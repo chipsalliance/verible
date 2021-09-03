@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -43,26 +42,24 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(DisableStatementNoLabelsRule);
 
-absl::string_view DisableStatementNoLabelsRule::Name() {
-  return "disable-statement";
-}
-const char DisableStatementNoLabelsRule::kTopic[] =
-    "disable-invalid-in-non-sequential";
-const char DisableStatementNoLabelsRule::kMessage[] =
+static const char kMessage[] =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
-const char DisableStatementNoLabelsRule::kMessageSeqBlock[] =
+static const char kMessageSeqBlock[] =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "label_of_seq_block;";
 
-std::string DisableStatementNoLabelsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that there are no occurrences of ",
-      Codify("disable some_label", description_type),
-      " if label is referring to a fork or other none sequential block label.",
-      ". Use ", Codify("disable fork", description_type), " instead. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& DisableStatementNoLabelsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "disable-statement",
+      .topic = "disable-invalid-in-non-sequential",
+      .desc =
+          "Checks that there are no occurrences of `disable some_label`"
+          " if label is referring to a fork or other none sequential block "
+          "label."
+          ". Use `disable fork` instead.",
+  };
+  return d;
 }
 
 static const Matcher& DisableMatcher() {
@@ -77,7 +74,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
   if (!DisableMatcher().Matches(symbol, &manager)) {
     return;
   }
-  const char* kMessageFinal = DisableStatementNoLabelsRule::kMessage;
+  const char* kMessageFinal = kMessage;
   // if no kDisable label, return, nothing to be checked
   const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
   if (disableLabels.empty()) {
@@ -109,7 +106,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
       if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
           ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
           ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-        kMessageFinal = DisableStatementNoLabelsRule::kMessageSeqBlock;
+        kMessageFinal = kMessageSeqBlock;
         break;
       }
       const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
@@ -123,7 +120,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
 }
 
 LintRuleStatus DisableStatementNoLabelsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 }  // namespace analysis
 }  // namespace verilog

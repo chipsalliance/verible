@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -37,14 +36,15 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbidDefparamRule);
 
-absl::string_view ForbidDefparamRule::Name() { return "forbid-defparam"; }
-const char ForbidDefparamRule::kTopic[] = "defparam";
-const char ForbidDefparamRule::kMessage[] = "Do not use defparam.";
+static const char kMessage[] = "Do not use defparam.";
 
-std::string ForbidDefparamRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Do not use defparam. See:", GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ForbidDefparamRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "forbid-defparam",
+      .topic = "defparam",
+      .desc = "Do not use defparam.",
+  };
+  return d;
 }
 
 // Matches the defparam construct.
@@ -66,8 +66,7 @@ void ForbidDefparamRule::HandleSymbol(
 }
 
 verible::LintRuleStatus ForbidDefparamRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

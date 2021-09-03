@@ -35,13 +35,10 @@ namespace analysis {
 class ForbidConsecutiveNullStatementsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
   ForbidConsecutiveNullStatementsRule() : state_(State::kNormal) {}
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
                   const verible::SyntaxTreeContext& context) override;
@@ -57,12 +54,6 @@ class ForbidConsecutiveNullStatementsRule : public verible::SyntaxTreeLintRule {
 
   // Internal analysis state.
   State state_;
-
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
 
   std::set<verible::LintViolation> violations_;
 };

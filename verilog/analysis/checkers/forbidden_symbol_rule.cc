@@ -20,7 +20,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -43,22 +42,17 @@ using verible::matcher::Matcher;
 // Register ForbiddenSystemTaskFunctionRule
 VERILOG_REGISTER_LINT_RULE(ForbiddenSystemTaskFunctionRule);
 
-absl::string_view ForbiddenSystemTaskFunctionRule::Name() {
-  return "invalid-system-task-function";
-}
-const char ForbiddenSystemTaskFunctionRule::kTopic[] =
-    "forbidden-system-functions";
-
-std::string ForbiddenSystemTaskFunctionRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that no forbidden system tasks or functions are used. These "
-      "consist of the following functions: ",
-      Codify("$psprintf", description_type), ", ",
-      Codify("$random", description_type), ", and ",
-      Codify("$dist_*", description_type), ". ", "Also non-LRM function ",
-      Codify("$srandom", description_type), ". See ",
-      GetVerificationCitation(kTopic), ".");
+const LintRuleDescriptor& ForbiddenSystemTaskFunctionRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "invalid-system-task-function",
+      .dv_topic = "forbidden-system-functions",
+      .desc =
+          "Checks that no forbidden system tasks or functions are used. These "
+          "consist of the following functions: "
+          "`$psprintf`, `$random`, and `$dist_*`. "
+          "Also non-LRM function `$srandom`.",
+  };
+  return d;
 }
 
 static const Matcher& IdMatcher() {
@@ -100,8 +94,7 @@ void ForbiddenSystemTaskFunctionRule::HandleSymbol(
 }
 
 verible::LintRuleStatus ForbiddenSystemTaskFunctionRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetVerificationCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 std::string ForbiddenSystemTaskFunctionRule::FormatReason(

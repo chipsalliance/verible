@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,16 +40,17 @@ using verible::matcher::Matcher;
 // Register AlwaysCombRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombRule);
 
-absl::string_view AlwaysCombRule::Name() { return "always-comb"; }
-const char AlwaysCombRule::kTopic[] = "combinational-logic";
-const char AlwaysCombRule::kMessage[] =
-    "Use \'always_comb\' instead of \'always @*\'.";
+static const char kMessage[] = "Use \'always_comb\' instead of \'always @*\'.";
 
-std::string AlwaysCombRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      Codify("always @*", description_type), ". Use ",
-                      Codify("always_comb", description_type), " instead. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& AlwaysCombRule::GetDescriptor() {
+  static LintRuleDescriptor d{
+      .name = "always-comb",
+      .topic = "combinational-logic",
+      .desc =
+          "Checks that there are no occurrences of "
+          "`always @*`. Use `always_comb` instead.",
+  };
+  return d;
 }
 
 // Matches event control (sensitivity list) for all signals.
@@ -74,7 +74,7 @@ void AlwaysCombRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus AlwaysCombRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

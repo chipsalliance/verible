@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -44,20 +43,19 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitFunctionTaskParameterTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionTaskParameterTypeRule);
 
-absl::string_view ExplicitFunctionTaskParameterTypeRule::Name() {
-  return "explicit-function-task-parameter-type";
-}
-const char ExplicitFunctionTaskParameterTypeRule::kTopic[] =
-    "function-task-argument-types";
-const char ExplicitFunctionTaskParameterTypeRule::kMessage[] =
+static const char kMessage[] =
     "Explicitly define a storage type for every function parameter.";
 
-std::string ExplicitFunctionTaskParameterTypeRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that every function and task parameter is declared with an "
-      "explicit storage type. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor&
+ExplicitFunctionTaskParameterTypeRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "explicit-function-task-parameter-type",
+      .topic = "function-task-argument-types",
+      .desc =
+          "Checks that every function and task parameter is declared "
+          "with an explicit storage type.",
+  };
+  return d;
 }
 
 static const Matcher& PortMatcher() {
@@ -78,7 +76,7 @@ void ExplicitFunctionTaskParameterTypeRule::HandleSymbol(
 }
 
 LintRuleStatus ExplicitFunctionTaskParameterTypeRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

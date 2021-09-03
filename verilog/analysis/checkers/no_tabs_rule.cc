@@ -20,7 +20,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
@@ -38,15 +37,17 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTabsRule);
 
-absl::string_view NoTabsRule::Name() { return "no-tabs"; }
-const char NoTabsRule::kTopic[] = "tabs";
-const char NoTabsRule::kMessage[] = "Use spaces, not tabs.";
+static const char kMessage[] = "Use spaces, not tabs.";
 
-std::string NoTabsRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that no tabs are used. Spaces should be used instead of tabs. "
-      "See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor &NoTabsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "no-tabs",
+      .topic = "tabs",
+      .desc =
+          "Checks that no tabs are used. Spaces should be used instead of "
+          "tabs. ",
+  };
+  return d;
 }
 
 void NoTabsRule::HandleLine(absl::string_view line) {
@@ -60,7 +61,7 @@ void NoTabsRule::HandleLine(absl::string_view line) {
 }
 
 LintRuleStatus NoTabsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

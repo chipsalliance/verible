@@ -81,8 +81,8 @@ class LintRuleRegistry {
 
   // Registers a lint rule with the appropriate registry.
   static void Register(const LintRuleId& rule,
-                       const LintRuleGenerator<RuleType>& creator,
-                       const LintDescription& descriptor) {
+                       const LintRuleGeneratorFun<RuleType>& creator,
+                       const LintDescriptionFun& descriptor) {
     LintRuleInfo<RuleType> info;
     info.lint_rule_generator = creator;
     info.description = descriptor;
@@ -91,10 +91,9 @@ class LintRuleRegistry {
 
   // Returns the description of the specific rule, formatted for description
   // type passed in.
-  static std::string GetRuleDescription(const LintRuleId& rule,
-                                        DescriptionType description_type) {
+  static LintRuleDescriptor GetRuleDescription(const LintRuleId& rule) {
     auto* create_func = FindOrNull(*GetLintRuleRegistry<RuleType>(), rule);
-    return (ABSL_DIE_IF_NULL(create_func)->description)(description_type);
+    return (ABSL_DIE_IF_NULL(create_func)->description)();
   }
 
   // Adds each rule name and a struct of information describing the rule to the
@@ -103,8 +102,8 @@ class LintRuleRegistry {
                                             DescriptionType description_type) {
     const auto* registry = GetLintRuleRegistry<RuleType>();
     for (const auto& rule_bundle : *registry) {
-      (*rule_map)[rule_bundle.first].description =
-          GetRuleDescription(rule_bundle.first, description_type);
+      (*rule_map)[rule_bundle.first].descriptor =
+          GetRuleDescription(rule_bundle.first);
     }
   }
 
@@ -117,8 +116,8 @@ class LintRuleRegistry {
 
 template <typename RuleType>
 LintRuleRegisterer<RuleType>::LintRuleRegisterer(
-    const LintRuleId& rule, const LintRuleGenerator<RuleType>& creator,
-    const LintDescription& descriptor) {
+    const LintRuleId& rule, const LintRuleGeneratorFun<RuleType>& creator,
+    const LintDescriptionFun& descriptor) {
   LintRuleRegistry<RuleType>::Register(rule, creator, descriptor);
 }
 

@@ -15,7 +15,6 @@
 #include "verilog/analysis/checkers/suggest_parentheses_rule.h"
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "verilog/CST/expression.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -31,20 +30,19 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 
-absl::string_view SuggestParenthesesRule::Name() {
-  return "suggest-parentheses";
-}
-const char SuggestParenthesesRule::kTopic[] = "parentheses";
-const char SuggestParenthesesRule::kMessage[] =
+static const char kMessage[] =
     "Parenthesize condition expressions that appear in the true-clause of "
     "another condition expression.";
 
-std::string SuggestParenthesesRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Recommend extra parentheses around subexpressions where it helps "
-      "readability. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& SuggestParenthesesRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "suggest-parentheses",
+      .topic = "parentheses",
+      .desc =
+          "Recommend extra parentheses around subexpressions where it "
+          "helps readability.",
+  };
+  return d;
 }
 
 void SuggestParenthesesRule::HandleNode(
@@ -78,7 +76,7 @@ void SuggestParenthesesRule::HandleNode(
 }
 
 LintRuleStatus SuggestParenthesesRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

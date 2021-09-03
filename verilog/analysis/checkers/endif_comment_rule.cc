@@ -21,7 +21,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/strings/comment_utils.h"
@@ -43,20 +42,20 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(EndifCommentRule);
 
-absl::string_view EndifCommentRule::Name() { return "endif-comment"; }
-const char EndifCommentRule::kTopic[] = "endif-comment";
-const char EndifCommentRule::kMessage[] =
+static const char kMessage[] =
     "`endif should be followed on the same line by a comment that matches the "
     "opening `ifdef/`ifndef.";
 
-std::string EndifCommentRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat("Checks that a Verilog ",
-                      Codify("`endif", description_type),
-                      " directive is followed by a comment that matches the "
-                      "name of the opening ",
-                      Codify("`ifdef", description_type), " or ",
-                      Codify("`ifndef", description_type), ". See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& EndifCommentRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "endif-comment",
+      .topic = "endif-comment",
+      .desc =
+          "Checks that a Verilog `` `endif`` directive is followed by a "
+          "comment that matches the name of the opening "
+          "`` `ifdef`` or `` `ifndef``.",
+  };
+  return d;
 }
 
 void EndifCommentRule::HandleToken(const TokenInfo& token) {
@@ -160,7 +159,7 @@ void EndifCommentRule::HandleToken(const TokenInfo& token) {
 }
 
 LintRuleStatus EndifCommentRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

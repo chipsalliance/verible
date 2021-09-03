@@ -21,7 +21,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -44,29 +43,21 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-absl::string_view StructUnionNameStyleRule::Name() {
-  return "struct-union-name-style";
-}
-const char StructUnionNameStyleRule::kTopic[] = "struct-union-conventions";
-const char StructUnionNameStyleRule::kMessageStruct[] = "Struct names";
-const char StructUnionNameStyleRule::kMessageUnion[] = "Union names";
+static const char kMessageStruct[] = "Struct names";
+static const char kMessageUnion[] = "Union names";
 
-std::string StructUnionNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
-      "Checks that ", Codify("struct", description_type), " and ",
-      Codify("union", description_type),
-      " names use lower_snake_case naming convention and end with '_t'. See ",
-      GetStyleGuideCitation(kTopic), ".");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "exceptions:String with exceptions");
-  } else {
-    return absl::StrCat(basic_desc,
-                        "\n##### Parameters\n"
-                        " * `exceptions` (Comma-separated list of allowed "
-                        "upper-case elements, such as unit-names"
-                        ". Default: Empty)\n");
-  }
+const LintRuleDescriptor &StructUnionNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "struct-union-name-style",
+      .topic = "struct-union-conventions",
+      .desc =
+          "Checks that `struct` and `union` "
+          " names use lower_snake_case naming convention and end with '_t'.",
+      .param = {{"exceptions", "",
+                 "Comma separated list of allowed upper-case elements, such as "
+                 "unit-names"}},
+  };
+  return d;
 }
 
 static const Matcher &TypedefMatcher() {
@@ -165,7 +156,7 @@ absl::Status StructUnionNameStyleRule::Configure(
 }
 
 LintRuleStatus StructUnionNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

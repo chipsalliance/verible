@@ -24,7 +24,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
@@ -46,16 +45,16 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(OneModulePerFileRule);
 
-absl::string_view OneModulePerFileRule::Name() { return "one-module-per-file"; }
-const char OneModulePerFileRule::kTopic[] = "file-extensions";
-const char OneModulePerFileRule::kMessage[] =
+static const char kMessage[] =
     "Each file should have only one module declaration. Found: ";
 
-std::string OneModulePerFileRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that at most one module is declared per file. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& OneModulePerFileRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "one-module-per-file",
+      .topic = "file-extensions",
+      .desc = "Checks that at most one module is declared per file.",
+  };
+  return d;
 }
 
 void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
@@ -87,7 +86,7 @@ void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
 }
 
 LintRuleStatus OneModulePerFileRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

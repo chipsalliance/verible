@@ -23,7 +23,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/config_utils.h"
@@ -46,27 +45,24 @@ VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
 static const char optional_suffix[] = "_pkg";
 
-absl::string_view PackageFilenameRule::Name() { return "package-filename"; }
-const char PackageFilenameRule::kTopic[] = "file-names";
-const char PackageFilenameRule::kMessage[] =
+static const char kMessage[] =
     "Package declaration name must match the file name "
     "(ignoring optional \"_pkg\" file name suffix).  ";
 
-std::string PackageFilenameRule::GetDescription(
-    DescriptionType description_type) {
-  static const std::string basic_desc = absl::StrCat(
-      "Checks that the package name matches the filename. Depending on "
-      "configuration, it is also allowed to replace underscore with dashes in "
-      "filenames.  See ",
-      GetStyleGuideCitation(kTopic), ".");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc,
-                        "Parameters: allow-dash-for-underscore:false");
-  } else {
-    return absl::StrCat(basic_desc,
-                        "\n##### Parameter\n"
-                        " * `allow-dash-for-underscore` Default: `false`\n");
-  }
+const LintRuleDescriptor& PackageFilenameRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "package-filename",
+      .topic = "file-names",
+      .desc =
+          "Checks that the package name matches the filename. Depending on "
+          "configuration, it is also allowed to replace underscore with dashes "
+          "in "
+          "filenames.",
+      .param = {{"allow-dash-for-underscore", "false",
+                 "Allow dashes in the filename corresponding to the "
+                 "underscores in the package"}},
+  };
+  return d;
 }
 
 void PackageFilenameRule::Lint(const TextStructureView& text_structure,
@@ -117,7 +113,7 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
 }
 
 LintRuleStatus PackageFilenameRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 absl::Status PackageFilenameRule::Configure(absl::string_view configuration) {

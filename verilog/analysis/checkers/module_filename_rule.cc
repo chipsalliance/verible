@@ -24,7 +24,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/config_utils.h"
@@ -47,29 +46,25 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ModuleFilenameRule);
 
-absl::string_view ModuleFilenameRule::Name() { return "module-filename"; }
-const char ModuleFilenameRule::kTopic[] = "file-names";
-const char ModuleFilenameRule::kMessage[] =
+static const char kMessage[] =
     "Declared module does not match the first dot-delimited component "
     "of file name: ";
 
-std::string ModuleFilenameRule::GetDescription(
-    DescriptionType description_type) {
-  static const std::string basic_desc = absl::StrCat(
-      "If a module is declared, checks that at least one module matches "
-      "the first dot-delimited component of the file name. Depending on "
-      "configuration, it is also allowed to replace underscore with dashes in "
-      "filenames.  "
-      "See ",
-      GetStyleGuideCitation(kTopic), ".");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc,
-                        "Parameters: allow-dash-for-underscore:false");
-  } else {
-    return absl::StrCat(basic_desc,
-                        "\n##### Parameter\n"
-                        " * `allow-dash-for-underscore` Default: `false`\n");
-  }
+const LintRuleDescriptor& ModuleFilenameRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "module-filename",
+      .topic = "file-names",
+      .desc =
+          "If a module is declared, checks that at least one module matches "
+          "the first dot-delimited component of the file name. Depending on "
+          "configuration, it is also allowed to replace underscore with dashes "
+          "in "
+          "filenames.  ",
+      .param = {{"allow-dash-for-underscore", "false",
+                 "Allow dashes in the filename where there are dashes in the "
+                 "module name"}},
+  };
+  return d;
 }
 
 static bool ModuleNameMatches(const verible::Symbol& s,
@@ -127,7 +122,7 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 }
 
 LintRuleStatus ModuleFilenameRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 absl::Status ModuleFilenameRule::Configure(absl::string_view configuration) {

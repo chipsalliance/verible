@@ -18,7 +18,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/text/token_info.h"
 #include "common/util/value_saver.h"
 #include "verilog/analysis/descriptions.h"
@@ -37,18 +36,18 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroStringConcatenationRule);
 
-absl::string_view MacroStringConcatenationRule::Name() {
-  return "macro-string-concatenation";
-}
-const char MacroStringConcatenationRule::kTopic[] = "defines";
-const char MacroStringConcatenationRule::kMessage[] =
+static const char kMessage[] =
     "Token concatenation (``) used inside plain string literal.";
 
-std::string MacroStringConcatenationRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Concatenation will not be evaluated here. Use `\"...`\" instead. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& MacroStringConcatenationRule::GetDescriptor() {
+  static LintRuleDescriptor d{
+      .name = "macro-string-concatenation",
+      .topic = "defines",
+      .desc =
+          "Concatenation will not be evaluated here. "
+          "Use `\"...`\" instead.",
+  };
+  return d;
 }
 
 void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
@@ -74,7 +73,7 @@ void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
 }
 
 LintRuleStatus MacroStringConcatenationRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

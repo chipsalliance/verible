@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/strings/naming_utils.h"
@@ -40,19 +39,17 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 
-absl::string_view BannedDeclaredNamePatternsRule::Name() {
-  return "banned-declared-name-patterns";
-}
-const char BannedDeclaredNamePatternsRule::kTopic[] = "identifiers";
-const char BannedDeclaredNamePatternsRule::kMessage[] =
-    "Check banned declared name patterns";
+static const char kMessage[] = "Check banned declared name patterns";
 
-std::string BannedDeclaredNamePatternsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks for"
-      " banned declared name against set of unwanted patterns."
-      " See your project's style guidance regarding naming.");
+const LintRuleDescriptor& BannedDeclaredNamePatternsRule::GetDescriptor() {
+  static LintRuleDescriptor d{
+      .name = "banned-declared-name-patterns",
+      .topic = "identifiers",
+      .desc =
+          "Checks for banned declared name against set of unwanted "
+          "patterns.",
+  };
+  return d;
 }
 
 void BannedDeclaredNamePatternsRule::HandleNode(
@@ -84,7 +81,7 @@ void BannedDeclaredNamePatternsRule::HandleNode(
 }
 
 LintRuleStatus BannedDeclaredNamePatternsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

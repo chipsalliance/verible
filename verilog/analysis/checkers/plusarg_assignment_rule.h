@@ -40,11 +40,8 @@ namespace analysis {
 class PlusargAssignmentRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
@@ -53,14 +50,6 @@ class PlusargAssignmentRule : public verible::SyntaxTreeLintRule {
 
  private:
   std::string FormatReason() const;
-
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  static const char kForbiddenFunctionName[];
-  static const char kCorrectFunctionName[];
-
- private:
   std::set<verible::LintViolation> violations_;
 };
 

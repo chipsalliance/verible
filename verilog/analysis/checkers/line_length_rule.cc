@@ -24,7 +24,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/strings/comment_utils.h"
 #include "common/strings/utf8.h"
@@ -54,9 +53,7 @@ using verible::TokenSequence;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(LineLengthRule);
 
-absl::string_view LineLengthRule::Name() { return "line-length"; }
-const char LineLengthRule::kTopic[] = "line-length";
-const char LineLengthRule::kMessage[] = "Line length exceeds max: ";
+static const char kMessage[] = "Line length exceeds max: ";
 
 #if 0  // See comment below about comment-reflowing being implemented
 static bool ContainsAnyWhitespace(absl::string_view s) {
@@ -67,16 +64,17 @@ static bool ContainsAnyWhitespace(absl::string_view s) {
 }
 #endif
 
-std::string LineLengthRule::GetDescription(DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
-      "Checks that all lines do not exceed the maximum allowed length. ",
-      "See ", GetStyleGuideCitation(kTopic), ".\n");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Parameters: length:", kDefaultLineLength);
-  } else {
-    return absl::StrCat(basic_desc, "##### Parameters\n",
-                        "  * `length` Default: `", kDefaultLineLength, "`");
-  }
+const LintRuleDescriptor& LineLengthRule::GetDescriptor() {
+  static LintRuleDescriptor d{
+      .name = "line-length",
+      .topic = "line-length",
+      .desc =
+          "Checks that all lines do not exceed the maximum allowed "
+          "length. ",
+      .param = {{"length", absl::StrCat(kDefaultLineLength),
+                 "Desired line length"}},
+  };
+  return d;
 }
 
 // Returns true if line is an exceptional case that should allow excessive
@@ -191,7 +189,7 @@ absl::Status LineLengthRule::Configure(absl::string_view configuration) {
 }
 
 LintRuleStatus LineLengthRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

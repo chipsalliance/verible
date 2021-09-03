@@ -18,7 +18,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
@@ -39,16 +38,15 @@ using verible::LintViolation;
 // Register UvmMacroSemicolonRule
 VERILOG_REGISTER_LINT_RULE(UvmMacroSemicolonRule);
 
-absl::string_view UvmMacroSemicolonRule::Name() {
-  return "uvm-macro-semicolon";
-}
-const char UvmMacroSemicolonRule::kTopic[] = "uvm-macro-semicolon-convention";
-// TODO(b/155128436): verify style guide anchor name
-
-std::string UvmMacroSemicolonRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that no `uvm_* macro calls end with ';'. See ",
-                      GetVerificationCitation(kTopic), ".");
+const LintRuleDescriptor& UvmMacroSemicolonRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "uvm-macro-semicolon",
+      .dv_topic =
+          "uvm-macro-semicolon-convention",  // TODO(b/155128436): verify
+                                             // style guide anchor name
+      .desc = "Checks that no `uvm_* macro calls end with ';'.",
+  };
+  return d;
 }
 
 // Returns a diagnostic message for this lint violation.
@@ -103,8 +101,7 @@ void UvmMacroSemicolonRule::HandleLeaf(
 }
 
 verible::LintRuleStatus UvmMacroSemicolonRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetVerificationCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

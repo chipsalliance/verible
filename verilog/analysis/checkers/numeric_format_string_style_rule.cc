@@ -20,7 +20,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/strings/naming_utils.h"
@@ -43,20 +42,20 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NumericFormatStringStyleRule);
 
-absl::string_view NumericFormatStringStyleRule::Name() {
-  return "numeric-format-string-style";
-}
-const char NumericFormatStringStyleRule::kTopic[] = "number-formatting";
-const char NumericFormatStringStyleRule::kMessage[] =
+static const char kMessage[] =
     "Formatting string must contain proper style-compilant numeric specifiers.";
 
-std::string NumericFormatStringStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that string literals with numeric format specifiers "
-      "have proper prefixes for hex and bin values and no prefixes for decimal "
-      "values.  See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& NumericFormatStringStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "numeric-format-string-style",
+      .topic = "number-formatting",
+      .desc =
+          "Checks that string literals with numeric format specifiers "
+          "have proper prefixes for hex and bin values and no prefixes for "
+          "decimal "
+          "values.",
+  };
+  return d;
 }
 
 template <typename T>
@@ -157,7 +156,7 @@ void NumericFormatStringStyleRule::HandleToken(const TokenInfo& token) {
 }
 
 LintRuleStatus NumericFormatStringStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

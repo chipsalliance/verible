@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -38,16 +37,16 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelRule);
 
-absl::string_view GenerateLabelRule::Name() { return "generate-label"; }
-const char GenerateLabelRule::kTopic[] = "generate-statements";
-const char GenerateLabelRule::kMessage[] =
+static const char kMessage[] =
     "All generate block statements must have a label";
 
-std::string GenerateLabelRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that every generate block statement is labeled. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& GenerateLabelRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "generate-label",
+      .topic = "generate-statements",
+      .desc = "Checks that every generate block statement is labeled.",
+  };
+  return d;
 }
 
 // Matches against generate blocks that do not have a label
@@ -72,8 +71,7 @@ void GenerateLabelRule::HandleSymbol(
 }
 
 verible::LintRuleStatus GenerateLabelRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

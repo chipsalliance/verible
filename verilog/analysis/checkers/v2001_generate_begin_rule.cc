@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,25 +40,24 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(V2001GenerateBeginRule);
 
-absl::string_view V2001GenerateBeginRule::Name() {
-  return "v2001-generate-begin";
-}
-const char V2001GenerateBeginRule::kTopic[] = "generate-constructs";
-const char V2001GenerateBeginRule::kMessage[] =
+static const char kMessage[] =
     "Do not begin a generate block inside a generate region.";
+
+const LintRuleDescriptor& V2001GenerateBeginRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "v2001-generate-begin",
+      .topic = "generate-constructs",
+      .desc =
+          "Checks that there are no generate-begin blocks inside a "
+          "generate region.",
+  };
+  return d;
+}
 
 static const Matcher& GenerateRegionMatcher() {
   static const Matcher matcher(
       NodekGenerateRegion(HasGenerateBlock().Bind("block")));
   return matcher;
-}
-
-std::string V2001GenerateBeginRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that there are no generate-begin blocks inside a generate "
-      "region. See ",
-      GetStyleGuideCitation(kTopic), ".");
 }
 
 void V2001GenerateBeginRule::HandleSymbol(
@@ -74,8 +72,7 @@ void V2001GenerateBeginRule::HandleSymbol(
 }
 
 verible::LintRuleStatus V2001GenerateBeginRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

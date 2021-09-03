@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -39,19 +38,18 @@ using verible::SyntaxTreeContext;
 // Register ForbidConsecutiveNullStatementsRule
 VERILOG_REGISTER_LINT_RULE(ForbidConsecutiveNullStatementsRule);
 
-absl::string_view ForbidConsecutiveNullStatementsRule::Name() {
-  return "forbid-consecutive-null-statements";
-}
-const char ForbidConsecutiveNullStatementsRule::kTopic[] =
-    "redundant-semicolons";
-const char ForbidConsecutiveNullStatementsRule::kMessage[] =
+static const char kMessage[] =
     "Do not use consecutive null statements like \';;\'.";
 
-std::string ForbidConsecutiveNullStatementsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      "consecutive null statements like ",
-                      Codify(";;", description_type));
+const LintRuleDescriptor& ForbidConsecutiveNullStatementsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "forbid-consecutive-null-statements",
+      .topic = "redundant-semicolons",
+      .desc =
+          "Checks that there are no occurrences of "
+          "consecutive null statements like `;;`",
+  };
+  return d;
 }
 
 void ForbidConsecutiveNullStatementsRule::HandleLeaf(
@@ -82,7 +80,7 @@ void ForbidConsecutiveNullStatementsRule::HandleLeaf(
 }
 
 LintRuleStatus ForbidConsecutiveNullStatementsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

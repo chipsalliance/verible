@@ -35,11 +35,8 @@ namespace analysis {
 class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) final;
@@ -53,9 +50,6 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
   static std::string FormatReason(absl::string_view width,
                                   absl::string_view base_text, char base,
                                   absl::string_view literal);
-
-  // Link to style guide rule.
-  static const char kTopic[];
 
   bool check_bin_numbers_ = true;
   bool check_hex_numbers_ = false;

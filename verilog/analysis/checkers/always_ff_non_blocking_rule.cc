@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,33 +45,25 @@ using verible::matcher::Matcher;
 // Register AlwaysFFNonBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysFFNonBlockingRule);
 
-absl::string_view AlwaysFFNonBlockingRule::Name() {
-  return "always-ff-non-blocking";
-}
-const char AlwaysFFNonBlockingRule::kTopic[] = "sequential-logic";
-const char AlwaysFFNonBlockingRule::kMessage[] =
+static const char kMessage[] =
     "Use blocking assignments, at most, for locals inside "
     "'always_ff' sequential blocks.";
 
-std::string AlwaysFFNonBlockingRule::GetDescription(
-    DescriptionType description_type) {
-  static const std::string basic_desc = absl::StrCat(
-      "Checks that blocking assignments are, at most, targeting "
-      "locals in sequential logic. See ",
-      GetStyleGuideCitation(kTopic), ".\n");
-
-  return absl::StrCat(
-      basic_desc, description_type == DescriptionType::kHelpRulesFlag
-                      ? "Parameters: "
-                        "catch_modifying_assignments: false; "
-                        "waive_for_locals: false"
-                      : "##### Parameters\n"
-                        "  * `catch_modifying_assignments` Default: `false`\n"
-                        "  * `waive_for_locals` Default: `false`");
+const LintRuleDescriptor &AlwaysFFNonBlockingRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "always-ff-non-blocking",
+      .topic = "sequential-logic",
+      .desc =
+          "Checks that blocking assignments are, at most, targeting "
+          "locals in sequential logic.",
+      .param = {{"catch_modifying_assignments", "false"},
+                {"waive_for_locals", "false"}},
+  };
+  return d;
 }
 
 LintRuleStatus AlwaysFFNonBlockingRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 //- Configuration -----------------------------------------------------------

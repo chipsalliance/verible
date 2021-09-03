@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -44,20 +43,18 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitTaskLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitTaskLifetimeRule);
 
-absl::string_view ExplicitTaskLifetimeRule::Name() {
-  return "explicit-task-lifetime";
-}
-const char ExplicitTaskLifetimeRule::kTopic[] =
-    "function-task-explicit-lifetime";
-const char ExplicitTaskLifetimeRule::kMessage[] =
+static const char kMessage[] =
     "Explicitly define static or automatic lifetime for non-class tasks";
 
-std::string ExplicitTaskLifetimeRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that every task declared outside of a class is declared with "
-      "an explicit lifetime (static or automatic). See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ExplicitTaskLifetimeRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "explicit-task-lifetime",
+      .topic = "function-task-explicit-lifetime",
+      .desc =
+          "Checks that every task declared outside of a class is declared "
+          "with an explicit lifetime (static or automatic).",
+  };
+  return d;
 }
 
 static const Matcher& TaskMatcher() {
@@ -88,7 +85,7 @@ void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus ExplicitTaskLifetimeRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

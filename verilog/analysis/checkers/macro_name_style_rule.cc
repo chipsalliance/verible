@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/strings/naming_utils.h"
@@ -42,18 +41,19 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroNameStyleRule);
 
-absl::string_view MacroNameStyleRule::Name() { return "macro-name-style"; }
-const char MacroNameStyleRule::kTopic[] = "defines";
-const char MacroNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Macro names must contain only CAPITALS, underscores, and digits.  "
     "Exception: UVM-like macros.";
 
-std::string MacroNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that every macro name follows ALL_CAPS naming convention.  "
-      "Exception: UVM-like macros.  See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& MacroNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "macro-name-style",
+      .topic = "defines",
+      .desc =
+          "Checks that every macro name follows ALL_CAPS naming convention. "
+          "_Exception_: UVM-like macros.",
+  };
+  return d;
 }
 
 void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
@@ -109,7 +109,7 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
 }
 
 LintRuleStatus MacroNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

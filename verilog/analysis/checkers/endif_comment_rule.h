@@ -47,11 +47,8 @@ namespace analysis {
 class EndifCommentRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   EndifCommentRule() : state_(State::kNormal) {}
 
@@ -67,11 +64,7 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
     kExpectEndifComment,
   };
 
-  // Link to style guide rule.
-  static const char kTopic[];
-
   // Diagnosic message.
-  static const char kMessage[];
 
   // Internal lexical analysis state.
   State state_;

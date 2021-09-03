@@ -505,6 +505,7 @@ absl::Status PrintRuleInfo(std::ostream* os,
                            const analysis::LintRuleDescriptionsMap& rule_map,
                            absl::string_view rule_name) {
   constexpr int kRuleWidth = 35;
+  constexpr int kParamIndent = kRuleWidth + 4;
   constexpr char kFill = ' ';
 
   const auto it = rule_map.find(rule_name);
@@ -514,9 +515,20 @@ absl::Status PrintRuleInfo(std::ostream* os,
         "\' not found. Please specify a rule name or \"all\" for help on "
         "the rules.\n"));
 
+  const auto& d = it->second.descriptor;
   // Print description.
   *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << rule_name
-      << it->second.description << "\n";
+      << d.desc << "\n";
+  if (!d.param.empty()) {
+    *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << " "
+        << "Parameter" << (d.param.size() > 1 ? "s" : "") << ":\n";
+    for (const auto& p : d.param) {
+      *os << std::left << std::setw(kParamIndent) << std::setfill(kFill) << " "
+          << "* `" << p.name << "` Default: `" << p.default_value << "` "
+          << p.description << "\n";
+    }
+  }
+
   // Print default enabled.
   *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << " "
       << "Enabled by default: " << std::boolalpha << it->second.default_enabled
@@ -556,8 +568,19 @@ void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
 
   for (const auto& rule : rule_map) {
     // Print the rule, description and if it is enabled by default.
+    const auto& d = rule.second.descriptor;
     *os << "### " << rule.first << "\n";
-    *os << rule.second.description << "\n\n";
+    *os << d.desc;
+    *os << " See "
+        << (d.dv_topic.empty() ? verible::GetStyleGuideCitation(d.topic)
+                               : verible::GetVerificationCitation(d.dv_topic))
+        << ".\n\n";
+    if (!d.param.empty())
+      *os << "##### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
+    for (const auto& p : d.param) {
+      *os << "  * `" << p.name << "` Default: `" << p.default_value << "` "
+          << p.description << "\n";
+    }
     *os << "Enabled by default: " << std::boolalpha
         << rule.second.default_enabled << "\n\n";
   }

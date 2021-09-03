@@ -35,11 +35,8 @@ namespace analysis {
 class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   absl::Status Configure(absl::string_view configuration) override;
 
@@ -49,9 +46,6 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
   // Format diagnostic message.
   std::string ViolationMsg(absl::string_view symbol_type,
                            uint32_t allowed_bitmap);

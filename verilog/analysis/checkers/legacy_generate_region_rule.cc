@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,17 +40,15 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::EqualTagPredicate;
 
-absl::string_view LegacyGenerateRegionRule::Name() {
-  return "legacy-generate-region";
-}
-const char LegacyGenerateRegionRule::kTopic[] = "generate-constructs";
-const char LegacyGenerateRegionRule::kMessage[] =
-    "Do not use generate regions.";
+static const char kMessage[] = "Do not use generate regions.";
 
-std::string LegacyGenerateRegionRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no generate regions. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& LegacyGenerateRegionRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "legacy-generate-region",
+      .topic = "generate-constructs",
+      .desc = "Checks that there are no generate regions.",
+  };
+  return d;
 }
 
 void LegacyGenerateRegionRule::HandleNode(
@@ -68,7 +65,7 @@ void LegacyGenerateRegionRule::HandleNode(
 }
 
 LintRuleStatus LegacyGenerateRegionRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

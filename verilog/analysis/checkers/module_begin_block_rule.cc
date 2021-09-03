@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -37,17 +36,18 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ModuleBeginBlockRule);
 
-absl::string_view ModuleBeginBlockRule::Name() { return "module-begin-block"; }
-const char ModuleBeginBlockRule::kTopic[] = "floating-begin-end-blocks";
-const char ModuleBeginBlockRule::kMessage[] =
+static const char kMessage[] =
     "Module-level begin-end blocks are not LRM-valid syntax.";
 
-std::string ModuleBeginBlockRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that there are no begin-end blocks declared at the module "
-      "level. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ModuleBeginBlockRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "module-begin-block",
+      .topic = "floating-begin-end-blocks",
+      .desc =
+          "Checks that there are no begin-end blocks declared at the module "
+          "level.",
+  };
+  return d;
 }
 
 // Matches begin-end blocks at the module-item level.
@@ -65,8 +65,7 @@ void ModuleBeginBlockRule::HandleSymbol(
 }
 
 verible::LintRuleStatus ModuleBeginBlockRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

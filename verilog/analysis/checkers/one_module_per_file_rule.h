@@ -31,25 +31,16 @@ namespace analysis {
 class OneModulePerFileRule : public verible::TextStructureLintRule {
  public:
   using rule_type = verible::TextStructureLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor &GetDescriptor();
 
   OneModulePerFileRule() {}
 
-  void Lint(const verible::TextStructureView&, absl::string_view) override;
+  void Lint(const verible::TextStructureView &, absl::string_view) override;
 
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
-
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
 };

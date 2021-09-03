@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -43,17 +42,18 @@ using verible::matcher::Matcher;
 // Register AlwaysCombBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombBlockingRule);
 
-absl::string_view AlwaysCombBlockingRule::Name() {
-  return "always-comb-blocking";
-}
-const char AlwaysCombBlockingRule::kTopic[] = "combinational-logic";
-const char AlwaysCombBlockingRule::kMessage[] =
+static const char kMessage[] =
     "Use only blocking assignments in \'always_comb\' combinational blocks.";
 
-std::string AlwaysCombBlockingRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      "non-blocking assignment in combinational logic.");
+const LintRuleDescriptor& AlwaysCombBlockingRule::GetDescriptor() {
+  static LintRuleDescriptor d{
+      .name = "always-comb-blocking",
+      .topic = "combinational-logic",
+      .desc =
+          "Checks that there are no occurrences of "
+          "non-blocking assignment in combinational logic.",
+  };
+  return d;
 }
 
 // Matches always_comb blocks.
@@ -83,7 +83,7 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus AlwaysCombBlockingRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

@@ -20,7 +20,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,21 +45,19 @@ using verible::matcher::Matcher;
 // Register ParameterTypeNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ParameterTypeNameStyleRule);
 
-absl::string_view ParameterTypeNameStyleRule::Name() {
-  return "parameter-type-name-style";
-}
-const char ParameterTypeNameStyleRule::kTopic[] = "parametrized-objects";
-
-const char ParameterTypeNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Parameter type names must use the lower_snake_case naming convention"
     " and end with _t.";
 
-std::string ParameterTypeNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that parameter type names follow the lower_snake_case naming "
-      "convention and end with _t. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ParameterTypeNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "parameter-type-name-style",
+      .topic = "parametrized-objects",
+      .desc =
+          "Checks that parameter type names follow the lower_snake_case naming "
+          "convention and end with _t.",
+  };
+  return d;
 }
 
 static const Matcher& ParamDeclMatcher() {
@@ -85,7 +82,7 @@ void ParameterTypeNameStyleRule::HandleSymbol(
 }
 
 LintRuleStatus ParameterTypeNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

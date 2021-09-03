@@ -23,7 +23,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -52,18 +51,15 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(TruncatedNumericLiteralRule);
 
-absl::string_view TruncatedNumericLiteralRule::Name() {
-  return "truncated-numeric-literal";
-}
-const char TruncatedNumericLiteralRule::kTopic[] = "number-literals";
-
-std::string TruncatedNumericLiteralRule::GetDescription(
-    DescriptionType description_type) {
-  static const std::string basic_desc = absl::StrCat(
-      "Checks that numeric literals are not longer than their stated "
-      "bit-width to avoid undesired accidental truncation. See ",
-      GetStyleGuideCitation(kTopic), ".\n");
-  return basic_desc;
+const LintRuleDescriptor& TruncatedNumericLiteralRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "truncated-numeric-literal",
+      .topic = "number-literals",
+      .desc =
+          "Checks that numeric literals are not longer than their stated "
+          "bit-width to avoid undesired accidental truncation.",
+  };
+  return d;
 }
 
 static const Matcher& NumberMatcher() {
@@ -190,7 +186,7 @@ void TruncatedNumericLiteralRule::HandleSymbol(
 }
 
 LintRuleStatus TruncatedNumericLiteralRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

@@ -49,10 +49,10 @@ using verible::TokenStreamLintRule;
 class TreeRuleBase : public SyntaxTreeLintRule {
  public:
   using rule_type = SyntaxTreeLintRule;
-  void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) override {}
-  void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) override {}
+  void HandleLeaf(const verible::SyntaxTreeLeaf &leaf,
+                  const verible::SyntaxTreeContext &context) override {}
+  void HandleNode(const verible::SyntaxTreeNode &node,
+                  const verible::SyntaxTreeContext &context) override {}
   verible::LintRuleStatus Report() const override {
     return verible::LintRuleStatus();
   }
@@ -61,15 +61,25 @@ class TreeRuleBase : public SyntaxTreeLintRule {
 class TreeRule1 : public TreeRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static absl::string_view Name() { return "test-rule-1"; }
-  static std::string GetDescription(DescriptionType) { return "TreeRule1"; }
+  static const LintRuleDescriptor &GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-1",
+        .desc = "TreeRule1",
+    };
+    return d;
+  }
 };
 
 class TreeRule2 : public TreeRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static absl::string_view Name() { return "test-rule-2"; }
-  static std::string GetDescription(DescriptionType) { return "TreeRule2"; }
+  static const LintRuleDescriptor &GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-2",
+        .desc = "TreeRule2",
+    };
+    return d;
+  }
 };
 
 VERILOG_REGISTER_LINT_RULE(TreeRule1);
@@ -94,7 +104,7 @@ TEST(LintRuleRegistryTest, CreateTreeLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTreeLintRuleValid) {
   auto any_rule = CreateSyntaxTreeLintRule("test-rule-1");
   EXPECT_NE(any_rule, nullptr);
-  auto rule_1 = dynamic_cast<TreeRule1*>(any_rule.get());
+  auto rule_1 = dynamic_cast<TreeRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 }
 
@@ -105,13 +115,13 @@ TEST(GetAllRuleDescriptionsHelpFlagTest, SyntaxRuleValid) {
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("test-rule-1");
   ASSERT_NE(it, rule_map.end());
-  EXPECT_EQ(it->second.description, "TreeRule1");
+  EXPECT_EQ(it->second.descriptor.desc, "TreeRule1");
 }
 
 class TokenRuleBase : public TokenStreamLintRule {
  public:
   using rule_type = TokenStreamLintRule;
-  void HandleToken(const verible::TokenInfo&) override {}
+  void HandleToken(const verible::TokenInfo &) override {}
   verible::LintRuleStatus Report() const override {
     return verible::LintRuleStatus();
   }
@@ -120,8 +130,13 @@ class TokenRuleBase : public TokenStreamLintRule {
 class TokenRule1 : public TokenRuleBase {
  public:
   using rule_type = TokenStreamLintRule;
-  static absl::string_view Name() { return "token-rule-1"; }
-  static std::string GetDescription(DescriptionType) { return "TokenRule1"; }
+  static const LintRuleDescriptor &GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "token-rule-1",
+        .desc = "TokenRule1",
+    };
+    return d;
+  }
 };
 
 VERILOG_REGISTER_LINT_RULE(TokenRule1);
@@ -140,7 +155,7 @@ TEST(LintRuleRegistryTest, CreateTokenLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTokenLintRuleValid) {
   auto any_rule = CreateTokenStreamLintRule("token-rule-1");
   EXPECT_NE(any_rule, nullptr);
-  auto rule_1 = dynamic_cast<TokenRule1*>(any_rule.get());
+  auto rule_1 = dynamic_cast<TokenRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 }
 
@@ -151,14 +166,19 @@ TEST(GetAllRuleDescriptionsHelpFlagTest, TokenRuleValid) {
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("token-rule-1");
   ASSERT_NE(it, rule_map.end());
-  EXPECT_EQ(it->second.description, "TokenRule1");
+  EXPECT_EQ(it->second.descriptor.desc, "TokenRule1");
 }
 
 class LineRule1 : public LineLintRule {
  public:
   using rule_type = LineLintRule;
-  static absl::string_view Name() { return "line-rule-1"; }
-  static std::string GetDescription(DescriptionType) { return "LineRule1"; }
+  static const LintRuleDescriptor &GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "line-rule-1",
+        .desc = "LineRule1",
+    };
+    return d;
+  }
 
   void HandleLine(absl::string_view) override {}
   verible::LintRuleStatus Report() const override {
@@ -182,7 +202,7 @@ TEST(LintRuleRegistryTest, CreateLineLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateLineLintRuleValid) {
   auto any_rule = CreateLineLintRule("line-rule-1");
   EXPECT_NE(any_rule, nullptr);
-  auto rule_1 = dynamic_cast<LineRule1*>(any_rule.get());
+  auto rule_1 = dynamic_cast<LineRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 }
 
@@ -193,16 +213,21 @@ TEST(GetAllRuleDescriptionsHelpFlagTest, LineRuleValid) {
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("line-rule-1");
   ASSERT_NE(it, rule_map.end());
-  EXPECT_EQ(it->second.description, "LineRule1");
+  EXPECT_EQ(it->second.descriptor.desc, "LineRule1");
 }
 
 class TextRule1 : public TextStructureLintRule {
  public:
   using rule_type = TextStructureLintRule;
-  static absl::string_view Name() { return "text-rule-1"; }
-  static std::string GetDescription(DescriptionType) { return "TextRule1"; }
+  static const LintRuleDescriptor &GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "text-rule-1",
+        .desc = "TextRule1",
+    };
+    return d;
+  }
 
-  void Lint(const verible::TextStructureView&, absl::string_view) override {}
+  void Lint(const verible::TextStructureView &, absl::string_view) override {}
   verible::LintRuleStatus Report() const override {
     return verible::LintRuleStatus();
   }
@@ -224,7 +249,7 @@ TEST(LintRuleRegistryTest, CreateTextLintRuleInvalid) {
 TEST(LintRuleRegistryTest, CreateTextLintRuleValid) {
   auto any_rule = CreateTextStructureLintRule("text-rule-1");
   EXPECT_NE(any_rule, nullptr);
-  auto rule_1 = dynamic_cast<TextRule1*>(any_rule.get());
+  auto rule_1 = dynamic_cast<TextRule1 *>(any_rule.get());
   EXPECT_NE(rule_1, nullptr);
 }
 
@@ -246,7 +271,7 @@ TEST(GetAllRuleDescriptionsHelpFlagTest, TextRuleValid) {
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("text-rule-1");
   ASSERT_NE(it, rule_map.end());
-  EXPECT_EQ(it->second.description, "TextRule1");
+  EXPECT_EQ(it->second.descriptor.desc, "TextRule1");
 }
 
 }  // namespace

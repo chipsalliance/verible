@@ -49,25 +49,23 @@ namespace analysis {
 template <typename RuleType>
 class LintRuleRegisterer;
 
-using LintRuleId = absl::string_view;
-
 template <typename RuleType>
-using LintRuleGenerator = std::function<std::unique_ptr<RuleType>()>;
-using LintDescription = std::function<std::string(DescriptionType)>;
+using LintRuleGeneratorFun = std::function<std::unique_ptr<RuleType>()>;
+using LintDescriptionFun = std::function<LintRuleDescriptor()>;
 
 template <typename RuleType>
 struct LintRuleInfo {
-  LintRuleGenerator<RuleType> lint_rule_generator;
-  LintDescription description;
+  LintRuleGeneratorFun<RuleType> lint_rule_generator;
+  LintDescriptionFun description;
 };
 
-struct LintRuleDescriptionInfo {
-  std::string description;
+struct LintRuleDefaultConfig {
+  LintRuleDescriptor descriptor;
   bool default_enabled = false;
 };
 
 using LintRuleDescriptionsMap =
-    std::map<LintRuleId, LintRuleDescriptionInfo, verible::StringViewCompare>;
+    std::map<LintRuleId, LintRuleDefaultConfig, verible::StringViewCompare>;
 
 // Helper macro to register a LintRule with LintRuleRegistry. In order to have
 // a global registry, some static initialization is needed. This macros
@@ -98,14 +96,16 @@ using LintRuleDescriptionsMap =
 //   return "my-lint-rule";  // safely initialized function-local string literal
 // }
 //
+// TODO(hzeller): once the class does not contain a state, extract the name
+// and description from the instance to avoid weird static initialization.
 #define VERILOG_REGISTER_LINT_RULE(class_name)                               \
   static verilog::analysis::LintRuleRegisterer<class_name::rule_type>        \
       __##class_name##__registerer(                                          \
-          class_name::Name(),                                                \
+          class_name::GetDescriptor().name, /* todo: only call once */       \
           []() {                                                             \
             return std::unique_ptr<class_name::rule_type>(new class_name()); \
           },                                                                 \
-          class_name::GetDescription);
+          class_name::GetDescriptor);
 
 // Static objects of type LintRuleRegisterer are used to register concrete
 // parsers in LintRuleRegistry. Users are expected to create these objects
@@ -114,8 +114,8 @@ template <typename RuleType>
 class LintRuleRegisterer {
  public:
   LintRuleRegisterer(const LintRuleId& rule,
-                     const LintRuleGenerator<RuleType>& creator,
-                     const LintDescription& descriptor);
+                     const LintRuleGeneratorFun<RuleType>& creator,
+                     const LintDescriptionFun& descriptor);
 };
 
 // Returns true if rule_name refers to a known lint rule.

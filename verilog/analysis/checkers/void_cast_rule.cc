@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -48,14 +47,15 @@ using verible::matcher::Matcher;
 // Register VoidCastRule
 VERILOG_REGISTER_LINT_RULE(VoidCastRule);
 
-absl::string_view VoidCastRule::Name() { return "void-cast"; }
-const char VoidCastRule::kTopic[] = "void-casts";
-
-std::string VoidCastRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that void casts do not contain certain function/method calls. "
-      "See ",
-      GetVerificationCitation(kTopic), ".");
+const LintRuleDescriptor& VoidCastRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "void-cast",
+      .dv_topic = "void-casts",
+      .desc =
+          "Checks that void casts do not contain certain function/method "
+          "calls. ",
+  };
+  return d;
 }
 
 const std::set<std::string>& VoidCastRule::ForbiddenFunctionsSet() {
@@ -118,7 +118,7 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus VoidCastRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetVerificationCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 std::string VoidCastRule::FormatReason(

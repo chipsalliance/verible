@@ -33,11 +33,8 @@ namespace analysis {
 class VoidCastRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
@@ -47,9 +44,6 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
  private:
   // Generate diagnostic message of why lint error occurred.
   std::string FormatReason(const verible::SyntaxTreeLeaf& leaf) const;
-
-  // Link to style guide rule.
-  static const char kTopic[];
 
   static const std::set<std::string>& ForbiddenFunctionsSet();
 

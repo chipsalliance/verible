@@ -33,9 +33,8 @@ namespace analysis {
 class TruncatedNumericLiteralRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) final;
@@ -43,9 +42,6 @@ class TruncatedNumericLiteralRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const final;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
   std::set<verible::LintViolation> violations_;
 };
 

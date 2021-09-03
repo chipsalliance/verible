@@ -21,7 +21,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -55,18 +54,15 @@ using verible::matcher::Matcher;
 // Register CreateObjectNameMatchRule
 VERILOG_REGISTER_LINT_RULE(CreateObjectNameMatchRule);
 
-absl::string_view CreateObjectNameMatchRule::Name() {
-  return "create-object-name-match";
-}
-const char CreateObjectNameMatchRule::kTopic[] = "naming";
-
-std::string CreateObjectNameMatchRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that the \'name\' argument of ",
-      Codify("type_id::create()", description_type),
-      " matches the name of the variable to which it is assigned. See ",
-      GetVerificationCitation(kTopic), ".");
+const LintRuleDescriptor& CreateObjectNameMatchRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "create-object-name-match",
+      .dv_topic = "naming",
+      .desc =
+          "Checks that the 'name' argument of `type_id::create()`"
+          " matches the name of the variable to which it is assigned.",
+  };
+  return d;
 }
 
 // Matches against assignments to typename::type_id::create() calls.
@@ -215,7 +211,7 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus CreateObjectNameMatchRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetVerificationCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis
