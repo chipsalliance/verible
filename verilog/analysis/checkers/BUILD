@@ -63,6 +63,7 @@ cc_library(
         ":struct_union_name_style_rule",
         ":suggest_parentheses_rule",
         ":token_stream_lint_rule",
+        ":truncated_numeric_literal_rule",
         ":undersized_binary_literal_rule",
         ":unpacked_dimensions_rule",
         ":uvm_macro_semicolon_rule",
@@ -984,6 +985,46 @@ cc_test(
     srcs = ["undersized_binary_literal_rule_test.cc"],
     deps = [
         ":undersized_binary_literal_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "truncated_numeric_literal_rule",
+    srcs = ["truncated_numeric_literal_rule.cc"],
+    hdrs = ["truncated_numeric_literal_rule.h"],
+    deps = [
+        "//common/analysis:citation",
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/text:concrete_syntax_leaf",
+        "//common/text:config_utils",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:token_info",
+        "//common/util:logging",
+        "//verilog/CST:numbers",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "truncated_numeric_literal_rule_test",
+    srcs = ["truncated_numeric_literal_rule_test.cc"],
+    deps = [
+        ":truncated_numeric_literal_rule",
         "//common/analysis:linter_test_utils",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
