@@ -331,7 +331,7 @@ Enabled by default: true
 Checks that numeric literals are not longer than their stated bit-width to avoid undesired accidental truncation. See [Style: number-literals].
 
 
-Enabled by default: false
+Enabled by default: true
 
 ### typedef-enums
 Checks that a Verilog `enum` declaration is named using `typedef`. See [Style: typedef-enums].
@@ -377,4 +377,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-09-03 13:30:46 -0700 from [2d95669](https://github.com/google/verible/commit/2d95669669fa795c24fc8de73c95161f17fea446)
+Generated on 2021-09-03 14:36:02 -0700 from [6743872](https://github.com/google/verible/commit/6743872c89b66ba9bb86c997c634396759c2b776)
