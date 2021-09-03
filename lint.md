@@ -261,6 +261,12 @@ Recommend extra parentheses around subexpressions where it helps readability. Se
 
 Enabled by default: true
 
+### truncated-numeric-literal
+Checks that numeric literals are not longer than their stated bit-width to avoid undesired accidental truncation. See [Style: number-literals].
+
+
+Enabled by default: false
+
 ### typedef-enums
 Checks that a Verilog `enum` declaration is named using `typedef`. See [Style: typedef-enums].
 
@@ -305,4 +311,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-09-03 10:52:35 -0700 from [7b88789](https://github.com/google/verible/commit/7b887899b566c507d6cd873ebd241e224ba446bd)
+Generated on 2021-09-03 13:30:46 -0700 from [2d95669](https://github.com/google/verible/commit/2d95669669fa795c24fc8de73c95161f17fea446)
