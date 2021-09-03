@@ -65,6 +65,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "positive-meaning-parameter-name",
     "constraint-name-style",
     "suggest-parentheses",
+    // TODO(hzeller) enable after #907 "truncated-numeric-literal",
     // TODO(fangism): enable in production:
     // TODO(b/155128436): "uvm-macro-semicolon"
     // TODO(b/117131903): "proper-parameter-declaration",
