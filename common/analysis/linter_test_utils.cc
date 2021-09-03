@@ -75,7 +75,7 @@ bool LintTestCase::ExactMatchFindings(
   if (!unmatched_found_violations.empty()) {
     all_match = false;
     *diffstream
-        << "The following found violations did not match the expected ones:\n";
+        << "FOUND these violations, but did not match the expected ones:\n";
     for (const auto& violation : unmatched_found_violations) {
       violation.token.ToStream(*diffstream, context) << std::endl;
     }
@@ -83,7 +83,7 @@ bool LintTestCase::ExactMatchFindings(
   if (!unmatched_expected_violations.empty()) {
     all_match = false;
     *diffstream
-        << "The following expected violations did not match the ones found:\n";
+        << "EXPECTED these violations, but did not match the ones found:\n";
     for (const auto& violation : unmatched_expected_violations) {
       violation.ToStream(*diffstream, context) << std::endl;
     }
