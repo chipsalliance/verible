@@ -43,14 +43,14 @@ using verible::matcher::Matcher;
 // Register ForbiddenMacroRule
 VERILOG_REGISTER_LINT_RULE(ForbiddenMacroRule);
 
-absl::string_view ForbiddenMacroRule::Name() { return "forbidden-macro"; }
-const char ForbiddenMacroRule::kTopic[] = "logging";
-
 // TODO(fangism): Generate table of URLs from InvalidMacrosMap().
-std::string ForbiddenMacroRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that no forbidden macro calls are used. See ",
-                      GetVerificationCitation(kTopic), ".");
+const LintRuleDescriptor& ForbiddenMacroRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "forbidden-macro",
+      .dv_topic = "logging",
+      .desc = "Checks that no forbidden macro calls are used.",
+  };
+  return d;
 }
 
 // Matches all macro call ids, like `foo.
@@ -62,8 +62,9 @@ static const Matcher& MacroCallMatcher() {
 // Set of invalid macros and URLs
 const std::map<std::string, std::string>&
 ForbiddenMacroRule::InvalidMacrosMap() {
+  // TODO(hzeller): don't use GetVerificationCitation here, more downstream.
   static const auto* invalid_symbols = new std::map<std::string, std::string>({
-      {"`uvm_warning", GetVerificationCitation(kTopic)},
+      {"`uvm_warning", GetVerificationCitation("logging")},
   });
   return *invalid_symbols;
 }
@@ -85,8 +86,7 @@ void ForbiddenMacroRule::HandleSymbol(
 verible::LintRuleStatus ForbiddenMacroRule::Report() const {
   // TODO(b/68104316): restructure LintRuleStatus to not requires a single URL
   // for every LintRuleStatus.
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetVerificationCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 std::string ForbiddenMacroRule::FormatReason(

@@ -20,7 +20,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,19 +45,18 @@ using verible::matcher::Matcher;
 // Register ConstraintNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
 
-absl::string_view ConstraintNameStyleRule::Name() {
-  return "constraint-name-style";
-}
-const char ConstraintNameStyleRule::kTopic[] = "constraints";
-const char ConstraintNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Constraint names must by styled with lower_snake_case and end with _c.";
 
-std::string ConstraintNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Check that constraint names follow the lower_snake_case convention and"
-      " end with _c. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ConstraintNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "constraint-name-style",
+      .topic = "constraints",
+      .desc =
+          "Check that constraint names follow the lower_snake_case "
+          "convention and end with _c.",
+  };
+  return d;
 }
 
 static const Matcher& ConstraintMatcher() {
@@ -90,7 +88,7 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus ConstraintNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

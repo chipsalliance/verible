@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,29 +40,22 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousStructsUnionsRule);
 
-absl::string_view ForbiddenAnonymousStructsUnionsRule::Name() {
-  return "typedef-structs-unions";
-}
-const char ForbiddenAnonymousStructsUnionsRule::kTopic[] =
-    "typedef-structs-unions";
-const char ForbiddenAnonymousStructsUnionsRule::kMessageStruct[] =
+static const char kMessageStruct[] =
     "struct definitions always should be named using typedef.";
-const char ForbiddenAnonymousStructsUnionsRule::kMessageUnion[] =
+static const char kMessageUnion[] =
     "union definitions always should be named using typedef.";
 
-std::string ForbiddenAnonymousStructsUnionsRule::GetDescription(
-    DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
-      "Checks that a Verilog ", Codify("struct", description_type), " or ",
-      Codify("union", description_type), " declaration is named using ",
-      Codify("typedef", description_type), ". See ",
-      GetStyleGuideCitation(kTopic), ".\n");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Parameters: allow_anonymous_nested:false");
-  } else {
-    return absl::StrCat(basic_desc, "##### Parameters\n",
-                        "  * `allow_anonymous_nested` Default: `false`");
-  }
+const LintRuleDescriptor& ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "typedef-structs-unions",
+      .topic = "typedef-structs-unions",
+      .desc =
+          "Checks that a Verilog `struct` or `union` declaration is "
+          "named using `typedef`.",
+      .param = {{"allow_anonymous_nested", "false",
+                 "Allow nested structs/unions to be anonymous."}},
+  };
+  return d;
 }
 
 absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
@@ -111,7 +103,7 @@ void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(
 }
 
 LintRuleStatus ForbiddenAnonymousStructsUnionsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

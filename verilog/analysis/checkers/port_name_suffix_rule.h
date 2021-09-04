@@ -34,11 +34,8 @@ namespace analysis {
 class PortNameSuffixRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
@@ -46,14 +43,6 @@ class PortNameSuffixRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic messages for port name violations.
-  static const char kMessageIn[];
-  static const char kMessageOut[];
-  static const char kMessageInOut[];
-
   // Helper functions
   void Violation(absl::string_view direction, const verible::TokenInfo& token,
                  const verible::SyntaxTreeContext& context);

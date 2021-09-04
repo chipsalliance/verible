@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -42,17 +41,16 @@ using verible::matcher::Matcher;
 // Register CaseMissingDefaultRule
 VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 
-absl::string_view CaseMissingDefaultRule::Name() {
-  return "case-missing-default";
-}
-const char CaseMissingDefaultRule::kTopic[] = "case-statements";
-const char CaseMissingDefaultRule::kMessage[] =
+static const char kMessage[] =
     "Explicitly define a default case for every case statement.";
 
-std::string CaseMissingDefaultRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that a default case-item is always defined. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& CaseMissingDefaultRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "case-missing-default",
+      .topic = "case-statements",
+      .desc = "Checks that a default case-item is always defined.",
+  };
+  return d;
 }
 
 static const Matcher& CaseMatcher() {
@@ -71,7 +69,7 @@ void CaseMissingDefaultRule::HandleSymbol(
 }
 
 LintRuleStatus CaseMissingDefaultRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

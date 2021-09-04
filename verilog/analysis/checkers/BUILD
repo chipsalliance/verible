@@ -77,7 +77,6 @@ cc_library(
     srcs = ["banned_declared_name_patterns_rule.cc"],
     hdrs = ["banned_declared_name_patterns_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -116,7 +115,6 @@ cc_library(
     srcs = ["no_tabs_rule.cc"],
     hdrs = ["no_tabs_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:line_lint_rule",
         "//common/analysis:lint_rule_status",
         "//common/text:token_info",
@@ -147,7 +145,6 @@ cc_library(
     srcs = ["no_trailing_spaces_rule.cc"],
     hdrs = ["no_trailing_spaces_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:line_lint_rule",
         "//common/analysis:lint_rule_status",
         "//common/text:token_info",
@@ -178,7 +175,6 @@ cc_library(
     srcs = ["positive_meaning_parameter_name_rule.cc"],
     hdrs = ["positive_meaning_parameter_name_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -217,7 +213,6 @@ cc_library(
     srcs = ["posix_eof_rule.cc"],
     hdrs = ["posix_eof_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:text_structure_lint_rule",
         "//common/text:text_structure",
@@ -249,7 +244,6 @@ cc_library(
     srcs = ["line_length_rule.cc"],
     hdrs = ["line_length_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:text_structure_lint_rule",
         "//common/strings:comment_utils",
@@ -292,7 +286,6 @@ cc_library(
     srcs = ["forbid_consecutive_null_statements_rule.cc"],
     hdrs = ["forbid_consecutive_null_statements_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -328,7 +321,6 @@ cc_library(
     srcs = ["forbid_defparam_rule.cc"],
     hdrs = ["forbid_defparam_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -363,7 +355,6 @@ cc_library(
     srcs = ["mismatched_labels_rule.cc"],
     hdrs = ["mismatched_labels_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis:syntax_tree_search",
@@ -403,7 +394,6 @@ cc_library(
     srcs = ["module_begin_block_rule.cc"],
     hdrs = ["module_begin_block_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -438,7 +428,6 @@ cc_library(
     srcs = ["module_filename_rule.cc"],
     hdrs = ["module_filename_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:text_structure_lint_rule",
@@ -475,7 +464,6 @@ cc_library(
     srcs = ["package_filename_rule.cc"],
     hdrs = ["package_filename_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:text_structure_lint_rule",
@@ -510,7 +498,6 @@ cc_library(
     srcs = ["module_instantiation_rules.cc"],
     hdrs = ["module_instantiation_rules.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -554,7 +541,6 @@ cc_library(
     srcs = ["one_module_per_file_rule.cc"],
     hdrs = ["one_module_per_file_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_search",
         "//common/analysis:text_structure_lint_rule",
@@ -590,7 +576,6 @@ cc_library(
     srcs = ["endif_comment_rule.cc"],
     hdrs = ["endif_comment_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:token_stream_lint_rule",
         "//common/strings:comment_utils",
@@ -622,7 +607,6 @@ cc_library(
     srcs = ["forbidden_anonymous_enums_rule.cc"],
     hdrs = ["forbidden_anonymous_enums_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -655,7 +639,6 @@ cc_library(
     srcs = ["enum_name_style_rule.cc"],
     hdrs = ["enum_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -692,7 +675,6 @@ cc_library(
     srcs = ["forbidden_macro_rule.cc"],
     hdrs = ["forbidden_macro_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -715,7 +697,6 @@ cc_library(
     srcs = ["forbidden_anonymous_structs_unions_rule.cc"],
     hdrs = ["forbidden_anonymous_structs_unions_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -765,7 +746,6 @@ cc_library(
     srcs = ["forbidden_symbol_rule.cc"],
     hdrs = ["forbidden_symbol_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -803,7 +783,6 @@ cc_library(
     srcs = ["generate_label_rule.cc"],
     hdrs = ["generate_label_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -840,7 +819,6 @@ cc_library(
     srcs = ["generate_label_prefix_rule.cc"],
     hdrs = ["generate_label_prefix_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -879,7 +857,6 @@ cc_library(
     srcs = ["v2001_generate_begin_rule.cc"],
     hdrs = ["v2001_generate_begin_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -919,7 +896,6 @@ cc_library(
     srcs = ["void_cast_rule.cc"],
     hdrs = ["void_cast_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -960,7 +936,6 @@ cc_library(
     srcs = ["undersized_binary_literal_rule.cc"],
     hdrs = ["undersized_binary_literal_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1000,7 +975,6 @@ cc_library(
     srcs = ["truncated_numeric_literal_rule.cc"],
     hdrs = ["truncated_numeric_literal_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1041,7 +1015,6 @@ cc_library(
     srcs = ["create_object_name_match_rule.cc"],
     hdrs = ["create_object_name_match_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1087,7 +1060,6 @@ cc_library(
     srcs = ["always_comb_rule.cc"],
     hdrs = ["always_comb_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1123,7 +1095,6 @@ cc_library(
     srcs = ["token_stream_lint_rule.cc"],
     hdrs = ["token_stream_lint_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1159,7 +1130,6 @@ cc_library(
     srcs = ["suggest_parentheses_rule.cc"],
     hdrs = ["suggest_parentheses_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:syntax_tree_lint_rule",
         "//verilog/CST:expression",
         "//verilog/CST:verilog_matchers",
@@ -1186,7 +1156,6 @@ cc_library(
     srcs = ["always_comb_blocking_rule.cc"],
     hdrs = ["always_comb_blocking_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis:syntax_tree_search",
@@ -1223,7 +1192,6 @@ cc_library(
     srcs = ["always_ff_non_blocking_rule.cc"],
     hdrs = ["always_ff_non_blocking_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis:syntax_tree_search",
@@ -1262,7 +1230,6 @@ cc_library(
     srcs = ["explicit_function_lifetime_rule.cc"],
     hdrs = ["explicit_function_lifetime_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1301,7 +1268,6 @@ cc_library(
     srcs = ["explicit_task_lifetime_rule.cc"],
     hdrs = ["explicit_task_lifetime_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1341,7 +1307,6 @@ cc_library(
     srcs = ["packed_dimensions_rule.cc"],
     hdrs = ["packed_dimensions_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1381,7 +1346,6 @@ cc_library(
     srcs = ["unpacked_dimensions_rule.cc"],
     hdrs = ["unpacked_dimensions_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1420,7 +1384,6 @@ cc_library(
     srcs = ["case_missing_default_rule.cc"],
     hdrs = ["case_missing_default_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1457,7 +1420,6 @@ cc_library(
     srcs = ["constraint_name_style_rule.cc"],
     hdrs = ["constraint_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1496,7 +1458,6 @@ cc_library(
     srcs = ["disable_statement_rule.cc"],
     hdrs = ["disable_statement_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1535,7 +1496,6 @@ cc_library(
     srcs = ["macro_name_style_rule.cc"],
     hdrs = ["macro_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:token_stream_lint_rule",
         "//common/strings:naming_utils",
@@ -1569,7 +1529,6 @@ cc_library(
     srcs = ["macro_string_concatenation_rule.cc"],
     hdrs = ["macro_string_concatenation_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:token_stream_lint_rule",
         "//common/text:token_info",
         "//common/util:value_saver",
@@ -1600,7 +1559,6 @@ cc_library(
     srcs = ["numeric_format_string_style_rule.cc"],
     hdrs = ["numeric_format_string_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:token_stream_lint_rule",
         "//common/strings:naming_utils",
@@ -1634,7 +1592,6 @@ cc_library(
     srcs = ["parameter_name_style_rule.cc"],
     hdrs = ["parameter_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1674,7 +1631,6 @@ cc_library(
     srcs = ["parameter_type_name_style_rule.cc"],
     hdrs = ["parameter_type_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1713,7 +1669,6 @@ cc_library(
     srcs = ["proper_parameter_declaration_rule.cc"],
     hdrs = ["proper_parameter_declaration_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1751,7 +1706,6 @@ cc_library(
     srcs = ["plusarg_assignment_rule.cc"],
     hdrs = ["plusarg_assignment_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1788,7 +1742,6 @@ cc_library(
     srcs = ["port_name_suffix_rule.cc"],
     hdrs = ["port_name_suffix_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1828,7 +1781,6 @@ cc_library(
     srcs = ["explicit_parameter_storage_type_rule.cc"],
     hdrs = ["explicit_parameter_storage_type_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1867,7 +1819,6 @@ cc_library(
     srcs = ["explicit_function_task_parameter_type_rule.cc"],
     hdrs = ["explicit_function_task_parameter_type_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1911,7 +1862,6 @@ cc_library(
     srcs = ["signal_name_style_rule.cc"],
     hdrs = ["signal_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1954,7 +1904,6 @@ cc_library(
     srcs = ["struct_union_name_style_rule.cc"],
     hdrs = ["struct_union_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -1993,7 +1942,6 @@ cc_library(
     srcs = ["interface_name_style_rule.cc"],
     hdrs = ["interface_name_style_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -2031,7 +1979,6 @@ cc_library(
     srcs = ["legacy_genvar_declaration_rule.cc"],
     hdrs = ["legacy_genvar_declaration_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -2069,7 +2016,6 @@ cc_library(
     srcs = ["legacy_generate_region_rule.cc"],
     hdrs = ["legacy_generate_region_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",
@@ -2106,7 +2052,6 @@ cc_library(
     srcs = ["uvm_macro_semicolon_rule.cc"],
     hdrs = ["uvm_macro_semicolon_rule.h"],
     deps = [
-        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/text:concrete_syntax_leaf",

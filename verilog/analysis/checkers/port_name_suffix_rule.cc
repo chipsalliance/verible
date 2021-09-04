@@ -21,7 +21,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -50,24 +49,24 @@ using verible::matcher::Matcher;
 // Register PortNameSuffixRule.
 VERILOG_REGISTER_LINT_RULE(PortNameSuffixRule);
 
-absl::string_view PortNameSuffixRule::Name() { return "port-name-suffix"; }
-const char PortNameSuffixRule::kTopic[] = "suffixes-for-signals-and-types";
-const char PortNameSuffixRule::kMessageIn[] =
+static const char kMessageIn[] =
     "input port names must end with _i, _ni or _pi";
-const char PortNameSuffixRule::kMessageOut[] =
+static const char kMessageOut[] =
     "output port names must end with _o, _no, or _po";
-const char PortNameSuffixRule::kMessageInOut[] =
+static const char kMessageInOut[] =
     "inout port names must end with _io, _nio or _pio";
 
-std::string PortNameSuffixRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Check that port names end with _i for inputs, _o for outputs and _io "
-      "for inouts. "
-      "Alternatively, for active-low signals use _n[io], for differential "
-      "pairs use _n[io] and _p[io]. "
-      "See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& PortNameSuffixRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "port-name-suffix",
+      .topic = "suffixes-for-signals-and-types",
+      .desc =
+          "Check that port names end with _i for inputs, _o for outputs and "
+          "_io for inouts. "
+          "Alternatively, for active-low signals use _n[io], for differential "
+          "pairs use _n[io] and _p[io].",
+  };
+  return d;
 }
 
 static const Matcher& PortMatcher() {
@@ -128,7 +127,7 @@ void PortNameSuffixRule::HandleSymbol(const Symbol& symbol,
 }
 
 LintRuleStatus PortNameSuffixRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

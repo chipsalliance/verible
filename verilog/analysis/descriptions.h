@@ -20,20 +20,28 @@
 #define VERIBLE_VERILOG_ANALYSIS_DESCRIPTIONS_H_
 
 #include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 
 namespace verilog {
 namespace analysis {
 
-enum class DescriptionType {
-  kHelpRulesFlag,  // emit CLI help text
-  kMarkdown,       // emit Markdown
+using LintRuleId = absl::string_view;
+
+struct LintConfigParameterDescriptor {
+  absl::string_view name;
+  std::string default_value;
+  std::string description;
 };
 
-// Returns a string with the appropriate wrappers to denote it is code in the
-// declared DescriptionType documentation.
-std::string Codify(absl::string_view, DescriptionType);
+struct LintRuleDescriptor {
+  LintRuleId name;             // ID/name of the rule.
+  absl::string_view topic;     // section in style-guide
+  absl::string_view dv_topic;  // section in design verification style-guide
+  std::string desc;            // Detailed description.
+  std::vector<LintConfigParameterDescriptor> param;
+};
 
 }  // namespace analysis
 }  // namespace verilog

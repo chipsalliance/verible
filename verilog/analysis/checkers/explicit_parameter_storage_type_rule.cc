@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -44,27 +43,19 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitParameterStorageTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitParameterStorageTypeRule);
 
-absl::string_view ExplicitParameterStorageTypeRule::Name() {
-  return "explicit-parameter-storage-type";
-}
-const char ExplicitParameterStorageTypeRule::kTopic[] = "constants";
-const char ExplicitParameterStorageTypeRule::kMessage[] =
+static const char kMessage[] =
     "Explicitly define a storage type for every parameter and localparam, ";
 
-std::string ExplicitParameterStorageTypeRule::GetDescription(
-    DescriptionType description_type) {
-  const std::string basic_desc =
-      absl::StrCat("Checks that every ", Codify("parameter", description_type),
-                   " and ", Codify("localparam", description_type),
-                   " is declared with an explicit storage type. See ",
-                   GetStyleGuideCitation(kTopic), ".");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "Parameters: exempt_type: (default '')");
-  } else {
-    return absl::StrCat(
-        basic_desc, "\n##### Parameters\n",
-        "  * `exempt_type` (optional `string`. Default: empty)");
-  }
+const LintRuleDescriptor& ExplicitParameterStorageTypeRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "explicit-parameter-storage-type",
+      .topic = "constants",
+      .desc =
+          "Checks that every `parameter` and `localparam` "
+          "is declared with an explicit storage type.",
+      .param = {{"exempt_type", "", "Set to `string` to exempt string types"}},
+  };
+  return d;
 }
 
 static const Matcher& ParamMatcher() {
@@ -116,7 +107,7 @@ absl::Status ExplicitParameterStorageTypeRule::Configure(
 }
 
 LintRuleStatus ExplicitParameterStorageTypeRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

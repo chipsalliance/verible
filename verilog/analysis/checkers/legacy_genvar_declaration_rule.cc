@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -40,18 +39,15 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 
-absl::string_view LegacyGenvarDeclarationRule::Name() {
-  return "legacy-genvar-declaration";
-}
-const char LegacyGenvarDeclarationRule::kTopic[] = "generate-constructs";
-const char LegacyGenvarDeclarationRule::kMessage[] =
-    "Do not use separate genvar declaration.";
+static const char kMessage[] = "Do not use separate genvar declaration.";
 
-std::string LegacyGenvarDeclarationRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no separate ",
-                      Codify("genvar", description_type), " declarations. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& LegacyGenvarDeclarationRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "legacy-genvar-declaration",
+      .topic = "generate-constructs",
+      .desc = "Checks that there are no separate `genvar` declarations.",
+  };
+  return d;
 }
 
 void LegacyGenvarDeclarationRule::HandleNode(
@@ -68,7 +64,7 @@ void LegacyGenvarDeclarationRule::HandleNode(
 }
 
 LintRuleStatus LegacyGenvarDeclarationRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

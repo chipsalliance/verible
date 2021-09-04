@@ -24,7 +24,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
@@ -43,15 +42,15 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTrailingSpacesRule);
 
-absl::string_view NoTrailingSpacesRule::Name() { return "no-trailing-spaces"; }
-const char NoTrailingSpacesRule::kTopic[] = "trailing-spaces";
-const char NoTrailingSpacesRule::kMessage[] = "Remove trailing spaces.";
+static const char kMessage[] = "Remove trailing spaces.";
 
-std::string NoTrailingSpacesRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that there are no trailing spaces on any lines. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& NoTrailingSpacesRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "no-trailing-spaces",
+      .topic = "trailing-spaces",
+      .desc = "Checks that there are no trailing spaces on any lines.",
+  };
+  return d;
 }
 
 void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
@@ -74,7 +73,7 @@ void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
 }
 
 LintRuleStatus NoTrailingSpacesRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

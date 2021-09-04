@@ -20,7 +20,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,21 +45,19 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PackedDimensionsRule);
 
-absl::string_view PackedDimensionsRule::Name() {
-  return "packed-dimensions-range-ordering";
-}
-const char PackedDimensionsRule::kTopic[] = "packed-ordering";
-const char PackedDimensionsRule::kMessage[] =
+static const char kMessage[] =
     "Declare packed dimension range in little-endian (decreasing) order, "
     "e.g. [N-1:0].";
 
-std::string PackedDimensionsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that packed dimension ranges are declare in little-endian "
-      "(decreasing) order, e.g. ",
-      Codify("[N-1:0]", description_type), ". See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& PackedDimensionsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "packed-dimensions-range-ordering",
+      .topic = "packed-ordering",
+      .desc =
+          "Checks that packed dimension ranges are declare in little-endian "
+          "(decreasing) order, e.g. `[N-1:0]`.",
+  };
+  return d;
 }
 
 static const Matcher& DimensionRangeMatcher() {
@@ -95,7 +92,7 @@ void PackedDimensionsRule::HandleSymbol(
 }
 
 LintRuleStatus PackedDimensionsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

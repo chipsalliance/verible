@@ -20,7 +20,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,20 +45,18 @@ using verible::matcher::Matcher;
 // Register PositiveMeaningParameterNameRule.
 VERILOG_REGISTER_LINT_RULE(PositiveMeaningParameterNameRule);
 
-absl::string_view PositiveMeaningParameterNameRule::Name() {
-  return "positive-meaning-parameter-name";
-}
-const char PositiveMeaningParameterNameRule::kTopic[] = "binary-parameters";
-
-const char PositiveMeaningParameterNameRule::kMessage[] =
+static const char kMessage[] =
     "Use positive naming for parameters, start the name with 'enable' instead.";
 
-std::string PositiveMeaningParameterNameRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that no parameter name starts with 'disable', using positive "
-      "naming (starting with 'enable') is recommended. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& PositiveMeaningParameterNameRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "positive-meaning-parameter-name",
+      .topic = "binary-parameters",
+      .desc =
+          "Checks that no parameter name starts with 'disable', using positive "
+          "naming (starting with 'enable') is recommended.",
+  };
+  return d;
 }
 
 static const Matcher& ParamDeclMatcher() {
@@ -85,7 +82,7 @@ void PositiveMeaningParameterNameRule::HandleSymbol(
 }
 
 LintRuleStatus PositiveMeaningParameterNameRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

@@ -54,11 +54,8 @@ namespace analysis {
 class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   absl::Status Configure(absl::string_view configuration) override;
 
@@ -70,13 +67,6 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
  private:
   // Tests if the rule is met, taking waiving condition into account.
   bool IsRuleMet(const verible::SyntaxTreeContext& context) const;
-
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessageStruct[];
-  static const char kMessageUnion[];
 
   bool allow_anonymous_nested_type_ = false;
 

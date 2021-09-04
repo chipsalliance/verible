@@ -33,23 +33,13 @@ namespace analysis {
 class ModuleParameterRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
-
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
-
   std::set<verible::LintViolation> violations_;
 };
 
@@ -58,23 +48,13 @@ class ModuleParameterRule : public verible::SyntaxTreeLintRule {
 class ModulePortRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
-
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
-
   // Returns false if a port list node is in violation of this rule and
   // true if it is not.
   bool IsPortListCompliant(const verible::SyntaxTreeNode& port_list_node) const;

@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -47,18 +46,19 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-absl::string_view SignalNameStyleRule::Name() { return "signal-name-style"; }
-const char SignalNameStyleRule::kTopic[] = "signal-conventions";
-const char SignalNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Signal names must use lower_snake_case naming convention.";
 
-std::string SignalNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that signal names use lower_snake_case naming convention. "
-      "Signals are defined as \"a net, variable, or port within a "
-      "SystemVerilog design\".  See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& SignalNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "signal-name-style",
+      .topic = "signal-conventions",
+      .desc =
+          "Checks that signal names use lower_snake_case naming convention. "
+          "Signals are defined as \"a net, variable, or port within a "
+          "SystemVerilog design\".",
+  };
+  return d;
 }
 
 static const Matcher& PortMatcher() {
@@ -104,7 +104,7 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus SignalNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

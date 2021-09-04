@@ -21,7 +21,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -52,26 +51,19 @@ using verible::matcher::Matcher;
 // Register UndersizedBinaryLiteralRule
 VERILOG_REGISTER_LINT_RULE(UndersizedBinaryLiteralRule);
 
-absl::string_view UndersizedBinaryLiteralRule::Name() {
-  return "undersized-binary-literal";
-}
-const char UndersizedBinaryLiteralRule::kTopic[] = "number-literals";
-
-std::string UndersizedBinaryLiteralRule::GetDescription(
-    DescriptionType description_type) {
-  static const std::string basic_desc = absl::StrCat(
-      "Checks that the digits of binary literals for the configured bases "
-      "match their declared width. See ",
-      GetStyleGuideCitation(kTopic), ".\n");
-
-  return absl::StrCat(basic_desc,
-                      description_type == DescriptionType::kHelpRulesFlag
-                          ? "Parameters: "
-                            "bin:true;oct:false;hex:false;"
-                          : "##### Parameters\n"
-                            "  * `bin` Default: `true`\n"
-                            "  * `oct` Default: `false`\n"
-                            "  * `hex` Default: `false`");
+const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "undersized-binary-literal",
+      .topic = "number-literals",
+      .desc =
+          "Checks that the digits of binary literals for the configured "
+          "bases match their declared width, i.e. has enough padding prefix "
+          "zeros.",
+      .param = {{"bin", "true", "Checking binary 'b literals."},
+                {"oct", "false", "Checking octal 'o literals."},
+                {"hex", "false", "Checking hexadecimal 'h literals."}},
+  };
+  return d;
 }
 
 // Broadly, start by matching all number nodes with a
@@ -165,7 +157,7 @@ absl::Status UndersizedBinaryLiteralRule::Configure(
 }
 
 LintRuleStatus UndersizedBinaryLiteralRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -39,17 +38,19 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);
 
-absl::string_view PlusargAssignmentRule::Name() { return "plusarg-assignment"; }
-const char PlusargAssignmentRule::kTopic[] = "plusarg-value-assignment";
-const char PlusargAssignmentRule::kForbiddenFunctionName[] = "$test$plusargs";
-const char PlusargAssignmentRule::kCorrectFunctionName[] = "$value$plusargs";
+static const char kForbiddenFunctionName[] = "$test$plusargs";
+static const char kCorrectFunctionName[] = "$value$plusargs";
 
-std::string PlusargAssignmentRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that plusargs are always assigned a value, by ",
-                      "ensuring that plusargs are never accessed using the ",
-                      Codify(kForbiddenFunctionName, description_type),
-                      " system task. See ", GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& PlusargAssignmentRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "plusarg-assignment",
+      .topic = "plusarg-value-assignment",
+      .desc =
+          absl::StrCat("Checks that plusargs are always assigned a value, by ",
+                       "ensuring that plusargs are never accessed using the `",
+                       kForbiddenFunctionName, "` system task."),
+  };
+  return d;
 }
 
 static const Matcher& IdMatcher() {
@@ -71,8 +72,7 @@ void PlusargAssignmentRule::HandleSymbol(
 }
 
 verible::LintRuleStatus PlusargAssignmentRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 std::string PlusargAssignmentRule::FormatReason() const {

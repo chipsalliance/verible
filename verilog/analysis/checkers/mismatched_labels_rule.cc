@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -42,17 +41,16 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MismatchedLabelsRule);
 
-absl::string_view MismatchedLabelsRule::Name() { return "mismatched-labels"; }
-const char MismatchedLabelsRule::kTopic[] = "mismatched-labels";
-const char MismatchedLabelsRule::kMessageMismatch[] =
-    "Begin/end block labels must match.";
-const char MismatchedLabelsRule::kMessageMissing[] =
-    "Matching begin label is missing.";
+static const char kMessageMismatch[] = "Begin/end block labels must match.";
+static const char kMessageMissing[] = "Matching begin label is missing.";
 
-std::string MismatchedLabelsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Labels mismatch. See:", GetStyleGuideCitation(kTopic),
-                      ".");
+const LintRuleDescriptor& MismatchedLabelsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "mismatched-labels",
+      .topic = "mismatched-labels",
+      .desc = "Check for matching begin/end labels.",
+  };
+  return d;
 }
 
 // Matches the begin node.
@@ -93,8 +91,7 @@ void MismatchedLabelsRule::HandleSymbol(
 }
 
 verible::LintRuleStatus MismatchedLabelsRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

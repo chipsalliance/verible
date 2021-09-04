@@ -42,12 +42,11 @@ namespace analysis {
 class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
   UvmMacroSemicolonRule() : state_(State::kNormal) {}
 
   // Returns the description of the rule implemented
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
                   const verible::SyntaxTreeContext& context) override;
@@ -66,9 +65,6 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
 
   // Save the matching macro and include it in diagnostic message
   verible::TokenInfo macro_id_ = verible::TokenInfo::EOFToken();
-
-  // Link to style-guide rule.
-  static const char kTopic[];
 
   std::set<verible::LintViolation> violations_;
 };

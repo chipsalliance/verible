@@ -31,11 +31,8 @@ namespace analysis {
 class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   absl::Status Configure(const absl::string_view configuration) override;
   void HandleSymbol(const verible::Symbol& symbol,
@@ -50,12 +47,6 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   bool LocalDeclaration(const verible::Symbol& symbol);
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
-
   // Collected violations.
   std::set<verible::LintViolation> violations_;
 

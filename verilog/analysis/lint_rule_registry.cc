@@ -80,31 +80,28 @@ class LintRuleRegistry {
   }
 
   // Registers a lint rule with the appropriate registry.
-  static void Register(const LintRuleId& rule,
-                       const LintRuleGenerator<RuleType>& creator,
-                       const LintDescription& descriptor) {
+  static void Register(const LintDescriptionFun& descriptor,
+                       const LintRuleGeneratorFun<RuleType>& creator) {
     LintRuleInfo<RuleType> info;
     info.lint_rule_generator = creator;
     info.description = descriptor;
-    (*GetLintRuleRegistry<RuleType>())[rule] = info;
+    (*GetLintRuleRegistry<RuleType>())[descriptor().name] = info;
   }
 
   // Returns the description of the specific rule, formatted for description
   // type passed in.
-  static std::string GetRuleDescription(const LintRuleId& rule,
-                                        DescriptionType description_type) {
+  static LintRuleDescriptor GetRuleDescription(const LintRuleId& rule) {
     auto* create_func = FindOrNull(*GetLintRuleRegistry<RuleType>(), rule);
-    return (ABSL_DIE_IF_NULL(create_func)->description)(description_type);
+    return (ABSL_DIE_IF_NULL(create_func)->description)();
   }
 
   // Adds each rule name and a struct of information describing the rule to the
   // map passed in.
-  static void GetRegisteredRuleDescriptions(LintRuleDescriptionsMap* rule_map,
-                                            DescriptionType description_type) {
+  static void GetRegisteredRuleDescriptions(LintRuleDescriptionsMap* rule_map) {
     const auto* registry = GetLintRuleRegistry<RuleType>();
     for (const auto& rule_bundle : *registry) {
-      (*rule_map)[rule_bundle.first].description =
-          GetRuleDescription(rule_bundle.first, description_type);
+      (*rule_map)[rule_bundle.first].descriptor =
+          GetRuleDescription(rule_bundle.first);
     }
   }
 
@@ -117,9 +114,9 @@ class LintRuleRegistry {
 
 template <typename RuleType>
 LintRuleRegisterer<RuleType>::LintRuleRegisterer(
-    const LintRuleId& rule, const LintRuleGenerator<RuleType>& creator,
-    const LintDescription& descriptor) {
-  LintRuleRegistry<RuleType>::Register(rule, creator, descriptor);
+    const LintDescriptionFun& descriptor,
+    const LintRuleGeneratorFun<RuleType>& creator) {
+  LintRuleRegistry<RuleType>::Register(descriptor, creator);
 }
 
 bool IsRegisteredLintRule(const LintRuleId& rule_name) {
@@ -183,35 +180,14 @@ std::set<LintRuleId> GetAllRegisteredLintRuleNames() {
   return result;
 }
 
-// TODO(fangism): Look at dependency tree between descriptions.h and
-// verilog_linter.cc so we can combine these two functions to just take in a
-// DescriptionType.
-LintRuleDescriptionsMap GetAllRuleDescriptionsHelpFlag() {
+LintRuleDescriptionsMap GetAllRuleDescriptions() {
   // Map that will hold the information to print about each rule.
-  LintRuleDescriptionsMap rule_map;
-  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  return rule_map;
-}
-
-LintRuleDescriptionsMap GetAllRuleDescriptionsMarkdown() {
-  // Map that will hold the information to print about each rule.
-  LintRuleDescriptionsMap rule_map;
-  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  return rule_map;
+  LintRuleDescriptionsMap res;
+  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(&res);
+  return res;
 }
 
 // Explicit template class instantiations

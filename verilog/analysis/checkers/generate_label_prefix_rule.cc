@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -40,21 +39,20 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 
-absl::string_view GenerateLabelPrefixRule::Name() {
-  return "generate-label-prefix";
-}
-const char GenerateLabelPrefixRule::kTopic[] = "generate-constructs";
-const char GenerateLabelPrefixRule::kMessage[] =
+static const char kMessage[] =
     "All generate block labels must start with g_ or gen_";
+
 // TODO(fangism): and be lower_snake_case?
 // TODO(fangism): generalize to a configurable pattern and
 // rename this class/rule to GenerateLabelNamingStyle?
 
-std::string GenerateLabelPrefixRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that every generate block label starts with g_ or gen_. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& GenerateLabelPrefixRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "generate-label-prefix",
+      .topic = "generate-constructs",
+      .desc = "Checks that every generate block label starts with g_ or gen_.",
+  };
+  return d;
 }
 
 // Matches begin statements
@@ -97,8 +95,7 @@ void GenerateLabelPrefixRule::HandleSymbol(
 }
 
 verible::LintRuleStatus GenerateLabelPrefixRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

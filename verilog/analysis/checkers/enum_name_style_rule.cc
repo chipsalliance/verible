@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,18 +40,19 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-absl::string_view EnumNameStyleRule::Name() { return "enum-name-style"; }
-const char EnumNameStyleRule::kTopic[] = "enumerations";
-const char EnumNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Enum names must use lower_snake_case naming convention "
     "and end with _t or _e.";
 
-std::string EnumNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that ", Codify("enum", description_type),
-                      " names use lower_snake_case naming convention"
-                      " and end with '_t' or '_e'. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& EnumNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "enum-name-style",
+      .topic = "enumerations",
+      .desc =
+          "Checks that `enum` names use lower_snake_case naming convention "
+          "and end with '_t' or '_e'.",
+  };
+  return d;
 }
 
 static const Matcher& TypedefMatcher() {
@@ -82,7 +82,7 @@ void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus EnumNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

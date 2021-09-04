@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -44,31 +43,27 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(UnpackedDimensionsRule);
 
-absl::string_view UnpackedDimensionsRule::Name() {
-  return "unpacked-dimensions-range-ordering";
-}
-const char UnpackedDimensionsRule::kTopic[] = "unpacked-ordering";
-
-const char kMessageScalarInOrder[] =
+static const char kMessageScalarInOrder[] =
     "When an unpacked dimension range is zero-based ([0:N-1]), "
     "declare size as [N] instead.";
-const char kMessageScalarReversed[] =
+static const char kMessageScalarReversed[] =
     "Unpacked dimension range must be declared in big-endian ([0:N-1]) order.  "
     "Declare zero-based big-endian unpacked dimensions sized as [N].";
-const char kMessageReorder[] =
+static const char kMessageReorder[] =
     "Declare unpacked dimension range in big-endian (increasing) order, "
     "e.g. [N:N+M].";
 
-std::string UnpackedDimensionsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that unpacked dimension ranges are declared in big-endian "
-      "order, ",
-      Codify("[0:N-1]", description_type),
-      " and when an unpacked dimension range is zero-based, ",
-      Codify("[0:N-1]", description_type), ", the size is declared as ",
-      Codify("[N]", description_type), " instead. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& UnpackedDimensionsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "unpacked-dimensions-range-ordering",
+      .topic = "unpacked-ordering",
+      .desc =
+          "Checks that unpacked dimension ranges are declared in "
+          "big-endian order `[0:N-1]`, "
+          "and when an unpacked dimension range is zero-based "
+          "`[0:N-1]`, the size is declared as `[N]` instead.",
+  };
+  return d;
 }
 
 static const Matcher& DimensionRangeMatcher() {
@@ -109,7 +104,7 @@ void UnpackedDimensionsRule::HandleSymbol(
 }
 
 LintRuleStatus UnpackedDimensionsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

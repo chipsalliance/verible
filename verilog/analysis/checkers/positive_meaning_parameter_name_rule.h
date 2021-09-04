@@ -32,11 +32,8 @@ namespace analysis {
 class PositiveMeaningParameterNameRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
@@ -44,12 +41,6 @@ class PositiveMeaningParameterNameRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message for parameter name violations.
-  static const char kMessage[];
-
   std::set<verible::LintViolation> violations_;
 };
 

@@ -49,23 +49,27 @@ using verible::matcher::Matcher;
 VERILOG_REGISTER_LINT_RULE(ModuleParameterRule);
 VERILOG_REGISTER_LINT_RULE(ModulePortRule);
 
-absl::string_view ModuleParameterRule::Name() { return "module-parameter"; }
-absl::string_view ModulePortRule::Name() { return "module-port"; }
-
-std::string ModuleParameterRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that module instantiations with more than one parameter are "
-      "passed in as named parameters, rather than positional parameters. "
-      "See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ModuleParameterRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "module-parameter",
+      .topic = "module-instantiation",
+      .desc =
+          "Checks that module instantiations with more than one parameter "
+          "are passed in as named parameters, rather than positional "
+          "parameters.",
+  };
+  return d;
 }
 
-std::string ModulePortRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that module instantiations with more than one port are passed "
-      "in as named ports, rather than positional ports. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ModulePortRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "module-port",
+      .topic = "module-instantiation",
+      .desc =
+          "Checks that module instantiations with more than one port are "
+          "passed in as named ports, rather than positional ports.",
+  };
+  return d;
 }
 
 // Matches against a gate instance with a port list and bind that port list
@@ -110,13 +114,12 @@ static bool IsAnyPort(const verible::Symbol* symbol) {
 // ModuleParameterRule Implementation
 //
 
-const char ModuleParameterRule::kTopic[] = "module-instantiation";
-const char ModuleParameterRule::kMessage[] =
-    "Pass named parameters for parameterized module instantiations with "
-    "more than one parameter";
-
 void ModuleParameterRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+  static const char kMessage[] =
+      "Pass named parameters for parameterized module instantiations with "
+      "more than one parameter";
+
   // Syntactically, class instances are indistinguishable from module instances
   // (they look like generic types), however, module instances can only occur
   // inside module definitions.  Anywhere outside of a module can be skipped.
@@ -142,21 +145,19 @@ void ModuleParameterRule::HandleSymbol(
 }
 
 verible::LintRuleStatus ModuleParameterRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 //
 // ModulePortRule Implementation
 //
 
-const char ModulePortRule::kTopic[] = "module-instantiation";
-const char ModulePortRule::kMessage[] =
-    "Use named ports for module instantiation with "
-    "more than one port";
-
 void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
                                   const verible::SyntaxTreeContext& context) {
+  static const char kMessage[] =
+      "Use named ports for module instantiation with "
+      "more than one port";
+
   verible::matcher::BoundSymbolManager manager;
 
   if (InstanceMatcher().Matches(symbol, &manager)) {
@@ -206,8 +207,7 @@ bool ModulePortRule::IsPortListCompliant(
 }
 
 verible::LintRuleStatus ModulePortRule::Report() const {
-  return verible::LintRuleStatus(violations_, Name(),
-                                 GetStyleGuideCitation(kTopic));
+  return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

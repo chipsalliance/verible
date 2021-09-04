@@ -19,7 +19,6 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -42,20 +41,19 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-absl::string_view InterfaceNameStyleRule::Name() {
-  return "interface-name-style";
-}
-const char InterfaceNameStyleRule::kTopic[] = "interface-conventions";
-const char InterfaceNameStyleRule::kMessage[] =
+static const char kMessage[] =
     "Interface names must use lower_snake_case naming convention "
     "and end with _if.";
 
-std::string InterfaceNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that ", Codify("interface", description_type),
-      " names use lower_snake_case naming convention and end with '_if'. See ",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& InterfaceNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "interface-name-style",
+      .topic = "interface-conventions",
+      .desc =
+          "Checks that `interface` names use lower_snake_case "
+          "naming convention and end with `_if`.",
+  };
+  return d;
 }
 
 static const Matcher& InterfaceMatcher() {
@@ -80,7 +78,7 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus InterfaceNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

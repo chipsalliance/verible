@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -43,26 +42,23 @@ using verible::matcher::Matcher;
 // Register ProperParameterDeclarationRule
 VERILOG_REGISTER_LINT_RULE(ProperParameterDeclarationRule);
 
-absl::string_view ProperParameterDeclarationRule::Name() {
-  return "proper-parameter-declaration";
-}
-const char ProperParameterDeclarationRule::kTopic[] = "constants";
-const char ProperParameterDeclarationRule::kParameterMessage[] =
+static const char kParameterMessage[] =
     "\'parameter\' declarations should only be within packages or in the "
     "formal parameter list of modules/classes.";
-const char ProperParameterDeclarationRule::kLocalParamMessage[] =
+static const char kLocalParamMessage[] =
     "\'localparam\' declarations should only be within modules\' or classes\' "
     "definition bodies.";
 
-std::string ProperParameterDeclarationRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that every ",
-                      Codify("parameter", description_type),
-                      " declaration is inside a package or in the formal "
-                      "parameter list of modules/classes and every ",
-                      Codify("localparam", description_type),
-                      " declaration is inside a module or class. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ProperParameterDeclarationRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "proper-parameter-declaration",
+      .topic = "constants",
+      .desc =
+          "Checks that every `parameter` declaration is inside a "
+          "package or in the formal parameter list of modules/classes and "
+          "every `localparam` declaration is inside a module or class.",
+  };
+  return d;
 }
 
 static const Matcher& ParamDeclMatcher() {
@@ -95,7 +91,7 @@ void ProperParameterDeclarationRule::HandleSymbol(
 }
 
 LintRuleStatus ProperParameterDeclarationRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

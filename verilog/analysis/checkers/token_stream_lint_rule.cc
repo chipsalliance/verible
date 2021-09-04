@@ -21,7 +21,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -43,21 +42,20 @@ using verible::matcher::Matcher;
 // Register TokenStreamLintRule
 VERILOG_REGISTER_LINT_RULE(TokenStreamLintRule);
 
-absl::string_view TokenStreamLintRule::Name() {
-  return "forbid-line-continuations";
-}
-const char TokenStreamLintRule::kTopic[] = "forbid-line-continuations";
-const char TokenStreamLintRule::kMessage[] =
+static const char kMessage[] =
     "The lines can't be continued with \'\\\', use concatenation operator with "
     "braces";
 
-std::string TokenStreamLintRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat("Checks that there are no occurrences of ",
-                      Codify("\'\\\'", description_type),
-                      " when breaking the string literal line. ",
-                      "Use concatenation operator with braces instead. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& TokenStreamLintRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "forbid-line-continuations",
+      .topic = "forbid-line-continuations",
+      .desc =
+          "Checks that there are no occurrences of `\\` when breaking the "
+          "string literal line. Use concatenation operator with braces "
+          "instead.",
+  };
+  return d;
 }
 
 static const Matcher& StringLiteralMatcher() {
@@ -84,7 +82,7 @@ void TokenStreamLintRule::HandleSymbol(const verible::Symbol& symbol,
 }
 
 LintRuleStatus TokenStreamLintRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

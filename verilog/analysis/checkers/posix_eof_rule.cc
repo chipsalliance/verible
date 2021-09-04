@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -40,13 +39,15 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PosixEOFRule);
 
-absl::string_view PosixEOFRule::Name() { return "posix-eof"; }
-const char PosixEOFRule::kTopic[] = "posix-file-endings";
-const char PosixEOFRule::kMessage[] = "File must end with a newline.";
+static const char kMessage[] = "File must end with a newline.";
 
-std::string PosixEOFRule::GetDescription(DescriptionType description_type) {
-  return absl::StrCat("Checks that the file ends with a newline. See ",
-                      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& PosixEOFRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "posix-eof",
+      .topic = "posix-file-endings",
+      .desc = "Checks that the file ends with a newline.",
+  };
+  return d;
 }
 
 void PosixEOFRule::Lint(const TextStructureView& text_structure,
@@ -63,7 +64,7 @@ void PosixEOFRule::Lint(const TextStructureView& text_structure,
 }
 
 LintRuleStatus PosixEOFRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

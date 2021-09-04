@@ -42,11 +42,8 @@ class LineLengthRule : public verible::TextStructureLintRule {
   };
 
   using rule_type = verible::TextStructureLintRule;
-  static absl::string_view Name();
 
-  // Returns the description of the rule implemented formatted for either the
-  // helper flag or markdown depending on the parameter type.
-  static std::string GetDescription(DescriptionType);
+  static const LintRuleDescriptor& GetDescriptor();
 
   LineLengthRule() {}
 
@@ -57,12 +54,6 @@ class LineLengthRule : public verible::TextStructureLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Link to style guide rule.
-  static const char kTopic[];
-
-  // Diagnostic message.
-  static const char kMessage[];
-
   int line_length_limit_ = kDefaultLineLength;
 
   // Collection of found violations.

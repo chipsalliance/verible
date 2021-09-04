@@ -45,6 +45,7 @@
 namespace verilog {
 namespace {
 
+using analysis::LintRuleDescriptor;
 using verible::LineLintRule;
 using verible::SyntaxTreeLintRule;
 using verible::TextStructureLintRule;
@@ -68,28 +69,36 @@ class TestRuleBase : public SyntaxTreeLintRule {
 class TestRule1 : public TestRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static absl::string_view Name() { return "test-rule-1"; }
-  static std::string GetDescription(analysis::DescriptionType) {
-    return "TestRule1";
+  static const LintRuleDescriptor& GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-1",
+        .desc = "TestRule1",
+    };
+    return d;
   }
 };
 
 class TestRule2 : public TestRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static absl::string_view Name() { return "test-rule-2"; }
-  static std::string GetDescription(analysis::DescriptionType) {
-    return "TestRule2";
+  static const LintRuleDescriptor& GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-2",
+        .desc = "TestRule2",
+    };
+    return d;
   }
 };
 
 class TestRule3 : public TokenStreamLintRule {
  public:
   using rule_type = TokenStreamLintRule;
-  static absl::string_view Name() { return "test-rule-3"; }
-
-  static std::string GetDescription(analysis::DescriptionType) {
-    return "TestRule3";
+  static const LintRuleDescriptor& GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-3",
+        .desc = "TestRule3",
+    };
+    return d;
   }
 
   void HandleToken(const verible::TokenInfo&) override {}
@@ -102,10 +111,12 @@ class TestRule3 : public TokenStreamLintRule {
 class TestRule4 : public LineLintRule {
  public:
   using rule_type = LineLintRule;
-  static absl::string_view Name() { return "test-rule-4"; }
-
-  static std::string GetDescription(analysis::DescriptionType) {
-    return "TestRule4";
+  static const LintRuleDescriptor& GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-4",
+        .desc = "TestRule4",
+    };
+    return d;
   }
 
   void HandleLine(absl::string_view) override {}
@@ -118,10 +129,12 @@ class TestRule4 : public LineLintRule {
 class TestRule5 : public TextStructureLintRule {
  public:
   using rule_type = TextStructureLintRule;
-  static absl::string_view Name() { return "test-rule-5"; }
-
-  static std::string GetDescription(analysis::DescriptionType) {
-    return "TestRule1";
+  static const LintRuleDescriptor& GetDescriptor() {
+    static const LintRuleDescriptor d{
+        .name = "test-rule-5",
+        .desc = "TestRule5",
+    };
+    return d;
   }
 
   void Lint(const TextStructureView&, absl::string_view) override {}

@@ -18,7 +18,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -39,19 +38,18 @@ using Matcher = verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousEnumsRule);
 
-absl::string_view ForbiddenAnonymousEnumsRule::Name() {
-  return "typedef-enums";
-}
-const char ForbiddenAnonymousEnumsRule::kTopic[] = "typedef-enums";
-const char ForbiddenAnonymousEnumsRule::kMessage[] =
+static const char kMessage[] =
     "enum types always should be named using typedef.";
 
-std::string ForbiddenAnonymousEnumsRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that a Verilog ", Codify("enum", description_type),
-      " declaration is named using ", Codify("typedef", description_type),
-      ". See ", GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& ForbiddenAnonymousEnumsRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "typedef-enums",
+      .topic = "typedef-enums",
+      .desc =
+          "Checks that a Verilog `enum` declaration is named using "
+          "`typedef`.",
+  };
+  return d;
 }
 
 static const Matcher& EnumMatcher() {
@@ -73,7 +71,7 @@ void ForbiddenAnonymousEnumsRule::HandleSymbol(
 }
 
 LintRuleStatus ForbiddenAnonymousEnumsRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

@@ -19,7 +19,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -46,29 +45,20 @@ using Matcher = verible::matcher::Matcher;
 // Register ParameterNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ParameterNameStyleRule);
 
-absl::string_view ParameterNameStyleRule::Name() {
-  return "parameter-name-style";
-}
-const char ParameterNameStyleRule::kTopic[] = "constants";
-
-std::string ParameterNameStyleRule::GetDescription(
-    DescriptionType description_type) {
-  static std::string basic_desc = absl::StrCat(
-      "Checks that non-type parameter and localparam names follow at least one "
-      "of the naming conventions from a choice of CamelCase and ALL_CAPS, ORed "
-      "together with the pipe-symbol(|). "
-      "Empty configuration: no style enforcement. See ",
-      GetStyleGuideCitation(kTopic), ".");
-  if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc,
-                        "Parameters: localparam_style:CamelCase;"
-                        "parameter_style:CamelCase|ALL_CAPS");
-  } else {
-    return absl::StrCat(basic_desc,
-                        "\n##### Parameters\n"
-                        " * `localparam_style` Default: `CamelCase`\n"
-                        " * `parameter_style` Default: `CamelCase|ALL_CAPS`\n");
-  }
+const LintRuleDescriptor& ParameterNameStyleRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "parameter-name-style",
+      .topic = "constants",
+      .desc =
+          "Checks that non-type parameter and localparam names follow at least "
+          "one of the naming conventions from a choice of "
+          "CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). "
+          "Empty configuration: no style enforcement.",
+      .param = {{"localparam_style", "CamelCase", "Style of localparam name"},
+                {"parameter_style", "CamelCase|ALL_CAPS",
+                 "Style of parameter names"}},
+  };
+  return d;
 }
 
 static const Matcher& ParamDeclMatcher() {
@@ -138,7 +128,7 @@ absl::Status ParameterNameStyleRule::Configure(
 }
 
 LintRuleStatus ParameterNameStyleRule::Report() const {
-  return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
+  return LintRuleStatus(violations_, GetDescriptor());
 }
 
 }  // namespace analysis

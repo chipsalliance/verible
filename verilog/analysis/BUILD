@@ -32,7 +32,6 @@ cc_test(
 
 cc_library(
     name = "descriptions",
-    srcs = ["descriptions.cc"],
     hdrs = ["descriptions.h"],
     deps = ["@com_google_absl//absl/strings"],
     alwayslink = 1,
@@ -89,16 +88,6 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_test(
-    name = "descriptions_test",
-    srcs = ["descriptions_test.cc"],
-    deps = [
-        ":descriptions",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 

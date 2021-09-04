@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/analysis/citation.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
@@ -155,6 +156,18 @@ struct LintRuleStatus {
   LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
                  const std::string& url)
       : lint_rule_name(rule_name), url(url), violations(vs) {}
+
+  // TODO(hzeller): the LintRuleDescriptor is in verilog/analysis namespace,
+  // don't want to move that to common in first step. So making this a
+  // template for it to be a 'source code compatible' adaption.
+  template <typename Descriptor>
+  LintRuleStatus(const std::set<LintViolation>& vs,
+                 const Descriptor& descriptor)
+      : lint_rule_name(descriptor.name),
+        url(!descriptor.dv_topic.empty()
+                ? GetVerificationCitation(descriptor.dv_topic)
+                : GetStyleGuideCitation(descriptor.topic)),
+        violations(vs) {}
 
   explicit LintRuleStatus(const std::set<LintViolation>& vs) : violations(vs) {}
 
