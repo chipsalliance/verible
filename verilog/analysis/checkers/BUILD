@@ -675,6 +675,7 @@ cc_library(
     srcs = ["forbidden_macro_rule.cc"],
     hdrs = ["forbidden_macro_rule.h"],
     deps = [
+        "//common/analysis:citation",
         "//common/analysis:lint_rule_status",
         "//common/analysis:syntax_tree_lint_rule",
         "//common/analysis/matcher",

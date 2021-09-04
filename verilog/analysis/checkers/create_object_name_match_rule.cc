@@ -42,7 +42,6 @@ namespace verilog {
 namespace analysis {
 
 using verible::down_cast;
-using verible::GetVerificationCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;

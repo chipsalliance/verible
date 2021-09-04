@@ -35,7 +35,6 @@ namespace analysis {
 
 VERILOG_REGISTER_LINT_RULE(InterfaceNameStyleRule);
 
-using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;

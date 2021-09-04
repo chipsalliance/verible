@@ -36,7 +36,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetVerificationCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;

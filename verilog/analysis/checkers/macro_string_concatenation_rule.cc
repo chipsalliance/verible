@@ -28,7 +28,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::TokenInfo;

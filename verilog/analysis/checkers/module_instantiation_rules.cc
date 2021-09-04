@@ -20,7 +20,6 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
-#include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -42,7 +41,6 @@ namespace verilog {
 namespace analysis {
 
 using verible::down_cast;
-using verible::GetStyleGuideCitation;
 using verible::matcher::Matcher;
 
 // Register the linter rule
