@@ -156,11 +156,7 @@ std::set<LintRuleId> GetAllRegisteredLintRuleNames();
 
 // Returns a map mapping each rule to a struct of information about the rule to
 // print.
-LintRuleDescriptionsMap GetAllRuleDescriptionsHelpFlag();
-
-// Returns a map mapping each rule to a struct of information about the rule in
-// order to create the markdown describing the lint rules.
-LintRuleDescriptionsMap GetAllRuleDescriptionsMarkdown();
+LintRuleDescriptionsMap GetAllRuleDescriptions();
 
 }  // namespace analysis
 }  // namespace verilog

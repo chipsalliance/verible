@@ -98,8 +98,7 @@ class LintRuleRegistry {
 
   // Adds each rule name and a struct of information describing the rule to the
   // map passed in.
-  static void GetRegisteredRuleDescriptions(LintRuleDescriptionsMap* rule_map,
-                                            DescriptionType description_type) {
+  static void GetRegisteredRuleDescriptions(LintRuleDescriptionsMap* rule_map) {
     const auto* registry = GetLintRuleRegistry<RuleType>();
     for (const auto& rule_bundle : *registry) {
       (*rule_map)[rule_bundle.first].descriptor =
@@ -182,35 +181,14 @@ std::set<LintRuleId> GetAllRegisteredLintRuleNames() {
   return result;
 }
 
-// TODO(fangism): Look at dependency tree between descriptions.h and
-// verilog_linter.cc so we can combine these two functions to just take in a
-// DescriptionType.
-LintRuleDescriptionsMap GetAllRuleDescriptionsHelpFlag() {
+LintRuleDescriptionsMap GetAllRuleDescriptions() {
   // Map that will hold the information to print about each rule.
-  LintRuleDescriptionsMap rule_map;
-  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kHelpRulesFlag);
-  return rule_map;
-}
-
-LintRuleDescriptionsMap GetAllRuleDescriptionsMarkdown() {
-  // Map that will hold the information to print about each rule.
-  LintRuleDescriptionsMap rule_map;
-  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(
-      &rule_map, DescriptionType::kMarkdown);
-  return rule_map;
+  LintRuleDescriptionsMap res;
+  LintRuleRegistry<SyntaxTreeLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<TokenStreamLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<LineLintRule>::GetRegisteredRuleDescriptions(&res);
+  LintRuleRegistry<TextStructureLintRule>::GetRegisteredRuleDescriptions(&res);
+  return res;
 }
 
 // Explicit template class instantiations

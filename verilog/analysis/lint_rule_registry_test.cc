@@ -110,8 +110,8 @@ TEST(LintRuleRegistryTest, CreateTreeLintRuleValid) {
 
 // Verifies that GetAllRuleDescriptionsHelpFlag correctly gets the descriptions
 // for a SyntaxTreeLintRule.
-TEST(GetAllRuleDescriptionsHelpFlagTest, SyntaxRuleValid) {
-  const auto rule_map = GetAllRuleDescriptionsHelpFlag();
+TEST(GetAllRuleDescriptions, SyntaxRuleValid) {
+  const auto rule_map = GetAllRuleDescriptions();
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("test-rule-1");
   ASSERT_NE(it, rule_map.end());
@@ -161,8 +161,8 @@ TEST(LintRuleRegistryTest, CreateTokenLintRuleValid) {
 
 // Verifies that GetAllRuleDescriptionsHelpFlag correctly gets the descriptions
 // for a TokenStreamLintRule.
-TEST(GetAllRuleDescriptionsHelpFlagTest, TokenRuleValid) {
-  const auto rule_map = GetAllRuleDescriptionsHelpFlag();
+TEST(GetAllRuleDescriptions, TokenRuleValid) {
+  const auto rule_map = GetAllRuleDescriptions();
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("token-rule-1");
   ASSERT_NE(it, rule_map.end());
@@ -208,8 +208,8 @@ TEST(LintRuleRegistryTest, CreateLineLintRuleValid) {
 
 // Verifies that GetAllRuleDescriptionsHelpFlag correctly gets the descriptions
 // for a LineLintRule.
-TEST(GetAllRuleDescriptionsHelpFlagTest, LineRuleValid) {
-  const auto rule_map = GetAllRuleDescriptionsHelpFlag();
+TEST(GetAllRuleDescriptions, LineRuleValid) {
+  const auto rule_map = GetAllRuleDescriptions();
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("line-rule-1");
   ASSERT_NE(it, rule_map.end());
@@ -266,8 +266,8 @@ TEST(LintRuleRegistryTest, ConfigureFactoryCreatedRule) {
 
 // Verifies that GetAllRuleDescriptionsHelpFlag correctly gets the descriptions
 // for a TextStructureLintRule.
-TEST(GetAllRuleDescriptionsHelpFlagTest, TextRuleValid) {
-  const auto rule_map = GetAllRuleDescriptionsHelpFlag();
+TEST(GetAllRuleDescriptions, TextRuleValid) {
+  const auto rule_map = GetAllRuleDescriptions();
   EXPECT_EQ(rule_map.size(), 5);
   const auto it = rule_map.find("text-rule-1");
   ASSERT_NE(it, rule_map.end());

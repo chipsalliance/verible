@@ -539,7 +539,7 @@ absl::Status PrintRuleInfo(std::ostream* os,
 void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
                                      absl::string_view flag_value) {
   // Set up the map.
-  auto rule_map = analysis::GetAllRuleDescriptionsHelpFlag();
+  auto rule_map = analysis::GetAllRuleDescriptions();
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }
@@ -561,7 +561,7 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
 }
 
 void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
-  auto rule_map = analysis::GetAllRuleDescriptionsMarkdown();
+  auto rule_map = analysis::GetAllRuleDescriptions();
   for (const auto& rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }

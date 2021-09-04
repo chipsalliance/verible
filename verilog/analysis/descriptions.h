@@ -43,15 +43,6 @@ struct LintRuleDescriptor {
   std::vector<LintConfigParameterDescriptor> param;
 };
 
-enum class DescriptionType {
-  kHelpRulesFlag,  // emit CLI help text
-  kMarkdown,       // emit Markdown
-};
-
-// Returns a string with the appropriate wrappers to denote it is code in the
-// declared DescriptionType documentation.
-std::string Codify(absl::string_view, DescriptionType);
-
 }  // namespace analysis
 }  // namespace verilog
 
