@@ -15,9 +15,11 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_ENUM_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ENUM_NAME_STYLE_RULE_H_
 
+#include <regex>
 #include <set>
 #include <string>
 
+#include "absl/types/optional.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -41,6 +43,8 @@ class EnumNameStyleRule : public verible::SyntaxTreeLintRule {
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
+  absl::Status Configure(absl::string_view configuration) override;
+
   verible::LintRuleStatus Report() const override;
 
  private:
@@ -49,6 +53,8 @@ class EnumNameStyleRule : public verible::SyntaxTreeLintRule {
 
   // Diagnostic message.
   static const char kMessage[];
+
+  absl::optional<std::regex> name_regex_;
 
   std::set<verible::LintViolation> violations_;
 };

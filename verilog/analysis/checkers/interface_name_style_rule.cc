@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/module.h"
@@ -52,10 +53,19 @@ const char InterfaceNameStyleRule::kMessage[] =
 
 std::string InterfaceNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("interface", description_type),
-      " names use lower_snake_case naming convention and end with '_if'. See ",
+      " names use lower_snake_case naming convention and end with "
+      "'_if' or match the optional regular expression format. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Parameters: name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
+  }
 }
 
 static const Matcher& InterfaceMatcher() {
@@ -72,6 +82,14 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     identifier_token = &GetInterfaceNameToken(symbol);
     name = identifier_token->text();
 
+    if (name_regex_.has_value()) {
+      if (!std::regex_match(std::string(name), *name_regex_)) {
+        violations_.insert(LintViolation(*identifier_token,
+                                         "Regex rule does not match", context));
+      }
+      return;
+    }
+
     if (!verible::IsLowerSnakeCaseWithDigits(name) ||
         !absl::EndsWith(name, "_if")) {
       violations_.insert(LintViolation(*identifier_token, kMessage, context));
@@ -79,6 +97,25 @@ void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   }
 }
 
+absl::Status InterfaceNameStyleRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetString;
+  std::string name_regex;
+  auto status = verible::ParseNameValues(
+      configuration, {{"name_regex", SetString(&name_regex)}});
+
+  if (!status.ok()) return status;
+
+  if (!name_regex.empty()) {
+    try {
+      name_regex_ = name_regex;
+    } catch (const std::regex_error& e) {
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Invalid regex specified");
+    }
+  }
+  return absl::OkStatus();
+}
 LintRuleStatus InterfaceNameStyleRule::Report() const {
   return LintRuleStatus(violations_, Name(), GetStyleGuideCitation(kTopic));
 }

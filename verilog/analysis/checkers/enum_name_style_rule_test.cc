@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -29,7 +30,59 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(EnumNameStyleRuleTest, ConfigurationPass) {
+  EnumNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("name_regex:[a-z]")).ok())
+      << status.message();
+}
+
+TEST(EnumNameStyleRuleTest, ConfigurationFail) {
+  EnumNameStyleRule rule;
+  absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_name_regex:")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("name_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
+}
+
+TEST(EnumNameStyleRuleTestConfiguredRegex, AcceptTests) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef enum baz_i;"},
+      {"typedef enum _baz_i;"},
+      {"typedef enum { OneValue, TwoValue } my_name_i;\nmy_name_e a_instance;"},
+      {"class foo;\n"
+       "typedef enum { Red=3, Green=5 } state_i;\n"
+       "state_i a_state;\n"
+       "endclass"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases,
+                                                                 regex);
+}
+
+TEST(EnumNameStyleRuleTestConfiguredRegex, RejectTests) {
+  const absl::string_view regex = "name_regex:[a-zA-Z]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"typedef enum ", {kToken, "Hello12World_i"}, ";"},
+      {"typedef enum ", {kToken, "baz_e"}, ";"},
+      {"class foo;\n"
+       "typedef enum {bar, baz} ",
+       {kToken, "bad_t"},
+       ";\n"
+       "bad_ hi;\n"
+       "endclass"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases,
+                                                                 regex);
+}
 
 TEST(EnumNameStyleRuleTest, ValidEnumNames) {
   const std::initializer_list<LintTestCase> kTestCases = {

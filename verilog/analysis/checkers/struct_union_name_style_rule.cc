@@ -56,16 +56,21 @@ std::string StructUnionNameStyleRule::GetDescription(
   static std::string basic_desc = absl::StrCat(
       "Checks that ", Codify("struct", description_type), " and ",
       Codify("union", description_type),
-      " names use lower_snake_case naming convention and end with '_t'. See ",
+      " names use lower_snake_case naming convention and end with '_t', or "
+      "match the optional regular expression format. See ",
       GetStyleGuideCitation(kTopic), ".");
   if (description_type == DescriptionType::kHelpRulesFlag) {
-    return absl::StrCat(basic_desc, "exceptions:String with exceptions");
-  } else {
     return absl::StrCat(basic_desc,
-                        "\n##### Parameters\n"
-                        " * `exceptions` (Comma-separated list of allowed "
-                        "upper-case elements, such as unit-names"
-                        ". Default: Empty)\n");
+                        "Parameters: exceptions:String with exceptions;"
+                        "name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        " * `exceptions` (Comma-separated list of allowed "
+        "upper-case elements, such as unit-names"
+        ". Default: Empty)\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
   }
 }
 
@@ -86,6 +91,13 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 
     const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
+    if (name_regex_.has_value()) {
+      if (!std::regex_match(std::string(name), *name_regex_)) {
+        violations_.insert(LintViolation(*identifier_leaf,
+                                         "Regex rule does not match", context));
+      }
+      return;
+    }
 
     if (!absl::EndsWith(name, "_t")) {
       violations_.insert(
@@ -131,10 +143,20 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 absl::Status StructUnionNameStyleRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetString;
-  std::string raw_tokens;
+  std::string raw_tokens, name_regex;
   auto status = verible::ParseNameValues(
-      configuration, {{"exceptions", SetString(&raw_tokens)}});
+      configuration, {{"exceptions", SetString(&raw_tokens)},
+                      {"name_regex", SetString(&name_regex)}});
   if (!status.ok()) return status;
+
+  if (!name_regex.empty()) {
+    try {
+      name_regex_ = name_regex;
+    } catch (const std::regex_error &e) {
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Invalid regex specified");
+    }
+  }
 
   if (!raw_tokens.empty()) {
     const auto &exceptions = absl::StrSplit(raw_tokens, ',');

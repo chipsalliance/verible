@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -29,7 +30,55 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(InterfaceNameStyleRuleTestRegex, ConfigurationPass) {
+  InterfaceNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("name_regex:[a-z]")).ok())
+      << status.message();
+}
+
+TEST(InterfaceNameStyleRuleTestRegex, ConfigurationFail) {
+  InterfaceNameStyleRule rule;
+  absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_name_regex:")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("name_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
+}
+
+TEST(InterfaceNameStyleRuleTestConfiguredRegex,
+     ValidInterfaceDeclarationNames) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"interface foo_i; endinterface"},
+      {"interface _foo_i; endinterface"},
+      {"interface foo12_i; endinterface"},
+      {"interface good_12W_name_i; endinterface"},
+      {"typedef virtual interface foo foo_i;"},
+      {"typedef virtual interface foo fOO_i;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(
+      kTestCases, regex);
+}
+
+TEST(InterfaceNameStyleRuleTestConfiguredRegex,
+     InvalidInterfaceDeclarationNames) {
+  const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"interface ", {kToken, "baz_12_fOo_i"}, "; endinterface"},
+      {"interface ", {kToken, "baz_fOo_t"}, "; endinterface"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(
+      kTestCases, regex);
+}
 
 TEST(InterfaceNameStyleRuleTest, ValidInterfaceDeclarationNames) {
   const std::initializer_list<LintTestCase> kTestCases = {

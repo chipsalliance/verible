@@ -15,10 +15,12 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_STRUCT_UNION_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_STRUCT_UNION_NAME_STYLE_RULE_H_
 
+#include <regex>
 #include <set>
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -55,6 +57,7 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   static const char kMessageUnion[];
 
   std::set<std::string> exceptions_;
+  absl::optional<std::regex> name_regex_;
 
   std::set<verible::LintViolation> violations_;
 };

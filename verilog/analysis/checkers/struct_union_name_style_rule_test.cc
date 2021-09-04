@@ -41,13 +41,21 @@ TEST(StructUnionNameStyleRuleTest, ConfigurationPass) {
       << status.message();
   EXPECT_TRUE((status = rule.Configure("exceptions:B,GiW")).ok())
       << status.message();
+  EXPECT_TRUE((status = rule.Configure("name_regex:[a-z]")).ok())
+      << status.message();
 }
 
 TEST(StructUnionNameStyleRuleTest, ConfigurationFail) {
   StructUnionNameStyleRule rule;
   absl::Status status;
-  EXPECT_FALSE((status = rule.Configure("bad_exceptions:,")).ok())
+  EXPECT_FALSE((status = rule.Configure("bad_exceptions:")).ok())
       << status.message();
+  EXPECT_FALSE((status = rule.Configure("bad_name_regex:")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("name_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
 
   EXPECT_FALSE((status = rule.Configure("exceptions:,")).ok())
       << status.message();
@@ -102,6 +110,28 @@ TEST(StructUnionNameStyleRuleTestConfigured, ValidStructNames) {
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
       kTestCases, exceptions);
+}
+
+TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidStructNames) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;} b_a_z_t_i;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, regex);
+}
+
+TEST(StructUnionNameStyleRuleTestConfiguredRegex, InvalidStructNames) {
+  const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "foo_t"}, ";"},
+      {"typedef struct {logic foo; logic bar;}", {kToken, "baz_12_fOo_i"}, ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, regex);
 }
 
 TEST(StructUnionNameStyleRuleTestConfigured, InvalidStructNames) {
@@ -182,6 +212,26 @@ TEST(StructUnionNameStyleRuleTestConfigured, ValidUnionNames) {
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
       kTestCases, exceptions);
+}
+TEST(StructUnionNameStyleRuleTestConfiguredRegex, ValidUnionNames) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;} b_a_z_t_i;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, regex);
+}
+
+TEST(StructUnionNameStyleRuleTestConfiguredRegex, InvalidUnionNames) {
+  const absl::string_view regex = "name_regex:[a-zA-Z_]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"typedef union {logic foo; logic bar;}", {kToken, "baz_12_fOo_i"}, ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, StructUnionNameStyleRule>(
+      kTestCases, regex);
 }
 
 TEST(StructUnionNameStyleRuleTest, InvalidUnionNames) {

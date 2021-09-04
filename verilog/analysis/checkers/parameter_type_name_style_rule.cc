@@ -25,6 +25,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
@@ -57,10 +58,19 @@ const char ParameterTypeNameStyleRule::kMessage[] =
 
 std::string ParameterTypeNameStyleRule::GetDescription(
     DescriptionType description_type) {
-  return absl::StrCat(
+  static std::string basic_desc = absl::StrCat(
       "Checks that parameter type names follow the lower_snake_case naming "
-      "convention and end with _t. See ",
+      "convention and end with _t or match the optional regular expression "
+      "format.. See ",
       GetStyleGuideCitation(kTopic), ".");
+  if (description_type == DescriptionType::kHelpRulesFlag) {
+    return absl::StrCat(basic_desc, "Parameters: name_regex:regex rule");
+  } else {
+    return absl::StrCat(
+        basic_desc,
+        "\n##### Parameters\n"
+        "* `name_regex` (The regex rule validating the names. Default: Empty)");
+  }
 }
 
 static const Matcher& ParamDeclMatcher() {
@@ -78,10 +88,38 @@ void ParameterTypeNameStyleRule::HandleSymbol(
     param_name_token = &GetSymbolIdentifierFromParamDeclaration(symbol);
     const auto param_name = param_name_token->text();
 
+    if (name_regex_.has_value()) {
+      if (!std::regex_match(std::string(param_name), *name_regex_)) {
+        violations_.insert(LintViolation(*param_name_token,
+                                         "Regex rule does not match", context));
+      }
+      return;
+    }
+
     if (!verible::IsLowerSnakeCaseWithDigits(param_name) ||
         !absl::EndsWith(param_name, "_t"))
       violations_.insert(LintViolation(*param_name_token, kMessage, context));
   }
+}
+
+absl::Status ParameterTypeNameStyleRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetString;
+  std::string name_regex;
+  auto status = verible::ParseNameValues(
+      configuration, {{"name_regex", SetString(&name_regex)}});
+
+  if (!status.ok()) return status;
+
+  if (!name_regex.empty()) {
+    try {
+      name_regex_ = name_regex;
+    } catch (const std::regex_error& e) {
+      return absl::Status(absl::StatusCode::kInvalidArgument,
+                          "Invalid regex specified");
+    }
+  }
+  return absl::OkStatus();
 }
 
 LintRuleStatus ParameterTypeNameStyleRule::Report() const {

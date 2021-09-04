@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
@@ -29,7 +30,59 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(ParameterTypeNameStyleRuleTest, ConfigurationPass) {
+  ParameterTypeNameStyleRule rule;
+  absl::Status status;
+  EXPECT_TRUE((status = rule.Configure("name_regex:[a-z]")).ok())
+      << status.message();
+}
+
+TEST(ParameterTypeNameStyleRuleTest, ConfigurationFail) {
+  ParameterTypeNameStyleRule rule;
+  absl::Status status;
+  EXPECT_FALSE((status = rule.Configure("bad_name_regex:")).ok())
+      << status.message();
+
+  EXPECT_FALSE((status = rule.Configure("name_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_TRUE(absl::StrContains(status.message(), "Invalid regex specified"));
+}
+
+TEST(ParameterTypeNameStyleRuleTestConfiguredRegex, AcceptTests) {
+  const absl::string_view regex = "name_regex:.*_i";
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"module foo #(parameter type foo_bar_i); endmodule"},
+      {"module foo #(parameter type foo_bar_i = logic); endmodule"},
+      {"module foo; localparam type foo_bar_i; endmodule"},
+      {"module foo; localparam type foo_bar_i = logic; endmodule"},
+      {"parameter type foo_bar_i;"},
+      {"parameter type foo_bar_i = logic;"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, ParameterTypeNameStyleRule>(
+      kTestCases, regex);
+}
+
+TEST(ParameterTypeNameStyleRuleTestConfiguredRegex, RejectTests) {
+  const absl::string_view regex = "name_regex:[a-zA-Z]*_i";
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module foo #(parameter type ", {kToken, "bar_t"}, "); endmodule"},
+      {"module foo #(parameter type ", {kToken, "foo_bar_i"}, "); endmodule"},
+      {"module foo #(parameter type ",
+       {kToken, "FooBar12"},
+       " = logic); endmodule"},
+      {"module foo #(parameter type ",
+       {kToken, "Foo1Bar_i"},
+       " = logic); endmodule"},
+      {"parameter type ", {kToken, "foo_bar_i"}, ";"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, ParameterTypeNameStyleRule>(
+      kTestCases, regex);
+}
 
 // Tests that ParameterTypeNameStyleRule correctly accepts valid names.
 TEST(ParameterTypeNameStyleRuleTest, AcceptTests) {
