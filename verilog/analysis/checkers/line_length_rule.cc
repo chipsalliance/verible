@@ -65,7 +65,7 @@ static bool ContainsAnyWhitespace(absl::string_view s) {
 #endif
 
 const LintRuleDescriptor& LineLengthRule::GetDescriptor() {
-  static LintRuleDescriptor d{
+  static const LintRuleDescriptor d{
       .name = "line-length",
       .topic = "line-length",
       .desc =

@@ -54,8 +54,6 @@ class ForbiddenAnonymousEnumsRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  // Diagnosic message.
-
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
 };

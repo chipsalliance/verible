@@ -115,7 +115,7 @@ static size_t GetBitWidthOfNumber(const BasedNumber& n, bool* is_lower_bound) {
       }
 
       // Let's first try if we can parse it with regular means. Luckily,
-      // absl provides system-independent abstraction of 128 bit numbers,
+      // absl provides compiler-independent abstraction of 128 bit numbers,
       // so we can parse most commonly used values accurately.
       absl::uint128 number;
       if (absl::SimpleAtoi(literal, &number)) {

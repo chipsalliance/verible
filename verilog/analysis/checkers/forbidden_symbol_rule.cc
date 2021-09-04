@@ -48,9 +48,8 @@ const LintRuleDescriptor& ForbiddenSystemTaskFunctionRule::GetDescriptor() {
       .dv_topic = "forbidden-system-functions",
       .desc =
           "Checks that no forbidden system tasks or functions are used. These "
-          "consist of the following functions: "
-          "`$psprintf`, `$random`, and `$dist_*`. "
-          "Also non-LRM function `$srandom`.",
+          "consist of the following functions: `$psprintf`, `$random`, and "
+          "`$dist_*`. As well as non-LRM function `$srandom`.",
   };
   return d;
 }

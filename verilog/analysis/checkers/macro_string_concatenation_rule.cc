@@ -40,12 +40,11 @@ static const char kMessage[] =
     "Token concatenation (``) used inside plain string literal.";
 
 const LintRuleDescriptor& MacroStringConcatenationRule::GetDescriptor() {
-  static LintRuleDescriptor d{
+  static const LintRuleDescriptor d{
       .name = "macro-string-concatenation",
       .topic = "defines",
       .desc =
-          "Concatenation will not be evaluated here. "
-          "Use `\"...`\" instead.",
+          "Concatenation will not be evaluated here. Use `\"...`\" instead.",
   };
   return d;
 }

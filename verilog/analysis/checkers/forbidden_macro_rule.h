@@ -52,8 +52,6 @@ class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
  private:
   std::string FormatReason(const verible::SyntaxTreeLeaf& leaf) const;
 
-  // Link to style-guide rule.
-
   // Set of invalid macros, mapped to style guide links.
   static const std::map<std::string, std::string>& InvalidMacrosMap();
 

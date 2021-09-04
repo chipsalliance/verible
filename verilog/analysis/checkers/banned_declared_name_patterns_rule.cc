@@ -42,7 +42,7 @@ using verible::SyntaxTreeContext;
 static const char kMessage[] = "Check banned declared name patterns";
 
 const LintRuleDescriptor& BannedDeclaredNamePatternsRule::GetDescriptor() {
-  static LintRuleDescriptor d{
+  static const LintRuleDescriptor d{
       .name = "banned-declared-name-patterns",
       .topic = "identifiers",
       .desc =

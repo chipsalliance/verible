@@ -43,7 +43,7 @@ VERILOG_REGISTER_LINT_RULE(AlwaysCombRule);
 static const char kMessage[] = "Use \'always_comb\' instead of \'always @*\'.";
 
 const LintRuleDescriptor& AlwaysCombRule::GetDescriptor() {
-  static LintRuleDescriptor d{
+  static const LintRuleDescriptor d{
       .name = "always-comb",
       .topic = "combinational-logic",
       .desc =

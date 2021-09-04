@@ -52,8 +52,7 @@ const LintRuleDescriptor& NumericFormatStringStyleRule::GetDescriptor() {
       .desc =
           "Checks that string literals with numeric format specifiers "
           "have proper prefixes for hex and bin values and no prefixes for "
-          "decimal "
-          "values.",
+          "decimal values.",
   };
   return d;
 }

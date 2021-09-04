@@ -51,10 +51,8 @@ const LintRuleDescriptor& ParameterNameStyleRule::GetDescriptor() {
       .topic = "constants",
       .desc =
           "Checks that non-type parameter and localparam names follow at least "
-          "one "
-          "of the naming conventions from a choice of CamelCase and ALL_CAPS, "
-          "ORed "
-          "together with the pipe-symbol(|). "
+          "one of the naming conventions from a choice of "
+          "CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). "
           "Empty configuration: no style enforcement.",
       .param = {{"localparam_style", "CamelCase", "Style of localparam name"},
                 {"parameter_style", "CamelCase|ALL_CAPS",

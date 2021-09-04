@@ -64,8 +64,6 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
     kExpectEndifComment,
   };
 
-  // Diagnosic message.
-
   // Internal lexical analysis state.
   State state_;
 

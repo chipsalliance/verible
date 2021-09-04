@@ -49,7 +49,7 @@ static const char kMessage[] =
     "Use blocking assignments, at most, for locals inside "
     "'always_ff' sequential blocks.";
 
-const LintRuleDescriptor &AlwaysFFNonBlockingRule::GetDescriptor() {
+const LintRuleDescriptor& AlwaysFFNonBlockingRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "always-ff-non-blocking",
       .topic = "sequential-logic",
@@ -79,8 +79,8 @@ absl::Status AlwaysFFNonBlockingRule::Configure(
 }
 
 //- Processing --------------------------------------------------------------
-void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
-                                           const SyntaxTreeContext &context) {
+void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol& symbol,
+                                           const SyntaxTreeContext& context) {
   //- Process and filter context before locating blocking assigments --------
 
   // Detect entering and leaving of always_ff blocks
@@ -100,14 +100,14 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
 
   // Rule may be waived if complete lhs consists of local variables
   //  -> determine root of lhs
-  const verible::Symbol *check_root = nullptr;
+  const verible::Symbol* check_root = nullptr;
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
-    if (const auto *const node =
-            verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+    if (const auto* const node =
+            verible::down_cast<const verible::SyntaxTreeNode*>(&symbol)) {
       check_root =
-          /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+          /* lhs */ verible::down_cast<const verible::SyntaxTreeNode*>(
               node->children()[0].get());
     }
   } else {
@@ -115,10 +115,10 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
     if (!catch_modifying_assignments_) return;
 
     if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
+      if (const auto* const node =
+              verible::down_cast<const verible::SyntaxTreeNode*>(&symbol)) {
         check_root =
-            /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
+            /* lhs */ verible::down_cast<const verible::SyntaxTreeNode*>(
                 node->children()[0].get());
       }
     } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
@@ -134,16 +134,16 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   bool waived = false;
   if (waive_for_locals_ && check_root) {
     waived = true;
-    for (const auto &var : SearchSyntaxTree(*check_root, ident_matcher)) {
+    for (const auto& var : SearchSyntaxTree(*check_root, ident_matcher)) {
       if (var.context.IsInside(NodeEnum::kDimensionScalar)) continue;
       if (var.context.IsInside(NodeEnum::kDimensionSlice)) continue;
       if (var.context.IsInside(NodeEnum::kHierarchyExtension)) continue;
 
       bool found = false;
-      if (const auto *const varn =
-              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
-        if (const auto *const ident =
-                verible::down_cast<const verible::SyntaxTreeLeaf *>(
+      if (const auto* const varn =
+              verible::down_cast<const verible::SyntaxTreeNode*>(var.match)) {
+        if (const auto* const ident =
+                verible::down_cast<const verible::SyntaxTreeLeaf*>(
                     varn->children()[0].get())) {
           found = std::find(locals_.begin(), locals_.end(),
                             ident->get().text()) != locals_.end();
@@ -159,7 +159,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
 }  // HandleSymbol()
 
-bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
+bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol& symbol,
                                           const int depth) {
   static const Matcher always_ff_matcher{
       NodekAlwaysStatement(AlwaysFFKeyword())};
@@ -198,18 +198,18 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
   return true;
 }  // InsideBlock()
 
-bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
+bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol& symbol) {
   static const Matcher decl_matcher{NodekDataDeclaration()};
   static const Matcher var_matcher{NodekRegisterVariable()};
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (decl_matcher.Matches(symbol, &symbol_man)) {
-    auto &count = scopes_.top().inherited_local_count;
-    for (const auto &var : SearchSyntaxTree(symbol, var_matcher)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
-        if (const auto *const ident =
-                verible::down_cast<const verible::SyntaxTreeLeaf *>(
+    auto& count = scopes_.top().inherited_local_count;
+    for (const auto& var : SearchSyntaxTree(symbol, var_matcher)) {
+      if (const auto* const node =
+              verible::down_cast<const verible::SyntaxTreeNode*>(var.match)) {
+        if (const auto* const ident =
+                verible::down_cast<const verible::SyntaxTreeLeaf*>(
                     node->children()[0].get())) {
           const absl::string_view name = ident->get().text();
           VLOG(4) << "Registering '" << name << '\'' << std::endl;

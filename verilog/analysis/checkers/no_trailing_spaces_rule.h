@@ -33,7 +33,7 @@ class NoTrailingSpacesRule : public verible::LineLintRule {
  public:
   using rule_type = verible::LineLintRule;
 
-  static const LintRuleDescriptor &GetDescriptor();
+  static const LintRuleDescriptor& GetDescriptor();
 
   NoTrailingSpacesRule() {}
 

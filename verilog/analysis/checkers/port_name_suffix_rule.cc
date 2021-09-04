@@ -62,10 +62,9 @@ const LintRuleDescriptor& PortNameSuffixRule::GetDescriptor() {
       .topic = "suffixes-for-signals-and-types",
       .desc =
           "Check that port names end with _i for inputs, _o for outputs and "
-          "_io "
-          "for inouts. "
+          "_io for inouts. "
           "Alternatively, for active-low signals use _n[io], for differential "
-          "pairs use _n[io] and _p[io]. ",
+          "pairs use _n[io] and _p[io].",
   };
   return d;
 }

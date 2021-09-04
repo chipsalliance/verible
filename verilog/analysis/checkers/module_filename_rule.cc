@@ -58,8 +58,7 @@ const LintRuleDescriptor& ModuleFilenameRule::GetDescriptor() {
           "If a module is declared, checks that at least one module matches "
           "the first dot-delimited component of the file name. Depending on "
           "configuration, it is also allowed to replace underscore with dashes "
-          "in "
-          "filenames.  ",
+          "in filenames.",
       .param = {{"allow-dash-for-underscore", "false",
                  "Allow dashes in the filename where there are dashes in the "
                  "module name"}},

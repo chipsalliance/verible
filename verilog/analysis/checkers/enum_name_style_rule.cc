@@ -49,8 +49,8 @@ const LintRuleDescriptor& EnumNameStyleRule::GetDescriptor() {
       .name = "enum-name-style",
       .topic = "enumerations",
       .desc =
-          "Checks that `enum` names use lower_snake_case naming convention"
-          " and end with '_t' or '_e'.",
+          "Checks that `enum` names use lower_snake_case naming convention "
+          "and end with '_t' or '_e'.",
   };
   return d;
 }

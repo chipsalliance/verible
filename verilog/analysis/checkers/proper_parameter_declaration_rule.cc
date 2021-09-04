@@ -56,8 +56,7 @@ const LintRuleDescriptor& ProperParameterDeclarationRule::GetDescriptor() {
       .desc =
           "Checks that every `parameter` declaration is inside a "
           "package or in the formal parameter list of modules/classes and "
-          "every "
-          "`localparam` declaration is inside a module or class.",
+          "every `localparam` declaration is inside a module or class.",
   };
   return d;
 }

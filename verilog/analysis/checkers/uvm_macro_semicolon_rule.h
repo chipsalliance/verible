@@ -66,8 +66,6 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
   // Save the matching macro and include it in diagnostic message
   verible::TokenInfo macro_id_ = verible::TokenInfo::EOFToken();
 
-  // Link to style-guide rule.
-
   std::set<verible::LintViolation> violations_;
 };
 

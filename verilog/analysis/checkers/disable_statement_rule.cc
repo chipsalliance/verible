@@ -54,10 +54,9 @@ const LintRuleDescriptor& DisableStatementNoLabelsRule::GetDescriptor() {
       .name = "disable-statement",
       .topic = "disable-invalid-in-non-sequential",
       .desc =
-          "Checks that there are no occurrences of `disable some_label`"
-          " if label is referring to a fork or other none sequential block "
-          "label."
-          ". Use `disable fork` instead.",
+          "Checks that there are no occurrences of `disable some_label` "
+          "if label is referring to a fork or other none sequential block "
+          "label. Use `disable fork` instead.",
   };
   return d;
 }

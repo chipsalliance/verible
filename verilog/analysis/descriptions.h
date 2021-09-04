@@ -38,7 +38,7 @@ struct LintConfigParameterDescriptor {
 struct LintRuleDescriptor {
   LintRuleId name;             // ID/name of the rule.
   absl::string_view topic;     // section in style-guide
-  absl::string_view dv_topic;  // section in style-guide
+  absl::string_view dv_topic;  // section in design verification style-guide
   std::string desc;            // Detailed description.
   std::vector<LintConfigParameterDescriptor> param;
 };

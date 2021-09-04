@@ -51,9 +51,9 @@ const LintRuleDescriptor& TokenStreamLintRule::GetDescriptor() {
       .name = "forbid-line-continuations",
       .topic = "forbid-line-continuations",
       .desc =
-          "Checks that there are no occurrences of `\\`"
-          " when breaking the string literal line. "
-          "Use concatenation operator with braces instead.",
+          "Checks that there are no occurrences of `\\` when breaking the "
+          "string literal line. Use concatenation operator with braces "
+          "instead.",
   };
   return d;
 }

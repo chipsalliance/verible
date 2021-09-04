@@ -56,7 +56,7 @@ const LintRuleDescriptor& ModuleParameterRule::GetDescriptor() {
       .desc =
           "Checks that module instantiations with more than one parameter "
           "are passed in as named parameters, rather than positional "
-          "parameters. ",
+          "parameters.",
   };
   return d;
 }

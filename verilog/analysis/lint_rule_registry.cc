@@ -80,13 +80,12 @@ class LintRuleRegistry {
   }
 
   // Registers a lint rule with the appropriate registry.
-  static void Register(const LintRuleId& rule,
-                       const LintRuleGeneratorFun<RuleType>& creator,
-                       const LintDescriptionFun& descriptor) {
+  static void Register(const LintDescriptionFun& descriptor,
+                       const LintRuleGeneratorFun<RuleType>& creator) {
     LintRuleInfo<RuleType> info;
     info.lint_rule_generator = creator;
     info.description = descriptor;
-    (*GetLintRuleRegistry<RuleType>())[rule] = info;
+    (*GetLintRuleRegistry<RuleType>())[descriptor().name] = info;
   }
 
   // Returns the description of the specific rule, formatted for description
@@ -115,9 +114,9 @@ class LintRuleRegistry {
 
 template <typename RuleType>
 LintRuleRegisterer<RuleType>::LintRuleRegisterer(
-    const LintRuleId& rule, const LintRuleGeneratorFun<RuleType>& creator,
-    const LintDescriptionFun& descriptor) {
-  LintRuleRegistry<RuleType>::Register(rule, creator, descriptor);
+    const LintDescriptionFun& descriptor,
+    const LintRuleGeneratorFun<RuleType>& creator) {
+  LintRuleRegistry<RuleType>::Register(descriptor, creator);
 }
 
 bool IsRegisteredLintRule(const LintRuleId& rule_name) {

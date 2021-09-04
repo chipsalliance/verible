@@ -98,14 +98,11 @@ using LintRuleDescriptionsMap =
 //
 // TODO(hzeller): once the class does not contain a state, extract the name
 // and description from the instance to avoid weird static initialization.
-#define VERILOG_REGISTER_LINT_RULE(class_name)                               \
-  static verilog::analysis::LintRuleRegisterer<class_name::rule_type>        \
-      __##class_name##__registerer(                                          \
-          class_name::GetDescriptor().name, /* todo: only call once */       \
-          []() {                                                             \
-            return std::unique_ptr<class_name::rule_type>(new class_name()); \
-          },                                                                 \
-          class_name::GetDescriptor);
+#define VERILOG_REGISTER_LINT_RULE(class_name)                           \
+  static verilog::analysis::LintRuleRegisterer<class_name::rule_type>    \
+      __##class_name##__registerer(class_name::GetDescriptor, []() {     \
+        return std::unique_ptr<class_name::rule_type>(new class_name()); \
+      });
 
 // Static objects of type LintRuleRegisterer are used to register concrete
 // parsers in LintRuleRegistry. Users are expected to create these objects
@@ -113,9 +110,8 @@ using LintRuleDescriptionsMap =
 template <typename RuleType>
 class LintRuleRegisterer {
  public:
-  LintRuleRegisterer(const LintRuleId& rule,
-                     const LintRuleGeneratorFun<RuleType>& creator,
-                     const LintDescriptionFun& descriptor);
+  LintRuleRegisterer(const LintDescriptionFun& descriptor,
+                     const LintRuleGeneratorFun<RuleType>& creator);
 };
 
 // Returns true if rule_name refers to a known lint rule.

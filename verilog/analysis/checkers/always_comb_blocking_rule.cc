@@ -46,7 +46,7 @@ static const char kMessage[] =
     "Use only blocking assignments in \'always_comb\' combinational blocks.";
 
 const LintRuleDescriptor& AlwaysCombBlockingRule::GetDescriptor() {
-  static LintRuleDescriptor d{
+  static const LintRuleDescriptor d{
       .name = "always-comb-blocking",
       .topic = "combinational-logic",
       .desc =

@@ -56,8 +56,7 @@ const LintRuleDescriptor& PackageFilenameRule::GetDescriptor() {
       .desc =
           "Checks that the package name matches the filename. Depending on "
           "configuration, it is also allowed to replace underscore with dashes "
-          "in "
-          "filenames.",
+          "in filenames.",
       .param = {{"allow-dash-for-underscore", "false",
                  "Allow dashes in the filename corresponding to the "
                  "underscores in the package"}},

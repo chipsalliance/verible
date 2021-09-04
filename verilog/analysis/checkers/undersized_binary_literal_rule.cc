@@ -59,7 +59,7 @@ const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
           "Checks that the digits of binary literals for the configured "
           "bases match their declared width, i.e. has enough padding prefix "
           "zeros.",
-      .param = {{"bin", "true", "Checing binary 'b literals."},
+      .param = {{"bin", "true", "Checking binary 'b literals."},
                 {"oct", "false", "Checking octal 'o literals."},
                 {"hex", "false", "Checking hexadecimal 'h literals."}},
   };
