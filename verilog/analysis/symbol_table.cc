@@ -161,6 +161,9 @@ static absl::Status DiagnoseMemberSymbolResolutionFailure(
                    context_name, "."));
 }
 
+static const SymbolTableNode* LookupSymbolUpwards(
+    const SymbolTableNode& context, absl::string_view symbol);
+
 class SymbolTable::Builder : public TreeContextVisitor {
  public:
   Builder(const VerilogSourceFile& source, SymbolTable* symbol_table,
@@ -265,6 +268,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
       case NodeEnum::kEnumType:
         DescendEnumType(node);
+        break;
+      case NodeEnum::kLPValue:
+        HandlePossibleImplicitDeclaration(node);
         break;
       default:
         Descend(node);
@@ -521,6 +527,26 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  void HandlePossibleImplicitDeclaration(const SyntaxTreeNode& node) {
+    VLOG(2) << __FUNCTION__;
+
+    // Only left-hand side of continuous assignment statements are allowed to
+    // implicitly declare nets (LRM 6.10: Implicit declarations).
+    if (Context().DirectParentsAre(
+            {NodeEnum::kNetVariableAssignment, NodeEnum::kAssignmentList,
+             NodeEnum::kContinuousAssignmentStatement})) {
+      CHECK(node.MatchesTag(NodeEnum::kLPValue));
+
+      DeclarationTypeInfo decl_type_info;
+      const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
+                                                       &decl_type_info);
+      declaration_type_info_->implicit = true;
+      Descend(node);
+    } else {
+      Descend(node);
+    }
+  }
+
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
@@ -653,6 +679,29 @@ class SymbolTable::Builder : public TreeContextVisitor {
       CheckedNewChildReferenceNode(ABSL_DIE_IF_NULL(reference_branch_point_),
                                    new_ref);
       return;
+    }
+
+    // Handle possible implicit declarations here
+    if (declaration_type_info_ != nullptr && declaration_type_info_->implicit) {
+      const SymbolTableNode* resolved =
+          LookupSymbolUpwards(*ABSL_DIE_IF_NULL(current_scope_), text);
+      if (resolved == nullptr) {
+        // No explicit declaration found, declare here
+        SymbolTableNode& implicit_declaration =
+            EmplaceTypedElementInCurrentScope(
+                leaf, text, SymbolMetaType::kDataNetVariableInstance);
+
+        const ReferenceComponent implicit_ref{
+            .identifier = text,
+            .ref_type = InferReferenceType(),
+            .required_metatype = InferMetaType(),
+            // pre-resolve
+            .resolved_symbol = &implicit_declaration,
+        };
+
+        ref.PushReferenceComponent(implicit_ref);
+        return;
+      }
     }
 
     // For all other cases, grow the reference chain deeper.
@@ -1768,6 +1817,10 @@ std::ostream& operator<<(std::ostream& stream,
     stream << *decl_type_info.user_defined_type;
   } else {
     stream << "(primitive)";
+  }
+
+  if (decl_type_info.implicit) {
+    stream << ", implicit";
   }
 
   return stream << " }";
