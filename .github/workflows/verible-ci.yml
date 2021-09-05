@@ -42,6 +42,29 @@ jobs:
     - name: Run formatting style check
       run: ./.github/bin/run-clang-format.sh
 
+  ClangTidy:
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get install clang-tidy
+        clang-tidy --version
+
+    - name: Run clang tidy (Check output)
+      run: ./.github/bin/run-clang-tidy.sh
+
 
   Check:
     runs-on: ubuntu-16.04

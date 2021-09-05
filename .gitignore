@@ -2,3 +2,5 @@
 /bazel-*
 tags
 releasing/out
+compile_commands.json
+

@@ -5,6 +5,7 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
+load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -12,15 +13,12 @@ exports_files([
     "LICENSE",
 ])
 
-installer(
-    name = "install",
-    data = [
+filegroup(
+   name = "install-binaries",
+   srcs = [
         "//common/tools:verible-patch-tool",
-        "//common/tools:verible-transform-interactive",
         "//verilog/tools/diff:verible-verilog-diff",
-        "//verilog/tools/formatter:git-verilog-format",
         "//verilog/tools/formatter:verible-verilog-format",
-        "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
         "//verilog/tools/kythe:verible-verilog-kythe-extractor",
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
@@ -28,6 +26,23 @@ installer(
         "//verilog/tools/project:verible-verilog-project",
         "//verilog/tools/syntax:verible-verilog-syntax",
     ],
+)
+
+filegroup(
+   name = "install-scripts",
+   srcs = [
+        "//common/tools:verible-transform-interactive",
+        "//verilog/tools/formatter:verible-verilog-format-changed-lines-interactive",
+        "//verilog/tools/formatter:git-verilog-format",
+   ]
+)
+
+installer(
+    name = "install",
+    data = [
+        ":install-binaries",
+        ":install-scripts",
+   ]
 )
 
 genrule(
@@ -53,4 +68,25 @@ action_listener(
     extra_actions = [":extractor"],
     mnemonics = ["CppCompile"],
     visibility = ["//visibility:public"],
+)
+
+compilation_database(
+    name = "compdb",
+    # targets = [ ":install-binaries" ],
+    # Unfortunately, compilation_database does not support filesets yet,
+    # so expand them here manually.
+    # https://github.com/grailbio/bazel-compilation-database/issues/84
+   targets = [
+        "//common/tools:verible-patch-tool",
+        "//verilog/tools/diff:verible-verilog-diff",
+        "//verilog/tools/formatter:verible-verilog-format",
+        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
+        "//verilog/tools/lint:verible-verilog-lint",
+        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
+        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
+        "//verilog/tools/project:verible-verilog-project",
+        "//verilog/tools/syntax:verible-verilog-syntax",
+    ],
+    # TODO: is there a way to essentially specify //... so that all tests
+    # are included as well ?
 )
