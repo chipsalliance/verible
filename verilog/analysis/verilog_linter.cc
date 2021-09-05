@@ -575,12 +575,16 @@ void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
         << (d.dv_topic.empty() ? verible::GetStyleGuideCitation(d.topic)
                                : verible::GetVerificationCitation(d.dv_topic))
         << ".\n\n";
-    if (!d.param.empty())
+
+    if (!d.param.empty()) {
       *os << "##### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
-    for (const auto& p : d.param) {
-      *os << "  * `" << p.name << "` Default: `" << p.default_value << "` "
-          << p.description << "\n";
+      for (const auto& p : d.param) {
+        *os << "  * `" << p.name << "` Default: `" << p.default_value << "` "
+            << p.description << "\n";
+      }
+      *os << "\n";
     }
+
     *os << "Enabled by default: " << std::boolalpha
         << rule.second.default_enabled << "\n\n";
   }
