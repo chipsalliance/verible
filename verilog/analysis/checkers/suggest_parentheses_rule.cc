@@ -25,7 +25,6 @@ namespace analysis {
 VERILOG_REGISTER_LINT_RULE(SuggestParenthesesRule);
 
 using verible::AutoFix;
-using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;

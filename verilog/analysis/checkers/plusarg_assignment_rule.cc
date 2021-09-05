@@ -33,7 +33,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetStyleGuideCitation;
 using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);

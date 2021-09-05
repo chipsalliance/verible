@@ -35,7 +35,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetVerificationCitation;
 using verible::container::FindWithDefault;
 using verible::matcher::Matcher;
 

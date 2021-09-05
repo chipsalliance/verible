@@ -32,7 +32,6 @@ namespace verilog {
 namespace analysis {
 
 using verible::AutoFix;
-using verible::GetVerificationCitation;
 using verible::LintViolation;
 
 // Register UvmMacroSemicolonRule

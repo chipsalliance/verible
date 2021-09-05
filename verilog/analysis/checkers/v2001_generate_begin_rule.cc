@@ -33,7 +33,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetStyleGuideCitation;
 using verible::LintViolation;
 using verible::matcher::Matcher;
 

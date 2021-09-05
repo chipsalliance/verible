@@ -40,7 +40,6 @@ namespace analysis {
 
 VERILOG_REGISTER_LINT_RULE(SignalNameStyleRule);
 
-using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;

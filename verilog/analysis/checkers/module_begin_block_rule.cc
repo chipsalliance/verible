@@ -30,7 +30,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetStyleGuideCitation;
 using verible::matcher::Matcher;
 
 // Register the lint rule

@@ -34,7 +34,6 @@ namespace verilog {
 namespace analysis {
 
 using verible::AutoFix;
-using verible::GetStyleGuideCitation;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::TokenInfo;
