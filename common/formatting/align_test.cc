@@ -1324,5 +1324,76 @@ TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
             "( eleven nineteen-ninety-nine 2k    )\n");
 }
 
+template <class Tree>
+struct ColumnsTreeFormatterTestCase {
+  Tree input;
+  absl::string_view expected;
+};
+
+TEST(ColumnsTreeFormatter, ColumnPositionTreePrinter) {
+  using T = ColumnPositionTree;
+  using V = ColumnPositionEntry;
+  static const TokenInfo kFooToken(1, "foo");
+
+  static const ColumnsTreeFormatterTestCase<T> kTestCases[] = {
+      {
+          T(V{{}, kFooToken, FlushLeft}),
+          "",
+      },
+      {
+          T(V{{0, 1, 2}, kFooToken, FlushRight}),
+          "",
+      },
+      {
+          T(V{{}, kFooToken, FlushLeft},       //
+            T(V{{0}, kFooToken, FlushLeft}),   //
+            T(V{{1}, kFooToken, FlushRight}),  //
+            T(V{{42}, kFooToken, FlushLeft})),
+          "| < 0 < | > 1 > | < 42 < |\n",
+      },
+      {
+          T(V{{}, kFooToken, FlushLeft},                    //
+            T(V{{0}, kFooToken, FlushLeft}),                //
+            T(V{{1}, kFooToken, FlushRight},                //
+              T(V{{1, 2}, kFooToken, FlushLeft}),           //
+              T(V{{1, 1}, kFooToken, FlushLeft}),           //
+              T(V{{1, 3, 3}, kFooToken, FlushLeft},         //
+                T(V{{1, 3, 3, 1}, kFooToken, FlushLeft})),  //
+              T(V{{2, 4, 2}, kFooToken, FlushRight}))),
+          "| < 0 < | >>>>>>>>>>>>>>>>> 1 >>>>>>>>>>>>>>>>>> |\n"
+          "        | < .2 < | < .1 < | < .3.3 < | > 2.4.2 > |\n"
+          "                          | << .1 << |\n",
+      },
+      {
+          T(V{{}, kFooToken, FlushLeft},             //
+            T(V{{0}, kFooToken, FlushLeft}),         //
+            T(V{{1}, kFooToken, FlushLeft}),         //
+            T(V{{42}, kFooToken, FlushLeft},         //
+              T(V{{3, 4, 5}, kFooToken, FlushLeft},  // not a subpath
+                T(V{{8}, kFooToken, FlushRight}))),  // not a subpath
+            T(V{{2}, kFooToken, FlushLeft})),
+          "| < 0 < | < 1 < | << 42 <<< | < 2 < |\n"
+          "                | < 3.4.5 < |\n"
+          "                | >>> 8 >>> |\n",
+      },
+      {
+          T(V{{}, kFooToken, FlushLeft},            //
+            T(V{{0}, kFooToken, FlushLeft},         //
+              T(V{{0, 0}, kFooToken, FlushLeft})),  //
+            T(V{{1}, kFooToken, FlushRight}),       //
+            T(V{{2}, kFooToken, FlushLeft},         //
+              T(V{{2, 0}, kFooToken, FlushLeft}))),
+          "| < 0 << | > 1 > | < 2 << |\n"
+          "| < .0 < |       | < .0 < |\n",
+      },
+  };
+
+  for (const auto& test_case : kTestCases) {
+    std::ostringstream stream;
+    stream << test_case.input;
+    EXPECT_EQ(stream.str(), test_case.expected);
+  }
+}
+
 }  // namespace
 }  // namespace verible
