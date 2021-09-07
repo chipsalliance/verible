@@ -62,7 +62,7 @@ jobs:
         sudo apt-get install clang-tidy
         clang-tidy --version
 
-    - name: Run clang tidy (Check output)
+    - name: Run clang tidy
       run: ./.github/bin/run-clang-tidy.sh
 
 
