@@ -73,9 +73,7 @@ class ParserParam {
   // Returns the maximum allocated size of parser stacks or 0
   // if ResizeStacks() was never called.
   // This is useful to determine a reasonable default parser stack size.
-  long MaxUsedStackSize() const {  // NOLINT
-    return max_used_stack_size_;
-  }
+  size_t MaxUsedStackSize() const { return max_used_stack_size_; }
 
   const ConcreteSyntaxTree& Root() const { return root_; }
 
@@ -101,7 +99,7 @@ class ParserParam {
   // Overflow storage for parser's internal symbol and value stack.
   StateStack state_stack_;
   ValueStack value_stack_;
-  int64_t max_used_stack_size_;
+  size_t max_used_stack_size_;
 
   ParserParam(const ParserParam&) = delete;
   ParserParam& operator=(const ParserParam&) = delete;

@@ -54,7 +54,9 @@ class StringSpliterator {
   StringSpliterator& operator=(StringSpliterator&&) = default;
 
   // Returns true if there is at least one result to come.
-  operator bool() const { return !end_; }  // NOLINT
+  operator bool() const {  // NOLINT(google-explicit-constructor)
+    return !end_;
+  }
 
   // Returns the substring up to the next occurrence of the delimiter,
   // and advances internal state to point to text after the delimiter.

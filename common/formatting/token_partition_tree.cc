@@ -420,14 +420,18 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
 //
 // TokenPartitionTree class wrapper used by AppendFittingSubpartitions and
 // ReshapeFittingSubpartitions for partition reshaping purposes.
+// These wrappers take single-argument constructors to implicitly convert
+// to this wrapper.
 //
 class TokenPartitionTreeWrapper {
  public:
-  TokenPartitionTreeWrapper(const TokenPartitionTree& node)  // NOLINT
+  /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
+      const TokenPartitionTree& node)
       : node_(&node) {}
 
   // Grouping node with no corresponding TokenPartitionTree node
-  TokenPartitionTreeWrapper(const UnwrappedLine& unwrapped_line)  // NOLINT
+  /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
+      const UnwrappedLine& unwrapped_line)
       : node_(nullptr) {
     unwrapped_line_ =
         std::unique_ptr<UnwrappedLine>(new UnwrappedLine(unwrapped_line));
