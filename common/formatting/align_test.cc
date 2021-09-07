@@ -976,7 +976,8 @@ TEST_F(InferAmbiguousAlignIntentTest, DifferenceSufficientlySmall) {
             "threeeee    four\n");
 }
 
-// Creates columns tree with the same layout as the syntax tree
+// Creates columns tree with the same layout as the syntax tree.
+// Columns created for tokens ',' have `contains_delimiter` set.
 template <const AlignmentColumnProperties& props>
 class SyntaxTreeColumnizer : public ColumnSchemaScanner {
  public:
@@ -994,10 +995,13 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
     ColumnSchemaScanner::Visit(node);
   }
   void Visit(const SyntaxTreeLeaf& leaf) override {
+    AlignmentColumnProperties local_props = props;
+    if (leaf.get().text() == ",") local_props.contains_delimiter = true;
+
     if (!current_column_)
-      ReserveNewColumn(leaf, props);
+      ReserveNewColumn(leaf, local_props);
     else
-      ReserveNewColumn(current_column_, leaf, props);
+      ReserveNewColumn(current_column_, leaf, local_props);
   }
 
  private:
@@ -1322,6 +1326,28 @@ TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
             "( four   ( five     six )     seven )\n"
             "( eight  ( ( nine ) ten )           )\n"
             "( eleven nineteen-ninety-nine 2k    )\n");
+}
+
+class SubcolumnsTreeWithDelimitersTest : public SubcolumnsTreeAlignmentTest {
+ public:
+  SubcolumnsTreeWithDelimitersTest(absl::string_view text =
+                                       "( One Two , )\n"
+                                       "( Three Four )\n"
+                                       "\n"
+                                       "( Seven Eight , )\n"
+                                       "( Five Six )\n")
+      : SubcolumnsTreeAlignmentTest(text) {}
+};
+
+TEST_F(SubcolumnsTreeWithDelimitersTest, ContainsDelimiterTest) {
+  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
+                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+
+  EXPECT_EQ(Render(),  //
+            "(One  Two,)\n"
+            "(ThreeFour)\n"
+            "(SevenEight,)\n"
+            "(Five Six   )\n");
 }
 
 template <class Tree>
