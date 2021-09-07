@@ -40,6 +40,8 @@ find . -name "*.cc" -and -not -name "*test*.cc" \
 
 cat ${TIDY_OUT}
 
-# For now, we always exit succesfully, but once we're tidy clean, consider
-# exiting with failure if there is something in the file.
+if [ -s ${TIDY_OUT} ]; then
+   echo "There were clang-tidy warnings. Please fix"
+   exit 1
+fi
 exit 0
