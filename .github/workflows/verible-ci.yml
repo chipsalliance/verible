@@ -36,7 +36,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt-get install clang-format
+        sudo apt -qq -y install clang-format
         clang-format --version
 
     - name: Run formatting style check
@@ -59,7 +59,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt-get install clang-tidy
+        sudo apt -qq -y install clang-tidy
         clang-tidy --version
 
     - name: Run clang tidy
