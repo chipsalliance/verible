@@ -79,8 +79,8 @@ const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node,
 }
 // Mutable variant.
 template <typename E>
-SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node,
-                              E expected_node_enum) {  // NOLINT
+SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node,  // NOLINT
+                              E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
   CHECK_EQ(E(node.Tag().tag), expected_node_enum);
   return node;

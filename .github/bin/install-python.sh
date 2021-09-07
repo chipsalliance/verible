@@ -15,16 +15,15 @@
 
 # Latest Python version in Xenial is 3.5. `verible_verilog_syntax.py` test
 # requires at least 3.6.
-echo 'deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu xenial main' | sudo tee /etc/apt/sources.list.d/deadsnakes.list
+echo 'deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic main' | sudo tee /etc/apt/sources.list.d/deadsnakes.list
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776
 
 sudo apt update
 sudo apt install -y \
     curl \
-    python3.9 \
+    python3.9 libpython3.9-stdlib \
     python3.9-distutils
 
 sudo ln -sf /usr/bin/python3.9 /usr/bin/python3
 
 python3 --version
-
