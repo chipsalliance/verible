@@ -281,8 +281,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // This overload enters 'scope' for the duration of the call.
   // New declared symbols will belong to that scope.
-  void Descend(const SyntaxTreeNode& node, SymbolTableNode& scope) {
-    const ValueSaver<SymbolTableNode*> save_scope(&current_scope_, &scope);
+  void Descend(const SyntaxTreeNode& node, SymbolTableNode* scope) {
+    const ValueSaver<SymbolTableNode*> save_scope(&current_scope_, scope);
     Descend(node);
   }
 
@@ -295,7 +295,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // the destructor.
   class CaptureDependentReference {
    public:
-    CaptureDependentReference(Builder* builder)
+    explicit CaptureDependentReference(Builder* builder)
         : builder_(builder),
           saved_branch_point_(builder_->reference_branch_point_) {
       // Push stack space to capture references.
@@ -445,7 +445,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // Type declarations (typedefs) create named alias elsewhere.
     const absl::string_view anon_name =
         current_scope_->Value().CreateAnonymousScope("struct");
-    SymbolTableNode& new_struct = DeclareScopedElementAndDescend(
+    SymbolTableNode* new_struct = DeclareScopedElementAndDescend(
         struct_type, anon_name, SymbolMetaType::kStruct);
 
     // Create a self-reference to this struct type so that it can be linked
@@ -455,7 +455,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
         .ref_type = ReferenceType::kImmediate,
         .required_metatype = SymbolMetaType::kStruct,
         // pre-resolve this symbol immediately
-        .resolved_symbol = &new_struct,
+        .resolved_symbol = new_struct,
     };
 
     const CaptureDependentReference capture(this);
@@ -470,7 +470,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     CHECK(enum_type.MatchesTag(NodeEnum::kEnumType));
     const absl::string_view anon_name =
         current_scope_->Value().CreateAnonymousScope("enum");
-    SymbolTableNode& new_enum = DeclareScopedElementAndDescend(
+    SymbolTableNode* new_enum = DeclareScopedElementAndDescend(
         enum_type, anon_name, SymbolMetaType::kEnumType);
 
     const ReferenceComponent anon_type_ref{
@@ -478,7 +478,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
         .ref_type = ReferenceType::kImmediate,
         .required_metatype = SymbolMetaType::kEnumType,
         // pre-resolve this symbol immediately
-        .resolved_symbol = &new_enum,
+        .resolved_symbol = new_enum,
     };
 
     const CaptureDependentReference capture(this);
@@ -489,7 +489,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     // Iterate over enumeration constants
-    for (const auto& itr : new_enum) {
+    for (const auto& itr : *new_enum) {
       const auto enum_constant_name = itr.first;
       const auto& symbol = itr.second;
       const auto& syntax_origin =
@@ -611,7 +611,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                 {NodeEnum::kTaskDeclaration, NodeEnum::kTaskPrototype});
           });
       if (decl_syntax == nullptr) return;
-      SymbolTableNode* declared_task = &EmplaceElementInCurrentScope(
+      SymbolTableNode* declared_task = EmplaceElementInCurrentScope(
           *decl_syntax, text, SymbolMetaType::kTask);
       // After this point, we've registered the new task,
       // so we can switch context over to the newly declared function
@@ -856,7 +856,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Creates a named element in the current scope.
   // Suitable for SystemVerilog language elements: functions, tasks, packages,
   // classes, modules, etc...
-  SymbolTableNode& EmplaceElementInCurrentScope(const verible::Symbol& element,
+  SymbolTableNode* EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
                                                 SymbolMetaType metatype) {
     const auto p =
@@ -868,7 +868,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name);
     }
-    return p.first->second;  // scope of the new (or pre-existing symbol)
+    return &p.first->second;  // scope of the new (or pre-existing symbol)
   }
 
   // Creates a named typed element in the current scope.
@@ -899,11 +899,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Creates a named element in the current scope, and traverses its subtree
   // inside the new element's scope.
   // Returns the new scope.
-  SymbolTableNode& DeclareScopedElementAndDescend(const SyntaxTreeNode& element,
+  SymbolTableNode* DeclareScopedElementAndDescend(const SyntaxTreeNode& element,
                                                   absl::string_view name,
                                                   SymbolMetaType type) {
-    SymbolTableNode& enter_scope(
-        EmplaceElementInCurrentScope(element, name, type));
+    SymbolTableNode* enter_scope =
+        EmplaceElementInCurrentScope(element, name, type);
     Descend(element, enter_scope);
     return enter_scope;
   }
@@ -1532,14 +1532,14 @@ static absl::Status DiagnoseUnqualifiedSymbolResolutionFailure(
                                           ContextFullPath(context), "."));
 }
 
-static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode& node,
+static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode* node,
                                                const SymbolTableNode& context) {
-  ReferenceComponent& component(node.Value());
+  ReferenceComponent& component(node->Value());
   VLOG(2) << __FUNCTION__ << ": " << component;
   // If already resolved, skip.
   if (component.resolved_symbol != nullptr) return;  // already bound
   const absl::string_view key(component.identifier);
-  CHECK(node.Parent() == nullptr);  // is root
+  CHECK(node->Parent() == nullptr);  // is root
   // root node: lookup this symbol from its context upward
   CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
 
@@ -1551,11 +1551,11 @@ static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode& node,
   }
 }
 
-static void ResolveUnqualifiedName(ReferenceComponent& component,
+static void ResolveUnqualifiedName(ReferenceComponent* component,
                                    const SymbolTableNode& context,
                                    std::vector<absl::Status>* diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
-  const absl::string_view key(component.identifier);
+  const absl::string_view key(component->identifier);
   // Find the first symbol whose name matches, without regard to its metatype.
   const SymbolTableNode* resolved = LookupSymbolUpwards(context, key);
   if (resolved == nullptr) {
@@ -1564,7 +1564,7 @@ static void ResolveUnqualifiedName(ReferenceComponent& component,
     return;
   }
 
-  const auto resolve_status = component.ResolveSymbol(*resolved);
+  const auto resolve_status = component->ResolveSymbol(*resolved);
   if (!resolve_status.ok()) {
     diagnostics->push_back(resolve_status);
   }
@@ -1573,11 +1573,11 @@ static void ResolveUnqualifiedName(ReferenceComponent& component,
 
 // Search this scope directly for a symbol, without any upward/inheritance
 // lookups.
-static void ResolveImmediateMember(ReferenceComponent& component,
+static void ResolveImmediateMember(ReferenceComponent* component,
                                    const SymbolTableNode& context,
                                    std::vector<absl::Status>* diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
-  const absl::string_view key(component.identifier);
+  const absl::string_view key(component->identifier);
   const auto found = context.Find(key);
   if (found == context.end()) {
     diagnostics->emplace_back(
@@ -1586,14 +1586,14 @@ static void ResolveImmediateMember(ReferenceComponent& component,
   }
 
   const SymbolTableNode& found_symbol = found->second;
-  const auto resolve_status = component.ResolveSymbol(found_symbol);
+  const auto resolve_status = component->ResolveSymbol(found_symbol);
   if (!resolve_status.ok()) {
     diagnostics->push_back(resolve_status);
   }
   VLOG(2) << "end of " << __FUNCTION__;
 }
 
-static void ResolveDirectMember(ReferenceComponent& component,
+static void ResolveDirectMember(ReferenceComponent* component,
                                 const SymbolTableNode& context,
                                 std::vector<absl::Status>* diagnostics) {
   VLOG(2) << __FUNCTION__ << ": " << component;
@@ -1609,7 +1609,7 @@ static void ResolveDirectMember(ReferenceComponent& component,
     return;
   }
 
-  const absl::string_view key(component.identifier);
+  const absl::string_view key(component->identifier);
   const auto* found =
       LookupSymbolThroughInheritedScopes(*canonical_context, key);
   if (found == nullptr) {
@@ -1619,7 +1619,7 @@ static void ResolveDirectMember(ReferenceComponent& component,
   }
 
   const SymbolTableNode& found_symbol = *found;
-  const auto resolve_status = component.ResolveSymbol(found_symbol);
+  const auto resolve_status = component->ResolveSymbol(found_symbol);
   if (!resolve_status.ok()) {
     diagnostics->push_back(resolve_status);
   }
@@ -1631,37 +1631,37 @@ static void ResolveDirectMember(ReferenceComponent& component,
 // resolve children references (guaranteed by calling this in a pre-order
 // traversal).
 static void ResolveReferenceComponentNode(
-    ReferenceComponentNode& node, const SymbolTableNode& context,
+    ReferenceComponentNode* node, const SymbolTableNode& context,
     std::vector<absl::Status>* diagnostics) {
-  ReferenceComponent& component(node.Value());
+  ReferenceComponent& component(node->Value());
   VLOG(2) << __FUNCTION__ << ": " << component;
   if (component.resolved_symbol != nullptr) return;  // already bound
 
   switch (component.ref_type) {
     case ReferenceType::kUnqualified: {
       // root node: lookup this symbol from its context upward
-      CHECK(node.Parent() == nullptr);
-      ResolveUnqualifiedName(component, context, diagnostics);
+      CHECK(node->Parent() == nullptr);
+      ResolveUnqualifiedName(&component, context, diagnostics);
       break;
     }
     case ReferenceType::kImmediate: {
-      ResolveImmediateMember(component, context, diagnostics);
+      ResolveImmediateMember(&component, context, diagnostics);
       break;
     }
     case ReferenceType::kDirectMember: {
       // Use parent's scope (if resolved successfully) to resolve this node.
-      const ReferenceComponent& parent_component(node.Parent()->Value());
+      const ReferenceComponent& parent_component(node->Parent()->Value());
 
       const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
       if (parent_scope == nullptr) return;  // leave this subtree unresolved
 
-      ResolveDirectMember(component, *parent_scope, diagnostics);
+      ResolveDirectMember(&component, *parent_scope, diagnostics);
       break;
     }
     case ReferenceType::kMemberOfTypeOfParent: {
       // Use parent's type's scope (if resolved successfully) to resolve this
       // node. Get the type of the object from the parent component.
-      const ReferenceComponent& parent_component(node.Parent()->Value());
+      const ReferenceComponent& parent_component(node->Parent()->Value());
       const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
       if (parent_scope == nullptr) return;  // leave this subtree unresolved
 
@@ -1671,7 +1671,7 @@ static void ResolveReferenceComponentNode(
       if (type_info.user_defined_type == nullptr) {
         diagnostics->push_back(absl::InvalidArgumentError(
             absl::StrCat("Type of parent reference ",
-                         ReferenceNodeFullPathString(*node.Parent()), " (",
+                         ReferenceNodeFullPathString(*node->Parent()), " (",
                          verible::StringSpanOfSymbol(*type_info.syntax_origin),
                          ") does not have any members.")));
         return;
@@ -1684,7 +1684,7 @@ static void ResolveReferenceComponentNode(
           type_info.user_defined_type->Value().resolved_symbol;
       if (type_scope == nullptr) return;
 
-      ResolveDirectMember(component, *type_scope, diagnostics);
+      ResolveDirectMember(&component, *type_scope, diagnostics);
       break;
     }
   }
@@ -1709,7 +1709,7 @@ void DependentReferences::Resolve(const SymbolTableNode& context,
   // hence a pre-order traversal.
   components->ApplyPreOrder(
       [&context, diagnostics](ReferenceComponentNode& node) {
-        ResolveReferenceComponentNode(node, context, diagnostics);
+        ResolveReferenceComponentNode(&node, context, diagnostics);
         // TODO: minor optimization, when resolution for a node fails,
         // skip checking that node's subtree; early terminate.
       });
@@ -1719,7 +1719,7 @@ void DependentReferences::Resolve(const SymbolTableNode& context,
 void DependentReferences::ResolveLocally(const SymbolTableNode& context) {
   if (components == nullptr) return;
   // Only attempt to resolve the reference root, and none of its subtrees.
-  ResolveReferenceComponentNodeLocal(*components, context);
+  ResolveReferenceComponentNodeLocal(components.get(), context);
 }
 
 absl::StatusOr<SymbolTableNode*> DependentReferences::ResolveOnlyBaseLocally(

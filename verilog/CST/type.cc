@@ -33,7 +33,7 @@ using verible::Symbol;
 using verible::SymbolPtr;
 using verible::SyntaxTreeNode;
 
-static SymbolPtr ReinterpretReferenceAsType(Symbol& reference) {
+static SymbolPtr ReinterpretReferenceAsType(Symbol& reference) {  // NOLINT
   SyntaxTreeNode& local_root(verible::GetSubtreeAsNode(
       reference, NodeEnum::kReference, 0, NodeEnum::kLocalRoot));
   auto& children(local_root.mutable_children());

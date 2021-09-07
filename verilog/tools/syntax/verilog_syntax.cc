@@ -162,7 +162,7 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
 }
 
 static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
-                          Json::Value& json) {
+                          Json::Value* json_out) {
   int exit_status = 0;
   const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -184,7 +184,7 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         if (error_limit != 0 && error_count >= error_limit) break;
       }
     } else {
-      Json::Value& errors = json["errors"] =
+      Json::Value& errors = (*json_out)["errors"] =
           verilog::GetLinterTokenErrorsAsJson(analyzer.get());
       if (error_limit > 0 && errors.size() > unsigned(error_limit)) {
         errors.resize(error_limit);
@@ -214,7 +214,7 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         t->ToStream(std::cout, context) << std::endl;
       }
     } else {
-      Json::Value& tokens = json["tokens"] = Json::arrayValue;
+      Json::Value& tokens = (*json_out)["tokens"] = Json::arrayValue;
       const auto& token_stream = analyzer->Data().GetTokenStreamView();
       tokens.resize(token_stream.size());
       Json::ArrayIndex token_index = 0;
@@ -234,7 +234,7 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         t.ToStream(std::cout, context) << std::endl;
       }
     } else {
-      Json::Value& tokens = json["rawtokens"] = Json::arrayValue;
+      Json::Value& tokens = (*json_out)["rawtokens"] = Json::arrayValue;
       const auto& token_stream = analyzer->Data().TokenStream();
       tokens.resize(token_stream.size());
       Json::ArrayIndex token_index = 0;
@@ -259,7 +259,7 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
       verilog::PrettyPrintVerilogTree(*syntax_tree, analyzer->Data().Contents(),
                                       &std::cout);
     } else {
-      json["tree"] = verilog::ConvertVerilogTreeToJson(
+      (*json_out)["tree"] = verilog::ConvertVerilogTreeToJson(
           *syntax_tree, analyzer->Data().Contents());
     }
   }
@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
     }
 
     Json::Value file_json;
-    int file_status = AnalyzeOneFile(content, filename, file_json);
+    int file_status = AnalyzeOneFile(content, filename, &file_json);
     exit_status = std::max(exit_status, file_status);
     if (absl::GetFlag(FLAGS_export_json)) {
       json[filename] = std::move(file_json);

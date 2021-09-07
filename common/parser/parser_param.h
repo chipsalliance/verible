@@ -73,7 +73,7 @@ class ParserParam {
   // Returns the maximum allocated size of parser stacks or 0
   // if ResizeStacks() was never called.
   // This is useful to determine a reasonable default parser stack size.
-  long MaxUsedStackSize() const {  // NOLINT(runtime/int)
+  long MaxUsedStackSize() const {  // NOLINT
     return max_used_stack_size_;
   }
 

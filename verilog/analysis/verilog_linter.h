@@ -138,7 +138,7 @@ absl::Status AppendLinterConfigurationFromFile(
 // messages.
 class ViolationPrinter : public ViolationHandler {
  public:
-  ViolationPrinter(std::ostream* stream)
+  explicit ViolationPrinter(std::ostream* stream)
       : stream_(stream), formatter_(nullptr) {}
 
   void HandleViolations(const std::set<LintViolationWithStatus>& violations,
@@ -185,9 +185,9 @@ class ViolationFixer : public ViolationHandler {
   using AnswerChooser = std::function<AnswerChoice(
       const verible::LintViolation&, absl::string_view)>;
 
-  ViolationFixer(std::ostream* message_stream,
-                 std::ostream* patch_stream = nullptr,
-                 AnswerChooser answer_chooser = InteractiveAnswerChooser)
+  explicit ViolationFixer(
+      std::ostream* message_stream, std::ostream* patch_stream = nullptr,
+      AnswerChooser answer_chooser = InteractiveAnswerChooser)
       : message_stream_(message_stream),
         patch_stream_(patch_stream),
         ultimate_answer_(AnswerChoice::kUnknown),

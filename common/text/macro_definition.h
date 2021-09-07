@@ -46,8 +46,8 @@ struct DefaultTokenInfo : public TokenInfo {
 
 // Macro formal parameter specification: name with optional default.
 struct MacroParameterInfo {
-  MacroParameterInfo(const TokenInfo& n = TokenInfo::EOFToken(),
-                     const TokenInfo& d = TokenInfo::EOFToken())
+  explicit MacroParameterInfo(const TokenInfo& n = TokenInfo::EOFToken(),
+                              const TokenInfo& d = TokenInfo::EOFToken())
       : name(n), default_value(d) {}
 
   // Name of macro parameter.

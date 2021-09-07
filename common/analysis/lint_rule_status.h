@@ -80,7 +80,7 @@ class AutoFix {
   AutoFix(const std::string& description, ReplacementEdit edit)
       : AutoFix(description, {edit}) {}
 
-  AutoFix(ReplacementEdit edit) : AutoFix({edit}) {}
+  explicit AutoFix(ReplacementEdit edit) : AutoFix({edit}) {}
 
   // Applies the fix on a `base` and returns modified text.
   std::string Apply(const absl::string_view base) const;

@@ -165,7 +165,7 @@ class TagMatchBuilder {
 class DynamicTagMatchBuilder {
  public:
   // tag is a combination of {node,leaf} and enumeration.
-  DynamicTagMatchBuilder(SymbolTag tag) : tag_(tag) {}
+  explicit DynamicTagMatchBuilder(SymbolTag tag) : tag_(tag) {}
 
   template <typename... Args>
   BindableMatcher operator()(Args... args) const {
