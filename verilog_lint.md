@@ -83,6 +83,7 @@ Checks that blocking assignments are, at most, targeting locals in sequential lo
 ##### Parameters
   * `catch_modifying_assignments` Default: `false` 
   * `waive_for_locals` Default: `false` 
+
 Enabled by default: true
 
 ### banned-declared-name-patterns
@@ -135,6 +136,7 @@ Checks that every `parameter` and `localparam` is declared with an explicit stor
 
 ##### Parameter
   * `exempt_type` Default: `` Set to `string` to exempt string types
+
 Enabled by default: true
 
 ### explicit-task-lifetime
@@ -197,6 +199,7 @@ Checks that all lines do not exceed the maximum allowed length.  See [Style: lin
 
 ##### Parameter
   * `length` Default: `100` Desired line length
+
 Enabled by default: true
 
 ### macro-name-style
@@ -224,6 +227,7 @@ If a module is declared, checks that at least one module matches the first dot-d
 
 ##### Parameter
   * `allow-dash-for-underscore` Default: `false` Allow dashes in the filename where there are dashes in the module name
+
 Enabled by default: true
 
 ### module-parameter
@@ -261,6 +265,7 @@ Checks that the package name matches the filename. Depending on configuration, i
 
 ##### Parameter
   * `allow-dash-for-underscore` Default: `false` Allow dashes in the filename corresponding to the underscores in the package
+
 Enabled by default: true
 
 ### packed-dimensions-range-ordering
@@ -274,6 +279,7 @@ Checks that non-type parameter and localparam names follow at least one of the n
 ##### Parameters
   * `localparam_style` Default: `CamelCase` Style of localparam name
   * `parameter_style` Default: `CamelCase|ALL_CAPS` Style of parameter names
+
 Enabled by default: true
 
 ### parameter-type-name-style
@@ -316,6 +322,7 @@ Checks that `struct` and `union` names use lower_snake_case naming convention an
 
 ##### Parameter
   * `exceptions` Default: `` Comma separated list of allowed upper-case elements, such as unit-names
+
 Enabled by default: true
 
 ### suggest-parentheses
@@ -338,6 +345,7 @@ Checks that a Verilog `struct` or `union` declaration is named using `typedef`. 
 
 ##### Parameter
   * `allow_anonymous_nested` Default: `false` Allow nested structs/unions to be anonymous.
+
 Enabled by default: true
 
 ### undersized-binary-literal
@@ -347,6 +355,7 @@ Checks that the digits of binary literals for the configured bases match their d
   * `bin` Default: `true` Checking binary 'b literals.
   * `oct` Default: `false` Checking octal 'o literals.
   * `hex` Default: `false` Checking hexadecimal 'h literals.
+
 Enabled by default: true
 
 ### unpacked-dimensions-range-ordering
@@ -372,4 +381,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-09-05 13:32:32 -0700 from [c7541dd](https://github.com/google/verible/commit/c7541dd09a2cbbff8c74db08836fec326d18ff56)
+Generated on 2021-09-06 23:32:11 -0700 from [63744a9](https://github.com/google/verible/commit/63744a99ca2794e150a6190c13045e86599e9217)
