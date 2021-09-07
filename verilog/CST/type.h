@@ -94,7 +94,7 @@ const verible::Symbol* GetBaseTypeFromDataType(
 // grammar conflicts.
 // The original reference_call_base pointer is consumed in the process.
 verible::SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
-    verible::SymbolPtr& reference_call_base);
+    verible::SymbolPtr& reference_call_base);  // NOLINT
 
 // Finds all node kDataType declarations. Used for testing the functions below.
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(

@@ -63,7 +63,8 @@ using ConcreteSyntaxTree = SymbolPtr;
 // This takes over ownership of the symbol pointer.
 //    $$ = MakeNode($1, $2, ForwardChildren($3), $4);
 struct ForwardChildren {
-  explicit ForwardChildren(SymbolPtr& symbol) : node(std::move(symbol)) {}
+  explicit ForwardChildren(SymbolPtr& symbol)  // NOLINT
+      : node(std::move(symbol)) {}
   SymbolPtr node;
 };
 

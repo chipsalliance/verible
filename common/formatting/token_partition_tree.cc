@@ -420,13 +420,18 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
 //
 // TokenPartitionTree class wrapper used by AppendFittingSubpartitions and
 // ReshapeFittingSubpartitions for partition reshaping purposes.
+// These wrappers take single-argument constructors to implicitly convert
+// to this wrapper.
 //
 class TokenPartitionTreeWrapper {
  public:
-  TokenPartitionTreeWrapper(const TokenPartitionTree& node) : node_(&node) {}
+  /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
+      const TokenPartitionTree& node)
+      : node_(&node) {}
 
   // Grouping node with no corresponding TokenPartitionTree node
-  TokenPartitionTreeWrapper(const UnwrappedLine& unwrapped_line)
+  /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
+      const UnwrappedLine& unwrapped_line)
       : node_(nullptr) {
     unwrapped_line_ =
         std::unique_ptr<UnwrappedLine>(new UnwrappedLine(unwrapped_line));
@@ -535,7 +540,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   // Create first partition group
   // and populate it with function name (e.g. { [function foo (] })
   auto* group = fitted_partitions->NewChild(header.Value());
-  auto* child = group->NewChild(header);
+  group->NewChild(header);
 
   int indent;
 
@@ -558,7 +563,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     indent = FitsOnLine(uwline, style).final_column;
 
     // Append first argument to current group
-    child = group->NewChild(subpartitions.front());
+    auto* child = group->NewChild(subpartitions.front());
     group->Value().Update(child);
     // keep group indentation
 
@@ -572,7 +577,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     indent = first_arg.Value().IndentationSpaces();
     // wrap line
     group = group->NewSibling(first_arg.Value());  // start new group
-    child = group->NewChild(first_arg);  // append not fitting 1st argument
+    group->NewChild(first_arg);  // append not fitting 1st argument
     group->Value().SetIndentationSpaces(indent);
 
     // Measure first wrapped line
@@ -597,7 +602,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
       fit_result = FitsOnLine(uwline, style);
       if (fit_result.fits) {
         // Fits, appending child
-        child = group->NewChild(arg);
+        auto* child = group->NewChild(arg);
         group->Value().Update(child);
         longest_line_len = std::max(longest_line_len, fit_result.final_column);
         continue;
@@ -606,7 +611,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 
     // Forced one per line or does not fit, start new group with current child
     group = group->NewSibling(arg.Value());
-    child = group->NewChild(arg);
+    group->NewChild(arg);
     // no need to update because group was created
     // with current child value
 
@@ -619,10 +624,10 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   if (trailer) {
     if (wrapped_first_subpartition) {
       group = group->NewSibling(trailer->Value());
-      child = group->NewChild(*trailer);
+      group->NewChild(*trailer);
       group->Value().SetIndentationSpaces(first_line.IndentationSpaces());
     } else {
-      child = group->NewChild(*trailer);
+      auto* child = group->NewChild(*trailer);
       group->Value().Update(child);
     }
     fit_result = FitsOnLine(group->Value().Value(), style);

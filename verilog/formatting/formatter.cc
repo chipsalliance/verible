@@ -363,7 +363,8 @@ static void DeterminePartitionExpansion(
       break;
     }
     case PartitionPolicyEnum::kTabularAlignment: {
-      if (uwline.Origin()->Tag().tag == (int)NodeEnum::kArgumentList) {
+      if (uwline.Origin()->Tag().tag ==
+          static_cast<int>(NodeEnum::kArgumentList)) {
         // Check whether the whole function call fits on one line. If possible,
         // unexpand and fit into one line. Otherwise expand argument list with
         // tabular alignment.
@@ -402,11 +403,11 @@ static void DeterminePartitionExpansion(
     case PartitionPolicyEnum::kFitOnLineElseExpand: {
       if (uwline.Origin() &&
           (uwline.Origin()->Tag().tag ==
-               (int)NodeEnum::kNetVariableAssignment ||
+               static_cast<int>(NodeEnum::kNetVariableAssignment) ||
            uwline.Origin()->Tag().tag ==
-               (int)NodeEnum::kBlockItemStatementList ||
+               static_cast<int>(NodeEnum::kBlockItemStatementList) ||
            uwline.Origin()->Tag().tag ==
-               (int)NodeEnum::kBlockingAssignmentStatement)) {
+               static_cast<int>(NodeEnum::kBlockingAssignmentStatement))) {
         // Align unnamed parameters in function call. Example:
         // always_comb begin
         //   value = function_name(8'hA, signal,

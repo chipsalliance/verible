@@ -642,7 +642,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
           Context().IsInside(NodeEnum::kNetVariableAssignment)) {
         if (any_of(node.children().begin(), node.children().end(),
                    [](const verible::SymbolPtr& p) {
-                     return p->Tag().tag == (int)NodeEnum::kParamByName;
+                     return p->Tag().tag ==
+                            static_cast<int>(NodeEnum::kParamByName);
                    })) {
           // Indentation of named arguments of functions
           VisitIndentedSection(node, style_.indentation_spaces,

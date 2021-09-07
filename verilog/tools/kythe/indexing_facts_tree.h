@@ -40,9 +40,9 @@ class Anchor {
   // conversion from std::string (and others).
   template <class T>
   struct DisableConversion {
-    /* implicit */ DisableConversion(T v) : value(v) {}
+    /* implicit */ DisableConversion(T v) : value(v) {}  // NOLINT
 
-    operator T() const { return value; }
+    operator T() const { return value; }  // NOLINT
 
     T value;
   };

@@ -138,7 +138,7 @@ static size_t GetBitWidthOfNumber(const BasedNumber& n, bool* is_lower_bound) {
       // without fully parsing the decimal number ?
       double v;
       if (absl::SimpleAtod(literal, &v) && !std::isinf(v)) {
-        return std::max(129, (int)ceil(log(v) / log(2)));
+        return std::max(129, static_cast<int>(ceil(log(v) / log(2))));
       }
 
       // Uh, more than 300-ish decimal digits ? ... rough estimation it is.

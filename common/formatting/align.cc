@@ -471,11 +471,11 @@ static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
 
 // Mark format tokens as must-append to remove future decision-making.
 static void CommitAlignmentDecisionToRow(
-    TokenPartitionTree& partition, const AlignmentRow& row,
-    MutableFormatTokenRange::iterator ftoken_base) {
+    const AlignmentRow& row, MutableFormatTokenRange::iterator ftoken_base,
+    TokenPartitionTree* partition) {
   if (!row.empty()) {
     const auto ftoken_range = ConvertToMutableFormatTokenRange(
-        partition.Value().TokensRange(), ftoken_base);
+        partition->Value().TokensRange(), ftoken_base);
     for (auto& ftoken : ftoken_range) {
       SpacingOptions& decision = ftoken.before.break_decision;
       if (decision == SpacingOptions::Undecided) {
@@ -483,7 +483,7 @@ static void CommitAlignmentDecisionToRow(
       }
     }
     // Tag every subtree as having already been committed to alignment.
-    partition.ApplyPostOrder([](TokenPartitionTree& node) {
+    partition->ApplyPostOrder([](TokenPartitionTree& node) {
       node.Value().SetPartitionPolicy(
           PartitionPolicyEnum::kSuccessfullyAligned);
     });
@@ -678,7 +678,7 @@ void AlignablePartitionGroup::ApplyAlignment(
     auto partition_iter = alignable_rows_.begin();
     for (auto& row : align_data.matrix) {
       // Commits to appending all tokens in this row (mutates format tokens)
-      CommitAlignmentDecisionToRow(**partition_iter, row, ftoken_base);
+      CommitAlignmentDecisionToRow(row, ftoken_base, &**partition_iter);
       ++partition_iter;
     }
   }

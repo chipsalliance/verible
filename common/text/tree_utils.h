@@ -49,14 +49,16 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym);
 // Returns a SyntaxTreeNode down_casted from a Symbol.
 const SyntaxTreeNode& SymbolCastToNode(const Symbol&);
 // Mutable variant.
-SyntaxTreeNode& SymbolCastToNode(Symbol&);
+SyntaxTreeNode& SymbolCastToNode(Symbol&);  // NOLINT
 
 // The following no-op overloads allow SymbolCastToNode() to work with zero
 // overhead when the argument type is statically known to be the same.
 inline const SyntaxTreeNode& SymbolCastToNode(const SyntaxTreeNode& node) {
   return node;
 }
-inline SyntaxTreeNode& SymbolCastToNode(SyntaxTreeNode& node) { return node; }
+inline SyntaxTreeNode& SymbolCastToNode(SyntaxTreeNode& node) {  // NOLINT
+  return node;
+}
 
 // Returns a SyntaxTreeLeaf down_casted from a Symbol.
 const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
@@ -77,7 +79,8 @@ const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node,
 }
 // Mutable variant.
 template <typename E>
-SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node, E expected_node_enum) {
+SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node,  // NOLINT
+                              E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
   CHECK_EQ(E(node.Tag().tag), expected_node_enum);
   return node;
