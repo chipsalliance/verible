@@ -1,0 +1,18 @@
+---
+# Disabled some clang-analyzer static checks, need some more investigation.
+# TODO(hzeller) fix and re-enable clang-analyzer checks.
+# TODO(hzeller) Enable performance-* once somewhat silent output.
+Checks: >
+  clang-diagnostic-*,clang-analyzer-*,
+  -clang-analyzer-core.NonNullParamChecker,
+  -clang-analyzer-cplusplus.NewDeleteLeaks,
+  -clang-diagnostic-unused-const-variable,
+  abseil-*,-abseil-no-namespace,
+  google-*,
+  -google-readability-braces-around-statements,
+  -google-readability-todo,
+
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+...
