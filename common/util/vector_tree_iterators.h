@@ -41,7 +41,7 @@ class VectorTreeIteratorBase {
   using reference = VectorTreeType&;
 
   VectorTreeIteratorBase() : node_(nullptr) {}
-  VectorTreeIteratorBase(pointer node) : node_(node) {}
+  explicit VectorTreeIteratorBase(pointer node) : node_(node) {}
 
   reference operator*() const {
     CHECK_NOTNULL(node_);
@@ -86,7 +86,7 @@ class VectorTreeLeavesIterator
 
  public:
   VectorTreeLeavesIterator() : base_type() {}
-  VectorTreeLeavesIterator(VectorTreeType* node)
+  explicit VectorTreeLeavesIterator(VectorTreeType* node)
       : base_type(node ? node->LeftmostDescendant() : nullptr) {}
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
@@ -120,7 +120,7 @@ class VectorTreePreOrderIterator
 
  public:
   VectorTreePreOrderIterator() : base_type() {}
-  VectorTreePreOrderIterator(VectorTreeType* node) : base_type(node) {}
+  explicit VectorTreePreOrderIterator(VectorTreeType* node) : base_type(node) {}
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
@@ -161,7 +161,8 @@ class VectorTreePostOrderIterator
 
  public:
   VectorTreePostOrderIterator() : base_type() {}
-  VectorTreePostOrderIterator(VectorTreeType* node) : base_type(node) {}
+  explicit VectorTreePostOrderIterator(VectorTreeType* node)
+      : base_type(node) {}
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
