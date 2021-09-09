@@ -372,7 +372,7 @@ static void CopyTreeStructure(
 class ColumnSchemaAggregator {
  public:
   void Collect(const ColumnPositionTree& columns) {
-    CollectColumnsTree(columns, columns_);
+    CollectColumnsTree(columns, &columns_);
   }
 
   // Sort columns by syntax tree path assigned to them and create an index that
@@ -413,26 +413,27 @@ class ColumnSchemaAggregator {
 
  private:
   void CollectColumnsTree(const ColumnPositionTree& column,
-                          VectorTree<AggregateColumnData>& aggregate_column) {
+                          VectorTree<AggregateColumnData>* aggregate_column) {
+    CHECK_NOTNULL(aggregate_column);
     for (const auto& subcolumn : column.Children()) {
       const auto [index_entry, insert] =
           syntax_to_columns_map_.try_emplace(subcolumn.Value().path);
       VectorTree<verible::AggregateColumnData>* aggregate_subcolumn;
       if (insert) {
-        aggregate_subcolumn = aggregate_column.NewChild();
+        aggregate_subcolumn = aggregate_column->NewChild();
         CHECK_NOTNULL(aggregate_subcolumn);
         // Put aggregate column node's path in created index entry
         aggregate_subcolumn->Path(index_entry->second);
       } else {
         // Fact: existing aggregate_subcolumn is a direct child of
         // aggregate_column
-        CHECK_GT(aggregate_column.Children().size(),
+        CHECK_GT(aggregate_column->Children().size(),
                  index_entry->second.back());
         aggregate_subcolumn =
-            &aggregate_column.Children()[index_entry->second.back()];
+            &aggregate_column->Children()[index_entry->second.back()];
       }
       aggregate_subcolumn->Value().Import(subcolumn.Value());
-      CollectColumnsTree(subcolumn, *aggregate_subcolumn);
+      CollectColumnsTree(subcolumn, aggregate_subcolumn);
     }
   }
 
