@@ -34,6 +34,34 @@ function strip_error() {
   sed -e 's| (syntax-error).||'
 }
 
+# Takes some json input from stdin and creates a string that has all
+# dictionaries sorted and all whitespace canonicalized.
+# Very simplistic, and output is not necessarily parseable as json, but goal
+# is to have some comparable string (will break if comma in strings)
+function json_canonicalize() {
+  local nest=()  # Stack of nested {} and [] regions.
+  local depth=-1
+  while read -n1 c ; do
+    case $c in
+      "{"|"[")  # Open next nested level
+	      nest[$((++depth))]=""
+	      ;;
+	    "}")  # Post-process dictionaries: sort by the keys for canonicalization.
+	      sorted=$(echo "${nest[${depth}]}" | tr ',' '\n' | sort | tr '\n' '%')
+	      nest[$((--depth))]+="{${sorted}}"
+	      ;;
+	    "]")  # Array sequence is kept as-is.
+	      no_comma=$(echo "${nest[${depth}]}" | tr ',' '%')
+	      nest[$((--depth))]+="[${no_comma}]"
+	      ;;
+	    *)
+	      nest[${depth}]+="$c"
+	      ;;
+    esac
+  done
+  echo ${nest[0]} | tr '%' ','
+}
+
 ################################################################################
 echo "=== Test no input args"
 
@@ -95,6 +123,35 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
   { echo "stderr differs." ; exit 1 ;}
 
 ################################################################################
+echo "=== Test reading stdin, print errors. --export_json"
+
+"$syntax_checker" --export_json - > "$MY_OUTPUT_FILE" 2>&1 <<EOF
+module 1;
+endmodule
+module 2;
+endmodule
+EOF
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+json_canonicalize > "$MY_EXPECT_FILE" <<EOF
+{"-":{
+  "errors": [
+      {"line": 0, "column": 7, "phase": "parse", "text": "1" },
+      {"line": 1, "column": 0, "phase": "parse", "text": "endmodule" },
+      {"line": 3, "column": 0, "phase": "parse", "text": "endmodule" }
+  ]}}
+EOF
+
+tr '\r\n' '\n' < $MY_OUTPUT_FILE | json_canonicalize > "${MY_OUTPUT_FILE}.1"
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "${MY_OUTPUT_FILE}.1" || \
+  { echo "stderr differs." ; exit 1 ;}
+
+################################################################################
 echo "=== Test reading stdin, with -error_limit=1"
 
 "$syntax_checker" --error_limit=1 - > "$MY_OUTPUT_FILE" 2>&1 <<EOF
@@ -146,6 +203,34 @@ EOF
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
+echo "=== Test --printtokens --export_json"
+
+"$syntax_checker" --printtokens --export_json - > "$MY_OUTPUT_FILE" <<EOF
+module mm;
+endmodule
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+json_canonicalize > "$MY_EXPECT_FILE" <<EOF
+{ "-":{
+   "tokens": [
+     {"start":  0, "end":  6,"tag": "module" },
+     {"start":  7, "end":  9,"tag": "SymbolIdentifier","text": "mm"},
+     {"start":  9, "end": 10,"tag": ";"},
+     {"start": 11, "end": 20,"tag": "endmodule"},
+     {"start": 21, "end": 21,"tag": "end of file","text": ""}
+   ]}}
+EOF
+
+tr '\r\n' '\n' < $MY_OUTPUT_FILE | json_canonicalize > "${MY_OUTPUT_FILE}.1"
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "${MY_OUTPUT_FILE}.1" || { echo "stdout differs." ; exit 1 ;}
+
+################################################################################
 echo "=== Test --printrawtokens"
 
 "$syntax_checker" --printrawtokens - > "$MY_OUTPUT_FILE" <<EOF
@@ -175,6 +260,37 @@ All lexed tokens:
 EOF
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
+
+################################################################################
+echo "=== Test --printrawtokens --export_json"
+
+"$syntax_checker" --printrawtokens --export_json - > "$MY_OUTPUT_FILE" <<EOF
+module mm;
+endmodule
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+json_canonicalize > "$MY_EXPECT_FILE" <<EOF
+{ "-": { "rawtokens":  [
+           { "start":  0, "end":  6, "tag": "module"},
+           { "start":  6, "end":  7, "tag": "TK_SPACE", "text": " "},
+           { "start":  7, "end":  9, "tag": "SymbolIdentifier", "text": "mm"},
+           { "start":  9, "end": 10, "tag": ";" },
+           { "start": 10, "end": 11, "tag": "TK_NEWLINE",  "text": "\n"},
+           { "start": 11, "end": 20, "tag": "endmodule" },
+           { "start": 20, "end": 21, "tag": "TK_NEWLINE", "text": "\n" },
+           { "start": 21, "end": 21, "tag": "end of file", "text": "" }
+         ]
+       }}
+EOF
+
+tr '\r\n' '\n' < $MY_OUTPUT_FILE | json_canonicalize > "${MY_OUTPUT_FILE}.1"
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "${MY_OUTPUT_FILE}.1" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
 echo "=== Test --printtree"
@@ -208,6 +324,53 @@ Node @0 (tag: kDescriptionList) {
 EOF
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || { echo "stdout differs." ; exit 1 ;}
+
+################################################################################
+echo "=== Test --printtree --export_json"
+
+"$syntax_checker" --printtree --export_json - > "$MY_OUTPUT_FILE" <<EOF
+module mm;
+endmodule
+EOF
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+json_canonicalize > "$MY_EXPECT_FILE" <<EOF
+{ "-": {
+"tree": {
+  "children": [
+    {
+      "children": [
+        {
+          "children": [
+            {"start": 0, "end":  6, "tag": "module" },
+            null,
+            {"start": 7, "end":  9, "tag": "SymbolIdentifier", "text": "mm" },
+            null,null,null,null,
+            {"start": 9, "end": 10,"tag": ";" }
+          ],
+          "tag": "kModuleHeader"
+        },
+        {
+          "children": [],
+          "tag": "kModuleItemList"
+        },
+        {"start": 11, "end": 20,"tag": "endmodule"},
+        null
+      ],
+      "tag": "kModuleDeclaration"
+    }
+  ],
+  "tag": "kDescriptionList"
+}}}
+EOF
+
+tr '\r\n' '\n' < $MY_OUTPUT_FILE | json_canonicalize > "${MY_OUTPUT_FILE}.1"
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "${MY_OUTPUT_FILE}.1" || { echo "stdout differs." ; exit 1 ;}
 
 ################################################################################
 echo "=== Test --verifytree"
