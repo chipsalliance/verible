@@ -60,6 +60,21 @@ We encourage you to start on any open issue by proposing test cases for
 discussion before diving into any implementation. Where applicable, also
 consider _negative_ tests. Try to keep the majority of tests small and focused.
 
+#### Running Code Coverage
+
+Code coverage is run in each pull request and tracked on [codecov].
+Tests for any new feature should exercise all possible branches;
+pull requests should strive for 100% differential coverage.
+
+To inspect coverage locally, run
+
+```
+MODE=coverage .github/bin/build-and-test.sh
+.github/bin/generate-coverage-html.sh
+```
+
+The coverage report can then be found in `coverage-html/index.html`
+
 ## Community Guidelines
 
 This project follows
@@ -68,3 +83,4 @@ This project follows
 <!-- reference links -->
 
 [google-cpp-style]: https://google.github.io/styleguide/cppguide.html
+[codecov]: https://app.codecov.io/gh/chipsalliance/verible
