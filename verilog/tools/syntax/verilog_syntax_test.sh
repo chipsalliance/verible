@@ -44,19 +44,19 @@ function json_canonicalize() {
   while read -n1 c ; do
     case $c in
       "{"|"[")  # Open next nested level
-	      nest[$((++depth))]=""
-	      ;;
-	    "}")  # Post-process dictionaries: sort by the keys for canonicalization.
-	      sorted=$(echo "${nest[${depth}]}" | tr ',' '\n' | sort | tr '\n' '%')
-	      nest[$((--depth))]+="{${sorted}}"
-	      ;;
-	    "]")  # Array sequence is kept as-is.
-	      no_comma=$(echo "${nest[${depth}]}" | tr ',' '%')
-	      nest[$((--depth))]+="[${no_comma}]"
-	      ;;
-	    *)
-	      nest[${depth}]+="$c"
-	      ;;
+        nest[$((++depth))]=""
+        ;;
+      "}")  # Post-process dictionaries: sort by the keys for canonicalization.
+        sorted=$(echo "${nest[${depth}]}" | tr ',' '\n' | sort | tr '\n' '%')
+        nest[$((--depth))]+="{${sorted}}"
+        ;;
+      "]")  # Array sequence is kept as-is.
+        no_comma=$(echo "${nest[${depth}]}" | tr ',' '%')
+        nest[$((--depth))]+="[${no_comma}]"
+        ;;
+      *)
+        nest[${depth}]+="$c"
+        ;;
     esac
   done
   echo ${nest[0]} | tr '%' ','
