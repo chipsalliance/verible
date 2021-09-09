@@ -215,9 +215,14 @@ static void ColumnsTreeFormatter(
                         [](std::size_t width, const VectorTree<Cell>& child) {
                           return width + child.Value().width;
                         });
+    // There is at least one child; each cell minimum width is equal to:
+    // CreateTextNodes::kMinCellWidth + kCellSeparator.size()
+    CHECK_GT(children_width, 0);
     if (node.Value().width > children_width) {
       auto extra_width = node.Value().width - children_width;
       for (auto& child : node.Children()) {
+        CHECK_GT(children_width, 0);
+        assert(children_width > 0);
         const auto added_child_width =
             extra_width * child.Value().width / children_width;
         extra_width -= added_child_width;
