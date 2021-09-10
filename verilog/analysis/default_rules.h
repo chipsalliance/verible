@@ -44,7 +44,7 @@ constexpr const char* kDefaultRuleSet[] = {
     "no-tabs",
     "posix-eof",
     "line-length",
-    "undersized-binary-literal",
+    "undersized-numeric-literal",
     "explicit-function-lifetime",
     "explicit-function-task-parameter-type",
     "explicit-task-lifetime",

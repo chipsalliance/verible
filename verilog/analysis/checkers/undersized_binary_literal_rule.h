@@ -38,6 +38,8 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
+  static const std::vector<LintRuleAliasDescriptor>& GetAliasDescriptors();
+
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) final;
 

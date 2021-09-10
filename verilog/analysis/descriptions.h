@@ -43,6 +43,12 @@ struct LintRuleDescriptor {
   std::vector<LintConfigParameterDescriptor> param;
 };
 
+struct LintRuleAliasDescriptor {
+  LintRuleId name;  // ID/name of the alias.
+  std::vector<std::pair<absl::string_view, absl::string_view>>
+      param_defaults;  // List of param values set by the alias
+};
+
 }  // namespace analysis
 }  // namespace verilog
 

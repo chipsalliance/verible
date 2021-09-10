@@ -53,7 +53,7 @@ VERILOG_REGISTER_LINT_RULE(UndersizedBinaryLiteralRule);
 
 const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
   static const LintRuleDescriptor d{
-      .name = "undersized-binary-literal",
+      .name = "undersized-numeric-literal",
       .topic = "number-literals",
       .desc =
           "Checks that the digits of binary literals for the configured "
@@ -70,6 +70,20 @@ const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
            "Provide autofix suggestions, e.g. "
            "32'hAB provides suggested fix 32'h000000AB."},
       }};
+  return d;
+}
+
+const std::vector<LintRuleAliasDescriptor>&
+UndersizedBinaryLiteralRule::GetAliasDescriptors() {
+  static const std::vector<LintRuleAliasDescriptor> d{
+      {
+          .name = "undersized-binary-literal",
+          .param_defaults =
+              {
+                  {"bin", "true"},
+              },
+      },
+  };
   return d;
 }
 

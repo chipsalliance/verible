@@ -553,6 +553,7 @@ absl::Status PrintRuleInfo(std::ostream* os,
   constexpr int kParamIndent = kRuleWidth + 4;
   constexpr char kFill = ' ';
 
+  rule_name = analysis::TranslateAliasIfExists(rule_name);
   const auto it = rule_map.find(rule_name);
   if (it == rule_map.end())
     return absl::NotFoundError(absl::StrCat(
@@ -571,6 +572,21 @@ absl::Status PrintRuleInfo(std::ostream* os,
       *os << std::left << std::setw(kParamIndent) << std::setfill(kFill) << " "
           << "* `" << p.name << "` Default: `" << p.default_value << "` "
           << p.description << "\n";
+    }
+  }
+
+  const auto aliases = analysis::GetLintRuleAliases(rule_name);
+  if (!aliases.empty()) {
+    *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << " "
+        << "Alias" << (aliases.size() > 1 ? "es" : "") << ":\n";
+    for (const auto& alias : aliases) {
+      const auto descr = analysis::GetLintRuleAliasDescriptor(rule_name, alias);
+      *os << std::left << std::setw(kParamIndent) << std::setfill(kFill) << " "
+          << "* `" << alias << "` sets parameters:";
+      for (const auto& param : descr.param_defaults) {
+        *os << " " << param.first << ":" << param.second << ";";
+      }
+      *os << "\n";
     }
   }
 

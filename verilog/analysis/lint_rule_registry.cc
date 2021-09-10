@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
@@ -38,6 +39,21 @@ using verible::TokenStreamLintRule;
 using verible::container::FindOrNull;
 
 namespace {
+
+absl::node_hash_map<LintRuleId, LintRuleId>* GetLintRuleAliases() {
+  // maps aliases to the original names of rules
+  static auto* aliases = new absl::node_hash_map<LintRuleId, LintRuleId>();
+  return aliases;
+}
+
+absl::node_hash_map<LintRuleId, LintAliasDescriptionsFun>*
+GetLintRuleAliasDescriptors() {
+  // maps rule name to a function that returns descriptors of its aliases
+  static auto* desc =
+      new absl::node_hash_map<LintRuleId, LintAliasDescriptionsFun>();
+  return desc;
+}
+
 // Used to export function local static pointer to avoid global variables
 template <typename RuleType>
 absl::node_hash_map<LintRuleId, LintRuleInfo<RuleType>>* GetLintRuleRegistry() {
@@ -112,11 +128,55 @@ class LintRuleRegistry {
 
 }  // namespace
 
+std::set<LintRuleId> GetLintRuleAliases(LintRuleId rule_name) {
+  std::set<LintRuleId> result;
+
+  for (auto const& alias : *GetLintRuleAliases()) {
+    if (alias.second == rule_name) result.insert(alias.first);
+  }
+  return result;
+}
+
+LintRuleAliasDescriptor GetLintRuleAliasDescriptor(LintRuleId rule_name,
+                                                   LintRuleId alias) {
+  const auto* descriptors = GetLintRuleAliasDescriptors();
+  const auto target = descriptors->find(rule_name);
+
+  CHECK(target != descriptors->end());
+  LintAliasDescriptionsFun desc_fun = target->second;
+  // desc_fun() returns a reference to a vector of descriptors of aliases
+  std::vector<LintRuleAliasDescriptor> alias_descriptors = desc_fun();
+  size_t i = 0;
+  for (; i != alias_descriptors.size(); i++) {
+    if (alias_descriptors[i].name == alias) {
+      return alias_descriptors[i];
+    }
+  }
+  LOG(FATAL) << "caller of " << __FUNCTION__
+             << "shall make sure that the alias belongs to the rule";
+  abort();
+}
+
 template <typename RuleType>
 LintRuleRegisterer<RuleType>::LintRuleRegisterer(
     const LintDescriptionFun& descriptor,
-    const LintRuleGeneratorFun<RuleType>& creator) {
+    const LintRuleGeneratorFun<RuleType>& creator,
+    const LintAliasDescriptionsFun alias_descriptors) {
   LintRuleRegistry<RuleType>::Register(descriptor, creator);
+
+  if (!alias_descriptors) return;
+
+  // map rule name with the function that returns a vector of alias descriptions
+  GetLintRuleAliasDescriptors()->insert(
+      std::pair<LintRuleId, LintAliasDescriptionsFun>(descriptor().name,
+                                                      alias_descriptors));
+
+  const std::vector<LintRuleAliasDescriptor> descrs = alias_descriptors();
+  for (auto const& descr : descrs) {
+    // map every alias of this rule to the name of the rule
+    GetLintRuleAliases()->insert(
+        std::pair<LintRuleId, LintRuleId>(descr.name, descriptor().name));
+  }
 }
 
 bool IsRegisteredLintRule(const LintRuleId& rule_name) {
@@ -178,6 +238,16 @@ std::set<LintRuleId> GetAllRegisteredLintRuleNames() {
     result.insert(name);
   }
   return result;
+}
+
+LintRuleId TranslateAliasIfExists(const LintRuleId alias) {
+  const auto* aliases = GetLintRuleAliases();
+  const auto target = aliases->find(alias);
+  if (target != aliases->end()) {
+    return target->second;
+  } else {
+    return alias;
+  }
 }
 
 LintRuleDescriptionsMap GetAllRuleDescriptions() {
