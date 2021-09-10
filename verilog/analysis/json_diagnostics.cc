@@ -20,15 +20,16 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
 #include "common/strings/line_column_map.h"
-#include "json/value.h"
 #include "verilog/analysis/verilog_analyzer.h"
+
+using nlohmann::json;
 
 namespace verilog {
 
 // Returns AnalysisPhase as JSON value.
 // Try not to change. External tools may use these values as a constant phase
 // IDs.
-static Json::Value analysis_phase_to_json(const verible::AnalysisPhase& phase) {
+static json analysis_phase_to_json(const verible::AnalysisPhase& phase) {
   switch (phase) {
     case verible::AnalysisPhase::kLexPhase:
       return "lex";
@@ -41,14 +42,14 @@ static Json::Value analysis_phase_to_json(const verible::AnalysisPhase& phase) {
   }
 }
 
-Json::Value GetLinterTokenErrorsAsJson(
-    const verilog::VerilogAnalyzer* analyzer) {
-  Json::Value syntax_errors = Json::arrayValue;
+json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer,
+                                size_t limit) {
+  json syntax_errors = json::array();
 
   const std::vector<verible::RejectedToken>& rejected_tokens =
       analyzer->GetRejectedTokens();
   for (const auto& rejected_token : rejected_tokens) {
-    Json::Value& error = syntax_errors.append(Json::objectValue);
+    json& error = syntax_errors.emplace_back(json::object());
 
     const absl::string_view base_text = analyzer->Data().Contents();
     const verible::LineColumnMap& line_column_map =
@@ -71,6 +72,7 @@ Json::Value GetLinterTokenErrorsAsJson(
     if (!rejected_token.explanation.empty()) {
       error["message"] = rejected_token.explanation;
     }
+    if (limit && --limit == 0) break;
   }
 
   return syntax_errors;

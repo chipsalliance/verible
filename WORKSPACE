@@ -167,13 +167,13 @@ http_archive(
 )
 
 http_archive(
-    name = "jsoncpp_git",
-    build_file = "//bazel:jsoncpp.BUILD",
-    sha256 = "77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0",
-    strip_prefix = "jsoncpp-1.9.2",
+    name = "jsonhpp",
+    build_file = "//bazel:jsonhpp.BUILD",
+    strip_prefix = "json-3.10.2",
+    sha256 = "081ed0f9f89805c2d96335c3acfa993b39a0a5b4b4cef7edb68dd2210a13458c",
     urls = [
-        "https://github.com/open-source-parsers/jsoncpp/archive/1.9.2.tar.gz",
-    ],
+        "https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.tar.gz"
+    ]
 )
 
 http_archive(

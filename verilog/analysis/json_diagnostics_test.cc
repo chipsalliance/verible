@@ -18,20 +18,19 @@
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 namespace {
 
-static void CheckJsonErrorItem(const Json::Value& json, const char* phase,
+static void CheckJsonErrorItem(const nlohmann::json& json, const char* phase,
                                const char* text) {
-  EXPECT_TRUE(json["column"].isIntegral());
-  EXPECT_TRUE(json["line"].isIntegral());
-  ASSERT_TRUE(json["phase"].isString());
-  EXPECT_EQ(json["phase"].asString(), phase);
-  ASSERT_TRUE(json["text"].isString());
-  EXPECT_EQ(json["text"].asString(), text);
+  EXPECT_TRUE(json["column"].is_number());
+  EXPECT_TRUE(json["line"].is_number());
+  ASSERT_TRUE(json["phase"].is_string());
+  EXPECT_EQ(json["phase"].get<std::string>(), phase);
+  EXPECT_EQ(json["text"].get<std::string>(), text);
 }
 
 TEST(JsonDiagnosticsTest, LexError) {
@@ -41,23 +40,28 @@ TEST(JsonDiagnosticsTest, LexError) {
   EXPECT_FALSE(status.ok());
   EXPECT_FALSE(analyzer_ptr->LexStatus().ok());
 
-  const Json::Value json =
-      verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
-  EXPECT_EQ(json.size(), 1);
+  const auto json = verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get(), 1);
+  ASSERT_EQ(json.size(), 1);
   CheckJsonErrorItem(json[0], "lex", "321foo");
 }
 
 TEST(JsonDiagnosticsTest, ParseError) {
-  const auto analyzer_ptr =
-      absl::make_unique<VerilogAnalyzer>("a+", "<noname>");
+  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
+      "module 1;endmodule\n"
+      "module 2;endmodule\n",
+      "<noname>");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
   EXPECT_FALSE(status.ok());
   EXPECT_FALSE(analyzer_ptr->ParseStatus().ok());
 
-  const Json::Value json =
-      verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get());
-  EXPECT_EQ(json.size(), 1);
-  CheckJsonErrorItem(json[0], "parse", "+");
+  auto json = verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get(), 1);
+  ASSERT_EQ(json.size(), 1);
+  CheckJsonErrorItem(json[0], "parse", "1");
+
+  json = verilog::GetLinterTokenErrorsAsJson(analyzer_ptr.get(), 2);
+  ASSERT_EQ(json.size(), 2);
+  CheckJsonErrorItem(json[0], "parse", "1");
+  CheckJsonErrorItem(json[1], "parse", "endmodule");
 }
 
 }  // namespace

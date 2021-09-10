@@ -16,14 +16,14 @@
 #define VERIBLE_COMMON_TEXT_TOKEN_INFO_JSON_H_
 
 #include "common/text/token_info.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 
 namespace verible {
 
 // Returns JSON representation of TokenInfo
-Json::Value ToJson(const TokenInfo& token_info,
-                   const TokenInfo::Context& context,
-                   bool include_text = false);
+nlohmann::json ToJson(const TokenInfo& token_info,
+                      const TokenInfo::Context& context,
+                      bool include_text = false);
 
 }  // namespace verible
 

@@ -17,13 +17,13 @@
 
 #include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 
 namespace verilog {
 
 // Returns a JSON representation of tree contained at root.
-Json::Value ConvertVerilogTreeToJson(const verible::Symbol& root,
-                                     absl::string_view base);
+nlohmann::json ConvertVerilogTreeToJson(const verible::Symbol& root,
+                                        absl::string_view base);
 
 }  // namespace verilog
 

@@ -32,7 +32,7 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-        "@jsoncpp_git//:jsoncpp",
+        "@jsonhpp//:jsonhpp",
     ],
 )
 
