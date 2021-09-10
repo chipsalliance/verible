@@ -961,6 +961,5 @@ cc_test(
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:jsonhpp",
     ],
 )

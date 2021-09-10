@@ -368,7 +368,6 @@ cc_test(
         ":token_info_json",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:jsonhpp",
     ],
 )
 
