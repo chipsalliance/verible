@@ -381,4 +381,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-09-09 21:34:48 -0700 from [43943f2](https://github.com/google/verible/commit/43943f2f0adfb68cba579ec0b442ba66a6b2e30d)
+Generated on 2021-09-10 07:06:57 -0700 from [0112df9](https://github.com/google/verible/commit/0112df95df81940ec77e3e45e3fdbed0beb2abab)
