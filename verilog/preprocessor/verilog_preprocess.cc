@@ -178,7 +178,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
 // Interprets preprocessor tokens as directives that act on this preprocessor
 // object and possibly transform the input token stream.
 absl::Status VerilogPreprocess::HandleTokenIterator(
-    const TokenStreamView::const_iterator iter,
+    TokenStreamView::const_iterator iter,
     const StreamIteratorGenerator& generator) {
   // For now, pass through all macro definition tokens to next consumer
   // (parser).

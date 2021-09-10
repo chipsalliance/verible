@@ -47,8 +47,8 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Format diagnostic message.
-  std::string ViolationMsg(absl::string_view symbol_type,
-                           uint32_t allowed_bitmap);
+  static std::string ViolationMsg(absl::string_view symbol_type,
+                                  uint32_t allowed_bitmap);
 
   enum StyleChoicesBits {
     kUpperCamelCase = (1 << 0),

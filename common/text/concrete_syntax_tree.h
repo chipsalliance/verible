@@ -73,7 +73,7 @@ struct ForwardChildren {
 // used by various language front-ends.
 class SyntaxTreeNode : public Symbol {
  public:
-  explicit SyntaxTreeNode(const int tag = kUntagged) : tag_(tag), children_() {}
+  explicit SyntaxTreeNode(const int tag = kUntagged) : tag_(tag) {}
 
   const std::vector<SymbolPtr>& children() const { return children_; }
   std::vector<SymbolPtr>& mutable_children() { return children_; }
@@ -114,10 +114,10 @@ class SyntaxTreeNode : public Symbol {
   }
 
   // Children accessor (mutable).
-  SymbolPtr& operator[](const size_t i);
+  SymbolPtr& operator[](size_t i);
 
   // Children accessor (const).
-  const SymbolPtr& operator[](const size_t i) const;
+  const SymbolPtr& operator[](size_t i) const;
 
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.

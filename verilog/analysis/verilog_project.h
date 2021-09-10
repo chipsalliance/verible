@@ -209,7 +209,6 @@ class VerilogProject {
   typedef file_set_type::iterator iterator;
   typedef file_set_type::const_iterator const_iterator;
 
- public:
   VerilogProject(absl::string_view root,
                  const std::vector<std::string>& include_paths,
                  absl::string_view corpus = "")
@@ -283,7 +282,6 @@ class VerilogProject {
   absl::Status IncludeFileNotFoundError(
       absl::string_view referenced_filename) const;
 
- private:
   // The path from which top-level translation units are referenced relatively
   // (often from a file list).  This path can be relative or absolute.
   // Default: the working directory of the invoking process.

@@ -57,10 +57,9 @@ bool IsZero(const Symbol& expr) {
   if (child->Kind() != SymbolKind::kLeaf) return false;
   const auto& term = down_cast<const SyntaxTreeLeaf&>(*child);
   auto text = term.get().text();
-  if (text == "\'0") return true;
   // TODO(fangism): Could do more sophisticated constant expression evaluation
-  // but for now it is fine for this to conservatively return false.
-  return false;
+  // but for now this is a good first implementation.
+  return (text == "\'0");
 }
 
 bool ConstantIntegerValue(const verible::Symbol& expr, int* value) {

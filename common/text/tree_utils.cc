@@ -397,7 +397,7 @@ void PrettyPrinter::Visit(const SyntaxTreeLeaf& leaf) {
 }
 
 void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
-  std::string tag_info = "";
+  std::string tag_info;
   const int tag = node.Tag().tag;
   if (tag != 0) tag_info = absl::StrCat("(tag: ", tag, ") ");
 

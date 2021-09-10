@@ -34,7 +34,7 @@
 
 namespace verible {
 
-std::string AutoFix::Apply(const absl::string_view base) const {
+std::string AutoFix::Apply(absl::string_view base) const {
   std::string result;
   auto prev_start = base.cbegin();
   for (const auto& edit : edits) {

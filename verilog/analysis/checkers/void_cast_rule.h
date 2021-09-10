@@ -43,7 +43,7 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Generate diagnostic message of why lint error occurred.
-  std::string FormatReason(const verible::SyntaxTreeLeaf& leaf) const;
+  static std::string FormatReason(const verible::SyntaxTreeLeaf& leaf);
 
   static const std::set<std::string>& ForbiddenFunctionsSet();
 

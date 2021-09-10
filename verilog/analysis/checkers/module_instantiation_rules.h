@@ -57,7 +57,8 @@ class ModulePortRule : public verible::SyntaxTreeLintRule {
  private:
   // Returns false if a port list node is in violation of this rule and
   // true if it is not.
-  bool IsPortListCompliant(const verible::SyntaxTreeNode& port_list_node) const;
+  static bool IsPortListCompliant(
+      const verible::SyntaxTreeNode& port_list_node);
 
   std::set<verible::LintViolation> violations_;
 };

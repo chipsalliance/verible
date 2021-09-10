@@ -184,7 +184,7 @@ static void ColumnsTreeFormatter(
   static constexpr absl::string_view kCellSeparator = "|";
 
   struct Cell {
-    std::string text = "";
+    std::string text;
     char filler = ' ';
     std::size_t width = 0;
   };
@@ -301,7 +301,7 @@ struct AlignedColumnConfiguration {
   }
 };
 
-ColumnPositionTree* ColumnSchemaScanner::ReserveNewColumn(
+/* static */ ColumnPositionTree* ColumnSchemaScanner::ReserveNewColumn(
     ColumnPositionTree* parent_column, const Symbol& symbol,
     const AlignmentColumnProperties& properties, const SyntaxTreePath& path) {
   CHECK_NOTNULL(parent_column);

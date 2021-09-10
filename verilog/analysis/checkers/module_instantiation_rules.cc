@@ -178,8 +178,8 @@ void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
 // contains all named ports
 // Returns false if node has 2 or more children and at least
 // one child is an unnamed positional port
-bool ModulePortRule::IsPortListCompliant(
-    const verible::SyntaxTreeNode& port_list_node) const {
+/* static */ bool ModulePortRule::IsPortListCompliant(
+    const verible::SyntaxTreeNode& port_list_node) {
   const auto& children = port_list_node.children();
   auto port_count = std::count_if(
       children.begin(), children.end(),

@@ -49,7 +49,7 @@ class PlusargAssignmentRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  std::string FormatReason() const;
+  static std::string FormatReason();
   std::set<verible::LintViolation> violations_;
 };
 

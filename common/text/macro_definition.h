@@ -70,17 +70,13 @@ struct MacroCall {
   // Positional arguments to macro call.
   std::vector<DefaultTokenInfo> positional_arguments;
 
-  MacroCall() : has_parameters(false), positional_arguments() {}
+  MacroCall() : has_parameters(false) {}
 };
 
 class MacroDefinition {
  public:
   MacroDefinition(const TokenInfo& header, const TokenInfo& name)
-      : header_(header),
-        name_(name),
-        is_callable_(false),
-        parameter_info_array_(),
-        parameter_positions_() {}
+      : header_(header), name_(name), is_callable_(false) {}
 
   absl::string_view Name() const { return name_.text(); }
 

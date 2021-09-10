@@ -30,9 +30,7 @@ struct FormatStyle : public verible::BasicFormatStyle {
   using AlignmentPolicy = verible::AlignmentPolicy;
   using IndentationStyle = verible::IndentationStyle;
 
-  FormatStyle() : verible::BasicFormatStyle() {
-    over_column_limit_penalty = 10000;
-  }
+  FormatStyle() { over_column_limit_penalty = 10000; }
 
   FormatStyle(const FormatStyle&) = default;
 

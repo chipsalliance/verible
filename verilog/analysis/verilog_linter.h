@@ -191,7 +191,6 @@ class ViolationFixer : public ViolationHandler {
       : message_stream_(message_stream),
         patch_stream_(patch_stream),
         ultimate_answer_(AnswerChoice::kUnknown),
-        rule_answers_(),
         answer_chooser_(answer_chooser) {}
 
   void HandleViolations(const std::set<LintViolationWithStatus>& violations,

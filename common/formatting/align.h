@@ -92,7 +92,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   // 'path' represents relative position within the enclosing syntax subtree,
   // and is used as a key for ordering and matching columns.
   // Returns pointer to a created column or nullptr if column was not created.
-  ColumnPositionTree* ReserveNewColumn(
+  static ColumnPositionTree* ReserveNewColumn(
       ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties, const SyntaxTreePath& path);
   ColumnPositionTree* ReserveNewColumn(
@@ -108,7 +108,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   }
   // Reserve a subcolumn using subcolumn number appended to the parent's path
   // as the key.
-  ColumnPositionTree* ReserveNewColumn(
+  static ColumnPositionTree* ReserveNewColumn(
       ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties) {
     CHECK_NOTNULL(parent_column);

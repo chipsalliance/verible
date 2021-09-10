@@ -86,7 +86,7 @@ std::ostream& operator<<(std::ostream& stream, const UnwrappedLine& line) {
 }
 
 FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
-    : indentation_spaces_(uwline.IndentationSpaces()), tokens_() {
+    : indentation_spaces_(uwline.IndentationSpaces()) {
   tokens_.reserve(uwline.Size());
   // Convert working PreFormatTokens (computed from wrap optimization) into
   // decision-bound representation.

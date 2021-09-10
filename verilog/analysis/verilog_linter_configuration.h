@@ -65,7 +65,7 @@ struct RuleBundle {
   // typically that would be a comma or newline.
   bool ParseConfiguration(absl::string_view text, char separator,
                           std::string* error);
-  std::string UnparseConfiguration(const char separator) const;
+  std::string UnparseConfiguration(char separator) const;
 };
 
 // Pair of functions that perform stringification and destringification

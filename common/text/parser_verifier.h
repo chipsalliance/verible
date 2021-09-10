@@ -42,17 +42,13 @@ namespace verible {
 class ParserVerifier : public TreeVisitorRecursive {
  public:
   ParserVerifier(const Symbol& root, const TokenStreamView& view)
-      : root_(root),
-        view_(view),
-        view_iterator_(view.begin()),
-        unmatched_tokens_() {}
+      : root_(root), view_(view), view_iterator_(view.begin()) {}
 
   ParserVerifier(const Symbol& root, const TokenStreamView& view,
                  const TokenComparator& token_comparator)
       : root_(root),
         view_(view),
         view_iterator_(view.begin()),
-        unmatched_tokens_(),
         token_comparator_(token_comparator) {}
 
   // Iterates through tree and stream view provided in constructor
