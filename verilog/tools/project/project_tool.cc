@@ -138,7 +138,7 @@ struct ProjectSymbols {
   }
 
   // Resolves symbols.
-  void Resolve(std::vector<absl::Status>* resolve_statuses) {
+  void Resolve(std::vector<absl::Status>* resolve_statuses) const {
     symbol_table->Resolve(resolve_statuses);
   }
 };

@@ -43,7 +43,7 @@ class SyntaxTreeSearcher : public TreeContextVisitor {
 
   void Search(const Symbol& root) { root.Accept(this); }
 
-  const std::vector<TreeSearchMatch> Matches() const { return matches_; }
+  const std::vector<TreeSearchMatch>& Matches() const { return matches_; }
 
  private:
   void CheckSymbol(const Symbol&);

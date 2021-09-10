@@ -214,10 +214,10 @@ struct DependentReferences {
 
   // Attempt to resolve all symbol references.
   void Resolve(const SymbolTableNode& context,
-               std::vector<absl::Status>* diagnostics);
+               std::vector<absl::Status>* diagnostics) const;
 
   // Attempt to resolve only local symbol references.
-  void ResolveLocally(const SymbolTableNode& context);
+  void ResolveLocally(const SymbolTableNode& context) const;
 
   // Attempt to only resolve the base of the reference (the first component).
   absl::StatusOr<SymbolTableNode*> ResolveOnlyBaseLocally(

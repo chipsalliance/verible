@@ -33,8 +33,6 @@ ParserParam::ParserParam(TokenGenerator* token_stream)
     : token_stream_(token_stream),
       last_token_(TokenInfo::EOFToken()),
       root_(),
-      state_stack_(),
-      value_stack_(),
       max_used_stack_size_(0) {}
 
 ParserParam::~ParserParam() {}
@@ -52,7 +50,8 @@ void ParserParam::RecordSyntaxError(const SymbolPtr& symbol_ptr) {
 }
 
 template <typename T>
-static void move_stack(T** raw_stack, int64_t* size, std::vector<T>* stack) {
+static void move_stack(T** raw_stack, const int64_t* size,
+                       std::vector<T>* stack) {
   stack->resize(*size);
   std::move(*raw_stack, *raw_stack + *size, stack->begin());
 }

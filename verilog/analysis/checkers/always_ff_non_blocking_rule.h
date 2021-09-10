@@ -34,7 +34,7 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  absl::Status Configure(const absl::string_view configuration) override;
+  absl::Status Configure(absl::string_view configuration) override;
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) override;
 
@@ -42,7 +42,7 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Detects entering and leaving relevant code inside always_ff
-  bool InsideBlock(const verible::Symbol& symbol, const int depth);
+  bool InsideBlock(const verible::Symbol& symbol, int depth);
   // Processes local declarations
   bool LocalDeclaration(const verible::Symbol& symbol);
 

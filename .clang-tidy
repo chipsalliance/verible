@@ -2,12 +2,30 @@
 # Disabled some clang-analyzer static checks, need some more investigation.
 # TODO(hzeller) fix and re-enable clang-analyzer checks.
 # TODO(hzeller) Enable performance-* once somewhat silent output.
+# TODO(hzeller) Looking over magic numbers might be good, but probably
+#               not worthwhile hard-failing
+# TODO(hzeller) Fix qualified auto readability suggestions and enable.
+# TODO(hzeller) Explore anofalloff suggestions.
+# readability-make-member-function-const is great, but it also suggests that
+#    in cases where we return a non-const pointer. So good to check, not by
+#    default.
 Checks: >
   clang-diagnostic-*,clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
   -clang-analyzer-cplusplus.NewDeleteLeaks,
   -clang-diagnostic-unused-const-variable,
   abseil-*,-abseil-no-namespace,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-named-parameter,
+  -readability-isolate-declaration,
+  -readability-redundant-access-specifiers,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-else-after-return,
+  -readability-qualified-auto,
+  -readability-use-anyofallof,
+  -readability-make-member-function-const,
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,

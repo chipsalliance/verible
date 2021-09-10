@@ -75,7 +75,7 @@ std::ostream& operator<<(std::ostream&, const RejectedToken&);
 class FileAnalyzer : public TextStructure {
  public:
   explicit FileAnalyzer(absl::string_view contents, absl::string_view filename)
-      : TextStructure(contents), filename_(filename), rejected_tokens_() {}
+      : TextStructure(contents), filename_(filename) {}
 
   virtual ~FileAnalyzer() {}
 

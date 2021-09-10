@@ -49,7 +49,7 @@ namespace verible {
 //
 class SyntaxTreeLinter : public TreeContextVisitor {
  public:
-  SyntaxTreeLinter() : rules_() {}
+  SyntaxTreeLinter() {}
 
   void Visit(const SyntaxTreeLeaf& leaf) override;
   void Visit(const SyntaxTreeNode& node) override;

@@ -74,7 +74,7 @@ verible::LintRuleStatus PlusargAssignmentRule::Report() const {
   return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
-std::string PlusargAssignmentRule::FormatReason() const {
+/* static */ std::string PlusargAssignmentRule::FormatReason() {
   return absl::StrCat("Do not use ", kForbiddenFunctionName,
                       " to access plusargs, use ", kCorrectFunctionName,
                       " instead.");

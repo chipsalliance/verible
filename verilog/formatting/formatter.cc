@@ -417,14 +417,10 @@ static void DeterminePartitionExpansion(
         auto look_for_arglist = [](const partition_node_type& child) {
           auto& node_view_child = child.Value();
           const UnwrappedLine& uwline_child = node_view_child.Value();
-          if (uwline_child.Origin() &&
-              uwline_child.Origin()->Kind() == verible::SymbolKind::kNode &&
-              verible::SymbolCastToNode(*uwline_child.Origin())
-                  .MatchesTag(NodeEnum::kArgumentList)) {
-            return true;
-          } else {
-            return false;
-          }
+          return (uwline_child.Origin() &&
+                  uwline_child.Origin()->Kind() == verible::SymbolKind::kNode &&
+                  verible::SymbolCastToNode(*uwline_child.Origin())
+                      .MatchesTag(NodeEnum::kArgumentList));
         };
 
         // Check if kNetVariableAssignment or kBlockItemStatementList contains

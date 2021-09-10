@@ -120,8 +120,8 @@ LintRuleStatus VoidCastRule::Report() const {
   return LintRuleStatus(violations_, GetDescriptor());
 }
 
-std::string VoidCastRule::FormatReason(
-    const verible::SyntaxTreeLeaf& leaf) const {
+/* static */ std::string VoidCastRule::FormatReason(
+    const verible::SyntaxTreeLeaf& leaf) {
   return std::string(leaf.get().text()) +
          " is an invalid call within this void cast";
 }

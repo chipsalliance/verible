@@ -84,7 +84,7 @@ class VerilogPreprocess {
   using MacroParameterInfo = verible::MacroParameterInfo;
 
  public:
-  VerilogPreprocess() : preprocess_data_() {}
+  VerilogPreprocess() {}
 
   // ScanStream reads in a stream of tokens returns the result as a move
   // of preprocessor_data_.  preprocessor_data_ should not be accessed
@@ -98,10 +98,10 @@ class VerilogPreprocess {
   using StreamIteratorGenerator =
       std::function<TokenStreamView::const_iterator()>;
 
-  absl::Status HandleTokenIterator(const TokenStreamView::const_iterator,
+  absl::Status HandleTokenIterator(TokenStreamView::const_iterator,
                                    const StreamIteratorGenerator&);
 
-  absl::Status HandleDefine(const TokenStreamView::const_iterator,
+  absl::Status HandleDefine(TokenStreamView::const_iterator,
                             const StreamIteratorGenerator&);
 
   // The following functions return nullptr when there is no error:

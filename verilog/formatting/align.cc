@@ -204,12 +204,8 @@ static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
   const auto token_range = uwline.TokensRange();
 
   // Scan for any tokens that would force a line break.
-  if (std::any_of(token_range.begin(), token_range.end(),
-                  &TokenForcesLineBreak)) {
-    return true;
-  }
-
-  return false;
+  return std::any_of(token_range.begin(), token_range.end(),
+                     &TokenForcesLineBreak);
 }
 
 // This class marks up token-subranges in named parameter assignments for
@@ -471,12 +467,10 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
     case NodeEnum::kDataDeclaration: {
       const SyntaxTreeNode& instances(GetInstanceListFromDataDeclaration(node));
       if (FindAllRegisterVariables(instances).size() > 1) return false;
-      if (!FindAllGateInstances(instances).empty()) return false;
-      return true;
+      return FindAllGateInstances(instances).empty();
     }
     case NodeEnum::kNetDeclaration: {
-      if (FindAllNetVariables(node).size() > 1) return false;
-      return true;
+      return FindAllNetVariables(node).size() <= 1;
     }
     default:
       return false;

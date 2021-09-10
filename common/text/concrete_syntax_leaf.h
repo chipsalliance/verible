@@ -66,9 +66,6 @@ class SyntaxTreeLeaf : public Symbol {
   TokenInfo token_;
 };
 
-// Returns a SyntaxTreeLeaf down_casted from a Symbol.
-const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
-
 std::ostream& operator<<(std::ostream& os, const SyntaxTreeLeaf& l);
 
 }  // namespace verible

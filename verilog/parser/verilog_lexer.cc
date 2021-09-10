@@ -22,13 +22,7 @@ namespace verilog {
 
 using verible::TokenInfo;
 
-VerilogLexer::VerilogLexer(const absl::string_view code)
-    : parent_lexer_type(code),
-      // These initial values should not matter, the lexer actions should
-      // guarantee to set them before using them.
-      balance_(0),
-      macro_id_length_(0),
-      macro_arg_length_(0) {}
+VerilogLexer::VerilogLexer(absl::string_view code) : parent_lexer_type(code) {}
 
 void VerilogLexer::Restart(absl::string_view code) {
   parent_lexer_type::Restart(code);

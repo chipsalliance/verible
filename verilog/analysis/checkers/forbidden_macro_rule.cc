@@ -89,8 +89,8 @@ verible::LintRuleStatus ForbiddenMacroRule::Report() const {
   return verible::LintRuleStatus(violations_, GetDescriptor());
 }
 
-std::string ForbiddenMacroRule::FormatReason(
-    const verible::SyntaxTreeLeaf& leaf) const {
+/* static */ std::string ForbiddenMacroRule::FormatReason(
+    const verible::SyntaxTreeLeaf& leaf) {
   const std::string function_name(leaf.get().text());
   const auto url = FindWithDefault(InvalidMacrosMap(), function_name, "");
   auto message = function_name + " is a forbidden macro";

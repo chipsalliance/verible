@@ -45,8 +45,11 @@ static std::string GetBuildVersion() {
   return result;
 }
 
-std::vector<char*> InitCommandLine(absl::string_view usage, int* argc,
-                                   char*** argv) {
+// We might want to have argc edited in the future, hence non-const param.
+std::vector<char*> InitCommandLine(
+    absl::string_view usage,
+    int* argc,  // NOLINT(readability-non-const-parameter)
+    char*** argv) {
   absl::FlagsUsageConfig usage_config;
   usage_config.version_string = GetBuildVersion;
   absl::SetFlagsUsageConfig(usage_config);

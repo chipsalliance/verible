@@ -94,7 +94,7 @@ absl::string_view VerilogAnalyzer::ScanParsingModeDirective(
 
 // Return a secondary parsing mode to attempt, depending on the token type of
 // the first rejected token from parsing as top-level.
-static const absl::string_view FailingTokenKeywordToParsingMode(
+static absl::string_view FailingTokenKeywordToParsingMode(
     verilog_tokentype token_type) {
   switch (token_type) {
     // For starting keywords that uniquely identify a parsing context,

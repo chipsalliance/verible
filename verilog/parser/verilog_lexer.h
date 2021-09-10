@@ -40,7 +40,7 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
   using parent_lexer_type = verible::FlexLexerAdapter<verilogFlexLexer>;
 
  public:
-  explicit VerilogLexer(const absl::string_view code);
+  explicit VerilogLexer(absl::string_view code);
 
   // Restart lexer with new input stream.
   void Restart(absl::string_view) final;
@@ -58,15 +58,15 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
   // These variables are controlled by the lexer code (verilog.lex).
 
   // for macro call argument lexing
-  int balance_;
+  int balance_ = 0;
 
   // TODO(fangism): This won't be needed.  Remove when appropriate.
   // for keeping track of end of macro-id
-  int macro_id_length_;
+  int macro_id_length_ = 0;
 
   // In the MACRO_ARG_UNLEXED state  (verilog.lex), track the number of
   // characters excluding trailing spaces/newlines.
-  int macro_arg_length_;
+  int macro_arg_length_ = 0;
 };
 
 // Recursively lex the given 'text', and apply 'func' to each subtoken.

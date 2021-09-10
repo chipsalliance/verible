@@ -50,7 +50,7 @@ class ForbiddenSystemTaskFunctionRule : public verible::SyntaxTreeLintRule {
   verible::LintRuleStatus Report() const override;
 
  private:
-  std::string FormatReason(const verible::SyntaxTreeLeaf& leaf) const;
+  static std::string FormatReason(const verible::SyntaxTreeLeaf& leaf);
 
   // Set of invalid functions and suggested replacements
   static const std::map<std::string, std::string>& InvalidSymbolsMap();

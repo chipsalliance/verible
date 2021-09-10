@@ -85,8 +85,8 @@ void PortNameSuffixRule::Violation(absl::string_view direction,
   }
 }
 
-bool PortNameSuffixRule::IsSuffixCorrect(const absl::string_view suffix,
-                                         const absl::string_view direction) {
+bool PortNameSuffixRule::IsSuffixCorrect(absl::string_view suffix,
+                                         absl::string_view direction) {
   static const std::map<absl::string_view, std::set<absl::string_view>>
       suffixes = {{"input", {"i", "ni", "pi"}},
                   {"output", {"o", "no", "po"}},

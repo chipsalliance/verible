@@ -1700,8 +1700,9 @@ ReferenceComponentMap ReferenceComponentNodeMapView(
   return map_view;
 }
 
-void DependentReferences::Resolve(const SymbolTableNode& context,
-                                  std::vector<absl::Status>* diagnostics) {
+void DependentReferences::Resolve(
+    const SymbolTableNode& context,
+    std::vector<absl::Status>* diagnostics) const {
   VLOG(1) << __FUNCTION__;
   if (components == nullptr) return;
   // References are arranged in dependency trees.
@@ -1716,7 +1717,7 @@ void DependentReferences::Resolve(const SymbolTableNode& context,
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
-void DependentReferences::ResolveLocally(const SymbolTableNode& context) {
+void DependentReferences::ResolveLocally(const SymbolTableNode& context) const {
   if (components == nullptr) return;
   // Only attempt to resolve the reference root, and none of its subtrees.
   ResolveReferenceComponentNodeLocal(components.get(), context);

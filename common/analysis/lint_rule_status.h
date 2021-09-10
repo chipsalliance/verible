@@ -61,7 +61,7 @@ struct ReplacementEdit {
 // Collection of ReplacementEdits performing single violation fix.
 class AutoFix {
  public:
-  AutoFix() : description(), edits() {}
+  AutoFix() {}
   AutoFix(const AutoFix& other)
       : description(other.description), edits(other.edits) {}
   AutoFix(const AutoFix&& other)
@@ -83,7 +83,7 @@ class AutoFix {
   explicit AutoFix(ReplacementEdit edit) : AutoFix({edit}) {}
 
   // Applies the fix on a `base` and returns modified text.
-  std::string Apply(const absl::string_view base) const;
+  std::string Apply(absl::string_view base) const;
 
   bool AddEdits(const std::set<ReplacementEdit>& new_edits);
 
@@ -151,7 +151,7 @@ struct LintViolation {
 
 // LintRuleStatus represents the result of running a single lint rule.
 struct LintRuleStatus {
-  LintRuleStatus() : violations() {}
+  LintRuleStatus() {}
 
   LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
                  const std::string& url)
