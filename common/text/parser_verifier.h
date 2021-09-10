@@ -61,8 +61,8 @@ class ParserVerifier : public TreeVisitorRecursive {
   // Do call these methods directly. Use Verify instead
   // TODO(jeremycs): changed these to protected and make SyntaxTreeLeaf
   //                 and SyntaxTreeNode friend classes
-  void Visit(const SyntaxTreeLeaf& leaf) override;
-  void Visit(const SyntaxTreeNode& node) override{};
+  void Visit(const SyntaxTreeLeaf& leaf) final;
+  void Visit(const SyntaxTreeNode& node) final{};
 
  private:
   const Symbol& root_;

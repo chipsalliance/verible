@@ -36,11 +36,11 @@ class ExplicitParameterStorageTypeRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+                    const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view configuration) override;
+  absl::Status Configure(absl::string_view configuration) final;
 
  private:
   // TODO(hzeller): would other exempt types be interesting?

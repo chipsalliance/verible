@@ -37,14 +37,14 @@ class BlankLineRule : public LineLintRule {
  public:
   BlankLineRule() {}
 
-  void HandleLine(absl::string_view line) override {
+  void HandleLine(absl::string_view line) final {
     if (line.empty()) {
       const TokenInfo token(0, line);
       violations_.insert(LintViolation(token, "some reason"));
     }
   }
 
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
   std::set<LintViolation> violations_;
@@ -92,16 +92,16 @@ class EmptyFileRule : public LineLintRule {
  public:
   EmptyFileRule() {}
 
-  void HandleLine(absl::string_view line) override { ++lines_; }
+  void HandleLine(absl::string_view line) final { ++lines_; }
 
-  void Finalize() override {
+  void Finalize() final {
     if (lines_ == 0) {
       violations_.insert(
           LintViolation(TokenInfo::EOFToken(), "insufficient bytes"));
     }
   }
 
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
   size_t lines_ = 0;
 

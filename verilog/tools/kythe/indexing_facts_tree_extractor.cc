@@ -86,8 +86,8 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
         Anchor(base));
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override;
-  void Visit(const SyntaxTreeNode& node) override;
+  void Visit(const SyntaxTreeLeaf& leaf) final;
+  void Visit(const SyntaxTreeNode& node) final;
 
   const IndexingFactNode& Root() const { return root_; }
   IndexingFactNode TakeRoot() { return std::move(root_); }

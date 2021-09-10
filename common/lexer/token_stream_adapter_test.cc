@@ -28,11 +28,11 @@ class FakeTokenSequenceLexer : public Lexer, public FakeLexer {
  public:
   using FakeLexer::SetTokensData;
 
-  const TokenInfo& GetLastToken() const override { return *tokens_iter_; }
+  const TokenInfo& GetLastToken() const final { return *tokens_iter_; }
 
-  const TokenInfo& DoNextToken() override { return FakeLexer::DoNextToken(); }
+  const TokenInfo& DoNextToken() final { return FakeLexer::DoNextToken(); }
 
-  void Restart(absl::string_view) override {}
+  void Restart(absl::string_view) final {}
 
   bool TokenIsError(const TokenInfo&) const override { return false; }
 };
@@ -69,7 +69,7 @@ TEST(MakeTokenSequenceTest, Sequencer) {
 }
 
 class TheNumberTwoIsErrorLexer : public FakeTokenSequenceLexer {
-  bool TokenIsError(const TokenInfo& token) const override {
+  bool TokenIsError(const TokenInfo& token) const final {
     return token.token_enum() == 2;
   }
 };

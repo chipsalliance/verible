@@ -40,7 +40,7 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
   // When handling leaf, check that it has target tag and report a violation
   // is not
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) override {
+                  const SyntaxTreeContext& context) final {
     if (leaf.get().token_enum() != target_) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
@@ -48,8 +48,8 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
 
   // Do not operate on nodes
   void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) override {}
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+                  const SyntaxTreeContext& context) final {}
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
   std::set<LintViolation> violations_;
@@ -114,12 +114,12 @@ class ChildrenLeavesAscending : public SyntaxTreeLintRule {
  public:
   // Do not process leaves
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) override {}
+                  const SyntaxTreeContext& context) final {}
 
   // When handling nodes, iterate through all children and check that tags
   // are ascending. Report leafs nodes that have leaves that are out of order.
   void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) override {
+                  const SyntaxTreeContext& context) final {
     int last_tag = 0;
     for (const auto& child : node.children()) {
       if (child->Kind() == SymbolKind::kLeaf) {
@@ -136,7 +136,7 @@ class ChildrenLeavesAscending : public SyntaxTreeLintRule {
     }
   }
 
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
   std::set<LintViolation> violations_;
@@ -222,16 +222,16 @@ class TagMatchesContextDepth : public SyntaxTreeLintRule {
  public:
   // When handling a leaf, check leaf's tag vs the size of its context
   void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) override {
+                  const SyntaxTreeContext& context) final {
     if (static_cast<size_t>(leaf.get().token_enum()) != context.size()) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
   // Do not process nodes
   void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) override {}
+                  const SyntaxTreeContext& context) final {}
 
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
   std::set<LintViolation> violations_;

@@ -43,7 +43,7 @@ class BisonParserAdapter : public Parser {
   explicit BisonParserAdapter(TokenGenerator* token_generator)
       : Parser(), param_(token_generator) {}
 
-  absl::Status Parse() override {
+  absl::Status Parse() final {
     int result = ParseFunc(&param_);
     // Results of parsing are stored in param_.
     VLOG(3) << "max_used_stack_size : " << MaxUsedStackSize();
@@ -57,17 +57,17 @@ class BisonParserAdapter : public Parser {
     }
   }
 
-  const TokenInfo& GetLastToken() const override {
+  const TokenInfo& GetLastToken() const final {
     return param_.GetLastToken();
   }
 
-  const std::vector<TokenInfo>& RejectedTokens() const override {
+  const std::vector<TokenInfo>& RejectedTokens() const final {
     return param_.RecoveredSyntaxErrors();
   }
 
-  const ConcreteSyntaxTree& Root() const override { return param_.Root(); }
+  const ConcreteSyntaxTree& Root() const final { return param_.Root(); }
 
-  ConcreteSyntaxTree TakeRoot() override { return param_.TakeRoot(); }
+  ConcreteSyntaxTree TakeRoot() final { return param_.TakeRoot(); }
 
   size_t MaxUsedStackSize() const { return param_.MaxUsedStackSize(); }
 

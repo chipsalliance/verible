@@ -45,9 +45,9 @@ TEST(PartitionPolicyTest, Printing) {
 class UnwrappedLineTest : public UnwrappedLineMemoryHandler,
                           public testing::Test {
  protected:
-  void SetUp() override {}
+  void SetUp() final {}
 
-  void TearDown() override {}
+  void TearDown() final {}
 };
 
 // Testing IsEmpty() and initialization of UnwrappedLine with no FormatTokens

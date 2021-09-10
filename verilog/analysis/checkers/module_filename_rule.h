@@ -36,10 +36,10 @@ class ModuleFilenameRule : public verible::TextStructureLintRule {
 
   ModuleFilenameRule() {}
 
-  absl::Status Configure(absl::string_view configuration) override;
-  void Lint(const verible::TextStructureView&, absl::string_view) override;
+  absl::Status Configure(absl::string_view configuration) final;
+  void Lint(const verible::TextStructureView&, absl::string_view) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // Ok to treat dashes as underscores.

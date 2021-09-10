@@ -44,9 +44,9 @@ class PlusargAssignmentRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+                    const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   std::string FormatReason() const;

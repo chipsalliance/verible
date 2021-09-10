@@ -34,11 +34,11 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  absl::Status Configure(const absl::string_view configuration) override;
+  absl::Status Configure(const absl::string_view configuration) final;
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+                    const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // Detects entering and leaving relevant code inside always_ff

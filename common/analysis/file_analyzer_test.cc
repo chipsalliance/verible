@@ -46,7 +46,7 @@ class FakeFileAnalyzer : public FileAnalyzer {
   FakeFileAnalyzer(const std::string& text, const std::string& filename)
       : FileAnalyzer(text, filename) {}
 
-  absl::Status Tokenize() override {
+  absl::Status Tokenize() final {
     // TODO(fangism): Tokenize(lexer) interface is not directly tested, but
     // covered elsewhere.
     return absl::OkStatus();

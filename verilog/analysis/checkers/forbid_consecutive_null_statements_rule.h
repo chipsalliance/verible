@@ -41,9 +41,9 @@ class ForbidConsecutiveNullStatementsRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) override;
+                  const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // States of the internal leaf-based analysis.

@@ -65,8 +65,8 @@ class MatchCounter : public TreeVisitorRecursive {
     return num_matches_;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override { TestSymbol(leaf); }
-  void Visit(const SyntaxTreeNode& node) override { TestSymbol(node); }
+  void Visit(const SyntaxTreeLeaf& leaf) final { TestSymbol(leaf); }
+  void Visit(const SyntaxTreeNode& node) final { TestSymbol(node); }
 
  private:
   Matcher matcher_;

@@ -77,10 +77,10 @@ class TokenColumnizer : public ColumnSchemaScanner {
  public:
   TokenColumnizer() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     ColumnSchemaScanner::Visit(node);
   }
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     // Let each token occupy its own column.
     ReserveNewColumn(leaf, FlushLeft);
   }
@@ -90,10 +90,10 @@ class TokenColumnizerRightFlushed : public ColumnSchemaScanner {
  public:
   TokenColumnizerRightFlushed() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     ColumnSchemaScanner::Visit(node);
   }
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     // Let each token occupy its own column.
     ReserveNewColumn(leaf, FlushRight);
   }
@@ -983,7 +983,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
  public:
   SyntaxTreeColumnizer() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     ColumnPositionTree* column;
     if (!current_column_)
       column = ReserveNewColumn(node, props);
@@ -994,7 +994,7 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
                                                          column);
     ColumnSchemaScanner::Visit(node);
   }
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     AlignmentColumnProperties local_props = props;
     if (leaf.get().text() == ",") local_props.contains_delimiter = true;
 

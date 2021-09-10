@@ -50,10 +50,10 @@ class TreeRuleBase : public SyntaxTreeLintRule {
  public:
   using rule_type = SyntaxTreeLintRule;
   void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) override {}
+                  const verible::SyntaxTreeContext& context) final {}
   void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) override {}
-  verible::LintRuleStatus Report() const override {
+                  const verible::SyntaxTreeContext& context) final {}
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -121,8 +121,8 @@ TEST(GetAllRuleDescriptions, SyntaxRuleValid) {
 class TokenRuleBase : public TokenStreamLintRule {
  public:
   using rule_type = TokenStreamLintRule;
-  void HandleToken(const verible::TokenInfo&) override {}
-  verible::LintRuleStatus Report() const override {
+  void HandleToken(const verible::TokenInfo&) final {}
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -180,8 +180,8 @@ class LineRule1 : public LineLintRule {
     return d;
   }
 
-  void HandleLine(absl::string_view) override {}
-  verible::LintRuleStatus Report() const override {
+  void HandleLine(absl::string_view) final {}
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -227,8 +227,8 @@ class TextRule1 : public TextStructureLintRule {
     return d;
   }
 
-  void Lint(const verible::TextStructureView&, absl::string_view) override {}
-  verible::LintRuleStatus Report() const override {
+  void Lint(const verible::TextStructureView&, absl::string_view) final {}
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };

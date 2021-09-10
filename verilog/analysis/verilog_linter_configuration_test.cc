@@ -58,10 +58,10 @@ using testing::SizeIs;
 class TestRuleBase : public SyntaxTreeLintRule {
  public:
   void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) override {}
+                  const verible::SyntaxTreeContext& context) final {}
   void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) override {}
-  verible::LintRuleStatus Report() const override {
+                  const verible::SyntaxTreeContext& context) final {}
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -101,9 +101,9 @@ class TestRule3 : public TokenStreamLintRule {
     return d;
   }
 
-  void HandleToken(const verible::TokenInfo&) override {}
+  void HandleToken(const verible::TokenInfo&) final {}
 
-  verible::LintRuleStatus Report() const override {
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -119,9 +119,9 @@ class TestRule4 : public LineLintRule {
     return d;
   }
 
-  void HandleLine(absl::string_view) override {}
+  void HandleLine(absl::string_view) final {}
 
-  verible::LintRuleStatus Report() const override {
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };
@@ -137,9 +137,9 @@ class TestRule5 : public TextStructureLintRule {
     return d;
   }
 
-  void Lint(const TextStructureView&, absl::string_view) override {}
+  void Lint(const TextStructureView&, absl::string_view) final {}
 
-  verible::LintRuleStatus Report() const override {
+  verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
 };

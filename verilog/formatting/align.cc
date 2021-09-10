@@ -218,7 +218,7 @@ class ActualNamedParameterColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ActualNamedParameterColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -248,7 +248,7 @@ class ActualNamedPortColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ActualNamedPortColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -278,7 +278,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   PortDeclarationColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -335,7 +335,7 @@ class PortDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     if (new_column_after_open_bracket_) {
@@ -415,7 +415,7 @@ class StructUnionMemberColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   StructUnionMemberColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -441,7 +441,7 @@ class StructUnionMemberColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -606,7 +606,7 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   DataDeclarationColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -676,7 +676,7 @@ class DataDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     if (new_column_after_open_bracket_) {
@@ -734,7 +734,7 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ClassPropertyColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -777,7 +777,7 @@ class ClassPropertyColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << "end of " << __FUNCTION__ << ", node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -799,7 +799,7 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   ParameterDeclarationColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -838,7 +838,7 @@ class ParameterDeclarationColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
 
@@ -938,7 +938,7 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
          NodeEnum::kGenerateCaseItem, NodeEnum::kDefaultItem});
   }
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -968,7 +968,7 @@ class CaseItemColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();
@@ -998,7 +998,7 @@ class AssignmentColumnSchemaScanner : public ColumnSchemaScanner {
  public:
   AssignmentColumnSchemaScanner() = default;
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     auto tag = NodeEnum(node.Tag().tag);
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
@@ -1021,7 +1021,7 @@ class AssignmentColumnSchemaScanner : public ColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", leaving node: " << tag;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     VLOG(2) << __FUNCTION__ << ", leaf: " << leaf.get() << " at "
             << TreePathFormatter(Path());
     const int tag = leaf.get().token_enum();

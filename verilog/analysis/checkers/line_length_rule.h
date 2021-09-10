@@ -47,11 +47,11 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   LineLengthRule() {}
 
-  absl::Status Configure(absl::string_view configuration) override;
+  absl::Status Configure(absl::string_view configuration) final;
 
-  void Lint(const verible::TextStructureView&, absl::string_view) override;
+  void Lint(const verible::TextStructureView&, absl::string_view) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   int line_length_limit_ = kDefaultLineLength;

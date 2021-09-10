@@ -45,7 +45,7 @@ class TreeAnnotator : public TreeContextVisitor {
 
  private:                           // methods
   using TreeContextVisitor::Visit;  // for SyntaxTreeNode
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     CatchUpToCurrentLeaf(leaf.get());
   }
 

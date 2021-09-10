@@ -51,8 +51,8 @@ class SyntaxTreeLinter : public TreeContextVisitor {
  public:
   SyntaxTreeLinter() : rules_() {}
 
-  void Visit(const SyntaxTreeLeaf& leaf) override;
-  void Visit(const SyntaxTreeNode& node) override;
+  void Visit(const SyntaxTreeLeaf& leaf) final;
+  void Visit(const SyntaxTreeNode& node) final;
 
   // Transfers ownership of rule into Linter
   void AddRule(std::unique_ptr<SyntaxTreeLintRule> rule) {
