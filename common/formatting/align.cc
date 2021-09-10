@@ -36,7 +36,10 @@
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/vector_tree.h"
+#include "common/util/vector_tree_iterators.h"
 
 namespace verible {
 
@@ -85,6 +88,8 @@ static int EffectiveLeftBorderWidth(const MutableFormatTokenRange& tokens) {
   return tokens.front().before.spaces_required;
 }
 
+using ColumnsTreePath = SyntaxTreePath;
+
 struct AlignmentCell {
   // Slice of format tokens in this cell (may be empty range).
   MutableFormatTokenRange tokens;
@@ -93,6 +98,11 @@ struct AlignmentCell {
   // Width of the left-side spacing before this cell, which can be considered
   // as a space-only column, usually no more than 1 space wide.
   int left_border_width = 0;
+
+  // Returns true when neither the cell nor its subcells contain any tokens.
+  bool IsUnused() const { return (tokens.empty() && compact_width == 0); }
+  // Returns true when the cell contains subcells with tokens.
+  bool IsComposite() const { return (tokens.empty() && compact_width > 0); }
 
   int TotalWidth() const { return left_border_width + compact_width; }
 
@@ -106,6 +116,9 @@ struct AlignmentCell {
   }
 };
 
+using AlignmentRow = VectorTree<AlignmentCell>;
+using AlignmentMatrix = std::vector<AlignmentRow>;
+
 std::ostream& operator<<(std::ostream& stream, const AlignmentCell& cell) {
   if (!cell.tokens.empty()) {
     // See UnwrappedLine::AsCode for similar printing.
@@ -115,6 +128,164 @@ std::ostream& operator<<(std::ostream& stream, const AlignmentCell& cell) {
                             });
   }
   return stream;
+}
+
+// Type of functions used to generate textual node representations that are
+// suitable for use in rectangular cell.
+// The function is called with a tree node as its only argument. It should
+// return a string containing the cell's text and a single character used as
+// a filler for cell's empty space.
+template <typename ValueType>
+using CellLabelGetterFunc =
+    std::function<std::pair<std::string, char>(const VectorTree<ValueType>&)>;
+
+// Recursively creates a tree with cells textual data. Its main purpose is to
+// split multi-line cell labels and calculate how many lines have to be printed.
+// This is a helper function used in ColumsTreeFormatter.
+template <typename ValueType, typename Cell>
+static std::size_t CreateTextNodes(
+    const VectorTree<ValueType>& src_node, VectorTree<Cell>* dst_node,
+    const CellLabelGetterFunc<ValueType>& get_cell_label) {
+  static constexpr std::size_t kMinCellWidth = 2;
+
+  std::size_t depth = 0;
+  std::size_t subtree_depth = 0;
+
+  for (const auto& src_child : src_node.Children()) {
+    const auto [text, filler] = get_cell_label(src_child);
+    const std::vector<std::string> lines = absl::StrSplit(text, '\n');
+    auto* dst_child = dst_node;
+    for (const auto& line : lines) {
+      dst_child = dst_child->NewChild(
+          Cell{line, filler, std::max(line.size(), kMinCellWidth)});
+    }
+    depth = std::max(depth, lines.size());
+    subtree_depth = std::max(
+        subtree_depth, CreateTextNodes(src_child, dst_child, get_cell_label));
+  }
+  return depth + subtree_depth;
+}
+
+// Prints visualization of columns tree 'root' to a 'stream'. The 'root' node
+// itself is not visualized. The 'get_cell_label' callback is used to get the
+// cell label printed for each node.
+//
+// The label's text can contain multiple lines. Each line can contain up to 3
+// fields separated by tab character ('\t'). The first field is aligned to the
+// left. The second field is either aligned to the right (when there are
+// 2 fields) or centered (when there are 3 fields). The third field is aligned
+// to the right. Empty space is filled with label's filler character.
+template <typename ValueType>
+static void ColumnsTreeFormatter(
+    std::ostream& stream, const VectorTree<ValueType>& root,
+    const CellLabelGetterFunc<ValueType>& get_cell_label) {
+  if (root.Children().empty()) return;
+
+  static constexpr absl::string_view kCellSeparator = "|";
+
+  struct Cell {
+    std::string text = "";
+    char filler = ' ';
+    std::size_t width = 0;
+  };
+  VectorTree<Cell> text_tree;
+
+  const std::size_t depth =
+      CreateTextNodes<ValueType, Cell>(root, &text_tree, get_cell_label);
+
+  // Adjust cells width to fit all their children
+  for (auto& node : VectorTreePostOrderTraversal(text_tree)) {
+    // Include separator width in cell width
+    node.Value().width += kCellSeparator.size();
+    if (node.is_leaf()) continue;
+    std::size_t children_width =
+        std::accumulate(node.Children().begin(), node.Children().end(), 0,
+                        [](std::size_t width, const VectorTree<Cell>& child) {
+                          return width + child.Value().width;
+                        });
+    if (node.Value().width < children_width) {
+      node.Value().width = children_width;
+    }
+  }
+  // Adjust cells width to fill their parents
+  for (auto& node : VectorTreePreOrderTraversal(text_tree)) {
+    if (node.is_leaf()) continue;
+    std::size_t children_width =
+        std::accumulate(node.Children().begin(), node.Children().end(), 0,
+                        [](std::size_t width, const VectorTree<Cell>& child) {
+                          return width + child.Value().width;
+                        });
+    // There is at least one child; each cell minimum width is equal to:
+    // CreateTextNodes::kMinCellWidth + kCellSeparator.size()
+    CHECK_GT(children_width, 0);
+    if (node.Value().width > children_width) {
+      auto extra_width = node.Value().width - children_width;
+      for (auto& child : node.Children()) {
+        CHECK_GT(children_width, 0);
+        assert(children_width > 0);
+        const auto added_child_width =
+            extra_width * child.Value().width / children_width;
+        extra_width -= added_child_width;
+        children_width -= child.Value().width;
+        child.Value().width += added_child_width;
+      }
+    }
+  }
+
+  std::vector<std::string> lines(depth);
+  auto range = VectorTreePreOrderTraversal(text_tree);
+  auto level_offset = text_tree.NumAncestors() + 1;
+  for (auto& node : make_range(range.begin() + 1, range.end())) {
+    auto& cell = node.Value();
+    const std::size_t level = node.NumAncestors() - level_offset;
+    if (level > 0 && node.IsFirstChild()) {
+      const int padding_len = lines[level - 1].size() - lines[level].size() -
+                              node.Parent()->Value().width;
+      if (padding_len > 0) {
+        if (lines[level].empty())
+          lines[level].append(std::string(padding_len, ' '));
+        else if (padding_len > int(kCellSeparator.size()))
+          lines[level].append(absl::StrCat(
+              kCellSeparator,
+              std::string(padding_len - kCellSeparator.size(), ' ')));
+      }
+    }
+
+    const std::vector<absl::string_view> parts =
+        absl::StrSplit(cell.text, '\t');
+    CHECK_LE(parts.size(), 3);
+
+    const auto width = cell.width - kCellSeparator.size();
+
+    switch (parts.size()) {
+      case 1: {
+        const std::string pad(width - parts[0].size(), cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad);
+        break;
+      }
+      case 2: {
+        const std::string pad(width - parts[0].size() - parts[1].size(),
+                              cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], pad,
+                        parts.back());
+        break;
+      }
+      case 3: {
+        std::size_t pos =
+            std::clamp((width - parts[1].size()) / 2, parts[0].size() + 1,
+                       width - parts[2].size() - parts[1].size() - 1);
+        const std::string left_pad(pos - parts[0].size(), cell.filler);
+        const std::string right_pad(
+            width - parts[2].size() - (pos + parts[1].size()), cell.filler);
+        absl::StrAppend(&lines[level], kCellSeparator, parts[0], left_pad,
+                        parts[1], right_pad, parts[2]);
+        break;
+      }
+    }
+  }
+  for (const auto& line : lines) {
+    if (!line.empty()) stream << line << kCellSeparator << "\n";
+  }
 }
 
 // These properties are calculated/aggregated from alignment cells.
@@ -130,38 +301,51 @@ struct AlignedColumnConfiguration {
   }
 };
 
-typedef std::vector<AlignmentCell> AlignmentRow;
-typedef std::vector<AlignmentRow> AlignmentMatrix;
-
-void ColumnSchemaScanner::ReserveNewColumn(
-    const Symbol& symbol, const AlignmentColumnProperties& properties,
-    const SyntaxTreePath& path) {
+ColumnPositionTree* ColumnSchemaScanner::ReserveNewColumn(
+    ColumnPositionTree* parent_column, const Symbol& symbol,
+    const AlignmentColumnProperties& properties, const SyntaxTreePath& path) {
+  CHECK_NOTNULL(parent_column);
   // The path helps establish a total ordering among all desired alignment
   // points, given that they may come from optional or repeated language
   // constructs.
   const SyntaxTreeLeaf* leaf = GetLeftmostLeaf(symbol);
   // It is possible for a node to be empty, in which case, ignore.
-  if (leaf == nullptr) return;
-  if (sparse_columns_.empty() || sparse_columns_.back().path != path) {
-    // It's possible the previous cell's path was intentionally altered
-    // to effectively fuse it with the cell that is about to be added.
-    // When this occurs, take the (previous) leftmost token, and suppress
-    // adding a new column.
-    sparse_columns_.push_back(
-        ColumnPositionEntry{path, leaf->get(), properties});
-    VLOG(2) << "reserving new column at " << TreePathFormatter(path);
+  if (leaf == nullptr) return nullptr;
+  if (parent_column->Parent() != nullptr && parent_column->Children().empty()) {
+    // Starting token of a column and its first subcolumn must be the same.
+    // (subcolumns overlap their parent column).
+    CHECK_EQ(parent_column->Value().starting_token, leaf->get());
   }
+  // It's possible the previous cell's path was intentionally altered
+  // to effectively fuse it with the cell that is about to be added.
+  // When this occurs, take the (previous) leftmost token, and suppress
+  // adding a new column.
+  if (parent_column->Children().empty() ||
+      parent_column->Children().back().Value().path != path) {
+    const auto* column = parent_column->NewChild(
+        ColumnPositionEntry{path, leaf->get(), properties});
+    ColumnsTreePath column_path;
+    column->Path(column_path);
+    VLOG(2) << "reserving new column for " << TreePathFormatter(path) << " at "
+            << TreePathFormatter(column_path);
+  }
+  return &parent_column->Children().back();
 }
 
 struct AggregateColumnData {
+  AggregateColumnData() = default;
+
   // This is taken as the first seen set of properties in any given column.
   AlignmentColumnProperties properties;
   // These tokens's positions will be used to identify alignment cell
   // boundaries.
   std::vector<TokenInfo> starting_tokens;
 
+  SyntaxTreePath path;
+
   void Import(const ColumnPositionEntry& cell) {
     if (starting_tokens.empty()) {
+      path = cell.path;
       // Take the first set of properties, and ignore the rest.
       // They should be consistent, coming from alignment cell scanners,
       // but this is not verified.
@@ -171,53 +355,171 @@ struct AggregateColumnData {
   }
 };
 
+// Creates 'dst_tree' tree with the same structure as 'src_tree'. Value of each
+// created node is obtained by calling 'converter' function with corresponding
+// node from 'src_tree'.
+template <typename SrcValueType, typename DstValueType>
+static void CopyTreeStructure(
+    const VectorTree<SrcValueType>& src_tree,
+    VectorTree<DstValueType>* dst_tree,
+    const std::function<DstValueType(const SrcValueType&)>& converter) {
+  for (const auto& src_child : src_tree.Children()) {
+    auto* dst_child = dst_tree->NewChild(converter(src_child.Value()));
+    CopyTreeStructure(src_child, dst_child, converter);
+  }
+}
+
 class ColumnSchemaAggregator {
  public:
-  void Collect(const std::vector<ColumnPositionEntry>& row) {
-    for (const auto& cell : row) {
-      cell_map_[cell.path].Import(cell);
+  void Collect(const ColumnPositionTree& columns) {
+    CollectColumnsTree(columns, &columns_);
+  }
+
+  // Sort columns by syntax tree path assigned to them and create an index that
+  // maps syntax tree path to a column. Call this after collecting all columns.
+  void Finalize() {
+    syntax_to_columns_map_.clear();
+
+    for (auto& node : VectorTreePreOrderTraversal(columns_)) {
+      if (node.Parent()) {
+        // Index the column
+        auto it = syntax_to_columns_map_.emplace_hint(
+            syntax_to_columns_map_.end(), node.Value().path, ColumnsTreePath{});
+        node.Path(it->second);
+      }
+      if (!node.is_leaf()) {
+        // Sort subcolumns
+        std::sort(node.Children().begin(), node.Children().end(),
+                  [](const auto& a, const auto& b) {
+                    return a.Value().path < b.Value().path;
+                  });
+      }
     }
   }
 
-  size_t NumUniqueColumns() const { return cell_map_.size(); }
-
-  // Establishes 1:1 between SyntaxTreePath and column index.
-  // Call this after collecting all columns.
-  void FinalizeColumnIndices() {
-    column_positions_.reserve(cell_map_.size());
-    for (const auto& kv : cell_map_) {
-      column_positions_.push_back(kv.first);
-    }
+  const std::map<SyntaxTreePath, ColumnsTreePath>& SyntaxToColumnsMap() const {
+    return syntax_to_columns_map_;
   }
 
-  const std::vector<SyntaxTreePath>& ColumnPositions() const {
-    return column_positions_;
-  }
+  const VectorTree<AggregateColumnData>& Columns() const { return columns_; }
 
-  std::vector<AlignmentColumnProperties> ColumnProperties() const {
-    std::vector<AlignmentColumnProperties> properties;
-    properties.reserve(cell_map_.size());
-    for (const auto& entry : cell_map_) {
-      properties.push_back(entry.second.properties);
-    }
+  VectorTree<AlignmentColumnProperties> ColumnProperties() const {
+    VectorTree<AlignmentColumnProperties> properties;
+    CopyTreeStructure<AggregateColumnData, AlignmentColumnProperties>(
+        columns_, &properties,
+        [](const AggregateColumnData& data) { return data.properties; });
     return properties;
   }
 
  private:
-  // Keeps track of unique positions where new columns are desired.
-  // The keys form the set of columns wanted across all rows.
-  // The values are sets of starting tokens, from which token ranges
-  // will be computed per cell.
-  std::map<SyntaxTreePath, AggregateColumnData> cell_map_;
+  void CollectColumnsTree(const ColumnPositionTree& column,
+                          VectorTree<AggregateColumnData>* aggregate_column) {
+    CHECK_NOTNULL(aggregate_column);
+    for (const auto& subcolumn : column.Children()) {
+      const auto [index_entry, insert] =
+          syntax_to_columns_map_.try_emplace(subcolumn.Value().path);
+      VectorTree<verible::AggregateColumnData>* aggregate_subcolumn;
+      if (insert) {
+        aggregate_subcolumn = aggregate_column->NewChild();
+        CHECK_NOTNULL(aggregate_subcolumn);
+        // Put aggregate column node's path in created index entry
+        aggregate_subcolumn->Path(index_entry->second);
+      } else {
+        // Fact: existing aggregate_subcolumn is a direct child of
+        // aggregate_column
+        CHECK_GT(aggregate_column->Children().size(),
+                 index_entry->second.back());
+        aggregate_subcolumn =
+            &aggregate_column->Children()[index_entry->second.back()];
+      }
+      aggregate_subcolumn->Value().Import(subcolumn.Value());
+      CollectColumnsTree(subcolumn, aggregate_subcolumn);
+    }
+  }
 
-  // 1:1 map between SyntaxTreePath and column index.
-  // Values are monotonically increasing, so this is binary_search-able.
-  std::vector<SyntaxTreePath> column_positions_;
+  // Keeps track of unique positions where new columns are desired.
+  // The nodes are sets of starting tokens, from which token ranges will be
+  // computed per cell.
+  VectorTree<AggregateColumnData> columns_;
+  // 1:1 map between syntax tree's path and columns tree's path
+  std::map<SyntaxTreePath, ColumnsTreePath> syntax_to_columns_map_;
 };
 
-static SequenceStreamFormatter<AlignmentRow> MatrixRowFormatter(
-    const AlignmentRow& row) {
-  return SequenceFormatter(row, " | ", "< ", " >");
+// CellLabelGetterFunc which creates a label with column's path relative to
+// its parent column and either '<' or '>' filler characters indicating whether
+// the column flushes to the left or the right.
+// `T` should be either AggregateColumnData or ColumnPositionEntry.
+template <typename T>
+static std::pair<std::string, char> GetColumnDataCellLabel(
+    const VectorTree<T>& node) {
+  std::ostringstream label;
+  const SyntaxTreePath& path = node.Value().path;
+  auto begin = path.begin();
+  if (node.Parent()) {
+    // Find and skip common prefix
+    const auto& parent_path = node.Parent()->Value().path;
+    auto parent_begin = parent_path.begin();
+    while (begin != path.end() && parent_begin != parent_path.end() &&
+           *begin == *parent_begin) {
+      ++begin;
+      ++parent_begin;
+    }
+  }
+  label << " \t ";
+  if (begin != path.begin() && begin != path.end()) label << ".";
+  label << SequenceFormatter(
+      iterator_range<SyntaxTreePath::const_iterator>(begin, path.end()), ".");
+  label << " \t ";
+
+  return {label.str(), node.Value().properties.flush_left ? '<' : '>'};
+}
+
+std::ostream& operator<<(std::ostream& stream,
+                         const VectorTree<AggregateColumnData>& tree) {
+  ColumnsTreeFormatter<AggregateColumnData>(
+      stream, tree, GetColumnDataCellLabel<AggregateColumnData>);
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const ColumnPositionTree& tree) {
+  ColumnsTreeFormatter<ColumnPositionEntry>(
+      stream, tree, GetColumnDataCellLabel<ColumnPositionEntry>);
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream,
+                         const VectorTree<AlignmentCell>& tree) {
+  ColumnsTreeFormatter<AlignmentCell>(
+      stream, tree,
+      [](const VectorTree<AlignmentCell>& node)
+          -> std::pair<std::string, char> {
+        const auto& cell = node.Value();
+        if (cell.IsUnused()) {
+          return {"", '.'};
+        } else {
+          const auto width_info = absl::StrCat("\t(", cell.left_border_width,
+                                               "+", cell.compact_width, ")\t");
+          if (cell.IsComposite())
+            return {absl::StrCat("/", width_info, "\\"), '`'};
+
+          std::ostringstream label;
+          label << "\t" << cell << "\t\n" << width_info;
+          return {label.str(), ' '};
+        }
+      });
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream,
+                         const VectorTree<AlignedColumnConfiguration>& tree) {
+  ColumnsTreeFormatter<AlignedColumnConfiguration>(
+      stream, tree, [](const VectorTree<AlignedColumnConfiguration>& node) {
+        const auto& cell = node.Value();
+        const auto label =
+            absl::StrCat("\t", cell.left_border, "+", cell.width, "\t");
+        return std::pair<std::string, char>{label, ' '};
+      });
+  return stream;
 }
 
 struct AlignmentRowData {
@@ -226,109 +528,87 @@ struct AlignmentRowData {
 
   // Set of cells found that correspond to an ordered, sparse set of columns
   // to be aligned with other rows.
-  std::vector<ColumnPositionEntry> sparse_columns;
+  ColumnPositionTree sparse_columns;
 };
 
-// Translate a sparse set of columns into a fully-populated matrix row.
 static void FillAlignmentRow(
     const AlignmentRowData& row_data,
-    const std::vector<SyntaxTreePath>& column_positions, AlignmentRow* row) {
-  VLOG(2) << __FUNCTION__;
+    const std::map<SyntaxTreePath, ColumnsTreePath>& columns_map,
+    AlignmentRow* row) {
   const auto& sparse_columns(row_data.sparse_columns);
-  MutableFormatTokenRange partition_token_range(row_data.ftoken_range);
-  // Translate token into preformat_token iterator,
-  // full token range.
-  const auto cbegin = column_positions.begin();
-  const auto cend = column_positions.end();
-  auto pos_iter = cbegin;
-  auto token_iter = partition_token_range.begin();
-  const auto token_end = partition_token_range.end();
-  int last_column_index = 0;
-  // Find each non-empty cell, and fill in other cells with empty ranges.
-  for (const auto& col : sparse_columns) {
-    pos_iter = std::find(pos_iter, cend, col.path);
-    // By construction, sparse_columns' paths should be a subset of those
-    // in the aggregated column_positions set.
-    CHECK(pos_iter != cend);
-    const int column_index = std::distance(cbegin, pos_iter);
-    VLOG(3) << "cell at column " << column_index;
+  MutableFormatTokenRange remaining_tokens_range(row_data.ftoken_range);
 
-    // Find the format token iterator that corresponds to the column start.
-    // Linear time total over all outer loop iterations.
-    token_iter =
-        std::find_if(token_iter, token_end, [=](const PreFormatToken& ftoken) {
-          return BoundsEqual(ftoken.Text(), col.starting_token.text());
-        });
-    CHECK(token_iter != token_end);
+  MutableFormatTokenRange* prev_cell_tokens = nullptr;
+  if (!sparse_columns.is_leaf()) {
+    for (const auto& col : VectorTreeLeavesTraversal(sparse_columns)) {
+      const auto column_loc_iter = columns_map.find(col.Value().path);
+      CHECK(column_loc_iter != columns_map.end());
 
-    // Fill null-range cells between [last_column_index, column_index).
-    const MutableFormatTokenRange empty_filler(token_iter, token_iter);
-    for (; last_column_index <= column_index; ++last_column_index) {
-      VLOG(3) << "empty at column " << last_column_index;
-      (*row)[last_column_index].tokens = empty_filler;
+      const auto token_iter = std::find_if(
+          remaining_tokens_range.begin(), remaining_tokens_range.end(),
+          [=](const PreFormatToken& ftoken) {
+            return BoundsEqual(ftoken.Text(),
+                               col.Value().starting_token.text());
+          });
+      CHECK(token_iter != remaining_tokens_range.end());
+      remaining_tokens_range.set_begin(token_iter);
+
+      if (prev_cell_tokens != nullptr) prev_cell_tokens->set_end(token_iter);
+
+      AlignmentRow& row_cell = row->DescendPath(column_loc_iter->second.begin(),
+                                                column_loc_iter->second.end());
+      row_cell.Value().tokens = remaining_tokens_range;
+      prev_cell_tokens = &row_cell.Value().tokens;
     }
-    // At this point, the current cell has only seen its lower bound.
-    // The upper bound will be set in a separate pass.
   }
-  // Fill any sparse cells up to the last column.
-  VLOG(3) << "fill up to last column";
-  const MutableFormatTokenRange empty_filler(token_end, token_end);
-  for (const int n = column_positions.size(); last_column_index < n;
-       ++last_column_index) {
-    VLOG(3) << "empty at column " << last_column_index;
-    (*row)[last_column_index].tokens = empty_filler;
-  }
-
-  // In this pass, set the upper bounds of cells' token ranges.
-  auto upper_bound = token_end;
-  for (auto& cell : verible::reversed_view(*row)) {
-    cell.tokens.set_end(upper_bound);
-    upper_bound = cell.tokens.begin();
-  }
-  VLOG(2) << "end of " << __FUNCTION__ << ", row: " << MatrixRowFormatter(*row);
 }
 
-struct MatrixCellSizeFormatter {
-  const AlignmentMatrix& matrix;
-};
+// Recursively calculates widths of each cell's subcells and, if needed, updates
+// cell's width to fit all subcells.
+static void UpdateAndPropagateRowCellWidths(AlignmentRow* node) {
+  node->Value().UpdateWidths();
 
-std::ostream& operator<<(std::ostream& stream,
-                         const MatrixCellSizeFormatter& p) {
-  const AlignmentMatrix& matrix = p.matrix;
-  for (const auto& row : matrix) {
-    stream << '['
-           << absl::StrJoin(row, ", ",
-                            [](std::string* out, const AlignmentCell& cell) {
-                              absl::StrAppend(out, cell.left_border_width, "+",
-                                              cell.compact_width);
-                            })
-           << ']' << std::endl;
+  if (node->is_leaf()) return;
+
+  int total_width = 0;
+  for (auto& child : node->Children()) {
+    UpdateAndPropagateRowCellWidths(&child);
+    total_width += child.Value().TotalWidth();
   }
-  return stream;
+
+  if (node->Value().tokens.empty()) {
+    node->Value().left_border_width =
+        node->Children().front().Value().left_border_width;
+    node->Value().compact_width = total_width - node->Value().left_border_width;
+  }
 }
 
-static void ComputeCellWidths(AlignmentMatrix* matrix) {
+static void ComputeRowCellWidths(AlignmentRow* row) {
   VLOG(2) << __FUNCTION__;
-  for (auto& row : *matrix) {
-    for (auto& cell : row) {
-      cell.UpdateWidths();
-    }
-    // Force leftmost table border to be 0 because these cells start new lines
-    // and thus should not factor into alignment calculation.
-    // Note: this is different from how StateNode calculates column positions.
-    row.front().left_border_width = 0;
+  UpdateAndPropagateRowCellWidths(row);
+
+  // Force leftmost table border to be 0 because these cells start new lines
+  // and thus should not factor into alignment calculation.
+  // Note: this is different from how StateNode calculates column positions.
+  auto* front = row;
+  while (!front->Children().empty()) {
+    front = &front->Children().front();
+    front->Value().left_border_width = 0;
   }
-  VLOG(2) << "end of " << __FUNCTION__ << ", cell sizes:\n"
-          << MatrixCellSizeFormatter{*matrix};
+  VLOG(2) << "end of " << __FUNCTION__;
 }
 
-typedef std::vector<AlignedColumnConfiguration> AlignedFormattingColumnSchema;
+using AlignedFormattingColumnSchema = VectorTree<AlignedColumnConfiguration>;
 
 static AlignedFormattingColumnSchema ComputeColumnWidths(
     const AlignmentMatrix& matrix,
-    const std::vector<AlignmentColumnProperties>& column_properties) {
+    const VectorTree<AlignmentColumnProperties>& column_properties) {
   VLOG(2) << __FUNCTION__;
-  AlignedFormattingColumnSchema column_configs(matrix.front().size());
+
+  AlignedFormattingColumnSchema column_configs;
+  CopyTreeStructure<AlignmentCell, AlignedColumnConfiguration>(
+      matrix.front(), &column_configs,
+      [](const AlignmentCell&) { return AlignedColumnConfiguration{}; });
 
   // Check which cell before delimiter is the longest
   // If this cell is in the last row, the sizes of column with delimiter
@@ -336,13 +616,16 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
   int longest_cell_before_delimiter = 0;
   bool align_to_last_row = false;
   for (const AlignmentRow& row : matrix) {
-    auto column_prop_iter = column_properties.begin();
-    for (const AlignmentCell& cell : row) {
+    auto column_prop_iter =
+        VectorTreePreOrderTraversal(column_properties).begin();
+    const auto column_prop_end =
+        VectorTreePreOrderTraversal(column_properties).end();
+    for (const auto& node : VectorTreePreOrderTraversal(row)) {
       const auto next_prop = std::next(column_prop_iter, 1);
-      if (next_prop != column_properties.end() &&
-          next_prop->contains_delimiter) {
-        if (longest_cell_before_delimiter < cell.TotalWidth()) {
-          longest_cell_before_delimiter = cell.TotalWidth();
+      if (next_prop != column_prop_end &&
+          next_prop->Value().contains_delimiter) {
+        if (longest_cell_before_delimiter < node.Value().TotalWidth()) {
+          longest_cell_before_delimiter = node.Value().TotalWidth();
           if (&row == &matrix.back()) align_to_last_row = true;
         }
         break;
@@ -352,19 +635,39 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
   }
 
   for (const AlignmentRow& row : matrix) {
-    auto column_iter = column_configs.begin();
-    auto column_prop_iter = column_properties.begin();
-    for (const AlignmentCell& cell : row) {
-      if (column_prop_iter->contains_delimiter && align_to_last_row) {
-        column_iter->width = 0;
-        column_iter->left_border = 0;
+    auto column_iter = VectorTreePreOrderTraversal(column_configs).begin();
+    auto column_prop_iter =
+        VectorTreePreOrderTraversal(column_properties).begin();
+
+    for (const auto& node : VectorTreePreOrderTraversal(row)) {
+      if (column_prop_iter->Value().contains_delimiter && align_to_last_row) {
+        column_iter->Value().width = 0;
+        column_iter->Value().left_border = 0;
       } else {
-        column_iter->UpdateFromCell(cell);
+        column_iter->Value().UpdateFromCell(node.Value());
       }
       ++column_iter;
       ++column_prop_iter;
     }
   }
+
+  // Make sure columns are wide enough to fit all their subcolumns
+  for (auto& column_iter : VectorTreePostOrderTraversal(column_configs)) {
+    if (!column_iter.is_leaf()) {
+      int children_width = std::accumulate(
+          column_iter.Children().begin(), column_iter.Children().end(), 0,
+          [](int width, const AlignedFormattingColumnSchema& node) {
+            return width + node.Value().TotalWidth();
+          });
+      column_iter.Value().left_border =
+          std::max(column_iter.Value().left_border,
+                   column_iter.Children().front().Value().left_border);
+      column_iter.Value().width =
+          std::max(column_iter.Value().width,
+                   children_width - column_iter.Value().left_border);
+    }
+  }
+
   VLOG(2) << "end of " << __FUNCTION__;
   return column_configs;
 }
@@ -394,47 +697,97 @@ struct DeferredTokenAlignment {
   }
 };
 
-// Align cells by adjusting pre-token spacing for a single row.
-static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
-    const AlignedFormattingColumnSchema& column_configs,
-    const std::vector<AlignmentColumnProperties>& properties,
-    const AlignmentRow& row) {
-  VLOG(2) << __FUNCTION__;
-  std::vector<DeferredTokenAlignment> align_actions;
-  int accrued_spaces = 0;
-  auto column_iter = column_configs.begin();
-  auto properties_iter = properties.begin();
-  for (const auto& cell : row) {
-    accrued_spaces += column_iter->left_border;
-    if (cell.tokens.empty()) {
-      // Accumulate spacing for the next sparse cell in this row.
-      accrued_spaces += column_iter->width;
+static void ComputeAlignedRowCellSpacings(
+    const VectorTree<verible::AlignedColumnConfiguration>& column_configs,
+    const VectorTree<verible::AlignmentColumnProperties>& properties,
+    const AlignmentRow& row, std::vector<DeferredTokenAlignment>* align_actions,
+    int* accrued_spaces) {
+  ColumnsTreePath node_path;
+  row.Path(node_path);
+  VLOG(2) << TreePathFormatter(node_path) << " " << __FUNCTION__ << std::endl;
+
+  if (row.Children().empty()) return;
+
+  auto column_config_it = column_configs.Children().begin();
+  auto column_properties_it = properties.Children().begin();
+  for (const auto& cell : row.Children()) {
+    node_path.clear();
+    cell.Path(node_path);
+    if (cell.Value().IsUnused()) {
+      const int total_width = column_config_it->Value().left_border +
+                              column_config_it->Value().width;
+
+      VLOG(2) << TreePathFormatter(node_path)
+              << " unused cell; width: " << total_width;
+
+      *accrued_spaces += total_width;
+    } else if (cell.Value().IsComposite()) {
+      // Cummulative subcolumns width might be smaller than their parent
+      // column's width.
+      const int subcolumns_width = std::accumulate(
+          column_config_it->Children().begin(),
+          column_config_it->Children().end(), 0,
+          [](int width, const VectorTree<AlignedColumnConfiguration>& node) {
+            return width + node.Value().TotalWidth();
+          });
+      const int padding =
+          column_config_it->Value().TotalWidth() - subcolumns_width;
+
+      VLOG(2) << TreePathFormatter(node_path) << " composite cell"
+              << "; padding: " << padding << "; flush: "
+              << (column_properties_it->Value().flush_left ? "left" : "right");
+
+      if (!column_properties_it->Value().flush_left) *accrued_spaces += padding;
+      ComputeAlignedRowCellSpacings(*column_config_it, *column_properties_it,
+                                    cell, align_actions, accrued_spaces);
+      if (column_properties_it->Value().flush_left) *accrued_spaces += padding;
     } else {
-      VLOG(2) << "at: " << cell.tokens.front().Text();
+      *accrued_spaces += column_config_it->Value().left_border;
+
+      VLOG(2) << TreePathFormatter(node_path) << " token cell"
+              << "; starting token: " << cell.Value().tokens.front().Text();
+
       // Align by setting the left-spacing based on sum of cell widths
       // before this one.
-      const int padding = column_iter->width - cell.compact_width;
-      PreFormatToken& ftoken = cell.tokens.front();
+      const int padding =
+          column_config_it->Value().width - cell.Value().compact_width;
+      PreFormatToken& ftoken = cell.Value().tokens.front();
       int left_spacing;
-      if (properties_iter->flush_left) {
-        if (properties_iter->contains_delimiter) {
+      if (column_properties_it->Value().flush_left) {
+        if (column_properties_it->Value().contains_delimiter) {
           left_spacing = 0;
-          accrued_spaces += padding;
+          *accrued_spaces += padding;
         } else {
-          left_spacing = accrued_spaces;
-          accrued_spaces = padding;
+          left_spacing = *accrued_spaces;
+          *accrued_spaces = padding;
         }
       } else {  // flush right
-        left_spacing = accrued_spaces + padding;
-        accrued_spaces = 0;
+        left_spacing = *accrued_spaces + padding;
+        *accrued_spaces = 0;
       }
-      align_actions.emplace_back(&ftoken, left_spacing);
-      VLOG(2) << "left_spacing = " << left_spacing;
+      align_actions->emplace_back(&ftoken, left_spacing);
+
+      VLOG(2) << TreePathFormatter(node_path)
+              << " ... left_spacing: " << left_spacing;
     }
-    VLOG(2) << "accrued_spaces = " << accrued_spaces;
-    ++column_iter;
-    ++properties_iter;
+
+    ++column_config_it;
+    ++column_properties_it;
   }
+}
+
+// Align cells by adjusting pre-token spacing for a single row.
+static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
+    const VectorTree<verible::AlignedColumnConfiguration>& column_configs,
+    const VectorTree<verible::AlignmentColumnProperties>& properties,
+    const AlignmentRow& row) {
+  VLOG(2) << __FUNCTION__ << "; row:\n" << row;
+  std::vector<DeferredTokenAlignment> align_actions;
+  int accrued_spaces = 0;
+
+  ComputeAlignedRowCellSpacings(column_configs, properties, row, &align_actions,
+                                &accrued_spaces);
+
   VLOG(2) << "end of " << __FUNCTION__;
   return align_actions;
 }
@@ -460,12 +813,23 @@ static MutableFormatTokenRange ConvertToMutableFormatTokenRange(
       ConvertToMutableIterator<array_type>(const_range.end(), base));
 }
 
+static const AlignmentRow* RightmostSubcolumnWithTokens(
+    const AlignmentRow& node) {
+  if (!node.Value().tokens.empty()) return &node;
+  for (const auto& child : reversed_view(node.Children())) {
+    if (child.Value().TotalWidth() > 0) {
+      return RightmostSubcolumnWithTokens(child);
+    }
+  }
+  return nullptr;
+}
+
 static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
-                                    const AlignmentRow& row) {
+                                    const AlignmentRow& last_subcol) {
   // Identify the unaligned epilog tokens of this 'partition', i.e. those not
   // spanned by 'row'.
   auto partition_end = partition.Value().TokensRange().end();
-  auto row_end = row.back().tokens.end();
+  auto row_end = last_subcol.Value().tokens.end();
   return FormatTokenRange(row_end, partition_end);
 }
 
@@ -473,7 +837,7 @@ static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
 static void CommitAlignmentDecisionToRow(
     const AlignmentRow& row, MutableFormatTokenRange::iterator ftoken_base,
     TokenPartitionTree* partition) {
-  if (!row.empty()) {
+  if (!row.Children().empty()) {
     const auto ftoken_range = ConvertToMutableFormatTokenRange(
         partition->Value().TokensRange(), ftoken_base);
     for (auto& ftoken : ftoken_range) {
@@ -514,9 +878,11 @@ static bool AlignedRowsFitUnderColumnLimit(
     const AlignmentMatrix& matrix, int total_column_width, int column_limit) {
   auto partition_iter = rows.begin();
   for (const auto& row : matrix) {
-    if (!row.empty()) {
+    const auto* rightmost_subcolumn = RightmostSubcolumnWithTokens(row);
+    if (rightmost_subcolumn) {
       // Identify the unaligned epilog text on each partition.
-      const FormatTokenRange epilog_range(EpilogRange(**partition_iter, row));
+      const FormatTokenRange epilog_range(
+          EpilogRange(**partition_iter, *rightmost_subcolumn));
       const int aligned_partition_width =
           total_column_width + EffectiveCellWidth(epilog_range);
       if (aligned_partition_width > column_limit) {
@@ -587,16 +953,14 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
         cell_scanner_gen(*row)};
 
     alignment_row_data.emplace_back(row_data);
+    VLOG(2) << "Row sparse columns:\n" << row_data.sparse_columns;
+
     // Aggregate union of all column keys (syntax tree paths).
     column_schema.Collect(row_data.sparse_columns);
   }
-
-  // Map SyntaxTreePaths to column indices.
-  VLOG(2) << "Mapping column indices";
-  column_schema.FinalizeColumnIndices();
-  const auto& column_positions = column_schema.ColumnPositions();
-  const size_t num_columns = column_schema.NumUniqueColumns();
-  VLOG(2) << "unique columns: " << num_columns;
+  VLOG(2) << "Generating column schema from collected row data";
+  column_schema.Finalize();
+  VLOG(2) << "Column schema:\n" << column_schema.Columns();
 
   // Populate a matrix of cells, where cells span token ranges.
   // Null cells (due to optional constructs) are represented by empty ranges,
@@ -606,31 +970,34 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   {
     auto row_data_iter = alignment_row_data.cbegin();
     for (auto& row : result.matrix) {
-      row.resize(num_columns);
-      FillAlignmentRow(*row_data_iter, column_positions, &row);
+      CopyTreeStructure<AggregateColumnData, AlignmentCell>(
+          column_schema.Columns(), &row,
+          [](const AggregateColumnData&) { return AlignmentCell{}; });
+
+      FillAlignmentRow(*row_data_iter, column_schema.SyntaxToColumnsMap(),
+                       &row);
+      ComputeRowCellWidths(&row);
+      VLOG(2) << "Filled row:\n" << row;
+
       ++row_data_iter;
     }
   }
-
-  // Compute compact sizes per cell.
-  ComputeCellWidths(&result.matrix);
 
   // Extract other non-computed column properties.
   const auto column_properties = column_schema.ColumnProperties();
 
   // Compute max widths per column.
-  AlignedFormattingColumnSchema column_configs(
+  VectorTree<AlignedColumnConfiguration> column_configs(
       ComputeColumnWidths(result.matrix, column_properties));
+
+  VLOG(2) << "Column widths:\n" << column_configs;
 
   {
     // Total width does not include initial left-indentation.
     // Assume indentation is the same for all partitions in each group.
     const int indentation = rows.front()->Value().IndentationSpaces();
-    const int total_column_width = std::accumulate(
-        column_configs.begin(), column_configs.end(), indentation,
-        [](int total_width, const AlignedColumnConfiguration& c) {
-          return total_width + c.TotalWidth();
-        });
+    const int total_column_width =
+        indentation + column_configs.Value().TotalWidth();
     VLOG(2) << "Total (aligned) column width = " << total_column_width;
     // if the aligned columns would exceed the column limit, then refuse to
     // align for now.  However, this check alone does not include text that
@@ -655,6 +1022,7 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   // Store the mutation set in a 2D structure that reflects the original token
   // partitions and alignment matrix representation.
   result.align_actions_2D.reserve(result.matrix.size());
+
   for (const auto& row : result.matrix) {
     result.align_actions_2D.push_back(
         ComputeAlignedRowSpacings(column_configs, column_properties, row));

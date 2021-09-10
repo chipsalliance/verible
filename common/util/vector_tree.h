@@ -238,11 +238,10 @@ class VectorTree : private _VectorTreeImpl {
 
   typedef _VectorTreeImpl impl_type;
 
-  // Private default constructor.
-  VectorTree() = default;
-
  public:
   typedef T value_type;
+
+  VectorTree() = default;
 
   // Deep copy-constructor.
   VectorTree(const this_type& other)
