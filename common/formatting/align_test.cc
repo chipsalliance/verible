@@ -1044,7 +1044,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
     while (true) {
       UnwrappedLine uwline(0, token_iter);
       SymbolPtr item = ParseItem(&token_iter, pre_format_tokens_.end());
-      if (!item.get()) {
+      if (!item) {
         break;
       }
       uwline.SpanUpToToken(token_iter);
@@ -1060,7 +1060,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       const std::vector<verible::PreFormatToken>::iterator& end) {
     SymbolPtr list = TNode(0);
     SymbolPtr item;
-    while ((item = ParseItem(it, end)).get() != nullptr) {
+    while ((item = ParseItem(it, end)) != nullptr) {
       SymbolCastToNode(*list).AppendChild(std::move(item));
     }
     return list;
