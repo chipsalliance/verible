@@ -21,10 +21,11 @@
 #include "common/text/token_info.h"
 #include "common/text/token_info_json.h"
 #include "common/util/value_saver.h"
-#include "json/json.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
 #include "verilog/parser/verilog_token.h"
 #include "verilog/parser/verilog_token_classifications.h"
+
+using nlohmann::json;
 
 namespace verilog {
 
@@ -35,18 +36,18 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
   void Visit(const verible::SyntaxTreeLeaf&) override;
   void Visit(const verible::SyntaxTreeNode&) override;
 
-  Json::Value TakeJsonValue() { return std::move(json_); }
+  json TakeJsonValue() { return std::move(json_); }
 
  protected:
   // Range of text spanned by syntax tree, used for offset calculation.
   const verible::TokenInfo::Context context_;
 
   // JSON tree root
-  Json::Value json_;
+  json json_;
 
   // Pointer to JSON value of currently visited symbol in its parent's
   // children list.
-  Json::Value* value_;
+  json* value_;
 };
 
 VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
@@ -54,7 +55,6 @@ VerilogTreeToJsonConverter::VerilogTreeToJsonConverter(absl::string_view base)
                [](std::ostream& stream, int e) {
                  stream << TokenTypeToString(static_cast<verilog_tokentype>(e));
                }),
-      json_(Json::objectValue),
       value_(&json_) {}
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
@@ -72,26 +72,23 @@ void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeLeaf& leaf) {
 }
 
 void VerilogTreeToJsonConverter::Visit(const verible::SyntaxTreeNode& node) {
-  *value_ = Json::objectValue;
+  *value_ = json::object();
   (*value_)["tag"] = NodeEnumToString(static_cast<NodeEnum>(node.Tag().tag));
-  Json::Value& children = (*value_)["children"] = Json::arrayValue;
-  children.resize(node.children().size());
+  json& children = (*value_)["children"] = json::array();
 
   {
-    const verible::ValueSaver<Json::Value*> value_saver(&value_, nullptr);
-    unsigned child_rank = 0;
+    const verible::ValueSaver<json*> value_saver(&value_, nullptr);
     for (const auto& child : node.children()) {
-      value_ = &children[child_rank];
+      value_ = &children.emplace_back(nullptr);
       // nullptrs from children list are intentionally preserved in JSON as
       // `null` values.
       if (child) child->Accept(this);
-      ++child_rank;
     }
   }
 }
 
-Json::Value ConvertVerilogTreeToJson(const verible::Symbol& root,
-                                     absl::string_view base) {
+json ConvertVerilogTreeToJson(const verible::Symbol& root,
+                              absl::string_view base) {
   VerilogTreeToJsonConverter converter(base);
   root.Accept(&converter);
   return converter.TakeJsonValue();

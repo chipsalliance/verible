@@ -36,7 +36,7 @@ cc_library(
     hdrs = ["token_info_json.h"],
     deps = [
         ":token_info",
-        "@jsoncpp_git//:jsoncpp",
+        "@jsonhpp//:jsonhpp",
     ],
 )
 
@@ -368,7 +368,7 @@ cc_test(
         ":token_info_json",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-        "@jsoncpp_git//:jsoncpp",
+        "@jsonhpp//:jsonhpp",
     ],
 )
 

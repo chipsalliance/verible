@@ -177,6 +177,33 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
   { echo "stderr differs." ; exit 1 ;}
 
 ################################################################################
+echo "=== Test reading stdin, print errors. --export_json --error_limit=1"
+
+"$syntax_checker" --export_json --error_limit=1 - > "$MY_OUTPUT_FILE" 2>&1 <<EOF
+module 1;
+endmodule
+module 2;
+endmodule
+EOF
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+json_canonicalize > "$MY_EXPECT_FILE" <<EOF
+{"-":{
+  "errors": [
+      {"line": 0, "column": 7, "phase": "parse", "text": "1" }
+  ]}}
+EOF
+
+tr '\r\n' '\n' < $MY_OUTPUT_FILE | json_canonicalize > "${MY_OUTPUT_FILE}.1"
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "${MY_OUTPUT_FILE}.1" || \
+  { echo "stderr differs." ; exit 1 ;}
+
+################################################################################
 echo "=== Test --printtokens"
 
 "$syntax_checker" --printtokens - > "$MY_OUTPUT_FILE" <<EOF

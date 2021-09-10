@@ -15,14 +15,15 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 #define VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 
-#include "json/value.h"
+#include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 
-// Returns JSON list with information about errors.
-Json::Value GetLinterTokenErrorsAsJson(
-    const verilog::VerilogAnalyzer* analyzer);
+// Returns JSON list with information about errors. At most "limit" errors
+// are returned (zero means unlimited).
+nlohmann::json GetLinterTokenErrorsAsJson(
+    const verilog::VerilogAnalyzer* analyzer, size_t limit);
 
 }  // namespace verilog
 

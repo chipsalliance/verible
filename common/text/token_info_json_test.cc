@@ -20,31 +20,22 @@
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
 #include "gtest/gtest.h"
-#include "json/value.h"
 
 namespace verible {
 namespace {
-
-static Json::Value ParseJson(absl::string_view text) {
-  Json::Value json;
-  std::unique_ptr<Json::CharReader> reader(
-      Json::CharReaderBuilder().newCharReader());
-  reader->parse(text.begin(), text.end(), &json, nullptr);
-  return json;
-}
 
 TEST(TokenInfoToJsonTest, ToJsonEOF) {
   constexpr absl::string_view base;  // empty
   const TokenInfo::Context context(base);
   const TokenInfo token_info(TK_EOF, base);
 
-  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), nlohmann::json::parse(R"({
     "start": 0,
     "end": 0,
     "tag": "0"
   })"));
 
-  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context, true), nlohmann::json::parse(R"({
     "start": 0,
     "end": 0,
     "tag": "0",
@@ -57,13 +48,13 @@ TEST(TokenInfoToJsonTest, ToJsonWithBase) {
   const TokenInfo::Context context(base);
   const TokenInfo token_info(7, base.substr(9, 3));
 
-  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), nlohmann::json::parse(R"({
     "start": 9,
     "end": 12,
     "tag": "7"
   })"));
 
-  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context, true), nlohmann::json::parse(R"({
     "start": 9,
     "end": 12,
     "tag": "7",
@@ -78,13 +69,13 @@ TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
   const verible::TokenInfo::Context context(
       text, [](std::ostream& stream, int e) { stream << "token enum " << e; });
 
-  EXPECT_EQ(ToJson(token_info, context), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context), nlohmann::json::parse(R"({
     "start": 0,
     "end": 19,
     "tag": "token enum 143"
   })"));
 
-  EXPECT_EQ(ToJson(token_info, context, true), ParseJson(R"({
+  EXPECT_EQ(ToJson(token_info, context, true), nlohmann::json::parse(R"({
     "start": 0,
     "end": 19,
     "tag": "token enum 143",

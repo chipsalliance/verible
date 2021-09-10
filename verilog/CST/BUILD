@@ -910,7 +910,7 @@ cc_library(
         "//verilog/parser:verilog_token",
         "//verilog/parser:verilog_token_classifications",
         "@com_google_absl//absl/strings",
-        "@jsoncpp_git//:jsoncpp",
+        "@jsonhpp//:jsonhpp",
     ],
 )
 
@@ -961,6 +961,6 @@ cc_test(
         "//verilog/analysis:verilog_analyzer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-        "@jsoncpp_git//:jsoncpp",
+        "@jsonhpp//:jsonhpp",
     ],
 )

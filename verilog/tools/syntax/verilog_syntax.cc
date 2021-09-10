@@ -19,6 +19,7 @@
 // verilog_syntax --verilog_trace_parser files...
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -42,7 +43,7 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
-#include "json/json.h"
+#include "nlohmann/json.hpp"
 #include "verilog/CST/verilog_tree_json.h"
 #include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/json_diagnostics.h"
@@ -109,6 +110,7 @@ ABSL_FLAG(bool, show_diagnostic_context, false,
           "line on which the diagnostic was found,"
           "followed by a line with a position marker");
 
+using nlohmann::json;
 using verible::ConcreteSyntaxTree;
 using verible::ParserVerifier;
 using verible::TextStructureView;
@@ -162,7 +164,7 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
 }
 
 static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
-                          Json::Value* json_out) {
+                          json* json_out) {
   int exit_status = 0;
   const auto analyzer = ParseWithLanguageMode(content, filename);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -184,11 +186,8 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         if (error_limit != 0 && error_count >= error_limit) break;
       }
     } else {
-      Json::Value& errors = (*json_out)["errors"] =
-          verilog::GetLinterTokenErrorsAsJson(analyzer.get());
-      if (error_limit > 0 && errors.size() > unsigned(error_limit)) {
-        errors.resize(error_limit);
-      }
+      (*json_out)["errors"] =
+          verilog::GetLinterTokenErrorsAsJson(analyzer.get(), error_limit);
     }
     exit_status = 1;
   }
@@ -214,14 +213,11 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         t->ToStream(std::cout, context) << std::endl;
       }
     } else {
-      Json::Value& tokens = (*json_out)["tokens"] = Json::arrayValue;
+      json& tokens = (*json_out)["tokens"] = json::array();
       const auto& token_stream = analyzer->Data().GetTokenStreamView();
-      tokens.resize(token_stream.size());
-      Json::ArrayIndex token_index = 0;
       for (const auto& t : token_stream) {
-        tokens[token_index] =
-            verible::ToJson(*t, context, ShouldIncludeTokenText(*t));
-        ++token_index;
+        tokens.push_back(
+            verible::ToJson(*t, context, ShouldIncludeTokenText(*t)));
       }
     }
   }
@@ -234,14 +230,11 @@ static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
         t.ToStream(std::cout, context) << std::endl;
       }
     } else {
-      Json::Value& tokens = (*json_out)["rawtokens"] = Json::arrayValue;
+      json& tokens = (*json_out)["rawtokens"] = json::array();
       const auto& token_stream = analyzer->Data().TokenStream();
-      tokens.resize(token_stream.size());
-      Json::ArrayIndex token_index = 0;
       for (const auto& t : token_stream) {
-        tokens[token_index] =
-            verible::ToJson(t, context, ShouldIncludeTokenText(t));
-        ++token_index;
+        tokens.push_back(
+            verible::ToJson(t, context, ShouldIncludeTokenText(t)));
       }
     }
   }
@@ -283,7 +276,7 @@ int main(int argc, char** argv) {
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  Json::Value json;
+  json json_out;
 
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
@@ -295,21 +288,16 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    Json::Value file_json;
+    json file_json;
     int file_status = AnalyzeOneFile(content, filename, &file_json);
     exit_status = std::max(exit_status, file_status);
     if (absl::GetFlag(FLAGS_export_json)) {
-      json[filename] = std::move(file_json);
+      json_out[filename] = std::move(file_json);
     }
   }
 
   if (absl::GetFlag(FLAGS_export_json)) {
-    Json::StreamWriterBuilder builder;
-    // Disable extra space before ':'
-    builder["enableYAMLCompatibility"] = true;
-    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-    writer->write(json, &std::cout);
-    std::cout << std::endl;
+    std::cout << std::setw(2) << json_out << std::endl;
   }
 
   return exit_status;

@@ -43,10 +43,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
 # tight warnings on for 'our' code-base.
-# TODO(hzeller): Remove after https://github.com/chipsalliance/verible/issues/747
-#                is figure out
+# TODO(hzeller): Remove after
+#            https://github.com/chipsalliance/verible/issues/747 is figured out
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"  # jsconcpp
 
 case "$MODE" in
   test)
