@@ -978,6 +978,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    ((e == f) && g) ? {1'b0, f} : (h) ?\n"
         "    {1'b0, e} - 1'b1 : {1'b0, e} + 1'b1;\n",
     },
+    {
+        "assign {aaaaaaaaaa, bbbbbbbbb} = {1'b0, cccccccccccccccccc[15:0]} +\n"
+        "                                 {1'b0, ddddddddddddddddd[15:0]};\n",
+        "assign {aaaaaaaaaa, bbbbbbbbb} =\n"
+        "    {1'b0, cccccccccccccccccc[15:0]} + {\n"
+        "    1'b0, ddddddddddddddddd[15:0]};\n",
+    },
+    {
+        "covergroup a(string b);\n"
+        "foobar: cross foo, bar {"
+        "ignore_bins baz = binsof(qux) intersect {1, 2, 3, 4, 5, 6, 7};"
+        "}\n"
+        "endgroup : a\n",
+        "covergroup a(string b);\n"
+        "  foobar: cross foo, bar{\n"
+        "    ignore_bins baz =\n"
+        "        binsof (qux) intersect {\n"
+        "      1, 2, 3, 4, 5, 6, 7\n"
+        "    };\n"
+        "  }\n"
+        "endgroup : a\n",
+    },
 
     // streaming operators
     {

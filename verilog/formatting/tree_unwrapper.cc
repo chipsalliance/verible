@@ -1031,9 +1031,12 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kOpenRangeList: {
-      if (Context().DirectParentIs(NodeEnum::kConcatenationExpression) &&
+      if (Context().DirectParentsAre(
+              {NodeEnum::kConcatenationExpression, NodeEnum::kExpression}) &&
           !Context().IsInside(NodeEnum::kCoverageBin) &&
-          !Context().IsInside(NodeEnum::kConditionExpression)) {
+          !Context().IsInside(NodeEnum::kConditionExpression) &&
+          (!Context().IsInside(NodeEnum::kBinaryExpression) ||
+           Context().IsInside(NodeEnum::kPropertyImplicationList))) {
         // Do not further indent preprocessor clauses.
         const int indent = suppress_indentation ? 0 : style_.indentation_spaces;
         VisitIndentedSection(node, indent,
@@ -1173,14 +1176,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                                          NodeEnum::kIdentifierList})) {
         // original un-lexed macro argument was successfully expanded
         VisitNewUnwrappedLine(node);
-      } else if (Context().DirectParentIs(NodeEnum::kOpenRangeList) &&
-                 Context().IsInside(NodeEnum::kConcatenationExpression) &&
-                 !(Context().IsInside(NodeEnum::kCoverageBin) ||
-                   Context().IsInside(NodeEnum::kConditionExpression))) {
+      } else if (Context().DirectParentsAre({NodeEnum::kOpenRangeList,
+                                             NodeEnum::kConcatenationExpression,
+                                             NodeEnum::kExpression}) &&
+                 !Context().IsInside(NodeEnum::kCoverageBin) &&
+                 !Context().IsInside(NodeEnum::kConditionExpression) &&
+                 (!Context().IsInside(NodeEnum::kBinaryExpression) ||
+                  Context().IsInside(NodeEnum::kPropertyImplicationList))) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
-      } else if (Context().IsInside(NodeEnum::kAssignmentPattern) &&
-                 !Context().IsInside(NodeEnum::kConditionExpression)) {
+      } else if (Context().IsInside(NodeEnum::kAssignmentPattern)) {
         VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
@@ -2098,10 +2103,13 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
           (current_context_.DirectParentIsOneOf(
                {NodeEnum::kUntagged, NodeEnum::kExpressionList}) &&
            current_context_.IsInside(NodeEnum::kAssignmentPattern)) ||
-          (current_context_.DirectParentIs(NodeEnum::kOpenRangeList) &&
-           current_context_.IsInside(NodeEnum::kConcatenationExpression) &&
+          (current_context_.DirectParentsAre(
+               {NodeEnum::kOpenRangeList, NodeEnum::kConcatenationExpression,
+                NodeEnum::kExpression}) &&
            !current_context_.IsInside(NodeEnum::kCoverageBin) &&
-           !current_context_.IsInside(NodeEnum::kConditionExpression))) {
+           !current_context_.IsInside(NodeEnum::kConditionExpression) &&
+           (!current_context_.IsInside(NodeEnum::kBinaryExpression) ||
+            current_context_.IsInside(NodeEnum::kPropertyImplicationList)))) {
         MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
