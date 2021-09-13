@@ -58,10 +58,17 @@ const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
           "Checks that the digits of binary literals for the configured "
           "bases match their declared width, i.e. has enough padding prefix "
           "zeros.",
-      .param = {{"bin", "true", "Checking binary 'b literals."},
-                {"oct", "false", "Checking octal 'o literals."},
-                {"hex", "false", "Checking hexadecimal 'h literals."}},
-  };
+      .param = {
+          {"bin", "true", "Checking binary 'b literals."},
+          {"oct", "false", "Checking octal 'o literals."},
+          {"hex", "false", "Checking hexadecimal 'h literals."},
+          {"autofix", "true",
+           "Provide autofix suggestions, e.g. "
+           "32'hAB provides suggested fix 32'h000000AB."},
+          {"autofix_suggest_decimal_for_one", "true",
+           "For the number 1 (one), provide two autofix alternatives "
+           "e.g. 32'h1 provides suggestions 32'd1 and 32'h00000001."},
+      }};
   return d;
 }
 
@@ -118,11 +125,26 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
   const int missing_bits = width - number.literal.length() * bits_per_digit;
   // Allow literals with single "0" or "?" as an exception
   if (missing_bits > 0 && number.literal != "0" && number.literal != "?") {
+    std::vector<AutoFix> autofixes;
+    if (number.literal == "1" && autofix_suggest_decimal_for_one) {
+      // For literals with number one, this often might be meant to be a
+      // decimal; in this case, make this first suggestion.
+      if (number.signedness) {
+        autofixes.push_back(AutoFix({{base_text.substr(0, 3), "'sd"}}));
+      } else {
+        autofixes.push_back(AutoFix({{base_text.substr(0, 2), "'d"}}));
+      }
+    }
+
+    // Regular fix: prefix with leading zeroes.
     const int leading_0 = (missing_bits + bits_per_digit - 1) / bits_per_digit;
+    autofixes.push_back(
+        AutoFix({{digits_text.substr(0, 0), std::string(leading_0, '0')}}));
+
     violations_.insert(LintViolation(
         digits_leaf->get(),
         FormatReason(width_text, base_text, number.base, digits_text), context,
-        {AutoFix({{digits_text.substr(0, 0), std::string(leading_0, '0')}})}));
+        autofixes));
   }
 }
 
@@ -149,10 +171,15 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
 absl::Status UndersizedBinaryLiteralRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetBool;
-  return verible::ParseNameValues(configuration,
-                                  {{"bin", SetBool(&check_bin_numbers_)},
-                                   {"hex", SetBool(&check_hex_numbers_)},
-                                   {"oct", SetBool(&check_oct_numbers_)}});
+  return verible::ParseNameValues(
+      configuration, {
+                         {"bin", SetBool(&check_bin_numbers_)},
+                         {"hex", SetBool(&check_hex_numbers_)},
+                         {"oct", SetBool(&check_oct_numbers_)},
+                         {"autofix", SetBool(&autofix)},
+                         {"autofix_suggest_decimal_for_one",
+                          SetBool(&autofix_suggest_decimal_for_one)},
+                     });
 }
 
 LintRuleStatus UndersizedBinaryLiteralRule::Report() const {

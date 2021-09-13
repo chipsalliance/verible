@@ -54,6 +54,8 @@ class UndersizedBinaryLiteralRule : public verible::SyntaxTreeLintRule {
   bool check_bin_numbers_ = true;
   bool check_hex_numbers_ = false;
   bool check_oct_numbers_ = false;
+  bool autofix = true;
+  bool autofix_suggest_decimal_for_one = true;
 
   std::set<verible::LintViolation> violations_;
 };
