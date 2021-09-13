@@ -5,7 +5,7 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
-load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -72,21 +72,7 @@ action_listener(
 
 compilation_database(
     name = "compdb",
-    # targets = [ ":install-binaries" ],
-    # Unfortunately, compilation_database does not support filesets yet,
-    # so expand them here manually.
-    # https://github.com/grailbio/bazel-compilation-database/issues/84
-   targets = [
-        "//common/tools:verible-patch-tool",
-        "//verilog/tools/diff:verible-verilog-diff",
-        "//verilog/tools/formatter:verible-verilog-format",
-        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
-        "//verilog/tools/lint:verible-verilog-lint",
-        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
-        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
-        "//verilog/tools/project:verible-verilog-project",
-        "//verilog/tools/syntax:verible-verilog-syntax",
-    ],
+    targets = [ ":install-binaries" ],
     # TODO: is there a way to essentially specify //... so that all tests
     # are included as well ?
 )
