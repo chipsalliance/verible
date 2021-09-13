@@ -99,7 +99,7 @@ class AutoFix {
 struct LintViolation {
   // This construct records a token stream lint violation.
   LintViolation(const TokenInfo& token, const std::string& reason,
-                std::initializer_list<AutoFix> autofixes = {})
+                const std::vector<AutoFix>& autofixes = {})
       : root(nullptr),
         token(token),
         reason(reason),
@@ -110,7 +110,7 @@ struct LintViolation {
   // Use this variation when the violation can be localized to a single token.
   LintViolation(const TokenInfo& token, const std::string& reason,
                 const SyntaxTreeContext& context,
-                std::initializer_list<AutoFix> autofixes = {})
+                const std::vector<AutoFix>& autofixes = {})
       : root(nullptr),
         token(token),
         reason(reason),
@@ -123,7 +123,7 @@ struct LintViolation {
   // the left-most leaf of the subtree.
   LintViolation(const Symbol& root, const std::string& reason,
                 const SyntaxTreeContext& context,
-                std::initializer_list<AutoFix> autofixes = {});
+                const std::vector<AutoFix>& autofixes = {});
 
   // root is a reference into original ConcreteSyntaxTree that
   // linter was run against. LintViolations should not outlive this tree.

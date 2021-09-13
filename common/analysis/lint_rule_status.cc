@@ -74,7 +74,7 @@ static TokenInfo SymbolToToken(const Symbol& root) {
 
 LintViolation::LintViolation(const Symbol& root, const std::string& reason,
                              const SyntaxTreeContext& context,
-                             std::initializer_list<AutoFix> autofixes)
+                             const std::vector<AutoFix>& autofixes)
     : root(&root),
       token(SymbolToToken(root)),
       reason(reason),
