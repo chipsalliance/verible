@@ -215,7 +215,8 @@ static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
 
 class VerilogColumnSchemaScanner : public ColumnSchemaScanner {
  public:
-  VerilogColumnSchemaScanner(const FormatStyle& style) : style_(style) {}
+  explicit VerilogColumnSchemaScanner(const FormatStyle& style)
+      : style_(style) {}
 
  protected:
   const FormatStyle& style_;
@@ -246,7 +247,7 @@ UnstyledAlignmentCellScannerGenerator(
 class ActualNamedParameterColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  ActualNamedParameterColumnSchemaScanner(const FormatStyle& style)
+  explicit ActualNamedParameterColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -277,7 +278,7 @@ class ActualNamedParameterColumnSchemaScanner
 // e.g. ".port_name(net_name)"
 class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  ActualNamedPortColumnSchemaScanner(const FormatStyle& style)
+  explicit ActualNamedPortColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -308,7 +309,7 @@ class ActualNamedPortColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // e.g. "input wire clk,"
 class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  PortDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit PortDeclarationColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -486,7 +487,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // e.g. bit [31:0] member_name;
 class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  StructUnionMemberColumnSchemaScanner(const FormatStyle& style)
+  explicit StructUnionMemberColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -676,7 +677,7 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
 // TODO(fangism): refactor out common logic
 class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  DataDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit DataDeclarationColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -805,7 +806,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // re-use the same column scanner as data/variable/net declarations.
 class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  ClassPropertyColumnSchemaScanner(const FormatStyle& style)
+  explicit ClassPropertyColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -872,7 +873,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
 class ParameterDeclarationColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  ParameterDeclarationColumnSchemaScanner(const FormatStyle& style)
+  explicit ParameterDeclarationColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -1006,7 +1007,7 @@ class ParameterDeclarationColumnSchemaScanner
 // items.
 class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  CaseItemColumnSchemaScanner(const FormatStyle& style)
+  explicit CaseItemColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   bool ParentContextIsCaseItem() const {
@@ -1073,7 +1074,7 @@ class CaseItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
 // * foo <= bar;
 class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  AssignmentColumnSchemaScanner(const FormatStyle& style)
+  explicit AssignmentColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) override {
@@ -1131,7 +1132,7 @@ class AssignmentColumnSchemaScanner : public VerilogColumnSchemaScanner {
 class EnumWithAssignmentsColumnSchemaScanner
     : public VerilogColumnSchemaScanner {
  public:
-  EnumWithAssignmentsColumnSchemaScanner(const FormatStyle& style)
+  explicit EnumWithAssignmentsColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) final {
@@ -1175,7 +1176,7 @@ class EnumWithAssignmentsColumnSchemaScanner
 // Distribution items should align on the :/ and := operators.
 class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
  public:
-  DistItemColumnSchemaScanner(const FormatStyle& style)
+  explicit DistItemColumnSchemaScanner(const FormatStyle& style)
       : VerilogColumnSchemaScanner(style) {}
 
   void Visit(const SyntaxTreeNode& node) final {
