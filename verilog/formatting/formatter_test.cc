@@ -395,8 +395,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      " `AINIT(S, (D == 4 && K inside {0, 1}) ||"
      " (D == 3 && K== 4))\n",
      "`AINIT(S,\n"
-     "       (D == 4 && K inside {0, 1}) || (\n"
-     "           D == 3 && K == 4))\n"},
+     "       (D == 4 && K inside {0, 1}) ||\n"
+     "           (D == 3 && K == 4))\n"},
     {// long macro call breaking
      " `ASSERT_INIT(S, D == 4 && K inside {0, 1})\n",
      "`ASSERT_INIT(S,\n"
@@ -982,8 +982,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "assign {aaaaaaaaaa, bbbbbbbbb} = {1'b0, cccccccccccccccccc[15:0]} +\n"
         "                                 {1'b0, ddddddddddddddddd[15:0]};\n",
         "assign {aaaaaaaaaa, bbbbbbbbb} =\n"
-        "    {1'b0, cccccccccccccccccc[15:0]} + {\n"
-        "    1'b0, ddddddddddddddddd[15:0]};\n",
+        "    {1'b0, cccccccccccccccccc[15:0]} +\n"
+        "    {1'b0, ddddddddddddddddd[15:0]};\n",
     },
     {
         "covergroup a(string b);\n"
@@ -999,6 +999,11 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "    };\n"
         "  }\n"
         "endgroup : a\n",
+    },
+    {
+        "assign {aa, bb} = {1'b0, cc} + {1'b0, dd};\n",
+        "assign {aa, bb} = {1'b0, cc} +\n"
+        "    {1'b0, dd};\n",
     },
 
     // streaming operators
