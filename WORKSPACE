@@ -198,7 +198,7 @@ http_archive(
 
 http_archive(
     name = "com_grail_bazel_compdb",
-    sha256 = "39b6632e7d3a6b6d076d9a0a0d936e6ddb6b1ebe2b1ff0200adac52761c94286",
-    strip_prefix = "bazel-compilation-database-08d706d3cf7daf3d529a26ca76d75da1a3eae6c0",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/08d706d3cf7daf3d529a26ca76d75da1a3eae6c0.tar.gz"],
+    sha256 = "f798690ddb6bba453ed489665c408bb0ce630bd7f0992c160c9414f933481a91",
+    strip_prefix = "bazel-compilation-database-ace73b04e76111afa09934f8771a2798847e724e",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/ace73b04e76111afa09934f8771a2798847e724e.tar.gz"],
 )
