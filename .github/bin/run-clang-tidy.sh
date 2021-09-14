@@ -18,11 +18,11 @@ TIDY_OUT=${TMPDIR:-/tmp}/clang-tidy.out
 # First, build the compilation database.
 bazel build :compdb > /dev/null 2>&1
 
-OUTPUT_BASE=$(bazel info output_base)
+EXEC_ROOT=$(bazel info execution_root)
 
-# Fix up the __OUTPUT_BASE__ to the path used by bazel.
+# Fix up the __EXEC_ROOT__ to the path used by bazel.
 cat bazel-bin/compile_commands.json \
-  | sed "s|__OUTPUT_BASE__|$OUTPUT_BASE|g" \
+  | sed "s|__EXEC_ROOT__|$EXEC_ROOT|" \
   | sed 's/-fno-canonical-system-headers//g' \
         > compile_commands.json
 
