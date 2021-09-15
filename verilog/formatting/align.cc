@@ -105,10 +105,10 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
 
   // Ignore .x or .x(x) port declarations.
   // These can appear in a list_of_port_or_port_declarations.
-  if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kPort)) {
-    return true;
-  }
-  return false;
+  CHECK_NOTNULL(uwline.Origin());
+  return uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
+         verible::SymbolCastToNode(*uwline.Origin())
+             .MatchesTag(NodeEnum::kPort);
 }
 
 static bool IgnoreWithinStructUnionMemberPartitionGroup(
@@ -160,8 +160,10 @@ static bool IgnoreWithinActualNamedParameterPartitionGroup(
 
   // ignore everything that isn't passing a parameter by name
   const auto& uwline = partition.Value();
-  return !verible::SymbolCastToNode(*uwline.Origin())
-              .MatchesTag(NodeEnum::kParamByName);
+  CHECK_NOTNULL(uwline.Origin());
+  return !(uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
+           verible::SymbolCastToNode(*uwline.Origin())
+               .MatchesTag(NodeEnum::kParamByName));
 }
 
 static bool IgnoreWithinActualNamedPortPartitionGroup(
@@ -176,6 +178,9 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
       verilog_tokentype::TK_DOTSTAR) {
     return true;
   }
+
+  CHECK_NOTNULL(uwline.Origin());
+  if (uwline.Origin()->Kind() != verible::SymbolKind::kNode) return true;
 
   // ignore implicit connections .aaa
   if (verible::SymbolCastToNode(*uwline.Origin())

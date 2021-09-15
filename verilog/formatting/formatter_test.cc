@@ -1999,6 +1999,17 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    localparam baz = 2  //comment\n"
      ") ();\n"
      "endmodule\n"},
+    {"module foo #("
+     "parameter  bar =1//comment\n"
+     ",localparam baz =2\n"
+     ") ();"
+     "endmodule",
+     "module foo #(\n"
+     "    parameter  bar = 1  //comment\n"
+     "    ,\n"
+     "    localparam baz = 2\n"
+     ") ();\n"
+     "endmodule\n"},
     {"module foo;"
      // fit in one line
      "parameter int i = '{\n"
@@ -4150,6 +4161,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "class i_love_params;\n"
      "  foo #(.bar) baz;\n"
      "  baz #(.foo) bar;\n"
+     "endclass\n"},
+    {"class i_love_params // comment\n"
+     ";\n"
+     "foo#(\n"
+     ".foobar(quuuuux) // comment\n"
+     ", .cat(dog)\n"
+     ") baz // comment\n"
+     ";endclass\n",
+     "class i_love_params  // comment\n"
+     ";\n"
+     "  foo #(\n"
+     "      .foobar(quuuuux)  // comment\n"
+     "      ,\n"
+     "      .cat   (dog)\n"
+     "  ) baz  // comment\n"
+     "      ;\n"
      "endclass\n"},
 
     // typedef test cases
@@ -6798,6 +6825,21 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .aaa(aaa)\n"
      "  );\n"
      "endmodule\n"},
+    {"module m;\n"
+     "foo bar(\n"
+     ".a(a) //comment1\n"
+     ", .aaa(aaa) //comment2\n"
+     ") //comment3\n"
+     ";\n"
+     "endmodule\n",
+     "module m;\n"
+     "  foo bar (\n"
+     "      .a  (a)  //comment1\n"
+     "      ,\n"
+     "      .aaa(aaa)  //comment2\n"
+     "  )  //comment3\n"
+     "      ;\n"
+     "endmodule\n"},
     {// module instantiation with all implicit connections
      "module m;\n"
      "foo bar(.a, .aa, .aaaaa);\n"
@@ -7992,6 +8034,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  bit [31:0]          second;\n"
      "  generic_type_name_t third;\n"
      "`endif\n"
+     "} type_t;\n"},
+    {"typedef struct {\n"
+     "bit [3:0] first // c\n"
+     "; bit [31:0] second"
+     "// c\n"
+     "; generic_type_name_t third // c\n"
+     ";} type_t;\n",
+     "typedef struct {\n"
+     "  bit [3:0]           first  // c\n"
+     ";\n"
+     "  bit [31:0]          second  // c\n"
+     ";\n"
+     "  generic_type_name_t third  // c\n"
+     ";\n"
      "} type_t;\n"},
     // Continuation comment alignment
     {"`define BAR 1 // A\n"
