@@ -1259,6 +1259,14 @@ static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
   return token_enum == '}';
 }
 
+// Returns true if the first token of the partition is forced to wrap
+static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
+  const auto ftokens = partition.Value().TokensRange();
+  if (ftokens.empty()) return false;
+  const auto break_decision = ftokens.front().before.break_decision;
+  return break_decision == verible::SpacingOptions::MustWrap;
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
   // Attach the trailing ';' partition to the previous sibling leaf.
@@ -2114,18 +2122,21 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
            !current_context_.IsInside(NodeEnum::kConditionExpression) &&
            (!current_context_.IsInside(NodeEnum::kBinaryExpression) ||
             current_context_.IsInside(NodeEnum::kPropertyImplicationList)))) {
-        MergeLastTwoPartitions();
+        if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
+          MergeLastTwoPartitions();
       } else if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
         // instead add this token to previous partition
-        MergeLastTwoPartitions();
+        if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
+          MergeLastTwoPartitions();
       }
       break;
     }
     case verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations: {
       // is a ';'
       if (current_context_.DirectParentIs(
-              NodeEnum::kAssertionVariableDeclarationList)) {
+              NodeEnum::kAssertionVariableDeclarationList) &&
+          !PartitionIsForcedIntoNewLine(*CurrentTokenPartition())) {
         MergeLastTwoPartitions();
       }
       break;
