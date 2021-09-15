@@ -68,6 +68,19 @@ class TreeRule1 : public TreeRuleBase {
     };
     return d;
   }
+  static const std::vector<LintRuleAliasDescriptor>& GetAliasDescriptors() {
+    static const std::vector<LintRuleAliasDescriptor> d{
+        {
+            .name = "rule1-alias1",
+            .param_defaults = {{"test_param1", "false"}},
+        },
+        {
+            .name = "rule1-alias2",
+            .param_defaults = {{"test_param1", "false"}},
+        },
+    };
+    return d;
+  }
 };
 
 class TreeRule2 : public TreeRuleBase {
@@ -238,6 +251,26 @@ VERILOG_REGISTER_LINT_RULE(TextRule1);
 // Verifies that a known text-structure-based rule is registered.
 TEST(LintRuleRegistryTest, ContainsTextRuleTrue) {
   EXPECT_TRUE(IsRegisteredLintRule("text-rule-1"));
+}
+
+// Verifies that the alias can be translated to a registered rule name.
+TEST(LintRuleRegistryTest, CanBeAliasedTrue) {
+  EXPECT_TRUE(IsRegisteredLintRule(TranslateAliasIfExists("rule1-alias1")));
+  EXPECT_TRUE(IsRegisteredLintRule(TranslateAliasIfExists("rule1-alias2")));
+}
+
+// Verifies that an invalid alias doesn't translate to a registered rule name
+TEST(LintRuleRegistryTest, TranslateInvalidAlias) {
+  EXPECT_FALSE(IsRegisteredLintRule(TranslateAliasIfExists("invalid-alias")));
+}
+
+// Verifies that aliases match the right rule
+TEST(LintRuleRegistryTest, AliasedCorrectly) {
+  std::set<LintRuleId> aliases = GetLintRuleAliases("test-rule-1");
+  EXPECT_NE(aliases.find("rule1-alias1"), aliases.end());
+  EXPECT_NE(aliases.find("rule1-alias2"), aliases.end());
+  EXPECT_EQ(TranslateAliasIfExists("rule1-alias1"), "test-rule-1");
+  EXPECT_EQ(TranslateAliasIfExists("rule1-alias2"), "test-rule-1");
 }
 
 // Verifies that a nonexistent text-structure-based rule yields a nullptr.
