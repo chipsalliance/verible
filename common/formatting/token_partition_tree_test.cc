@@ -418,6 +418,225 @@ TEST_F(AdjustIndentationTest, Absolute) {
   EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 2);
 }
 
+static bool PropertiesEqual(const UnwrappedLine& left,
+                            const UnwrappedLine& right) {
+  return (left.TokensRange() == right.TokensRange() &&
+          left.IndentationSpaces() == right.IndentationSpaces() &&
+          left.PartitionPolicy() == right.PartitionPolicy());
+}
+
+class GroupLeafWithPreviousLeafTest : public TokenPartitionTreeTestFixture {};
+
+TEST_F(GroupLeafWithPreviousLeafTest, RootOnly) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+  };
+
+  const auto saved_tree(tree);  // deep copy
+  auto* group = GroupLeafWithPreviousLeaf(&tree);
+  EXPECT_EQ(group, nullptr);
+
+  // Expect no change.
+  const auto diff = DeepEqual(tree, saved_tree, PropertiesEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
+TEST_F(GroupLeafWithPreviousLeafTest, OneChild) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+
+  // Construct an artificial tree using the above partitions.
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all, tree_type{all},  // subtree spans same range
+  };
+  ASSERT_FALSE(tree.is_leaf());
+
+  const auto saved_tree(tree);  // deep copy
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().front());
+  EXPECT_EQ(group, nullptr);
+
+  // Expect no change.
+  const auto diff = DeepEqual(tree, saved_tree, PropertiesEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
+TEST_F(GroupLeafWithPreviousLeafTest, TwoChild) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  // Construct an artificial tree using the following partitions.
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine part1(0, begin);
+  part1.SpanUpToToken(begin + 3);
+  part1.SetIndentationSpaces(4);
+  part1.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+  UnwrappedLine part2(0, part1.TokensRange().end());
+  part2.SpanUpToToken(all.TokensRange().end());
+  part2.SetIndentationSpaces(2);
+  part2.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
+
+  UnwrappedLine group_part(0, begin);
+  group_part.SpanUpToToken(preformat_tokens.end());
+  group_part.SetIndentationSpaces(4);
+  group_part.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{part1},
+      tree_type{part2},
+  };
+
+  const tree_type expected_tree{
+      all,
+      tree_type{
+          group_part,
+          tree_type{part1},
+          tree_type{part2},
+      },
+  };
+
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().back());
+  EXPECT_EQ(group, &tree.Children().back());
+
+  const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
+TEST_F(GroupLeafWithPreviousLeafTest, TwoGenerations) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  // Construct an artificial tree using the following partitions.
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine part1(0, begin);
+  part1.SpanUpToToken(begin + 3);
+  UnwrappedLine part1a(0, begin);
+  part1a.SpanUpToToken(begin + 2);
+  UnwrappedLine part1b(0, part1a.TokensRange().end());
+  part1b.SpanUpToToken(part1.TokensRange().end());
+  UnwrappedLine part2(0, part1.TokensRange().end());
+  part2.SpanUpToToken(all.TokensRange().end());
+
+  // New expected partition should be part1b + part2
+  UnwrappedLine group_part(0, part1b.TokensRange().begin());
+  group_part.SpanUpToToken(all.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{
+          part1, tree_type{part1a},  // unchanged
+          tree_type{part1b},         // target partition
+      },
+      tree_type{part2},  // source partition
+  };
+
+  const tree_type expected_tree{
+      all,
+      tree_type{
+          all,
+          tree_type{part1a},
+          tree_type{
+              group_part, tree_type{part1b},  // target partition
+              tree_type{part2},               // source partition
+          },
+      },
+  };
+
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().back());
+  EXPECT_EQ(group, &tree.Children().back().Children().back());
+
+  const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
+TEST_F(GroupLeafWithPreviousLeafTest, Cousins) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+
+  // Construct an artificial tree using the following partitions.
+  UnwrappedLine all(0, begin);
+  all.SpanUpToToken(preformat_tokens.end());
+  UnwrappedLine part1(0, begin);
+  part1.SpanUpToToken(begin + 3);
+  UnwrappedLine part1a(0, begin);
+  part1a.SpanUpToToken(begin + 2);
+  UnwrappedLine part1b(0, part1a.TokensRange().end());
+  part1b.SpanUpToToken(part1.TokensRange().end());
+  UnwrappedLine part2(0, part1.TokensRange().end());
+  part2.SpanUpToToken(all.TokensRange().end());
+  UnwrappedLine part2a(0, part2.TokensRange().begin());
+  part2a.SpanUpToToken(part2.TokensRange().begin() + 1);
+  UnwrappedLine part2b(0, part2a.TokensRange().end());
+  part2b.SpanUpToToken(all.TokensRange().end());
+
+  // New expected partition should be part1b + part2a
+  UnwrappedLine group_part(0, part1b.TokensRange().begin());
+  group_part.SpanUpToToken(part2a.TokensRange().end());
+  UnwrappedLine group_parent(0, begin);
+  group_parent.SpanUpToToken(part2a.TokensRange().end());
+
+  using tree_type = TokenPartitionTree;
+  tree_type tree{
+      all,
+      tree_type{
+          part1, tree_type{part1a},  // unchanged
+          tree_type{part1b},         // target partition
+      },
+      tree_type{
+          part2,
+          tree_type{part2a},  // source partition
+          tree_type{part2b},
+      },
+  };
+
+  const tree_type expected_tree{
+      all,
+      tree_type{
+          group_parent,
+          tree_type{part1a},
+          tree_type{
+              group_part, tree_type{part1b},  // target partition
+              tree_type{part2a},              // source partition
+          },
+      },
+      tree_type{
+          part2b,
+          tree_type{part2b},
+      },
+  };
+
+  auto* group =
+      GroupLeafWithPreviousLeaf(&tree.Children().back().Children().front());
+  EXPECT_EQ(group, &tree.Children().front().Children().back());
+
+  const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
+  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
+                                    << *diff.left << "\nand:\n"
+                                    << *diff.right << '\n';
+}
+
 static bool TokenRangeEqual(const UnwrappedLine& left,
                             const UnwrappedLine& right) {
   return left.TokensRange() == right.TokensRange();

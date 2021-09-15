@@ -1277,7 +1277,23 @@ static void AttachTrailingSemicolonToPreviousPartition(
   // be a semicolon where one is grammatically expected.
   // In those cases, do nothing.
   if (PartitionStartsWithSemicolon(*partition)) {
-    verible::MergeLeafIntoPreviousLeaf(partition->RightmostDescendant());
+    auto* semicolon_partition = partition->RightmostDescendant();
+    // When the semicolon is forced to wrap (e.g. when previous partition ends
+    // with EOL comment), wrap previous partition with a group and append the
+    // semicolon partition to it.
+    if (PartitionIsForcedIntoNewLine(*semicolon_partition)) {
+      auto* group = verible::GroupLeafWithPreviousLeaf(semicolon_partition);
+      // Update invalidated pointer
+      semicolon_partition = group->RightmostDescendant();
+      group->Value().SetPartitionPolicy(
+          verible::PartitionPolicyEnum::kAlwaysExpand);
+      // Set indentation of partition with semicolon to match indentation of the
+      // partition it has been grouped with
+      semicolon_partition->Value().SetIndentationSpaces(
+          group->Value().IndentationSpaces());
+    } else {
+      verible::MergeLeafIntoPreviousLeaf(semicolon_partition);
+    }
     VLOG(4) << "after moving semicolon:\n" << *partition;
   }
 }

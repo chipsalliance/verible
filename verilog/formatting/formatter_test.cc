@@ -4176,7 +4176,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      ,\n"
      "      .cat   (dog)\n"
      "  ) baz  // comment\n"
-     "      ;\n"
+     "  ;\n"
      "endclass\n"},
 
     // typedef test cases
@@ -6838,7 +6838,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      ,\n"
      "      .aaa(aaa)  //comment2\n"
      "  )  //comment3\n"
-     "      ;\n"
+     "  ;\n"
      "endmodule\n"},
     {// module instantiation with all implicit connections
      "module m;\n"

@@ -124,6 +124,15 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
 
+// Groups this leaf with the leaf partition that preceded it, which could be
+// a distant relative. The grouping node is created in place of the preceding
+// leaf.
+// Both grouped partitions retain their indentation level and partition
+// policies. The group partition's indentation level and partition policy is
+// copied from the first partition in the group.
+// Returns the grouped partition if operation succeeded, else nullptr.
+TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf);
+
 // Merges this leaf into the leaf partition that preceded it, which could be
 // a distant relative.  The leaf is destroyed in the process.
 // The destination partition retains its indentation level and partition

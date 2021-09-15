@@ -327,6 +327,54 @@ static void UpdateTokenRangeUpperBound(TokenPartitionTree* leaf,
   }
 }
 
+TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
+  VLOG(4) << "origin leaf:\n" << *leaf;
+  auto* previous_leaf = ABSL_DIE_IF_NULL(leaf)->PreviousLeaf();
+  if (previous_leaf == nullptr) return nullptr;
+  VLOG(4) << "previous leaf:\n" << *previous_leaf;
+
+  // If there is no common ancestor, do nothing and return.
+  auto& common_ancestor =
+      *ABSL_DIE_IF_NULL(leaf->NearestCommonAncestor(previous_leaf));
+  VLOG(4) << "common ancestor:\n" << common_ancestor;
+
+  // Verify continuity of token ranges between adjacent leaves.
+  CHECK(previous_leaf->Value().TokensRange().end() ==
+        leaf->Value().TokensRange().begin());
+
+  auto* leaf_parent = leaf->Parent();
+  {
+    // Extend the upper-bound of the previous leaf partition to cover the
+    // partition that is about to be removed.
+    const auto range_end = leaf->Value().TokensRange().end();
+    const auto uwline = leaf->Value();
+    const auto previous_uwline = previous_leaf->Value();
+    UpdateTokenRangeUpperBound(previous_leaf, &common_ancestor, range_end);
+    previous_leaf->NewChild(previous_uwline);
+    previous_leaf->NewChild(uwline);
+    if (range_end > common_ancestor.Value().TokensRange().end()) {
+      common_ancestor.Value().SpanUpToToken(range_end);
+    }
+    VLOG(5) << "common ancestor (after updating target):\n" << common_ancestor;
+    // Shrink lower-bounds of the originating subtree.
+    UpdateTokenRangeLowerBound(leaf_parent, &common_ancestor, range_end);
+    VLOG(5) << "common ancestor (after updating origin):\n" << common_ancestor;
+
+    // Remove the obsolete partition, leaf.
+    // Caution: Existing references to the obsolete partition (and beyond)
+    // will be invalidated!
+    leaf->RemoveSelfFromParent();
+    VLOG(4) << "common ancestor (after merging leaf):\n" << common_ancestor;
+  }
+
+  // Sanity check invariants.
+  VerifyFullTreeFormatTokenRanges(
+      common_ancestor,
+      common_ancestor.LeftmostDescendant()->Value().TokensRange().begin());
+
+  return previous_leaf;
+}
+
 // Note: this destroys leaf
 TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
   VLOG(4) << "origin leaf:\n" << *leaf;
