@@ -63,6 +63,12 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_indentation (Indent port declarations: {indent,wrap});
       default: wrap;
+    --port_declarations_right_align_packed_dimensions (If true, packed
+      dimensions in contexts with enabled alignment are aligned to the right.);
+      default: false;
+    --port_declarations_right_align_unpacked_dimensions (If true, unpacked
+      dimensions in contexts with enabled alignment are aligned to the right.);
+      default: false;
     --show_equally_optimal_wrappings (If true, print when multiple optimal
       solutions are found (stderr), but continue to operate normally.);
       default: false;
@@ -93,4 +99,4 @@ path.
 
 ## Version
 
-Generated on 2021-09-13 22:12:08 -0700 from [19ed159](https://github.com/google/verible/commit/19ed15949a6911f580f29cc47d11f922692cd3d6)
+Generated on 2021-09-20 08:45:06 -0700 from [e26f211](https://github.com/google/verible/commit/e26f2119d1a5f0c4f1c147011a10bb3c7352179b)
