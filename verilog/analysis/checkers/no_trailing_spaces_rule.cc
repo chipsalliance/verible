@@ -24,6 +24,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
@@ -53,11 +54,14 @@ const LintRuleDescriptor& NoTrailingSpacesRule::GetDescriptor() {
 }
 
 void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
+  // Lines may end with \n or \r\n. '\n' is already excluded.
+  // Exclude '\r'
+  absl::ConsumeSuffix(&line, "\r");
+  // Now any line endings (either \n or \r\n) are excluded.
   // Searches each line in reverse for spaces.
   const auto rbegin = line.crbegin();
   const auto rend = line.crend();
   if (rbegin != rend) {
-    // Lines already exclude \n, so we can check using std::isspace.
     const auto reverse_iter =
         std::find_if(rbegin, rend, [](char c) { return !std::isspace(c); });
     const int trailing = std::distance(rbegin, reverse_iter);

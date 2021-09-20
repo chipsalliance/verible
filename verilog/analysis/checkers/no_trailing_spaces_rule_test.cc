@@ -35,6 +35,7 @@ using verible::RunLintTestCases;
 TEST(NoTrailingSpacesRuleTest, AcceptsText) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
+      {"\r\n"},
       {"\n"},
       {"\n\n\n"},
       {"\naaa"},
@@ -42,6 +43,8 @@ TEST(NoTrailingSpacesRuleTest, AcceptsText) {
       {"  xxx\n\n"},
       {"\txxx\n\n"},
       {"  xxx\n  yyy\n"},
+      {"  xxx\n  yyy\r\n"},
+      {"  xxx\n  yyy\r\n\r\n"},
       {"module foo;\nendmodule\n"},
   };
   RunLintTestCases<VerilogAnalyzer, NoTrailingSpacesRule>(kTestCases);
@@ -62,6 +65,8 @@ TEST(NoTrailingSpacesRuleTest, RejectsTrailingSpaces) {
       {"a  b", {kToken, "   "}, "\n\n1  2", {kToken, "  "}, "\n"},
       {"module foo;", {kToken, " "}, "\nendmodule\n"},
       {"module foo;\nendmodule", {kToken, " "}, "\n"},
+      {"module foo;\nendmodule", {kToken, "  "}, "\r\n"},
+      {"module foo;\nendmodule", {kToken, "  "}, "\r\n\r\n"},
       {"`define\tIGNORANCE\t\"strength\"", {kToken, " "}, "\n"},
   };
   RunLintTestCases<VerilogAnalyzer, NoTrailingSpacesRule>(kTestCases);
