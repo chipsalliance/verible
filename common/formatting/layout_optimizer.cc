@@ -18,472 +18,521 @@
 
 #include "common/formatting/layout_optimizer.h"
 
+#include <algorithm>
+#include <iomanip>
+#include <ostream>
+
+#include "absl/container/fixed_array.h"
+#include "common/formatting/basic_format_style.h"
 #include "common/formatting/line_wrap_searcher.h"
-#include "common/formatting/state_node.h"
+#include "common/formatting/unwrapped_line.h"
+#include "common/util/container_iterator_range.h"
 #include "common/util/value_saver.h"
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, const LayoutType& type) {
-  switch (type) {
-    case LayoutType::kLayoutLine:
-      return stream << "[<line>]";
-    case LayoutType::kLayoutHorizontalMerge:
-      return stream << "[<horizontal>]";
-    case LayoutType::kLayoutVerticalMerge:
-      return stream << "[<vertical>]";
-    case LayoutType::kLayoutIndent:
-      return stream << "[<indent>]";
-  }
-  LOG(FATAL) << "Unknown layout type " << int(type);
-  return stream;
+void OptimizeTokenPartitionTree(TokenPartitionTree* node,
+                                const BasicFormatStyle& style) {
+  CHECK_NOTNULL(node);
+
+  using layout_optimizer_internal::LayoutFunction;
+  using layout_optimizer_internal::LayoutFunctionFactory;
+  using layout_optimizer_internal::LayoutFunctionSegment;
+  using layout_optimizer_internal::TreeReconstructor;
+
+  VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
+  const auto indentation = node->Value().IndentationSpaces();
+
+  LayoutFunctionFactory factory(style);
+
+  const std::function<LayoutFunction(const TokenPartitionTree&)> TraverseTree =
+      [&TraverseTree, &style, &factory](const TokenPartitionTree& subnode) {
+        const auto policy = subnode.Value().PartitionPolicy();
+
+        if (subnode.is_leaf()) {
+          return factory.Line(subnode.Value());
+        }
+
+        switch (policy) {
+          case PartitionPolicyEnum::kOptimalLayout: {
+            // Support only function/macro/system calls for now
+            CHECK_EQ(subnode.Children().size(), 2);
+
+            const auto& function_header = subnode.Children()[0];
+            const auto& function_args = subnode.Children()[1];
+
+            auto header = TraverseTree(function_header);
+            auto args = TraverseTree(function_args);
+
+            auto stack_layout = factory.Stack({
+                header,
+                factory.Indent(args, style.wrap_spaces),
+            });
+            if (args.MustWrap()) {
+              return stack_layout;
+            }
+            auto juxtaposed_layout = factory.Juxtaposition({
+                header,
+                args,
+            });
+            return factory.Choice({
+                std::move(stack_layout),
+                std::move(juxtaposed_layout),
+            });
+          }
+
+          case PartitionPolicyEnum::kFitOnLineElseExpand: {
+            absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
+            std::transform(subnode.Children().begin(), subnode.Children().end(),
+                           layouts.begin(),
+                           [&TraverseTree](const TokenPartitionTree& subnode) {
+                             return TraverseTree(subnode);
+                           });
+            return factory.Wrap(layouts.begin(), layouts.end());
+          }
+
+            // TODO(mglb): Think about introducing PartitionPolicies that
+            // correspond directly to combinators in LayoutFunctionFactory.
+            // kOptimalLayout strategy could then be implemented directly in
+            // TreeUnwrapper.
+
+          default: {
+            LOG(FATAL) << "Unsupported policy: " << policy << "\n"
+                       << "Node:\n"
+                       << subnode;
+            return LayoutFunction();
+          }
+        }
+      };
+
+  const LayoutFunction layout_function = TraverseTree(*node);
+  CHECK(!layout_function.empty());
+  VLOG(4) << __FUNCTION__ << ", layout function:\n" << layout_function;
+
+  auto iter = layout_function.AtOrToTheLeftOf(indentation);
+  CHECK(iter != layout_function.end());
+  VLOG(4) << __FUNCTION__ << ", layout:\n" << iter->layout;
+
+  TreeReconstructor tree_reconstructor(indentation, style);
+  tree_reconstructor.TraverseTree(iter->layout);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(node);
+  VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
 
-std::ostream& operator<<(std::ostream& stream, const Layout& layout) {
-  const auto type = layout.GetType();
-  if (type == LayoutType::kLayoutLine) {
-    return stream << "[" << layout.Text() << "]"
-                  << ", spacing: " << layout.SpacesBeforeLayout()
-                  << ", length: " << layout.Length()
-                  << (layout.MustWrapLayout()
-                          ? ", must-wrap"
-                          : (layout.MustAppendLayout() ? ", must-append" : ""));
-  }
-  return stream << layout.GetType()
-                << ", indent: " << layout.GetIndentationSpaces()
-                << ", spacing: " << layout.SpacesBeforeLayout();
-}
+namespace layout_optimizer_internal {
 
-std::ostream& operator<<(std::ostream& stream, const Knot& knot) {
-  return stream << "(column: " << knot.column_ << ", span: " << knot.span_
-                << ", intercept: " << knot.intercept_
-                << ", gradient: " << knot.gradient_ << ", layout_tree:\n"
-                << knot.layout_ << ", spaces: " << knot.before_spaces_
-                << ", action: " << knot.break_decision_ << ")\n";
-}
+namespace {
 
-KnotSet KnotSet::FromUnwrappedLine(const UnwrappedLine& uwline,
-                                   const BasicFormatStyle& style) {
-  auto layout = Layout(uwline);
-  const auto span = layout.Length();
-  auto layout_tree = LayoutTree(layout);
-  KnotSet knot_set;
-
-  if (span < style.column_limit) {
-    knot_set.AppendKnot(Knot(0,     // column (starting)
-                             span,  // layout span (columns)
-                             0,     // intercept
-                             0,  // zero gradient because of under column limit
-                             layout_tree,  // layout
-                             layout.SpacesBeforeLayout(),
-                             layout.SpacingOptionsLayout()));
-    knot_set.AppendKnot(Knot(style.column_limit - span, span,
-                             0,                                // intercept
-                             style.over_column_limit_penalty,  // gradient
-                             layout_tree, layout.SpacesBeforeLayout(),
-                             layout.SpacingOptionsLayout()));
+// Adopts sublayouts of 'source' into 'destination' if 'source' and
+// 'destination' types are equal and 'source' doesn't have extra indentation.
+// Otherwise adopts whole 'source'.
+void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
+                                     LayoutTree* destination) {
+  CHECK_NOTNULL(destination);
+  if (!source.Value().is_leaf() &&
+      source.Value().Type() == destination->Value().Type()) {
+    for (const auto& sublayout : source.Children())
+      destination->AdoptSubtree(sublayout);
   } else {
-    knot_set.AppendKnot(
-        Knot(0, span,
-             // cost of choosing this solution
-             // columns over limit x over column limit penalty
-             (span - style.column_limit) * style.over_column_limit_penalty,
-             style.over_column_limit_penalty,  // over column limit penalty
-             layout_tree, layout.SpacesBeforeLayout(),
-             layout.SpacingOptionsLayout()));
+    destination->AdoptSubtree(source);
   }
-
-  return knot_set;
 }
 
-KnotSet KnotSet::IndentBlock(const KnotSet right, int indent,
-                             const BasicFormatStyle& style) {
-  KnotSet ret;
+// Largest possible column value, used as infinity.
+constexpr int kInfinity = std::numeric_limits<int>::max();
 
-  auto s2 = KnotSetIterator(right);
+}  // namespace
 
-  auto s1_margin = 0;
-  auto s2_margin = indent;
-  s2.MoveToMargin(s2_margin);
-
-  const auto infinity = std::numeric_limits<int>::max();
-
-  while (true) {
-    auto g2 = s2.CurrentKnot().GetGradient();
-
-    auto overhang = s2_margin - style.column_limit;
-    auto g_cur = g2 - style.over_column_limit_penalty * (overhang >= 0);
-    float i_cur = s2.CurrentKnotValueAt(s2_margin) -
-                  style.over_column_limit_penalty * std::max(overhang, 0);
-
-    auto current_layout = Layout(indent);
-    auto current_layout_tree = LayoutTree(current_layout);
-    current_layout_tree.AdoptSubtree(s2.CurrentKnot().GetLayout());
-    ret.AppendKnot(Knot(s1_margin,                            // column
-                        indent + s2.CurrentKnot().GetSpan(),  // span
-                        i_cur,                                // intercept
-                        g_cur,                                // gradient
-                        current_layout_tree,                  // layout
-                        0,                                    // spaces before
-                        SpacingOptions::Undecided));  // spacing decision
-
-    const auto kn2 = s2.NextKnotColumn();
-    if (kn2 == infinity) {
-      break;
-    }
-    s2.Advance();
-
-    s2_margin = kn2;
-    s1_margin = s2_margin - indent;
+std::ostream& operator<<(std::ostream& stream, LayoutType type) {
+  switch (type) {
+    case LayoutType::kLine:
+      return stream << "line";
+    case LayoutType::kJuxtaposition:
+      return stream << "juxtaposition";
+    case LayoutType::kStack:
+      return stream << "stack";
+    case LayoutType::kIndent:
+      return stream << "indent";
   }
-
-  VLOG(4) << "Indent:\n" << ret;
-  return ret;
-}
-
-KnotSet KnotSet::InterceptPlusConst(float const_val) const {
-  KnotSet ret;
-  for (const auto& itr : knots_) {
-    ret.AppendKnot(Knot{itr.GetColumn(), itr.GetSpan(),
-                        itr.GetIntercept() + const_val, itr.GetGradient(),
-                        itr.GetLayout(), itr.GetSpacesBefore(),
-                        itr.GetSpacingOptions()});
-  }
-  return ret;
-}
-
-std::ostream& operator<<(std::ostream& stream, const KnotSet& knot_set) {
-  stream << "{\n";
-  for (const auto& itr : knot_set.knots_) {
-    stream << "  " << itr;
-  }
-  stream << "}\n";
+  LOG(FATAL) << "Unknown layout type: " << int(type);
   return stream;
 }
 
-// FIXME(ldk): I think that none of those kind of functions should be const.
-//    All operations like join/merge/wrap and so on should result in empty
-//    solultion set.
-KnotSet SolutionSet::VerticalJoin(const BasicFormatStyle& style) {
-  KnotSet ret;
+std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
+  if (layout.Type() == LayoutType::kLine) {
+    stream << "[ " << layout.Text() << " ]"
+           << ", length: " << layout.Length()
+           << ", spacing: " << layout.SpacesBefore()
+           << ", break decision: " << layout.BreakDecision();
 
-  // Iterator set
-  ResetIteratorSet();
-
-  const auto first_knot_spaces_before = front()[0].GetSpacesBefore();
-  const auto first_knot_spacing_action = front()[0].GetSpacingOptions();
-  const int last_knot_set_span = back()[0].GetSpan();
-  const auto infinity = std::numeric_limits<int>::max();
-  const auto plus_const =
-      (size() <= 1) ? 0 : (size() - 1) * style.line_break_penalty;
-
-  int margin = 0;
-  while (true) {
-    float current_intercept = 0;
-    int current_gradient = 0;
-    auto current_layout =
-        Layout(LayoutType::kLayoutVerticalMerge, iterator_set_.front()
-                                                     .CurrentKnot()
-                                                     .GetLayout()
-                                                     .Value()
-                                                     .SpacesBeforeLayout());
-    auto current_layout_tree = LayoutTree(current_layout);
-
-    for (auto& itr : iterator_set_) {
-      const auto& knot = itr.CurrentKnot();
-      current_intercept += knot.ValueAt(margin);
-      current_gradient += knot.GetGradient();
-      current_layout_tree.AdoptSubtree(knot.GetLayout());
-    }
-
-    ret.AppendKnot(Knot(margin, last_knot_set_span,
-                        current_intercept + plus_const, current_gradient,
-                        current_layout_tree, first_knot_spaces_before,
-                        first_knot_spacing_action));
-
-    int d_star = infinity;
-
-    for (auto& itr : iterator_set_) {
-      int knot = itr.NextKnotColumn();
-
-      if (knot == infinity || knot <= margin) {
-        continue;
-      }
-
-      if ((knot - margin) < d_star) {
-        d_star = knot - margin;
-      }
-    }
-
-    if (d_star == infinity) {
-      break;
-    }
-
-    margin += d_star;
-    MoveIteratorSet(margin);
+  } else {
+    stream << "[<" << layout.Type() << ">]"
+           << ", indent: " << layout.IndentationSpaces()
+           << ", spacing: " << layout.SpacesBefore()
+           << ", break decision: " << layout.BreakDecision();
   }
-
-  clear();
-  return ret;
+  return stream;
 }
 
-KnotSet SolutionSet::HorizontalJoin(const BasicFormatStyle& style) {
-  // Consecutively merge subpartitions
-  while (size() > 1) {
-    const auto left = front();
-    pop_front();
-    const auto right = front();
-    pop_front();
-
-    // Join horizontally
-    const auto& joined = HorizontalJoin(left, right, style);
-
-    push_front(joined);
-  }
-
-  KnotSet ret = front();
-  clear();
-  return ret;
+std::ostream& operator<<(std::ostream& stream,
+                         const LayoutFunctionSegment& segment) {
+  stream << "[" << std::setw(3) << std::setfill(' ') << segment.column << "] ("
+         << std::fixed << std::setprecision(3) << segment.intercept << " + "
+         << segment.gradient << "*x), span: " << segment.span << ", layout:\n";
+  segment.layout.PrintTree(&stream, 6);
+  return stream;
 }
 
-KnotSet SolutionSet::MinimalSet(const BasicFormatStyle& style) {
-  if (size() == 0) {
-    return KnotSet();
-  } else if (size() == 1) {
-    const auto knot_set = front();
-    clear();
-    return knot_set;
+std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf) {
+  if (lf.empty()) return stream << "{}";
+
+  stream << "{\n";
+  for (const auto& segment : lf) {
+    stream << "  [" << std::setw(3) << std::setfill(' ') << segment.column
+           << "] (" << std::fixed << std::setprecision(3) << std::setw(8)
+           << std::setfill(' ') << segment.intercept << " + " << std::setw(4)
+           << std::setfill(' ') << segment.gradient
+           << "*x), span: " << std::setw(3) << std::setfill(' ') << segment.span
+           << ", layout:\n";
+    segment.layout.PrintTree(&stream, 8);
+    stream << "\n";
   }
-
-  KnotSet ret;
-
-  // iterator set
-  ResetIteratorSet();
-
-  int k_l = 0;
-  int last_min_value_idx = -1;
-  int last_min_soln_idx = -1;
-
-  const auto infinity = std::numeric_limits<int>::max();
-
-  while (k_l < infinity) {
-    const auto k_h = IteratorSetMinimalNextColumn() - 1;
-    const auto gradients = IteratorSetCurrentGradients();
-
-    while (true) {
-      // Cost _values_ at knot 'k_l'
-      const auto values = IteratorSetValuesAt(k_l);
-      const auto min_value_itr = std::min_element(values.begin(), values.end());
-      const auto min_value_idx = std::distance(values.begin(), min_value_itr);
-      const auto min_value = *min_value_itr;
-
-      const auto min_gradient = gradients[min_value_idx];
-
-      const auto& min_soln = iterator_set_[min_value_idx];
-      const auto min_soln_idx = min_soln.GetIndex();
-
-      if ((min_value_idx != last_min_value_idx) ||
-          (min_soln_idx != last_min_soln_idx)) {
-        ret.AppendKnot(Knot(k_l, min_soln.CurrentKnot().GetSpan(), min_value,
-                            min_gradient, min_soln.CurrentKnot().GetLayout(),
-                            min_soln.CurrentKnot().GetSpacesBefore(),
-                            min_soln.CurrentKnot().GetSpacingOptions()));
-        last_min_value_idx = min_value_idx;
-        last_min_soln_idx = min_soln_idx;
-      }
-
-      std::vector<int> distances_to_cross;
-      for (unsigned int i = 0; i < iterator_set_.size(); i += 1) {
-        if (gradients[i] >= min_gradient) {
-          continue;
-        }
-
-        float gamma = (values[i] - min_value) / (min_gradient - gradients[i]);
-        distances_to_cross.push_back(ceil(gamma));
-      }
-
-      std::vector<int> crossovers;
-      for (const auto& d : distances_to_cross) {
-        if (d > 0 && k_l + d <= k_h) {
-          crossovers.push_back(k_l + d);
-        }
-      }
-
-      if (crossovers.size() > 0) {
-        k_l = *std::min_element(crossovers.begin(), crossovers.end());
-      } else {
-        k_l = k_h + 1;
-        if (k_l < infinity) {
-          MoveIteratorSet(k_l);
-        }
-        break;
-      }
-    }
-  }
-
-  return ret;
+  stream << "}";
+  return stream;
 }
 
-KnotSet SolutionSet::WrapSet(const BasicFormatStyle& style) {
-  if (size() == 0) {
-    return KnotSet();
-  } else if (size() == 1) {
-    const auto knot_set = front();
-    clear();
-    return knot_set;
+LayoutFunction::iterator LayoutFunction::begin() {
+  return LayoutFunction::iterator(*this, 0);
+}
+
+LayoutFunction::iterator LayoutFunction::end() {
+  return LayoutFunction::iterator(*this, size());
+}
+
+LayoutFunction::const_iterator LayoutFunction::begin() const {
+  return LayoutFunction::const_iterator(*this, 0);
+}
+
+LayoutFunction::const_iterator LayoutFunction::end() const {
+  return LayoutFunction::const_iterator(*this, size());
+}
+
+LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
+    int column) const {
+  if (empty()) return end();
+
+  auto left_it = begin();
+  auto it = left_it + 1;
+  while (it != end() && it->column <= column) {
+    left_it = it;
+    ++it;
   }
+  return left_it;
+}
 
-  SolutionSet elt_layouts;
-  std::transform(begin(), end(), std::back_inserter(elt_layouts),
-                 [](const KnotSet& knot_set) { return knot_set; });
+LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
+  auto layout = LayoutTree(LayoutItem(uwline));
+  const auto span = layout.Value().Length();
 
-  SolutionSet wrap_solutions;
-  std::transform(begin(), end(), std::back_inserter(wrap_solutions),
-                 [](const KnotSet& knot_set) { return KnotSet(); });
+  if (span < style_.column_limit) {
+    return LayoutFunction{
+        // 0 <= X < column_limit-span
+        {0, layout, span, 0, 0},
+        // column_limit-span <= X
+        {style_.column_limit - span, std::move(layout), span, 0,
+         style_.over_column_limit_penalty},
+    };
+  } else {
+    return LayoutFunction{
+        {0, std::move(layout), span,
+         float((span - style_.column_limit) * style_.over_column_limit_penalty),
+         style_.over_column_limit_penalty},
+    };
+  }
+}
 
-  assert(elt_layouts.size() == size());
-  assert(elt_layouts.size() == wrap_solutions.size());
+LayoutFunction LayoutFunctionFactory::Stack(
+    std::initializer_list<LayoutFunction> lfs) const {
+  if (lfs.size() == 0) return LayoutFunction();
+  if (lfs.size() == 1) return *(lfs.begin());
 
-  const int n = size();
-  for (int i = n - 1; i >= 0; --i) {
-    SolutionSet solution_i;
-    auto line_layout = elt_layouts[i];
+  LayoutFunction result;
 
-    for (int j = i; j < n - 1; ++j) {
-      const auto full_soln =
-          SolutionSet{line_layout, wrap_solutions[j + 1]}.VerticalJoin(style);
+  // Use fist line's spacing for new layouts.
+  const auto& first_layout_item = lfs.begin()->front().layout.Value();
+  const auto spaces_before = first_layout_item.SpacesBefore();
+  const auto break_decision = first_layout_item.BreakDecision();
+  // Use last line's span for new layouts. Other lines won't be modified by
+  // any further layout combinations.
+  const auto& last_layout_function = *(lfs.end() - 1);
+  const int span = last_layout_function.front().span;
 
-      const float cpack = 1e-3;
-      solution_i.push_back(full_soln.InterceptPlusConst(
-          style.line_break_penalty + cpack * (n - j)));
-      const auto& elt_layout = elt_layouts[j + 1];
-      if (elt_layout.MustWrap()) {
-        line_layout = SolutionSet{line_layout, elt_layout}.VerticalJoin(style);
-      } else {
-        line_layout =
-            SolutionSet{line_layout, elt_layout}.HorizontalJoin(style);
-      }
+  const float line_breaks_penalty =
+      (lfs.size() - 1) * style_.line_break_penalty;
+
+  // Create a segment iterator for each LayoutFunction.
+  auto segments = absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
+
+  // Iterate over columns from left to right and process a segment of each
+  // LayoutFunction that is under currently iterated column.
+  int current_column = 0;
+  do {
+    {
+      // Point iterators to segments under current column.
+      std::transform(lfs.begin(), lfs.end(), segments.begin(),
+                     [current_column](const LayoutFunction& lf) {
+                       return lf.AtOrToTheLeftOf(current_column);
+                     });
     }
 
-    solution_i.push_back(line_layout);
-    wrap_solutions[i] = solution_i.MinimalSet(style);
-  }
+    auto new_segment = LayoutFunctionSegment{
+        current_column,
+        LayoutTree(
+            LayoutItem(LayoutType::kStack, spaces_before, break_decision)),
+        span, line_breaks_penalty, 0};
 
-  clear();
-  auto ks = wrap_solutions.size() > 0 ? wrap_solutions[0] : KnotSet();
-  VLOG(4) << "WrapSet:\n" << ks;
-  return ks;
+    for (const auto& segment_it : segments) {
+      new_segment.intercept += segment_it->CostAt(current_column);
+      new_segment.gradient += segment_it->gradient;
+      AdoptLayoutAndFlattenIfSameType(segment_it->layout, &new_segment.layout);
+    }
+    result.insert(std::move(new_segment));
+
+    {
+      // Find next column.
+      int next_column = kInfinity;
+      auto layout_function_it = lfs.begin();
+      for (auto segment_it : segments) {
+        const auto& layout_function = *layout_function_it++;
+        if (segment_it + 1 == layout_function.end()) continue;
+        const int column = (segment_it + 1)->column;
+        CHECK_GE(column, 0);
+        if (column <= current_column) continue;
+        if (column < next_column) next_column = column;
+      }
+      current_column = next_column;
+    }
+  } while (current_column < kInfinity);
+
+  return result;
 }
 
-KnotSet SolutionSet::HorizontalJoin(const KnotSet& left, const KnotSet& right,
-                                    const BasicFormatStyle& style) {
-  KnotSet ret;
+LayoutFunction LayoutFunctionFactory::Juxtaposition(
+    std::initializer_list<LayoutFunction> lfs) const {
+  auto lfs_container = make_container_range(lfs.begin(), lfs.end());
 
-  auto s1 = KnotSetIterator(left);
-  auto s2 = KnotSetIterator(right);
+  if (lfs_container.empty()) return LayoutFunction();
+  if (lfs_container.size() == 1) return lfs_container.front();
 
-  auto s1_margin = 0;
-  auto s2_margin =
-      s1.CurrentKnot().GetSpan() + s2.CurrentKnot().GetSpacesBefore();
-  s2.MoveToMargin(s2_margin);
+  LayoutFunction incremental = lfs_container.front();
+  lfs_container.pop_front();
+  for (auto& lf : lfs_container) {
+    incremental = Juxtaposition(incremental, lf);
+  }
 
-  const auto infinity = std::numeric_limits<int>::max();
+  return incremental;
+}
+
+LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
+                                             int indent) const {
+  LayoutFunction result;
+
+  auto indent_column = 0;
+  auto column = indent;
+  auto segment = lf.AtOrToTheLeftOf(column);
 
   while (true) {
-    auto g1 = s1.CurrentKnot().GetGradient();
-    auto g2 = s2.CurrentKnot().GetGradient();
+    auto columns_over_limit = column - style_.column_limit;
 
-    auto overhang = s2_margin - style.column_limit;
-    auto g_cur = g1 + g2 - style.over_column_limit_penalty * (overhang >= 0);
-    float i_cur = s1.CurrentKnotValueAt(s1_margin) +
-                  s2.CurrentKnotValueAt(s2_margin) -
-                  style.over_column_limit_penalty * std::max(overhang, 0);
+    const float new_intercept =
+        segment->CostAt(column) -
+        style_.over_column_limit_penalty * std::max(columns_over_limit, 0);
+    const int new_gradient =
+        segment->gradient -
+        style_.over_column_limit_penalty * (columns_over_limit >= 0);
 
-    const auto s1_layout = s1.CurrentKnot().GetLayout();
-    const auto s2_layout = s2.CurrentKnot().GetLayout();
-    auto current_layout = Layout(LayoutType::kLayoutHorizontalMerge,
-                                 s1_layout.Value().SpacesBeforeLayout());
-    auto current_layout_tree = LayoutTree(current_layout);
-    current_layout_tree.AdoptSubtree(s1_layout);
-    current_layout_tree.AdoptSubtree(s2_layout);
-    ret.AppendKnot(Knot(
-        s1_margin,
-        s1.CurrentKnot().GetSpan() + s2.CurrentKnot().GetSpacesBefore() +
-            s2.CurrentKnot().GetSpan(),
-        i_cur, g_cur, current_layout_tree, s1.CurrentKnot().GetSpacesBefore(),
-        s1.CurrentKnot().GetSpacingOptions()));
+    auto new_layout = LayoutTree(LayoutItem(indent), segment->layout);
 
-    const auto kn1 = s1.NextKnotColumn();
-    const auto kn2 = s2.NextKnotColumn();
+    const int new_span = indent + segment->span;
 
-    if (kn1 == infinity && kn2 == infinity) {
-      break;
-    }
+    result.insert(LayoutFunctionSegment{indent_column, std::move(new_layout),
+                                        new_span, new_intercept, new_gradient});
 
-    if (kn1 - s1_margin <= kn2 - s2_margin) {
-      s1.Advance();
-      s1_margin = kn1;
-      s2_margin = s1_margin + s1.CurrentKnot().GetSpan() +
-                  s2.CurrentKnot().GetSpacesBefore();
-      s2.MoveToMargin(s2_margin);
+    ++segment;
+    if (segment == lf.end()) break;
+    column = segment->column;
+    indent_column = column - indent;
+  }
+
+  return result;
+}
+
+LayoutFunction LayoutFunctionFactory::Juxtaposition(
+    const LayoutFunction& left, const LayoutFunction& right) const {
+  LayoutFunction result;
+
+  auto segment_l = left.begin();
+  auto segment_r = right.begin();
+
+  auto column_l = 0;
+  auto column_r = segment_l->span + segment_r->layout.Value().SpacesBefore();
+  segment_r = right.AtOrToTheLeftOf(column_r);
+
+  while (true) {
+    const int columns_over_limit = column_r - style_.column_limit;
+
+    const float new_intercept =
+        segment_l->CostAt(column_l) + segment_r->CostAt(column_r) -
+        style_.over_column_limit_penalty * std::max(columns_over_limit, 0);
+    const int new_gradient =
+        segment_l->gradient + segment_r->gradient -
+        (columns_over_limit >= 0 ? style_.over_column_limit_penalty : 0);
+
+    const auto& layout_l = segment_l->layout;
+    const auto& layout_r = segment_r->layout;
+    auto new_layout = LayoutTree(LayoutItem(LayoutType::kJuxtaposition,
+                                            layout_l.Value().SpacesBefore(),
+                                            layout_l.Value().BreakDecision()));
+
+    AdoptLayoutAndFlattenIfSameType(layout_l, &new_layout);
+    AdoptLayoutAndFlattenIfSameType(layout_r, &new_layout);
+
+    const int new_span =
+        segment_l->span + segment_r->span + layout_r.Value().SpacesBefore();
+
+    result.insert(LayoutFunctionSegment{column_l, std::move(new_layout),
+                                        new_span, new_intercept, new_gradient});
+
+    auto next_segment_l = segment_l + 1;
+    auto next_column_l = kInfinity;
+    if (next_segment_l != left.end()) next_column_l = next_segment_l->column;
+
+    auto next_segment_r = segment_r + 1;
+    auto next_column_r = kInfinity;
+    if (next_segment_r != right.end()) next_column_r = next_segment_r->column;
+
+    if (next_segment_l == left.end() && next_segment_r == right.end()) break;
+
+    if (next_segment_r == right.end() ||
+        (next_column_l - column_l) <= (next_column_r - column_r)) {
+      column_l = next_column_l;
+      column_r = next_column_l + next_segment_l->span +
+                 layout_r.Value().SpacesBefore();
+
+      segment_l = next_segment_l;
+      segment_r = right.AtOrToTheLeftOf(column_r);
     } else {
-      s2.Advance();
-      s2_margin = kn2;
-      s1_margin = s2_margin - s1.CurrentKnot().GetSpan() -
-                  s2.CurrentKnot().GetSpacesBefore();
+      column_r = next_column_r;
+      column_l =
+          next_column_r - segment_l->span - layout_r.Value().SpacesBefore();
+
+      segment_r = next_segment_r;
     }
   }
 
-  VLOG(4) << "ret:\n" << ret;
-  return ret;
+  return result;
 }
 
-std::ostream& operator<<(std::ostream& ostream,
-                         const SolutionSet& solution_set) {
-  for (const auto& itr : solution_set) {
-    ostream << itr;
-  }
-  return ostream;
+LayoutFunction LayoutFunctionFactory::Choice(
+    absl::FixedArray<LayoutFunction::const_iterator>& segments) {
+  CHECK(!segments.empty());
+
+  LayoutFunction result;
+
+  // Initial value set to an iterator that doesn't point to any existing
+  // segment.
+  LayoutFunction::const_iterator last_min_cost_segment =
+      segments.front().Container().end();
+
+  int current_column = 0;
+  // Iterate (in increasing order) over starting columns (knots) of all
+  // segments of every LayoutFunction.
+  do {
+    // Starting column of the next closest segment.
+    int next_knot = kInfinity;
+
+    for (auto& segment_it : segments) {
+      segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
+
+      const int column =
+          (segment_it + 1).IsEnd() ? kInfinity : segment_it[1].column;
+      if (column < next_knot) next_knot = column;
+    }
+
+    do {
+      const LayoutFunction::const_iterator min_cost_segment = *std::min_element(
+          segments.begin(), segments.end(),
+          [current_column](const auto& a, const auto& b) {
+            if (a->CostAt(current_column) != b->CostAt(current_column))
+              return (a->CostAt(current_column) < b->CostAt(current_column));
+            // Sort by gradient when cost is the same. Favor earlier
+            // element when both gradients are equal.
+            return (a->gradient <= b->gradient);
+          });
+
+      if (min_cost_segment != last_min_cost_segment) {
+        result.insert(LayoutFunctionSegment{
+            current_column, min_cost_segment->layout, min_cost_segment->span,
+            min_cost_segment->CostAt(current_column),
+            min_cost_segment->gradient});
+        last_min_cost_segment = min_cost_segment;
+      }
+
+      // Find closest crossover point located before next knot.
+      int next_column = next_knot;
+      for (const auto& segment : segments) {
+        if (segment->gradient >= min_cost_segment->gradient) continue;
+        float gamma = (segment->CostAt(current_column) -
+                       min_cost_segment->CostAt(current_column)) /
+                      (min_cost_segment->gradient - segment->gradient);
+        int column = current_column + std::ceil(gamma);
+        if (column > current_column && column < next_knot &&
+            column < next_column) {
+          next_column = column;
+        }
+      }
+
+      current_column = next_column;
+    } while (current_column < next_knot);
+  } while (current_column < kInfinity);
+
+  return result;
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
-  const auto type = layout_tree.Value().GetType();
+  const auto type = layout_tree.Value().Type();
 
   switch (type) {
-    case LayoutType::kLayoutLine: {
-      const auto& uwline = layout_tree.Value().AsUnwrappedLine();
-      assert(layout_tree.Children().size() == 0);
+    case LayoutType::kLine: {
+      CHECK(layout_tree.Children().empty());
 
       if (active_unwrapped_line_ == nullptr) {
-        unwrapped_lines_.push_back(uwline);
-        active_unwrapped_line_ = &unwrapped_lines_.back();
-        active_unwrapped_line_->SetIndentationSpaces(
-            current_indentation_spaces_);
+        auto uwline = layout_tree.Value().ToUnwrappedLine();
+        uwline.SetIndentationSpaces(current_indentation_spaces_);
+        active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
+      } else {
+        active_unwrapped_line_->SpanUpToToken(
+            layout_tree.Value().ToUnwrappedLine().TokensRange().end());
       }
-
-      active_unwrapped_line_->SpanUpToToken(
-          layout_tree.Value().AsUnwrappedLine().TokensRange().end());
-      return;
+      break;
     }
 
-    case LayoutType::kLayoutHorizontalMerge: {
+    case LayoutType::kJuxtaposition: {
       // Organize children horizontally (by appending to current unwrapped
       // line)
       for (const auto& child : layout_tree.Children()) {
         TraverseTree(child);
       }
-      return;
+      break;
     }
 
-    case LayoutType::kLayoutVerticalMerge: {
-      // Nothing to do
-      if (layout_tree.Children().size() == 0) {
-        return;
+    case LayoutType::kStack: {
+      if (layout_tree.Children().empty()) {
+        break;
       }
-
       if (layout_tree.Children().size() == 1) {
         TraverseTree(layout_tree.Children().front());
-        return;
+        break;
       }
 
       int indentation = current_indentation_spaces_;
@@ -492,7 +541,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
       // second and later layouts
       if (active_unwrapped_line_ != nullptr) {
         indentation = FitsOnLine(*active_unwrapped_line_, style_).final_column +
-                      layout_tree.Value().SpacesBeforeLayout();
+                      layout_tree.Value().SpacesBefore();
       }
 
       // Append that child
@@ -507,13 +556,12 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         active_unwrapped_line_ = nullptr;
         TraverseTree(*itr);
       }
-      return;
+      break;
     }
 
-    case LayoutType::kLayoutIndent: {
-      assert(layout_tree.Children().size() == 1);
-      const auto relative_indentation =
-          layout_tree.Value().GetIndentationSpaces();
+    case LayoutType::kIndent: {
+      CHECK_EQ(layout_tree.Children().size(), 1);
+      const auto relative_indentation = layout_tree.Value().IndentationSpaces();
 
       const ValueSaver<int> indent_saver(
           &current_indentation_spaces_,
@@ -523,85 +571,32 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
       // start of new line
       active_unwrapped_line_ = nullptr;
       TraverseTree(layout_tree.Children().front());
-      return;
+      break;
     }
   }
 }
 
-void OptimizeTokenPartitionTree(TokenPartitionTree* node,
-                                const BasicFormatStyle& style) {
-  // VLOG(4) << "Optimize token partition tree:\n" << *node;
-  const auto indentation = node->Value().IndentationSpaces();
+void TreeReconstructor::ReplaceTokenPartitionTreeNode(
+    TokenPartitionTree* node) const {
+  CHECK_NOTNULL(node);
+  CHECK(!unwrapped_lines_.empty());
 
-  std::function<KnotSet(const TokenPartitionTree&)> TraverseTree =
-      [&TraverseTree, &style](const TokenPartitionTree& n) {
-        const auto policy = n.Value().PartitionPolicy();
+  const auto& first_line = unwrapped_lines_.front();
+  const auto& last_line = unwrapped_lines_.back();
 
-        // leaf
-        if (n.Children().size() == 0) {
-          return KnotSet::FromUnwrappedLine(n.Value(), style);
-        }
+  node->Value() = UnwrappedLine(first_line);
+  node->Value().SpanUpToToken(last_line.TokensRange().end());
+  node->Value().SetIndentationSpaces(current_indentation_spaces_);
 
-        switch (policy) {
-          case PartitionPolicyEnum::kOptimalLayout: {
-            // Support only function/macro/system calls
-            assert(n.Children().size() == 2);
-
-            const auto& function_header = n.Children()[0];
-            const auto& function_args = n.Children()[1];
-
-            const auto header_knot_set = TraverseTree(function_header);
-            const auto args_knot_set = TraverseTree(function_args);
-
-            SolutionSet choice_set;
-            // Prefer HorizontalJoin over VerticalJoin
-            // FIXME(ldk): Order of subsolutions shouldn't matter
-            if (!args_knot_set.MustWrap()) {
-              choice_set.push_back(
-                  SolutionSet{header_knot_set, args_knot_set}.HorizontalJoin(
-                      style));
-            }
-            choice_set.push_back(SolutionSet{
-                header_knot_set,
-                KnotSet::IndentBlock(args_knot_set, style.wrap_spaces, style)}
-                                     .VerticalJoin(style));
-            return choice_set.MinimalSet(style);
-          }
-
-          // FIXME(ldk): How to handle kFitOnLineElseExpand?
-          //     Try to append (currently) or all-or-nothing (originally)?
-          case PartitionPolicyEnum::kFitOnLineElseExpand: {
-            // VLOG(4) << "wrap_subpartitions:\n" << n;
-            SolutionSet wrap_set;
-            std::transform(n.Children().begin(), n.Children().end(),
-                           std::back_inserter(wrap_set),
-                           [&TraverseTree](const TokenPartitionTree& subnode) {
-                             return TraverseTree(subnode);
-                           });
-            return wrap_set.WrapSet(style);
-          }
-
-          default: {
-            LOG(ERROR) << "Unsupported policy: " << policy;
-            LOG(ERROR) << "Node:\n" << n;
-            assert(false);
-            return KnotSet();
-          }
-        }
-      };
-
-  auto solution = TraverseTree(*ABSL_DIE_IF_NULL(node));
-  assert(solution.Size() > 0);
-  VLOG(4) << "solution:\n" << solution;
-
-  KnotSetIterator itr(solution);
-  itr.MoveToMargin(indentation);
-  assert(itr.Done() == false);
-  VLOG(4) << "layout:\n" << itr.CurrentKnot().GetLayout();
-
-  TreeReconstructor tree_reconstructor(indentation, style);
-  tree_reconstructor.TraverseTree(itr.CurrentKnot().GetLayout());
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(node);
+  node->Children().clear();
+  for (const auto& uwline : unwrapped_lines_) {
+    // TODO(mglb): Do something like `CommitAlignmentDecisionToRow()` does and
+    // mark lines and tokens as already formatted and prevent further line
+    // wrapping.
+    node->AdoptSubtree(uwline);
+  }
 }
+
+}  // namespace layout_optimizer_internal
 
 }  // namespace verible

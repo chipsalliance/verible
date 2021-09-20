@@ -14,21 +14,42 @@
 
 #include "common/formatting/layout_optimizer.h"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
+#include "common/formatting/basic_format_style.h"
+#include "common/formatting/token_partition_tree.h"
+#include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/strings/split.h"
+#include "common/util/spacer.h"
 #include "gtest/gtest.h"
 
 namespace verible {
+
+using layout_optimizer_internal::LayoutItem;
+using layout_optimizer_internal::LayoutTree;
+using layout_optimizer_internal::LayoutType;
+
+using layout_optimizer_internal::LayoutFunction;
+using layout_optimizer_internal::LayoutFunctionFactory;
+using layout_optimizer_internal::LayoutFunctionSegment;
+
+using layout_optimizer_internal::TreeReconstructor;
+
 namespace {
 
-static bool TokenRangeEqual(const UnwrappedLine& left,
-                            const UnwrappedLine& right) {
+bool TokenRangeEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
   return left.TokensRange() == right.TokensRange();
 }
 
-class LayoutTestFixture : public ::testing::Test,
-                          public UnwrappedLineMemoryHandler {
+class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
  public:
-  LayoutTestFixture()
+  LayoutTest()
       : sample_("short_line loooooong_line"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
@@ -43,29 +64,16 @@ class LayoutTestFixture : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
-TEST_F(LayoutTestFixture, TestLineLength) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-
-  UnwrappedLine short_line(0, begin);
-  short_line.SpanUpToToken(begin + 1);
-  EXPECT_EQ(Layout::UnwrappedLineLength(short_line), 10);
-
-  UnwrappedLine long_line(0, begin + 1);
-  long_line.SpanUpToToken(begin + 2);
-  EXPECT_EQ(Layout::UnwrappedLineLength(long_line), 14);
-}
-
-TEST_F(LayoutTestFixture, TestLineLayoutAsUnwrappedLine) {
+TEST_F(LayoutTest, TestLineLayoutAsUnwrappedLine) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
 
   UnwrappedLine short_line(0, begin);
   short_line.SpanUpToToken(begin + 1);
 
-  Layout layout_short(short_line);
+  LayoutItem layout_short(short_line);
 
-  const auto uwline = layout_short.AsUnwrappedLine();
+  const auto uwline = layout_short.ToUnwrappedLine();
   EXPECT_EQ(uwline.IndentationSpaces(), 0);
   EXPECT_EQ(uwline.PartitionPolicy(), PartitionPolicyEnum::kAlwaysExpand);
 
@@ -73,878 +81,882 @@ TEST_F(LayoutTestFixture, TestLineLayoutAsUnwrappedLine) {
   EXPECT_EQ(uwline.TokensRange().end(), short_line.TokensRange().end());
 }
 
-TEST_F(LayoutTestFixture, TestLineLayout) {
+TEST_F(LayoutTest, TestLineLayout) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
 
   UnwrappedLine short_line(0, begin);
   short_line.SpanUpToToken(begin + 1);
 
-  Layout layout_short(short_line);
-  EXPECT_EQ(layout_short.GetType(), LayoutType::kLayoutLine);
-  EXPECT_EQ(layout_short.GetIndentationSpaces(), 0);
-  EXPECT_EQ(layout_short.SpacesBeforeLayout(), 0);
-  EXPECT_EQ(layout_short.SpacingOptionsLayout(), SpacingOptions::Undecided);
-  EXPECT_FALSE(layout_short.MustWrapLayout());
-  EXPECT_FALSE(layout_short.MustAppendLayout());
+  LayoutItem layout_short(short_line);
+  EXPECT_EQ(layout_short.Type(), LayoutType::kLine);
+  EXPECT_EQ(layout_short.IndentationSpaces(), 0);
+  EXPECT_EQ(layout_short.SpacesBefore(), 0);
+  EXPECT_EQ(layout_short.BreakDecision(), SpacingOptions::Undecided);
   EXPECT_EQ(layout_short.Length(), 10);
   EXPECT_EQ(layout_short.Text(), "short_line");
 }
 
-TEST_F(LayoutTestFixture, TestIndentedLayout) {
+TEST_F(LayoutTest, TestIndentedLayout) {
   const auto indent = 7;
-  Layout indent_layout(indent);
-  EXPECT_EQ(indent_layout.GetType(), LayoutType::kLayoutIndent);
-  EXPECT_EQ(indent_layout.GetIndentationSpaces(), indent);
-  EXPECT_EQ(indent_layout.SpacesBeforeLayout(), 0);
+  LayoutItem indent_layout(indent);
+  EXPECT_EQ(indent_layout.Type(), LayoutType::kIndent);
+  EXPECT_EQ(indent_layout.IndentationSpaces(), indent);
+  EXPECT_EQ(indent_layout.SpacesBefore(), 0);
 }
 
-TEST_F(LayoutTestFixture, TestHorizontalAndVerticalLayouts) {
+TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
   const auto spaces_before = 3;
 
-  Layout horizontal_layout(LayoutType::kLayoutHorizontalMerge, spaces_before);
-  EXPECT_EQ(horizontal_layout.GetType(), LayoutType::kLayoutHorizontalMerge);
-  EXPECT_EQ(horizontal_layout.SpacesBeforeLayout(), spaces_before);
+  LayoutItem horizontal_layout(LayoutType::kJuxtaposition, spaces_before,
+                               SpacingOptions::MustAppend);
+  EXPECT_EQ(horizontal_layout.Type(), LayoutType::kJuxtaposition);
+  EXPECT_EQ(horizontal_layout.SpacesBefore(), spaces_before);
+  EXPECT_EQ(horizontal_layout.BreakDecision(), SpacingOptions::MustAppend);
 
-  Layout vertical_layout(LayoutType::kLayoutVerticalMerge, spaces_before);
-  EXPECT_EQ(vertical_layout.GetType(), LayoutType::kLayoutVerticalMerge);
-  EXPECT_EQ(vertical_layout.SpacesBeforeLayout(), spaces_before);
+  LayoutItem vertical_layout(LayoutType::kStack, spaces_before,
+                             SpacingOptions::MustWrap);
+  EXPECT_EQ(vertical_layout.Type(), LayoutType::kStack);
+  EXPECT_EQ(vertical_layout.SpacesBefore(), spaces_before);
+  EXPECT_EQ(vertical_layout.BreakDecision(), SpacingOptions::MustWrap);
 }
 
-class KnotTest : public ::testing::Test {};
-
-TEST_F(KnotTest, TestAccessors) {
-  const auto column = 3;
-  const auto span = 7;
-  const auto intercept = 11.13f;
-  const auto gradient = 17;
-  const auto layout_tree = LayoutTree{Layout{LayoutType::kLayoutLine, 0}};
-  const auto before_spaces = 19;
-  const auto spacing_options = SpacingOptions::Undecided;
-
-  Knot knot(column, span, intercept, gradient, layout_tree, before_spaces,
-            spacing_options);
-  EXPECT_EQ(knot.GetColumn(), column);
-  EXPECT_EQ(knot.GetSpan(), span);
-  EXPECT_EQ(knot.GetIntercept(), intercept);
-  EXPECT_EQ(knot.GetGradient(), gradient);
-  {
-    const auto tree = knot.GetLayout();
-    EXPECT_EQ(tree.Children().size(), 0);
-    EXPECT_EQ(tree.Value().GetType(), LayoutType::kLayoutLine);
-  }
-  EXPECT_EQ(knot.GetSpacesBefore(), before_spaces);
-  EXPECT_EQ(knot.GetSpacingOptions(), spacing_options);
-  EXPECT_FALSE(knot.MustWrap());
-  EXPECT_FALSE(knot.MustAppend());
+std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
+                            int indentation) {
+  for (const auto& line : verible::SplitLinesKeepLineTerminator(str))
+    stream << verible::Spacer(indentation) << line;
+  return stream;
 }
 
-TEST_F(KnotTest, TestValueAt) {
-  const auto column = 3;
-  const auto span = 7;
-  const auto intercept = 11.13f;
-  const auto gradient = 17;
-  const auto layout_tree = LayoutTree{Layout{LayoutType::kLayoutLine, 0}};
-  const auto before_spaces = 19;
-  const auto spacing_options = SpacingOptions::Undecided;
-
-  Knot knot(column, span, intercept, gradient, layout_tree, before_spaces,
-            spacing_options);
-  EXPECT_EQ(knot.ValueAt(3), intercept);
-  EXPECT_EQ(knot.ValueAt(5), intercept + gradient * 2);
-  EXPECT_EQ(knot.ValueAt(11), intercept + gradient * 8);
-}
-
-TEST_F(KnotTest, TestWrapping) {
-  Knot wrap_knot(0, 0, 0, 0, LayoutTree{Layout{LayoutType::kLayoutLine, 0}}, 0,
-                 SpacingOptions::MustWrap);
-  EXPECT_TRUE(wrap_knot.MustWrap());
-  EXPECT_FALSE(wrap_knot.MustAppend());
-
-  Knot append_knot(0, 0, 0, 0, LayoutTree{Layout{LayoutType::kLayoutLine, 0}},
-                   0, SpacingOptions::MustAppend);
-  EXPECT_FALSE(append_knot.MustWrap());
-  EXPECT_TRUE(append_knot.MustAppend());
-}
-
-class KnotSetTestFixture : public ::testing::Test,
-                           public UnwrappedLineMemoryHandler {
+class LayoutFunctionFactoryTest : public ::testing::Test,
+                                  public UnwrappedLineMemoryHandler {
  public:
-  KnotSetTestFixture()
-      : sample_("regular_line must_wrap_line"),
-        tokens_(absl::StrSplit(sample_, ' ')) {
+  LayoutFunctionFactoryTest()
+      : sample_(
+            //   :    |10  :    |20  :    |30  :    |40
+            "This line is short.\n"
+            "This line is so long that it exceeds column limit.\n"
+            "        Indented  line  with  many  spaces .\n"
+
+            "One under 40 column limit (39 columns).\n"
+            "Exactly at 40 column limit (40 columns).\n"
+            "One over 40 column limit (41 characters).\n"
+
+            "One under 30 limit (29 cols).\n"
+            "Exactly at 30 limit (30 cols).\n"
+            "One over 30 limit (31 columns).\n"
+
+            "10 columns"),
+        tokens_(
+            absl::StrSplit(sample_, absl::ByAnyChar(" \n"), absl::SkipEmpty())),
+        style_(CreateStyle()),
+        factory_(LayoutFunctionFactory(style_)) {
     for (const auto token : tokens_) {
       ftokens_.emplace_back(TokenInfo{1, token});
     }
-    CreateTokenInfos(ftokens_);
-    pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+    CreateTokenInfosExternalStringBuffer(ftokens_);
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                               &pre_format_tokens_);
+
+    // Create UnwrappedLine for each sample text's line and set token properties
+    uwlines_.emplace_back(0, pre_format_tokens_.begin());
+    for (auto token_it = pre_format_tokens_.begin();
+         token_it != pre_format_tokens_.end(); ++token_it) {
+      const auto leading_spaces = token_it->OriginalLeadingSpaces();
+
+      // First token in a line
+      if (absl::StrContains(leading_spaces, '\n')) {
+        token_it->before.break_decision = SpacingOptions::MustWrap;
+
+        uwlines_.back().SpanUpToToken(token_it);
+        uwlines_.emplace_back(0, token_it);
+      }
+
+      // Count spaces preceding the token and set spaces_required accordingly
+      auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
+      if (last_non_space_offset != absl::string_view::npos) {
+        token_it->before.spaces_required =
+            leading_spaces.size() - 1 - last_non_space_offset;
+      } else {
+        token_it->before.spaces_required = leading_spaces.size();
+      }
+    }
+    uwlines_.back().SpanUpToToken(pre_format_tokens_.end());
   }
 
  protected:
+  // Readable names for each line
+  static constexpr int kShortLineId = 0;
+  static constexpr int kLongLineId = 1;
+  static constexpr int kIndentedLineId = 2;
+
+  static constexpr int kOneUnder40LimitLineId = 3;
+  static constexpr int kExactlyAt40LimitLineId = 4;
+  static constexpr int kOneOver40LimitLineId = 5;
+
+  static constexpr int kOneUnder30LimitLineId = 6;
+  static constexpr int kExactlyAt30LimitLineId = 7;
+  static constexpr int kOneOver30LimitLineId = 8;
+
+  static constexpr int k10ColumnsLineId = 9;
+
+  static BasicFormatStyle CreateStyle() {
+    BasicFormatStyle style;
+    // Hardcode everything to prevent failures when defaults change.
+    style.indentation_spaces = 2;
+    style.wrap_spaces = 4;
+    style.column_limit = 40;
+    style.over_column_limit_penalty = 100;
+    style.line_break_penalty = 2;
+    return style;
+  }
+
+  static void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
+                                         const LayoutFunction& expected,
+                                         int line_no) {
+    using ::testing::PrintToString;
+    std::ostringstream msg;
+    if (actual.size() != expected.size()) {
+      msg << "invalid value of size():\n"
+          << "  actual:   " << actual.size() << "\n"
+          << "  expected: " << expected.size() << "\n\n";
+    }
+
+    for (int i = 0; i < std::min(actual.size(), expected.size()); ++i) {
+      std::ostringstream segment_msg;
+
+      if (actual[i].column != expected[i].column) {
+        segment_msg << "  invalid column:\n"
+                    << "    actual:   " << actual[i].column << "\n"
+                    << "    expected: " << expected[i].column << "\n";
+      }
+      if (actual[i].intercept != expected[i].intercept) {
+        segment_msg << "  invalid intercept:\n"
+                    << "    actual:   " << actual[i].intercept << "\n"
+                    << "    expected: " << expected[i].intercept << "\n";
+      }
+      if (actual[i].gradient != expected[i].gradient) {
+        segment_msg << "  invalid gradient:\n"
+                    << "    actual:   " << actual[i].gradient << "\n"
+                    << "    expected: " << expected[i].gradient << "\n";
+      }
+      if (actual[i].span != expected[i].span) {
+        segment_msg << "  invalid span:\n"
+                    << "    actual:   " << actual[i].span << "\n"
+                    << "    expected: " << expected[i].span << "\n";
+      }
+      auto layout_diff = DeepEqual(actual[i].layout, expected[i].layout);
+      if (layout_diff.left != nullptr) {
+        segment_msg << "  invalid layout (fragment):\n"
+                    << "    actual:\n";
+        PrintIndented(segment_msg, PrintToString(*layout_diff.left), 6) << "\n";
+        segment_msg << "    expected:\n";
+        PrintIndented(segment_msg, PrintToString(*layout_diff.right), 6)
+            << "\n";
+      }
+      if (auto str = segment_msg.str(); !str.empty())
+        msg << "segment[" << i << "]:\n" << str << "\n";
+    }
+
+    if (const auto str = msg.str(); !str.empty()) {
+      ADD_FAILURE_AT(__FILE__, line_no) << "LayoutFunctions differ.\nActual:\n"
+                                        << actual << "\nExpected:\n"
+                                        << expected << "\n\nDetails:\n\n"
+                                        << str;
+    } else {
+      SUCCEED();
+    }
+  }
+
   const std::string sample_;
   const std::vector<absl::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
+  std::vector<UnwrappedLine> uwlines_;
+  const BasicFormatStyle style_;
+  const LayoutFunctionFactory factory_;
 };
 
-TEST_F(KnotSetTestFixture, EmptySet) {
-  KnotSet knot_set;
-  EXPECT_EQ(knot_set.Size(), 0);
-  EXPECT_FALSE(knot_set.MustWrap());
-}
+TEST_F(LayoutFunctionFactoryTest, Line) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-TEST_F(KnotSetTestFixture, KnotSetFromUnwrappedLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
-
-  UnwrappedLine regular_line(0, begin);
-  regular_line.SpanUpToToken(begin + 1);
-
-  const auto knot_set_regular = KnotSet::FromUnwrappedLine(regular_line, style);
-  EXPECT_FALSE(knot_set_regular.MustWrap());
-  EXPECT_EQ(knot_set_regular.Size(), 2);
   {
-    // first knot
-    const auto& knot = knot_set_regular[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 12);  // Length of 'regular_line'
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), 0);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-
-      // Testing only information that _every_ layout contains/carries
-      // (information needed to easily reconstruct TokenPartitionTree)
-      // Information specific to kLayoutLine is tested in 'TestLineLayout'
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-  {
-    // second knot
-    const auto& knot = knot_set_regular[1];
-    EXPECT_EQ(knot.GetColumn(), style.column_limit - 12);
-    EXPECT_EQ(knot.GetSpan(), 12);
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), style.over_column_limit_penalty);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Line(uwlines_[kShortLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kShortLineId])), 19, 0.0F, 0},
+        {21, LT(LI(uwlines_[kShortLineId])), 19, 0.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
 
-  UnwrappedLine must_wrap_line(0, begin + 1);
-  must_wrap_line.SpanUpToToken(begin + 2);
-
-  const auto knot_set_must_wrap =
-      KnotSet::FromUnwrappedLine(must_wrap_line, style);
-  EXPECT_TRUE(knot_set_must_wrap.MustWrap());
-  EXPECT_EQ(knot_set_must_wrap.Size(), 2);
   {
-    // first knot
-    const auto& knot = knot_set_must_wrap[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 14);
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), 0);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::MustWrap);
+    const auto lf = factory_.Line(uwlines_[kLongLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kLongLineId])), 50, 1000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // second knot
-    const auto& knot = knot_set_must_wrap[1];
-    // column limit - length of 'must_wrap_line'
-    EXPECT_EQ(knot.GetColumn(), style.column_limit - 14);
-    EXPECT_EQ(knot.GetSpan(), 14);
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), style.over_column_limit_penalty);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::MustWrap);
+    const auto lf = factory_.Line(uwlines_[kIndentedLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kIndentedLineId])), 36, 0.0F, 0},
+        {4, LT(LI(uwlines_[kIndentedLineId])), 36, 0.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Line(uwlines_[kOneUnder40LimitLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kOneUnder40LimitLineId])), 39, 0.0F, 0},
+        {1, LT(LI(uwlines_[kOneUnder40LimitLineId])), 39, 0.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Line(uwlines_[kExactlyAt40LimitLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kExactlyAt40LimitLineId])), 40, 0.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Line(uwlines_[kOneOver40LimitLineId]);
+    const auto expected_lf = LayoutFunction{
+        {0, LT(LI(uwlines_[kOneOver40LimitLineId])), 41, 100.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
 }
 
-TEST_F(KnotSetTestFixture, TestIndentBlockTrivialKnot) {
-  const auto indent = 7;
+TEST_F(LayoutFunctionFactoryTest, Stack) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-  KnotSet knot_set;
-  knot_set.AppendKnot(Knot(0, 0, 0, 0,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 0}}, 0,
-                           SpacingOptions::Undecided));
-
-  BasicFormatStyle style;
-  const auto knot_set_indent = KnotSet::IndentBlock(knot_set, indent, style);
-  EXPECT_FALSE(knot_set_indent.MustWrap());
-  EXPECT_EQ(knot_set_indent.Size(), 1);
   {
-    const auto& knot = knot_set_indent[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), indent);
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), 0);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 1);
-      const auto& layout_subtree = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutIndent);
-      EXPECT_EQ(layout.GetIndentationSpaces(), indent);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-
-      const auto& sublayout = layout_subtree.Value();
-      EXPECT_EQ(sublayout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(sublayout.GetIndentationSpaces(), 0);
-      EXPECT_EQ(sublayout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 2.0F, 0},
+        {21, expected_layout, 10, 2.0F, 100},
+        {30, expected_layout, 10, 902.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 19, 2.0F, 0},
+        {21, expected_layout, 19, 2.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kLongLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 50, 1002.0F, 100},
+        {21, expected_layout, 50, 3102.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kLongLineId])),                        //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 19, 1002.0F, 100},
+        {21, expected_layout, 19, 3102.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kLongLineId])),                         //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 1004.0F, 100},
+        {21, expected_layout, 10, 3104.0F, 200},
+        {30, expected_layout, 10, 4904.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kIndentedLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kIndentedLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 36, 2.0F, 0},
+        {4, expected_layout, 36, 2.0F, 100},
+        {21, expected_layout, 36, 1702.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 39, 2.0F, 0},
+        {1, expected_layout, 39, 2.0F, 100},
+        {21, expected_layout, 39, 2002.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kOneOver40LimitLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kOneOver40LimitLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 41, 102.0F, 100},
+        {21, expected_layout, 41, 2202.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 40, 2.0F, 100},
+        {21, expected_layout, 40, 2102.0F, 100},
+    };
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),             //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 19, 2.0F, 0},
+        {1, expected_layout, 19, 2.0F, 100},
+        {21, expected_layout, 19, 2002.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kOneOver40LimitLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),              //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 19, 102.0F, 100},
+        {21, expected_layout, 19, 2202.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),            //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 40, 2.0F, 100},
+        {21, expected_layout, 40, 2102.0F, 100},
+    };
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Stack({
+            factory_.Line(uwlines_[kIndentedLineId]),
+            factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+            factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+            factory_.Line(uwlines_[kOneOver40LimitLineId]),
+            factory_.Line(uwlines_[k10ColumnsLineId]),
+        }),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kLongLineId])),                         //
+           LT(LI(uwlines_[kIndentedLineId])),                     //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),              //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),             //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),               //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 1112.0F, 300},
+        {1, expected_layout, 10, 1412.0F, 400},
+        {4, expected_layout, 10, 2612.0F, 500},
+        {21, expected_layout, 10, 11112.0F, 600},
+        {30, expected_layout, 10, 16512.0F, 700},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    // Expected result here is the same as in the test case above
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Line(uwlines_[kIndentedLineId]),
+        factory_.Stack({
+            factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+            factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+            factory_.Line(uwlines_[kOneOver40LimitLineId]),
+        }),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                        //
+           LT(LI(uwlines_[kLongLineId])),                         //
+           LT(LI(uwlines_[kIndentedLineId])),                     //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),              //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),             //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),               //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 1112.0F, 300},
+        {1, expected_layout, 10, 1412.0F, 400},
+        {4, expected_layout, 10, 2612.0F, 500},
+        {21, expected_layout, 10, 11112.0F, 600},
+        {30, expected_layout, 10, 16512.0F, 700},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
 }
 
-TEST_F(KnotSetTestFixture, TestIndentBlockFromUnwrappedLine) {
-  const auto indent = 7;
+TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  static const auto kSampleStackLayout =
+      LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
+         LT(LI(uwlines_[kShortLineId])),                        //
+         LT(LI(uwlines_[kLongLineId])),                         //
+         LT(LI(uwlines_[k10ColumnsLineId])));
+  // Result of:
+  // factory_.Stack({
+  //     factory_.Line(uwlines_[kShortLineId]),
+  //     factory_.Line(uwlines_[kLongLineId]),
+  //     factory_.Line(uwlines_[k10ColumnsLineId]),
+  // });
+  static const auto kSampleStackLayoutFunction = LayoutFunction{
+      {0, kSampleStackLayout, 10, 1004.0F, 100},
+      {21, kSampleStackLayout, 10, 3104.0F, 200},
+      {30, kSampleStackLayout, 10, 4904.0F, 300},
+  };
 
-  UnwrappedLine regular_line(0, begin);
-  regular_line.SpanUpToToken(begin + 1);
-
-  const auto knot_set_regular = KnotSet::FromUnwrappedLine(regular_line, style);
-  const auto knot_set_indent =
-      KnotSet::IndentBlock(knot_set_regular, indent, style);
-  EXPECT_FALSE(knot_set_indent.MustWrap());
-  EXPECT_EQ(knot_set_indent.Size(), 2);
   {
-    // first knot
-    const auto& knot = knot_set_indent[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(),
-              12 + indent);  // length of 'regular_line' + indent
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), 0);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 1);
-      const auto& layout_subtree = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutIndent);
-      EXPECT_EQ(layout.GetIndentationSpaces(), indent);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-
-      const auto& sublayout = layout_subtree.Value();
-      EXPECT_EQ(sublayout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(sublayout.GetIndentationSpaces(), 0);
-      EXPECT_EQ(sublayout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 29, 0.0F, 0},
+        {11, expected_layout, 29, 0.0F, 100},
+        {21, expected_layout, 29, 1000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // second knot
-    const auto& knot = knot_set_indent[1];
-    EXPECT_EQ(knot.GetColumn(), style.column_limit - (12 + indent));
-    EXPECT_EQ(knot.GetSpan(), 12 + indent);
-    EXPECT_EQ(knot.GetIntercept(), 0);
-    EXPECT_EQ(knot.GetGradient(), style.over_column_limit_penalty);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 1);
-      const auto& layout_subtree = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutIndent);
-      EXPECT_EQ(layout.GetIndentationSpaces(), indent);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 0);
-
-      const auto& sublayout = layout_subtree.Value();
-      EXPECT_EQ(sublayout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(sublayout.GetIndentationSpaces(), 0);
-      EXPECT_EQ(sublayout.SpacesBeforeLayout(), 0);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 0);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-}
-
-TEST_F(KnotSetTestFixture, TestInterceptPlusConst) {
-  KnotSet knot_set;
-
-  knot_set.AppendKnot(Knot(1, 3, 5, 7,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                           111, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(11, 13, 17, 23,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                           231, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(17, 31, 51, 73,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 957}},
-                           957, SpacingOptions::Undecided));
-
-  EXPECT_EQ(knot_set.Size(), 3);
-
-  const auto plusconst = 11;
-  const auto knot_set_plusconst = knot_set.InterceptPlusConst(plusconst);
-  {
-    // first knot
-    const auto& knot = knot_set_plusconst[0];
-    EXPECT_EQ(knot.GetColumn(), 1);
-    EXPECT_EQ(knot.GetSpan(), 3);
-    EXPECT_EQ(knot.GetIntercept(), 5 + plusconst);
-    EXPECT_EQ(knot.GetGradient(), 7);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 111);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 111);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           LT(LI(uwlines_[k10ColumnsLineId])),                            //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 39, 0.0F, 0},
+        {1, expected_layout, 39, 0.0F, 100},
+        {11, expected_layout, 39, 1000.0F, 100},
+        {21, expected_layout, 39, 2000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // second knot
-    const auto& knot = knot_set_plusconst[1];
-    EXPECT_EQ(knot.GetColumn(), 11);
-    EXPECT_EQ(knot.GetSpan(), 13);
-    EXPECT_EQ(knot.GetIntercept(), 17 + plusconst);
-    EXPECT_EQ(knot.GetGradient(), 23);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 231);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 231);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[k10ColumnsLineId])),                           //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 29, 0.0F, 0},
+        {11, expected_layout, 29, 0.0F, 100},
+        {30, expected_layout, 29, 1900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // third knot
-    const auto& knot = knot_set_plusconst[2];
-    EXPECT_EQ(knot.GetColumn(), 17);
-    EXPECT_EQ(knot.GetSpan(), 31);
-    EXPECT_EQ(knot.GetIntercept(), 51 + plusconst);
-    EXPECT_EQ(knot.GetGradient(), 73);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-      EXPECT_EQ(layout.SpacesBeforeLayout(), 957);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 957);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-}
-
-class KnotSetIteratorTest : public ::testing::Test {};
-
-TEST_F(KnotSetIteratorTest, TestIteration) {
-  KnotSet knot_set;
-
-  knot_set.AppendKnot(Knot(1, 3, 5, 7,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                           111, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(11, 13, 17, 23,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                           231, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(17, 31, 51, 73,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 957}},
-                           957, SpacingOptions::Undecided));
-
-  EXPECT_EQ(knot_set.Size(), 3);
-
-  KnotSetIterator knot_set_iterator(knot_set);
-  EXPECT_EQ(knot_set_iterator.Size(), 3);
-
-  EXPECT_FALSE(knot_set_iterator.Done());
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 0);
-
-  knot_set_iterator.Advance();
-  EXPECT_FALSE(knot_set_iterator.Done());
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 1);
-
-  knot_set_iterator.Advance();
-  EXPECT_FALSE(knot_set_iterator.Done());
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 2);
-
-  knot_set_iterator.Advance();
-  EXPECT_TRUE(knot_set_iterator.Done());
-
-  knot_set_iterator.Reset();
-  EXPECT_FALSE(knot_set_iterator.Done());
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 0);
-}
-
-TEST_F(KnotSetIteratorTest, TestKnotsColumns) {
-  KnotSet knot_set;
-
-  knot_set.AppendKnot(Knot(1, 3, 5, 7,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                           111, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(11, 13, 17, 23,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                           231, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(17, 31, 51, 73,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 957}},
-                           957, SpacingOptions::Undecided));
-
-  KnotSetIterator knot_set_iterator(knot_set);
-  EXPECT_EQ(knot_set_iterator.Size(), 3);
-
-  const auto infinity = std::numeric_limits<int>::max();
-
-  EXPECT_EQ(knot_set_iterator.CurrentColumn(), 1);
-  EXPECT_EQ(knot_set_iterator.NextKnotColumn(), 11);
-  knot_set_iterator.Advance();
-  EXPECT_EQ(knot_set_iterator.CurrentColumn(), 11);
-  EXPECT_EQ(knot_set_iterator.NextKnotColumn(), 17);
-  knot_set_iterator.Advance();
-  EXPECT_EQ(knot_set_iterator.CurrentColumn(), 17);
-  EXPECT_EQ(knot_set_iterator.NextKnotColumn(), infinity);
-  knot_set_iterator.Advance();
-  EXPECT_EQ(knot_set_iterator.CurrentColumn(), infinity);
-  EXPECT_EQ(knot_set_iterator.NextKnotColumn(), infinity);
-}
-
-TEST_F(KnotSetIteratorTest, TestKnotsValues) {
-  KnotSet knot_set;
-
-  knot_set.AppendKnot(Knot(1, 3, 5, 7,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                           111, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(11, 13, 17, 23,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                           231, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(17, 31, 51, 73,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 957}},
-                           957, SpacingOptions::Undecided));
-
-  KnotSetIterator knot_set_iterator(knot_set);
-  EXPECT_EQ(knot_set_iterator.Size(), 3);
-
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(1), 5);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(5), 5 + (5 - 1) * 7);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(10), 5 + (10 - 1) * 7);
-
-  knot_set_iterator.Advance();
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(11), 17);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(13), 17 + (13 - 11) * 23);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(15), 17 + (15 - 11) * 23);
-
-  knot_set_iterator.Advance();
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(17), 51);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(18), 51 + 73);
-  EXPECT_EQ(knot_set_iterator.CurrentKnotValueAt(31), 51 + (31 - 17) * 73);
-}
-
-TEST_F(KnotSetIteratorTest, TestMoveToMargin) {
-  KnotSet knot_set;
-
-  knot_set.AppendKnot(Knot(1, 3, 5, 7,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                           111, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(11, 13, 17, 23,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                           231, SpacingOptions::Undecided));
-  knot_set.AppendKnot(Knot(17, 31, 51, 73,
-                           LayoutTree{Layout{LayoutType::kLayoutLine, 957}},
-                           957, SpacingOptions::Undecided));
-
-  KnotSetIterator knot_set_iterator(knot_set);
-  EXPECT_EQ(knot_set_iterator.Size(), 3);
-
-  // Three knots at @1, @11 and @17
-  // which gives us three ranges: {[1-10], [11-16], [17-inf]}
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 0);
-
-  // Shouldn't change index
-  knot_set_iterator.MoveToMargin(5);
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 0);
-
-  // Select second (middle) knot
-  knot_set_iterator.MoveToMargin(15);
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 1);
-
-  knot_set_iterator.MoveToMargin(30);
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 2);
-
-  knot_set_iterator.MoveToMargin(50);
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 2);
-
-  knot_set_iterator.MoveToMargin(3);
-  EXPECT_EQ(knot_set_iterator.GetIndex(), 0);
-}
-
-class SolutionSetTest : public ::testing::Test {};
-
-TEST_F(SolutionSetTest, VerticalJoinTest2Solutions) {
-  KnotSet knot_set_up;
-  knot_set_up.AppendKnot(Knot(0, 13, 5, 7,
-                              LayoutTree{Layout{LayoutType::kLayoutLine, 111}},
-                              111, SpacingOptions::Undecided));
-  knot_set_up.AppendKnot(Knot(11, 13, 17, 23,
-                              LayoutTree{Layout{LayoutType::kLayoutLine, 231}},
-                              231, SpacingOptions::Undecided));
-
-  KnotSet knot_set_down;
-  knot_set_down.AppendKnot(
-      Knot(0, 31, 11, 1, LayoutTree{Layout{LayoutType::kLayoutLine, 957}}, 957,
-           SpacingOptions::Undecided));
-  knot_set_down.AppendKnot(
-      Knot(5, 31, 51, 73, LayoutTree{Layout{LayoutType::kLayoutLine, 957}}, 957,
-           SpacingOptions::Undecided));
-
-  BasicFormatStyle style;
-  const auto knot_set_vertical =
-      SolutionSet{knot_set_up, knot_set_down}.VerticalJoin(style);
-
-  EXPECT_EQ(knot_set_vertical.Size(), 3);
-
-  {
-    // first knot
-    const auto& knot = knot_set_vertical[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 31);  // 'last' KnotSet span
-    EXPECT_EQ(knot.GetIntercept(), 5 + 11 + style.line_break_penalty);
-    EXPECT_EQ(knot.GetGradient(), 7 + 1);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 111);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kIndentedLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           LT(LI(uwlines_[kIndentedLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 63, 2300.0F, 100},
+        {21, expected_layout, 63, 3600.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // second knot
-    const auto& knot = knot_set_vertical[1];
-    EXPECT_EQ(knot.GetColumn(), 5);
-    EXPECT_EQ(knot.GetSpan(), 31);
-    EXPECT_EQ(knot.GetIntercept(), 5 + 51 + style.line_break_penalty + (5 * 7));
-    EXPECT_EQ(knot.GetGradient(), 7 + 73);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 111);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kIndentedLineId]),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 8, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kIndentedLineId])),                            //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 55, 1500.0F, 100},
+        {4, expected_layout, 55, 1900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
   {
-    // third knot
-    const auto& knot = knot_set_vertical[2];
-    EXPECT_EQ(knot.GetColumn(), 11);
-    EXPECT_EQ(knot.GetSpan(), 31);
-    EXPECT_EQ(knot.GetIntercept(),
-              17 + 51 + style.line_break_penalty + (11 - 5) * 73);
-    EXPECT_EQ(knot.GetGradient(), 23 + 73);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 111);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+    const auto lf = factory_.Juxtaposition({
+        kSampleStackLayoutFunction,
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           kSampleStackLayout,                                            //
+           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 29, 1004.0F, 100},
+        {11, expected_layout, 29, 2104.0F, 200},
+        {21, expected_layout, 29, 4104.0F, 300},
+        {30, expected_layout, 29, 6804.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        kSampleStackLayoutFunction,
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           kSampleStackLayout);
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 29, 2904.0F, 100},
+        {2, expected_layout, 29, 3104.0F, 200},
+        {11, expected_layout, 29, 4904.0F, 300},
+        {21, expected_layout, 29, 7904.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf =
+        factory_.Juxtaposition({factory_.Line(uwlines_[kOneUnder30LimitLineId]),
+                                factory_.Line(uwlines_[k10ColumnsLineId])});
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kOneUnder30LimitLineId])),                     //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 39, 0.0F, 0},
+        {1, expected_layout, 39, 0.0F, 100},
+        {11, expected_layout, 39, 1000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Juxtaposition(
+        {factory_.Line(uwlines_[kExactlyAt30LimitLineId]),
+         factory_.Line(uwlines_[k10ColumnsLineId])});
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kExactlyAt30LimitLineId])),                    //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 40, 0.0F, 100},
+        {10, expected_layout, 40, 1000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf =
+        factory_.Juxtaposition({factory_.Line(uwlines_[kOneOver30LimitLineId]),
+                                factory_.Line(uwlines_[k10ColumnsLineId])});
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
+           LT(LI(uwlines_[kOneOver30LimitLineId])),                      //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 41, 100.0F, 100},
+        {9, expected_layout, 41, 1000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Juxtaposition({
+            factory_.Line(uwlines_[kIndentedLineId]),
+            factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+            factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+            factory_.Line(uwlines_[kOneOver40LimitLineId]),
+            factory_.Line(uwlines_[k10ColumnsLineId]),
+        }),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           LT(LI(uwlines_[kLongLineId])),                                 //
+           LT(LI(uwlines_[kIndentedLineId])),                             //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),                      //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),                     //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),                       //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 243, 19500.0F, 100},
+        {21, expected_layout, 243, 21600.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    // Expected result here is the same as in the test case above
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Line(uwlines_[kLongLineId]),
+        factory_.Line(uwlines_[kIndentedLineId]),
+        factory_.Juxtaposition({
+            factory_.Line(uwlines_[kOneUnder40LimitLineId]),
+            factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
+            factory_.Line(uwlines_[kOneOver40LimitLineId]),
+        }),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
+           LT(LI(uwlines_[kShortLineId])),                                //
+           LT(LI(uwlines_[kLongLineId])),                                 //
+           LT(LI(uwlines_[kIndentedLineId])),                             //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),                      //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),                     //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),                       //
+           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 243, 19500.0F, 100},
+        {21, expected_layout, 243, 21600.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
 }
 
-TEST_F(SolutionSetTest, HorizontalJoin2Solutions) {
-  KnotSet knot_set_left;
-  knot_set_left.AppendKnot(Knot(0, 13, 5, 7,
-                                LayoutTree{Layout{LayoutType::kLayoutLine, 1}},
-                                1, SpacingOptions::Undecided));
-  knot_set_left.AppendKnot(Knot(11, 13, 17, 23,
-                                LayoutTree{Layout{LayoutType::kLayoutLine, 1}},
-                                1, SpacingOptions::Undecided));
+TEST_F(LayoutFunctionFactoryTest, Choice) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-  KnotSet knot_set_right;
-  knot_set_right.AppendKnot(Knot(0, 7, 11, 1,
-                                 LayoutTree{Layout{LayoutType::kLayoutLine, 2}},
-                                 2, SpacingOptions::Undecided));
-  knot_set_right.AppendKnot(Knot(5, 7, 51, 73,
-                                 LayoutTree{Layout{LayoutType::kLayoutLine, 2}},
-                                 2, SpacingOptions::Undecided));
+  struct ChoiceTestCase {
+    int line_no;
+    const std::initializer_list<LayoutFunction> choices;
+    const LayoutFunction expected;
+  };
 
-  BasicFormatStyle style;
-  const auto knot_set_horizontal =
-      SolutionSet{knot_set_left, knot_set_right}.HorizontalJoin(style);
+  // Layout doesn't really matter in this test
+  static const auto layout =
+      LT(LI(LayoutType::kLine, 0, SpacingOptions::Undecided));
 
-  EXPECT_EQ(knot_set_horizontal.Size(), 2);
+  static const ChoiceTestCase kTestCases[] = {
+      {__LINE__,
+       {
+           LayoutFunction{{0, layout, 10, 100.0F, 10}},
+           LayoutFunction{{0, layout, 10, 200.0F, 10}},
+       },
+       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
+      {__LINE__,
+       {
+           LayoutFunction{{0, layout, 10, 200.0F, 10}},
+           LayoutFunction{{0, layout, 10, 100.0F, 10}},
+       },
+       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
+      {__LINE__,
+       {
+           LayoutFunction{{0, layout, 10, 100.0F, 10}},
+           LayoutFunction{{0, layout, 10, 100.0F, 10}},
+       },
+       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
+      {__LINE__,
+       {
+           LayoutFunction{{0, layout, 10, 100.0F, 1}},
+           LayoutFunction{{0, layout, 10, 0.0F, 3}},
+       },
+       LayoutFunction{
+           {0, layout, 10, 0.0F, 3},
+           {50, layout, 10, 150.0F, 1},
+       }},
+      {__LINE__,
+       {
+           LayoutFunction{
+               {0, layout, 10, 100.0F, 1},
+           },
+           LayoutFunction{
+               {0, layout, 10, 0.0F, 3},
+               {50, layout, 10, 150.0F, 0},
+           },
+       },
+       LayoutFunction{
+           {0, layout, 10, 0.0F, 3},
+           {50, layout, 10, 150.0F, 0},
+       }},
+      {__LINE__,
+       {
+           LayoutFunction{
+               {0, layout, 10, 100.0F, 1},
+           },
+           LayoutFunction{
+               {0, layout, 10, 0.0F, 3},
+               {50, layout, 10, 160.0F, 0},
+           },
+       },
+       LayoutFunction{
+           {0, layout, 10, 0.0F, 3},
+           {50, layout, 10, 150.0F, 1},
+           {60, layout, 10, 160.0F, 0},
+       }},
+      {__LINE__,
+       {
+           LayoutFunction{
+               {0, layout, 10, 100.0F, 1},
+           },
+           LayoutFunction{
+               {0, layout, 10, 0.0F, 3},
+               {50, layout, 10, 160.0F, 0},
+           },
+       },
+       LayoutFunction{
+           {0, layout, 10, 0.0F, 3},
+           {50, layout, 10, 150.0F, 1},
+           {60, layout, 10, 160.0F, 0},
+       }},
+      {__LINE__,
+       {
+           LayoutFunction{
+               {0, layout, 10, 100.0F, 1},
+               {50, layout, 10, 150.0F, 0},
+           },
+           LayoutFunction{
+               {0, layout, 10, 125.0F, 0},
+               {75, layout, 10, 125.0F, 1},
+           },
+       },
+       LayoutFunction{
+           {0, layout, 10, 100.0F, 1},
+           {25, layout, 10, 125.0F, 0},
+           {75, layout, 10, 125.0F, 1},
+           {100, layout, 10, 150.0F, 0},
+       }},
+      {__LINE__,
+       {
+           LayoutFunction{
+               {0, layout, 1, 50.0F, 0},
+           },
+           LayoutFunction{
+               {0, layout, 2, 0.0F, 10},
+           },
+           LayoutFunction{
+               {0, layout, 3, 999.0F, 0},
+               {10, layout, 3, 0.0F, 10},
+           },
+           LayoutFunction{
+               {0, layout, 4, 999.0F, 0},
+               {20, layout, 4, 0.0F, 10},
+           },
+       },
+       LayoutFunction{
+           {0, layout, 2, 0.0F, 10},
+           {5, layout, 1, 50.0F, 0},
+           {10, layout, 3, 0.0F, 10},
+           {15, layout, 1, 50.0F, 0},
+           {20, layout, 4, 0.0F, 10},
+           {25, layout, 1, 50.0F, 0},
+       }},
+  };
 
-  {
-    const auto& knot = knot_set_horizontal[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 13 + 2 + 7);
-    EXPECT_EQ(knot.GetIntercept(), 5 + 51 + 73 * (15 - 5));  // overhang == 0
-    EXPECT_EQ(knot.GetGradient(), 7 + 73);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutHorizontalMerge);
-
-      const auto& layout_left_subtree = layout_tree.Children()[0];
-      EXPECT_EQ(layout_left_subtree.Children().size(), 0);
-      const auto& layout_left = layout_left_subtree.Value();
-      EXPECT_EQ(layout_left.GetType(), LayoutType::kLayoutLine);
-
-      const auto& layout_right_subtree = layout_tree.Children()[1];
-      EXPECT_EQ(layout_right_subtree.Children().size(), 0);
-      const auto& layout_right = layout_right_subtree.Value();
-      EXPECT_EQ(layout_right.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-  {
-    const auto& knot = knot_set_horizontal[1];
-    EXPECT_EQ(knot.GetColumn(), 11);
-    EXPECT_EQ(knot.GetSpan(), 13 + 2 + 7);
-    EXPECT_EQ(knot.GetIntercept(),
-              17 + 51 + 73 * ((11 + 13 + 2) - 5));  // overhang == 0
-    EXPECT_EQ(knot.GetGradient(), 23 + 73);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutHorizontalMerge);
-
-      const auto& layout_left_subtree = layout_tree.Children()[0];
-      EXPECT_EQ(layout_left_subtree.Children().size(), 0);
-      const auto& layout_left = layout_left_subtree.Value();
-      EXPECT_EQ(layout_left.GetType(), LayoutType::kLayoutLine);
-
-      const auto& layout_right_subtree = layout_tree.Children()[1];
-      EXPECT_EQ(layout_right_subtree.Children().size(), 0);
-      const auto& layout_right = layout_right_subtree.Value();
-      EXPECT_EQ(layout_right.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-}
-
-TEST_F(SolutionSetTest, MinimalSetFrom2Solutions) {
-  KnotSet knot_set_a;
-  knot_set_a.AppendKnot(Knot(0, 13, 5, 7,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 1}}, 1,
-                             SpacingOptions::Undecided));
-  knot_set_a.AppendKnot(Knot(11, 13, 17, 23,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 1}}, 1,
-                             SpacingOptions::Undecided));
-
-  KnotSet knot_set_b;
-  knot_set_b.AppendKnot(Knot(0, 7, 11, 1,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 2}}, 2,
-                             SpacingOptions::Undecided));
-  knot_set_b.AppendKnot(Knot(5, 7, 51, 73,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 2}}, 2,
-                             SpacingOptions::Undecided));
-
-  BasicFormatStyle style;
-  const auto knot_set_minimal =
-      SolutionSet{knot_set_a, knot_set_b}.MinimalSet(style);
-
-  EXPECT_EQ(knot_set_minimal.Size(), 2);
-
-  {
-    const auto& knot = knot_set_minimal[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 13);
-    EXPECT_EQ(knot.GetIntercept(), 5);
-    EXPECT_EQ(knot.GetGradient(), 7);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-  {
-    const auto& knot = knot_set_minimal[1];
-    EXPECT_EQ(knot.GetColumn(), 11);
-    EXPECT_EQ(knot.GetSpan(), 13);
-    EXPECT_EQ(knot.GetIntercept(), 17);
-    EXPECT_EQ(knot.GetGradient(), 23);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 0);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-}
-
-TEST_F(SolutionSetTest, Wrap2Solutions) {
-  KnotSet knot_set_a;
-  knot_set_a.AppendKnot(Knot(0, 13, 5, 7,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 1}}, 1,
-                             SpacingOptions::Undecided));
-  knot_set_a.AppendKnot(Knot(11, 13, 17, 23,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 1}}, 1,
-                             SpacingOptions::Undecided));
-
-  KnotSet knot_set_b;
-  knot_set_b.AppendKnot(Knot(0, 7, 11, 1,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 2}}, 2,
-                             SpacingOptions::Undecided));
-  knot_set_b.AppendKnot(Knot(5, 7, 51, 73,
-                             LayoutTree{Layout{LayoutType::kLayoutLine, 2}}, 2,
-                             SpacingOptions::Undecided));
-
-  BasicFormatStyle style;
-  const auto knot_set_wrapped =
-      SolutionSet{knot_set_a, knot_set_b}.WrapSet(style);
-
-  EXPECT_EQ(knot_set_wrapped.Size(), 3);
-
-  {
-    const auto& knot = knot_set_wrapped[0];
-    EXPECT_EQ(knot.GetColumn(), 0);
-    EXPECT_EQ(knot.GetSpan(), 7);
-    EXPECT_EQ(knot.GetIntercept(), 20.002f);
-    EXPECT_EQ(knot.GetGradient(), 8);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-
-      const auto& layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-
-      const auto& layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-  {
-    const auto& knot = knot_set_wrapped[1];
-    EXPECT_EQ(knot.GetColumn(), 5);
-    EXPECT_EQ(knot.GetSpan(), 7);
-    EXPECT_EQ(knot.GetIntercept(), 95.002f);
-    EXPECT_EQ(knot.GetGradient(), 80);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-
-      const auto& layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-
-      const auto& layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
-  }
-  {
-    const auto& knot = knot_set_wrapped[2];
-    EXPECT_EQ(knot.GetColumn(), 11);
-    EXPECT_EQ(knot.GetSpan(), 7);
-    EXPECT_EQ(knot.GetIntercept(), 510.002f);
-    EXPECT_EQ(knot.GetGradient(), 96);
-    {
-      const auto layout_tree = knot.GetLayout();
-      EXPECT_EQ(layout_tree.Children().size(), 2);
-      const auto& layout = layout_tree.Value();
-      EXPECT_EQ(layout.GetType(), LayoutType::kLayoutVerticalMerge);
-
-      const auto& layout_subtree_upper = layout_tree.Children()[0];
-      EXPECT_EQ(layout_subtree_upper.Children().size(), 0);
-      const auto& layout_upper = layout_subtree_upper.Value();
-      EXPECT_EQ(layout_upper.GetType(), LayoutType::kLayoutLine);
-
-      const auto& layout_subtree_lower = layout_tree.Children()[1];
-      EXPECT_EQ(layout_subtree_lower.Children().size(), 0);
-      const auto& layout_lower = layout_subtree_lower.Value();
-      EXPECT_EQ(layout_lower.GetType(), LayoutType::kLayoutLine);
-    }
-    EXPECT_EQ(knot.GetSpacesBefore(), 1);
-    EXPECT_EQ(knot.GetSpacingOptions(), SpacingOptions::Undecided);
+  for (const auto& test_case : kTestCases) {
+    const LayoutFunction choice_result = factory_.Choice(test_case.choices);
+    ExpectLayoutFunctionsEqual(choice_result, test_case.expected,
+                               test_case.line_no);
   }
 }
 
-class TreeReconstructorTestFixture : public ::testing::Test,
-                                     public UnwrappedLineMemoryHandler {
+class TreeReconstructorTest : public ::testing::Test,
+                              public UnwrappedLineMemoryHandler {
  public:
-  TreeReconstructorTestFixture()
+  TreeReconstructorTest()
       : sample_("first_line second_line third_line fourth_line"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
@@ -959,7 +971,7 @@ class TreeReconstructorTestFixture : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
-TEST_F(TreeReconstructorTestFixture, SingleLine) {
+TEST_F(TreeReconstructorTest, SingleLine) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -967,22 +979,50 @@ TEST_F(TreeReconstructorTestFixture, SingleLine) {
   UnwrappedLine single_line(0, begin);
   single_line.SpanUpToToken(begin + 1);
 
-  const auto layout_tree = LayoutTree{Layout{single_line}};
+  const auto layout_tree = LayoutTree(LayoutItem(single_line));
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{single_line, tree_type{single_line}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{single_line,  //
+                           Tree{single_line}};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 }
 
-TEST_F(TreeReconstructorTestFixture, HorizontalLayoutSingleLines) {
+TEST_F(TreeReconstructorTest, HorizontalLayoutWithOneLine) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  BasicFormatStyle style;
+
+  UnwrappedLine uwline(0, begin);
+  uwline.SpanUpToToken(begin + 1);
+
+  const auto layout_tree =
+      LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false),
+                 LayoutTree(LayoutItem(uwline)));
+
+  TreeReconstructor tree_reconstructor(0, style);
+  tree_reconstructor.TraverseTree(layout_tree);
+
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{uwline,  //
+                           Tree{uwline}};
+  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:\n"
+                                << optimized_tree << "\n";
+}
+
+TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -994,25 +1034,27 @@ TEST_F(TreeReconstructorTestFixture, HorizontalLayoutSingleLines) {
   UnwrappedLine all(0, left_line.TokensRange().begin());
   all.SpanUpToToken(right_line.TokensRange().end());
 
-  const auto layout_tree = LayoutTree{{LayoutType::kLayoutHorizontalMerge, 0},
-                                      LayoutTree{Layout{left_line}},
-                                      LayoutTree{Layout{right_line}}};
+  const auto layout_tree = LayoutTree(
+      LayoutItem(LayoutType::kJuxtaposition, 0,
+                 left_line.TokensRange().front().before.break_decision),
+      LayoutTree(LayoutItem(left_line)), LayoutTree(LayoutItem(right_line)));
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{all, tree_type{all}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected(all,  //
+                           Tree(all));
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 }
 
-TEST_F(TreeReconstructorTestFixture, VerticalLayoutSingleLines) {
+TEST_F(TreeReconstructorTest, EmptyHorizontalLayout) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -1024,26 +1066,121 @@ TEST_F(TreeReconstructorTestFixture, VerticalLayoutSingleLines) {
   UnwrappedLine all(0, upper_line.TokensRange().begin());
   all.SpanUpToToken(lower_line.TokensRange().end());
 
-  const auto layout_tree = LayoutTree{{LayoutType::kLayoutVerticalMerge, 0},
-                                      LayoutTree{Layout{upper_line}},
-                                      LayoutTree{Layout{lower_line}}};
+  const auto layout_tree =
+      LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false),
+                 LayoutTree(LayoutItem(upper_line)),
+                 LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false)),
+                 LayoutTree(LayoutItem(lower_line)));
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{all, tree_type{upper_line},
-                                tree_type{lower_line}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{all,  //
+                           Tree{all}};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 }
 
-TEST_F(TreeReconstructorTestFixture, VerticallyJoinHorizontalLayouts) {
+TEST_F(TreeReconstructorTest, VerticalLayoutWithOneLine) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  BasicFormatStyle style;
+
+  UnwrappedLine uwline(0, begin);
+  uwline.SpanUpToToken(begin + 1);
+
+  const auto layout_tree = LayoutTree(LayoutItem(LayoutType::kStack, 0, false),
+                                      LayoutTree(LayoutItem(uwline)));
+
+  TreeReconstructor tree_reconstructor(0, style);
+  tree_reconstructor.TraverseTree(layout_tree);
+
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{uwline,  //
+                           Tree{uwline}};
+  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:\n"
+                                << optimized_tree << "\n";
+}
+
+TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  BasicFormatStyle style;
+
+  UnwrappedLine upper_line(0, begin);
+  upper_line.SpanUpToToken(begin + 1);
+  UnwrappedLine lower_line(0, begin + 1);
+  lower_line.SpanUpToToken(begin + 2);
+  UnwrappedLine all(0, upper_line.TokensRange().begin());
+  all.SpanUpToToken(lower_line.TokensRange().end());
+
+  const auto layout_tree = LayoutTree(
+      LayoutItem(LayoutType::kStack, 0,
+                 upper_line.TokensRange().front().before.break_decision),
+      LayoutTree(LayoutItem(upper_line)), LayoutTree(LayoutItem(lower_line)));
+
+  TreeReconstructor tree_reconstructor(0, style);
+  tree_reconstructor.TraverseTree(layout_tree);
+
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{all,               //
+                           Tree{upper_line},  //
+                           Tree{lower_line}};
+  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:\n"
+                                << optimized_tree << "\n";
+}
+
+TEST_F(TreeReconstructorTest, EmptyVerticalLayout) {
+  const auto& preformat_tokens = pre_format_tokens_;
+  const auto begin = preformat_tokens.begin();
+  BasicFormatStyle style;
+
+  UnwrappedLine upper_line(0, begin);
+  upper_line.SpanUpToToken(begin + 1);
+  UnwrappedLine lower_line(0, begin + 1);
+  lower_line.SpanUpToToken(begin + 2);
+  UnwrappedLine all(0, upper_line.TokensRange().begin());
+  all.SpanUpToToken(lower_line.TokensRange().end());
+
+  const auto layout_tree =
+      LayoutTree(LayoutItem(LayoutType::kStack, 0, false),
+                 LayoutTree(LayoutItem(upper_line)),
+                 LayoutTree(LayoutItem(LayoutType::kStack, 0, false)),
+                 LayoutTree(LayoutItem(lower_line)));
+
+  TreeReconstructor tree_reconstructor(0, style);
+  tree_reconstructor.TraverseTree(layout_tree);
+
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{all,               //
+                           Tree{upper_line},  //
+                           Tree{lower_line}};
+  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
+  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
+                                << tree_expected << "\nGot:\n"
+                                << optimized_tree << "\n";
+}
+
+TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -1064,32 +1201,34 @@ TEST_F(TreeReconstructorTestFixture, VerticallyJoinHorizontalLayouts) {
 
   UnwrappedLine all(0, upper_line.TokensRange().begin());
   all.SpanUpToToken(lower_line.TokensRange().end());
-
   const LayoutTree layout_tree{
-      {LayoutType::kLayoutVerticalMerge, 0},
-      LayoutTree{{LayoutType::kLayoutHorizontalMerge, 0},
-                 LayoutTree{Layout{first_line}},
-                 LayoutTree{Layout{second_line}}},
-      LayoutTree{{LayoutType::kLayoutHorizontalMerge, 0},
-                 LayoutTree{Layout{third_line}},
-                 LayoutTree{Layout{fourth_line}}}};
+      LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
+      LayoutTree(
+          LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
+          LayoutTree(LayoutItem(first_line)),
+          LayoutTree(LayoutItem(second_line))),
+      LayoutTree(
+          LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
+          LayoutTree(LayoutItem(third_line)),
+          LayoutTree(LayoutItem(fourth_line)))};
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{all, tree_type{upper_line},
-                                tree_type{lower_line}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{all,               //
+                           Tree{upper_line},  //
+                           Tree{lower_line}};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 }
 
-TEST_F(TreeReconstructorTestFixture, HorizontallyJoinVerticalLayouts) {
+TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -1113,30 +1252,33 @@ TEST_F(TreeReconstructorTestFixture, HorizontallyJoinVerticalLayouts) {
   UnwrappedLine all(0, upper_line.TokensRange().begin());
   all.SpanUpToToken(bottom_line.TokensRange().end());
 
-  const LayoutTree layout_tree{{LayoutType::kLayoutHorizontalMerge, 0},
-                               LayoutTree{{LayoutType::kLayoutVerticalMerge, 0},
-                                          LayoutTree{Layout{first_line}},
-                                          LayoutTree{Layout{second_line}}},
-                               LayoutTree{{LayoutType::kLayoutVerticalMerge, 0},
-                                          LayoutTree{Layout{third_line}},
-                                          LayoutTree{Layout{fourth_line}}}};
+  const LayoutTree layout_tree{
+      LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
+      LayoutTree(LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
+                 LayoutTree(LayoutItem(first_line)),
+                 LayoutTree(LayoutItem(second_line))),
+      LayoutTree(LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
+                 LayoutTree(LayoutItem(third_line)),
+                 LayoutTree(LayoutItem(fourth_line)))};
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{all, tree_type{upper_line},
-                                tree_type{middle_line}, tree_type{bottom_line}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{all,                //
+                           Tree{upper_line},   //
+                           Tree{middle_line},  //
+                           Tree{bottom_line}};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 }
 
-TEST_F(TreeReconstructorTestFixture, IndentSingleLine) {
+TEST_F(TreeReconstructorTest, IndentSingleLine) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   BasicFormatStyle style;
@@ -1145,17 +1287,18 @@ TEST_F(TreeReconstructorTestFixture, IndentSingleLine) {
   single_line.SpanUpToToken(begin + 1);
 
   const auto indent = 7;
-
-  const LayoutTree layout_tree{{indent}, LayoutTree{single_line}};
+  const LayoutTree layout_tree{
+      LayoutTree(LayoutItem(indent), LayoutTree(LayoutItem(single_line)))};
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
 
-  auto optimized_tree = VectorTree{UnwrappedLine(0, begin)};
+  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
   tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  using tree_type = TokenPartitionTree;
-  const tree_type tree_expected{single_line, tree_type{single_line}};
+  using Tree = TokenPartitionTree;
+  const Tree tree_expected{single_line,  //
+                           Tree{single_line}};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
@@ -1164,11 +1307,10 @@ TEST_F(TreeReconstructorTestFixture, IndentSingleLine) {
   EXPECT_EQ(optimized_tree.Children()[0].Value().IndentationSpaces(), indent);
 }
 
-class OptimizeTokenPartitionTreeTestFixture
-    : public ::testing::Test,
-      public UnwrappedLineMemoryHandler {
+class OptimizeTokenPartitionTreeTest : public ::testing::Test,
+                                       public UnwrappedLineMemoryHandler {
  public:
-  OptimizeTokenPartitionTreeTestFixture()
+  OptimizeTokenPartitionTreeTest()
       : sample_(
             "function_fffffffffff( type_a_aaaa, "
             "type_b_bbbbb, type_c_cccccc, "
@@ -1186,7 +1328,7 @@ class OptimizeTokenPartitionTreeTestFixture
   std::vector<TokenInfo> ftokens_;
 };
 
-TEST_F(OptimizeTokenPartitionTreeTestFixture, OneLevelFunctionCall) {
+TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
 
@@ -1225,11 +1367,16 @@ TEST_F(OptimizeTokenPartitionTreeTestFixture, OneLevelFunctionCall) {
   all.SpanUpToToken(args.TokensRange().end());
   all.SetPartitionPolicy(PartitionPolicyEnum::kOptimalLayout);
 
-  using tree_type = TokenPartitionTree;
-  tree_type tree_under_test{
-      all, tree_type{header},
-      tree_type{args, tree_type{arg_a}, tree_type{arg_b}, tree_type{arg_c},
-                tree_type{arg_d}, tree_type{arg_e}, tree_type{arg_f}}};
+  using Tree = TokenPartitionTree;
+  Tree tree_under_test{all,               //
+                       Tree{header},      //
+                       Tree{args,         //
+                            Tree{arg_a},  //
+                            Tree{arg_b},  //
+                            Tree{arg_c},  //
+                            Tree{arg_d},  //
+                            Tree{arg_e},  //
+                            Tree{arg_f}}};
 
   BasicFormatStyle style;
   style.column_limit = 40;
@@ -1242,9 +1389,11 @@ TEST_F(OptimizeTokenPartitionTreeTestFixture, OneLevelFunctionCall) {
   UnwrappedLine args_bottom_line(0, arg_e.TokensRange().begin());
   args_bottom_line.SpanUpToToken(arg_f.TokensRange().end());
 
-  const tree_type tree_expected{
-      all, tree_type{header}, tree_type{args_top_line},
-      tree_type{args_middle_line}, tree_type{args_bottom_line}};
+  const Tree tree_expected{all,                     //
+                           Tree{header},            //
+                           Tree{args_top_line},     //
+                           Tree{args_middle_line},  //
+                           Tree{args_bottom_line}};
 
   const auto diff = DeepEqual(tree_under_test, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"

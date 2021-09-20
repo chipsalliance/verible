@@ -2524,7 +2524,6 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  end\n"
      "endmodule\n"},
     {
-        // FIXME(ldk): Affected by kOptimalLayout, GH#30
         "module block_generate;\n"
         "`ASSERT(blah)\n"
         "generate endgenerate endmodule\n",
@@ -6660,7 +6659,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "      {xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == "
         "SqRgavM[15:2];\n"
         "JgQLBG == 4'h0;,\n"
-        "      \"foo\")\n"  // FIXME(ldk): Affected by layout optmizer
+        "      \"foo\")\n"
         "endtask\n",
     },
 
@@ -10897,11 +10896,10 @@ TEST(FormatterEndToEndTest, PortDeclarationDimensionsAlignmentTest) {
 
 // TODO(fangism): directed tests using style variations
 
-// FIXME(ldk): WIP GH#30
 static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
     {"module foo;"
      "`uvm_info(`gfn, $sformatf(\n"
-     "\"\\n  base_vseq: generate \%0d pulse in channel \%0d\", cfg.num_pulses, "
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
      "i), UVM_DEBUG)\n"
      "endmodule",
      "module foo;\n"
@@ -10913,7 +10911,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
      "          cfg.num_pulses, i), UVM_DEBUG)\n"
      "endmodule\n"},
     {"module foo;`uvm_info(`gfn, $sformatf("
-     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n \%s\","
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
      "cfg.convert2string()), UVM_LOW)\n"
      "endmodule",
      "module foo;\n"
@@ -10923,8 +10921,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
      "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\"\n"
      "              ,\n"
      "          cfg.convert2string()),\n"
-     "      UVM_LOW)\n"  // FIXME(ldk): Improper indentation caused by
-                         // SearchLineWraps
+     "      UVM_LOW)\n"  // FIXME: Wrapped by SearchLineWraps
      "endmodule\n"},
 };
 
@@ -10949,7 +10946,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases40ColumnsLimit) {
 static constexpr FormatterTestCase kNestedFunctionsTestCases60ColumnsLimit[] = {
     {"module foo;"
      "`uvm_info(`gfn, $sformatf(\n"
-     "\"\\n  base_vseq: generate \%0d pulse in channel \%0d\", cfg.num_pulses, "
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
      "i), UVM_DEBUG)\n"
      "endmodule",
      "module foo;\n"
@@ -10961,7 +10958,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases60ColumnsLimit[] = {
      "          cfg.num_pulses, i), UVM_DEBUG)\n"
      "endmodule\n"},
     {"module foo;`uvm_info(`gfn, $sformatf("
-     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n \%s\","
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
      "cfg.convert2string()), UVM_LOW)\n"
      "endmodule",
      "module foo;\n"
@@ -10995,7 +10992,7 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases60ColumnsLimit) {
 static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
     {"module foo;"
      "`uvm_info(`gfn, $sformatf(\n"
-     "\"\\n  base_vseq: generate \%0d pulse in channel \%0d\", cfg.num_pulses, "
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
      "i), UVM_DEBUG)\n"
      "endmodule",
      "module foo;\n"
@@ -11004,7 +11001,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
      "                            cfg.num_pulses, i), UVM_DEBUG)\n"
      "endmodule\n"},
     {"module foo;`uvm_info(`gfn, $sformatf("
-     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n \%s\","
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
      "cfg.convert2string()), UVM_LOW)\n"
      "endmodule",
      "module foo;\n"
@@ -11015,7 +11012,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
      "endmodule\n"},
     {"module x;"
      "`uvm_fatal(`gfn, $sformatf("
-     "\"The data 0x\%0h written to the signature address is formatted "
+     "\"The data 0x%0h written to the signature address is formatted "
      "incorrectly.\","
      "signature_data))\n"
      "endmodule",
@@ -11025,7 +11022,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
      "      $sformatf(\n"
      "          \"The data 0x%0h written to the signature address is formatted "
      "incorrectly.\"\n"
-     "              ,\n"  // FIXME(ldk): Line wrapped because of column limit
+     "              ,\n"  // FIXME: Wrapped by SearchLineWraps
      "          signature_data))\n"
      "endmodule\n"},
 };
@@ -11052,7 +11049,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
     {
         {"module foo;"
          "`uvm_info(`gfn, $sformatf(\n"
-         "\"\\n  base_vseq: generate \%0d pulse in channel \%0d\", "
+         "\"\\n  base_vseq: generate %0d pulse in channel %0d\", "
          "cfg.num_pulses, i), UVM_DEBUG)\n"
          "endmodule",
          "module foo;\n"
@@ -11061,7 +11058,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
          "            UVM_DEBUG)\n"
          "endmodule\n"},
         {"module foo;`uvm_info(`gfn, $sformatf("
-         "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n \%s\","
+         "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
          "cfg.convert2string()), UVM_LOW)\n"
          "endmodule",
          "module foo;\n"
@@ -11072,7 +11069,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
          "endmodule\n"},
         {"module x;"
          "`uvm_fatal(`gfn, $sformatf("
-         "\"The data 0x\%0h written to the signature address is formatted "
+         "\"The data 0x%0h written to the signature address is formatted "
          "incorrectly.\","
          "signature_data))\n"
          "endmodule",
@@ -11086,7 +11083,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
         {// nested modules, three-levels
          "module x; module y; module z;"
          "`uvm_fatal(`gfn, $sformatf("
-         "\"The data 0x\%0h written to the signature address is formatted "
+         "\"The data 0x%0h written to the signature address is formatted "
          "incorrectly.\","
          "signature_data))\n"
          "endmodule endmodule endmodule",
@@ -11152,8 +11149,8 @@ static constexpr FormatterTestCase kFunctionCallsWithComments[] = {
 
     {// nested function calls with comments
      "module foo;"
-     "`uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate \%0d"
-     " pulse in channel \%0d\", cfg.num_pulses, // comment\n"
+     "`uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d"
+     " pulse in channel %0d\", cfg.num_pulses, // comment\n"
      " i), UVM_DEBUG)\n"
      "endmodule",
      "module foo;\n"

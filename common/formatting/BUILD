@@ -112,9 +112,14 @@ cc_library(
     ],
     deps = [
         ":basic_format_style",
+        ":line_wrap_searcher",
         ":token_partition_tree",
         ":unwrapped_line",
+        "//common/util:container_iterator_range",
+        "//common/util:value_saver",
         "//common/util:vector_tree",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -122,8 +127,14 @@ cc_test(
     name = "layout_optimizer_test",
     srcs = ["layout_optimizer_test.cc"],
     deps = [
+        ":basic_format_style",
         ":layout_optimizer",
+        ":token_partition_tree",
+        ":unwrapped_line",
         ":unwrapped_line_test_utils",
+        "//common/strings:split",
+        "//common/util:spacer",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

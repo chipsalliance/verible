@@ -19,9 +19,15 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
 #define VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
 
-#include <deque>
+#include <algorithm>
+#include <iterator>
+#include <ostream>
+#include <type_traits>
 #include <vector>
 
+#include "absl/container/fixed_array.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
@@ -29,89 +35,100 @@
 
 namespace verible {
 
-// Layout type
+// Handles formatting of TokenPartitionTree nodes with kOptimalLayout partition
+// policy.
+void OptimizeTokenPartitionTree(TokenPartitionTree* node,
+                                const BasicFormatStyle& style);
+
+// Implementation details exported for tests.
+namespace layout_optimizer_internal {
+
+// LayoutItem type
 enum class LayoutType {
-  // Holds UnwrappedLine
-  kLayoutLine,
+  // Single line. LayoutItem of this type is always a leaf in LayoutTree.
+  kLine,
 
-  // Merges sublayouts, horizontally
-  kLayoutHorizontalMerge,
+  // Joins child items horizontally. See also:
+  // LayoutFunctionFactory::Juxtaposition.
+  kJuxtaposition,
 
-  // Merges sublayout, vertically
-  kLayoutVerticalMerge,
+  // Stacks child items vertically. See also: LayoutFunctionFactory::Stack.
+  kStack,
 
-  // Indent sublayout
-  // ----------------
-  // Why do we introduce new layout instead of using
-  // kLayoutHorizontalMerge + kLayoutLine(empty + indent)?
-  // Because:
-  // 1. It does not introduce Knot at column_limit - indent
-  // 2. No need to check layouts type in HorizontalJoin() whether to
-  //    skip or not before_spaces (when merging indent line with normal
-  //    line/layout)
-  // 3. Wrapping layout forces GetSpacesBefore() return 0
-  kLayoutIndent,
+  // Indents child with specified amount of spaces. Must contain one child.
+  //
+  // The same effect could have been achieved using a juxtaposition of empty
+  // indented line and an item. Dedicated indent layout allows for a few
+  // simplifications:
+  // * It does not introduce knot at (column_limit - indent)
+  // * No need to check layout type in Juxtaposition combinator and whether to
+  //   skip or not spaces_before (when merging indented line with normal line or
+  //   layout)
+  // * Wrapping sets spaces_before to 0.
+  kIndent,
 };
 
-std::ostream& operator<<(std::ostream& stream, const LayoutType& type);
+std::ostream& operator<<(std::ostream& stream, LayoutType type);
 
-// Intermediate partition tree layout
-class Layout {
+// LayoutTree node data
+class LayoutItem {
  public:
-  Layout(LayoutType type, int spacing)
-      : type_(type), indentation_(0), spaces_before_(spacing) {}
+  // Prevent creation of uninitialized LayoutItem
+  LayoutItem() = delete;
 
-  Layout(const UnwrappedLine& uwline)
-      : type_(LayoutType::kLayoutLine), indentation_(0) {
-    tokens_ = uwline.TokensRange();
-    if (tokens_.size() > 0) {
-      assert(tokens_.size() > 0);
-      spaces_before_ = tokens_.front().before.spaces_required;
-    } else {
-      spaces_before_ = 0;
-    }
-  }
+  explicit LayoutItem(LayoutType type, int spacing,
+                      SpacingOptions break_decision)
+      : type_(type),
+        indentation_(0),
+        spaces_before_(spacing),
+        break_decision_(break_decision) {}
 
-  Layout(int indent)
-      : type_(LayoutType::kLayoutIndent),
+  // Creates Line item from UnwrappedLine.
+  explicit LayoutItem(const UnwrappedLine& uwline)
+      : type_(LayoutType::kLine),
+        indentation_(0),
+        tokens_(uwline.TokensRange()),
+        spaces_before_(!tokens_.empty() ? tokens_.front().before.spaces_required
+                                        : 0),
+        break_decision_(!tokens_.empty() ? tokens_.front().before.break_decision
+                                         : SpacingOptions::Undecided) {}
+
+  // Creates Indent layout.
+  explicit LayoutItem(int indent)
+      : type_(LayoutType::kIndent),
         indentation_(indent),
-        spaces_before_(0) {}
+        spaces_before_(0),
+        break_decision_(SpacingOptions::AppendAligned) {}
 
-  ~Layout() = default;
-  Layout(const Layout&) = default;
+  LayoutItem(const LayoutItem&) = default;
+  LayoutItem& operator=(const LayoutItem&) = default;
 
-  // Deleting standard interfaces
-  Layout() = delete;
-  Layout(Layout&&) = delete;
-  Layout& operator=(const Layout&) = delete;
-  Layout& operator=(Layout&&) = delete;
+  LayoutType Type() const { return type_; }
 
-  LayoutType GetType() const { return type_; }
+  // Returns indent of Indent layout, 0 for other item types.
+  int IndentationSpaces() const { return indentation_; }
 
-  int GetIndentationSpaces() const { return indentation_; }
+  // Returns amount of spaces before first token.
+  int SpacesBefore() const { return spaces_before_; }
 
-  int SpacesBeforeLayout() const { return spaces_before_; }
+  // Returns decision about spacing just before this layout
+  SpacingOptions BreakDecision() const { return break_decision_; }
 
+  // Returns textual representation of spanned tokens for Line items, empty
+  // string for other item types.
   std::string Text() const {
     return absl::StrJoin(tokens_, " ",
-                         [=](std::string* out, const PreFormatToken& token) {
+                         [](std::string* out, const PreFormatToken& token) {
                            absl::StrAppend(out, token.Text());
                          });
   }
 
-  UnwrappedLine AsUnwrappedLine() const {
-    assert(type_ == LayoutType::kLayoutLine);
-    UnwrappedLine uwline(0, tokens_.begin());
-    uwline.SpanUpToToken(tokens_.end());
-    uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
-    return uwline;
-  }
-
+  // Returns length of the line in columns.
+  // Can be called only on Line items.
   int Length() const {
-    assert(type_ == LayoutType::kLayoutLine);
-    if (tokens_.size() == 0) {
-      return 0;
-    }
+    CHECK_EQ(type_, LayoutType::kLine);
+
+    if (tokens_.empty()) return 0;
     int len = 0;
     for (const auto& token : tokens_) {
       len += token.before.spaces_required;
@@ -121,283 +138,447 @@ class Layout {
     return len;
   }
 
-  static int UnwrappedLineLength(const UnwrappedLine& uwline) {
-    int len = 0;
-    for (const auto& token : uwline.TokensRange()) {
-      len += token.before.spaces_required;
-      len += token.Length();
-    }
-    len -= uwline.TokensRange().front().before.spaces_required;
-    return len;
+  // Returns the item as UnwrappedLine.
+  // Can be called only on Line items.
+  UnwrappedLine ToUnwrappedLine() const {
+    CHECK_EQ(type_, LayoutType::kLine);
+
+    UnwrappedLine uwline(0, tokens_.begin());
+    uwline.SpanUpToToken(tokens_.end());
+    uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+    return uwline;
   }
 
-  SpacingOptions SpacingOptionsLayout() const {
-    assert(type_ == LayoutType::kLayoutLine);
-    assert(tokens_.size() > 0);
-    return tokens_.front().before.break_decision;
-  }
-
-  bool MustWrapLayout() const {
-    return SpacingOptionsLayout() == SpacingOptions::MustWrap;
-  }
-
-  bool MustAppendLayout() const {
-    return SpacingOptionsLayout() == SpacingOptions::MustAppend;
+  friend bool operator==(const LayoutItem& lhs, const LayoutItem& rhs) {
+    return (lhs.type_ == rhs.type_ && lhs.indentation_ == rhs.indentation_ &&
+            lhs.tokens_ == rhs.tokens_ &&
+            lhs.spaces_before_ == rhs.spaces_before_ &&
+            lhs.break_decision_ == rhs.break_decision_);
   }
 
  private:
-  const LayoutType type_;
-
-  const int indentation_;
-
-  /* const */ FormatTokenRange tokens_;
-
-  /* const */ int spaces_before_;
+  LayoutType type_;
+  int indentation_;
+  FormatTokenRange tokens_;
+  int spaces_before_;
+  SpacingOptions break_decision_;
 };
 
-std::ostream& operator<<(std::ostream& stream, const Layout& layout);
+std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout);
 
-using LayoutTree = VectorTree<const Layout>;
+// Intermediate partition tree layout
+using LayoutTree = VectorTree<LayoutItem>;
 
-class Knot {
-  friend std::ostream& operator<<(std::ostream&, const Knot&);
+// Single segment of LayoutFunction
+// Maps starting column to a linear cost function and its optimal layout.
+struct LayoutFunctionSegment {
+  // Starting column.
+  // AKA: knot.
+  int column;
 
- public:
-  explicit Knot(int column, int span, float intercept, int gradient,
-                LayoutTree layout, int before_spaces,
-                SpacingOptions break_decision)
-      : column_(column),
-        span_(span),
-        intercept_(intercept),
-        gradient_(gradient),
-        layout_(layout),
-        before_spaces_(before_spaces),
-        break_decision_(break_decision) {}
+  // Optimal layout for an interval starting at the column.
+  // AKA: layout expression
+  LayoutTree layout;
 
-  Knot(const Knot&) = default;
-  Knot(Knot&&) = default;
+  // Width of the last line of the layout in columns.
+  int span;
 
-  ~Knot() = default;
+  // Intercept (a constant) of linear cost function.
+  float intercept;
+  // Gradient (rate of change) of linear cost function.
+  int gradient;
 
-  // Deleting standard interfaces:
-  Knot() = delete;
-  Knot& operator=(const Knot&) = delete;
-  Knot& operator=(Knot&&) = delete;
-
-  int GetColumn() const { return column_; }
-  int GetSpan() const { return span_; }
-  float GetIntercept() const { return intercept_; }
-  int GetGradient() const { return gradient_; }
-  LayoutTree GetLayout() const { return layout_; }
-  int GetSpacesBefore() const { return before_spaces_; }
-  SpacingOptions GetSpacingOptions() const { return break_decision_; }
-
-  bool MustWrap() const { return break_decision_ == SpacingOptions::MustWrap; }
-
-  bool MustAppend() const {
-    return break_decision_ == SpacingOptions::MustAppend;
+  // Returns cost of placing the layout at 'margin' column.
+  float CostAt(int margin) const {
+    CHECK_GE(margin, 0);
+    CHECK_GE(margin, column);
+    return intercept + gradient * (margin - column);
   }
 
-  // Total cost if this knot if placed at column 'm'
-  float ValueAt(int m) const {
-    assert(m >= 0 && m >= column_);
-    return intercept_ +                // static cost
-           gradient_ * (m - column_);  // plus gradient (over column_limit)
-  }
+  LayoutFunctionSegment(const LayoutFunctionSegment&) = default;
+  LayoutFunctionSegment& operator=(const LayoutFunctionSegment&) = default;
 
- private:
-  // Start column
-  const int column_;
-
-  // Span of Knot
-  const int span_;
-
-  // Constant cost of this knot
-  const float intercept_;
-
-  // Cost of over limit characters from this knot
-  // cost = intercept_ + (over_limit_characters) * gradient_
-  const int gradient_;
-
-  // Layout (subsolution)
-  const LayoutTree layout_;
-
-  const int before_spaces_;
-
-  const SpacingOptions break_decision_;
+  LayoutFunctionSegment(LayoutFunctionSegment&&) = default;
+  LayoutFunctionSegment& operator=(LayoutFunctionSegment&&) = default;
 };
 
-class KnotSet {
-  friend std::ostream& operator<<(std::ostream&, const KnotSet&);
+template <bool IsConstIterator>
+class LayoutFunctionIterator;
 
+// Piecewise-linear layout function.
+//
+// The layout function represents one or more layouts for a single fragment of
+// code and a cost function used for picking the most optimal layout.
+//
+// The class is a set containing LayoutFunctionSegments. Each segment starts at
+// its starting column and ends at the next segment's starting column. The last
+// segment spans up to infinity.
+//
+// AKA: KnotSet, Block
+class LayoutFunction {
  public:
-  KnotSet() = default;
-  ~KnotSet() = default;
+  using iterator = LayoutFunctionIterator<false>;
+  using const_iterator = LayoutFunctionIterator<true>;
 
-  KnotSet(KnotSet&&) = default;
-  KnotSet(const KnotSet&) = default;
-  KnotSet& operator=(KnotSet&&) = default;
-
-  // Deleting standard interfaces:
-  KnotSet& operator=(const KnotSet&) = delete;
-
-  const Knot& operator[](size_t idx) const {
-    assert(idx < knots_.size());
-    return knots_[idx];
+  LayoutFunction() = default;
+  LayoutFunction(std::initializer_list<LayoutFunctionSegment> segments)
+      : segments_(segments) {
+    CHECK(AreSegmentsSorted());
+    if (!segments_.empty()) CHECK_EQ(segments_.front().column, 0);
   }
 
-  int Size() const { return knots_.size(); }
+  LayoutFunction(LayoutFunction&&) = default;
+  LayoutFunction& operator=(LayoutFunction&&) = default;
 
+  LayoutFunction(const LayoutFunction&) = default;
+  LayoutFunction& operator=(const LayoutFunction&) = default;
+
+  void insert(const LayoutFunctionSegment& segment) {
+    if (!segments_.empty())
+      CHECK_LT(segments_.back().column, segment.column);
+    else
+      CHECK_EQ(segment.column, 0);
+    segments_.push_back(segment);
+  }
+  void insert(LayoutFunctionSegment&& segment) {
+    if (!segments_.empty())
+      CHECK_LT(segments_.back().column, segment.column);
+    else
+      CHECK_EQ(segment.column, 0);
+    segments_.push_back(segment);
+  }
+
+  bool empty() const { return segments_.empty(); }
+
+  int size() const { return segments_.size(); }
+
+  iterator begin();
+  const_iterator begin() const;
+
+  iterator end();
+  const_iterator end() const;
+
+  // Returns iterator pointing to a segment starting at or to the left of
+  // 'column'.
+  // AKA: x-
+  const_iterator AtOrToTheLeftOf(int column) const;
+
+  LayoutFunctionSegment& front() { return segments_.front(); }
+  const LayoutFunctionSegment& front() const { return segments_.front(); }
+
+  LayoutFunctionSegment& back() { return segments_.back(); }
+  const LayoutFunctionSegment& back() const { return segments_.back(); }
+
+  const LayoutFunctionSegment& operator[](size_t index) const {
+    CHECK_GE(index, 0);
+    CHECK_LT(index, segments_.size());
+    return segments_[index];
+  }
+  LayoutFunctionSegment& operator[](size_t index) {
+    CHECK_GE(index, 0);
+    CHECK_LT(index, segments_.size());
+    return segments_[index];
+  }
+
+  // Returns whether BreakDecision of any layout is MustWrap.
   bool MustWrap() const {
-    return std::find_if(knots_.begin(), knots_.end(), [](const Knot& knot) {
-             return knot.MustWrap();
-           }) != knots_.end();
+    if (empty()) return false;
+    const bool must_wrap = segments_.front().layout.Value().BreakDecision() ==
+                           SpacingOptions::MustWrap;
+    // If for some reason not all layouts have the same "MustWrap" status, it
+    // should be taken into account in the code that uses this method. This
+    // shouldn't be the case, as every layout should wrap the same token range.
+    CHECK(std::all_of(segments_.begin(), segments_.end(),
+                      [must_wrap](const auto& segment) {
+                        return (segment.layout.Value().BreakDecision() ==
+                                SpacingOptions::MustWrap) == must_wrap;
+                      }));
+    return must_wrap;
   }
 
-  void AppendKnot(const Knot& knot) { knots_.push_back(knot); }
-
-  static KnotSet FromUnwrappedLine(const UnwrappedLine& uwline,
-                                   const BasicFormatStyle& style);
-
-  static KnotSet IndentBlock(const KnotSet right, int indent,
-                             const BasicFormatStyle& style);
-
-  KnotSet InterceptPlusConst(float const_val) const;
-
  private:
-  std::vector</* const */ Knot> knots_;
+  bool AreSegmentsSorted() const {
+    return std::is_sorted(
+        segments_.begin(), segments_.end(),
+        [](const LayoutFunctionSegment& a, const LayoutFunctionSegment& b) {
+          return a.column < b.column;
+        });
+  }
+  // std::set would be more appropriate generally, but due to really
+  // small amount of elements the container has to hold and ordered inserts, it
+  // probably wouldn't help in anything.
+  std::vector<LayoutFunctionSegment> segments_;
 };
 
-std::ostream& operator<<(std::ostream& stream, const KnotSet& knot_set);
+template <bool IsConst, typename T>
+using ConditionalConst = std::conditional_t<IsConst, std::add_const_t<T>, T>;
 
-class KnotSetIterator {
+// Iterator used by LayoutFunction.
+template <bool IsConstIterator>
+class LayoutFunctionIterator {
+  using iterator = LayoutFunctionIterator<IsConstIterator>;
+  using container = ConditionalConst<IsConstIterator, LayoutFunction>;
+
  public:
-  explicit KnotSetIterator(const KnotSet& knot_set)
-      : knot_set_(knot_set), index_(0) {}
+  LayoutFunctionIterator() = default;
 
-  void Advance() { index_ += 1; }
+  explicit LayoutFunctionIterator(container& layout_function, int index = 0)
+      : lf_(&layout_function), index_(index) {
+    CHECK_LE(index_, lf_->size());
+  }
 
-  void Reset() { index_ = 0; }
+  LayoutFunctionIterator(const iterator&) = default;
+  LayoutFunctionIterator& operator=(const iterator&) = default;
 
-  bool Done() const { return index_ >= knot_set_.Size(); }
+  // Helper methods
 
-  int CurrentColumn() const {
-    if (index_ >= knot_set_.Size()) {
-      return std::numeric_limits<int>::max();
+  // Returns reference to iterated container
+  container& Container() const { return *lf_; }
+
+  // Returns index of current element
+  container& Index() const { return index_; }
+
+  // Return whether iterator points to container's end()
+  bool IsEnd() const { return index_ == lf_->size(); }
+
+  // Moves iterator to a segment starting at or to the left of 'column'.
+  void MoveToKnotAtOrToTheLeftOf(int column) {
+    CHECK_GE(column, 0);
+    if (Container().empty()) return;
+    CHECK_EQ(Container().front().column, 0);
+
+    auto& this_ref = *this;
+    if (this_ref->column > column) {
+      while (this_ref->column > column) --this_ref;
     } else {
-      return knot_set_[index_].GetColumn();
+      // Find first segment to the right of the 'column'...
+      while (!IsEnd() && this_ref->column <= column) ++this_ref;
+      // ... and go one segment back.
+      --this_ref;
     }
   }
 
-  int NextKnotColumn() const {
-    if ((index_ + 1) >= knot_set_.Size()) {
-      return std::numeric_limits<int>::max();
-    } else {
-      return knot_set_[index_ + 1].GetColumn();
-    }
+  // RandomAccessIterator interface
+
+  using iterator_category = std::random_access_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = LayoutFunctionSegment;
+  using pointer = ConditionalConst<IsConstIterator, LayoutFunctionSegment>*;
+  using reference = ConditionalConst<IsConstIterator, LayoutFunctionSegment>&;
+
+  reference operator*() const { return (*lf_)[index_]; }
+
+  pointer operator->() const { return &(*lf_)[index_]; }
+
+  reference operator[](size_t index) const {
+    CHECK_LT(index, lf_->size() - index_);
+    return (*lf_)[index_ + index];
   }
 
-  void MoveToMargin(int m) {
-    if (CurrentColumn() > m) {
-      while (CurrentColumn() > m) {
-        index_ -= 1;
-      }
-    } else {
-      while (NextKnotColumn() <= m) {
-        index_ += 1;
-      }
-    }
+  iterator& operator+=(difference_type rhs) {
+    CHECK_LE(rhs, lf_->size() - index_);
+    index_ += rhs;
+    return *this;
+  }
+  iterator& operator-=(difference_type rhs) {
+    CHECK_LE(rhs, index_);
+    index_ -= rhs;
+    return *this;
   }
 
-  float CurrentKnotValueAt(int m) const {
-    assert(index_ < knot_set_.Size());
-    return knot_set_[index_].ValueAt(m);
+  iterator& operator++() { return *this += 1; }
+
+  iterator& operator--() { return *this -= 1; }
+
+  iterator operator++(int) {
+    auto tmp = *this;
+    ++(*this);
+    return tmp;
   }
 
-  const Knot& CurrentKnot() const { return knot_set_[index_]; }
+  iterator operator--(int) {
+    auto tmp = *this;
+    --(*this);
+    return tmp;
+  }
 
-  int GetIndex() const { return index_; }
+  iterator operator+(difference_type rhs) const {
+    return iterator(*lf_, index_ + rhs);
+  }
+  iterator operator-(difference_type rhs) const {
+    return iterator(*lf_, index_ - rhs);
+  }
 
-  int Size() const { return knot_set_.Size(); }
+  friend iterator operator+(difference_type lhs, const iterator& rhs) {
+    return iterator(*rhs.lf_, lhs + rhs.index_);
+  }
+  friend iterator operator-(difference_type lhs, const iterator& rhs) {
+    return iterator(*rhs.lf_, lhs - rhs.index_);
+  }
+
+  friend bool operator==(const iterator& a, const iterator& b) {
+    return (a.lf_ == b.lf_) && (a.index_ == b.index_);
+  }
+  friend bool operator!=(const iterator& a, const iterator& b) {
+    return !(a == b);
+  }
+  friend bool operator<(const iterator& a, const iterator& b) {
+    return (a.lf_ == b.lf_) && (a.index_ < b.index_);
+  }
+  friend bool operator>(const iterator& a, const iterator& b) {
+    return (a.lf_ == b.lf_) && (a.index_ > b.index_);
+  }
+  friend bool operator<=(const iterator& a, const iterator& b) {
+    return !(a > b);
+  }
+  friend bool operator>=(const iterator& a, const iterator& b) {
+    return !(a < b);
+  }
 
  private:
-  const KnotSet& knot_set_;
-
+  container* lf_;
   int index_;
 };
 
-class SolutionSet : public std::deque<KnotSet> {
+std::ostream& operator<<(std::ostream& stream,
+                         const LayoutFunctionSegment& segment);
+
+std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf);
+
+template <typename Iterator, typename ValueType>
+inline constexpr bool IsIteratorDereferencingTo =
+    std::is_same_v<typename std::iterator_traits<Iterator>::value_type,
+                   ValueType>;
+
+// Methods for creating and combining LayoutFunctions
+class LayoutFunctionFactory {
  public:
-  SolutionSet() = default;
-  ~SolutionSet() = default;
+  explicit LayoutFunctionFactory(const BasicFormatStyle& style)
+      : style_(style) {}
 
-  // SolutionSet{} constructor
-  using std::deque<KnotSet>::deque;
+  // Creates CostFunction for a single line from UnwrappedLine 'uwline'.
+  LayoutFunction Line(const UnwrappedLine& uwline) const;
 
-  // Deleting standard interfaces:
-  SolutionSet(const SolutionSet&) = delete;
-  SolutionSet(SolutionSet&&) = delete;
-  SolutionSet& operator=(const SolutionSet&) = delete;
-  SolutionSet& operator=(SolutionSet&&) = delete;
+  // Combines two or more layouts vertically.
+  // All combined layouts start at the same column. The first line of layout
+  // n+1 is immediately below the last line of layout n.
+  LayoutFunction Stack(std::initializer_list<LayoutFunction> lfs) const;
 
-  KnotSet VerticalJoin(const BasicFormatStyle& style);
+  // Combines two or more layouts so that the layout N+1 is directy to the
+  // right of the last line of layout N.
+  //
+  // EXAMPLE:
+  //
+  // Layout 1:
+  //     First First First First First First
+  //     First First First
+  //
+  // Layout 2:
+  //     Second Second Second
+  //     Second Second
+  //
+  // Juxtaposition:
+  //     First First First First First First
+  //     First First First Second Second Second
+  //                       Second Second
+  LayoutFunction Juxtaposition(std::initializer_list<LayoutFunction> lfs) const;
 
-  KnotSet HorizontalJoin(const BasicFormatStyle& style);
+  // Creates the piecewise minimum function of a set of LayoutFunctions.
+  //
+  // The combinator is intended to choose optimal layout from a set of
+  // different layouts of the same code fragment.
+  //
+  // When two layouts have the same cost, the function favors the layout with
+  // lower gradient. When gradients are equal too, earlier element is used.
+  LayoutFunction Choice(std::initializer_list<LayoutFunction> lfs) const {
+    return Choice(lfs.begin(), lfs.end());
+  }
 
-  KnotSet MinimalSet(const BasicFormatStyle& style);
+  // See Choice(std::initializer_list<LayoutFunction> lfs).
+  //
+  // Iterator: iterator type that dereferences to LayoutFunction.
+  template <class Iterator>
+  LayoutFunction Choice(const Iterator begin, const Iterator end) const {
+    static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
+                  "Iterator's value type must LayoutFunction.");
+    const auto lfs = make_container_range(begin, end);
 
-  KnotSet WrapSet(const BasicFormatStyle& style);
+    if (lfs.empty()) return LayoutFunction();
+    if (lfs.size() == 1) return lfs.front();
+
+    // Create a segment iterator for each LayoutFunction.
+    auto segments =
+        absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
+    std::transform(lfs.begin(), lfs.end(), segments.begin(),
+                   [](const LayoutFunction& lf) { return lf.begin(); });
+
+    return Choice(segments);
+  }
+
+  // Returns LayoutFunction 'lf' with layout indented using 'indent' spaces.
+  LayoutFunction Indent(const LayoutFunction& lf, int indent) const;
+
+  // Joins layouts horizontally and wraps them into multiple lines to stay under
+  // column limit. Kind of like a words in a paragraph.
+  LayoutFunction Wrap(std::initializer_list<LayoutFunction> lfs) const {
+    return Wrap(lfs.begin(), lfs.end());
+  }
+
+  // See Wrap(std::initializer_list<LayoutFunction> lfs).
+  //
+  // Iterator: iterator type that dereferences to LayoutFunction.
+  template <class Iterator>
+  LayoutFunction Wrap(const Iterator begin, const Iterator end) const {
+    static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
+                  "Iterator's value type must LayoutFunction.");
+
+    const auto lfs = make_container_range(begin, end);
+
+    if (lfs.empty()) return LayoutFunction();
+    if (lfs.size() == 1) return lfs.front();
+
+    absl::FixedArray<LayoutFunction> results(lfs.size());
+
+    int size = lfs.size();
+    for (int i = size - 1; i >= 0; --i) {
+      absl::FixedArray<LayoutFunction> results_i(size - i);
+      LayoutFunction incremental = lfs[i];
+      for (int j = i; j < size - 1; ++j) {
+        auto result_j = Stack({
+            incremental,
+            results[j + 1],
+        });
+        // Penalty used to favor layouts with elements packed into earlier
+        // lines.
+        static const float kEarlierLinesFavoringPenalty = 1e-3;
+        for (auto& segment : result_j)
+          segment.intercept += style_.line_break_penalty +
+                               kEarlierLinesFavoringPenalty * (lfs.size() - j);
+        results_i[j - i] = std::move(result_j);
+
+        const auto& next_element = lfs[j + 1];
+
+        if (next_element.MustWrap())
+          incremental = Stack({std::move(incremental), next_element});
+        else
+          incremental = Juxtaposition({std::move(incremental), next_element});
+      }
+      results_i.back() = std::move(incremental);
+
+      results[i] = Choice(results_i.begin(), results_i.end());
+    }
+    return results[0];
+  }
 
  private:
-  KnotSet HorizontalJoin(const KnotSet& left, const KnotSet& right,
-                         const BasicFormatStyle& style);
+  LayoutFunction Juxtaposition(const LayoutFunction& left,
+                               const LayoutFunction& right) const;
 
-  void ResetIteratorSet() {
-    iterator_set_.clear();
-    std::transform(
-        begin(), end(), std::back_inserter(iterator_set_),
-        [](const KnotSet& knot_set) { return KnotSetIterator(knot_set); });
-  }
+  static LayoutFunction Choice(
+      absl::FixedArray<LayoutFunction::const_iterator>& segments);
 
-  void MoveIteratorSet(int margin) {
-    std::for_each(iterator_set_.begin(), iterator_set_.end(),
-                  [&margin](KnotSetIterator& s) { s.MoveToMargin(margin); });
-  }
-
-  std::vector<int> IteratorSetCurrentGradients() const {
-    std::vector<int> gradients;
-    std::transform(iterator_set_.begin(), iterator_set_.end(),
-                   std::back_inserter(gradients), [](const KnotSetIterator& s) {
-                     return s.CurrentKnot().GetGradient();
-                   });
-    return gradients;
-  }
-
-  std::vector<float> IteratorSetValuesAt(int column) const {
-    std::vector<float> values;
-    std::transform(iterator_set_.begin(), iterator_set_.end(),
-                   std::back_inserter(values),
-                   [&column](const KnotSetIterator& s) {
-                     return s.CurrentKnotValueAt(column);
-                   });
-    return values;
-  }
-
-  int IteratorSetMinimalNextColumn() const {
-    return std::min_element(
-               iterator_set_.begin(), iterator_set_.end(),
-               [](const KnotSetIterator& a, const KnotSetIterator& b) {
-                 return a.NextKnotColumn() < b.NextKnotColumn();
-               })
-        ->NextKnotColumn();
-  }
-
-  // Group of KnotSetIterators on which above functions operate
-  std::vector<KnotSetIterator> iterator_set_;
+  const BasicFormatStyle& style_;
 };
-
-std::ostream& operator<<(std::ostream& ostream,
-                         const SolutionSet& solution_set);
 
 class TreeReconstructor {
  public:
@@ -413,19 +594,7 @@ class TreeReconstructor {
 
   void TraverseTree(const LayoutTree& layout_tree);
 
-  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node) const {
-    const auto& first_line = unwrapped_lines_.front();
-    const auto& last_line = unwrapped_lines_.back();
-
-    node->Value() = UnwrappedLine(first_line);
-    node->Value().SpanUpToToken(last_line.TokensRange().end());
-    node->Value().SetIndentationSpaces(current_indentation_spaces_);
-
-    node->Children().clear();
-    for (const auto& uwline : unwrapped_lines_) {
-      node->AdoptSubtree(uwline);
-    }
-  }
+  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node) const;
 
  private:
   std::vector<UnwrappedLine> unwrapped_lines_;
@@ -437,8 +606,7 @@ class TreeReconstructor {
   const BasicFormatStyle& style_;
 };
 
-void OptimizeTokenPartitionTree(TokenPartitionTree* node,
-                                const BasicFormatStyle& style);
+}  // namespace layout_optimizer_internal
 
 }  // namespace verible
 
