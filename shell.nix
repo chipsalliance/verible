@@ -19,6 +19,7 @@ pkgs.mkShell {
       bazel
       gcc
       glibc
+      jdk
       python3
     ];
 
