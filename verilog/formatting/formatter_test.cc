@@ -10696,6 +10696,158 @@ TEST(FormatterEndToEndTest, OnelineFormatExpandTest) {
   }
 }
 
+struct DimensionsAlignmentTestCase {
+  absl::string_view input;
+  absl::string_view expected[4];
+};
+
+static constexpr DimensionsAlignmentTestCase
+    kPortDeclarationDimensionsAlignmentTestCases[] = {
+        {"import \"DPI-C\" context function void func(\n"
+         "input bit foo,\n"
+         "input bit [2] foobar,\n"
+         "input bit [24:16] bar,\n"
+         "input bit [2:0][31:0] baz,\n"
+         "input bit [4][24:0][16:0] foobarbaz[],\n"
+         "input bit [FOOBAZ][31:24] qux[16],\n"
+         "input bit [16] quux[8:2][16][32],\n"
+         "output bit [2:0][2:0][2:0] quuz[8][16:12]\n"
+         ");\n",
+         {
+             "import \"DPI-C\" context function void func(\n"
+             "  input  bit                       foo,\n"
+             "  input  bit [     2]              foobar,\n"
+             "  input  bit [ 24:16]              bar,\n"
+             "  input  bit [   2:0][ 31:0]       baz,\n"
+             "  input  bit [     4][ 24:0][16:0] foobarbaz[   ],\n"
+             "  input  bit [FOOBAZ][31:24]       qux      [ 16],\n"
+             "  input  bit [    16]              quux     [8:2][   16][32],\n"
+             "  output bit [   2:0][  2:0][ 2:0] quuz     [  8][16:12]\n"
+             ");\n",
+             "import \"DPI-C\" context function void func(\n"
+             "  input  bit                       foo,\n"
+             "  input  bit [     2]              foobar,\n"
+             "  input  bit [ 24:16]              bar,\n"
+             "  input  bit [   2:0][ 31:0]       baz,\n"
+             "  input  bit [     4][ 24:0][16:0] foobarbaz         [     ],\n"
+             "  input  bit [FOOBAZ][31:24]       qux               [   16],\n"
+             "  input  bit [    16]              quux     [8:2][16][   32],\n"
+             "  output bit [   2:0][  2:0][ 2:0] quuz          [ 8][16:12]\n"
+             ");\n",
+             "import \"DPI-C\" context function void func(\n"
+             "  input  bit                      foo,\n"
+             "  input  bit              [    2] foobar,\n"
+             "  input  bit              [24:16] bar,\n"
+             "  input  bit      [   2:0][ 31:0] baz,\n"
+             "  input  bit [  4][  24:0][ 16:0] foobarbaz[   ],\n"
+             "  input  bit      [FOOBAZ][31:24] qux      [ 16],\n"
+             "  input  bit              [   16] quux     [8:2][   16][32],\n"
+             "  output bit [2:0][   2:0][  2:0] quuz     [  8][16:12]\n"
+             ");\n",
+             "import \"DPI-C\" context function void func(\n"
+             "  input  bit                      foo,\n"
+             "  input  bit              [    2] foobar,\n"
+             "  input  bit              [24:16] bar,\n"
+             "  input  bit      [   2:0][ 31:0] baz,\n"
+             "  input  bit [  4][  24:0][ 16:0] foobarbaz         [     ],\n"
+             "  input  bit      [FOOBAZ][31:24] qux               [   16],\n"
+             "  input  bit              [   16] quux     [8:2][16][   32],\n"
+             "  output bit [2:0][   2:0][  2:0] quuz          [ 8][16:12]\n"
+             ");\n",
+         }},
+        {"module m(\n"
+         "output bit [2:0][2:0][2:0] quuz[8][16:12],\n"
+         "input bit [16] quux[8:2][16][32],\n"
+         "input bit [FOOBAZ][31:24] qux[16],\n"
+         "input bit [4][24:0][16:0] foobaz[],\n"
+         "input bit [2:0][31:0] baz,\n"
+         "input bit [24:16] bar,\n"
+         "input bit [2] foobar,\n"
+         "input bit foo\n"
+         "); endmodule:m\n",
+         {
+             "module m (\n"
+             "    output bit [   2:0][  2:0][ 2:0] quuz  [  8][16:12],\n"
+             "    input  bit [    16]              quux  [8:2][   16][32],\n"
+             "    input  bit [FOOBAZ][31:24]       qux   [ 16],\n"
+             "    input  bit [     4][ 24:0][16:0] foobaz[   ],\n"
+             "    input  bit [   2:0][ 31:0]       baz,\n"
+             "    input  bit [ 24:16]              bar,\n"
+             "    input  bit [     2]              foobar,\n"
+             "    input  bit                       foo\n"
+             ");\n"
+             "endmodule : m\n",
+             "module m (\n"
+             "    output bit [   2:0][  2:0][ 2:0] quuz       [ 8][16:12],\n"
+             "    input  bit [    16]              quux  [8:2][16][   32],\n"
+             "    input  bit [FOOBAZ][31:24]       qux            [   16],\n"
+             "    input  bit [     4][ 24:0][16:0] foobaz         [     ],\n"
+             "    input  bit [   2:0][ 31:0]       baz,\n"
+             "    input  bit [ 24:16]              bar,\n"
+             "    input  bit [     2]              foobar,\n"
+             "    input  bit                       foo\n"
+             ");\n"
+             "endmodule : m\n",
+             "module m (\n"
+             "    output bit [2:0][   2:0][  2:0] quuz  [  8][16:12],\n"
+             "    input  bit              [   16] quux  [8:2][   16][32],\n"
+             "    input  bit      [FOOBAZ][31:24] qux   [ 16],\n"
+             "    input  bit [  4][  24:0][ 16:0] foobaz[   ],\n"
+             "    input  bit      [   2:0][ 31:0] baz,\n"
+             "    input  bit              [24:16] bar,\n"
+             "    input  bit              [    2] foobar,\n"
+             "    input  bit                      foo\n"
+             ");\n"
+             "endmodule : m\n",
+             "module m (\n"
+             "    output bit [2:0][   2:0][  2:0] quuz       [ 8][16:12],\n"
+             "    input  bit              [   16] quux  [8:2][16][   32],\n"
+             "    input  bit      [FOOBAZ][31:24] qux            [   16],\n"
+             "    input  bit [  4][  24:0][ 16:0] foobaz         [     ],\n"
+             "    input  bit      [   2:0][ 31:0] baz,\n"
+             "    input  bit              [24:16] bar,\n"
+             "    input  bit              [    2] foobar,\n"
+             "    input  bit                      foo\n"
+             ");\n"
+             "endmodule : m\n",
+         }},
+};
+
+TEST(FormatterEndToEndTest, PortDeclarationDimensionsAlignmentTest) {
+  FormatStyle style;
+  style.column_limit = 64;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  // All combinations of port_declaration_right_align_{un,}packed_dimensions
+  static const bool right_align_combinations[][2] = {
+      {false, false}, {false, true}, {true, false}, {true, true}};
+
+  for (const auto& test_case : kPortDeclarationDimensionsAlignmentTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    size_t expected_index = 0;
+    for (const auto& right_align : right_align_combinations) {
+      VLOG(1) << "style variant:\n"
+              << "port_declarations_right_align_packed_dimensions: "
+              << right_align[0] << "\n"
+              << "port_declarations_right_align_unpacked_dimensions: "
+              << right_align[1] << "\n";
+      style.port_declarations_right_align_packed_dimensions = right_align[0];
+      style.port_declarations_right_align_unpacked_dimensions = right_align[1];
+
+      std::ostringstream stream;
+
+      const auto status =
+          FormatVerilog(test_case.input, "<filename>", style, stream);
+      // Require these test cases to be valid.
+      EXPECT_OK(status) << status.message();
+      EXPECT_EQ(stream.str(), test_case.expected[expected_index++])
+          << "code:\n"
+          << test_case.input;
+    }
+  }
+}
+
 // TODO(fangism): directed tests using style variations
 
 }  // namespace

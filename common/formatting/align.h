@@ -33,14 +33,25 @@ namespace verible {
 
 // Attributes of columns of text alignment (controlled by developer).
 struct AlignmentColumnProperties {
+  static constexpr int kNoBorderOverride = -1;
+
   // If true format cell with padding to the right: |text   |
   // else format cell with padding to the left:     |   text|
   bool flush_left = true;
+  // When set, ignores tokens' left_border and uses this value instead.
+  // This is propagated to a leftmost subcolumn if the subcolumn's
+  // left_border_override is lower.
+  int left_border_override = kNoBorderOverride;
+
   bool contains_delimiter = false;
 
   AlignmentColumnProperties() = default;
+
   explicit AlignmentColumnProperties(bool flush_left)
       : flush_left(flush_left) {}
+
+  explicit AlignmentColumnProperties(bool flush_left, int left_border_override)
+      : flush_left(flush_left), left_border_override(left_border_override) {}
 };
 
 // This object represents a bid for a new column as a row of tokens is scanned.
@@ -327,14 +338,22 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
 // for alignment purposes.
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells(
-    const TokenPartitionTree& row) {
+    const TokenPartitionTree& row,
+    const std::function<ScannerType(void)> scanner_factory) {
   const UnwrappedLine& unwrapped_line = row.Value();
   // Walk the original syntax tree that spans a subset of the tokens spanned by
   // this 'row', and detect the sparse set of columns found by the scanner.
   const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
-  ScannerType scanner;
+  ScannerType scanner = scanner_factory();
   origin->Accept(&scanner);
   return scanner.SparseColumns();
+}
+
+template <class ScannerType>
+ColumnPositionTree ScanPartitionForAlignmentCells(
+    const TokenPartitionTree& row) {
+  return ScanPartitionForAlignmentCells<ScannerType>(
+      row, [] { return ScannerType(); });
 }
 
 // Similarly to the function above this function creates an instance of
@@ -354,11 +373,12 @@ ColumnPositionTree ScanPartitionForAlignmentCells(
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
+    const std::function<ScannerType(void)> scanner_factory,
     const std::function<void(TokenRange, ColumnPositionTree*)>
         non_tree_column_scanner) {
   // re-use existing scanner
   ColumnPositionTree column_entries =
-      ScanPartitionForAlignmentCells<ScannerType>(row);
+      ScanPartitionForAlignmentCells<ScannerType>(row, scanner_factory);
 
   const UnwrappedLine& unwrapped_line = row.Value();
   const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
@@ -382,6 +402,15 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
   return column_entries;
 }
 
+template <class ScannerType>
+ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
+    const TokenPartitionTree& row,
+    const std::function<void(TokenRange, ColumnPositionTree*)>
+        non_tree_column_scanner) {
+  return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
+      row, [] { return ScannerType(); }, non_tree_column_scanner);
+}
+
 // Convenience function for generating alignment cell scanners.
 // This can be useful for constructing maps of scanners based on type.
 //
@@ -401,6 +430,14 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
   };
 }
 
+template <class ScannerType>
+AlignmentCellScannerFunction AlignmentCellScannerGenerator(
+    const std::function<ScannerType(void)> scanner_factory) {
+  return [scanner_factory](const TokenPartitionTree& row) {
+    return ScanPartitionForAlignmentCells<ScannerType>(row, scanner_factory);
+  };
+}
+
 // Overloaded function for generating alignment cell scanners. This adapter
 // accepts a trailing token scanner function for aligning delimiters and
 // comments.
@@ -411,6 +448,18 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
   return [non_tree_column_scanner](const TokenPartitionTree& row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
         row, non_tree_column_scanner);
+  };
+}
+
+template <class ScannerType>
+AlignmentCellScannerFunction AlignmentCellScannerGenerator(
+    const std::function<ScannerType(void)> scanner_factory,
+    const std::function<void(TokenRange, ColumnPositionTree*)>
+        non_tree_column_scanner) {
+  return [scanner_factory,
+          non_tree_column_scanner](const TokenPartitionTree& row) {
+    return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
+        row, scanner_factory, non_tree_column_scanner);
   };
 }
 
