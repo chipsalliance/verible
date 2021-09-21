@@ -8050,7 +8050,7 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
         "covergroup cg(string s);"
         "x_cross : cross s1, s2{"
         "  bins a = binsof(x) intersect {d};"
-        "  bins b = binsof(y) intersect {e};"
+        "  bins b = binsof(y) intersect {e, f};"
         "}"
         "endgroup ",
         CovergroupDeclaration(
@@ -8059,15 +8059,16 @@ const TreeUnwrapperTestData kUnwrapCovergroupTestCases[] = {
                              L(2, {"string", "s"}), L(0, {")", ";"})),
             CovergroupItemList(
                 1, L(1, {"x_cross", ":", "cross", "s1", ",", "s2", "{"}),
-                CrossItemList(2,
-                              N(2,
-                                L(2, {"bins", "a", "=", "binsof", "(", "x", ")",
-                                      "intersect", "{"}),
-                                L(3, {"d"}), L(2, {"}", ";"})),
-                              N(2,
-                                L(2, {"bins", "b", "=", "binsof", "(", "y", ")",
-                                      "intersect", "{"}),
-                                L(3, {"e"}), L(2, {"}", ";"}))),
+                CrossItemList(
+                    2,
+                    N(2,
+                      L(2, {"bins", "a", "=", "binsof", "(", "x", ")",
+                            "intersect", "{"}),
+                      L(3, {"d"}), L(2, {"}", ";"})),
+                    N(2,
+                      L(2, {"bins", "b", "=", "binsof", "(", "y", ")",
+                            "intersect", "{"}),
+                      N(3, L(3, {"e", ","}), L(3, {"f"})), L(2, {"}", ";"}))),
                 L(1, {"}"})),
             L(0, {"endgroup"})),
     },
