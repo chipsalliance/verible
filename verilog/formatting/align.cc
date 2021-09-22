@@ -234,7 +234,8 @@ UnstyledAlignmentCellScannerGenerator() {
 template <class ScannerType>
 std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
 UnstyledAlignmentCellScannerGenerator(
-    const std::function<void(verible::TokenRange, verible::ColumnPositionTree*)>
+    const std::function<void(verible::TokenRange,
+                             verible::ColumnPositionTree*)>&
         non_tree_column_scanner) {
   return [non_tree_column_scanner](const FormatStyle& vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
