@@ -887,4 +887,49 @@ interactive_autofix_test "@^(y***D" \
 
 ################################################################################
 
+echo "=== Test --autofix=inplace-interactive: Choose alternative fix"
+
+# Choose alternatives with key '1' or '2'
+
+# Files with alternatives in autofixes
+ORIGINAL_ALT_AUTO_FIX="${TEST_TMPDIR}/orig-autofix-alternative.sv"
+>"${ORIGINAL_ALT_AUTO_FIX}"
+echo -en "module AlternativeAutoFix;\n" >>"${ORIGINAL_ALT_AUTO_FIX}"
+echo -en "  assign a = 32'h1;\n"        >>"${ORIGINAL_ALT_AUTO_FIX}"
+echo -en "endmodule\n"                  >>"${ORIGINAL_ALT_AUTO_FIX}"
+
+REFERENCE_ALT_AUTO_FIX_1="${TEST_TMPDIR}/alt-autofix-alternative-1.sv"
+>"${REFERENCE_ALT_AUTO_FIX_1}"
+echo -en "module AlternativeAutoFix;\n" >>"${REFERENCE_ALT_AUTO_FIX_1}"
+echo -en "  assign a = 32'h00000001;\n" >>"${REFERENCE_ALT_AUTO_FIX_1}"
+echo -en "endmodule\n"                  >>"${REFERENCE_ALT_AUTO_FIX_1}"
+
+REFERENCE_ALT_AUTO_FIX_2="${TEST_TMPDIR}/alt-autofix-alternative-2.sv"
+>"${REFERENCE_ALT_AUTO_FIX_2}"
+echo -en "module AlternativeAutoFix;\n" >>"${REFERENCE_ALT_AUTO_FIX_2}"
+echo -en "  assign a = 32'd1;\n"        >>"${REFERENCE_ALT_AUTO_FIX_2}"
+echo -en "endmodule\n"                  >>"${REFERENCE_ALT_AUTO_FIX_2}"
+
+failure=0
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "1"
+
+check_diff "${REFERENCE_ALT_AUTO_FIX_1}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "First alternative not coosen."
+(( failure|="$?" ))
+
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "2"
+check_diff "${REFERENCE_ALT_AUTO_FIX_2}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "Second alternative not coosen."
+(( failure|="$?" ))
+
+(( $failure )) && exit 1
+
 echo "PASS"

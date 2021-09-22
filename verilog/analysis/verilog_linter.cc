@@ -114,6 +114,18 @@ static void PrintFix(std::ostream& stream, absl::string_view text,
   verible::LineDiffsToUnifiedDiff(stream, diff, 1);
 }
 
+static void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
+                                 const std::vector<verible::AutoFix>& fixes) {
+  const bool print_alternative_number = fixes.size() > 1;
+  for (size_t i = 0; i < fixes.size(); ++i) {
+    if (print_alternative_number) {
+      stream << "=== " << (i + 1)
+             << ". alternative =================================\n";
+    }
+    PrintFix(stream, text, fixes[i]);
+  }
+}
+
 void ViolationFixer::CommitFixes(absl::string_view source_content,
                                  absl::string_view source_path,
                                  const verible::AutoFix& fix) const {
@@ -162,14 +174,21 @@ void ViolationFixer::HandleViolation(
     return;
   }
 
+  static std::string_view previous_fix_conflict =
+      "The fix conflicts with "
+      "previously applied fixes, rejecting.\n";
+
   AnswerChoice answer;
-  for (;;) {
+  for (bool first_round = true; /**/; first_round = false) {
     if (ultimate_answer_ != AnswerChoice::kUnknown) {
       answer = ultimate_answer_;
     } else if (auto found = rule_answers_.find(rule_name);
                found != rule_answers_.end()) {
       answer = found->second;
     } else {
+      if (is_interactive_ && first_round) {  // Show the user what is available.
+        PrintFixAlternatives(*message_stream_, base, violation.autofixes);
+      }
       answer = answer_chooser_(violation, rule_name);
     }
 
@@ -180,13 +199,23 @@ void ViolationFixer::HandleViolation(
       case AnswerChoice::kApplyAllForRule:
         rule_answers_[rule_name] = AnswerChoice::kApply;
         [[fallthrough]];
-      case AnswerChoice::kApply:
-        // Apply first available fix
+      case AnswerChoice::kApply:  // Apply first available fix
         if (!fix->AddEdits(violation.autofixes[0].Edits())) {
-          VLOG(2) << "The fix conflicts with previously applied fixes, "
-                     "rejecting.";
-        } else {
-          (*message_stream_) << "(fixed)" << std::endl;
+          *message_stream_ << previous_fix_conflict;
+        }
+        break;
+
+      case AnswerChoice::kApplySecondAlternative:
+        if (violation.autofixes.size() > 1 &&
+            !fix->AddEdits(violation.autofixes[1].Edits())) {
+          *message_stream_ << previous_fix_conflict;
+        }
+        break;
+
+      case AnswerChoice::kApplyThirdAlternative:
+        if (violation.autofixes.size() > 2 &&
+            !fix->AddEdits(violation.autofixes[2].Edits())) {
+          *message_stream_ << previous_fix_conflict;
         }
         break;
 
@@ -200,8 +229,7 @@ void ViolationFixer::HandleViolation(
         return;
 
       case AnswerChoice::kPrintFix:
-        // Print first available fix
-        PrintFix(*message_stream_, base, violation.autofixes[0]);
+        PrintFixAlternatives(*message_stream_, base, violation.autofixes);
         continue;
       case AnswerChoice::kPrintAppliedFixes:
         PrintFix(*message_stream_, base, *fix);
@@ -218,7 +246,7 @@ void ViolationFixer::HandleViolation(
 ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
     const verible::LintViolation& violation, absl::string_view rule_name) {
   static absl::string_view help_message =
-      "y - apply fix\n"
+      "y - apply first fix [or type number of alternative e.g. '2']\n"
       "n - reject fix\n"
       "a - apply this and all remaining fixes for violations of this rule\n"
       "d - reject this and all remaining fixes for violations of this rule\n"
@@ -228,12 +256,21 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
       "P - show fixes applied in this file so far\n"
       "? - print this help and prompt again\n";
 
+  // If we have alternatives, show this in the short-menu.
+  std::string alternative_list;
+  if (size_t fix_count = violation.autofixes.size(); fix_count > 1) {
+    for (size_t i = 0; i < fix_count; ++i)
+      alternative_list += std::to_string(i + 1) + ",";
+  }
+
   for (;;) {
     const char c = verible::ReadCharFromUser(
         std::cin, std::cerr, verible::IsInteractiveTerminalSession(),
-        "Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] ");
+        "Autofix is available. Apply? [" + alternative_list +
+            "y,n,a,d,A,D,p,P,?] ");
 
     switch (c) {
+      case '1':
       case 'y':
         return AnswerChoice::kApply;
       case 'a':
@@ -241,6 +278,14 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
       case 'A':
         return AnswerChoice::kApplyAll;
 
+      case '2':
+        if (violation.autofixes.size() > 1)
+          return AnswerChoice::kApplySecondAlternative;
+        break;
+      case '3':
+        if (violation.autofixes.size() > 2)
+          return AnswerChoice::kApplyThirdAlternative;
+        break;
       case 'n':
         return AnswerChoice::kReject;
       case 'd':
@@ -267,8 +312,6 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
         std::cerr << help_message << std::endl;
         continue;
     }
-
-    break;
   }
 }
 
