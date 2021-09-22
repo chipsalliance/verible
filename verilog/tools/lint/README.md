@@ -237,6 +237,7 @@ The interactive modes `--autofix=patch-interactive` and
 * `?` - print this help and prompt again
 
 Example interactive session (`--autofix=inplace-interactive`):
+
 ```
 autofixtest.sv:3:1: Remove trailing spaces. [Style: trailing-spaces] [no-trailing-spaces]
 Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] a

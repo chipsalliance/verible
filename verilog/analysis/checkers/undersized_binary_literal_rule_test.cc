@@ -183,33 +183,55 @@ TEST(UndersizedBinaryLiteralTest, ApplyAutoFix) {
       kTestCases, "bin:true;hex:true;oct:true;autofix:true");
 }
 
-TEST(UndersizedBinaryLiteralRule, ApplyAutoFixDigitOne) {
+TEST(UndersizedBinaryLiteralRule, AutoFixDigitZeroProvideUnsizedAlternative) {
+  // In the case lint_zero is configured, we provide alternatives to write
+  // just a simple '0
+
+  // Alternatives the auto fix offers
+  constexpr int kFirstFix = 0;
+  constexpr int kSecondFix = 1;
+  constexpr int kThirdFix = 2;
+
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // First suggested alternative: replace just with simple '0
+      {"localparam x = 32'h0;", "localparam x = '0;", kFirstFix},
+      // We only apply this for unsigned values
+      {"localparam x = 32'sh0;", "localparam x = 32'sh00000000;", kFirstFix},
+
+      // Next alternative is the standard expansion
+      {"localparam x = 32'h0;", "localparam x = 32'h00000000;", kSecondFix},
+
+      // Third alternative would be what we anyway would do with single digit
+      // suggestions: convert to decimal.
+      {"localparam x = 32'h0;", "localparam x = 32'd0;", kThirdFix},
+  };
+  RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases,
+      "bin:true;hex:true;oct:true;lint_zero:true;"
+      "autofix:true");
+}
+
+TEST(UndersizedBinaryLiteralRule, AutoFixSingleDigitProvideDecimalAlternative) {
   // Alternatives the auto fix offers
   constexpr int kFirstFix = 0;
   constexpr int kSecondFix = 1;
   const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-      {"localparam x = 32'h1;", "localparam x = 32'd1;", kFirstFix},
-      {"localparam x = 32'sh1;", "localparam x = 32'sd1;", kFirstFix},
-      {"localparam x = 32'h1;", "localparam x = 32'h00000001;", kSecondFix},
-      {"localparam x = 32'sh1;", "localparam x = 32'sh00000001;", kSecondFix},
-  };
-  RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
-      kTestCases,
-      "bin:true;hex:true;oct:true;"
-      "autofix:true;autofix_suggest_decimal_for_one:true");
-}
-
-TEST(UndersizedBinaryLiteralRule, ApplyAutoDoNotFixDigitOne) {
-  // Alternatives the auto fix offers
-  constexpr int kFirstFix = 0;
-  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // First choice: zero expand
       {"localparam x = 32'h1;", "localparam x = 32'h00000001;", kFirstFix},
       {"localparam x = 32'sh1;", "localparam x = 32'sh00000001;", kFirstFix},
+      {"localparam x = 32'h9;", "localparam x = 32'h00000009;", kFirstFix},
+      {"localparam x = 32'sh9;", "localparam x = 32'sh00000009;", kFirstFix},
+
+      // Second choice: convert to decimal
+      {"localparam x = 32'h1;", "localparam x = 32'd1;", kSecondFix},
+      {"localparam x = 32'sh1;", "localparam x = 32'sd1;", kSecondFix},
+      {"localparam x = 32'h9;", "localparam x = 32'd9;", kSecondFix},
+      {"localparam x = 32'sh9;", "localparam x = 32'sd9;", kSecondFix},
   };
   RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
       kTestCases,
       "bin:true;hex:true;oct:true;"
-      "autofix:true;autofix_suggest_decimal_for_one:false");
+      "autofix:true");
 }
 
 }  // namespace

@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/undersized_binary_literal_rule.h"
 
+#include <cctype>
 #include <cstddef>
 #include <set>
 #include <string>
@@ -62,12 +63,12 @@ const LintRuleDescriptor& UndersizedBinaryLiteralRule::GetDescriptor() {
           {"bin", "true", "Checking binary 'b literals."},
           {"oct", "false", "Checking octal 'o literals."},
           {"hex", "false", "Checking hexadecimal 'h literals."},
+          {"lint_zero", "false",
+           "Also generate a lint warning for value zero such as `32'h0`; "
+           "autofix suggestions would be to zero-expand or untype `'0`."},
           {"autofix", "true",
            "Provide autofix suggestions, e.g. "
            "32'hAB provides suggested fix 32'h000000AB."},
-          {"autofix_suggest_decimal_for_one", "true",
-           "For the number 1 (one), provide two autofix alternatives "
-           "e.g. 32'h1 provides suggestions 32'd1 and 32'h00000001."},
       }};
   return d;
 }
@@ -123,23 +124,32 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
   }
 
   const int missing_bits = width - number.literal.length() * bits_per_digit;
-  // Allow literals with single "0" or "?" as an exception
-  if (missing_bits > 0 && number.literal != "0" && number.literal != "?") {
+  // if !lint_zero, "0" is an exceptions. Also "?" is always an exception
+  if (missing_bits > 0 && (lint_zero_ || number.literal != "0") &&
+      number.literal != "?") {
     std::vector<AutoFix> autofixes;
-    if (number.literal == "1" && autofix_suggest_decimal_for_one) {
-      // For literals with number one, this often might be meant to be a
-      // decimal; in this case, make this first suggestion.
-      if (number.signedness) {
-        autofixes.push_back(AutoFix({{base_text.substr(0, 3), "'sd"}}));
-      } else {
-        autofixes.push_back(AutoFix({{base_text.substr(0, 2), "'d"}}));
-      }
+
+    // Special number zero (if lint_zero defined): suggest a '0 in this case
+    if (number.literal == "0" && !number.signedness) {
+      autofixes.push_back(
+          AutoFix({{width_text, ""}, {base_text.substr(0, 2), "'"}}));
     }
 
     // Regular fix: prefix with leading zeroes.
     const int leading_0 = (missing_bits + bits_per_digit - 1) / bits_per_digit;
     autofixes.push_back(
         AutoFix({{digits_text.substr(0, 0), std::string(leading_0, '0')}}));
+
+    // For literals with small values that can be represented in one decimal
+    // digit, this often might also be useful as decimal. Make this the final
+    // suggestion.
+    if (number.literal.size() == 1 && std::isdigit(number.literal[0])) {
+      if (number.signedness) {
+        autofixes.push_back(AutoFix({{base_text.substr(0, 3), "'sd"}}));
+      } else {
+        autofixes.push_back(AutoFix({{base_text.substr(0, 2), "'d"}}));
+      }
+    }
 
     violations_.insert(LintViolation(
         digits_leaf->get(),
@@ -171,15 +181,12 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
 absl::Status UndersizedBinaryLiteralRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetBool;
-  return verible::ParseNameValues(
-      configuration, {
-                         {"bin", SetBool(&check_bin_numbers_)},
-                         {"hex", SetBool(&check_hex_numbers_)},
-                         {"oct", SetBool(&check_oct_numbers_)},
-                         {"autofix", SetBool(&autofix)},
-                         {"autofix_suggest_decimal_for_one",
-                          SetBool(&autofix_suggest_decimal_for_one)},
-                     });
+  return verible::ParseNameValues(configuration,
+                                  {{"bin", SetBool(&check_bin_numbers_)},
+                                   {"hex", SetBool(&check_hex_numbers_)},
+                                   {"oct", SetBool(&check_oct_numbers_)},
+                                   {"lint_zero", SetBool(&lint_zero_)},
+                                   {"autofix", SetBool(&autofix_)}});
 }
 
 LintRuleStatus UndersizedBinaryLiteralRule::Report() const {
