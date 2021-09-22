@@ -289,8 +289,8 @@ Checks that the digits of binary literals for the configured bases match their d
   * `bin` Default: `true` Checking binary 'b literals.
   * `oct` Default: `false` Checking octal 'o literals.
   * `hex` Default: `false` Checking hexadecimal 'h literals.
+  * `lint_zero` Default: `false` Also generate a lint warning for value zero such as `32'h0`; autofix suggestions would be to zero-expand or untype `'0`.
   * `autofix` Default: `true` Provide autofix suggestions, e.g. 32'hAB provides suggested fix 32'h000000AB.
-  * `autofix_suggest_decimal_for_one` Default: `true` For the number 1 (one), provide two autofix alternatives e.g. 32'h1 provides suggestions 32'd1 and 32'h00000001.
 
 Enabled by default: true
 
@@ -317,4 +317,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2021-09-20 16:41:58 -0700 from [27693bd](https://github.com/google/verible/commit/27693bd57e9b3781483206b9fb5930555e9ff58d)
+Generated on 2021-09-22 14:21:16 -0700 from [6cb1ca8](https://github.com/google/verible/commit/6cb1ca8295c68e7f660dc5a7d61c1f39f5755856)
