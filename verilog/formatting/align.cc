@@ -65,8 +65,8 @@ using verible::TreeContextPathVisitor;
 using verible::TreePathFormatter;
 using verible::ValueSaver;
 
-static const AlignmentColumnProperties FlushLeft(true);
-static const AlignmentColumnProperties FlushRight(false);
+static constexpr AlignmentColumnProperties FlushLeft(true);
+static constexpr AlignmentColumnProperties FlushRight(false);
 
 // Special SyntaxTreePath index used for non-tree tokens
 static const size_t kNonTreeTokenPathIndex = std::numeric_limits<size_t>::max();

@@ -47,10 +47,10 @@ struct AlignmentColumnProperties {
 
   AlignmentColumnProperties() = default;
 
-  explicit AlignmentColumnProperties(bool flush_left)
+  explicit constexpr AlignmentColumnProperties(bool flush_left)
       : flush_left(flush_left) {}
 
-  AlignmentColumnProperties(bool flush_left, int left_border_override)
+  constexpr AlignmentColumnProperties(bool flush_left, int left_border_override)
       : flush_left(flush_left), left_border_override(left_border_override) {}
 };
 
