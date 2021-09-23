@@ -119,8 +119,8 @@ static void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
   const bool print_alternative_number = fixes.size() > 1;
   for (size_t i = 0; i < fixes.size(); ++i) {
     if (print_alternative_number) {
-      stream << "=== " << (i + 1)
-             << ". alternative =================================\n";
+      stream << verible::term::inverse(
+          absl::StrCat("[ ", (i + 1), ". Alternative ]\n"));
     }
     PrintFix(stream, text, fixes[i]);
   }
@@ -262,8 +262,8 @@ ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
   for (;;) {
     const char c = verible::ReadCharFromUser(
         std::cin, std::cerr, verible::IsInteractiveTerminalSession(),
-        "Autofix is available. Apply? [" + alternative_list +
-            "y,n,a,d,A,D,p,P,?] ");
+        verible::term::bold("Autofix is available. Apply? [" +
+                            alternative_list + "y,n,a,d,A,D,p,P,?] "));
 
     // Single character digit chooses the available alternative.
     if (c >= '1' && c <= '9' &&

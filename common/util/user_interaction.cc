@@ -17,6 +17,7 @@
 #include <iostream>
 #include <string>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 #ifndef _WIN32
@@ -57,4 +58,20 @@ char ReadCharFromUser(std::istream& input, std::ostream& output,
   }
 }
 
+namespace term {
+// TODO(hzeller): assumption here that basic ANSI codes work on all
+// platforms, but if not, change this with ifdef.
+static constexpr absl::string_view kBoldEscape("\e[1m");
+static constexpr absl::string_view kInverseEscape("\e[7m");
+static constexpr absl::string_view kNormalEscape("\e[0m");
+
+std::string bold(absl::string_view s) {
+  if (!IsInteractiveTerminalSession()) return std::string(s);
+  return absl::StrCat(kBoldEscape, s, kNormalEscape);
+}
+std::string inverse(absl::string_view s) {
+  if (!IsInteractiveTerminalSession()) return std::string(s);
+  return absl::StrCat(kInverseEscape, s, kNormalEscape);
+}
+}  // namespace term
 }  // namespace verible

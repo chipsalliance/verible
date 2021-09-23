@@ -20,6 +20,12 @@
 #include "absl/strings/string_view.h"
 
 namespace verible {
+namespace term {
+// Convenience functions that wrap a string to output colored on screen, iff
+// this is an interactive session.
+std::string bold(absl::string_view s);
+std::string inverse(absl::string_view s);
+}  // namespace term
 
 // Returns if this is likely a terminal session (tests if stdin filedescriptor
 // is a terminal).
