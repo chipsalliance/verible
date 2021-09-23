@@ -161,11 +161,11 @@ class IntervalSet : private _IntervalSetImpl {
   }
 
   IntervalSet(const IntervalSet<T>&) = default;
-  IntervalSet(IntervalSet<T>&&) = default;
+  IntervalSet(IntervalSet<T>&&) noexcept = default;
   ~IntervalSet() { CheckIntegrity(); }
 
   IntervalSet<T>& operator=(const IntervalSet<T>&) = default;
-  IntervalSet<T>& operator=(IntervalSet<T>&&) = default;
+  IntervalSet<T>& operator=(IntervalSet<T>&&) noexcept = default;
 
  public:
   const_iterator begin(void) const { return intervals_.begin(); }
@@ -585,9 +585,9 @@ class DisjointIntervalSet : private _IntervalSetImpl {
   DisjointIntervalSet() = default;
 
   DisjointIntervalSet(const DisjointIntervalSet&) = default;
-  DisjointIntervalSet(DisjointIntervalSet&&) = default;
+  DisjointIntervalSet(DisjointIntervalSet&&) noexcept = default;
   DisjointIntervalSet& operator=(const DisjointIntervalSet&) = default;
-  DisjointIntervalSet& operator=(DisjointIntervalSet&&) = default;
+  DisjointIntervalSet& operator=(DisjointIntervalSet&&) noexcept = default;
 
   bool empty() const { return intervals_.empty(); }
   const_iterator begin() const { return intervals_.begin(); }

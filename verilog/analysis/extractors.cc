@@ -30,11 +30,12 @@ absl::Status CollectInterfaceNames(absl::string_view content,
 
   const auto analyzer =
       verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, "<file>");
-  const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
-  const auto parse_status = analyzer->ParseStatus();
+  auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
+  auto parse_status = analyzer->ParseStatus();
 
   if (!lex_status.ok()) return lex_status;
   if (!parse_status.ok()) return parse_status;
+
   // TODO: Having a syntax error may still result in a partial syntax tree
   // to work with.  Currently, this utility has zero tolerance on syntax error.
 
@@ -47,7 +48,7 @@ absl::Status CollectInterfaceNames(absl::string_view content,
   for (const auto& mod_header : mod_headers) {
     const auto if_leafs = FindAllSymbolIdentifierLeafs(*mod_header.match);
     for (const auto& if_leaf_match : if_leafs) {
-      const auto if_leaf = SymbolCastToLeaf(*if_leaf_match.match);
+      const auto& if_leaf = SymbolCastToLeaf(*if_leaf_match.match);
       absl::string_view if_name = if_leaf.get().text();
       if_names->insert(std::string(if_name));  // TODO: use absl::string_view
     }

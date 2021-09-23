@@ -46,12 +46,14 @@ std::ostream& operator<<(std::ostream&, DiffStatus);
 // TODO(fangism): move this to language-agnostic common/analysis library.
 DiffStatus LexicallyEquivalent(
     absl::string_view left, absl::string_view right,
-    std::function<bool(absl::string_view, verible::TokenSequence*)> lexer,
-    std::function<bool(const verible::TokenInfo&)> recursion_predicate,
-    std::function<bool(const verible::TokenInfo&)> remove_predicate,
-    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
-        equal_comparator,
-    std::function<void(const verible::TokenInfo&, std::ostream&)> token_printer,
+    const std::function<bool(absl::string_view, verible::TokenSequence*)>&
+        lexer,
+    const std::function<bool(const verible::TokenInfo&)>& recursion_predicate,
+    const std::function<bool(const verible::TokenInfo&)>& remove_predicate,
+    const std::function<bool(const verible::TokenInfo&,
+                             const verible::TokenInfo&)>& equal_comparator,
+    const std::function<void(const verible::TokenInfo&, std::ostream&)>&
+        token_printer,
     std::ostream* errstream = nullptr);
 
 // Returns a DiffStatus that captures 'equivalence' ignoring tokens filtered
@@ -59,9 +61,9 @@ DiffStatus LexicallyEquivalent(
 // If errstream is provided, print detailed error message to that stream.
 DiffStatus VerilogLexicallyEquivalent(
     absl::string_view left, absl::string_view right,
-    std::function<bool(const verible::TokenInfo&)> remove_predicate,
-    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
-        equal_comparator,
+    const std::function<bool(const verible::TokenInfo&)>& remove_predicate,
+    const std::function<bool(const verible::TokenInfo&,
+                             const verible::TokenInfo&)>& equal_comparator,
     std::ostream* errstream = nullptr);
 
 // Returns true if both token sequences are equivalent, ignoring whitespace.

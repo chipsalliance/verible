@@ -374,7 +374,7 @@ template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
     const std::function<ScannerType(void)>& scanner_factory,
-    const std::function<void(TokenRange, ColumnPositionTree*)>
+    const std::function<void(TokenRange, ColumnPositionTree*)>&
         non_tree_column_scanner) {
   // re-use existing scanner
   ColumnPositionTree column_entries =

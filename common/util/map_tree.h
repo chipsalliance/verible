@@ -100,7 +100,7 @@ class MapTree {
   }
 
   // move (with relink)
-  MapTree(MapTree&& other)
+  MapTree(MapTree&& other) noexcept
       : node_value_(std::move(other.node_value_)),
         subtrees_(std::move(other.subtrees_)),
         // Retain existing parent.

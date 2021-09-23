@@ -45,7 +45,7 @@ using SubcommandFunction =
 struct SubcommandEntry {
   SubcommandEntry(SubcommandFunction fun, absl::string_view usage,
                   bool show_in_help = true)
-      : main(fun), usage(usage), show_in_help(show_in_help) {}
+      : main(std::move(fun)), usage(usage), show_in_help(show_in_help) {}
 
   // sub-main function
   const SubcommandFunction main;

@@ -39,9 +39,9 @@ class iterator_range {
       : begin_(std::move(b)), end_(std::move(e)) {}
 
   iterator_range(const iterator_range&) = default;
-  iterator_range(iterator_range&&) = default;
+  iterator_range(iterator_range&&) noexcept = default;
   iterator_range& operator=(const iterator_range&) = default;
-  iterator_range& operator=(iterator_range&&) = default;
+  iterator_range& operator=(iterator_range&&) noexcept = default;
 
   const iterator& begin() const { return begin_; }
   const iterator& end() const { return end_; }

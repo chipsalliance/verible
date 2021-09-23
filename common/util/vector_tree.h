@@ -251,7 +251,7 @@ class VectorTree : private _VectorTreeImpl {
     Relink();
   }
 
-  VectorTree(this_type&& other)
+  VectorTree(this_type&& other) noexcept
       : node_value_(std::move(other.node_value_)),
         children_(std::move(other.children_)),
         parent_(other.parent_) {
@@ -303,7 +303,7 @@ class VectorTree : private _VectorTreeImpl {
 
   // Explicit move-assignability needed for vector::erase()
   // No need to change parent links when children keep same parent.
-  VectorTree& operator=(this_type&& source) {
+  VectorTree& operator=(this_type&& source) noexcept {
     // Keep this->parent_.  Ignore source.parent_.
 
     node_value_ = std::move(source.node_value_);

@@ -133,13 +133,11 @@ absl::Status HunkHeader::Parse(absl::string_view text) {
           "new-file range should start with '+', but got: ", new_range_str,
           "\"."));
     }
-    {
-      const auto status = old_range.Parse(old_range_str);
-      if (!status.ok()) return status;
+    if (auto status = old_range.Parse(old_range_str); !status.ok()) {
+      return status;
     }
-    {
-      const auto status = new_range.Parse(new_range_str);
-      if (!status.ok()) return status;
+    if (auto status = new_range.Parse(new_range_str); !status.ok()) {
+      return status;
     }
   }
 
@@ -291,9 +289,8 @@ std::vector<Hunk> Hunk::Split() const {
 }
 
 absl::Status Hunk::Parse(const LineRange& hunk_lines) {
-  {
-    const auto status = header_.Parse(hunk_lines.front());
-    if (!status.ok()) return status;
+  if (auto status = header_.Parse(hunk_lines.front()); !status.ok()) {
+    return status;
   }
 
   LineRange body(hunk_lines);
@@ -301,8 +298,9 @@ absl::Status Hunk::Parse(const LineRange& hunk_lines) {
   lines_.resize(body.size());
   auto line_iter = lines_.begin();
   for (const auto& line : body) {
-    const auto status = line_iter->Parse(line);
-    if (!status.ok()) return status;
+    if (auto status = line_iter->Parse(line); !status.ok()) {
+      return status;
+    }
     ++line_iter;
   }
   return IsValid();
@@ -388,8 +386,10 @@ static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
 absl::Status FilePatch::VerifyAgainstOriginalLines(
     const std::vector<absl::string_view>& original_lines) const {
   for (const Hunk& hunk : hunks_) {
-    const auto status = hunk.VerifyAgainstOriginalLines(original_lines);
-    if (!status.ok()) return status;
+    if (auto status = hunk.VerifyAgainstOriginalLines(original_lines);
+        !status.ok()) {
+      return status;
+    }
   }
   return absl::OkStatus();
 }
@@ -411,9 +411,8 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // original diff structure/stream to provide original contents.
   // Below, we VerifyAgainstOriginalLines for all hunks in this FilePatch.
   std::string original_file;
-  {
-    const auto status = file_reader(old_file_.path, &original_file);
-    if (!status.ok()) return status;
+  if (auto status = file_reader(old_file_.path, &original_file); !status.ok()) {
+    return status;
   }
 
   if (!hunks_.empty()) {
@@ -423,9 +422,8 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   }
 
   const std::vector<absl::string_view> orig_lines(SplitLines(original_file));
-  {
-    const auto status = VerifyAgainstOriginalLines(orig_lines);
-    if (!status.ok()) return status;
+  if (auto status = VerifyAgainstOriginalLines(orig_lines); !status.ok()) {
+    return status;
   }
 
   // Accumulate lines to write here.
@@ -539,19 +537,19 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
     metadata_.emplace_back(line);
   }
 
-  {
-    const auto status =
-        ParseSourceInfoWithMarker(&old_file_, *line_iter, "---");
-    if (!status.ok()) return status;
+  if (auto status = ParseSourceInfoWithMarker(&old_file_, *line_iter, "---");
+      !status.ok()) {
+    return status;
   }
   ++line_iter;
   if (line_iter == lines.end()) {
     return absl::InvalidArgumentError(
         "Expected a file marker starting with \"+++\", but did not find one.");
   } else {
-    const auto status =
-        ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
-    if (!status.ok()) return status;
+    if (auto status = ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
+        !status.ok()) {
+      return status;
+    }
   }
   ++line_iter;
 
@@ -573,8 +571,9 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   hunks_.resize(hunk_ranges.size());
   auto hunk_iter = hunks_.begin();
   for (const auto& hunk_range : hunk_ranges) {
-    const auto status = hunk_iter->Parse(hunk_range);
-    if (!status.ok()) return status;
+    if (auto status = hunk_iter->Parse(hunk_range); !status.ok()) {
+      return status;
+    }
     ++hunk_iter;
   }
   return absl::OkStatus();
@@ -649,8 +648,9 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
   file_patches_.resize(file_patch_ranges.size());
   auto iter = file_patches_.begin();
   for (const auto& range : file_patch_ranges) {
-    const auto status = iter->Parse(range);
-    if (!status.ok()) return status;
+    if (auto status = iter->Parse(range); !status.ok()) {
+      return status;
+    }
     ++iter;
   }
 
@@ -693,9 +693,10 @@ absl::Status PatchSet::PickApply(
     const internal::FileReaderFunction& file_reader,
     const internal::FileWriterFunction& file_writer) const {
   for (const internal::FilePatch& file_patch : file_patches_) {
-    const auto status =
-        file_patch.PickApply(ins, outs, file_reader, file_writer);
-    if (!status.ok()) return status;
+    if (auto status = file_patch.PickApply(ins, outs, file_reader, file_writer);
+        !status.ok()) {
+      return status;
+    }
   }
   return absl::OkStatus();
 }

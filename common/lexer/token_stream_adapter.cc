@@ -27,7 +27,7 @@ TokenGenerator MakeTokenGenerator(Lexer* l) {
 
 absl::Status MakeTokenSequence(
     Lexer* lexer, absl::string_view text, TokenSequence* tokens,
-    std::function<void(const TokenInfo&)> error_token_handler) {
+    const std::function<void(const TokenInfo&)>& error_token_handler) {
   // TODO(fangism): provide a Lexer interface to grab all tokens en masse,
   // which would save virtual function dispatch overhead.
   lexer->Restart(text);

@@ -194,7 +194,7 @@ class ViolationFixer : public ViolationHandler {
 
   // Violation fixer with user-chosen answer chooser.
   ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
-                 AnswerChooser answer_chooser)
+                 const AnswerChooser& answer_chooser)
       : ViolationFixer(message_stream, patch_stream, answer_chooser, false) {}
 
   // Violation fixer with interactive answer choice.
@@ -207,7 +207,7 @@ class ViolationFixer : public ViolationHandler {
 
  private:
   ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
-                 AnswerChooser answer_chooser, bool is_interactive)
+                 const AnswerChooser& answer_chooser, bool is_interactive)
       : message_stream_(message_stream),
         patch_stream_(patch_stream),
         answer_chooser_(answer_chooser),

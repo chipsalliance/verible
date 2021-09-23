@@ -104,8 +104,9 @@ static absl::Status VerifyDecoding(absl::string_view original,
 
   // Copy over mappings.  Verify map reconstruction.
   const auto saved_map = subst.save();
-  const auto status = reverse_subst.load(saved_map);
-  if (!status.ok()) return status;
+  if (auto status = reverse_subst.load(saved_map); !status.ok()) {
+    return status;
+  }
 
   // Decode and compare.
   std::ostringstream decoded_output;
@@ -149,12 +150,15 @@ absl::Status ObfuscateVerilogCode(absl::string_view content,
   ObfuscateVerilogCodeInternal(content, &buffer, subst);
 
   // Always verify equivalence.
-  const auto eq_status = VerifyEquivalence(content, buffer.str());
-  if (!eq_status.ok()) return eq_status;
+  if (auto status = VerifyEquivalence(content, buffer.str()); !status.ok()) {
+    return status;
+  }
 
   // Always verify decoding.
-  const auto verify_status = VerifyDecoding(content, buffer.str(), *subst);
-  if (!verify_status.ok()) return verify_status;
+  if (auto status = VerifyDecoding(content, buffer.str(), *subst);
+      !status.ok()) {
+    return status;
+  }
 
   *output << buffer.str();
   return absl::OkStatus();

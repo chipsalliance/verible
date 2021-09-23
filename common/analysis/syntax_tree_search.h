@@ -45,7 +45,7 @@ struct TreeSearchMatch {
 // of related nodes together, rather than as each one is encountered.
 std::vector<TreeSearchMatch> SearchSyntaxTree(
     const Symbol& root, const verible::matcher::Matcher& matcher,
-    std::function<bool(const SyntaxTreeContext&)> context_predicate);
+    const std::function<bool(const SyntaxTreeContext&)>& context_predicate);
 
 // This overload treats the missing context_predicate as always returning true.
 std::vector<TreeSearchMatch> SearchSyntaxTree(

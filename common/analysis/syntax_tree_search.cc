@@ -38,7 +38,7 @@ class SyntaxTreeSearcher : public TreeContextVisitor {
  public:
   SyntaxTreeSearcher(
       const matcher::Matcher& m,
-      std::function<bool(const SyntaxTreeContext&)> context_predicate)
+      const std::function<bool(const SyntaxTreeContext&)>& context_predicate)
       : matcher_(m), context_predicate_(context_predicate) {}
 
   void Search(const Symbol& root) { root.Accept(this); }
@@ -86,7 +86,7 @@ void SyntaxTreeSearcher::Visit(const SyntaxTreeNode& node) {
 
 std::vector<TreeSearchMatch> SearchSyntaxTree(
     const Symbol& root, const verible::matcher::Matcher& matcher,
-    std::function<bool(const SyntaxTreeContext&)> context_predicate) {
+    const std::function<bool(const SyntaxTreeContext&)>& context_predicate) {
   SyntaxTreeSearcher searcher(matcher, context_predicate);
   searcher.Search(root);
   return searcher.Matches();
