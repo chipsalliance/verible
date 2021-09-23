@@ -25,6 +25,7 @@ Checks: >
   -readability-qualified-auto,
   -readability-use-anyofallof,
   -readability-make-member-function-const,
+  -readability-function-cognitive-complexity,
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,
