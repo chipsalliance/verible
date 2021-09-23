@@ -243,10 +243,10 @@ TEST(AutoFixTest, ValidUseCases) {
   static constexpr absl::string_view text("This is an image");
 
   // AutoFix(ReplacementEdit)
-  const AutoFix singleEdit({text.substr(5, 2), "isn't"});
+  const AutoFix singleEdit("e", {text.substr(5, 2), "isn't"});
   EXPECT_EQ(singleEdit.Apply(text), "This isn't an image");
 
-  const AutoFix singleInsert({text.substr(16, 0), "."});
+  const AutoFix singleInsert("i", {text.substr(16, 0), "."});
   EXPECT_EQ(singleInsert.Apply(text), "This is an image.");
 
   // AutoFix()
@@ -262,15 +262,15 @@ TEST(AutoFixTest, ValidUseCases) {
 
   // AutoFix(ReplacementEdit),
   // ReplacementEdit(const TokenInfo&, const std::string&)
-  AutoFix otherCollection({image_token, "🖼"});
+  AutoFix otherCollection("image", {image_token, "🖼"});
   EXPECT_TRUE(otherCollection.AddEdits(fixesCollection.Edits()));
   EXPECT_EQ(otherCollection.Apply(text), "Hello. This isn't an 🖼.");
 
   // AutoFix(std::initializer_list<ReplacementEdit>)
-  const AutoFix multipleEdits({
-      {text.substr(11, 5), "text"},
-      {text.substr(8, 2), "a"},
-  });
+  const AutoFix multipleEdits("Multi-edit", {
+                                                {text.substr(11, 5), "text"},
+                                                {text.substr(8, 2), "a"},
+                                            });
   EXPECT_EQ(multipleEdits.Apply(text), "This is a text");
 
   // AutoFix(const AutoFix& other)
@@ -310,16 +310,16 @@ TEST(AutoFixTest, ConflictingEdits) {
   EXPECT_FALSE(fixesCollection.AddEdits({{text.substr(15, 1), "ination"}}));
   EXPECT_EQ(fixesCollection.Apply(text), "This is a text");
 
-  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
-                        {text.substr(11, 5), "IMAGE"}}),
+  EXPECT_DEATH(AutoFix("overlap", {{text.substr(8, 8), "a text"},  //
+                                   {text.substr(11, 5), "IMAGE"}}),
                "Edits must not overlap");
 
-  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
-                        {text.substr(8, 1), "A"}}),
+  EXPECT_DEATH(AutoFix("overlap", {{text.substr(8, 8), "a text"},  //
+                                   {text.substr(8, 1), "A"}}),
                "Edits must not overlap");
 
-  EXPECT_DEATH(AutoFix({{text.substr(8, 8), "a text"},  //
-                        {text.substr(15, 1), "ination"}}),
+  EXPECT_DEATH(AutoFix("overlap", {{text.substr(8, 8), "a text"},  //
+                                   {text.substr(15, 1), "ination"}}),
                "Edits must not overlap");
 }
 

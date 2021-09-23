@@ -69,8 +69,8 @@ void NoTrailingSpacesRule::HandleLine(absl::string_view line) {
       const int column = line.length() - trailing;
       const TokenInfo token(TK_SPACE, line.substr(column));
 
-      violations_.insert(
-          LintViolation(token, kMessage, {AutoFix({token, ""})}));
+      violations_.insert(LintViolation(
+          token, kMessage, {AutoFix("Remove trailing space", {token, ""})}));
     }
   }
 }

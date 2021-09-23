@@ -37,7 +37,7 @@ namespace verible {
 std::string AutoFix::Apply(absl::string_view base) const {
   std::string result;
   auto prev_start = base.cbegin();
-  for (const auto& edit : edits) {
+  for (const auto& edit : edits_) {
     CHECK_LE(base.cbegin(), edit.fragment.cbegin());
     CHECK_GE(base.cend(), edit.fragment.cend());
 
@@ -55,11 +55,11 @@ std::string AutoFix::Apply(absl::string_view base) const {
 bool AutoFix::AddEdits(const std::set<ReplacementEdit>& new_edits) {
   // Check for conflicts
   for (const auto& edit : new_edits) {
-    if (edits.find(edit) != edits.end()) {
+    if (edits_.find(edit) != edits_.end()) {
       return false;
     }
   }
-  edits.insert(new_edits.cbegin(), new_edits.cend());
+  edits_.insert(new_edits.cbegin(), new_edits.cend());
   return true;
 }
 
