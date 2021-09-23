@@ -61,9 +61,9 @@ char ReadCharFromUser(std::istream& input, std::ostream& output,
 namespace term {
 // TODO(hzeller): assumption here that basic ANSI codes work on all
 // platforms, but if not, change this with ifdef.
-static constexpr absl::string_view kBoldEscape("\e[1m");
-static constexpr absl::string_view kInverseEscape("\e[7m");
-static constexpr absl::string_view kNormalEscape("\e[0m");
+static constexpr absl::string_view kBoldEscape("\033[1m");
+static constexpr absl::string_view kInverseEscape("\033[7m");
+static constexpr absl::string_view kNormalEscape("\033[0m");
 
 std::string bold(absl::string_view s) {
   if (!IsInteractiveTerminalSession()) return std::string(s);

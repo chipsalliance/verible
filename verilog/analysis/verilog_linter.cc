@@ -119,8 +119,8 @@ static void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
   const bool print_alternative_number = fixes.size() > 1;
   for (size_t i = 0; i < fixes.size(); ++i) {
     if (print_alternative_number) {
-      stream << verible::term::inverse(
-          absl::StrCat("[ ", (i + 1), ". Alternative ]\n"));
+      stream << verible::term::inverse(absl::StrCat(
+          "[ ", (i + 1), ". Alternative ", fixes[i].Description(), " ]\n"));
     }
     PrintFix(stream, text, fixes[i]);
   }
