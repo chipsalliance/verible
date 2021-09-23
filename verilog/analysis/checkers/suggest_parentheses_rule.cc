@@ -64,7 +64,8 @@ void SuggestParenthesesRule::HandleNode(
 
         violations_.insert(LintViolation(
             token, kMessage, context,
-            {AutoFix({{token.text().substr(0, 0), "("},
+            {AutoFix("Add parenthesis for readability",
+                     {{token.text().substr(0, 0), "("},
                       {token.text().substr(token.text().length(), 0), ")"}})}));
       }
       break;

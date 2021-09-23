@@ -62,37 +62,29 @@ struct ReplacementEdit {
 class AutoFix {
  public:
   AutoFix() {}
-  AutoFix(const AutoFix& other)
-      : description(other.description), edits(other.edits) {}
-  AutoFix(const AutoFix&& other)
-      : description(std::move(other.description)),
-        edits(std::move(other.edits)) {}
+  AutoFix(const AutoFix& other) = default;
+  AutoFix(AutoFix&& other) = default;
 
-  AutoFix(const std::string& description,
+  AutoFix(absl::string_view description,
           std::initializer_list<ReplacementEdit> edits)
-      : description(description), edits(edits) {
-    CHECK_EQ(this->edits.size(), edits.size()) << "Edits must not overlap.";
+      : description_(description), edits_(edits) {
+    CHECK_EQ(edits_.size(), edits.size()) << "Edits must not overlap.";
   }
 
-  AutoFix(std::initializer_list<ReplacementEdit> edits)
-      : AutoFix("Fix", edits) {}
-
-  AutoFix(const std::string& description, ReplacementEdit edit)
+  AutoFix(absl::string_view description, ReplacementEdit edit)
       : AutoFix(description, {edit}) {}
-
-  explicit AutoFix(ReplacementEdit edit) : AutoFix({edit}) {}
 
   // Applies the fix on a `base` and returns modified text.
   std::string Apply(absl::string_view base) const;
 
   bool AddEdits(const std::set<ReplacementEdit>& new_edits);
 
-  const std::set<ReplacementEdit>& Edits() const { return edits; }
-  const std::string& Description() const { return description; }
+  const std::set<ReplacementEdit>& Edits() const { return edits_; }
+  const std::string& Description() const { return description_; }
 
  private:
-  std::string description;
-  std::set<ReplacementEdit> edits;
+  std::string description_;
+  std::set<ReplacementEdit> edits_;
 };
 
 // LintViolation is a class that represents a single rule violation.

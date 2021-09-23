@@ -67,8 +67,9 @@ void ForbidConsecutiveNullStatementsRule::HandleLeaf(
 
       case State::kExpectNonSemicolon: {
         if (leaf.Tag().tag == ';') {
-          violations_.insert(LintViolation(leaf, kMessage, context,
-                                           {AutoFix({leaf.get(), ""})}));
+          violations_.insert(LintViolation(
+              leaf, kMessage, context,
+              {AutoFix("Remove superfluous semicolon", {leaf.get(), ""})}));
         } else {
           state_ = State::kNormal;
         }

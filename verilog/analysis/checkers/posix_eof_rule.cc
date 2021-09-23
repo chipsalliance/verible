@@ -56,8 +56,9 @@ void PosixEOFRule::Lint(const TextStructureView& text_structure,
     if (!last_line.empty()) {
       // Point to the end of the line (also EOF).
       const TokenInfo token(TK_OTHER, last_line.substr(last_line.length(), 0));
-      violations_.insert(
-          LintViolation(token, kMessage, {AutoFix({token, "\n"})}));
+      violations_.insert(LintViolation(
+          token, kMessage,
+          {AutoFix("Add newline at end of file", {token, "\n"})}));
     }
   }
 }

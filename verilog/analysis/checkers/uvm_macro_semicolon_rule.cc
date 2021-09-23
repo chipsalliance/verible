@@ -81,9 +81,10 @@ void UvmMacroSemicolonRule::HandleLeaf(
 
       case State::kCheckMacro: {
         if (leaf.Tag().tag == ';') {
-          violations_.insert(LintViolation(leaf, FormatReason(macro_id_),
-                                           context,
-                                           {AutoFix({leaf.get(), ""})}));
+          violations_.insert(
+              LintViolation(leaf, FormatReason(macro_id_), context,
+                            {AutoFix("Remove semicolon at end of macro call",
+                                     {leaf.get(), ""})}));
           state_ = State::kNormal;
         } else if (leaf.Tag().tag ==
                    verilog_tokentype::MacroCallCloseToEndLine) {
