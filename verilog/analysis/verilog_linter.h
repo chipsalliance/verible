@@ -192,7 +192,7 @@ class ViolationFixer : public ViolationHandler {
   using AnswerChooser =
       std::function<Answer(const verible::LintViolation&, absl::string_view)>;
 
-  // Violation fixer with user-choosen answer chooser.
+  // Violation fixer with user-chosen answer chooser.
   ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
                  AnswerChooser answer_chooser)
       : ViolationFixer(message_stream, patch_stream, answer_chooser, false) {}

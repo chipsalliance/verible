@@ -359,14 +359,17 @@ std::ostream& operator<<(std::ostream& stream,
                 << " }";
 }
 
-static const verible::EnumNameMap<RuleSet> kRuleSetEnumStringMap = {
-    {"all", RuleSet::kAll},
-    {"none", RuleSet::kNone},
-    {"default", RuleSet::kDefault},
-};
+static const verible::EnumNameMap<RuleSet>& RuleSetEnumStringMap() {
+  static const verible::EnumNameMap<RuleSet> kRuleSetEnumStringMap({
+      {"all", RuleSet::kAll},
+      {"none", RuleSet::kNone},
+      {"default", RuleSet::kDefault},
+  });
+  return kRuleSetEnumStringMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, RuleSet rules) {
-  return kRuleSetEnumStringMap.Unparse(rules, stream);
+  return RuleSetEnumStringMap().Unparse(rules, stream);
 }
 
 //
@@ -379,7 +382,7 @@ std::string AbslUnparseFlag(const RuleSet& rules) {
 }
 
 bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error) {
-  return kRuleSetEnumStringMap.Parse(text, rules, error, "--ruleset value");
+  return RuleSetEnumStringMap().Parse(text, rules, error, "--ruleset value");
 }
 
 std::string AbslUnparseFlag(const RuleBundle& bundle) {
