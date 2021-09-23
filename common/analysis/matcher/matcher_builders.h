@@ -73,6 +73,7 @@ class PathMatchBuilder {
   static_assert(N > 0, "Path must have at least one element");
 
  public:
+  // TODO(hzeller): make this a constexpr constructor.
   explicit PathMatchBuilder(const SymbolTag (&path)[N]) {
     std::copy(std::begin(path), std::end(path), std::begin(path_));
   }
@@ -109,7 +110,7 @@ class PathMatchBuilder {
 // Helper function for creating PathMatchers.
 // Deduces size of path.
 template <int N>
-PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
+constexpr PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
   return PathMatchBuilder<N>(path);
 }
 
@@ -133,7 +134,7 @@ PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
 template <SymbolKind Kind, typename EnumType, EnumType Tag>
 class TagMatchBuilder {
  public:
-  TagMatchBuilder() {}
+  constexpr TagMatchBuilder() {}
 
   template <typename... Args>
   BindableMatcher operator()(Args... args) const {
