@@ -42,7 +42,8 @@ class VerilogSourceFile {
 
   // When a file is not found among a set of paths, remember it with an
   // error status.
-  VerilogSourceFile(absl::string_view referenced_path, absl::Status status);
+  VerilogSourceFile(absl::string_view referenced_path,
+                    const absl::Status& status);
 
   VerilogSourceFile(const VerilogSourceFile&) = delete;
   VerilogSourceFile& operator=(const VerilogSourceFile&) = delete;

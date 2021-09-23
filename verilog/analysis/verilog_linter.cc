@@ -362,8 +362,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
     return 2;
   }
 
-  const std::vector<LintRuleStatus> linter_statuses =
-      std::move(linter_result.value());
+  const std::vector<LintRuleStatus>& linter_statuses = linter_result.value();
 
   size_t total_violations = 0;
   for (const auto& rule_status : linter_statuses) {

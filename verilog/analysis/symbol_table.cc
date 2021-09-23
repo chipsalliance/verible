@@ -1374,14 +1374,14 @@ absl::Status ReferenceComponent::MatchesMetatype(
 absl::Status ReferenceComponent::ResolveSymbol(
     const SymbolTableNode& resolved) {
   // Verify metatype match.
-  const auto metatype_match_status = MatchesMetatype(resolved.Value().metatype);
-  if (metatype_match_status.ok()) {
-    VLOG(2) << "  resolved: " << ContextFullPath(resolved);
-    resolved_symbol = &resolved;
-  } else {
+  if (auto metatype_match_status = MatchesMetatype(resolved.Value().metatype);
+      !metatype_match_status.ok()) {
     VLOG(2) << metatype_match_status.message();
     return metatype_match_status;
   }
+
+  VLOG(2) << "  resolved: " << ContextFullPath(resolved);
+  resolved_symbol = &resolved;
   return absl::OkStatus();
 }
 

@@ -31,7 +31,7 @@
 namespace verilog {
 
 VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
-                                     absl::Status status)
+                                     const absl::Status& status)
     : referenced_path_(referenced_path), status_(status) {}
 
 absl::Status VerilogSourceFile::Open() {

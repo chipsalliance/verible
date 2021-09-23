@@ -36,7 +36,7 @@ TokenGenerator MakeTokenGenerator(Lexer* l);
 // Populates a TokenSequence with lexed tokens.
 absl::Status MakeTokenSequence(
     Lexer* lexer, absl::string_view text, TokenSequence* tokens,
-    std::function<void(const TokenInfo&)> error_token_handler);
+    const std::function<void(const TokenInfo&)>& error_token_handler);
 
 // Generic container-to-iterator-generator adapter.
 // Once the end is reached, keep returning the end iterator.

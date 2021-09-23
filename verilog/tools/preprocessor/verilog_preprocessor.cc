@@ -37,10 +37,9 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   }
   const auto source_file = args[0];
   std::string source_contents;
-  {
-    const auto status =
-        verible::file::GetContents(source_file, &source_contents);
-    if (!status.ok()) return status;
+  if (auto status = verible::file::GetContents(source_file, &source_contents);
+      !status.ok()) {
+    return status;
   }
 
   // TODO(fangism): parse a subcommand-specific flag for replacement option

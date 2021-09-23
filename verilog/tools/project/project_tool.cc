@@ -80,7 +80,7 @@ struct VerilogProjectConfig {
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
     // Load file list.
-    const auto files_names_or_status(
+    auto files_names_or_status(
         verilog::ParseSourceFileListFromFile(file_list_path));
     if (!files_names_or_status.ok()) return files_names_or_status.status();
     files_names = std::move(*files_names_or_status);
@@ -160,16 +160,14 @@ static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  {
-    const auto status = config.LoadFromGlobalFlags();
-    if (!status.ok()) return status;
+  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+    return status;
   }
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  {
-    const auto status = project_symbols.Load();
-    if (!status.ok()) return status;
+  if (auto status = project_symbols.Load(); !status.ok()) {
+    return status;
   }
 
   // Build symbol table.
@@ -194,16 +192,14 @@ static absl::Status ResolveAndShowSymbolReferences(
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  {
-    const auto status = config.LoadFromGlobalFlags();
-    if (!status.ok()) return status;
+  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+    return status;
   }
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  {
-    const auto status = project_symbols.Load();
-    if (!status.ok()) return status;
+  if (auto status = project_symbols.Load(); !status.ok()) {
+    return status;
   }
 
   // Build symbol table.
@@ -231,16 +227,14 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  {
-    const auto status = config.LoadFromGlobalFlags();
-    if (!status.ok()) return status;
+  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+    return status;
   }
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  {
-    const auto status = project_symbols.Load();
-    if (!status.ok()) return status;
+  if (auto status = project_symbols.Load(); !status.ok()) {
+    return status;
   }
 
   // Build symbol table.

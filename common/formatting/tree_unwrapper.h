@@ -137,7 +137,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Skip over uninteresting tokens, those for which the predicate is true.
   // For example, this could be used to skip over spaces, but not newlines.
   void SkipUnfilteredTokens(
-      std::function<bool(const verible::TokenInfo&)> predicate);
+      const std::function<bool(const verible::TokenInfo&)>& predicate);
 
   // Returns true of next_unfiltered_tokens_ points to a token that was kept
   // in preformatted_tokens_.

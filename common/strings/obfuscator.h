@@ -46,7 +46,7 @@ class Obfuscator {
                        StringViewCompare>
       translator_type;
 
-  explicit Obfuscator(generator_type g) : generator_(g) {}
+  explicit Obfuscator(const generator_type& g) : generator_(g) {}
 
   // Declares a mapping from key-string to value-string that will be
   // used in obfuscation.  This is useful for applying previously used

@@ -288,7 +288,7 @@ absl::Status LinterConfiguration::AppendFromFile(
   // Read local configuration file
   std::string content;
 
-  const absl::Status config_read_status =
+  absl::Status config_read_status =
       verible::file::GetContents(config_filename, &content);
   if (config_read_status.ok()) {
     RuleBundle local_rules_bundle;

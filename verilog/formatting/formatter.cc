@@ -220,7 +220,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   fmt.SelectLines(lines);
 
   // Format code.
-  const Status format_status = fmt.Format(control);
+  Status format_status = fmt.Format(control);
   if (!format_status.ok()) {
     if (format_status.code() != StatusCode::kResourceExhausted) {
       // Some more fatal error, halt immediately.
@@ -246,9 +246,9 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   return format_status;
 
   // For now, unconditionally verify.
-  const Status verify_status =
-      VerifyFormatting(text_structure, formatted_text, filename);
-  if (!verify_status.ok()) {
+  if (Status verify_status =
+          VerifyFormatting(text_structure, formatted_text, filename);
+      !verify_status.ok()) {
     return verify_status;
   }
 
@@ -257,9 +257,10 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   //   format(format(text)) == format(text)
   if (control.verify_convergence) {
     std::ostringstream reformat_stream;
-    const auto reformat_status = ReformatVerilog(
-        text, formatted_text, filename, style, reformat_stream, lines, control);
-    if (!reformat_status.ok()) {
+    if (auto reformat_status =
+            ReformatVerilog(text, formatted_text, filename, style,
+                            reformat_stream, lines, control);
+        !reformat_status.ok()) {
       return reformat_status;
     }
     const std::string& reformatted_text(reformat_stream.str());

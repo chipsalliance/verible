@@ -38,14 +38,13 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
   }
   const auto patchfile = args[0];
   std::string patch_contents;
-  {
-    const auto status = verible::file::GetContents(patchfile, &patch_contents);
-    if (!status.ok()) return status;
+  if (auto status = verible::file::GetContents(patchfile, &patch_contents);
+      !status.ok()) {
+    return status;
   }
   verible::PatchSet patch_set;
-  {
-    const auto status = patch_set.Parse(patch_contents);
-    if (!status.ok()) return status;
+  if (auto status = patch_set.Parse(patch_contents); !status.ok()) {
+    return status;
   }
   const verible::FileLineNumbersMap changed_lines(
       patch_set.AddedLinesMap(false));
@@ -67,14 +66,13 @@ static absl::Status ApplyPick(const SubcommandArgsRange& args,
   }
   const auto patchfile = args[0];
   std::string patch_contents;
-  {
-    const auto status = verible::file::GetContents(patchfile, &patch_contents);
-    if (!status.ok()) return status;
+  if (auto status = verible::file::GetContents(patchfile, &patch_contents);
+      !status.ok()) {
+    return status;
   }
   verible::PatchSet patch_set;
-  {
-    const auto status = patch_set.Parse(patch_contents);
-    if (!status.ok()) return status;
+  if (auto status = patch_set.Parse(patch_contents); !status.ok()) {
+    return status;
   }
   return patch_set.PickApplyInPlace(ins, outs);
 }
@@ -111,8 +109,10 @@ static absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
   size_t file_count = 0;
   for (const auto& arg : args) {
     std::string contents;
-    const auto status = verible::file::GetContents(arg, &contents);
-    if (!status.ok()) return status;
+    if (auto status = verible::file::GetContents(arg, &contents);
+        !status.ok()) {
+      return status;
+    }
     outs << "<<<< contents of file[" << file_count << "] (" << arg << ") <<<<"
          << std::endl;
     outs << contents;

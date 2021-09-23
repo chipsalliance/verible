@@ -61,15 +61,18 @@ absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
   const auto buffer = Data().Contents();
   TokenSequence& tokens = MutableData().MutableTokenStream();
 
-  const auto lex_status = MakeTokenSequence(
-      lexer, buffer, &tokens, [&](const TokenInfo& error_token) {
-        VLOG(1) << "Lexical error with token: " << error_token;
-        // Save error details in rejected_tokens_.
-        rejected_tokens_.push_back(
-            RejectedToken{error_token, AnalysisPhase::kLexPhase,
-                          "" /* no detailed explanation */});
-      });
-  if (!lex_status.ok()) return lex_status;
+  if (auto lex_status = MakeTokenSequence(
+          lexer, buffer, &tokens,
+          [&](const TokenInfo& error_token) {
+            VLOG(1) << "Lexical error with token: " << error_token;
+            // Save error details in rejected_tokens_.
+            rejected_tokens_.push_back(
+                RejectedToken{error_token, AnalysisPhase::kLexPhase,
+                              "" /* no detailed explanation */});
+          });
+      !lex_status.ok()) {
+    return lex_status;
+  }
 
   // Partition token stream into line-by-line slices.
   MutableData().CalculateFirstTokensPerLine();
@@ -81,7 +84,7 @@ absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
 
 // Runs the parser on the current TokenStreamView.
 absl::Status FileAnalyzer::Parse(Parser* parser) {
-  const absl::Status status = parser->Parse();
+  absl::Status status = parser->Parse();
   // Transfer syntax tree root, even if there were (recovered) syntax errors,
   // because the partial tree can still be useful to analyze.
   MutableData().MutableSyntaxTree() = parser->TakeRoot();

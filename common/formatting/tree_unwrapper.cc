@@ -252,7 +252,7 @@ bool TreeUnwrapper::NextUnfilteredTokenIsRetained() const {
 }
 
 void TreeUnwrapper::SkipUnfilteredTokens(
-    std::function<bool(const verible::TokenInfo&)> predicate) {
+    const std::function<bool(const verible::TokenInfo&)>& predicate) {
   while (predicate(*next_unfiltered_token_)) {
     ++next_unfiltered_token_;
   }

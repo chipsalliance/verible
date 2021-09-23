@@ -71,7 +71,7 @@ class AutoFix {
     CHECK_EQ(edits_.size(), edits.size()) << "Edits must not overlap.";
   }
 
-  AutoFix(absl::string_view description, ReplacementEdit edit)
+  AutoFix(absl::string_view description, const ReplacementEdit& edit)
       : AutoFix(description, {edit}) {}
 
   // Applies the fix on a `base` and returns modified text.

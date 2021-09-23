@@ -91,9 +91,9 @@ static bool ShouldRecursivelyAnalyzeToken(const TokenInfo& token) {
 
 DiffStatus VerilogLexicallyEquivalent(
     absl::string_view left, absl::string_view right,
-    std::function<bool(const verible::TokenInfo&)> remove_predicate,
-    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
-        equal_comparator,
+    const std::function<bool(const verible::TokenInfo&)>& remove_predicate,
+    const std::function<bool(const verible::TokenInfo&,
+                             const verible::TokenInfo&)>& equal_comparator,
     std::ostream* errstream) {
   // Bind some Verilog-specific parameters.
   return LexicallyEquivalent(
@@ -110,12 +110,13 @@ DiffStatus VerilogLexicallyEquivalent(
 
 DiffStatus LexicallyEquivalent(
     absl::string_view left_text, absl::string_view right_text,
-    std::function<bool(absl::string_view, TokenSequence*)> lexer,
-    std::function<bool(const verible::TokenInfo&)> recursion_predicate,
-    std::function<bool(const verible::TokenInfo&)> remove_predicate,
-    std::function<bool(const verible::TokenInfo&, const verible::TokenInfo&)>
-        equal_comparator,
-    std::function<void(const verible::TokenInfo&, std::ostream&)> token_printer,
+    const std::function<bool(absl::string_view, TokenSequence*)>& lexer,
+    const std::function<bool(const verible::TokenInfo&)>& recursion_predicate,
+    const std::function<bool(const verible::TokenInfo&)>& remove_predicate,
+    const std::function<bool(const verible::TokenInfo&,
+                             const verible::TokenInfo&)>& equal_comparator,
+    const std::function<void(const verible::TokenInfo&, std::ostream&)>&
+        token_printer,
     std::ostream* errstream) {
   VLOG(2) << __FUNCTION__;
   // Lex texts into token sequences.
