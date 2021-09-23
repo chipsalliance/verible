@@ -155,9 +155,10 @@ int main(int argc, char** argv) {
   }
 
   const verilog::ViolationFixer::AnswerChooser applyAllFixes =
-      [](const verible::LintViolation&, absl::string_view) {
-        return verilog::ViolationFixer::AnswerChoice::kApplyAll;
-      };
+      [](const verible::LintViolation&,
+         absl::string_view) -> verilog::ViolationFixer::Answer {
+    return {verilog::ViolationFixer::AnswerChoice::kApplyAll, 0};
+  };
 
   std::unique_ptr<verilog::ViolationHandler> violation_handler;
   switch (autofix_mode) {

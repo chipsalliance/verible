@@ -114,6 +114,18 @@ static void PrintFix(std::ostream& stream, absl::string_view text,
   verible::LineDiffsToUnifiedDiff(stream, diff, 1);
 }
 
+static void PrintFixAlternatives(std::ostream& stream, absl::string_view text,
+                                 const std::vector<verible::AutoFix>& fixes) {
+  const bool print_alternative_number = fixes.size() > 1;
+  for (size_t i = 0; i < fixes.size(); ++i) {
+    if (print_alternative_number) {
+      stream << "=== " << (i + 1)
+             << ". alternative =================================\n";
+    }
+    PrintFix(stream, text, fixes[i]);
+  }
+}
+
 void ViolationFixer::CommitFixes(absl::string_view source_content,
                                  absl::string_view source_path,
                                  const verible::AutoFix& fix) const {
@@ -162,46 +174,53 @@ void ViolationFixer::HandleViolation(
     return;
   }
 
-  AnswerChoice answer;
-  for (;;) {
-    if (ultimate_answer_ != AnswerChoice::kUnknown) {
+  static std::string_view previous_fix_conflict =
+      "The fix conflicts with "
+      "previously applied fixes, rejecting.\n";
+
+  Answer answer;
+  for (bool first_round = true; /**/; first_round = false) {
+    if (ultimate_answer_.choice != AnswerChoice::kUnknown) {
       answer = ultimate_answer_;
     } else if (auto found = rule_answers_.find(rule_name);
                found != rule_answers_.end()) {
       answer = found->second;
+      // If the ApplyAll specifies alternative not available here, use first.
+      if (answer.alternative >= violation.autofixes.size()) {
+        answer.alternative = 0;
+      }
     } else {
+      if (is_interactive_ && first_round) {  // Show the user what is available.
+        PrintFixAlternatives(*message_stream_, base, violation.autofixes);
+      }
       answer = answer_chooser_(violation, rule_name);
     }
 
-    switch (answer) {
+    switch (answer.choice) {
       case AnswerChoice::kApplyAll:
-        ultimate_answer_ = AnswerChoice::kApply;
+        ultimate_answer_ = {AnswerChoice::kApply};
         [[fallthrough]];
       case AnswerChoice::kApplyAllForRule:
-        rule_answers_[rule_name] = AnswerChoice::kApply;
+        rule_answers_[rule_name] = {AnswerChoice::kApply, answer.alternative};
         [[fallthrough]];
-      case AnswerChoice::kApply:
-        // Apply first available fix
-        if (!fix->AddEdits(violation.autofixes[0].Edits())) {
-          VLOG(2) << "The fix conflicts with previously applied fixes, "
-                     "rejecting.";
-        } else {
-          (*message_stream_) << "(fixed)" << std::endl;
+      case AnswerChoice::kApply:  // Apply fix chosen in the alternatative
+        if (answer.alternative >= violation.autofixes.size())
+          continue;  // ask again.
+        if (!fix->AddEdits(violation.autofixes[answer.alternative].Edits())) {
+          *message_stream_ << previous_fix_conflict;
         }
         break;
-
       case AnswerChoice::kRejectAll:
-        ultimate_answer_ = AnswerChoice::kReject;
+        ultimate_answer_ = {AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kRejectAllForRule:
-        rule_answers_[rule_name] = AnswerChoice::kReject;
+        rule_answers_[rule_name] = {AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kReject:
         return;
 
       case AnswerChoice::kPrintFix:
-        // Print first available fix
-        PrintFix(*message_stream_, base, violation.autofixes[0]);
+        PrintFixAlternatives(*message_stream_, base, violation.autofixes);
         continue;
       case AnswerChoice::kPrintAppliedFixes:
         PrintFix(*message_stream_, base, *fix);
@@ -215,10 +234,9 @@ void ViolationFixer::HandleViolation(
   }
 }
 
-ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
+ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
     const verible::LintViolation& violation, absl::string_view rule_name) {
-  static absl::string_view help_message =
-      "y - apply fix\n"
+  static absl::string_view fixed_help_message =
       "n - reject fix\n"
       "a - apply this and all remaining fixes for violations of this rule\n"
       "d - reject this and all remaining fixes for violations of this rule\n"
@@ -228,36 +246,60 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
       "P - show fixes applied in this file so far\n"
       "? - print this help and prompt again\n";
 
+  const size_t fix_count = violation.autofixes.size();
+  std::string help_message;
+  std::string alternative_list;  // Show alternatives in the short-menu.
+  if (fix_count > 1) {
+    help_message =
+        absl::StrCat("y - apply first fix\n[1-", fix_count,
+                     "] - apply given alternative\n", fixed_help_message);
+    for (size_t i = 0; i < fix_count; ++i)
+      absl::StrAppend(&alternative_list, (i + 1), ",");
+  } else {
+    help_message = absl::StrCat("y - apply fix\n", fixed_help_message);
+  }
+
   for (;;) {
     const char c = verible::ReadCharFromUser(
         std::cin, std::cerr, verible::IsInteractiveTerminalSession(),
-        "Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] ");
+        "Autofix is available. Apply? [" + alternative_list +
+            "y,n,a,d,A,D,p,P,?] ");
+
+    // Single character digit chooses the available alternative.
+    if (c >= '1' && c <= '9' &&
+        c < static_cast<char>('1' + violation.autofixes.size())) {
+      return {AnswerChoice::kApply, static_cast<size_t>(c - '1')};
+    }
 
     switch (c) {
       case 'y':
-        return AnswerChoice::kApply;
-      case 'a':
-        return AnswerChoice::kApplyAllForRule;
-      case 'A':
-        return AnswerChoice::kApplyAll;
+        return {AnswerChoice::kApply, 0};
 
+        // TODO(hzeller): Should we provide a way to choose 'all for rule'
+        // including an alternative ? Maybe with a two-letter response
+        // such as 1a, 2a, 3a ? Current assumption of interaction is
+        // single character.
+      case 'a':
+        return {AnswerChoice::kApplyAllForRule};
+      case 'A':
+        return {AnswerChoice::kApplyAll};  // No alternatives
       case 'n':
-        return AnswerChoice::kReject;
+        return {AnswerChoice::kReject};
       case 'd':
-        return AnswerChoice::kRejectAllForRule;
+        return {AnswerChoice::kRejectAllForRule};
       case 'D':
-        return AnswerChoice::kRejectAll;
+        return {AnswerChoice::kRejectAll};
 
       case '\0':
         // EOF: received when too few "answers" have been piped to stdin.
         LOG(WARNING) << "Received EOF while there are questions left. "
                         "Rejecting all remaining fixes.";
-        return AnswerChoice::kRejectAll;
+        return {AnswerChoice::kRejectAll};
 
       case 'p':
-        return AnswerChoice::kPrintFix;
+        return {AnswerChoice::kPrintFix};
       case 'P':
-        return AnswerChoice::kPrintAppliedFixes;
+        return {AnswerChoice::kPrintAppliedFixes};
 
       case '\n':
         continue;
@@ -267,8 +309,6 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
         std::cerr << help_message << std::endl;
         continue;
     }
-
-    break;
   }
 }
 

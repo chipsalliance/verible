@@ -887,4 +887,63 @@ interactive_autofix_test "@^(y***D" \
 
 ################################################################################
 
+echo "=== Test --autofix=inplace-interactive: Choose alternative fix"
+
+# Choose alternatives with key '1' or '2'
+
+# Files with alternatives in autofixes
+ORIGINAL_ALT_AUTO_FIX="${TEST_TMPDIR}/orig-autofix-alternative.sv"
+cat >"${ORIGINAL_ALT_AUTO_FIX}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'h1;
+endmodule
+EOF
+
+REFERENCE_ALT_AUTO_FIX_1="${TEST_TMPDIR}/alt-autofix-alternative-1.sv"
+cat >"${REFERENCE_ALT_AUTO_FIX_1}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'h00000001;
+endmodule
+EOF
+
+REFERENCE_ALT_AUTO_FIX_2="${TEST_TMPDIR}/alt-autofix-alternative-2.sv"
+cat >"${REFERENCE_ALT_AUTO_FIX_2}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'd1;
+endmodule
+EOF
+
+failure=0
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "1"
+
+check_diff "${REFERENCE_ALT_AUTO_FIX_1}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "First alternative not chosen."
+(( failure|="$?" ))
+
+# Choosing first non-existing alternative, then an existing one.
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "41"
+
+check_diff "${REFERENCE_ALT_AUTO_FIX_1}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "First alternative not chosen."
+(( failure|="$?" ))
+
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "2"
+check_diff "${REFERENCE_ALT_AUTO_FIX_2}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "Second alternative not chosen."
+(( failure|="$?" ))
+
+(( $failure )) && exit 1
+
 echo "PASS"

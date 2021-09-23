@@ -182,28 +182,45 @@ class ViolationFixer : public ViolationHandler {
     kPrintAppliedFixes,  // show fixes applied so far
   };
 
-  using AnswerChooser = std::function<AnswerChoice(
-      const verible::LintViolation&, absl::string_view)>;
+  struct Answer {
+    AnswerChoice choice;
+    // If there are multiple alternatives for fixes available, this is
+    // the one chosen. By default the first one.
+    size_t alternative = 0;
+  };
 
-  explicit ViolationFixer(
-      std::ostream* message_stream, std::ostream* patch_stream = nullptr,
-      AnswerChooser answer_chooser = InteractiveAnswerChooser)
-      : message_stream_(message_stream),
-        patch_stream_(patch_stream),
-        ultimate_answer_(AnswerChoice::kUnknown),
-        answer_chooser_(answer_chooser) {}
+  using AnswerChooser =
+      std::function<Answer(const verible::LintViolation&, absl::string_view)>;
+
+  // Violation fixer with user-choosen answer chooser.
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
+                 AnswerChooser answer_chooser)
+      : ViolationFixer(message_stream, patch_stream, answer_chooser, false) {}
+
+  // Violation fixer with interactive answer choice.
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream)
+      : ViolationFixer(message_stream, patch_stream, InteractiveAnswerChooser,
+                       true) {}
 
   void HandleViolations(const std::set<LintViolationWithStatus>& violations,
                         absl::string_view base, absl::string_view path) final;
 
- protected:
+ private:
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
+                 AnswerChooser answer_chooser, bool is_interactive)
+      : message_stream_(message_stream),
+        patch_stream_(patch_stream),
+        answer_chooser_(answer_chooser),
+        is_interactive_(is_interactive),
+        ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
+
   void HandleViolation(const verible::LintViolation& violation,
                        absl::string_view base, absl::string_view path,
                        absl::string_view url, absl::string_view rule_name,
                        const verible::LintStatusFormatter& formatter,
                        verible::AutoFix* fix);
 
-  static AnswerChoice InteractiveAnswerChooser(
+  static Answer InteractiveAnswerChooser(
       const verible::LintViolation& violation, absl::string_view rule_name);
 
   void CommitFixes(absl::string_view source_content,
@@ -212,9 +229,11 @@ class ViolationFixer : public ViolationHandler {
 
   std::ostream* const message_stream_;
   std::ostream* const patch_stream_;
-  AnswerChoice ultimate_answer_;
-  std::map<absl::string_view, AnswerChoice> rule_answers_;
   const AnswerChooser answer_chooser_;
+  const bool is_interactive_;
+
+  Answer ultimate_answer_;
+  std::map<absl::string_view, Answer> rule_answers_;
 };
 
 // VerilogLintTextStructure analyzes Verilog syntax tree for style violations
