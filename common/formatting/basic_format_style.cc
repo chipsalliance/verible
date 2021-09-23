@@ -24,20 +24,22 @@
 namespace verible {
 
 // This mapping defines how this enum is displayed and parsed.
-static const verible::EnumNameMap<IndentationStyle> kIndentationStyleStringMap =
-    {
-        {"indent", IndentationStyle::kIndent},
-        {"wrap", IndentationStyle::kWrap},
-};
+static const verible::EnumNameMap<IndentationStyle>& IndentationStyleStrings() {
+  static const verible::EnumNameMap<IndentationStyle>
+      kIndentationStyleStringMap({
+          {"indent", IndentationStyle::kIndent},
+          {"wrap", IndentationStyle::kWrap},
+      });
+  return kIndentationStyleStringMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, IndentationStyle p) {
-  return kIndentationStyleStringMap.Unparse(p, stream);
+  return IndentationStyleStrings().Unparse(p, stream);
 }
 
 bool AbslParseFlag(absl::string_view text, IndentationStyle* mode,
                    std::string* error) {
-  return kIndentationStyleStringMap.Parse(text, mode, error,
-                                          "IndentationStyle");
+  return IndentationStyleStrings().Parse(text, mode, error, "IndentationStyle");
 }
 
 std::string AbslUnparseFlag(const IndentationStyle& mode) {

@@ -45,27 +45,30 @@ enum class AutofixMode {
   kInplace,             // Automatically apply patch in-place.
 };
 
-static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap = {
-    {"no", AutofixMode::kNo},
-    {"patch-interactive", AutofixMode::kPatchInteractive},
-    {"patch", AutofixMode::kPatch},
-    {"inplace-interactive", AutofixMode::kInplaceInteractive},
-    {"inplace", AutofixMode::kInplace},
-};
+static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
+  static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap({
+      {"no", AutofixMode::kNo},
+      {"patch-interactive", AutofixMode::kPatchInteractive},
+      {"patch", AutofixMode::kPatch},
+      {"inplace-interactive", AutofixMode::kInplaceInteractive},
+      {"inplace", AutofixMode::kInplace},
+  });
+  return kAutofixModeEnumStringMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, AutofixMode mode) {
-  return kAutofixModeEnumStringMap.Unparse(mode, stream);
+  return AutofixModeEnumStringMap().Unparse(mode, stream);
 }
 
 std::string AbslUnparseFlag(const AutofixMode& mode) {
   std::ostringstream stream;
-  kAutofixModeEnumStringMap.Unparse(mode, stream);
+  AutofixModeEnumStringMap().Unparse(mode, stream);
   return stream.str();
 }
 
 bool AbslParseFlag(absl::string_view text, AutofixMode* mode,
                    std::string* error) {
-  return kAutofixModeEnumStringMap.Parse(text, mode, error, "--autofix value");
+  return AutofixModeEnumStringMap().Parse(text, mode, error, "--autofix value");
 }
 
 // LINT.IfChange

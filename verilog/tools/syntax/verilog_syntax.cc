@@ -63,19 +63,22 @@ enum class LanguageMode {
   kVerilogLibraryMap,
 };
 
-static const verible::EnumNameMap<LanguageMode> kLanguageModeStringMap{{
-    {"auto", LanguageMode::kAutoDetect},
-    {"sv", LanguageMode::kSystemVerilog},
-    {"lib", LanguageMode::kVerilogLibraryMap},
-}};
+static const verible::EnumNameMap<LanguageMode>& LanguageModeStringMap() {
+  static const verible::EnumNameMap<LanguageMode> kLanguageModeStringMap({
+      {"auto", LanguageMode::kAutoDetect},
+      {"sv", LanguageMode::kSystemVerilog},
+      {"lib", LanguageMode::kVerilogLibraryMap},
+  });
+  return kLanguageModeStringMap;
+}
 
 static std::ostream& operator<<(std::ostream& stream, LanguageMode mode) {
-  return kLanguageModeStringMap.Unparse(mode, stream);
+  return LanguageModeStringMap().Unparse(mode, stream);
 }
 
 static bool AbslParseFlag(absl::string_view text, LanguageMode* mode,
                           std::string* error) {
-  return kLanguageModeStringMap.Parse(text, mode, error, "--flag value");
+  return LanguageModeStringMap().Parse(text, mode, error, "--flag value");
 }
 
 static std::string AbslUnparseFlag(const LanguageMode& mode) {

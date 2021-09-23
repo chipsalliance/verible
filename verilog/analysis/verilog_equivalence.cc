@@ -42,15 +42,18 @@ using verible::TokenSequence;
 // TODO(fangism): majority of this code is not Verilog-specific and could
 // be factored into a common/analysis library.
 
-static const verible::EnumNameMap<DiffStatus> kDiffStatusStringMap = {
-    {"equivalent", DiffStatus::kEquivalent},
-    {"different", DiffStatus::kDifferent},
-    {"left-error", DiffStatus::kLeftError},
-    {"right-error", DiffStatus::kRightError},
-};
+static const verible::EnumNameMap<DiffStatus>& DiffStatusStringMap() {
+  static const verible::EnumNameMap<DiffStatus> kDiffStatusStringMap({
+      {"equivalent", DiffStatus::kEquivalent},
+      {"different", DiffStatus::kDifferent},
+      {"left-error", DiffStatus::kLeftError},
+      {"right-error", DiffStatus::kRightError},
+  });
+  return kDiffStatusStringMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, DiffStatus status) {
-  return kDiffStatusStringMap.Unparse(status, stream);
+  return DiffStatusStringMap().Unparse(status, stream);
 }
 
 // Lex a token into smaller substrings/subtokens.

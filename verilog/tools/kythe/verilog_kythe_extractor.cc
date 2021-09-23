@@ -39,20 +39,23 @@ enum class PrintMode {
   kProto,
 };
 
-static const verible::EnumNameMap<PrintMode> kPrintModeStringMap{{
-    {"json", PrintMode::kJSON},
-    {"json_debug", PrintMode::kJSONDebug},
-    {"proto", PrintMode::kProto},
-}};
+static const verible::EnumNameMap<PrintMode>& PrintModeStringMap() {
+  static const verible::EnumNameMap<PrintMode> kPrintModeStringMap({
+      {"json", PrintMode::kJSON},
+      {"json_debug", PrintMode::kJSONDebug},
+      {"proto", PrintMode::kProto},
+  });
+  return kPrintModeStringMap;
+}
 
 static std::ostream& operator<<(std::ostream& stream, PrintMode mode) {
-  return kPrintModeStringMap.Unparse(mode, stream);
+  return PrintModeStringMap().Unparse(mode, stream);
 }
 
 static bool AbslParseFlag(absl::string_view text, PrintMode* mode,
                           std::string* error) {
-  return kPrintModeStringMap.Parse(text, mode, error,
-                                   "--print_kythe_facts value");
+  return PrintModeStringMap().Parse(text, mode, error,
+                                    "--print_kythe_facts value");
 }
 
 static std::string AbslUnparseFlag(const PrintMode& mode) {

@@ -144,18 +144,22 @@ enum TokenScannerState {
   kEndNoNewline,
 };
 
-static const verible::EnumNameMap<TokenScannerState>
-    kTokenScannerStateStringMap = {
-        {"kStart", TokenScannerState::kStart},
-        {"kHaveNewline", TokenScannerState::kHaveNewline},
-        {"kNewPartition", TokenScannerState::kNewPartition},
-        {"kEndWithNewline", TokenScannerState::kEndWithNewline},
-        {"kEndNoNewline", TokenScannerState::kEndNoNewline},
-};
+static const verible::EnumNameMap<TokenScannerState>&
+TokenScannerStateStrings() {
+  static const verible::EnumNameMap<TokenScannerState>
+      kTokenScannerStateStringMap({
+          {"kStart", TokenScannerState::kStart},
+          {"kHaveNewline", TokenScannerState::kHaveNewline},
+          {"kNewPartition", TokenScannerState::kNewPartition},
+          {"kEndWithNewline", TokenScannerState::kEndWithNewline},
+          {"kEndNoNewline", TokenScannerState::kEndNoNewline},
+      });
+  return kTokenScannerStateStringMap;
+}
 
 // Conventional stream printer (declared in header providing enum).
 std::ostream& operator<<(std::ostream& stream, TokenScannerState p) {
-  return kTokenScannerStateStringMap.Unparse(p, stream);
+  return TokenScannerStateStrings().Unparse(p, stream);
 }
 
 // This finite state machine class is used to determine the placement of

@@ -66,31 +66,34 @@ static absl::string_view StripOuterQuotes(absl::string_view text) {
   return absl::StripSuffix(absl::StripPrefix(text, "\""), "\"");
 }
 
-static const verible::EnumNameMap<SymbolMetaType> kSymbolMetaTypeNames({
-    // short-hand annotation for identifier reference type
-    {"<root>", SymbolMetaType::kRoot},
-    {"class", SymbolMetaType::kClass},
-    {"module", SymbolMetaType::kModule},
-    {"package", SymbolMetaType::kPackage},
-    {"parameter", SymbolMetaType::kParameter},
-    {"typedef", SymbolMetaType::kTypeAlias},
-    {"data/net/var/instance", SymbolMetaType::kDataNetVariableInstance},
-    {"function", SymbolMetaType::kFunction},
-    {"task", SymbolMetaType::kTask},
-    {"struct", SymbolMetaType::kStruct},
-    {"enum", SymbolMetaType::kEnumType},
-    {"<enum constant>", SymbolMetaType::kEnumConstant},
-    {"interface", SymbolMetaType::kInterface},
-    {"<unspecified>", SymbolMetaType::kUnspecified},
-    {"<callable>", SymbolMetaType::kCallable},
-});
+static const verible::EnumNameMap<SymbolMetaType>& SymbolMetaTypeNames() {
+  static const verible::EnumNameMap<SymbolMetaType> kSymbolMetaTypeNames({
+      // short-hand annotation for identifier reference type
+      {"<root>", SymbolMetaType::kRoot},
+      {"class", SymbolMetaType::kClass},
+      {"module", SymbolMetaType::kModule},
+      {"package", SymbolMetaType::kPackage},
+      {"parameter", SymbolMetaType::kParameter},
+      {"typedef", SymbolMetaType::kTypeAlias},
+      {"data/net/var/instance", SymbolMetaType::kDataNetVariableInstance},
+      {"function", SymbolMetaType::kFunction},
+      {"task", SymbolMetaType::kTask},
+      {"struct", SymbolMetaType::kStruct},
+      {"enum", SymbolMetaType::kEnumType},
+      {"<enum constant>", SymbolMetaType::kEnumConstant},
+      {"interface", SymbolMetaType::kInterface},
+      {"<unspecified>", SymbolMetaType::kUnspecified},
+      {"<callable>", SymbolMetaType::kCallable},
+  });
+  return kSymbolMetaTypeNames;
+}
 
 std::ostream& operator<<(std::ostream& stream, SymbolMetaType symbol_type) {
-  return kSymbolMetaTypeNames.Unparse(symbol_type, stream);
+  return SymbolMetaTypeNames().Unparse(symbol_type, stream);
 }
 
 static absl::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
-  return kSymbolMetaTypeNames.EnumName(type);
+  return SymbolMetaTypeNames().EnumName(type);
 }
 
 // Root SymbolTableNode has no key, but we identify it as "$root"

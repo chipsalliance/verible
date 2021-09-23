@@ -43,17 +43,20 @@ enum class DiffMode {
   kObfuscate,
 };
 
-static const verible::EnumNameMap<DiffMode> kDiffModeStringMap = {
-    {"format", DiffMode::kFormat},
-    {"obfuscate", DiffMode::kObfuscate},
-};
+static const verible::EnumNameMap<DiffMode>& DiffModeStringMap() {
+  static const verible::EnumNameMap<DiffMode> kDiffModeStringMap({
+      {"format", DiffMode::kFormat},
+      {"obfuscate", DiffMode::kObfuscate},
+  });
+  return kDiffModeStringMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, DiffMode p) {
-  return kDiffModeStringMap.Unparse(p, stream);
+  return DiffModeStringMap().Unparse(p, stream);
 }
 
 bool AbslParseFlag(absl::string_view text, DiffMode* mode, std::string* error) {
-  return kDiffModeStringMap.Parse(text, mode, error, "--mode value");
+  return DiffModeStringMap().Parse(text, mode, error, "--mode value");
 }
 
 std::string AbslUnparseFlag(const DiffMode& mode) {

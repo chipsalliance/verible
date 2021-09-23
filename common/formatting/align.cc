@@ -43,21 +43,24 @@
 
 namespace verible {
 
-static const verible::EnumNameMap<AlignmentPolicy> kAlignmentPolicyNameMap = {
-    {"align", AlignmentPolicy::kAlign},
-    {"flush-left", AlignmentPolicy::kFlushLeft},
-    {"preserve", AlignmentPolicy::kPreserve},
-    {"infer", AlignmentPolicy::kInferUserIntent},
-    // etc.
-};
+static const verible::EnumNameMap<AlignmentPolicy>& AlignmentPolicyNameMap() {
+  static const verible::EnumNameMap<AlignmentPolicy> kAlignmentPolicyNameMap({
+      {"align", AlignmentPolicy::kAlign},
+      {"flush-left", AlignmentPolicy::kFlushLeft},
+      {"preserve", AlignmentPolicy::kPreserve},
+      {"infer", AlignmentPolicy::kInferUserIntent},
+      // etc.
+  });
+  return kAlignmentPolicyNameMap;
+}
 
 std::ostream& operator<<(std::ostream& stream, AlignmentPolicy policy) {
-  return kAlignmentPolicyNameMap.Unparse(policy, stream);
+  return AlignmentPolicyNameMap().Unparse(policy, stream);
 }
 
 bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
                    std::string* error) {
-  return kAlignmentPolicyNameMap.Parse(text, policy, error, "AlignmentPolicy");
+  return AlignmentPolicyNameMap().Parse(text, policy, error, "AlignmentPolicy");
 }
 
 std::string AbslUnparseFlag(const AlignmentPolicy& policy) {
