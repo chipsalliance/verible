@@ -59,8 +59,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-tidy
-        clang-tidy --version
+        sudo apt -qq -y install clang-tidy-10
 
     - name: Run clang tidy
       run: ./.github/bin/run-clang-tidy.sh

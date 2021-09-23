@@ -34,7 +34,7 @@ find . -name "*.cc" -and -not -name "*test*.cc" \
      -or -name "*.h" -and -not -name "*test*.h" \
   | grep -v "verilog/tools/kythe" \
   | xargs -P$(nproc) -n 5 -- \
-          clang-tidy --quiet 2>/dev/null \
+          clang-tidy-10 --quiet 2>/dev/null \
   | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}
 
 
@@ -44,4 +44,6 @@ if [ -s ${TIDY_OUT} ]; then
    echo "There were clang-tidy warnings. Please fix"
    exit 1
 fi
+
+echo "No clang-tidy complaints."
 exit 0
