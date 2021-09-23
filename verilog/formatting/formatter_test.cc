@@ -395,8 +395,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      " `AINIT(S, (D == 4 && K inside {0, 1}) ||"
      " (D == 3 && K== 4))\n",
      "`AINIT(S,\n"
-     "       (D == 4 && K inside {0, 1}) || (\n"
-     "           D == 3 && K == 4))\n"},
+     "       (D == 4 && K inside {0, 1}) ||\n"
+     "           (D == 3 && K == 4))\n"},
     {// long macro call breaking
      " `ASSERT_INIT(S, D == 4 && K inside {0, 1})\n",
      "`ASSERT_INIT(S,\n"
@@ -959,6 +959,51 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "      a_really_long_identifier :\n"
         "      another_really_long_identifier;\n"
         "endmodule\n",
+    },
+    {
+        "assign m = check                ? {10'b0, foo} :\n"
+        "           (bar && (baz == '0)) ? hello        :\n"
+        "           world                ? temp1        : temp2;\n",
+        "assign m = check ? {10'b0, foo} :\n"
+        "    (bar && (baz == '0)) ? hello :\n"
+        "    world ? temp1 : temp2;\n",
+    },
+    {
+        "assign {a, b} = !(c == d) ? {1'b0, e} :\n"
+        "                ((e == f) && g) ?\n"
+        "                {1'b0, f} : (h) ?\n"
+        "                {1'b0, e} - 1'b1 :\n"
+        "                {1'b0, e} + 1'b1;\n",
+        "assign {a, b} = !(c == d) ? {1'b0, e} :\n"
+        "    ((e == f) && g) ? {1'b0, f} : (h) ?\n"
+        "    {1'b0, e} - 1'b1 : {1'b0, e} + 1'b1;\n",
+    },
+    {
+        "assign {aaaaaaaaaa, bbbbbbbbb} = {1'b0, cccccccccccccccccc[15:0]} +\n"
+        "                                 {1'b0, ddddddddddddddddd[15:0]};\n",
+        "assign {aaaaaaaaaa, bbbbbbbbb} =\n"
+        "    {1'b0, cccccccccccccccccc[15:0]} +\n"
+        "    {1'b0, ddddddddddddddddd[15:0]};\n",
+    },
+    {
+        "covergroup a(string b);\n"
+        "foobar: cross foo, bar {"
+        "ignore_bins baz = binsof(qux) intersect {1, 2, 3, 4, 5, 6, 7};"
+        "}\n"
+        "endgroup : a\n",
+        "covergroup a(string b);\n"
+        "  foobar: cross foo, bar{\n"
+        "    ignore_bins baz =\n"
+        "        binsof (qux) intersect {\n"
+        "      1, 2, 3, 4, 5, 6, 7\n"
+        "    };\n"
+        "  }\n"
+        "endgroup : a\n",
+    },
+    {
+        "assign {aa, bb} = {1'b0, cc} + {1'b0, dd};\n",
+        "assign {aa, bb} = {1'b0, cc} +\n"
+        "    {1'b0, dd};\n",
     },
 
     // streaming operators

@@ -607,12 +607,16 @@ static WithReason<int> BreakPenaltyBetweenTokens(
 
   // Prefer to split after an assignment operator, rather than before.
   // TODO(fangism): use context to cover all assignment-like cases
-  if (right.TokenEnum() == '=') return {5, "right is '='"};
+  if (right.TokenEnum() == '=') return {8, "right is '='"};
 
-  // Prefer to keep '(' with whatever is on the left.
-  // TODO(fangism): ... except when () is used as precedence.
-  if (right.format_token_enum == FormatTokenType::open_group)
+  if ((left.format_token_enum != FormatTokenType::binary_operator ||
+       left.TokenEnum() == '=') &&
+      right.format_token_enum == FormatTokenType::open_group) {
+    // Prefer to keep '(' with a token on the left, as long as it is not binary
+    // operator other than '='
+    // TODO(fangism): ... except when () is used as precedence.
     return {5, "right is open-group"};
+  }
   // Prefer to keep ')' with whatever is on the left.
   if (right.format_token_enum == FormatTokenType::close_group ||
       right.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine)
@@ -686,7 +690,7 @@ static WithReason<int> TokensWithContextBreakPenalty(
   }
   if (left_context.DirectParentIs(NodeEnum::kBinaryExpression) &&
       left.format_token_enum == FormatTokenType::binary_operator) {
-    return {0, "Prefer to split after binary operators (+0 on right)."};
+    return {-5, "Prefer to split after binary operators (-5 on right)."};
   }
   return {0, "No adjustment."};
 }

@@ -101,11 +101,11 @@ localparam int DDDDDDDDDDD = pppppppppppppppppp + LLLLLLLLLLLLLL
 + ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
 endmodule
 )sv",
-        // make sure the '+' after 'pppppppppppppppppp' is on the same line
+        // make sure the line does not break before a '+'
         R"sv(
 module m;
-  localparam int DDDDDDDDDDD = pppppppppppppppppp +
-      LLLLLLLLLLLLLL + ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
+  localparam int DDDDDDDDDDD = pppppppppppppppppp + LLLLLLLLLLLLLL +
+      ((EEEEEEEEEEEE && FFFFFFFFFFFFFF > 0) ? hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh : 0);
 endmodule
 )sv"},
     {
