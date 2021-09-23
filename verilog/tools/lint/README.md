@@ -1,7 +1,7 @@
 # SystemVerilog Style Linter
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
+freshness: { owner: 'hzeller' reviewed: '2021-09-23' }
 *-->
 
 The `verible-verilog-lint` SV style linter analyzes code for patterns and
@@ -124,15 +124,28 @@ The `--rules` flag allows to enable/disable rules as well as pass configuration
 to rules that accept them. It accepts a comma-separated list
 [rule names][lint-rule-list]. If prefixed with a `-` (minus), the rule is
 disabled. No prefix or a '+' (plus) prefix enables the rule. An optional
-configuration can be passed after an `=` assignment.
+configuration can be passed after an `=` assignment. Each name/value is
+
+So rule configurations with parameters looks like this
+```
+  --rules=[+-]rule-name="<param>:<paramvalue>;<param2>:<value>",[+-]next-rule...
+```
 
 The following example enables the
 [`enum-name-style`][lint-rule-list_enum-name-style] rule, enables and configures
 the [`line-length`][lint-rule-list_line-length] rule (80 characters length) and
 disables the [`no-tabs`][lint-rule-list_no-tabs] rule.
 
-```
+```bash
 verible-verilog-lint --rules=enum-name-style,+line-length=length:80,-no-tabs ...
+```
+
+Some lint rules have multiple parameters, these are separated with semicolon.
+Since common shells treat semicolon as special character, you have to put
+the parameters in quotes.
+
+```bash
+verible-verilog-lint --rules="undersized-binary-literal=hex:true;lint_zero:true" ...
 ```
 
 Additionally, the `--rules_config` flag can be used to read configuration stored
@@ -238,29 +251,40 @@ The interactive modes `--autofix=patch-interactive` and
 
 Example interactive session (`--autofix=inplace-interactive`):
 
-```
-autofixtest.sv:3:1: Remove trailing spaces. [Style: trailing-spaces] [no-trailing-spaces]
-Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] a
-(fixed)
-autofixtest.sv:6:31: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
-Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] p
-@@ -5,3 +5,3 @@
+<pre>
+$ verible-verilog-lint --rules="undersized-binary-literal=hex:true" --autofix=inplace-interactive autofixtest.sv
 
--    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
-+    assign foo = condition_a? (condition_b ? condition_c ? a : b : c) : d;
-
-Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] y
-(fixed)
-autofixtest.sv:6:45: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
-Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] p
-@@ -5,3 +5,3 @@
-
--    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
-+    assign foo = condition_a? condition_b ? (condition_c ? a : b) : c : d;
-
-Autofix is available. Apply? [y,n,a,d,A,D,p,P,?] y
-(fixed)
-```
+autofixtest.sv:2:30: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
+<b>[ Add parenthesis for readability ]</b>
+@@ -1,3 +1,3 @@
+ module foo();
+-   assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
++   assign foo = condition_a? (condition_b ? condition_c ? a : b : c) : d;
+    assign c = 32'h1;
+<b>Autofix is available. Apply? [y,n,a,d,A,D,p,P,?]</b> y
+autofixtest.sv:2:44: Parenthesize condition expressions that appear in the true-clause of another condition expression. [Style: parentheses] [suggest-parentheses]
+<b>[ Add parenthesis for readability ]</b>
+@@ -1,3 +1,3 @@
+ module foo();
+-   assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
++   assign foo = condition_a? condition_b ? (condition_c ? a : b) : c : d;
+    assign c = 32'h1;
+<b>Autofix is available. Apply? [y,n,a,d,A,D,p,P,?]</b> y
+autofixtest.sv:3:19: Hex literal 32'h1 has less digits than expected for 32 bits. [Style: number-literals] [undersized-binary-literal]
+<b>[ 1. Alternative Left-expand leading zeroes ]</b>
+@@ -2,3 +2,3 @@
+    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
+-   assign c = 32'h1;
++   assign c = 32'h00000001;
+ endmodule
+<b>[ 2. Alternative Replace with decimal ]</b>
+@@ -2,3 +2,3 @@
+    assign foo = condition_a? condition_b ? condition_c ? a : b : c : d;
+-   assign c = 32'h1;
++   assign c = 32'd1;
+ endmodule
+<b>Autofix is available. Apply? [1,2,y,n,a,d,A,D,p,P,?]</b> 1
+</pre>
 
 <!-- reference links -->
 
