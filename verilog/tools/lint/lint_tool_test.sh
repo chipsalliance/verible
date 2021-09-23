@@ -893,22 +893,25 @@ echo "=== Test --autofix=inplace-interactive: Choose alternative fix"
 
 # Files with alternatives in autofixes
 ORIGINAL_ALT_AUTO_FIX="${TEST_TMPDIR}/orig-autofix-alternative.sv"
->"${ORIGINAL_ALT_AUTO_FIX}"
-echo -en "module AlternativeAutoFix;\n" >>"${ORIGINAL_ALT_AUTO_FIX}"
-echo -en "  assign a = 32'h1;\n"        >>"${ORIGINAL_ALT_AUTO_FIX}"
-echo -en "endmodule\n"                  >>"${ORIGINAL_ALT_AUTO_FIX}"
+cat >"${ORIGINAL_ALT_AUTO_FIX}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'h1;
+endmodule
+EOF
 
 REFERENCE_ALT_AUTO_FIX_1="${TEST_TMPDIR}/alt-autofix-alternative-1.sv"
->"${REFERENCE_ALT_AUTO_FIX_1}"
-echo -en "module AlternativeAutoFix;\n" >>"${REFERENCE_ALT_AUTO_FIX_1}"
-echo -en "  assign a = 32'h00000001;\n" >>"${REFERENCE_ALT_AUTO_FIX_1}"
-echo -en "endmodule\n"                  >>"${REFERENCE_ALT_AUTO_FIX_1}"
+cat >"${REFERENCE_ALT_AUTO_FIX_1}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'h00000001;
+endmodule
+EOF
 
 REFERENCE_ALT_AUTO_FIX_2="${TEST_TMPDIR}/alt-autofix-alternative-2.sv"
->"${REFERENCE_ALT_AUTO_FIX_2}"
-echo -en "module AlternativeAutoFix;\n" >>"${REFERENCE_ALT_AUTO_FIX_2}"
-echo -en "  assign a = 32'd1;\n"        >>"${REFERENCE_ALT_AUTO_FIX_2}"
-echo -en "endmodule\n"                  >>"${REFERENCE_ALT_AUTO_FIX_2}"
+cat >"${REFERENCE_ALT_AUTO_FIX_2}" <<EOF
+module AlternativeAutoFix;
+  assign a = 32'd1;
+endmodule
+EOF
 
 failure=0
 cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
@@ -918,7 +921,18 @@ cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
              <<< "1"
 
 check_diff "${REFERENCE_ALT_AUTO_FIX_1}" "${TEST_FILE}" "${DIFF_FILE}" \
-    "First alternative not coosen."
+    "First alternative not chosen."
+(( failure|="$?" ))
+
+# Choosing first non-existing alternative, then an existing one.
+cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
+"$lint_tool" --ruleset=none --rules="undersized-binary-literal=hex:true" \
+             --autofix=inplace-interactive \
+             "${TEST_FILE}" > /dev/null 2>&1 \
+             <<< "41"
+
+check_diff "${REFERENCE_ALT_AUTO_FIX_1}" "${TEST_FILE}" "${DIFF_FILE}" \
+    "First alternative not chosen."
 (( failure|="$?" ))
 
 cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
@@ -927,7 +941,7 @@ cp ${ORIGINAL_ALT_AUTO_FIX} ${TEST_FILE}
              "${TEST_FILE}" > /dev/null 2>&1 \
              <<< "2"
 check_diff "${REFERENCE_ALT_AUTO_FIX_2}" "${TEST_FILE}" "${DIFF_FILE}" \
-    "Second alternative not coosen."
+    "Second alternative not chosen."
 (( failure|="$?" ))
 
 (( $failure )) && exit 1

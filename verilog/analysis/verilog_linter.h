@@ -170,12 +170,8 @@ class ViolationFixer : public ViolationHandler {
  public:
   enum class AnswerChoice {
     kUnknown,
-    kApply,  // apply fix
-    // TODO(hzeller): if we expect much more than a few alternatives, don't
-    // do this in the enum.
-    kApplySecondAlternative,  // like apply fix, but 2. alternative if available
-    kApplyThirdAlternative,   // like apply fix, but 3. alternative if available
-    kReject,                  // reject fix
+    kApply,              // apply fix
+    kReject,             // reject fix
     kApplyAllForRule,    // apply this and all remaining fixes for violations
                          // of this rule
     kRejectAllForRule,   // reject this and all remaining fixes for violations
@@ -186,8 +182,15 @@ class ViolationFixer : public ViolationHandler {
     kPrintAppliedFixes,  // show fixes applied so far
   };
 
-  using AnswerChooser = std::function<AnswerChoice(
-      const verible::LintViolation&, absl::string_view)>;
+  struct Answer {
+    AnswerChoice choice;
+    // If there are multiple alternatives for fixes available, this is
+    // the one chosen. By default the first one.
+    size_t alternative = 0;
+  };
+
+  using AnswerChooser =
+      std::function<Answer(const verible::LintViolation&, absl::string_view)>;
 
   // Violation fixer with user-choosen answer chooser.
   ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
@@ -209,7 +212,7 @@ class ViolationFixer : public ViolationHandler {
         patch_stream_(patch_stream),
         answer_chooser_(answer_chooser),
         is_interactive_(is_interactive),
-        ultimate_answer_(AnswerChoice::kUnknown) {}
+        ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
 
   void HandleViolation(const verible::LintViolation& violation,
                        absl::string_view base, absl::string_view path,
@@ -217,7 +220,7 @@ class ViolationFixer : public ViolationHandler {
                        const verible::LintStatusFormatter& formatter,
                        verible::AutoFix* fix);
 
-  static AnswerChoice InteractiveAnswerChooser(
+  static Answer InteractiveAnswerChooser(
       const verible::LintViolation& violation, absl::string_view rule_name);
 
   void CommitFixes(absl::string_view source_content,
@@ -229,8 +232,8 @@ class ViolationFixer : public ViolationHandler {
   const AnswerChooser answer_chooser_;
   const bool is_interactive_;
 
-  AnswerChoice ultimate_answer_;
-  std::map<absl::string_view, AnswerChoice> rule_answers_;
+  Answer ultimate_answer_;
+  std::map<absl::string_view, Answer> rule_answers_;
 };
 
 // VerilogLintTextStructure analyzes Verilog syntax tree for style violations

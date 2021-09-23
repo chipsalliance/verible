@@ -178,13 +178,17 @@ void ViolationFixer::HandleViolation(
       "The fix conflicts with "
       "previously applied fixes, rejecting.\n";
 
-  AnswerChoice answer;
+  Answer answer;
   for (bool first_round = true; /**/; first_round = false) {
-    if (ultimate_answer_ != AnswerChoice::kUnknown) {
+    if (ultimate_answer_.choice != AnswerChoice::kUnknown) {
       answer = ultimate_answer_;
     } else if (auto found = rule_answers_.find(rule_name);
                found != rule_answers_.end()) {
       answer = found->second;
+      // If the ApplyAll specifies alternative not available here, use first.
+      if (answer.alternative >= violation.autofixes.size()) {
+        answer.alternative = 0;
+      }
     } else {
       if (is_interactive_ && first_round) {  // Show the user what is available.
         PrintFixAlternatives(*message_stream_, base, violation.autofixes);
@@ -192,38 +196,25 @@ void ViolationFixer::HandleViolation(
       answer = answer_chooser_(violation, rule_name);
     }
 
-    switch (answer) {
+    switch (answer.choice) {
       case AnswerChoice::kApplyAll:
-        ultimate_answer_ = AnswerChoice::kApply;
+        ultimate_answer_ = {AnswerChoice::kApply};
         [[fallthrough]];
       case AnswerChoice::kApplyAllForRule:
-        rule_answers_[rule_name] = AnswerChoice::kApply;
+        rule_answers_[rule_name] = {AnswerChoice::kApply, answer.alternative};
         [[fallthrough]];
-      case AnswerChoice::kApply:  // Apply first available fix
-        if (!fix->AddEdits(violation.autofixes[0].Edits())) {
+      case AnswerChoice::kApply:  // Apply fix chosen in the alternatative
+        if (answer.alternative >= violation.autofixes.size())
+          continue;  // ask again.
+        if (!fix->AddEdits(violation.autofixes[answer.alternative].Edits())) {
           *message_stream_ << previous_fix_conflict;
         }
         break;
-
-      case AnswerChoice::kApplySecondAlternative:
-        if (violation.autofixes.size() > 1 &&
-            !fix->AddEdits(violation.autofixes[1].Edits())) {
-          *message_stream_ << previous_fix_conflict;
-        }
-        break;
-
-      case AnswerChoice::kApplyThirdAlternative:
-        if (violation.autofixes.size() > 2 &&
-            !fix->AddEdits(violation.autofixes[2].Edits())) {
-          *message_stream_ << previous_fix_conflict;
-        }
-        break;
-
       case AnswerChoice::kRejectAll:
-        ultimate_answer_ = AnswerChoice::kReject;
+        ultimate_answer_ = {AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kRejectAllForRule:
-        rule_answers_[rule_name] = AnswerChoice::kReject;
+        rule_answers_[rule_name] = {AnswerChoice::kReject};
         [[fallthrough]];
       case AnswerChoice::kReject:
         return;
@@ -243,10 +234,9 @@ void ViolationFixer::HandleViolation(
   }
 }
 
-ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
+ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
     const verible::LintViolation& violation, absl::string_view rule_name) {
-  static absl::string_view help_message =
-      "y - apply first fix [or type number of alternative e.g. '2']\n"
+  static absl::string_view fixed_help_message =
       "n - reject fix\n"
       "a - apply this and all remaining fixes for violations of this rule\n"
       "d - reject this and all remaining fixes for violations of this rule\n"
@@ -256,11 +246,17 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
       "P - show fixes applied in this file so far\n"
       "? - print this help and prompt again\n";
 
-  // If we have alternatives, show this in the short-menu.
-  std::string alternative_list;
-  if (size_t fix_count = violation.autofixes.size(); fix_count > 1) {
+  const size_t fix_count = violation.autofixes.size();
+  std::string help_message;
+  std::string alternative_list;  // Show alternatives in the short-menu.
+  if (fix_count > 1) {
+    help_message =
+        absl::StrCat("y - apply first fix\n[1-", fix_count,
+                     "] - apply given alternative\n", fixed_help_message);
     for (size_t i = 0; i < fix_count; ++i)
-      alternative_list += std::to_string(i + 1) + ",";
+      absl::StrAppend(&alternative_list, (i + 1), ",");
+  } else {
+    help_message = absl::StrCat("y - apply fix\n", fixed_help_message);
   }
 
   for (;;) {
@@ -269,40 +265,41 @@ ViolationFixer::AnswerChoice ViolationFixer::InteractiveAnswerChooser(
         "Autofix is available. Apply? [" + alternative_list +
             "y,n,a,d,A,D,p,P,?] ");
 
-    switch (c) {
-      case '1':
-      case 'y':
-        return AnswerChoice::kApply;
-      case 'a':
-        return AnswerChoice::kApplyAllForRule;
-      case 'A':
-        return AnswerChoice::kApplyAll;
+    // Single character digit chooses the available alternative.
+    if (c >= '1' && c <= '9' &&
+        c < static_cast<char>('1' + violation.autofixes.size())) {
+      return {AnswerChoice::kApply, static_cast<size_t>(c - '1')};
+    }
 
-      case '2':
-        if (violation.autofixes.size() > 1)
-          return AnswerChoice::kApplySecondAlternative;
-        break;
-      case '3':
-        if (violation.autofixes.size() > 2)
-          return AnswerChoice::kApplyThirdAlternative;
-        break;
+    switch (c) {
+      case 'y':
+        return {AnswerChoice::kApply, 0};
+
+        // TODO(hzeller): Should we provide a way to choose 'all for rule'
+        // including an alternative ? Maybe with a two-letter response
+        // such as 1a, 2a, 3a ? Current assumption of interaction is
+        // single character.
+      case 'a':
+        return {AnswerChoice::kApplyAllForRule};
+      case 'A':
+        return {AnswerChoice::kApplyAll};  // No alternatives
       case 'n':
-        return AnswerChoice::kReject;
+        return {AnswerChoice::kReject};
       case 'd':
-        return AnswerChoice::kRejectAllForRule;
+        return {AnswerChoice::kRejectAllForRule};
       case 'D':
-        return AnswerChoice::kRejectAll;
+        return {AnswerChoice::kRejectAll};
 
       case '\0':
         // EOF: received when too few "answers" have been piped to stdin.
         LOG(WARNING) << "Received EOF while there are questions left. "
                         "Rejecting all remaining fixes.";
-        return AnswerChoice::kRejectAll;
+        return {AnswerChoice::kRejectAll};
 
       case 'p':
-        return AnswerChoice::kPrintFix;
+        return {AnswerChoice::kPrintFix};
       case 'P':
-        return AnswerChoice::kPrintAppliedFixes;
+        return {AnswerChoice::kPrintAppliedFixes};
 
       case '\n':
         continue;
