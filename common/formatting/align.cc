@@ -201,7 +201,7 @@ static void ColumnsTreeFormatter(
     // Include separator width in cell width
     node.Value().width += kCellSeparator.size();
     if (node.is_leaf()) continue;
-    std::size_t children_width =
+    const std::size_t children_width =
         std::accumulate(node.Children().begin(), node.Children().end(), 0,
                         [](std::size_t width, const VectorTree<Cell>& child) {
                           return width + child.Value().width;
@@ -226,7 +226,7 @@ static void ColumnsTreeFormatter(
       for (auto& child : node.Children()) {
         CHECK_GT(children_width, 0);
         const auto added_child_width =
-            extra_width * child.Value().width / children_width;
+            extra_width * child.Value().width / children_width;  // NOLINT
         extra_width -= added_child_width;
         children_width -= child.Value().width;
         child.Value().width += added_child_width;
