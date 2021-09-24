@@ -32,7 +32,6 @@ namespace verible {
 ParserParam::ParserParam(TokenGenerator* token_stream)
     : token_stream_(token_stream),
       last_token_(TokenInfo::EOFToken()),
-      root_(),
       max_used_stack_size_(0) {}
 
 ParserParam::~ParserParam() {}

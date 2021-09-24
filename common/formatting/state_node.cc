@@ -59,8 +59,7 @@ StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
       // Kludge: This leaks into the resulting FormattedExcerpt, which means
       // additional logic is needed to handle preservation of (vertical) spacing
       // between formatted token partitions.
-      current_column(uwline.IndentationSpaces()),
-      wrap_column_positions() {
+      current_column(uwline.IndentationSpaces()) {
   // The starting column is relative to the current indentation level.
   VLOG(4) << "initial column position: " << current_column;
   wrap_column_positions.push(current_column + style.wrap_spaces);

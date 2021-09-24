@@ -15,6 +15,10 @@
 
 TIDY_OUT=${TMPDIR:-/tmp}/clang-tidy.out
 
+CLANG_TIDY=clang-tidy-12
+
+hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
+
 # First, build the compilation database.
 bazel build :compdb > /dev/null 2>&1
 
@@ -34,7 +38,7 @@ find . -name "*.cc" -and -not -name "*test*.cc" \
      -or -name "*.h" -and -not -name "*test*.h" \
   | grep -v "verilog/tools/kythe" \
   | xargs -P$(nproc) -n 5 -- \
-          clang-tidy-10 --quiet 2>/dev/null \
+          ${CLANG_TIDY} --quiet 2>/dev/null \
   | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}
 
 
@@ -45,5 +49,5 @@ if [ -s ${TIDY_OUT} ]; then
    exit 1
 fi
 
-echo "No clang-tidy complaints."
+echo "No clang-tidy complaints.😎"
 exit 0
