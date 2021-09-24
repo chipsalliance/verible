@@ -225,7 +225,6 @@ static void ColumnsTreeFormatter(
       auto extra_width = node.Value().width - children_width;
       for (auto& child : node.Children()) {
         CHECK_GT(children_width, 0);
-        assert(children_width > 0);
         const auto added_child_width =
             extra_width * child.Value().width / children_width;
         extra_width -= added_child_width;
