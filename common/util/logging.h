@@ -36,7 +36,7 @@ namespace verible {
 template <typename T>
 ABSL_MUST_USE_RESULT T DieIfNull(const char* file, int line,
                                  const char* exprtext, T&& t) {
-  CHECK(t != nullptr) << exprtext;
+  CHECK((t != nullptr)) << file << ":" << line << ": " << exprtext;
   return std::forward<T>(t);
 }
 }  // namespace verible
