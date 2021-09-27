@@ -9,9 +9,9 @@ http_archive(
     # implementation to solve the issue
     patch_args = ["-p1"],
     patches = ["//bazel:absl.patch"],
-    sha256 = "cfb1f22164808eb0a233ad91287df84c2af2084cfc8b429eca1be1e57511065d",
-    strip_prefix = "abseil-cpp-20210324.1",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.1.zip"],
+    sha256 = "1a7edda1ff56967e33bc938a4f0a68bb9efc6ba73d62bb4a5f5662463698056c",
+    strip_prefix = "abseil-cpp-20210324.2",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.zip"],
 )
 
 # Intermediate version of googletest. The last published release v1.10.0 does
