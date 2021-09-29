@@ -103,6 +103,14 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       }
     }
     part = absl::StripAsciiWhitespace(part);
+    while (!part.empty() && part[part.size() - 1] == ',') {
+      // Not fatal, just report
+      if (!error->empty()) error->append("\n");
+      error->append(absl::StrCat(
+          "Ignoring stray comma at end of configuration `", part, "`"));
+      part = part.substr(0, part.size() - 1);
+    }
+
     if (part.empty()) continue;
     // If prefix is '-', the rule is disabled. For symmetry, we also allow
     // '+' to enable rule.
@@ -293,6 +301,8 @@ absl::Status LinterConfiguration::AppendFromFile(
     RuleBundle local_rules_bundle;
     std::string error;
     if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
+      if (!error.empty())
+        LOG(WARNING) << "Warnings in parse configuration: " << error;
       UseRuleBundle(local_rules_bundle);
     } else {
       LOG(WARNING) << "Unable to fully parse configuration: " << error;

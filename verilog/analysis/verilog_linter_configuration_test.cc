@@ -788,6 +788,28 @@ TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
   }
 }
 
+TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
+  // Multiline rules might still have a comma from the one-line
+  // rule configuration. They shouldn't harm.
+  const std::string text =
+      "test-rule-1,,,  \n"
+      "-test-rule-2=a:b,\n"
+      "+test-rule-3=bar:baz,  # config-comment\n";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(success) << error;
+    ASSERT_NE(error.find(","), std::string::npos) << error;  // warning report
+    ASSERT_THAT(bundle.rules, SizeIs(3));
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+    EXPECT_FALSE(bundle.rules["test-rule-2"].enabled);
+    EXPECT_EQ("a:b", bundle.rules["test-rule-2"].configuration);
+    EXPECT_TRUE(bundle.rules["test-rule-3"].enabled);
+    EXPECT_EQ("bar:baz", bundle.rules["test-rule-3"].configuration);
+  }
+}
+
 // ConfigureFromOptions Tests
 TEST(ConfigureFromOptionsTest, Basic) {
   LinterConfiguration config;
