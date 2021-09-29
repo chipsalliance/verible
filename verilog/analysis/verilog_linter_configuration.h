@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
@@ -203,18 +204,19 @@ class LinterConfiguration {
   std::set<analysis::LintRuleId> ActiveRuleIds() const;
 
   // Creates instances of every enabled syntax tree rule
-  std::vector<std::unique_ptr<verible::SyntaxTreeLintRule>>
+  absl::StatusOr<std::vector<std::unique_ptr<verible::SyntaxTreeLintRule>>>
   CreateSyntaxTreeRules() const;
 
   // Creates instances of every enabled token stream rule
-  std::vector<std::unique_ptr<verible::TokenStreamLintRule>>
+  absl::StatusOr<std::vector<std::unique_ptr<verible::TokenStreamLintRule>>>
   CreateTokenStreamRules() const;
 
   // Creates instances of every enabled line rule
-  std::vector<std::unique_ptr<verible::LineLintRule>> CreateLineRules() const;
+  absl::StatusOr<std::vector<std::unique_ptr<verible::LineLintRule>>>
+  CreateLineRules() const;
 
   // Creates instances of every enabled text structure lint rule
-  std::vector<std::unique_ptr<verible::TextStructureLintRule>>
+  absl::StatusOr<std::vector<std::unique_ptr<verible::TextStructureLintRule>>>
   CreateTextStructureRules() const;
 
   // Path to external lint waivers configuration file

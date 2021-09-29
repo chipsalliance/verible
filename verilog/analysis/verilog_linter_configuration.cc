@@ -231,7 +231,7 @@ std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
 //
 // T should be a descendant of verible::LintRule.
 template <typename T>
-static std::vector<std::unique_ptr<T>> CreateRules(
+static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
     const std::map<analysis::LintRuleId, RuleSetting>& config,
     std::function<std::unique_ptr<T>(const analysis::LintRuleId&)> factory) {
   std::vector<std::unique_ptr<T>> rule_instances;
@@ -243,10 +243,9 @@ static std::vector<std::unique_ptr<T>> CreateRules(
     if (rule_ptr == nullptr) continue;
 
     if (!setting.configuration.empty()) {
-      absl::Status status;
-      if (!(status = rule_ptr->Configure(setting.configuration)).ok()) {
-        // TODO(hzeller): return error message to caller to handle ?
-        LOG(QFATAL) << rule_pair.first << ": " << status.message();
+      if (absl::Status status = rule_ptr->Configure(setting.configuration);
+          !status.ok()) {
+        return status;
       }
     }
 
@@ -255,25 +254,25 @@ static std::vector<std::unique_ptr<T>> CreateRules(
   return rule_instances;
 }
 
-std::vector<std::unique_ptr<SyntaxTreeLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<SyntaxTreeLintRule>>>
 LinterConfiguration::CreateSyntaxTreeRules() const {
   return CreateRules<SyntaxTreeLintRule>(configuration_,
                                          analysis::CreateSyntaxTreeLintRule);
 }
 
-std::vector<std::unique_ptr<TokenStreamLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<TokenStreamLintRule>>>
 LinterConfiguration::CreateTokenStreamRules() const {
   return CreateRules<TokenStreamLintRule>(configuration_,
                                           analysis::CreateTokenStreamLintRule);
 }
 
-std::vector<std::unique_ptr<LineLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<LineLintRule>>>
 LinterConfiguration::CreateLineRules() const {
   return CreateRules<LineLintRule>(configuration_,
                                    analysis::CreateLineLintRule);
 }
 
-std::vector<std::unique_ptr<TextStructureLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<TextStructureLintRule>>>
 LinterConfiguration::CreateTextStructureRules() const {
   return CreateRules<TextStructureLintRule>(
       configuration_, analysis::CreateTextStructureLintRule);
