@@ -30,6 +30,13 @@ Checks: >
   -google-readability-braces-around-statements,
   -google-readability-todo,
   performance-*,
+  bugprone-*,
+  -bugprone-narrowing-conversions,
+  -bugprone-branch-clone,
+  -bugprone-reserved-identifier,
+  -bugprone-move-forwarding-reference,
+  -bugprone-exception-escape,
+  modernize-use-override,
 
 WarningsAsErrors: ''
 HeaderFilterRegex: ''

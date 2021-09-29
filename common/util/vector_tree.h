@@ -295,6 +295,7 @@ class VectorTree : private _VectorTreeImpl {
 
   // Copy value and children, but relink new children to this node.
   VectorTree& operator=(const this_type& source) {
+    if (this == &source) return *this;
     node_value_ = source.node_value_;
     children_ = source.Children();
     Relink();
