@@ -509,7 +509,7 @@ std::vector<LintRuleStatus> VerilogLinter::ReportStatus(
   return statuses;
 }
 
-LinterConfiguration LinterConfigurationFromFlags(
+absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
     absl::string_view linting_start_file) {
   LinterConfiguration config;
 
@@ -522,9 +522,8 @@ LinterConfiguration LinterConfigurationFromFlags(
       .waiver_files = absl::GetFlag(FLAGS_waiver_files),
   };
 
-  absl::Status config_status = config.ConfigureFromOptions(options);
-  if (!config_status.ok()) {
-    LOG(WARNING) << "Unable to configure linter for: " << linting_start_file;
+  if (auto status = config.ConfigureFromOptions(options); !status.ok()) {
+    return status;
   }
 
   return config;

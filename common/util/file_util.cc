@@ -118,7 +118,7 @@ absl::Status FileExists(const std::string &filename) {
   fs::file_status stat = fs::status(filename, err);
 
   if (err.value() != 0) {
-    return absl::NotFoundError(absl::StrCat(filename, ":", err.message()));
+    return absl::NotFoundError(absl::StrCat(filename, ": ", err.message()));
   }
 
   if (fs::is_regular_file(stat) || fs::is_fifo(stat)) {

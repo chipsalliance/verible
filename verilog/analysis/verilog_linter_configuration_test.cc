@@ -803,6 +803,20 @@ TEST(ConfigureFromOptionsTest, Basic) {
   EXPECT_TRUE(status.ok());
 }
 
+TEST(ConfigureFromOptionsTest, LoadFromNonExistingFile) {
+  LinterConfiguration config;
+
+  LinterOptions options = {.ruleset = RuleSet::kAll,
+                           .rules = RuleBundle(),
+                           .config_file = "non-existent-file.txt",
+                           .rules_config_search = false,
+                           .linting_start_file = "filename",
+                           .waiver_files = "filename"};
+
+  auto status = config.ConfigureFromOptions(options);
+  EXPECT_FALSE(status.ok()) << status.message();
+}
+
 TEST(ConfigureFromOptionsTest, RulesNumber) {
   LinterConfiguration config;
 

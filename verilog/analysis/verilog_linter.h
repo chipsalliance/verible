@@ -127,7 +127,7 @@ class VerilogLinter {
 // Creates a linter configuration from global flags.
 // If --rules_config_search is configured, uses the given
 // start file to look up the directory chain.
-LinterConfiguration LinterConfigurationFromFlags(
+absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
     absl::string_view linting_start_file = ".");
 
 // Expands linter configuration from a text file

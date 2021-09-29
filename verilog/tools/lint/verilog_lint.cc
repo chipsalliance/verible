@@ -191,8 +191,13 @@ int main(int argc, char** argv) {
   for (const absl::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
     // Copy configuration, so that it can be locally modified per file.
-    const LinterConfiguration config(
-        verilog::LinterConfigurationFromFlags(filename));
+    auto config_status = verilog::LinterConfigurationFromFlags(filename);
+    if (!config_status.ok()) {
+      std::cerr << config_status.status().message() << std::endl;
+      exit_status = 1;
+      continue;
+    }
+    const LinterConfiguration& config = *config_status;
 
     const int lint_status = verilog::LintOneFile(
         &std::cout, filename, config, violation_handler.get(),

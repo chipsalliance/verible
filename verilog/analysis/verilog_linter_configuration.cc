@@ -311,12 +311,8 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   UseRuleSet(options.ruleset);
 
   if (!options.config_file.empty()) {
-    const absl::Status config_read_status = AppendFromFile(options.config_file);
-
-    if (!config_read_status.ok()) {
-      LOG(WARNING) << options.config_file
-                   << ": Unable to read rules configuration file "
-                   << config_read_status << std::endl;
+    if (auto status = AppendFromFile(options.config_file); !status.ok()) {
+      return status;
     }
 
     if (options.rules_config_search) {
