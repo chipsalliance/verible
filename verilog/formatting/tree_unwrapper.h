@@ -56,7 +56,7 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
                          const FormatStyle& style,
                          const preformatted_tokens_type&);
 
-  ~TreeUnwrapper();
+  ~TreeUnwrapper() override;
 
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;

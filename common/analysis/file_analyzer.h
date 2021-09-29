@@ -77,7 +77,7 @@ class FileAnalyzer : public TextStructure {
   explicit FileAnalyzer(absl::string_view contents, absl::string_view filename)
       : TextStructure(contents), filename_(filename) {}
 
-  virtual ~FileAnalyzer() {}
+  ~FileAnalyzer() override {}
 
   virtual absl::Status Tokenize() = 0;
 
