@@ -103,6 +103,14 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       }
     }
     part = absl::StripAsciiWhitespace(part);
+    while (!part.empty() && part[part.size() - 1] == ',') {
+      // Not fatal, just report
+      if (!error->empty()) error->append("\n");
+      error->append(absl::StrCat(
+          "Ignoring stray comma at end of configuration `", part, "`"));
+      part = part.substr(0, part.size() - 1);
+    }
+
     if (part.empty()) continue;
     // If prefix is '-', the rule is disabled. For symmetry, we also allow
     // '+' to enable rule.
@@ -231,7 +239,7 @@ std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
 //
 // T should be a descendant of verible::LintRule.
 template <typename T>
-static std::vector<std::unique_ptr<T>> CreateRules(
+static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
     const std::map<analysis::LintRuleId, RuleSetting>& config,
     std::function<std::unique_ptr<T>(const analysis::LintRuleId&)> factory) {
   std::vector<std::unique_ptr<T>> rule_instances;
@@ -243,10 +251,9 @@ static std::vector<std::unique_ptr<T>> CreateRules(
     if (rule_ptr == nullptr) continue;
 
     if (!setting.configuration.empty()) {
-      absl::Status status;
-      if (!(status = rule_ptr->Configure(setting.configuration)).ok()) {
-        // TODO(hzeller): return error message to caller to handle ?
-        LOG(QFATAL) << rule_pair.first << ": " << status.message();
+      if (absl::Status status = rule_ptr->Configure(setting.configuration);
+          !status.ok()) {
+        return status;
       }
     }
 
@@ -255,25 +262,25 @@ static std::vector<std::unique_ptr<T>> CreateRules(
   return rule_instances;
 }
 
-std::vector<std::unique_ptr<SyntaxTreeLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<SyntaxTreeLintRule>>>
 LinterConfiguration::CreateSyntaxTreeRules() const {
   return CreateRules<SyntaxTreeLintRule>(configuration_,
                                          analysis::CreateSyntaxTreeLintRule);
 }
 
-std::vector<std::unique_ptr<TokenStreamLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<TokenStreamLintRule>>>
 LinterConfiguration::CreateTokenStreamRules() const {
   return CreateRules<TokenStreamLintRule>(configuration_,
                                           analysis::CreateTokenStreamLintRule);
 }
 
-std::vector<std::unique_ptr<LineLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<LineLintRule>>>
 LinterConfiguration::CreateLineRules() const {
   return CreateRules<LineLintRule>(configuration_,
                                    analysis::CreateLineLintRule);
 }
 
-std::vector<std::unique_ptr<TextStructureLintRule>>
+absl::StatusOr<std::vector<std::unique_ptr<TextStructureLintRule>>>
 LinterConfiguration::CreateTextStructureRules() const {
   return CreateRules<TextStructureLintRule>(
       configuration_, analysis::CreateTextStructureLintRule);
@@ -294,6 +301,8 @@ absl::Status LinterConfiguration::AppendFromFile(
     RuleBundle local_rules_bundle;
     std::string error;
     if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
+      if (!error.empty())
+        LOG(WARNING) << "Warnings in parse configuration: " << error;
       UseRuleBundle(local_rules_bundle);
     } else {
       LOG(WARNING) << "Unable to fully parse configuration: " << error;
@@ -312,12 +321,8 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   UseRuleSet(options.ruleset);
 
   if (!options.config_file.empty()) {
-    const absl::Status config_read_status = AppendFromFile(options.config_file);
-
-    if (!config_read_status.ok()) {
-      LOG(WARNING) << options.config_file
-                   << ": Unable to read rules configuration file "
-                   << config_read_status << std::endl;
+    if (auto status = AppendFromFile(options.config_file); !status.ok()) {
+      return status;
     }
 
     if (options.rules_config_search) {

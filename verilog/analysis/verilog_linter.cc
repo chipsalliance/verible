@@ -406,19 +406,23 @@ absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
     }
   }
   auto text_rules = configuration.CreateTextStructureRules();
-  for (auto& rule : text_rules) {
+  if (!text_rules.ok()) return text_rules.status();
+  for (auto& rule : *text_rules) {
     text_structure_linter_.AddRule(std::move(rule));
   }
   auto line_rules = configuration.CreateLineRules();
-  for (auto& rule : line_rules) {
+  if (!line_rules.ok()) return line_rules.status();
+  for (auto& rule : *line_rules) {
     line_linter_.AddRule(std::move(rule));
   }
   auto token_rules = configuration.CreateTokenStreamRules();
-  for (auto& rule : token_rules) {
+  if (!token_rules.ok()) return token_rules.status();
+  for (auto& rule : *token_rules) {
     token_stream_linter_.AddRule(std::move(rule));
   }
   auto syntax_rules = configuration.CreateSyntaxTreeRules();
-  for (auto& rule : syntax_rules) {
+  if (!syntax_rules.ok()) return syntax_rules.status();
+  for (auto& rule : *syntax_rules) {
     syntax_tree_linter_.AddRule(std::move(rule));
   }
 
@@ -505,7 +509,7 @@ std::vector<LintRuleStatus> VerilogLinter::ReportStatus(
   return statuses;
 }
 
-LinterConfiguration LinterConfigurationFromFlags(
+absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
     absl::string_view linting_start_file) {
   LinterConfiguration config;
 
@@ -518,9 +522,8 @@ LinterConfiguration LinterConfigurationFromFlags(
       .waiver_files = absl::GetFlag(FLAGS_waiver_files),
   };
 
-  absl::Status config_status = config.ConfigureFromOptions(options);
-  if (!config_status.ok()) {
-    LOG(WARNING) << "Unable to configure linter for: " << linting_start_file;
+  if (auto status = config.ConfigureFromOptions(options); !status.ok()) {
+    return status;
   }
 
   return config;
