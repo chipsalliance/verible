@@ -645,7 +645,7 @@ TEST(RuleBundleTest, UnparseRuleBundleEmpty) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleEmpty) {
-  std::string text = "";
+  constexpr absl::string_view text = "";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -656,7 +656,7 @@ TEST(RuleBundleTest, ParseRuleBundleEmpty) {
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
   // Allow for an optional '+' to enable a rule for symmetry with '-' disable
-  std::string text = "test-rule-1,test-rule-2,+test-rule-3";
+  constexpr absl::string_view text = "test-rule-1,test-rule-2,+test-rule-3";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -669,7 +669,8 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
-  auto text = "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
+  constexpr absl::string_view text =
+      "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -691,7 +692,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
-  std::string text = "test-rule-1";
+  constexpr absl::string_view text = "test-rule-1";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -702,7 +703,8 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOne) {
 }
 
 TEST(RuleBundleTest, ParseRuleWhitespaceAroundAllowed) {
-  std::string text = "\t test-rule-1 \t, +test-rule-2=foo:bar \t";
+  constexpr absl::string_view text =
+      "\t test-rule-1 \t, +test-rule-2=foo:bar \t";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -715,7 +717,7 @@ TEST(RuleBundleTest, ParseRuleWhitespaceAroundAllowed) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
-  std::string text = "test-rule-1,-test-rule-2";
+  constexpr absl::string_view text = "test-rule-1,-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -727,7 +729,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveralTurnOff) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
-  std::string text = "-test-rule-1";
+  constexpr absl::string_view text = "-test-rule-1";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -738,7 +740,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptOneTurnOff) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleReject) {
-  std::string text = "test-rule-1,bad-flag";
+  constexpr absl::string_view text = "test-rule-1,bad-flag";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
@@ -747,7 +749,7 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
-  std::string text = "test-rule-1\n-test-rule-2";
+  constexpr absl::string_view text = "test-rule-1\n-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, '\n', &error);
@@ -759,7 +761,7 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
-  std::string text = "test-rule-1\nbad-flag\n-test-rule-2";
+  constexpr absl::string_view text = "test-rule-1\nbad-flag\n-test-rule-2";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, '\n', &error);
@@ -768,7 +770,7 @@ TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
 }
 
 TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
-  const std::string text =
+  constexpr absl::string_view text =
       "    # some comment after whitespace\n"
       "# more comment\n"
       "test-rule-1\n"
@@ -791,7 +793,7 @@ TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
 TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
   // Multiline rules might still have a comma from the one-line
   // rule configuration. They shouldn't harm.
-  const std::string text =
+  constexpr absl::string_view text =
       "test-rule-1,,,  \n"
       "-test-rule-2=a:b,\n"
       "+test-rule-3=bar:baz,  # config-comment\n";
