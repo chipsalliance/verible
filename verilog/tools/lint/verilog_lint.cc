@@ -148,13 +148,13 @@ int main(int argc, char** argv) {
       }
     }
     if (!autofix_output_stream) {
-      LOG(WARNING) << "--autofix=patch needs --autofix_output_file";
+      std::cerr << "--autofix=patch needs --autofix_output_file" << std::endl;
       autofix_mode = AutofixMode::kNo;
       exit_status = kAutofixErrorExitStatus;
     }
   } else if (!autofix_output_file.empty()) {
-    LOG(WARNING) << "--autofix_output_file has no effect for --autofix="
-                 << autofix_mode;
+    std::cerr << "--autofix_output_file has no effect for --autofix="
+              << autofix_mode << std::endl;
   }
 
   const verilog::ViolationFixer::AnswerChooser applyAllFixes =

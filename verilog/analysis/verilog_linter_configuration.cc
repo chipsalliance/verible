@@ -302,10 +302,11 @@ absl::Status LinterConfiguration::AppendFromFile(
     std::string error;
     if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
       if (!error.empty())
-        LOG(WARNING) << "Warnings in parse configuration: " << error;
+        std::cerr << "Warnings in parse configuration: " << error << std::endl;
       UseRuleBundle(local_rules_bundle);
     } else {
-      LOG(WARNING) << "Unable to fully parse configuration: " << error;
+      std::cerr << "Unable to fully parse configuration: " << error
+                << std::endl;
     }
     return absl::OkStatus();
   }
@@ -326,8 +327,8 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
     }
 
     if (options.rules_config_search) {
-      LOG(WARNING) << "Explicit config file " << options.config_file
-                   << " disables --rules_config_search";
+      std::cerr << "Explicit config file " << options.config_file
+                << " disables --rules_config_search" << std::endl;
     }
   } else if (options.rules_config_search) {
     // Search upward if search is enabled and no configuration file is
@@ -341,9 +342,9 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
           AppendFromFile(resolved_config_file);
 
       if (!config_read_status.ok()) {
-        LOG(WARNING) << resolved_config_file
-                     << ": Unable to read rules configuration file "
-                     << config_read_status << std::endl;
+        std::cerr << resolved_config_file
+                  << ": Unable to read rules configuration file "
+                  << config_read_status << std::endl;
       }
     }
   }
