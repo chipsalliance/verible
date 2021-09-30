@@ -219,7 +219,6 @@ cc_binary(
         "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
-        "//verilog/CST:verilog_nonterminals",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_project",
         "//verilog/analysis/checkers:verilog_lint_rules",
