@@ -129,10 +129,18 @@ TEST(FileUtil, StatusErrorReporting) {
   // The following chmod() is not working on Win32. So let's not use
   // this test here.
   // TODO: Can we make permission-denied test that works on Windows ?
-  chmod(test_file.c_str(), 0);  // Enforce a permission denied situation
+
+  // Enforce a permission denied situation
+  // TODO: Issue #963 - if this turns out to not always succeed to chmod
+  // we should just skip the test.
+  const int chmod_result = chmod(test_file.c_str(), 0);
+  EXPECT_EQ(chmod_result, 0);
+
+  content.clear();
   status = file::GetContents(test_file, &content);
-  EXPECT_FALSE(status.ok());
+  EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
   EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+  EXPECT_TRUE(content.empty()) << "'" << content << "'";
 #endif
 }
 
