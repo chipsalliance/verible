@@ -295,8 +295,8 @@ ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
 
       case '\0':
         // EOF: received when too few "answers" have been piped to stdin.
-        LOG(WARNING) << "Received EOF while there are questions left. "
-                        "Rejecting all remaining fixes.";
+        std::cerr << "Received EOF while there are questions left. "
+                  << "Rejecting all remaining fixes." << std::endl;
         return {AnswerChoice::kRejectAll};
 
       case 'p':
