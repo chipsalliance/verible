@@ -54,8 +54,10 @@ class LineLengthRule : public verible::TextStructureLintRule {
   verible::LintRuleStatus Report() const final;
 
  private:
+  bool AllowLongLineException(verible::TokenSequence::const_iterator,
+                              verible::TokenSequence::const_iterator);
   int line_length_limit_ = kDefaultLineLength;
-
+  bool check_comments_ = false;
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
 };
