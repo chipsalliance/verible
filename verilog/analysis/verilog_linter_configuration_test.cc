@@ -802,7 +802,7 @@ TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
     std::string error;
     bool success = bundle.ParseConfiguration(text, '\n', &error);
     ASSERT_TRUE(success) << error;
-    ASSERT_NE(error.find(","), std::string::npos) << error;  // warning report
+    ASSERT_NE(error.find(','), std::string::npos) << error;  // warning report
     ASSERT_THAT(bundle.rules, SizeIs(3));
     EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
     EXPECT_FALSE(bundle.rules["test-rule-2"].enabled);
