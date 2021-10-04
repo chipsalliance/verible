@@ -174,7 +174,7 @@ TEST(MessageStreamSplitterTest, CompleteReadMultipleMessagesShortRead) {
 
   // Read until we reached EOF, indicated as kUnavailable
   EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);  // EOF
-  EXPECT_GT(read_call_count, 10);  // Just checking that it is significatnly > 1
+  EXPECT_GT(read_call_count, 10);  // Just checking that it is significantly > 1
   EXPECT_EQ(processor_call_count, 2);
 }
 
