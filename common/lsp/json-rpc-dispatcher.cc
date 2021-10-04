@@ -14,10 +14,6 @@
 
 #include "common/lsp/json-rpc-dispatcher.h"
 
-static constexpr int kParseError = -32700;
-static constexpr int kMethodNotFound = -32601;
-static constexpr int kInternalError = -32603;
-
 namespace verible {
 void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   nlohmann::json request;

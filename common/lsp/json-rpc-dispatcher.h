@@ -54,6 +54,11 @@ namespace verible {
 // [2]: https://github.com/hzeller/jcxxgen
 class JsonRpcDispatcher {
  public:
+  // Magic constants defined in https://www.jsonrpc.org/specification
+  static constexpr int kParseError = -32700;
+  static constexpr int kMethodNotFound = -32601;
+  static constexpr int kInternalError = -32603;
+
   // A notification receives a request, but does not return anything
   using RPCNotification = std::function<void(const nlohmann::json &r)>;
 

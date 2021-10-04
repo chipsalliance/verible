@@ -24,10 +24,6 @@
 
 using nlohmann::json;
 
-static constexpr int kJsonRpcParseError = -32700;
-static constexpr int kJsonRpcMethodNotFound = -32601;
-static constexpr int kJsonRpcInternalError = -32603;
-
 namespace verible {
 TEST(JsonRpcDispatcherTest, Call_GarbledInputRequest) {
   int write_fun_called = 0;
@@ -36,7 +32,7 @@ TEST(JsonRpcDispatcherTest, Call_GarbledInputRequest) {
   JsonRpcDispatcher dispatcher([&](absl::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
-    EXPECT_EQ(j["error"]["code"], kJsonRpcParseError) << s;
+    EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kParseError) << s;
     ++write_fun_called;
   });
 
@@ -54,7 +50,7 @@ TEST(JsonRpcDispatcherTest, Call_MissingMethodInRequest) {
   JsonRpcDispatcher dispatcher([&](absl::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
-    EXPECT_EQ(j["error"]["code"], kJsonRpcMethodNotFound) << s;
+    EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
     ++write_fun_called;
   });
   dispatcher.AddNotificationHandler(
@@ -168,7 +164,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_ReportInternalError) {
   JsonRpcDispatcher dispatcher([&](absl::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
-    EXPECT_EQ(j["error"]["code"], kJsonRpcInternalError) << s;
+    EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kInternalError) << s;
     ++write_fun_called;
   });
 
@@ -192,7 +188,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_MissingMethodImplemented) {
   JsonRpcDispatcher dispatcher([&](absl::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
-    EXPECT_EQ(j["error"]["code"], kJsonRpcMethodNotFound) << s;
+    EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
     ++write_fun_called;
   });
 
