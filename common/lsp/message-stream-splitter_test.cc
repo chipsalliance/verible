@@ -83,6 +83,28 @@ TEST(MessageStreamSplitterTest, CompleteReadValidMessage) {
   EXPECT_EQ(processor_call_count, 1);  // No additional calls recorded here.
 }
 
+TEST(MessageStreamSplitterTest, BufferSizeTooSmall) {
+  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr absl::string_view kBody = "foo";
+
+  DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
+  MessageStreamSplitter s(10);  // Way too small buffer.
+  int processor_call_count = 0;
+  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+    ++processor_call_count;
+  });
+
+  absl::Status status = absl::OkStatus();
+  while (status.ok()) {
+    status =
+        s.PullFrom([&](char *buf, int size) { return stream.read(buf, size); });
+  }
+
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kResourceExhausted);
+  EXPECT_EQ(processor_call_count, 0);
+}
+
 TEST(MessageStreamSplitterTest, StreamDoesNotContainCompleteData) {
   static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
   static constexpr absl::string_view kBody = "fo";  // <- too short

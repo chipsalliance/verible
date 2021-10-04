@@ -101,6 +101,11 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
     available_read_space -= pending_data_.size();
   }
 
+  if (available_read_space == 0) {
+    return absl::ResourceExhaustedError(
+        "Buffer for MessageStreamSplitter too small");
+  }
+
   int bytes_read = read_fun(begin_of_read, available_read_space);
   if (bytes_read <= 0) {
     // Got EOF.
