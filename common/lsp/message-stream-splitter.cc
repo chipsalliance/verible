@@ -62,9 +62,8 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
     int body_size = 0;
     const int body_offset = ParseHeaderGetBodyOffset(*data, &body_size);
     if (body_offset == -2) {
-      absl::string_view limited_view(data->data(),
-                                     std::min(data->size(),
-                                              static_cast<size_t>(256)));
+      absl::string_view limited_view(
+          data->data(), std::min(data->size(), static_cast<size_t>(256)));
       return absl::InvalidArgumentError(
           absl::StrCat("No `Content-Length:` header. '", limited_view, "...'"));
     }
