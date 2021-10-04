@@ -1,6 +1,8 @@
 # This package contains the basic language server protocol [1] implementation
 # needed in language specific parts to provide LSP services.
-# LSP is using JSON-PRC [2] for the RPC protocol.
+# LSP is using JSON-PRC [2] for the RPC protocol, the transport layer chunks
+# messages with header+body blocks, similar to HTTP.
+#
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 # [2]: https://www.jsonrpc.org/specification
 
@@ -21,7 +23,6 @@ cc_library(
         "@com_google_absl//absl/status",
     ],
 )
-
 
 cc_test(
     name = "message-stream-splitter_test",
@@ -48,7 +49,6 @@ cc_library(
         "@jsonhpp//:jsonhpp",
     ],
 )
-
 
 cc_test(
     name = "json-rpc-dispatcher_test",
