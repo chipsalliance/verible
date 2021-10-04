@@ -75,15 +75,17 @@ class JsonRpcDispatcher {
   JsonRpcDispatcher(const JsonRpcDispatcher &) = delete;
 
   // Add a request handler for RPC calls that receive data and send a response.
-  void AddRequestHandler(const std::string &method_name,
+  // Returns successful registration, false if that name is already registered.
+  bool AddRequestHandler(const std::string &method_name,
                          const RPCCallHandler &fun) {
-    handlers_.insert({method_name, fun});
+    return handlers_.insert({method_name, fun}).second;
   }
 
   // Add a request handler for RPC Notifications, that are receive-only events.
-  void AddNotificationHandler(const std::string &method_name,
+  // Returns successful registration, false if that name is already registered.
+  bool AddNotificationHandler(const std::string &method_name,
                               const RPCNotification &fun) {
-    notifications_.insert({method_name, fun});
+    return notifications_.insert({method_name, fun}).second;
   }
 
   // Dispatch incoming message, a string view with json data.
@@ -91,12 +93,13 @@ class JsonRpcDispatcher {
   // If this is an RPC call, response will call WriteFun.
   void DispatchMessage(absl::string_view data);
 
-  // Get some statistical counters of methods called and exceptions encountered.
+  // Get some human-readable statistical counters of methods called
+  // and exception messages encountered.
   const StatsMap &GetStatCounters() const { return statistic_counters_; }
 
   // Number of exceptions that have been dealt with and turned into error
   // messages or ignored depending on the context.
-  // The counters returnded by GetStatsCounters() will report counts by
+  // The counters returned by GetStatsCounters() will report counts by
   // exception message.
   int exception_count() const { return exception_count_; }
 

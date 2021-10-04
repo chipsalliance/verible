@@ -32,8 +32,9 @@ namespace verible {
 //
 // The MessageStreamSplitter does not read data directly from a source but
 // gets handed a read function to get the data from. This allows to use this
-// in different environments from testing to using it with a filedescriptor
-// event dispatcher (select()).
+// in different environments from testing response to different behavior of the
+// read() to using it with a filedescriptor event dispatcher (select()).
+//
 // The simplest implementation of the "ReadFun" just wraps a system read() call.
 //
 // The header data MUST contain a Content-Length header.
@@ -86,8 +87,8 @@ class MessageStreamSplitter {
 
   // -- Statistical data
 
-  uint64_t StatLargestBodySeen() const { return stats_largest_body_; }
-  uint64_t StatTotalBytesRead() const { return stats_total_bytes_read_; }
+  size_t StatLargestBodySeen() const { return stats_largest_body_; }
+  size_t StatTotalBytesRead() const { return stats_total_bytes_read_; }
 
  private:
   static int ParseHeaderGetBodyOffset(absl::string_view data, int *body_size);
@@ -100,7 +101,7 @@ class MessageStreamSplitter {
   MessageProcessFun message_processor_;
 
   size_t stats_largest_body_ = 0;
-  uint64_t stats_total_bytes_read_ = 0;
+  size_t stats_total_bytes_read_ = 0;
   absl::string_view pending_data_;
 };
 }  // namespace verible

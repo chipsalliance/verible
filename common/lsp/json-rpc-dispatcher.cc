@@ -19,9 +19,6 @@ static constexpr int kMethodNotFound = -32601;
 static constexpr int kInternalError = -32603;
 
 namespace verible {
-// Dispatch incoming message, a string view with json data.
-// Call this with the content of exactly one message.
-// If this is an RPC call, it send the response via the WriteFun.
 void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   nlohmann::json request;
   try {
@@ -41,7 +38,7 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   }
   const std::string &method = request["method"];
 
-  // Direct dispatch, later maybe send to thread-pool ?
+  // Direct dispatch, later maybe send to an executor that returns futures ?
   const bool is_notification = (request.find("id") == request.end());
   bool handled = false;
   if (is_notification) {

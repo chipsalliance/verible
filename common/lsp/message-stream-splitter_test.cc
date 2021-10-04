@@ -26,6 +26,8 @@ using ::testing::HasSubstr;
 namespace verible {
 TEST(MessageStreamSplitterTest, NotRegisteredMessageProcessor) {
   MessageStreamSplitter s(4096);
+  // We need to have had a message processor registered before, otherwise
+  // the read would not know where to send results.
   auto status = s.PullFrom([](char *, int) { return 0; });
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kFailedPrecondition);
@@ -150,7 +152,7 @@ TEST(MessageStreamSplitterTest, CompleteReadMultipleMessagesShortRead) {
 
   // Read until we reached EOF, indicated as kUnavailable
   EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);  // EOF
-  EXPECT_GT(read_call_count, 10);  // this requires a few read calls.
+  EXPECT_GT(read_call_count, 10);  // Just checking that it is significatnly > 1
   EXPECT_EQ(processor_call_count, 2);
 }
 

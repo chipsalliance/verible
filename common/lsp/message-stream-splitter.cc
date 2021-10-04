@@ -15,15 +15,11 @@
 #include "common/lsp/message-stream-splitter.h"
 
 namespace verible {
-static constexpr absl::string_view kEndHeaderMarker = "\r\n\r\n";
-static constexpr absl::string_view kContentLengthHeader = "Content-Length: ";
-
 absl::Status MessageStreamSplitter::PullFrom(const ReadFun &read_fun) {
   if (!message_processor_) {
     return absl::FailedPreconditionError(
-        "MessageStreamSplitter: Message "
-        "processor not yet set, needed "
-        "before ProcessInput() called");
+        "MessageStreamSplitter: Message processor not yet set, needed "
+        "before PullFrom() called");
   }
   return ReadInput(read_fun);
 }
@@ -32,21 +28,28 @@ absl::Status MessageStreamSplitter::PullFrom(const ReadFun &read_fun) {
 // Return -2 if header complete, but does not contain a valid
 //    Content-Length header (i.e. an actual problem)
 // On success, returns the offset to the body and its size in "body_size"
+static constexpr int kIncompleteHeader = -1;
+static constexpr int kGarbledHeader = -2;
 int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
                                                     int *body_size) {
+  static constexpr absl::string_view kEndHeaderMarker = "\r\n\r\n";
+  static constexpr absl::string_view kContentLengthHeader = "Content-Length: ";
+
   auto end_of_header = data.find(kEndHeaderMarker);
-  if (end_of_header == absl::string_view::npos) return -1;  // incomplete
+  if (end_of_header == absl::string_view::npos) return kIncompleteHeader;
 
   // Very dirty search for header - we don't check if starts with line.
   const absl::string_view header_content(data.data(), end_of_header);
   auto found_ContentLength_header = header_content.find(kContentLengthHeader);
-  if (found_ContentLength_header == absl::string_view::npos) return -2;
+  if (found_ContentLength_header == absl::string_view::npos) {
+    return kGarbledHeader;
+  }
 
   size_t end_key = found_ContentLength_header + kContentLengthHeader.size();
   absl::string_view body_size_start_of_value = {
       header_content.data() + end_key, header_content.size() - end_key};
   if (!absl::SimpleAtoi(body_size_start_of_value, body_size)) {
-    return -2;
+    return kGarbledHeader;
   }
 
   return end_of_header + kEndHeaderMarker.size();
@@ -54,14 +57,13 @@ int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
 
 // Read from data and process all fully available messages found in data.
 // Updates "data" to return the remaining unprocessed data.
-// Returns ok() status unless header is corrupted or one of the
-// message processor call fails.
+// Returns ok() status encountered a corrupted header.
 absl::Status MessageStreamSplitter::ProcessContainedMessages(
     absl::string_view *data) {
   while (!data->empty()) {
     int body_size = 0;
     const int body_offset = ParseHeaderGetBodyOffset(*data, &body_size);
-    if (body_offset == -2) {
+    if (body_offset == kGarbledHeader) {
       absl::string_view limited_view(
           data->data(), std::min(data->size(), static_cast<size_t>(256)));
       return absl::InvalidArgumentError(
@@ -69,8 +71,10 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
     }
 
     const int message_size = body_offset + body_size;
-    if (body_offset < 0 || message_size > static_cast<int>(data->size()))
+    if (body_offset == kIncompleteHeader ||
+        message_size > static_cast<int>(data->size())) {
       return absl::OkStatus();  // Only insufficient partial buffer available.
+    }
 
     absl::string_view header(data->data(), body_offset);
     absl::string_view body(data->data() + body_offset, body_size);
@@ -89,7 +93,7 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
   char *begin_of_read = read_buffer_.get();
   int available_read_space = read_buffer_size_;
 
-  // Get all we had left from last time to the beginning of the buffer.
+  // Move all we had left from last time to the beginning of the buffer.
   // This is in the same buffer, so we need to memmove()
   if (!pending_data_.empty()) {
     memmove(begin_of_read, pending_data_.data(), pending_data_.size());

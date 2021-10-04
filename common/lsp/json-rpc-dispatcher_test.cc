@@ -57,9 +57,8 @@ TEST(JsonRpcDispatcherTest, Call_MissingMethodInRequest) {
     EXPECT_EQ(j["error"]["code"], kJsonRpcMethodNotFound) << s;
     ++write_fun_called;
   });
-  dispatcher.AddNotificationHandler("foo", [&](const json &j) {  //
-    ++notification_fun_called;
-  });
+  dispatcher.AddNotificationHandler(
+      "foo", [&](const json &j) { ++notification_fun_called; });
 
   dispatcher.DispatchMessage(
       R"({"jsonrpc":"2.0","params":{"hello": "world"}})");
@@ -77,10 +76,15 @@ TEST(JsonRpcDispatcherTest, CallNotification) {
     std::cerr << s;
     ++write_fun_called;
   });
-  dispatcher.AddNotificationHandler("foo", [&](const json &j) {
-    EXPECT_EQ(j, json::parse(R"({ "hello": "world"})"));
-    ++notification_fun_called;
-  });
+  const bool registered =
+      dispatcher.AddNotificationHandler("foo", [&](const json &j) {
+        EXPECT_EQ(j, json::parse(R"({ "hello": "world"})"));
+        ++notification_fun_called;
+      });
+  EXPECT_TRUE(registered);
+
+  // Registration for method with that name only works once.
+  EXPECT_FALSE(dispatcher.AddNotificationHandler("foo", [](const json &j) {}));
 
   dispatcher.DispatchMessage(
       R"({"jsonrpc":"2.0","method":"foo","params":{"hello": "world"}})");
@@ -137,11 +141,17 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler) {
     EXPECT_TRUE(j.find("error") == j.end());
     ++write_fun_called;
   });
-  dispatcher.AddRequestHandler("foo", [&](const json &j) -> json {
-    EXPECT_EQ(j, json::parse(R"({ "hello":"world"})"));
-    ++rpc_fun_called;
-    return json::parse(R"({ "some": "response"})");
-  });
+  const bool registered =
+      dispatcher.AddRequestHandler("foo", [&](const json &j) -> json {
+        EXPECT_EQ(j, json::parse(R"({ "hello":"world"})"));
+        ++rpc_fun_called;
+        return json::parse(R"({ "some": "response"})");
+      });
+  EXPECT_TRUE(registered);
+
+  // Registration with already registered name should fail.
+  EXPECT_FALSE(dispatcher.AddRequestHandler(
+      "foo", [](const json &j) -> json { return nullptr; }));
 
   dispatcher.DispatchMessage(
       R"({"jsonrpc":"2.0","id":1,"method":"foo","params":{"hello":"world"}})");
