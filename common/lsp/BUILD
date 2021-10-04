@@ -37,6 +37,11 @@ cc_library(
     name = "json-rpc-dispatcher",
     hdrs = ["json-rpc-dispatcher.h"],
     srcs = ["json-rpc-dispatcher.cc"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fexceptions"],
+    }),
+    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
@@ -48,6 +53,11 @@ cc_library(
 cc_test(
     name = "json-rpc-dispatcher_test",
     srcs = ["json-rpc-dispatcher_test.cc"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fexceptions"],
+    }),
+    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
         "@com_google_absl//absl/strings",
