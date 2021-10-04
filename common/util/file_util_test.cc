@@ -130,17 +130,16 @@ TEST(FileUtil, StatusErrorReporting) {
   // this test here.
   // TODO: Can we make permission-denied test that works on Windows ?
 
-  // Enforce a permission denied situation
-  // TODO: Issue #963 - if this turns out to not always succeed to chmod
-  // we should just skip the test.
-  const int chmod_result = chmod(test_file.c_str(), 0);
-  EXPECT_EQ(chmod_result, 0);
-
-  content.clear();
-  status = file::GetContents(test_file, &content);
-  EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
-  EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
-  EXPECT_TRUE(content.empty()) << "'" << content << "'";
+  // Issue #963 - if this test is run as root, the permission issue
+  // will not manifest. Also if chmod() did not succeed. Skip in this case.
+  if (geteuid() != 0 && chmod(test_file.c_str(), 0) == 0) {
+    // Enforce a permission denied situation
+    content.clear();
+    status = file::GetContents(test_file, &content);
+    EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
+    EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+    EXPECT_TRUE(content.empty()) << "'" << content << "'";
+  }
 #endif
 }
 
