@@ -71,7 +71,8 @@ class EditTextBuffer {
 
   static LineVector GenerateLines(absl::string_view content);
   void ReplaceDocument(absl::string_view content);
-  bool EditLine(const TextDocumentContentChangeEvent &c, std::string *str);
+  bool LineEdit(const TextDocumentContentChangeEvent &c, std::string *str);
+  bool MultiLineEdit(const TextDocumentContentChangeEvent &c);
 
   int64_t edit_count_ = 0;
   int64_t document_length_ = 0;

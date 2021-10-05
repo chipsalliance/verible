@@ -39,30 +39,9 @@ bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
 
   if (c.range.start.line == c.range.end.line &&
       c.text.find_first_of('\n') == std::string::npos) {
-    return EditLine(c, lines_[c.range.start.line].get());
+    return LineEdit(c, lines_[c.range.start.line].get());  // simple case.
   } else {
-    // Multiline edit.
-    const absl::string_view start_line = *lines_[c.range.start.line];
-    const auto before = start_line.substr(0, c.range.start.character);
-
-    const absl::string_view end_line = *lines_[c.range.end.line];
-    const auto behind = end_line.substr(c.range.end.character);
-    const std::string new_content = absl::StrCat(before, c.text, behind);
-
-    const auto before_begin = lines_.begin() + c.range.start.line;
-    const auto before_end = lines_.begin() + c.range.end.line + 1;
-    document_length_ -=
-        std::accumulate(before_begin, before_end, 0,
-                        [](int sum, const LineVector::value_type &line) {
-                          return sum + line->length();
-                        });
-    document_length_ += new_content.length();
-    LineVector regenerated_lines = GenerateLines(new_content);
-    // Probably not the most optimal
-    lines_.erase(before_begin, before_end);
-    lines_.insert(lines_.begin() + c.range.start.line,
-                  regenerated_lines.begin(), regenerated_lines.end());
-    return true;
+    return MultiLineEdit(c);
   }
 }
 
@@ -90,7 +69,7 @@ void EditTextBuffer::ReplaceDocument(absl::string_view content) {
   lines_ = GenerateLines(content);
 }
 
-bool EditTextBuffer::EditLine(const TextDocumentContentChangeEvent &c,
+bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
                               std::string *str) {
   int end_char = c.range.end.character;
 
@@ -101,9 +80,41 @@ bool EditTextBuffer::EditLine(const TextDocumentContentChangeEvent &c,
   document_length_ -= str->length();
   const absl::string_view assembly = *str;
   const auto before = assembly.substr(0, c.range.start.character);
-  const auto behind = assembly.substr(end_char);
-  *str = absl::StrCat(before, c.text, behind);
+  const auto after = assembly.substr(end_char);
+  *str = absl::StrCat(before, c.text, after);
   document_length_ += str->length();
+  return true;
+}
+
+bool EditTextBuffer::MultiLineEdit(const TextDocumentContentChangeEvent &c) {
+  const absl::string_view start_line = *lines_[c.range.start.line];
+  const auto before = start_line.substr(0, c.range.start.character);
+
+  const absl::string_view end_line = *lines_[c.range.end.line];
+  const auto after = end_line.substr(c.range.end.character);
+
+  // Assemble the full content to replace the range of lines with including
+  // the parts that come from the first and last line to be edited.
+  const std::string new_content = absl::StrCat(before, c.text, after);
+
+  // Content length update: substract all the bytes that were in the old
+  // content and add all in the new content.
+  const auto before_begin = lines_.begin() + c.range.start.line;
+  const auto before_end = lines_.begin() + c.range.end.line + 1;
+  document_length_ -=
+      std::accumulate(before_begin, before_end, 0,
+                      [](int sum, const LineVector::value_type &line) {
+                        return sum + line->length();
+                      });
+  document_length_ += new_content.length();
+
+  // The new content might include newlines, yielding multiple single lines.
+  LineVector regenerated_lines = GenerateLines(new_content);
+
+  // Update the affected lines. Probably not the most optimal but good enough
+  lines_.erase(before_begin, before_end);
+  lines_.insert(lines_.begin() + c.range.start.line, regenerated_lines.begin(),
+                regenerated_lines.end());
   return true;
 }
 
@@ -130,9 +141,7 @@ void BufferCollection::didOpenEvent(const DidOpenTextDocumentParams &o) {
 }
 
 void BufferCollection::didCloseEvent(const DidCloseTextDocumentParams &o) {
-  auto found = buffers_.find(o.textDocument.uri);
-  if (found == buffers_.end()) return;
-  buffers_.erase(found);
+  buffers_.erase(o.textDocument.uri);
 }
 
 void BufferCollection::didChangeEvent(const DidChangeTextDocumentParams &o) {
