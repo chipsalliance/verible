@@ -91,7 +91,7 @@ genrule(
     name = "lsp-protocol_h",
     srcs = ["lsp-protocol.yaml"],
     outs = ["lsp-protocol.h"],
-    cmd = "$(location jcxxgen) $(location lsp-protocol.yaml) -j '\"nlohmann/json.hpp\"' -n verible::lsp -o $@",
+    cmd = "$(location jcxxgen) $(location lsp-protocol.yaml) --json_header '\"nlohmann/json.hpp\"' --class_namespace verible::lsp --output $@",
     tools = [":jcxxgen"],
     visibility = ["//visibility:private"],
 )
@@ -100,6 +100,8 @@ cc_binary(
     name = "jcxxgen",
     srcs = ["jcxxgen.cc"],
     deps = [
+        "//common/util:init_command_line",
        "@com_google_absl//absl/strings",
+       "@com_google_absl//absl/flags:flag",
     ]
 )

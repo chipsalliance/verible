@@ -15,8 +15,7 @@
 // A simple code generator taking a yaml file and generating nlohmann/json
 // serializable structs.
 
-#include <unistd.h>
-
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -24,7 +23,18 @@
 #include <string>
 #include <unordered_map>
 
+#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "common/util/init_command_line.h"
+
+ABSL_FLAG(std::string, output, "",
+          "Name of the output file. If empty, output is written to stdout");
+ABSL_FLAG(std::string, class_namespace, "",
+          "Namespace of the generated structs");
+ABSL_FLAG(std::string, json_header, "<nlohmann/json>",
+          "Include path to json.hpp including brackets <> or quotes \"\" "
+          "around.");
 
 // Interface. Currently private, but could be moved to a header if needed.
 struct Location {
@@ -76,15 +86,12 @@ struct ObjectType {
   std::vector<const ObjectType *> superclasses;  // fixed up after all read.
 };
 
-// Parse models from file. Return vector of models if successful, nullptr
-// otherwise.
 using ObjectTypeVector = std::vector<ObjectType *>;
-std::unique_ptr<ObjectTypeVector> LoadObjectTypes(const char *filename);
 
 static bool contains(const std::string &s, char c) {
   return absl::StrContains(s, c);
 }
-static bool ParseObjectTypesFromFile(const char *filename,
+static bool ParseObjectTypesFromFile(const std::string &filename,
                                      ObjectTypeVector *parsed_out) {
   static const std::regex emptyline_re("^[ \t]*(#.*)?");
   static const std::regex toplevel_object_re("^([a-zA-Z0-9_]+):");
@@ -93,7 +100,7 @@ static bool ParseObjectTypesFromFile(const char *filename,
   static const std::regex property_re(
       "^[ \t]+([a-zA-Z_<]+)([\\?\\+]*):[ ]*([a-zA-Z0-9_]+)[ ]*(=[ \t]*(.+))?");
 
-  Location current_location = {filename, 0};
+  Location current_location = {filename.c_str(), 0};
   ObjectType *current_model = nullptr;
   std::ifstream in(filename);
   if (!in.good()) {
@@ -205,7 +212,7 @@ static bool ValidateTypes(ObjectTypeVector *object_types) {
   return true;
 }
 
-std::unique_ptr<ObjectTypeVector> LoadObjectTypes(const char *filename) {
+std::unique_ptr<ObjectTypeVector> LoadObjectTypes(const std::string &filename) {
   std::unique_ptr<ObjectTypeVector> result(new ObjectTypeVector());
 
   if (!ParseObjectTypesFromFile(filename, result.get())) return nullptr;
@@ -213,18 +220,19 @@ std::unique_ptr<ObjectTypeVector> LoadObjectTypes(const char *filename) {
   return result;
 }
 
-void GenerateCode(const char *filename, const char *nlohmann_json_include,
-                  const char *gen_namespace, const ObjectTypeVector &objects,
-                  FILE *out) {
-  fprintf(out, "// Don't modify. Generated from %s\n", filename);
+void GenerateCode(const std::string &filename,
+                  const std::string &nlohmann_json_include,
+                  const std::string &gen_namespace,
+                  const ObjectTypeVector &objects, FILE *out) {
+  fprintf(out, "// Don't modify. Generated from %s\n", filename.c_str());
   fprintf(out,
           "#pragma once\n"
           "#include <string>\n"
           "#include <vector>\n");
-  fprintf(out, "#include %s\n\n", nlohmann_json_include);
+  fprintf(out, "#include %s\n\n", nlohmann_json_include.c_str());
 
-  if (gen_namespace) {
-    fprintf(out, "namespace %s {\n", gen_namespace);
+  if (!gen_namespace.empty()) {
+    fprintf(out, "namespace %s {\n", gen_namespace.c_str());
   }
   for (const auto &o : objects) {
     fprintf(out, "struct %s", o->name.c_str());
@@ -334,46 +342,21 @@ void GenerateCode(const char *filename, const char *nlohmann_json_include,
             o->name.c_str());
   }
 
-  if (gen_namespace) {
-    fprintf(out, "}  // %s\n", gen_namespace);
+  if (!gen_namespace.empty()) {
+    fprintf(out, "}  // %s\n", gen_namespace.c_str());
   }
 }
 
 int main(int argc, char *argv[]) {
-  if (argc < 2) {
-    fprintf(stderr, "usage: %s [options] <protocol-spec-yaml>\n", argv[0]);
-    fprintf(stderr,
-            "Options:\n"
-            "  -o <filename>     : Output to filename\n"
-            "  -j <json-include> : Include path to json.hpp, "
-            "including brackets <> or quotes \"\" around.\n"
-            "                      Default: '<nlohmann/json.hpp>'\n"
-            "  -n <namespace>    : Namespace to generate structs into.\n");
+  const auto usage =
+      absl::StrCat("usage: ", argv[0], " [options] <protocol-spec-yaml>");
+  const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
+
+  if (file_args.size() < 2) {
+    std::cerr << "Need filename";
     return 1;
   }
-
-  const char *out_filename = nullptr;
-  const char *nlohmann_json_include = "<nlohmann/json.hpp>";
-  const char *generated_namespace = nullptr;
-  int opt;
-  while ((opt = getopt(argc, argv, "o:j:n:")) != -1) {
-    switch (opt) {
-      case 'o':
-        out_filename = optarg;
-        break;
-      case 'j':
-        nlohmann_json_include = optarg;
-        break;
-      case 'n':
-        generated_namespace = optarg;
-        break;
-      default:
-        fprintf(stderr, "Invalid option\n");
-        return 1;
-    }
-  }
-
-  const char *schema_filename = argv[optind];
+  const std::string &schema_filename = file_args[1];
   auto objects = LoadObjectTypes(schema_filename);
   if (!objects) {
     fprintf(stderr, "Couldn't parse spec\n");
@@ -381,14 +364,15 @@ int main(int argc, char *argv[]) {
   }
 
   FILE *out = stdout;
-  if (out_filename) {
-    out = fopen(out_filename, "w");
+  const std::string &output = absl::GetFlag(FLAGS_output);
+  if (!output.empty()) {
+    out = fopen(output.c_str(), "w");
     if (!out) {
       perror("opening output file");
       return 3;
     }
   }
 
-  GenerateCode(schema_filename, nlohmann_json_include, generated_namespace,
-               *objects, out);
+  GenerateCode(schema_filename, absl::GetFlag(FLAGS_json_header),
+               absl::GetFlag(FLAGS_class_namespace), *objects, out);
 }

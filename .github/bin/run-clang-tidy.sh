@@ -39,6 +39,7 @@ cat bazel-bin/compile_commands.json \
 find . -name "*.cc" -and -not -name "*test*.cc" \
      -or -name "*.h" -and -not -name "*test*.h" \
   | grep -v "verilog/tools/kythe" \
+  | grep -v "common/lsp" \
   | xargs -P$(nproc) -n 5 -- \
           ${CLANG_TIDY} --quiet 2>/dev/null \
   | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}
