@@ -65,3 +65,41 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "lsp-text-buffer",
+    srcs = ["lsp-text-buffer.cc"],
+    hdrs = ["lsp-text-buffer.h", "lsp-protocol.h"],
+    deps = [
+        ":json-rpc-dispatcher",
+        "@com_google_absl//absl/strings",
+        "@jsonhpp//:jsonhpp",
+    ]
+)
+
+cc_test(
+    name = "lsp-text-buffer_test",
+    srcs = ["lsp-text-buffer_test.cc"],
+    deps = [
+        ":lsp-text-buffer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
+genrule(
+    name = "lsp-protocol_h",
+    srcs = ["lsp-protocol.yaml"],
+    outs = ["lsp-protocol.h"],
+    cmd = "$(location jcxxgen) $(location lsp-protocol.yaml) -j '\"nlohmann/json.hpp\"' -n verible::lsp -o $@",
+    tools = [":jcxxgen"],
+    visibility = ["//visibility:private"],
+)
+
+cc_binary(
+    name = "jcxxgen",
+    srcs = ["jcxxgen.cc"],
+    deps = [
+       "@com_google_absl//absl/strings",
+    ]
+)

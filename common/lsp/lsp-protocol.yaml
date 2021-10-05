@@ -1,0 +1,58 @@
+# Copyright 2021 The Verible Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Language Server Protocol [1] types used in this project.
+# There is a huge number of them, so let's just add the ones needed
+# as we go.
+#
+# The types defined here are generated into structs with the jcxxgen
+# code generator, that generates structs with the necessary boilerplate to
+# be seamlessly converted to and from json with the nlohmann/json library.
+#
+# [1]: https://microsoft.github.io/language-server-protocol/specification
+
+Position:
+  line: integer       # Zero based line
+  character: integer  # Zero based column
+
+Range:
+  start: Position
+  end: Position
+
+TextDocumentIdentifier:
+  uri: string
+
+TextDocumentItem:
+  <:TextDocumentIdentifier
+  languageId: string
+  version: integer
+  text: string
+
+TextDocumentContentChangeEvent:
+  range?: Range     # Range optional; if no range given, full document replace
+  text: string
+
+# -- Text document notifiations. These allow us to keep track of the content.
+DidOpenTextDocumentParams:      # textDocument/didOpen
+  textDocument: TextDocumentItem
+
+DidChangeTextDocumentParams:    # textDocument/didChange
+  textDocument: TextDocumentIdentifier
+  contentChanges+: TextDocumentContentChangeEvent
+
+DidSaveTextDocumentParams:      # textDocument/didSave
+  textDocument: TextDocumentIdentifier
+
+DidCloseTextDocumentParams:     # textDocument/didClose
+  textDocument: TextDocumentIdentifier
