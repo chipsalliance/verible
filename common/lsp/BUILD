@@ -91,7 +91,7 @@ genrule(
     name = "lsp-protocol_h",
     srcs = ["lsp-protocol.yaml"],
     outs = ["lsp-protocol.h"],
-    cmd = "$(location jcxxgen) $(location lsp-protocol.yaml) --json_header '\"nlohmann/json.hpp\"' --class_namespace verible::lsp --output $@",
+    cmd = '$(location jcxxgen) --json_header=\'"nlohmann/json.hpp"\' --class_namespace verible::lsp --output $@ $(location lsp-protocol.yaml)',
     tools = [":jcxxgen"],
     visibility = ["//visibility:private"],
 )

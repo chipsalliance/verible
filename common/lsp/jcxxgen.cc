@@ -32,7 +32,7 @@ ABSL_FLAG(std::string, output, "",
           "Name of the output file. If empty, output is written to stdout");
 ABSL_FLAG(std::string, class_namespace, "",
           "Namespace of the generated structs");
-ABSL_FLAG(std::string, json_header, "<nlohmann/json>",
+ABSL_FLAG(std::string, json_header, "<nlohmann/json.hpp>",
           "Include path to json.hpp including brackets <> or quotes \"\" "
           "around.");
 
