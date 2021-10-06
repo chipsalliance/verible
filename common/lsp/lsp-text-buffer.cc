@@ -26,7 +26,6 @@ void EditTextBuffer::ApplyChanges(
 }
 
 bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
-  ++edit_count_;
   if (!c.has_range) {
     ReplaceDocument(c.text);
     return true;
@@ -138,6 +137,7 @@ void BufferCollection::didOpenEvent(const DidOpenTextDocumentParams &o) {
   auto inserted = buffers_.insert({o.textDocument.uri, nullptr});
   if (inserted.second) {
     inserted.first->second.reset(new EditTextBuffer(o.textDocument.text));
+    inserted.first->second->set_last_global_version(++global_version_);
   }
 }
 
@@ -148,7 +148,23 @@ void BufferCollection::didCloseEvent(const DidCloseTextDocumentParams &o) {
 void BufferCollection::didChangeEvent(const DidChangeTextDocumentParams &o) {
   auto found = buffers_.find(o.textDocument.uri);
   if (found == buffers_.end()) return;
-  found->second->ApplyChanges(o.contentChanges);
+  EditTextBuffer *const buffer = found->second.get();
+  buffer->ApplyChanges(o.contentChanges);
+  buffer->set_last_global_version(++global_version_);
+}
+
+int BufferCollection::MapBuffersChangedSince(
+    int64_t last_global_version,
+    const std::function<void(const std::string &uri,
+                             const EditTextBuffer &buffer)> &map_fun) const {
+  if (global_version_ <= last_global_version) return 0;
+  int count = 0;
+  for (const auto &b : buffers_) {
+    if (b.second->last_global_version() <= last_global_version) continue;
+    ++count;
+    if (map_fun) map_fun(b.first, *b.second);
+  }
+  return count;
 }
 
 void EditTextBuffer::RequestContent(const ContentProcessFun &processor) const {
