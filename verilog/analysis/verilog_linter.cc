@@ -77,6 +77,7 @@ namespace verilog {
 
 using verible::LineColumnMap;
 using verible::LintRuleStatus;
+using verible::LintViolationWithStatus;
 using verible::LintWaiver;
 using verible::TextStructureView;
 using verible::TokenInfo;
@@ -321,7 +322,7 @@ ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
 //  2..: other fatal issues such as file not found.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config,
-                ViolationHandler* violation_handler, bool check_syntax,
+                verible::ViolationHandler* violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context) {
   std::string content;
   const absl::Status content_status =

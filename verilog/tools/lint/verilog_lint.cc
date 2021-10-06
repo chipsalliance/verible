@@ -29,6 +29,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/violation_handler.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
@@ -45,6 +46,11 @@ enum class AutofixMode {
   kInplace,             // Automatically apply patch in-place.
 };
 
+enum class OutputFormat {
+  kPlain,
+  kRDJson,
+};
+
 static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
   static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap({
       {"no", AutofixMode::kNo},
@@ -56,8 +62,20 @@ static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
   return kAutofixModeEnumStringMap;
 }
 
+static const verible::EnumNameMap<OutputFormat>& OutputFormatEnumStringMap() {
+  static const verible::EnumNameMap<OutputFormat> kOutputFormatEnumStringMap({
+      {"plain", OutputFormat::kPlain},
+      {"rdjson", OutputFormat::kRDJson},
+  });
+  return kOutputFormatEnumStringMap;
+}
+
 std::ostream& operator<<(std::ostream& stream, AutofixMode mode) {
   return AutofixModeEnumStringMap().Unparse(mode, stream);
+}
+
+std::ostream& operator<<(std::ostream& stream, OutputFormat format) {
+  return OutputFormatEnumStringMap().Unparse(format, stream);
 }
 
 std::string AbslUnparseFlag(const AutofixMode& mode) {
@@ -66,9 +84,21 @@ std::string AbslUnparseFlag(const AutofixMode& mode) {
   return stream.str();
 }
 
+std::string AbslUnparseFlag(const OutputFormat& format) {
+  std::ostringstream stream;
+  OutputFormatEnumStringMap().Unparse(format, stream);
+  return stream.str();
+}
+
 bool AbslParseFlag(absl::string_view text, AutofixMode* mode,
                    std::string* error) {
   return AutofixModeEnumStringMap().Parse(text, mode, error, "--autofix value");
+}
+
+bool AbslParseFlag(absl::string_view text, OutputFormat* format,
+                   std::string* error) {
+  return OutputFormatEnumStringMap().Parse(text, format, error,
+                                           "--output_format value");
 }
 
 // LINT.IfChange
@@ -99,6 +129,8 @@ ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
 ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to if "
           "--autofix=patch or --autofix=patch-interactive");
+ABSL_FLAG(OutputFormat, output_format, OutputFormat::kPlain,
+          "Output format; one of [plain|rdjson]");
 
 // LINT.ThenChange(README.md)
 
@@ -163,10 +195,18 @@ int main(int argc, char** argv) {
     return {verilog::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
 
-  std::unique_ptr<verilog::ViolationHandler> violation_handler;
+  auto select_printer =
+      [&](const OutputFormat& format) -> verible::ViolationHandler* {
+    if (format == OutputFormat::kRDJson)
+      return new verible::RDJsonPrinter(&std::cerr);
+    return new verilog::ViolationPrinter(&std::cerr);
+  };
+
+  std::unique_ptr<verible::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
-      violation_handler.reset(new verilog::ViolationPrinter(&std::cerr));
+      violation_handler.reset(
+          select_printer(absl::GetFlag(FLAGS_output_format)));
       break;
     case AutofixMode::kPatchInteractive:
       CHECK(autofix_output_stream);

@@ -227,6 +227,7 @@ cc_library(
         "//common/analysis:text_structure_linter",
         "//common/analysis:token_stream_lint_rule",
         "//common/analysis:token_stream_linter",
+        "//common/analysis:violation_handler",
         "//common/strings:line_column_map",
         "//common/strings:diff",
         "//common/text:concrete_syntax_tree",

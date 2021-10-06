@@ -223,7 +223,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
         VerilogLintTextStructure(filename, config_, text_structure);
     verilog::ViolationPrinter violation_printer(&diagnostics);
-    const std::set<LintViolationWithStatus> violations =
+    const std::set<verible::LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
     violation_printer.HandleViolations(violations, text_structure.Contents(),
                                        filename);
@@ -460,7 +460,7 @@ class ViolationFixerTest : public testing::Test {
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
         VerilogLintTextStructure(temp_file.filename(), config_, text_structure);
 
-    const std::set<LintViolationWithStatus> violations =
+    const std::set<verible::LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
     violation_fixer.HandleViolations(violations, text_structure.Contents(),
                                      temp_file.filename());
