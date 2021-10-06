@@ -67,6 +67,22 @@ cc_test(
 )
 
 cc_library(
+    name = "file-event-dispatcher",
+    srcs = ["file-event-dispatcher.cc"],
+    hdrs = ["file-event-dispatcher.h"],
+)
+
+cc_test(
+    name = "file-event-dispatcher_test",
+    srcs = ["file-event-dispatcher_test.cc"],
+    deps = [
+       ":file-event-dispatcher",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "lsp-text-buffer",
     srcs = ["lsp-text-buffer.cc"],
     hdrs = ["lsp-text-buffer.h", "lsp-protocol.h"],
