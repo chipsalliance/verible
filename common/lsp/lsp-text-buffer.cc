@@ -25,7 +25,6 @@ void EditTextBuffer::ApplyChanges(
   for (const auto &c : cc) ApplyChange(c);
 }
 
-// Apply a LSP edit operatation.
 bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
   ++edit_count_;
   if (!c.has_range) {
