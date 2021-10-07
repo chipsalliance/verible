@@ -11062,10 +11062,10 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
          "cfg.convert2string()), UVM_LOW)\n"
          "endmodule",
          "module foo;\n"
-         "  `uvm_info(`gfn, $sformatf(\n"
-         "                      \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE "
+         "  `uvm_info(\n"
+         "      `gfn, $sformatf(\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE "
          "|----\\n %s\", cfg.convert2string()),\n"
-         "            UVM_LOW)\n"
+         "      UVM_LOW)\n"
          "endmodule\n"},
         {"module x;"
          "`uvm_fatal(`gfn, $sformatf("
@@ -11074,12 +11074,11 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
          "signature_data))\n"
          "endmodule",
          "module x;\n"
-         "  `uvm_fatal(`gfn, $sformatf(\n"
-         "                       \"The data 0x%0h written to the signature "
+         "  `uvm_fatal(\n"
+         "      `gfn, $sformatf(\"The data 0x%0h written to the signature "
          "address is formatted incorrectly.\",\n"
-         "                       signature_data))\n"
+         "                      signature_data))\n"
          "endmodule\n"},
-
         {// nested modules, three-levels
          "module x; module y; module z;"
          "`uvm_fatal(`gfn, $sformatf("

@@ -76,8 +76,8 @@ void OptimizeTokenPartitionTree(TokenPartitionTree* node,
                 args,
             });
             return factory.Choice({
-                std::move(stack_layout),
                 std::move(juxtaposed_layout),
+                std::move(stack_layout),
             });
           }
 
