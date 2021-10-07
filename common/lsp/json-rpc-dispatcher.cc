@@ -20,7 +20,7 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   try {
     request = nlohmann::json::parse(data);
   } catch (const std::exception &e) {
-    statistic_counters_[e.what()]++;
+    ++statistic_counters_[e.what()];
     ++exception_count_;
     SendReply(CreateError(request, kParseError, e.what()));
     return;
@@ -29,7 +29,7 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   if (request.find("method") == request.end()) {
     SendReply(
         CreateError(request, kMethodNotFound, "Method required in request"));
-    statistic_counters_["Request without method"]++;
+    ++statistic_counters_["Request without method"];
     return;
   }
   const std::string &method = request["method"];
@@ -42,8 +42,8 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   } else {
     handled = CallRequestHandler(request, method);
   }
-  statistic_counters_[method + (handled ? "" : " (unhandled)") +
-                      (is_notification ? "  ev" : " RPC")]++;
+  ++statistic_counters_[method + (handled ? "" : " (unhandled)") +
+                        (is_notification ? "  ev" : " RPC")];
 }
 
 bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
@@ -55,7 +55,7 @@ bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
     return true;
   } catch (const std::exception &e) {
     ++exception_count_;
-    statistic_counters_[method + " : " + e.what()]++;
+    ++statistic_counters_[method + " : " + e.what()];
   }
   return false;
 }
@@ -74,7 +74,7 @@ bool JsonRpcDispatcher::CallRequestHandler(const nlohmann::json &req,
     return true;
   } catch (const std::exception &e) {
     ++exception_count_;
-    statistic_counters_[method + " : " + e.what()]++;
+    ++statistic_counters_[method + " : " + e.what()];
     SendReply(CreateError(req, kInternalError, e.what()));
   }
   return false;

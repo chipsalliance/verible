@@ -46,9 +46,7 @@ int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
   }
 
   size_t end_key = found_ContentLength_header + kContentLengthHeader.size();
-  absl::string_view body_size_start_of_value = {
-      header_content.data() + end_key, header_content.size() - end_key};
-  if (!absl::SimpleAtoi(body_size_start_of_value, body_size)) {
+  if (!absl::SimpleAtoi(header_content.substr(end_key), body_size)) {
     return kGarbledHeader;
   }
 
@@ -116,7 +114,7 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
     if (!pending_data_.empty()) {
       return absl::DataLossError(
           absl::StrCat("Got EOF, but still have incomplete message with ",
-                       pending_data_.size(), "bytes read so far."));
+                       pending_data_.size(), " bytes read so far."));
     }
     return absl::UnavailableError(absl::StrCat("read() returned ", bytes_read));
   }

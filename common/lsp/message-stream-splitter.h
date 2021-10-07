@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 
-//
 #include "absl/status/status.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -83,7 +82,7 @@ class MessageStreamSplitter {
   //  - kUnavailable     : regular EOF, no data pending. A 'good' non-ok status.
   //  - kDataloss        : got EOF, but still incomplete data pending.
   //  - kResourceExhausted: Buffer size chosen in constructor is not sufficient.
-  //  - kInvalidargument : stream corrupted, couldn't read header.
+  //  - kInvalidArgument : stream corrupted, couldn't read header.
   absl::Status PullFrom(const ReadFun &read_fun);
 
   // -- Statistical data
