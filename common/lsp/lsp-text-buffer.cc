@@ -68,6 +68,7 @@ void EditTextBuffer::ReplaceDocument(absl::string_view content) {
   lines_ = GenerateLines(content);
 }
 
+// Return success (might not if input out of range)
 bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
                               std::string *str) {
   int end_char = c.range.end.character;
@@ -85,6 +86,7 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
   return true;
 }
 
+// Returns success (always succeeds);
 bool EditTextBuffer::MultiLineEdit(const TextDocumentContentChangeEvent &c) {
   const absl::string_view start_line = *lines_[c.range.start.line];
   const auto before = start_line.substr(0, c.range.start.character);

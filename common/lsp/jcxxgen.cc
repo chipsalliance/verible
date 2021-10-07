@@ -91,9 +91,11 @@ using ObjectTypeVector = std::vector<ObjectType *>;
 static bool contains(const std::string &s, char c) {
   return absl::StrContains(s, c);
 }
+
+// Returns if successful.
 static bool ParseObjectTypesFromFile(const std::string &filename,
                                      ObjectTypeVector *parsed_out) {
-  static const std::regex emptyline_re("^[ \t]*(#.*)?");
+  static const std::regex emptyline_or_comment_re("^[ \t]*(#.*)?");
   static const std::regex toplevel_object_re("^([a-zA-Z0-9_]+):");
 
   // For now, let's just read up to the first type and leave out alternatives
@@ -113,7 +115,7 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
     std::getline(in, line);
     current_location.line++;
 
-    if (std::regex_match(line, emptyline_re)) continue;
+    if (std::regex_match(line, emptyline_or_comment_re)) continue;
 
     if (std::regex_search(line, matches, toplevel_object_re)) {
       current_model = new ObjectType(current_location, matches[1]);
@@ -144,30 +146,31 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
   return true;
 }
 
+// Validate types and return if successful.
 static bool ValidateTypes(ObjectTypeVector *object_types) {
   std::unordered_map<std::string, ObjectType *> typeByName;
 
-  for (auto &o : *object_types) {
+  for (auto &obj : *object_types) {
     // We only insert types as they come, so that we can make sure they are
     // used after being defined.
-    auto inserted = typeByName.insert({o->name, o});
+    auto inserted = typeByName.insert({obj->name, obj});
     if (!inserted.second) {
-      std::cerr << o->location << "Duplicate name; previous defined in "
+      std::cerr << obj->location << "Duplicate name; previous defined in "
                 << inserted.first->second->location << "\n";
       return false;
     }
 
     // Resolve superclasses
-    for (const auto &e : o->extends) {
+    for (const auto &e : obj->extends) {
       const auto &found = typeByName.find(e);
       if (found == typeByName.end()) {
-        std::cerr << o->location << "Unknown superclass " << e << "\n";
+        std::cerr << obj->location << "Unknown superclass " << e << "\n";
         return false;
       }
-      o->superclasses.push_back(found->second);
+      obj->superclasses.push_back(found->second);
     }
 
-    for (auto &p : o->properties) {
+    for (auto &p : obj->properties) {
       const std::string &t = p.type;
       if (t == "object" || t == "string" || t == "integer" || t == "boolean") {
         continue;
@@ -184,20 +187,20 @@ static bool ValidateTypes(ObjectTypeVector *object_types) {
     // Validate that we don't have properties with the same name twice in
     // one class (including superclasses)
     std::unordered_map<std::string, const Property *> my_property_names;
-    for (const auto &p : o->properties) {
+    for (const auto &p : obj->properties) {
       auto inserted = my_property_names.insert({p.name, &p});
       if (inserted.second) continue;
-      std::cerr << p.location << "In class '" << o->name
+      std::cerr << p.location << "In class '" << obj->name
                 << "' same name property '" << p.name << "' defined here\n"
                 << inserted.first->second->location << "  ... and here\n";
       return false;
     }
-    for (const auto &s : o->superclasses) {
+    for (const auto &s : obj->superclasses) {
       for (const auto &sp : s->properties) {
         auto inserted = my_property_names.insert({sp.name, &sp});
         if (inserted.second) continue;
-        const bool is_owner_superclass = (inserted.first->second->owner != o);
-        std::cerr << o->location << o->name << " has duplicate property '"
+        const bool is_owner_superclass = (inserted.first->second->owner != obj);
+        std::cerr << obj->location << obj->name << " has duplicate property '"
                   << sp.name << "'\n"
                   << inserted.first->second->location << "  ... found in "
                   << (is_owner_superclass ? "super" : "") << "class '"
@@ -234,16 +237,16 @@ void GenerateCode(const std::string &filename,
   if (!gen_namespace.empty()) {
     fprintf(out, "namespace %s {\n", gen_namespace.c_str());
   }
-  for (const auto &o : objects) {
-    fprintf(out, "struct %s", o->name.c_str());
+  for (const auto &obj : objects) {
+    fprintf(out, "struct %s", obj->name.c_str());
     bool is_first = true;
-    for (const auto &e : o->extends) {
+    for (const auto &e : obj->extends) {
       fprintf(out, "%s", is_first ? " :" : ",");
       fprintf(out, " public %s", e.c_str());
       is_first = false;
     }
     fprintf(out, " {\n");
-    for (const auto &p : o->properties) {
+    for (const auto &p : obj->properties) {
       std::string type;
       if (p.object_type)
         type = p.object_type->name;
@@ -277,10 +280,10 @@ void GenerateCode(const std::string &filename,
     // nlohmann::json serialization
     fprintf(out, "\n");
     fprintf(out, "  void Deserialize(const nlohmann::json &j) {\n");
-    for (const auto &e : o->extends) {
+    for (const auto &e : obj->extends) {
       fprintf(out, "    %s::Deserialize(j);\n", e.c_str());
     }
-    for (const auto &p : o->properties) {
+    for (const auto &p : obj->properties) {
       int indent = 4;
       std::string access_call = "j.at(\"" + p.name + "\")";
       std::string access_deref = access_call + ".";
@@ -307,10 +310,10 @@ void GenerateCode(const std::string &filename,
     fprintf(out, "  }\n");
 
     fprintf(out, "  void Serialize(nlohmann::json *j) const {\n");
-    for (const auto &e : o->extends) {
+    for (const auto &e : obj->extends) {
       fprintf(out, "    %s::Serialize(j);\n", e.c_str());
     }
-    for (const auto &p : o->properties) {
+    for (const auto &p : obj->properties) {
       int indent = 4;
       if (p.is_optional) {
         fprintf(out, "%*sif (has_%s)", indent, "", p.name.c_str());
@@ -335,11 +338,11 @@ void GenerateCode(const std::string &filename,
     fprintf(out,
             "inline void to_json(nlohmann::json &j, const %s &obj) "
             "{ obj.Serialize(&j); }\n",
-            o->name.c_str());
+            obj->name.c_str());
     fprintf(out,
             "inline void from_json(const nlohmann::json &j, %s &obj) "
             "{ obj.Deserialize(j); }\n\n",
-            o->name.c_str());
+            obj->name.c_str());
   }
 
   if (!gen_namespace.empty()) {

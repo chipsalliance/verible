@@ -31,7 +31,7 @@ TEST(TextBufferTest, RecreateEmptyFile) {
 
 TEST(TextBufferTest, RequestParticularLine) {
   EditTextBuffer buffer("foo\nbar\nbaz\n");
-  EXPECT_EQ(buffer.lines(), 3);
+  ASSERT_EQ(buffer.lines(), 3);
   buffer.RequestLine(0, [](absl::string_view s) {  //
     EXPECT_EQ(std::string(s), "foo\n");
   });

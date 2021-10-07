@@ -39,6 +39,7 @@ class EditTextBuffer {
 
   explicit EditTextBuffer(absl::string_view initial_text);
   EditTextBuffer(const EditTextBuffer &) = delete;
+  EditTextBuffer(EditTextBuffer &&) = delete;
 
   // Requst to flatten the content call and call function "processor" that
   // gets a string_view of the current state that is valid for the duration
@@ -87,6 +88,7 @@ class BufferCollection {
   // Create buffer collection and subscribe to buffer events at the dispatcher.
   explicit BufferCollection(JsonRpcDispatcher *dispatcher);
   BufferCollection(const BufferCollection &) = delete;
+  BufferCollection(BufferCollection &&) = delete;
 
   // Handle textDocument/didOpen event; create a new EditTextBuffer.
   void didOpenEvent(const DidOpenTextDocumentParams &o);
