@@ -11090,8 +11090,8 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
          "  module y;\n"
          "    module z;\n"
          "      `uvm_fatal(\n"
-         "          `gfn, $sformatf(\n"
-         "                    \"The data 0x%0h written to the signature "
+         "          `gfn,\n"
+         "          $sformatf(\"The data 0x%0h written to the signature "
          "address is formatted incorrectly.\",\n"
          "                    signature_data))\n"
          "    endmodule\n"
@@ -11153,11 +11153,10 @@ static constexpr FormatterTestCase kFunctionCallsWithComments[] = {
      " i), UVM_DEBUG)\n"
      "endmodule",
      "module foo;\n"
-     "  `uvm_info(\n"
-     "      `gfn, $sformatf(\n"
-     "                \"\\n  base_vseq: generate %0d pulse in channel %0d\", "
-     "cfg.num_pulses,  // comment\n"
-     "                i), UVM_DEBUG)\n"
+     "  `uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d pulse in "
+     "channel %0d\",\n"
+     "                            cfg.num_pulses,  // comment\n"
+     "                            i), UVM_DEBUG)\n"
      "endmodule\n"},
 };
 

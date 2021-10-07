@@ -558,10 +558,12 @@ class LayoutFunctionFactory {
 
         const auto& next_element = lfs[j + 1];
 
+        const auto layout_functions = {std::move(incremental), next_element};
         if (next_element.MustWrap())
-          incremental = Stack({std::move(incremental), next_element});
+          incremental = Stack(layout_functions);
         else
-          incremental = Juxtaposition({std::move(incremental), next_element});
+          incremental = Choice(
+              {Juxtaposition(layout_functions), Stack(layout_functions)});
       }
       results_i.back() = std::move(incremental);
 
