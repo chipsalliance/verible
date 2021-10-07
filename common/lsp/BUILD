@@ -29,8 +29,8 @@ cc_test(
     srcs = ["message-stream-splitter_test.cc"],
     deps = [
         ":message-stream-splitter",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -60,8 +60,8 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -81,6 +81,7 @@ cc_test(
     name = "lsp-text-buffer_test",
     srcs = ["lsp-text-buffer_test.cc"],
     deps = [
+        ":json-rpc-dispatcher",
         ":lsp-text-buffer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
