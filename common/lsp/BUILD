@@ -30,6 +30,7 @@ cc_test(
     deps = [
         ":message-stream-splitter",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -45,7 +46,6 @@ cc_library(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/status",
         "@jsonhpp//:jsonhpp",
     ],
 )
@@ -61,6 +61,7 @@ cc_test(
     deps = [
         ":json-rpc-dispatcher",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )
