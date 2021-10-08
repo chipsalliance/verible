@@ -114,15 +114,10 @@ cc_binary(
     name = "dummy-lsp",
     srcs = ["dummy-lsp.cc", "lsp-protocol.h"],
     deps = [
-      ":file-event-dispatcher",
       ":json-rpc-dispatcher",
       ":lsp-text-buffer",
       ":message-stream-splitter",
     ],
-    linkopts = select({
-        "@platforms//os:windows": [ "-DEFAULTLIB:ws2_32.lib" ],
-        "//conditions:default": [],
-    }),
 )
 
 sh_test_with_runfiles_lib(

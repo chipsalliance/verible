@@ -19,15 +19,19 @@
 }
 DUMMY_LSP="$(rlocation ${TEST_WORKSPACE}/$1)"
 
+TMP_IN=${TEST_TMPDIR:-/tmp/}/test-lsp-in.txt
 TMP_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out.txt
 
 # One message per line, converted by the awk script to header/body.
 # Simple end-to-end test
-(awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0);}' <<EOF
+awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0","method":"initialize","params":null,"id":1}
 {"jsonrpc":"2.0","method":"shutdown","params":{},"id":2}
 EOF
-) | "${DUMMY_LSP}" > "${TMP_OUT}"
+
+"${DUMMY_LSP}" < ${TMP_IN} > "${TMP_OUT}"
+
+ls -l ${TMP_IN}
 
 cat ${TMP_OUT}
 

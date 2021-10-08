@@ -16,7 +16,6 @@
 // to initialize and shutdown as well as tracking file contents.
 // This is merely to test that the json-rpc plumbing is working.
 
-#include "common/lsp/file-event-dispatcher.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
@@ -25,14 +24,15 @@
 #ifndef _WIN32
 #include <unistd.h>
 #else
+#include <fcntl.h>
 #include <io.h>
+#include <stdio.h>
 // Windows doesn't have posix read(), but something called _read
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
 
 using verible::lsp::BufferCollection;
 using verible::lsp::EditTextBuffer;
-using verible::lsp::FileEventDispatcher;
 using verible::lsp::InitializeResult;
 using verible::lsp::JsonRpcDispatcher;
 using verible::lsp::MessageStreamSplitter;
@@ -59,6 +59,10 @@ InitializeResult InitializeServer(const nlohmann::json &params) {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef _WIN32
+  _setmode(_fileno(stdin), _O_BINARY);
+#endif
+
   std::cerr << "Greetings. FYI This language server is a demo." << std::endl;
 
   // Input and output is stdin and stdout
@@ -94,21 +98,14 @@ int main(int argc, char *argv[]) {
                                  return nullptr;
                                });
 
-  static constexpr int kIdleTimeoutMs = 300;
-  FileEventDispatcher file_multiplexer(kIdleTimeoutMs);
-
-  // Whenever there is something to read from stdin, feed our message
-  // to the stream splitter which will in turn call the JSON rpc dispatcher
-  file_multiplexer.RunOnReadable(in_fd, [&stream_splitter,
-                                         &shutdown_requested]() {
-    auto status = stream_splitter.PullFrom([](char *buf, int size) -> int {  //
+  absl::Status status = absl::OkStatus();
+  while (status.ok() && !shutdown_requested) {
+    status = stream_splitter.PullFrom([](char *buf, int size) -> int {  //
       return read(in_fd, buf, size);
     });
-    if (!status.ok()) std::cerr << status.message() << std::endl;
-    return status.ok() && !shutdown_requested;
-  });
+  }
 
-  file_multiplexer.Loop();
+  std::cerr << status.message() << std::endl;
 
   if (shutdown_requested) {
     std::cerr << "Shutting down due to shutdown request." << std::endl;
