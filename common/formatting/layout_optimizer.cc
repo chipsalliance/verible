@@ -129,8 +129,13 @@ namespace {
 void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
                                      LayoutTree* destination) {
   CHECK_NOTNULL(destination);
-  if (!source.Value().is_leaf() &&
-      source.Value().Type() == destination->Value().Type()) {
+  const auto& src_item = source.Value();
+  const auto& dst_item = destination->Value();
+  if (!source.is_leaf() && src_item.Type() == dst_item.Type() &&
+      src_item.IndentationSpaces() == 0) {
+    const auto& first_subitem = source.Children().front().Value();
+    CHECK(src_item.BreakDecision() == first_subitem.BreakDecision());
+    CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
     for (const auto& sublayout : source.Children())
       destination->AdoptSubtree(sublayout);
   } else {
@@ -151,8 +156,6 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
       return stream << "juxtaposition";
     case LayoutType::kStack:
       return stream << "stack";
-    case LayoutType::kIndent:
-      return stream << "indent";
   }
   LOG(FATAL) << "Unknown layout type: " << int(type);
   return stream;
@@ -162,12 +165,13 @@ std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
   if (layout.Type() == LayoutType::kLine) {
     stream << "[ " << layout.Text() << " ]"
            << ", length: " << layout.Length()
+           << ", indentation: " << layout.IndentationSpaces()
            << ", spacing: " << layout.SpacesBefore()
            << ", break decision: " << layout.BreakDecision();
 
   } else {
     stream << "[<" << layout.Type() << ">]"
-           << ", indent: " << layout.IndentationSpaces()
+           << ", indentation: " << layout.IndentationSpaces()
            << ", spacing: " << layout.SpacesBefore()
            << ", break decision: " << layout.BreakDecision();
   }
@@ -351,7 +355,9 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
         segment->gradient -
         style_.over_column_limit_penalty * (columns_over_limit >= 0);
 
-    auto new_layout = LayoutTree(LayoutItem(indent), segment->layout);
+    auto new_layout = segment->layout;
+    new_layout.Value().SetIndentationSpaces(
+        new_layout.Value().IndentationSpaces() + indent);
 
     const int new_span = indent + segment->span;
 
@@ -502,6 +508,15 @@ LayoutFunction LayoutFunctionFactory::Choice(
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
   const auto type = layout_tree.Value().Type();
 
+  const auto relative_indentation = layout_tree.Value().IndentationSpaces();
+  const ValueSaver<int> indent_saver(
+      &current_indentation_spaces_,
+      current_indentation_spaces_ + relative_indentation);
+
+  // Apply indentation for children by enforcing
+  // start of new line
+  if (relative_indentation > 0) active_unwrapped_line_ = nullptr;
+
   switch (type) {
     case LayoutType::kLine: {
       CHECK(layout_tree.Children().empty());
@@ -556,21 +571,6 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         active_unwrapped_line_ = nullptr;
         TraverseTree(*itr);
       }
-      break;
-    }
-
-    case LayoutType::kIndent: {
-      CHECK_EQ(layout_tree.Children().size(), 1);
-      const auto relative_indentation = layout_tree.Value().IndentationSpaces();
-
-      const ValueSaver<int> indent_saver(
-          &current_indentation_spaces_,
-          current_indentation_spaces_ + relative_indentation);
-
-      // Apply indentation for children by enforcing
-      // start of new line
-      active_unwrapped_line_ = nullptr;
-      TraverseTree(layout_tree.Children().front());
       break;
     }
   }

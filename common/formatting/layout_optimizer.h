@@ -54,18 +54,6 @@ enum class LayoutType {
 
   // Stacks child items vertically. See also: LayoutFunctionFactory::Stack.
   kStack,
-
-  // Indents child with specified amount of spaces. Must contain one child.
-  //
-  // The same effect could have been achieved using a juxtaposition of empty
-  // indented line and an item. Dedicated indent layout allows for a few
-  // simplifications:
-  // * It does not introduce knot at (column_limit - indent)
-  // * No need to check layout type in Juxtaposition combinator and whether to
-  //   skip or not spaces_before (when merging indented line with normal line or
-  //   layout)
-  // * Wrapping sets spaces_before to 0.
-  kIndent,
 };
 
 std::ostream& operator<<(std::ostream& stream, LayoutType type);
@@ -93,20 +81,18 @@ class LayoutItem {
         break_decision_(!tokens_.empty() ? tokens_.front().before.break_decision
                                          : SpacingOptions::Undecided) {}
 
-  // Creates Indent layout.
-  explicit LayoutItem(int indent)
-      : type_(LayoutType::kIndent),
-        indentation_(indent),
-        spaces_before_(0),
-        break_decision_(SpacingOptions::AppendAligned) {}
-
   LayoutItem(const LayoutItem&) = default;
   LayoutItem& operator=(const LayoutItem&) = default;
 
   LayoutType Type() const { return type_; }
 
-  // Returns indent of Indent layout, 0 for other item types.
+  // Returns "hard" indent, which is never removed when the layout is joined
+  // with another layout.
   int IndentationSpaces() const { return indentation_; }
+
+  // Sets "hard" indent, which is never removed when the layout is joined
+  // with another layout.
+  void SetIndentationSpaces(int indent) { indentation_ = indent; }
 
   // Returns amount of spaces before first token.
   int SpacesBefore() const { return spaces_before_; }
@@ -280,7 +266,7 @@ class LayoutFunction {
     return segments_[index];
   }
 
-  // Returns whether BreakDecision of any layout is MustWrap.
+  // Returns whether BreakDecision of sublayouts is MustWrap.
   bool MustWrap() const {
     if (empty()) return false;
     const bool must_wrap = segments_.front().layout.Value().BreakDecision() ==

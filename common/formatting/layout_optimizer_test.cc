@@ -97,14 +97,6 @@ TEST_F(LayoutTest, TestLineLayout) {
   EXPECT_EQ(layout_short.Text(), "short_line");
 }
 
-TEST_F(LayoutTest, TestIndentedLayout) {
-  const auto indent = 7;
-  LayoutItem indent_layout(indent);
-  EXPECT_EQ(indent_layout.Type(), LayoutType::kIndent);
-  EXPECT_EQ(indent_layout.IndentationSpaces(), indent);
-  EXPECT_EQ(indent_layout.SpacesBefore(), 0);
-}
-
 TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
   const auto spaces_before = 3;
 
@@ -1287,8 +1279,8 @@ TEST_F(TreeReconstructorTest, IndentSingleLine) {
   single_line.SpanUpToToken(begin + 1);
 
   const auto indent = 7;
-  const LayoutTree layout_tree{
-      LayoutTree(LayoutItem(indent), LayoutTree(LayoutItem(single_line)))};
+  LayoutTree layout_tree{LayoutItem(single_line)};
+  layout_tree.Value().SetIndentationSpaces(indent);
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
