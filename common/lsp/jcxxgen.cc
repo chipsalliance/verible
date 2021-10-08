@@ -19,11 +19,13 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <regex>
 #include <string>
 #include <unordered_map>
 
 #include "absl/flags/flag.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "common/util/init_command_line.h"
@@ -223,29 +225,88 @@ std::unique_ptr<ObjectTypeVector> LoadObjectTypes(const std::string &filename) {
   return result;
 }
 
+// Simple code formatter that always indents when it sees "{" at the end
+// of a format string and detents on "}" at the beginning of a string.
+class CodeFormatter {
+ public:
+  CodeFormatter(std::ostream *out, int code_indent)
+      : out_(out), code_indent_(code_indent) {}
+
+  void push_indent() { indent_ += code_indent_; }
+  void pop_indent() {
+    if (indent_ > 0) indent_ -= code_indent_;
+  }
+
+  // Format string without parameters.
+  CodeFormatter &operator()(const char *fmt) {
+    IndentIfNeeded(fmt);
+    return format(fmt);
+  }
+
+  // Format string; every ${} in the format string is replaced with
+  // the native ostream printing of that given object.
+  template <typename T, typename... Targs>
+  CodeFormatter &operator()(const char *fmt, T car, Targs... cdr) {
+    IndentIfNeeded(fmt);
+    return format(fmt, car, cdr...);
+  }
+
+ private:
+  void IndentIfNeeded(const char *fmt) {
+    if (absl::StartsWith(fmt, "}")) pop_indent();
+    if (last_was_newline) {
+      *out_ << std::string(indent_, ' ');
+    }
+    last_was_newline = absl::EndsWith(fmt, "\n");
+    if (absl::EndsWith(absl::StripTrailingAsciiWhitespace(fmt), "{"))
+      push_indent();
+  }
+
+  CodeFormatter &format(const char *fmt) {
+    *out_ << fmt;
+    return *this;
+  }
+
+  template <typename T, typename... Targs>
+  CodeFormatter &format(const char *fmt, T car, Targs... cdr) {
+    for (/**/; *fmt; ++fmt) {
+      if (fmt[0] == '$' && fmt[1] == '{' && fmt[2] == '}') {
+        *out_ << car;
+        return format(fmt + 3, cdr...);
+      }
+      *out_ << *fmt;
+    }
+    return *this;
+  }
+
+  std::ostream *const out_;
+  const int code_indent_;
+  int indent_ = 0;
+  bool last_was_newline = false;
+};
+
 void GenerateCode(const std::string &filename,
                   const std::string &nlohmann_json_include,
                   const std::string &gen_namespace,
-                  const ObjectTypeVector &objects, FILE *out) {
-  fprintf(out, "// Don't modify. Generated from %s\n", filename.c_str());
-  fprintf(out,
-          "#pragma once\n"
-          "#include <string>\n"
-          "#include <vector>\n");
-  fprintf(out, "#include %s\n\n", nlohmann_json_include.c_str());
+                  const ObjectTypeVector &objects, std::ostream *out) {
+  CodeFormatter fmt(out, 2);
+  fmt("// Don't modify. Generated from ${}\n", filename);
+  fmt("#pragma once\n"
+      "#include <string>\n"
+      "#include <vector>\n");
+  fmt("#include ${}\n\n", nlohmann_json_include);
 
   if (!gen_namespace.empty()) {
-    fprintf(out, "namespace %s {\n", gen_namespace.c_str());
+    fmt("namespace ${} {\n", gen_namespace).pop_indent();
   }
   for (const auto &obj : objects) {
-    fprintf(out, "struct %s", obj->name.c_str());
+    fmt("struct ${}", obj->name);
     bool is_first = true;
-    for (const auto &e : obj->extends) {
-      fprintf(out, "%s", is_first ? " :" : ",");
-      fprintf(out, " public %s", e.c_str());
+    for (const auto &superclass : obj->extends) {
+      fmt("${} public ${}", is_first ? " :" : ",", superclass);
       is_first = false;
     }
-    fprintf(out, " {\n");
+    fmt(" {\n");
     for (const auto &p : obj->properties) {
       std::string type;
       if (p.object_type)
@@ -264,89 +325,73 @@ void GenerateCode(const std::string &filename,
         continue;
       }
       if (p.is_array) {
-        fprintf(out, "  std::vector<%s> %s", type.c_str(), p.name.c_str());
+        fmt("std::vector<${}> ${}", type, p.name);
       } else {
-        fprintf(out, "  %s %s", type.c_str(), p.name.c_str());
+        fmt("${} ${}", type, p.name);
       }
-      if (!p.default_value.empty())
-        fprintf(out, " = %s", p.default_value.c_str());
-      fprintf(out, ";\n");
+      if (!p.default_value.empty()) fmt(" = ${}", p.default_value);
+      fmt(";\n");
       if (p.is_optional) {
-        fprintf(out, "  bool has_%s = false;  // optional property\n",
-                p.name.c_str());
+        fmt("bool has_${} = false;  // optional property\n", p.name);
       }
     }
 
     // nlohmann::json serialization
-    fprintf(out, "\n");
-    fprintf(out, "  void Deserialize(const nlohmann::json &j) {\n");
-    for (const auto &e : obj->extends) {
-      fprintf(out, "    %s::Deserialize(j);\n", e.c_str());
+    fmt("\n");
+    fmt("void Deserialize(const nlohmann::json &j) {\n");
+    for (const auto &superclass : obj->extends) {
+      fmt("${}::Deserialize(j);\n", superclass);
     }
     for (const auto &p : obj->properties) {
-      int indent = 4;
       std::string access_call = "j.at(\"" + p.name + "\")";
       std::string access_deref = access_call + ".";
       if (p.is_optional) {
-        fprintf(out,
-                "%*sif (auto found = j.find(\"%s\"); found != j.end()) {\n",
-                indent, "", p.name.c_str());
-        indent += 4;
-        fprintf(out, "%*shas_%s = true;\n", indent, "", p.name.c_str());
+        fmt("if (auto found = j.find(\"${}\"); found != j.end()) {\n", p.name);
+        fmt("has_${} = true;\n", p.name);
         access_call = "*found";
         access_deref = "found->";
       }
       if (p.object_type == nullptr || p.is_array) {
-        fprintf(out, "%*s%sget_to(%s);\n", indent, "", access_deref.c_str(),
-                p.name.c_str());
+        fmt("${}get_to(${});\n", access_deref, p.name);
       } else {
-        fprintf(out, "%*s%s.Deserialize(%s);\n", indent, "", p.name.c_str(),
-                access_call.c_str());
+        fmt("${}.Deserialize(${});\n", p.name, access_call);
       }
       if (p.is_optional) {
-        fprintf(out, "%*s}\n", indent - 4, "");
+        fmt("}\n");
       }
     }
-    fprintf(out, "  }\n");
+    fmt("}\n");  // end of Deserialize
 
-    fprintf(out, "  void Serialize(nlohmann::json *j) const {\n");
+    fmt("void Serialize(nlohmann::json *j) const {\n");
     for (const auto &e : obj->extends) {
-      fprintf(out, "    %s::Serialize(j);\n", e.c_str());
+      fmt("${}::Serialize(j);\n", e);
     }
     for (const auto &p : obj->properties) {
-      int indent = 4;
-      if (p.is_optional) {
-        fprintf(out, "%*sif (has_%s)", indent, "", p.name.c_str());
-        indent = 1;
-      }
+      if (p.is_optional) fmt("if (has_${}) ", p.name);
       if (p.object_type == nullptr || p.is_array) {
-        fprintf(out, "%*s(*j)[\"%s\"] = %s;\n", indent, "", p.name.c_str(),
-                p.name.c_str());
+        fmt("(*j)[\"${}\"] = ${};\n", p.name, p.name);
       } else {
-        fprintf(out, "%*s%s.Serialize(&(*j)[\"%s\"]);\n", indent, "",
-                p.name.c_str(), p.name.c_str());
+        fmt("${}.Serialize(&(*j)[\"${}\"]);\n", p.name, p.name);
       }
     }
-    fprintf(out, "  }\n");
+    fmt("}\n");  // End of Serialize
 
-    fprintf(out, "};\n");  // End of struct
+    fmt("};\n");  // End of struct
 
     // functions that are picked up by the nlohmann::json serializer
     // We could generate template code once for all to_json/from_json that take
     // a T obj, but to limit method lookup confusion for other objects that
     // might interact with the json library, let's be explicit for each struct
-    fprintf(out,
-            "inline void to_json(nlohmann::json &j, const %s &obj) "
-            "{ obj.Serialize(&j); }\n",
-            obj->name.c_str());
-    fprintf(out,
-            "inline void from_json(const nlohmann::json &j, %s &obj) "
-            "{ obj.Deserialize(j); }\n\n",
-            obj->name.c_str());
+    fmt("inline void to_json(nlohmann::json &j, const ${} &obj) "
+        "{ obj.Serialize(&j); }\n",
+        obj->name);
+    fmt("inline void from_json(const nlohmann::json &j, ${} &obj) "
+        "{ obj.Deserialize(j); }\n\n",
+        obj->name);
   }
 
   if (!gen_namespace.empty()) {
-    fprintf(out, "}  // %s\n", gen_namespace.c_str());
+    fmt("}  // ${}\n", gen_namespace);
   }
 }
 
@@ -356,7 +401,7 @@ int main(int argc, char *argv[]) {
   const auto file_args = verible::InitCommandLine(usage, &argc, &argv);
 
   if (file_args.size() < 2) {
-    std::cerr << "Need filename";
+    std::cerr << "Need filename" << std::endl;
     return 1;
   }
   const std::string &schema_filename = file_args[1];
@@ -366,14 +411,12 @@ int main(int argc, char *argv[]) {
     return 2;
   }
 
-  FILE *out = stdout;
-  const std::string &output = absl::GetFlag(FLAGS_output);
-  if (!output.empty()) {
-    out = fopen(output.c_str(), "w");
-    if (!out) {
-      perror("opening output file");
-      return 3;
-    }
+  std::ostream *out = &std::cout;
+  std::unique_ptr<std::ostream> ostream_closer;
+  const std::string &output_file = absl::GetFlag(FLAGS_output);
+  if (!output_file.empty()) {
+    ostream_closer.reset(new std::fstream(output_file, std::ios_base::out));
+    out = ostream_closer.get();
   }
 
   GenerateCode(schema_filename, absl::GetFlag(FLAGS_json_header),
