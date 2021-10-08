@@ -72,6 +72,10 @@ cc_library(
     name = "file-event-dispatcher",
     srcs = ["file-event-dispatcher.cc"],
     hdrs = ["file-event-dispatcher.h"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_test(
@@ -114,7 +118,11 @@ cc_binary(
       ":json-rpc-dispatcher",
       ":lsp-text-buffer",
       ":message-stream-splitter",
-    ]
+    ],
+    linkopts = select({
+        "@platforms//os:windows": [ "-DEFAULTLIB:ws2_32.lib" ],
+        "//conditions:default": [],
+    }),
 )
 
 sh_test_with_runfiles_lib(

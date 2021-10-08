@@ -78,15 +78,15 @@ int main(int argc, char *argv[]) {
         return dispatcher.DispatchMessage(body);
       });
 
-  // The buffer collection keeps track of all the buffers opened in the editor
-  // passes edit events it receives from the dispatcher to it.
+  // The buffer collection keeps track of all the buffers opened in the editor.
+  // It registers callbacks to receive the relevant events on the dispatcher.
   BufferCollection buffers(&dispatcher);
 
   // Exchange of capabilities.
   dispatcher.AddRequestHandler("initialize", InitializeServer);
 
-  // The server will tell use to shut down but also notifies us on exit. Use
-  // any of these as hints to finish our service.
+  // The server will tell use to shut down. Use that as trigger to exit our
+  // loop.
   bool shutdown_requested = false;
   dispatcher.AddRequestHandler("shutdown",
                                [&shutdown_requested](const nlohmann::json &) {
