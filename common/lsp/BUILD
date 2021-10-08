@@ -29,8 +29,8 @@ cc_test(
     srcs = ["message-stream-splitter_test.cc"],
     deps = [
         ":message-stream-splitter",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -60,8 +60,49 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "lsp-text-buffer",
+    srcs = ["lsp-text-buffer.cc"],
+    hdrs = ["lsp-text-buffer.h", "lsp-protocol.h"],
+    deps = [
+        ":json-rpc-dispatcher",
+        "@com_google_absl//absl/strings",
+        "@jsonhpp//:jsonhpp",
+    ]
+)
+
+cc_test(
+    name = "lsp-text-buffer_test",
+    srcs = ["lsp-text-buffer_test.cc"],
+    deps = [
+        ":json-rpc-dispatcher",
+        ":lsp-text-buffer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
+genrule(
+    name = "lsp-protocol_h",
+    srcs = ["lsp-protocol.yaml"],
+    outs = ["lsp-protocol.h"],
+    cmd = '$(location jcxxgen) --json_header=\'"nlohmann/json.hpp"\' --class_namespace verible::lsp --output $@ $(location lsp-protocol.yaml)',
+    tools = [":jcxxgen"],
+    visibility = ["//visibility:private"],
+)
+
+cc_binary(
+    name = "jcxxgen",
+    srcs = ["jcxxgen.cc"],
+    deps = [
+        "//common/util:init_command_line",
+       "@com_google_absl//absl/strings",
+       "@com_google_absl//absl/flags:flag",
+    ]
 )
