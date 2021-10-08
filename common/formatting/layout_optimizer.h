@@ -64,16 +64,17 @@ class LayoutItem {
   // Prevent creation of uninitialized LayoutItem
   LayoutItem() = delete;
 
-  explicit LayoutItem(LayoutType type, int spacing, bool must_wrap)
+  explicit LayoutItem(LayoutType type, int spacing, bool must_wrap,
+                      int indentation = 0)
       : type_(type),
-        indentation_(0),
+        indentation_(indentation),
         spaces_before_(spacing),
         must_wrap_(must_wrap) {}
 
   // Creates Line item from UnwrappedLine.
-  explicit LayoutItem(const UnwrappedLine& uwline)
+  explicit LayoutItem(const UnwrappedLine& uwline, int indentation = 0)
       : type_(LayoutType::kLine),
-        indentation_(0),
+        indentation_(indentation),
         tokens_(uwline.TokensRange()),
         spaces_before_(!tokens_.empty() ? tokens_.front().before.spaces_required
                                         : 0),
