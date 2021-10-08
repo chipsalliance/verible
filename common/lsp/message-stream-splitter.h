@@ -25,6 +25,7 @@
 #include "absl/strings/string_view.h"
 
 namespace verible {
+namespace lsp {
 // Splits messages that are formatted as header + body coming from some
 // abstracted input stream and calls a handler for each complete message it
 // receives.
@@ -104,5 +105,6 @@ class MessageStreamSplitter {
   size_t stats_total_bytes_read_ = 0;
   absl::string_view pending_data_;
 };
+}  // namespace lsp
 }  // namespace verible
 #endif  // VERIBLE_COMMON_LSP_MESSAGE_STREAM_SPLITTER_H

@@ -34,12 +34,9 @@ cat bazel-bin/compile_commands.json \
 # for now.
 # Also, exclude kythe for now, as it is somehwat noisy and should be
 # addressed separately.
-# common/lsp excluded as the compilation database generation gets confused
-# with pure libraries not yet wired up to a binary (it is otherwise tidy-clean)
 find . -name "*.cc" -and -not -name "*test*.cc" \
      -or -name "*.h" -and -not -name "*test*.h" \
   | grep -v "verilog/tools/kythe" \
-  | grep -v "common/lsp/" \
   | xargs -P$(nproc) -n 5 -- \
           ${CLANG_TIDY} --quiet 2>/dev/null \
   | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}

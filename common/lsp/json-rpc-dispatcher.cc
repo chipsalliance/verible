@@ -15,6 +15,7 @@
 #include "common/lsp/json-rpc-dispatcher.h"
 
 namespace verible {
+namespace lsp {
 void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   nlohmann::json request;
   try {
@@ -120,4 +121,5 @@ void JsonRpcDispatcher::SendReply(const nlohmann::json &response) {
   out_bytes << response << "\n";
   write_fun_(out_bytes.str());
 }
+}  // namespace lsp
 }  // namespace verible

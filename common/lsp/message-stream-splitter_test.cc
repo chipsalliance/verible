@@ -24,6 +24,7 @@
 using ::testing::HasSubstr;
 
 namespace verible {
+namespace lsp {
 TEST(MessageStreamSplitterTest, NotRegisteredMessageProcessor) {
   MessageStreamSplitter s(4096);
   // We need to have had a message processor registered before, otherwise
@@ -213,4 +214,5 @@ TEST(MessageStreamSplitterTest, GarbledSizeInContentHeader) {
   EXPECT_THAT(status.message(), HasSubstr("header"));
   EXPECT_EQ(processor_call_count, 0);
 }
+}  // namespace lsp
 }  // namespace verible

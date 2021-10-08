@@ -15,6 +15,7 @@
 #include "common/lsp/message-stream-splitter.h"
 
 namespace verible {
+namespace lsp {
 absl::Status MessageStreamSplitter::PullFrom(const ReadFun &read_fun) {
   if (!message_processor_) {
     return absl::FailedPreconditionError(
@@ -129,4 +130,5 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
 
   return absl::OkStatus();
 }
+}  // namespace lsp
 }  // namespace verible

@@ -8,6 +8,8 @@
 
 licenses(["notice"])
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 package(
     default_visibility = [
         "//:__subpackages__",
@@ -102,6 +104,26 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ]
+)
+
+cc_binary(
+    name = "dummy-lsp",
+    srcs = ["dummy-lsp.cc", "lsp-protocol.h"],
+    deps = [
+      ":file-event-dispatcher",
+      ":json-rpc-dispatcher",
+      ":lsp-text-buffer",
+      ":message-stream-splitter",
+    ]
+)
+
+sh_test_with_runfiles_lib(
+    name = "dummy-lsp_test",
+    size = "small",
+    srcs = ["dummy-lsp_test.sh"],
+    args = ["$(location :dummy-lsp)"],
+    data = [":dummy-lsp"],
+    deps = [],
 )
 
 genrule(

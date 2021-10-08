@@ -26,6 +26,7 @@
 #include "nlohmann/json.hpp"
 
 namespace verible {
+namespace lsp {
 // A Dispatcher that is fed JSON as string, parses them to json objects and
 // dispatches the contained method call to pre-registered handlers.
 // Results of RPCCallHandlers are wrapped in a json rpc response object
@@ -129,5 +130,6 @@ class JsonRpcDispatcher {
   int exception_count_ = 0;
   StatsMap statistic_counters_;
 };
+}  // namespace lsp
 }  // namespace verible
 #endif  // VERIBLE_COMMON_LSP_JSON_RPC_DISPATCHER_H

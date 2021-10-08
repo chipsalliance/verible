@@ -86,6 +86,7 @@ compilation_database(
         "//verilog/tools/preprocessor:verible-verilog-preprocessor",
         "//verilog/tools/project:verible-verilog-project",
         "//verilog/tools/syntax:verible-verilog-syntax",
+        "//common/lsp:dummy-lsp",
     ],
     # TODO: is there a way to essentially specify //... so that all tests
     # are included as well ?
