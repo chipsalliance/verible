@@ -92,7 +92,7 @@ TEST_F(LayoutTest, TestLineLayout) {
   EXPECT_EQ(layout_short.Type(), LayoutType::kLine);
   EXPECT_EQ(layout_short.IndentationSpaces(), 0);
   EXPECT_EQ(layout_short.SpacesBefore(), 0);
-  EXPECT_EQ(layout_short.BreakDecision(), SpacingOptions::Undecided);
+  EXPECT_EQ(layout_short.MustWrap(), false);
   EXPECT_EQ(layout_short.Length(), 10);
   EXPECT_EQ(layout_short.Text(), "short_line");
 }
@@ -101,16 +101,15 @@ TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
   const auto spaces_before = 3;
 
   LayoutItem horizontal_layout(LayoutType::kJuxtaposition, spaces_before,
-                               SpacingOptions::MustAppend);
+                               false);
   EXPECT_EQ(horizontal_layout.Type(), LayoutType::kJuxtaposition);
   EXPECT_EQ(horizontal_layout.SpacesBefore(), spaces_before);
-  EXPECT_EQ(horizontal_layout.BreakDecision(), SpacingOptions::MustAppend);
+  EXPECT_EQ(horizontal_layout.MustWrap(), false);
 
-  LayoutItem vertical_layout(LayoutType::kStack, spaces_before,
-                             SpacingOptions::MustWrap);
+  LayoutItem vertical_layout(LayoutType::kStack, spaces_before, true);
   EXPECT_EQ(vertical_layout.Type(), LayoutType::kStack);
   EXPECT_EQ(vertical_layout.SpacesBefore(), spaces_before);
-  EXPECT_EQ(vertical_layout.BreakDecision(), SpacingOptions::MustWrap);
+  EXPECT_EQ(vertical_layout.MustWrap(), true);
 }
 
 std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
@@ -329,10 +328,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 10, 2.0F, 0},
         {21, expected_layout, 10, 2.0F, 100},
@@ -345,10 +343,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kShortLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 19, 2.0F, 0},
         {21, expected_layout, 19, 2.0F, 200},
@@ -360,10 +357,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kLongLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kLongLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kLongLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 50, 1002.0F, 100},
         {21, expected_layout, 50, 3102.0F, 200},
@@ -375,10 +371,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kLongLineId]),
         factory_.Line(uwlines_[kShortLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kLongLineId])),                        //
-           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),  //
+                                    LT(LI(uwlines_[kLongLineId])),    //
+                                    LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 19, 1002.0F, 100},
         {21, expected_layout, 19, 3102.0F, 200},
@@ -391,11 +386,10 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kLongLineId]),
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kLongLineId])),                         //
-           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kLongLineId])),     //
+                                    LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 10, 1004.0F, 100},
         {21, expected_layout, 10, 3104.0F, 200},
@@ -408,10 +402,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kIndentedLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kIndentedLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kIndentedLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 36, 2.0F, 0},
         {4, expected_layout, 36, 2.0F, 100},
@@ -424,10 +417,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kOneUnder40LimitLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kOneUnder40LimitLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 39, 2.0F, 0},
         {1, expected_layout, 39, 2.0F, 100},
@@ -440,10 +432,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kOneOver40LimitLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kOneOver40LimitLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kOneOver40LimitLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 41, 102.0F, 100},
         {21, expected_layout, 41, 2202.0F, 200},
@@ -455,10 +446,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[kExactlyAt40LimitLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, false),  //
+                                    LT(LI(uwlines_[kShortLineId])),    //
+                                    LT(LI(uwlines_[kExactlyAt40LimitLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 40, 2.0F, 100},
         {21, expected_layout, 40, 2102.0F, 100},
@@ -470,8 +460,8 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])),             //
+        LT(LI(LayoutType::kStack, 0, true),           //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),  //
            LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 19, 2.0F, 0},
@@ -485,10 +475,9 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kOneOver40LimitLineId]),
         factory_.Line(uwlines_[kShortLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kOneOver40LimitLineId])),              //
-           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),          //
+                                    LT(LI(uwlines_[kOneOver40LimitLineId])),  //
+                                    LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 19, 102.0F, 100},
         {21, expected_layout, 19, 2202.0F, 200},
@@ -501,8 +490,8 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[kShortLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])),            //
+        LT(LI(LayoutType::kStack, 0, true),            //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),  //
            LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 40, 2.0F, 100},
@@ -522,13 +511,13 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         }),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kLongLineId])),                         //
-           LT(LI(uwlines_[kIndentedLineId])),                     //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])),              //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])),             //
-           LT(LI(uwlines_[kOneOver40LimitLineId])),               //
+        LT(LI(LayoutType::kStack, 0, false),           //
+           LT(LI(uwlines_[kShortLineId])),             //
+           LT(LI(uwlines_[kLongLineId])),              //
+           LT(LI(uwlines_[kIndentedLineId])),          //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),   //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),  //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),    //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 10, 1112.0F, 300},
@@ -553,13 +542,13 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                        //
-           LT(LI(uwlines_[kLongLineId])),                         //
-           LT(LI(uwlines_[kIndentedLineId])),                     //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])),              //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])),             //
-           LT(LI(uwlines_[kOneOver40LimitLineId])),               //
+        LT(LI(LayoutType::kStack, 0, false),           //
+           LT(LI(uwlines_[kShortLineId])),             //
+           LT(LI(uwlines_[kLongLineId])),              //
+           LT(LI(uwlines_[kIndentedLineId])),          //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),   //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),  //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),    //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 10, 1112.0F, 300},
@@ -577,9 +566,9 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
   using LI = LayoutItem;
 
   static const auto kSampleStackLayout =
-      LT(LI(LayoutType::kStack, 0, SpacingOptions::Undecided),  //
-         LT(LI(uwlines_[kShortLineId])),                        //
-         LT(LI(uwlines_[kLongLineId])),                         //
+      LT(LI(LayoutType::kStack, 0, false),  //
+         LT(LI(uwlines_[kShortLineId])),    //
+         LT(LI(uwlines_[kLongLineId])),     //
          LT(LI(uwlines_[k10ColumnsLineId])));
   // Result of:
   // factory_.Stack({
@@ -599,8 +588,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LT(LI(uwlines_[kShortLineId])),            //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 29, 0.0F, 0},
@@ -616,9 +605,9 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
-           LT(LI(uwlines_[k10ColumnsLineId])),                            //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LT(LI(uwlines_[kShortLineId])),            //
+           LT(LI(uwlines_[k10ColumnsLineId])),        //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 39, 0.0F, 0},
@@ -633,10 +622,9 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[k10ColumnsLineId]),
         factory_.Line(uwlines_[kShortLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[k10ColumnsLineId])),                           //
-           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+                                    LT(LI(uwlines_[k10ColumnsLineId])),       //
+                                    LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 29, 0.0F, 0},
         {11, expected_layout, 29, 0.0F, 100},
@@ -650,8 +638,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[kIndentedLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LT(LI(uwlines_[kShortLineId])),            //
            LT(LI(uwlines_[kIndentedLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 63, 2300.0F, 100},
@@ -664,10 +652,9 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[kIndentedLineId]),
         factory_.Line(uwlines_[kShortLineId]),
     });
-    const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 8, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kIndentedLineId])),                            //
-           LT(LI(uwlines_[kShortLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 8, true),  //
+                                    LT(LI(uwlines_[kIndentedLineId])),        //
+                                    LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 55, 1500.0F, 100},
         {4, expected_layout, 55, 1900.0F, 100},
@@ -680,8 +667,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[kShortLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           kSampleStackLayout,                                            //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           kSampleStackLayout,                        //
            LT(LI(uwlines_[kShortLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 29, 1004.0F, 100},
@@ -697,8 +684,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         kSampleStackLayoutFunction,
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LT(LI(uwlines_[kShortLineId])),            //
            kSampleStackLayout);
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 29, 2904.0F, 100},
@@ -713,8 +700,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Juxtaposition({factory_.Line(uwlines_[kOneUnder30LimitLineId]),
                                 factory_.Line(uwlines_[k10ColumnsLineId])});
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kOneUnder30LimitLineId])),                     //
+        LT(LI(LayoutType::kJuxtaposition, 0, true),   //
+           LT(LI(uwlines_[kOneUnder30LimitLineId])),  //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 39, 0.0F, 0},
@@ -728,8 +715,8 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         {factory_.Line(uwlines_[kExactlyAt30LimitLineId]),
          factory_.Line(uwlines_[k10ColumnsLineId])});
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kExactlyAt30LimitLineId])),                    //
+        LT(LI(LayoutType::kJuxtaposition, 0, true),    //
+           LT(LI(uwlines_[kExactlyAt30LimitLineId])),  //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 40, 0.0F, 100},
@@ -741,10 +728,9 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
     const auto lf =
         factory_.Juxtaposition({factory_.Line(uwlines_[kOneOver30LimitLineId]),
                                 factory_.Line(uwlines_[k10ColumnsLineId])});
-    const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::MustWrap),  //
-           LT(LI(uwlines_[kOneOver30LimitLineId])),                      //
-           LT(LI(uwlines_[k10ColumnsLineId])));
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+                                    LT(LI(uwlines_[kOneOver30LimitLineId])),  //
+                                    LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 41, 100.0F, 100},
         {9, expected_layout, 41, 1000.0F, 100},
@@ -764,13 +750,13 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         }),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
-           LT(LI(uwlines_[kLongLineId])),                                 //
-           LT(LI(uwlines_[kIndentedLineId])),                             //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])),                      //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])),                     //
-           LT(LI(uwlines_[kOneOver40LimitLineId])),                       //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),   //
+           LT(LI(uwlines_[kShortLineId])),             //
+           LT(LI(uwlines_[kLongLineId])),              //
+           LT(LI(uwlines_[kIndentedLineId])),          //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),   //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),  //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),    //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 243, 19500.0F, 100},
@@ -792,13 +778,13 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
         factory_.Line(uwlines_[k10ColumnsLineId]),
     });
     const auto expected_layout =
-        LT(LI(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),  //
-           LT(LI(uwlines_[kShortLineId])),                                //
-           LT(LI(uwlines_[kLongLineId])),                                 //
-           LT(LI(uwlines_[kIndentedLineId])),                             //
-           LT(LI(uwlines_[kOneUnder40LimitLineId])),                      //
-           LT(LI(uwlines_[kExactlyAt40LimitLineId])),                     //
-           LT(LI(uwlines_[kOneOver40LimitLineId])),                       //
+        LT(LI(LayoutType::kJuxtaposition, 0, false),   //
+           LT(LI(uwlines_[kShortLineId])),             //
+           LT(LI(uwlines_[kLongLineId])),              //
+           LT(LI(uwlines_[kIndentedLineId])),          //
+           LT(LI(uwlines_[kOneUnder40LimitLineId])),   //
+           LT(LI(uwlines_[kExactlyAt40LimitLineId])),  //
+           LT(LI(uwlines_[kOneOver40LimitLineId])),    //
            LT(LI(uwlines_[k10ColumnsLineId])));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 243, 19500.0F, 100},
@@ -819,8 +805,7 @@ TEST_F(LayoutFunctionFactoryTest, Choice) {
   };
 
   // Layout doesn't really matter in this test
-  static const auto layout =
-      LT(LI(LayoutType::kLine, 0, SpacingOptions::Undecided));
+  static const auto layout = LT(LI(LayoutType::kLine, 0, false));
 
   static const ChoiceTestCase kTestCases[] = {
       {__LINE__,
@@ -1028,7 +1013,8 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
 
   const auto layout_tree = LayoutTree(
       LayoutItem(LayoutType::kJuxtaposition, 0,
-                 left_line.TokensRange().front().before.break_decision),
+                 left_line.TokensRange().front().before.break_decision ==
+                     SpacingOptions::MustWrap),
       LayoutTree(LayoutItem(left_line)), LayoutTree(LayoutItem(right_line)));
 
   TreeReconstructor tree_reconstructor(0, style);
@@ -1119,7 +1105,8 @@ TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
 
   const auto layout_tree = LayoutTree(
       LayoutItem(LayoutType::kStack, 0,
-                 upper_line.TokensRange().front().before.break_decision),
+                 upper_line.TokensRange().front().before.break_decision ==
+                     SpacingOptions::MustWrap),
       LayoutTree(LayoutItem(upper_line)), LayoutTree(LayoutItem(lower_line)));
 
   TreeReconstructor tree_reconstructor(0, style);
@@ -1194,15 +1181,13 @@ TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
   UnwrappedLine all(0, upper_line.TokensRange().begin());
   all.SpanUpToToken(lower_line.TokensRange().end());
   const LayoutTree layout_tree{
-      LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
-      LayoutTree(
-          LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
-          LayoutTree(LayoutItem(first_line)),
-          LayoutTree(LayoutItem(second_line))),
-      LayoutTree(
-          LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
-          LayoutTree(LayoutItem(third_line)),
-          LayoutTree(LayoutItem(fourth_line)))};
+      LayoutItem(LayoutType::kStack, 0, false),
+      LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false),
+                 LayoutTree(LayoutItem(first_line)),
+                 LayoutTree(LayoutItem(second_line))),
+      LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false),
+                 LayoutTree(LayoutItem(third_line)),
+                 LayoutTree(LayoutItem(fourth_line)))};
 
   TreeReconstructor tree_reconstructor(0, style);
   tree_reconstructor.TraverseTree(layout_tree);
@@ -1245,11 +1230,11 @@ TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
   all.SpanUpToToken(bottom_line.TokensRange().end());
 
   const LayoutTree layout_tree{
-      LayoutItem(LayoutType::kJuxtaposition, 0, SpacingOptions::Undecided),
-      LayoutTree(LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
+      LayoutItem(LayoutType::kJuxtaposition, 0, false),
+      LayoutTree(LayoutItem(LayoutType::kStack, 0, false),
                  LayoutTree(LayoutItem(first_line)),
                  LayoutTree(LayoutItem(second_line))),
-      LayoutTree(LayoutItem(LayoutType::kStack, 0, SpacingOptions::Undecided),
+      LayoutTree(LayoutItem(LayoutType::kStack, 0, false),
                  LayoutTree(LayoutItem(third_line)),
                  LayoutTree(LayoutItem(fourth_line)))};
 

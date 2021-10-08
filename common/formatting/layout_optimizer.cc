@@ -134,7 +134,7 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
   if (!source.is_leaf() && src_item.Type() == dst_item.Type() &&
       src_item.IndentationSpaces() == 0) {
     const auto& first_subitem = source.Children().front().Value();
-    CHECK(src_item.BreakDecision() == first_subitem.BreakDecision());
+    CHECK(src_item.MustWrap() == first_subitem.MustWrap());
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
     for (const auto& sublayout : source.Children())
       destination->AdoptSubtree(sublayout);
@@ -164,17 +164,13 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
 std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
   if (layout.Type() == LayoutType::kLine) {
     stream << "[ " << layout.Text() << " ]"
-           << ", length: " << layout.Length()
-           << ", indentation: " << layout.IndentationSpaces()
-           << ", spacing: " << layout.SpacesBefore()
-           << ", break decision: " << layout.BreakDecision();
-
+           << ", length: " << layout.Length();
   } else {
-    stream << "[<" << layout.Type() << ">]"
-           << ", indentation: " << layout.IndentationSpaces()
-           << ", spacing: " << layout.SpacesBefore()
-           << ", break decision: " << layout.BreakDecision();
+    stream << "[<" << layout.Type() << ">]";
   }
+  stream << ", indentation: " << layout.IndentationSpaces()
+         << ", spacing: " << layout.SpacesBefore()
+         << ", must wrap: " << (layout.MustWrap() ? "YES" : "no");
   return stream;
 }
 
@@ -265,7 +261,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
   // Use fist line's spacing for new layouts.
   const auto& first_layout_item = lfs.begin()->front().layout.Value();
   const auto spaces_before = first_layout_item.SpacesBefore();
-  const auto break_decision = first_layout_item.BreakDecision();
+  const auto break_decision = first_layout_item.MustWrap();
   // Use last line's span for new layouts. Other lines won't be modified by
   // any further layout combinations.
   const auto& last_layout_function = *(lfs.end() - 1);
@@ -398,7 +394,7 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
     const auto& layout_r = segment_r->layout;
     auto new_layout = LayoutTree(LayoutItem(LayoutType::kJuxtaposition,
                                             layout_l.Value().SpacesBefore(),
-                                            layout_l.Value().BreakDecision()));
+                                            layout_l.Value().MustWrap()));
 
     AdoptLayoutAndFlattenIfSameType(layout_l, &new_layout);
     AdoptLayoutAndFlattenIfSameType(layout_r, &new_layout);

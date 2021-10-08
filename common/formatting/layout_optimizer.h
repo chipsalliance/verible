@@ -64,12 +64,11 @@ class LayoutItem {
   // Prevent creation of uninitialized LayoutItem
   LayoutItem() = delete;
 
-  explicit LayoutItem(LayoutType type, int spacing,
-                      SpacingOptions break_decision)
+  explicit LayoutItem(LayoutType type, int spacing, bool must_wrap)
       : type_(type),
         indentation_(0),
         spaces_before_(spacing),
-        break_decision_(break_decision) {}
+        must_wrap_(must_wrap) {}
 
   // Creates Line item from UnwrappedLine.
   explicit LayoutItem(const UnwrappedLine& uwline)
@@ -78,8 +77,8 @@ class LayoutItem {
         tokens_(uwline.TokensRange()),
         spaces_before_(!tokens_.empty() ? tokens_.front().before.spaces_required
                                         : 0),
-        break_decision_(!tokens_.empty() ? tokens_.front().before.break_decision
-                                         : SpacingOptions::Undecided) {}
+        must_wrap_(!tokens_.empty() && tokens_.front().before.break_decision ==
+                                           SpacingOptions::MustWrap) {}
 
   LayoutItem(const LayoutItem&) = default;
   LayoutItem& operator=(const LayoutItem&) = default;
@@ -97,8 +96,8 @@ class LayoutItem {
   // Returns amount of spaces before first token.
   int SpacesBefore() const { return spaces_before_; }
 
-  // Returns decision about spacing just before this layout
-  SpacingOptions BreakDecision() const { return break_decision_; }
+  // Returns whether to force line break just before this layout.
+  bool MustWrap() const { return must_wrap_; }
 
   // Returns textual representation of spanned tokens for Line items, empty
   // string for other item types.
@@ -139,7 +138,7 @@ class LayoutItem {
     return (lhs.type_ == rhs.type_ && lhs.indentation_ == rhs.indentation_ &&
             lhs.tokens_ == rhs.tokens_ &&
             lhs.spaces_before_ == rhs.spaces_before_ &&
-            lhs.break_decision_ == rhs.break_decision_);
+            lhs.must_wrap_ == rhs.must_wrap_);
   }
 
  private:
@@ -147,7 +146,7 @@ class LayoutItem {
   int indentation_;
   FormatTokenRange tokens_;
   int spaces_before_;
-  SpacingOptions break_decision_;
+  bool must_wrap_;
 };
 
 std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout);
@@ -266,18 +265,16 @@ class LayoutFunction {
     return segments_[index];
   }
 
-  // Returns whether BreakDecision of sublayouts is MustWrap.
+  // Returns whether MustWrap of sublayouts is MustWrap.
   bool MustWrap() const {
     if (empty()) return false;
-    const bool must_wrap = segments_.front().layout.Value().BreakDecision() ==
-                           SpacingOptions::MustWrap;
+    const bool must_wrap = segments_.front().layout.Value().MustWrap();
     // If for some reason not all layouts have the same "MustWrap" status, it
     // should be taken into account in the code that uses this method. This
     // shouldn't be the case, as every layout should wrap the same token range.
     CHECK(std::all_of(segments_.begin(), segments_.end(),
                       [must_wrap](const auto& segment) {
-                        return (segment.layout.Value().BreakDecision() ==
-                                SpacingOptions::MustWrap) == must_wrap;
+                        return segment.layout.Value().MustWrap() == must_wrap;
                       }));
     return must_wrap;
   }
