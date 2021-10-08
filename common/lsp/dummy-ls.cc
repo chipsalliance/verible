@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
-// Windows doesn't have posix read(), but something called _read
+// Windows doesn't have Posix read(), but something called _read
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
 
@@ -43,7 +43,7 @@ InitializeResult InitializeServer(const nlohmann::json &params) {
   // just announce what we do.
   InitializeResult result;
   result.serverInfo = {
-      .name = "verible-lsp",
+      .name = "Verible testing language server.",
       .version = "0.1",
   };
   result.capabilities = {
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   _setmode(_fileno(stdin), _O_BINARY);
 #endif
 
-  std::cerr << "Greetings. FYI This language server is a demo." << std::endl;
+  std::cerr << "Note: this dummy-ls is for testing." << std::endl;
 
   // Input and output is stdin and stdout
   static constexpr int in_fd = 0;  // STDIN_FILENO
@@ -89,8 +89,7 @@ int main(int argc, char *argv[]) {
   // Exchange of capabilities.
   dispatcher.AddRequestHandler("initialize", InitializeServer);
 
-  // The server will tell use to shut down. Use that as trigger to exit our
-  // loop.
+  // The client sends a request to shut down. Use that to exit our loop.
   bool shutdown_requested = false;
   dispatcher.AddRequestHandler("shutdown",
                                [&shutdown_requested](const nlohmann::json &) {

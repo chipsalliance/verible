@@ -111,8 +111,8 @@ cc_test(
 )
 
 cc_binary(
-    name = "dummy-lsp",
-    srcs = ["dummy-lsp.cc", "lsp-protocol.h"],
+    name = "dummy-ls",
+    srcs = ["dummy-ls.cc", "lsp-protocol.h"],
     deps = [
       ":json-rpc-dispatcher",
       ":lsp-text-buffer",
@@ -121,11 +121,11 @@ cc_binary(
 )
 
 sh_test_with_runfiles_lib(
-    name = "dummy-lsp_test",
+    name = "dummy-ls_test",
     size = "small",
-    srcs = ["dummy-lsp_test.sh"],
-    args = ["$(location :dummy-lsp)"],
-    data = [":dummy-lsp"],
+    srcs = ["dummy-ls_test.sh"],
+    args = ["$(location :dummy-ls)"],
+    data = [":dummy-ls"],
     deps = [],
 )
 

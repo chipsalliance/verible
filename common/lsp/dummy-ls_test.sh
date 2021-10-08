@@ -31,11 +31,9 @@ EOF
 
 "${DUMMY_LSP}" < ${TMP_IN} > "${TMP_OUT}"
 
-ls -l ${TMP_IN}
-
 cat ${TMP_OUT}
 
 # Check if an expected content is returned
-grep verible-lsp "${TMP_OUT}" > /dev/null
+grep "testing language server" "${TMP_OUT}" > /dev/null
 
 exit $?
