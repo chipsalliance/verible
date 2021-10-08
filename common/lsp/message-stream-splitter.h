@@ -56,9 +56,14 @@ class MessageStreamSplitter {
 
   // Read using an internal buffer of "read_buffer_size", which must be larger
   // than the largest expected message.
-  explicit MessageStreamSplitter(size_t read_buffer_size)
+  // If "strict_crlf_header_separation" is false, also allows for simple
+  // newline as separation character in the header. Useful for manually
+  // speaking the protocol.
+  explicit MessageStreamSplitter(size_t read_buffer_size,
+                                 bool strict_crlf_header_separation = true)
       : read_buffer_size_(read_buffer_size),
-        read_buffer_(new char[read_buffer_size]) {}
+        read_buffer_(new char[read_buffer_size]),
+        lenient_lf_separation_(!strict_crlf_header_separation) {}
   MessageStreamSplitter(const MessageStreamSplitter &) = delete;
 
   // Set the function that will receive extracted message bodies.
@@ -92,12 +97,13 @@ class MessageStreamSplitter {
   size_t StatTotalBytesRead() const { return stats_total_bytes_read_; }
 
  private:
-  static int ParseHeaderGetBodyOffset(absl::string_view data, int *body_size);
+  int ParseHeaderGetBodyOffset(absl::string_view data, int *body_size);
   absl::Status ProcessContainedMessages(absl::string_view *data);
   absl::Status ReadInput(const ReadFun &read_fun);
 
   const size_t read_buffer_size_;
   std::unique_ptr<char[]> read_buffer_;
+  const bool lenient_lf_separation_;
 
   MessageProcessFun message_processor_;
 
