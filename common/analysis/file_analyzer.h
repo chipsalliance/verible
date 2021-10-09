@@ -39,6 +39,7 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_FILE_ANALYZER_H_
 #define VERIBLE_COMMON_ANALYSIS_FILE_ANALYZER_H_
 
+#include <functional>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -92,6 +93,29 @@ class FileAnalyzer : public TextStructure {
 
   // Collect diagnostic messages for rejected tokens.
   std::vector<std::string> TokenErrorMessages() const;
+
+  // TODO(hzeller): these are not really 'linter' messages but lexing
+  // and parsing issues. So ExtractParseErrorDetails() would be more
+  // appropriate.
+
+  // Function to receive break-down of an issue with a rejected token.
+  // "filename" is the filename the error occured, "phase" is the phase
+  // such as lexing/parsing. "range" is the range of the reported region
+  // with lines/columns.
+  // "token_text" is the exact text of the token.
+  // The "context_line" is the line in which the corresponding error happend.
+  // The "message" finally is a human-readable errormessage
+  using ReportLinterErrorFunction = std::function<void(
+      const std::string& filename, LineColumnRange range, AnalysisPhase phase,
+      absl::string_view token_text, absl::string_view context_line,
+      const std::string& message)>;
+
+  // Extract detailed diagnostic information for rejected token.
+  void ExtractLinterTokenErrorDetail(
+      const RejectedToken& error_token,
+      const ReportLinterErrorFunction& error_report) const;
+
+  // -- convenience functions using the above
 
   // Diagnostic message for rejected tokens for linter.
   // Second argument is the show_context option. When enabled

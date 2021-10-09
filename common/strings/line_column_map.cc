@@ -27,9 +27,21 @@ namespace verible {
 
 // Print to the user as 1-based index because that is how lines
 // and columns are indexed in every file diagnostic tool.
-std::ostream& operator<<(std::ostream& output_stream,
-                         const LineColumn& line_column) {
-  return output_stream << line_column.line + 1 << ':' << line_column.column + 1;
+// TODO(hzeller): this should have a ':' at the end, but the current expectation
+// in TokenErrorMessage() is that it ends with the column. Consider printing
+// a range there in the first place.
+std::ostream& operator<<(std::ostream& out, const LineColumn& line_column) {
+  return out << line_column.line + 1 << ':' << line_column.column + 1;
+}
+
+std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
+  // Unlike 'technical' representation where we point the end pos one past
+  // the relevant range, for human consuption we want to point to the last
+  // character.
+  LineColumn right = r.end;
+  right.column--;
+  // That center colon should come from LineColumn already; see comment above.
+  return out << r.start << ':' << right << ':';
 }
 
 // Records locations of line breaks, which can then be used to translate
