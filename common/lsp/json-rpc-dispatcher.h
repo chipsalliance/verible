@@ -98,7 +98,7 @@ class JsonRpcDispatcher {
   void DispatchMessage(absl::string_view data);
 
   // Send a notification to the client side. Parameters will be wrapped
-  // in in a JSON-RPC message and pushed out to the WriteFun
+  // in a JSON-RPC message and pushed out to the WriteFun
   void SendNotification(const std::string &method,
                         const nlohmann::json &notification_params);
 
