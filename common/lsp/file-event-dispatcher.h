@@ -50,7 +50,7 @@ class FileEventDispatcher {
   //   (3) Signal received or select() issue. Returns false in this case.
   //
   // This is broken out to make it simple to test steps in unit tests.
-  bool SingleCycle(unsigned timeout_ms);
+  bool SingleEvent(unsigned timeout_ms);
 
  private:
   typedef std::map<int, Handler> HandlerMap;

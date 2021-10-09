@@ -51,11 +51,12 @@ static void CallHandlers(
       --available_fds;
       keep_handler = it->second();
     }
+    // NB: modifying container while iterating. Safe for std::map.
     it = keep_handler ? std::next(it) : handlers->erase(it);
   }
 }
 
-bool FileEventDispatcher::SingleCycle(unsigned int timeout_ms) {
+bool FileEventDispatcher::SingleEvent(unsigned int timeout_ms) {
   fd_set read_fds;
 
   struct timeval timeout;
@@ -99,7 +100,8 @@ bool FileEventDispatcher::SingleCycle(unsigned int timeout_ms) {
 void FileEventDispatcher::Loop() {
   const unsigned timeout = idle_ms_;
 
-  while (SingleCycle(timeout)) {
+  while (SingleEvent(timeout)) {
+    // Intentional empty body.
   }
 }
 }  // namespace lsp
