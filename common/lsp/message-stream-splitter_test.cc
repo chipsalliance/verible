@@ -55,6 +55,36 @@ class DataStreamSimulator {
   int read_pos_ = 0;
 };
 
+TEST(MessageStreamSplitterTest, LenientHeaderNewline) {
+  for (const bool strict_header_crlf : {false, true}) {
+    MessageStreamSplitter header_test(256, strict_header_crlf);
+    int count_call = 0;
+    header_test.SetMessageProcessor(
+        [&count_call](absl::string_view, absl::string_view body) {
+          EXPECT_EQ(std::string(body), "x");
+          ++count_call;
+        });
+    DataStreamSimulator two_messages(
+        "Content-Length: 1\r\n\r\nx"  // this first one will always parse
+        "Content-Length: 1\n\nx");    // this will only parse if !strict
+
+    absl::Status status = absl::OkStatus();
+    while (status.ok()) {
+      status = header_test.PullFrom(
+          [&](char *buf, int size) { return two_messages.read(buf, size); });
+    }
+
+    if (strict_header_crlf) {
+      // The second message never contained \r\n\r\n, still pending at end.
+      EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss) << status;
+    } else {
+      // An expected 'read everything reached EOF' status.
+      EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable) << status;
+    }
+    EXPECT_EQ(count_call, strict_header_crlf ? 1 : 2) << status;
+  }
+}
+
 TEST(MessageStreamSplitterTest, CompleteReadValidMessage) {
   static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
   static constexpr absl::string_view kBody = "foo";
