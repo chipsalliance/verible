@@ -22,6 +22,14 @@
 #
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 
+ServerInfo:
+  name: string
+  version: string
+
+InitializeResult:
+  capabilities: object          # Lots. We output that directly as plain json.
+  serverInfo: ServerInfo
+
 Position:
   line: integer       # Zero based line
   character: integer  # Zero based column
@@ -35,8 +43,6 @@ TextDocumentIdentifier:
 
 TextDocumentItem:
   <:TextDocumentIdentifier
-  languageId: string
-  version: integer
   text: string
 
 TextDocumentContentChangeEvent:

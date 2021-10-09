@@ -8,6 +8,8 @@
 
 licenses(["notice"])
 
+load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+
 package(
     default_visibility = [
         "//:__subpackages__",
@@ -70,6 +72,10 @@ cc_library(
     name = "file-event-dispatcher",
     srcs = ["file-event-dispatcher.cc"],
     hdrs = ["file-event-dispatcher.h"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_test(
@@ -102,6 +108,25 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ]
+)
+
+cc_binary(
+    name = "dummy-ls",
+    srcs = ["dummy-ls.cc", "lsp-protocol.h"],
+    deps = [
+      ":json-rpc-dispatcher",
+      ":lsp-text-buffer",
+      ":message-stream-splitter",
+    ],
+)
+
+sh_test_with_runfiles_lib(
+    name = "dummy-ls_test",
+    size = "small",
+    srcs = ["dummy-ls_test.sh"],
+    args = ["$(location :dummy-ls)"],
+    data = [":dummy-ls"],
+    deps = [],
 )
 
 genrule(

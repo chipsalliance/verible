@@ -17,14 +17,20 @@
 #ifndef _WIN32
 #include <sys/select.h>
 #else
-// TODO: this implementation is not tested on Windows. Someone with access
-// to a windows machine and knowledge about how these things work on that
-// platform, please test if this works and provide a PR for necessary changes
-// here and in the test. Calling WSAStartup() might be needed ?
-// If it gets too finicky, we also could pull in another dependency such
-// as libevent, but given the small set of features we need, this might
-// be a bit of an overkill.
+// TODO: this implementation doesn't seem to work on windows with regular
+// file descriptors as the posix subsystem is very spotty
+// implmented there. Winsock only seems to deal with sockets, not with
+// any file descriptor (error returned by select() is WSAENOTSOCK).
+//
+// If someone with access to a windows machine and knowledge about how
+// these things can work on that platform, please provide a PR.
+//
+// We might also need to sidestep that by using a library such as libevent
+// that already has worked around all these issues and implement
+// FileEventDispatcher with that. But it would be another dependency.
 #include <winsock2.h>
+
+#include <iostream>
 #endif
 
 #include <algorithm>
@@ -34,6 +40,21 @@
 
 namespace verible {
 namespace lsp {
+FileEventDispatcher::FileEventDispatcher(unsigned idle_ms) : idle_ms_(idle_ms) {
+#ifdef _WIN32
+  // Windows-specific init to be able to use select()
+  const WORD requestedVersion = MAKEWORD(2, 0);
+  WSADATA initdata;
+  WSAStartup(requestedVersion, &initdata);
+#endif
+}
+
+FileEventDispatcher::~FileEventDispatcher() {
+#ifdef _WIN32
+  WSACleanup();
+#endif
+}
+
 bool FileEventDispatcher::RunOnReadable(int fd, const Handler &handler) {
   return read_handlers_.insert({fd, handler}).second;
 }
@@ -80,7 +101,11 @@ bool FileEventDispatcher::SingleEvent(unsigned int timeout_ms) {
 
   int fds_ready = select(maxfd + 1, &read_fds, nullptr, nullptr, &timeout);
   if (fds_ready < 0) {
+#ifdef _WIN32
+    std::cerr << "s=" << fds_ready << "; e=" << WSAGetLastError() << std::endl;
+#else
     perror("select() failed");
+#endif
     return false;
   }
 

@@ -25,6 +25,7 @@
 using nlohmann::json;
 
 namespace verible {
+namespace lsp {
 TEST(JsonRpcDispatcherTest, Call_GarbledInputRequest) {
   int write_fun_called = 0;
 
@@ -212,4 +213,5 @@ TEST(JsonRpcDispatcherTest, SendNotificationToClient) {
   dispatcher.SendNotification("greeting_method", params);
   EXPECT_EQ(1, write_fun_called);
 }
+}  // namespace lsp
 }  // namespace verible
