@@ -9,6 +9,11 @@
 licenses(["notice"])
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//common/lsp:jcxxgen.bzl", "jcxxgen")
+
+exports_files([
+    "jcxxgen.bzl",
+])
 
 package(
     default_visibility = [
@@ -88,12 +93,20 @@ cc_test(
     ],
 )
 
+jcxxgen(
+    name = "lsp-protocol",
+    src = "lsp-protocol.yaml",
+    out = "lsp-protocol.h",
+    namespace = "verible::lsp",
+)
+
 cc_library(
     name = "lsp-text-buffer",
     srcs = ["lsp-text-buffer.cc"],
-    hdrs = ["lsp-text-buffer.h", "lsp-protocol.h"],
+    hdrs = ["lsp-text-buffer.h"],
     deps = [
         ":json-rpc-dispatcher",
+        ":lsp-protocol",
         "@com_google_absl//absl/strings",
         "@jsonhpp//:jsonhpp",
     ]
@@ -112,8 +125,9 @@ cc_test(
 
 cc_binary(
     name = "dummy-ls",
-    srcs = ["dummy-ls.cc", "lsp-protocol.h"],
+    srcs = ["dummy-ls.cc"],
     deps = [
+      ":lsp-protocol",
       ":json-rpc-dispatcher",
       ":lsp-text-buffer",
       ":message-stream-splitter",
@@ -127,15 +141,6 @@ sh_test_with_runfiles_lib(
     args = ["$(location :dummy-ls)"],
     data = [":dummy-ls"],
     deps = [],
-)
-
-genrule(
-    name = "lsp-protocol_h",
-    srcs = ["lsp-protocol.yaml"],
-    outs = ["lsp-protocol.h"],
-    cmd = '$(location jcxxgen) --json_header=\'"nlohmann/json.hpp"\' --class_namespace verible::lsp --output $@ $(location lsp-protocol.yaml)',
-    tools = [":jcxxgen"],
-    visibility = ["//visibility:private"],
 )
 
 cc_binary(
