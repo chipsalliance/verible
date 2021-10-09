@@ -198,4 +198,18 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_MissingMethodImplemented) {
   EXPECT_EQ(write_fun_called, 1);  // Reported error.
   EXPECT_EQ(dispatcher.exception_count(), 0);
 }
+
+TEST(JsonRpcDispatcherTest, SendNotificationToClient) {
+  int write_fun_called = 0;
+  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+    const json j = json::parse(s);
+    EXPECT_EQ(j["method"], "greeting_method");
+    EXPECT_EQ(j["params"], "Hi, y'all");
+    ++write_fun_called;
+  });
+
+  const json params = "Hi, y'all";
+  dispatcher.SendNotification("greeting_method", params);
+  EXPECT_EQ(1, write_fun_called);
+}
 }  // namespace verible

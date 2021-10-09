@@ -80,6 +80,14 @@ bool JsonRpcDispatcher::CallRequestHandler(const nlohmann::json &req,
   return false;
 }
 
+void JsonRpcDispatcher::SendNotification(const std::string &method,
+                                         const nlohmann::json &notification) {
+  nlohmann::json result = {{"jsonrpc", "2.0"}};
+  result["method"] = method;
+  result["params"] = notification;
+  SendReply(result);
+}
+
 /*static*/ nlohmann::json JsonRpcDispatcher::CreateError(
     const nlohmann::json &request, int code, absl::string_view message) {
   nlohmann::json result = {

@@ -112,7 +112,7 @@ class BufferCollection {
   int64_t global_version() const { return global_version_; }
 
   // Calls "map_fun"() on each buffer that has changed since the given version.
-  // This allows to only proces changed buffers.
+  // This allows to only process changed buffers.
   // Use 0 (zero) as last version to have the map function receive all buffers.
   // "map_fun" can be nullptr in which case only the number of changed buffers.
   // are returned.
