@@ -23,6 +23,8 @@
 #include "verilog/analysis/verilog_analyzer.h"
 
 using nlohmann::json;
+using verible::AnalysisPhase;
+using verible::LineColumnRange;
 
 namespace verilog {
 
@@ -51,27 +53,17 @@ json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer,
   for (const auto& rejected_token : rejected_tokens) {
     json& error = syntax_errors.emplace_back(json::object());
 
-    const absl::string_view base_text = analyzer->Data().Contents();
-    const verible::LineColumnMap& line_column_map =
-        analyzer->Data().GetLineColumnMap();
-    if (!rejected_token.token_info.isEOF()) {
-      const auto pos =
-          line_column_map(rejected_token.token_info.left(base_text));
-      error["line"] = pos.line;
-      error["column"] = pos.column;
-      error["text"] = std::string(rejected_token.token_info.text());
-    } else {
-      const int file_size = base_text.length();
-      const auto pos = line_column_map(file_size);
-      error["line"] = pos.line;
-      error["column"] = pos.column;
-      error["text"] = "<EOF>";
-    }
-    error["phase"] = analysis_phase_to_json(rejected_token.phase);
-
-    if (!rejected_token.explanation.empty()) {
-      error["message"] = rejected_token.explanation;
-    }
+    analyzer->ExtractLinterTokenErrorDetail(
+        rejected_token,
+        [&error](const std::string& filename, LineColumnRange range,
+                 AnalysisPhase phase, absl::string_view token_text,
+                 absl::string_view context_line, const std::string& message) {
+          error["line"] = range.start.line;  // NB: zero based index
+          error["column"] = range.start.column;
+          error["text"] = std::string(token_text);
+          error["phase"] = analysis_phase_to_json(phase);
+          if (!message.empty()) error["message"] = message;
+        });
     if (limit && --limit == 0) break;
   }
 

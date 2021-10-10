@@ -67,7 +67,23 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
     const auto message = analyzer.LinterTokenErrorMessage(
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
-        message, "hello.txt:2:5: syntax error, rejected \"w0rld\""));
+        message, "hello.txt:2:5: syntax error, rejected \"w0rld\""))
+        << message;
+  }
+  {
+    analyzer.ExtractLinterTokenErrorDetail(
+        {error_token, AnalysisPhase::kParsePhase},
+        [](const std::string& filename, LineColumnRange range,
+           AnalysisPhase phase, absl::string_view token_text,
+           absl::string_view context_line, const std::string& message) {
+          EXPECT_EQ(filename, "hello.txt");
+          EXPECT_EQ(range.start.line, 1);
+          EXPECT_EQ(range.start.column, 4);
+          EXPECT_EQ(range.end.line, 1);
+          EXPECT_EQ(range.end.column, 9);
+          EXPECT_EQ(phase, AnalysisPhase::kParsePhase);
+          EXPECT_EQ(token_text, "w0rld");
+        });
   }
 }
 
@@ -91,6 +107,22 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
                           "bye w0rld\n"
                           "    ^"));
   }
+  {
+    analyzer.ExtractLinterTokenErrorDetail(
+        {error_token, AnalysisPhase::kParsePhase},
+        [](const std::string& filename, LineColumnRange range,
+           AnalysisPhase phase, absl::string_view token_text,
+           absl::string_view context_line, const std::string& message) {
+          EXPECT_EQ(filename, "hello.txt");
+          EXPECT_EQ(range.start.line, 1);
+          EXPECT_EQ(range.start.column, 4);
+          EXPECT_EQ(range.end.line, 1);
+          EXPECT_EQ(range.end.column, 9);
+          EXPECT_EQ(phase, AnalysisPhase::kParsePhase);
+          EXPECT_EQ(token_text, "w0rld");
+          EXPECT_EQ(context_line, "bye w0rld");
+        });
+  }
 }
 
 // Verify that an error token on one character is reported correctly.
@@ -108,6 +140,22 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:6: syntax error, rejected \",\""));
+  }
+  {
+    analyzer.ExtractLinterTokenErrorDetail(
+        {error_token, AnalysisPhase::kParsePhase},
+        [](const std::string& filename, LineColumnRange range,
+           AnalysisPhase phase, absl::string_view token_text,
+           absl::string_view context_line, const std::string& message) {
+          EXPECT_EQ(filename, "hello.txt");
+          EXPECT_EQ(range.start.line, 0);
+          EXPECT_EQ(range.start.column, 5);
+          EXPECT_EQ(range.end.line, 0);
+          EXPECT_EQ(range.end.column, 6);
+          EXPECT_EQ(phase, AnalysisPhase::kParsePhase);
+          EXPECT_EQ(token_text, ",");
+          EXPECT_EQ(context_line, "hello, world");
+        });
   }
 }
 
@@ -147,6 +195,22 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
         message, "hello.txt:1:8: syntax error, rejected \"world\nbye\""));
+  }
+  {
+    analyzer.ExtractLinterTokenErrorDetail(
+        {error_token, AnalysisPhase::kParsePhase},
+        [](const std::string& filename, LineColumnRange range,
+           AnalysisPhase phase, absl::string_view token_text,
+           absl::string_view context_line, const std::string& message) {
+          EXPECT_EQ(filename, "hello.txt");
+          EXPECT_EQ(range.start.line, 0);
+          EXPECT_EQ(range.start.column, 7);
+          EXPECT_EQ(range.end.line, 1);
+          EXPECT_EQ(range.end.column, 3);
+          EXPECT_EQ(phase, AnalysisPhase::kParsePhase);
+          EXPECT_EQ(token_text, "world\nbye");
+          EXPECT_EQ(context_line, "hello, world");
+        });
   }
 }
 
@@ -194,19 +258,35 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
 //
 // Verify that an error at EOF reported correctly.
 TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
-  const std::string text("hello, world\nbye w0rld (\n");
+  const std::string text("hello, world\nbye w0rld (\nmissing");
   const TokenInfo error_token(TokenInfo::EOFToken());
   FakeFileAnalyzer analyzer(text, "unbalanced.txt");
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: <<EOF>> at 3:1");
+    EXPECT_EQ(message, "token: <<EOF>> at 3:8");
   }
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
-        message, "unbalanced.txt:3:1: syntax error (unexpected EOF)"));
+        message, "unbalanced.txt:3:8: syntax error (unexpected EOF)"));
+  }
+  {
+    analyzer.ExtractLinterTokenErrorDetail(
+        {error_token, AnalysisPhase::kParsePhase},
+        [](const std::string& filename, LineColumnRange range,
+           AnalysisPhase phase, absl::string_view token_text,
+           absl::string_view context_line, const std::string& message) {
+          EXPECT_EQ(filename, "unbalanced.txt");
+          EXPECT_EQ(range.start.line, 2);
+          EXPECT_EQ(range.start.column, 7);
+          EXPECT_EQ(range.end.line, 2);
+          EXPECT_EQ(range.end.column, 7);
+          EXPECT_EQ(phase, AnalysisPhase::kParsePhase);
+          EXPECT_EQ(token_text, "<EOF>");
+          EXPECT_EQ(context_line, "missing");
+        });
   }
 }
 

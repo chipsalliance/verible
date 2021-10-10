@@ -45,6 +45,18 @@ struct LineColumn {
 
 std::ostream& operator<<(std::ostream&, const LineColumn&);
 
+// A complete range.
+struct LineColumnRange {
+  LineColumn start;
+  LineColumn end;
+
+  bool operator==(const LineColumnRange& r) const {
+    return start == r.start && end == r.end;
+  }
+};
+
+std::ostream& operator<<(std::ostream&, const LineColumnRange&);
+
 class LineColumnMap {
  public:
   explicit LineColumnMap(absl::string_view);

@@ -108,6 +108,7 @@ std::string FileAnalyzer::TokenErrorMessage(
   const absl::string_view base_text = Data().Contents();
   std::ostringstream output_stream;
   if (!error_token.isEOF()) {
+    // TODO(hzeller): simply print LineColumnRange ?
     const auto left = line_column_map(error_token.left(base_text));
     auto right = line_column_map(error_token.right(base_text));
     --right.column;  // Point to last character, not one-past-the-end.
@@ -138,35 +139,55 @@ std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
   return messages;
 }
 
-std::string FileAnalyzer::LinterTokenErrorMessage(
-    const RejectedToken& error_token, bool diagnostic_context) const {
+void FileAnalyzer::ExtractLinterTokenErrorDetail(
+    const RejectedToken& error_token,
+    const ReportLinterErrorFunction& error_report) const {
   const LineColumnMap& line_column_map = Data().GetLineColumnMap();
   const absl::string_view base_text = Data().Contents();
 
-  std::ostringstream output_stream;
-  output_stream << filename_ << ':';
-  if (!error_token.token_info.isEOF()) {
-    const auto left = line_column_map(error_token.token_info.left(base_text));
-    output_stream << left << ": " << error_token.phase << " error, rejected \""
-                  << error_token.token_info.text() << "\" (syntax-error).";
-    if (diagnostic_context) {
-      const auto& lines = Data().Lines();
-      if (left.line < static_cast<int>(lines.size())) {
-        output_stream << "\n" << lines[left.line] << std::endl;
-        output_stream << verible::Spacer(left.column) << "^";
-      }
-    }
-  } else {
-    const int file_size = base_text.length();
-    const auto end = line_column_map(file_size);
-    output_stream << end << ": " << error_token.phase
-                  << " error (unexpected EOF) (syntax-error).";
+  const LineColumn start =
+      error_token.token_info.isEOF()
+          ? line_column_map(base_text.length())
+          : line_column_map(error_token.token_info.left(base_text));
+  const LineColumn end =
+      error_token.token_info.isEOF()
+          ? start
+          : line_column_map(error_token.token_info.right(base_text));
+
+  absl::string_view context_line = "";
+  const auto& lines = Data().Lines();
+  if (start.line < static_cast<int>(lines.size())) {
+    context_line = lines[start.line];
   }
   // TODO(b/63893567): Explain syntax errors by inspecting state stack.
-  if (!error_token.explanation.empty()) {
-    output_stream << "  " << error_token.explanation;
-  }
-  return output_stream.str();
+  error_report(
+      filename_, {start, end}, error_token.phase,
+      error_token.token_info.isEOF() ? "<EOF>" : error_token.token_info.text(),
+      context_line, error_token.explanation);
+}
+
+std::string FileAnalyzer::LinterTokenErrorMessage(
+    const RejectedToken& error_token, bool diagnostic_context) const {
+  std::ostringstream out;
+  ExtractLinterTokenErrorDetail(
+      error_token,
+      [&](const std::string& filename, LineColumnRange range,
+          AnalysisPhase phase, absl::string_view token_text,
+          absl::string_view context_line, const std::string& message) {
+        // TODO(hzeller): switch to printing range, but make sure that
+        // potential users are not running into trouble.
+        out << filename_ << ':' << range.start << ": " << phase;
+        if (error_token.token_info.isEOF()) {
+          out << " error (unexpected EOF) (syntax-error).";
+        } else {
+          out << " error, rejected \"" << token_text << "\" (syntax-error).";
+        }
+        if (diagnostic_context && !context_line.empty()) {
+          out << "\n" << context_line << std::endl;
+          out << verible::Spacer(range.start.column) << "^";
+        }
+      });
+  return out.str();
 }
 
 std::vector<std::string> FileAnalyzer::LinterTokenErrorMessages(
