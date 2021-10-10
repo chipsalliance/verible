@@ -103,8 +103,8 @@ class FileAnalyzer : public TextStructure {
   // such as lexing/parsing. "range" is the range of the reported region
   // with lines/columns.
   // "token_text" is the exact text of the token.
-  // The "context_line" is the line in which the corresponding error happend.
-  // The "message" finally is a human-readable errormessage
+  // The "context_line" is the line in which the corresponding error happened.
+  // The "message" finally is a human-readable error message
   using ReportLinterErrorFunction = std::function<void(
       const std::string& filename, LineColumnRange range, AnalysisPhase phase,
       absl::string_view token_text, absl::string_view context_line,

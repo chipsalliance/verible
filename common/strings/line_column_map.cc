@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& out, const LineColumn& line_column) {
 
 std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
   // Unlike 'technical' representation where we point the end pos one past
-  // the relevant range, for human consuption we want to point to the last
+  // the relevant range, for human consumption we want to point to the last
   // character.
   LineColumn right = r.end;
   right.column--;
