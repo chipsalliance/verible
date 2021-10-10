@@ -73,26 +73,6 @@ cc_test(
     ],
 )
 
-cc_library(
-    name = "file-event-dispatcher",
-    srcs = ["file-event-dispatcher.cc"],
-    hdrs = ["file-event-dispatcher.h"],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-)
-
-cc_test(
-    name = "file-event-dispatcher_test",
-    srcs = ["file-event-dispatcher_test.cc"],
-    deps = [
-       ":file-event-dispatcher",
-        "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
 jcxxgen(
     name = "lsp-protocol",
     src = "lsp-protocol.yaml",
