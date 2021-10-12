@@ -114,14 +114,15 @@ TEST(MessageStreamSplitterTest, CompleteReadValidMessage) {
   EXPECT_EQ(processor_call_count, 1);  // No additional calls recorded here.
 }
 
-TEST(MessageStreamSplitterTest, BufferSizeTooSmall) {
+TEST(MessageStreamSplitterTest, BufferSizeReallocated) {
   static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
   static constexpr absl::string_view kBody = "foo";
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
-  MessageStreamSplitter s(10);  // Way too small buffer.
+  MessageStreamSplitter s(2);  // Start with way too small buffer
   int processor_call_count = 0;
   s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+    EXPECT_EQ(std::string(body), "foo");
     ++processor_call_count;
   });
 
@@ -132,8 +133,8 @@ TEST(MessageStreamSplitterTest, BufferSizeTooSmall) {
   }
 
   EXPECT_FALSE(status.ok());
-  EXPECT_EQ(status.code(), absl::StatusCode::kResourceExhausted);
-  EXPECT_EQ(processor_call_count, 0);
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);  // regular EOF
+  EXPECT_EQ(processor_call_count, 1);
 }
 
 TEST(MessageStreamSplitterTest, StreamDoesNotContainCompleteData) {
