@@ -95,23 +95,21 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
 // Read from "read_fun", fill internal buffer and call all available
 // complete messages in it.
 absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
-  char *begin_of_read = read_buffer_.get();
-  int available_read_space = read_buffer_size_;
+  size_t write_offset = 0;
 
   // Move all we had left from last time to the beginning of the buffer.
   // This is in the same buffer, so we need to memmove()
   if (!pending_data_.empty()) {
-    memmove(begin_of_read, pending_data_.data(), pending_data_.size());
-    begin_of_read += pending_data_.size();
-    available_read_space -= pending_data_.size();
+    memmove(read_buffer_.data(), pending_data_.data(), pending_data_.size());
+    write_offset = pending_data_.size();
   }
 
-  if (available_read_space == 0) {
-    return absl::ResourceExhaustedError(
-        "Buffer for MessageStreamSplitter too small");
+  if (write_offset == read_buffer_.size()) {
+    read_buffer_.resize(2 * read_buffer_.size());
   }
 
-  int bytes_read = read_fun(begin_of_read, available_read_space);
+  const int free_space = read_buffer_.size() - write_offset;
+  int bytes_read = read_fun(read_buffer_.data() + write_offset, free_space);
   if (bytes_read <= 0) {
     // Got EOF.
     // If we still have data pending, regard this as data loss situation, as
@@ -127,7 +125,7 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
   }
   stats_total_bytes_read_ += bytes_read;
 
-  absl::string_view data(read_buffer_.get(), pending_data_.size() + bytes_read);
+  absl::string_view data(read_buffer_.data(), write_offset + bytes_read);
   if (auto status = ProcessContainedMessages(&data); !status.ok()) {
     return status;
   }

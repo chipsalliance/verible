@@ -54,15 +54,14 @@ class MessageStreamSplitter {
   using MessageProcessFun =
       std::function<void(absl::string_view header, absl::string_view body)>;
 
-  // Read using an internal buffer of "read_buffer_size", which must be larger
-  // than the largest expected message.
+  // Optional parameters are "initial_read_buffer_size" for the initial
+  // internal buffer size (will be realloc'ed when needed).
   // If "strict_crlf_header_separation" is false, also allows for simple
   // newline as separation character in the header. Useful for manually
   // speaking the protocol.
-  explicit MessageStreamSplitter(size_t read_buffer_size,
+  explicit MessageStreamSplitter(size_t initial_read_buffer_size = 4096,
                                  bool strict_crlf_header_separation = true)
-      : read_buffer_size_(read_buffer_size),
-        read_buffer_(new char[read_buffer_size]),
+      : read_buffer_(initial_read_buffer_size),
         lenient_lf_separation_(!strict_crlf_header_separation) {}
   MessageStreamSplitter(const MessageStreamSplitter &) = delete;
 
@@ -87,7 +86,6 @@ class MessageStreamSplitter {
   // Code
   //  - kUnavailable     : regular EOF, no data pending. A 'good' non-ok status.
   //  - kDataloss        : got EOF, but still incomplete data pending.
-  //  - kResourceExhausted: Buffer size chosen in constructor is not sufficient.
   //  - kInvalidArgument : stream corrupted, couldn't read header.
   absl::Status PullFrom(const ReadFun &read_fun);
 
@@ -101,8 +99,7 @@ class MessageStreamSplitter {
   absl::Status ProcessContainedMessages(absl::string_view *data);
   absl::Status ReadInput(const ReadFun &read_fun);
 
-  const size_t read_buffer_size_;
-  std::unique_ptr<char[]> read_buffer_;
+  std::vector<char> read_buffer_;
   const bool lenient_lf_separation_;
 
   MessageProcessFun message_processor_;
