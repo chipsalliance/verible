@@ -28,6 +28,6 @@ def jcxxgen(name, src, out, namespace = ""):
     )
     native.cc_library(
         name = name,
-        srcs = [out],
+        hdrs = [out],
         deps = ["@jsonhpp//:jsonhpp"],
     )
