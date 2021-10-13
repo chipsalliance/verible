@@ -106,6 +106,16 @@ jcxxgen(
 )
 
 cc_test(
+    name = "violation_handler_test",
+    srcs = ["violation_handler_test.cc"], 
+    deps = [
+        ":violation_handler",
+        ":rdformat",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
+cc_test(
     name = "command_file_lexer_test",
     size = "small",
     srcs = ["command_file_lexer_test.cc"],
