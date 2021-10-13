@@ -20,7 +20,8 @@
 DUMMY_LSP="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 TMP_IN=${TEST_TMPDIR:-/tmp/}/test-lsp-in.txt
-TMP_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out.txt
+JSON_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-json.txt
+MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 
 # One message per line, converted by the awk script to header/body.
 # Simple end-to-end test
@@ -29,11 +30,23 @@ awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0","method":"shutdown","params":{},"id":2}
 EOF
 
-"${DUMMY_LSP}" < ${TMP_IN} > "${TMP_OUT}"
+"${DUMMY_LSP}" < ${TMP_IN} > "${JSON_OUT}" 2> "${MSG_OUT}"
 
-cat ${TMP_OUT}
+echo "-- JSON protocol output --"
+cat ${JSON_OUT}
+
+echo "-- stderr messages --"
+cat ${MSG_OUT}
 
 # Check if an expected content is returned
-grep "testing language server" "${TMP_OUT}" > /dev/null
+grep "testing language server" "${JSON_OUT}" > /dev/null
+if [ $? -ne 0 ]; then
+  echo "Didn't get initialize feedback message"
+  exit 1
+fi
 
-exit $?
+grep "shutdown request" "${MSG_OUT}" > /dev/null
+if [ $? -ne 0 ]; then
+  echo "Didn't get shutdown feedback"
+  exit 1
+fi
