@@ -123,8 +123,9 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
       ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties) {
     CHECK_NOTNULL(parent_column);
-    auto subpath = GetSubpath(parent_column->Value().path,
-                              {parent_column->Children().size()});
+    const SyntaxTreePath::value_type subindex =
+        parent_column->Children().size();
+    const auto subpath = GetSubpath(parent_column->Value().path, {subindex});
     return ReserveNewColumn(parent_column, symbol, properties, subpath);
   }
 

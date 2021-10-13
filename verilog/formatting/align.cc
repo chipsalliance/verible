@@ -69,9 +69,11 @@ static constexpr AlignmentColumnProperties FlushLeft(true);
 static constexpr AlignmentColumnProperties FlushRight(false);
 
 // Special SyntaxTreePath index used for non-tree tokens
-static const size_t kNonTreeTokenPathIndex = std::numeric_limits<size_t>::max();
+static const SyntaxTreePath::value_type kNonTreeTokenPathIndex =
+    std::numeric_limits<SyntaxTreePath::value_type>::max();
 // Maximum SyntaxTreePath index available for tree tokens
-static const size_t kMaxPathIndex = std::numeric_limits<size_t>::max() - 1;
+static const SyntaxTreePath::value_type kMaxPathIndex =
+    std::numeric_limits<SyntaxTreePath::value_type>::max() - 1;
 
 template <class T>
 static bool TokensAreAllCommentsOrAttributes(const T& tokens) {

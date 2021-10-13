@@ -47,7 +47,7 @@ class TreeContextVisitor : public SymbolVisitor {
 // e.g. use the LexicographicalLess comparator in common/util/algorithm.h.
 // TODO(fangism): consider replacing with hybrid "small" vector to
 // minimize heap allocations, because these are expected to be small.
-using SyntaxTreePath = std::vector<size_t>;
+using SyntaxTreePath = std::vector<int>;
 
 // This visitor traverses a tree and maintains a stack of offsets
 // that represents the positional path taken from the root to
