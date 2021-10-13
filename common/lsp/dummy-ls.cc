@@ -32,7 +32,6 @@
 #endif
 
 using verible::lsp::BufferCollection;
-using verible::lsp::EditTextBuffer;
 using verible::lsp::InitializeResult;
 using verible::lsp::JsonRpcDispatcher;
 using verible::lsp::MessageStreamSplitter;
