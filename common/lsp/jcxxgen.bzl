@@ -13,8 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Rule to generate json-serializable simple structs
+"""
+
 def jcxxgen(name, src, out, namespace = ""):
     """Generate C/C++ language source from a jcxxgen schema file.
+
+    Args:
+      name: Name of the rule, producing a cc-library with the same name.
+      src:  The schema yaml input file.
+      out:  Name of the generated header file.
+      namespace: Optional name of the C++ namespace for generated structs.
     """
     tool = "//common/lsp:jcxxgen"
     json_header = '"nlohmann/json.hpp"'
@@ -28,6 +38,6 @@ def jcxxgen(name, src, out, namespace = ""):
     )
     native.cc_library(
         name = name,
-        srcs = [out],
+        hdrs = [out],
         deps = ["@jsonhpp//:jsonhpp"],
     )
