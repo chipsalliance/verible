@@ -37,6 +37,11 @@ Checks: >
   -bugprone-move-forwarding-reference,
   -bugprone-exception-escape,
   modernize-use-override,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
+  -misc-unused-parameters,
+  -misc-redundant-expression,
 
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
