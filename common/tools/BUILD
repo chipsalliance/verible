@@ -4,6 +4,10 @@ load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
 licenses(["notice"])
 
+exports_files([
+    "jcxxgen.bzl",
+])
+
 cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
@@ -50,4 +54,15 @@ sh_test_with_runfiles_lib(
         ":verible-transform-interactive",
     ],
     deps = [],
+)
+
+cc_binary(
+    name = "jcxxgen",
+    srcs = ["jcxxgen.cc"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//common/util:init_command_line",
+       "@com_google_absl//absl/strings",
+       "@com_google_absl//absl/flags:flag",
+    ]
 )

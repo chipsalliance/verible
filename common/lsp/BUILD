@@ -9,11 +9,7 @@
 licenses(["notice"])
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
-load("//common/lsp:jcxxgen.bzl", "jcxxgen")
-
-exports_files([
-    "jcxxgen.bzl",
-])
+load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 package(
     default_visibility = [
@@ -121,14 +117,4 @@ sh_test_with_runfiles_lib(
     args = ["$(location :dummy-ls)"],
     data = [":dummy-ls"],
     deps = [],
-)
-
-cc_binary(
-    name = "jcxxgen",
-    srcs = ["jcxxgen.cc"],
-    deps = [
-        "//common/util:init_command_line",
-       "@com_google_absl//absl/strings",
-       "@com_google_absl//absl/flags:flag",
-    ]
 )
