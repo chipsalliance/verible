@@ -371,6 +371,26 @@ static void CopyTreeStructure(
   }
 }
 
+// Recursively compares two SyntaxTreePaths element by element. Out of bound
+// elements are assumed to have values that are less than 0 but greater than any
+// negative number. First non-matching elements pair determines the result:
+// -1 if a < b, 1 if a > b. If all pairs are equal the result is 0.
+static int CompareSyntaxTreePath(const SyntaxTreePath& a,
+                                 const SyntaxTreePath& b, int index = 0) {
+  // a[index] ? b[index]
+  if (int(a.size()) > index && int(b.size()) > index) {
+    if (a[index] < b[index]) return -1;
+    if (a[index] > b[index]) return 1;
+    if (a[index] == b[index]) return CompareSyntaxTreePath(a, b, index + 1);
+  }
+  // a[index] ? (out-of-bounds)
+  if (int(a.size()) > index) return (a[index] < 0) ? -1 : 1;
+  // (out-of-bounds) ? b[index]
+  if (int(b.size()) > index) return (0 > b[index]) ? 1 : -1;
+  // (out-of-bounds) == (out-of-bounds)
+  return 0;
+}
+
 class ColumnSchemaAggregator {
  public:
   void Collect(const ColumnPositionTree& columns) {
@@ -390,10 +410,12 @@ class ColumnSchemaAggregator {
         node.Path(it->second);
       }
       if (!node.is_leaf()) {
-        // Sort subcolumns
+        // Sort subcolumns. This puts negative paths (leading non-tree token
+        // columns) before empty, zero, and positive ones.
         std::sort(node.Children().begin(), node.Children().end(),
                   [](const auto& a, const auto& b) {
-                    return a.Value().path < b.Value().path;
+                    return CompareSyntaxTreePath(a.Value().path,
+                                                 b.Value().path) < 0;
                   });
         // Propagate left_border_override property to the left subcolumn
         auto& left_child_data = node.Children().front().Value();
@@ -870,8 +892,7 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
     const UnwrappedLine& unwrapped_line,
     MutableFormatTokenRange::iterator ftoken_base) {
   // Each row should correspond to an individual list element
-  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
-  VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
+  VLOG(2) << "row: " << StringSpanOfTokenRange(unwrapped_line.TokensRange());
 
   const auto range_begin = unwrapped_line.TokensRange().begin();
   auto range_end = unwrapped_line.TokensRange().end();
@@ -957,12 +978,19 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
     // Each row should correspond to an individual list element
     const UnwrappedLine& unwrapped_line = row->Value();
 
+    // Scan each token-range for cell boundaries based on syntax,
+    // and establish partial ordering based on syntax tree paths.
+    auto sparse_columns = cell_scanner_gen(*row);
+    // Make sure columns are properly ordered.
+    std::sort(
+        sparse_columns.Children().begin(), sparse_columns.Children().end(),
+        [](const auto& a, const auto& b) {
+          return CompareSyntaxTreePath(a.Value().path, b.Value().path) < 0;
+        });
     const AlignmentRowData row_data{
         // Extract the range of format tokens whose spacings should be adjusted.
         GetMutableFormatTokenRange(unwrapped_line, ftoken_base),
-        // Scan each token-range for cell boundaries based on syntax,
-        // and establish partial ordering based on syntax tree paths.
-        cell_scanner_gen(*row)};
+        std::move(sparse_columns)};
 
     alignment_row_data.emplace_back(row_data);
     VLOG(2) << "Row sparse columns:\n" << row_data.sparse_columns;
@@ -982,6 +1010,10 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   {
     auto row_data_iter = alignment_row_data.cbegin();
     for (auto& row : result.matrix) {
+      VLOG(3) << "Row tokens: "
+              << StringSpanOfTokenRange(
+                     FormatTokenRange(row_data_iter->ftoken_range.begin(),
+                                      row_data_iter->ftoken_range.end()));
       CopyTreeStructure<AggregateColumnData, AlignmentCell>(
           column_schema.Columns(), &row,
           [](const AggregateColumnData&) { return AlignmentCell{}; });

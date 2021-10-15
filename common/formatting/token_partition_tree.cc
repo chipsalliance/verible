@@ -273,8 +273,8 @@ void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount) {
   AdjustIndentationRelative(tree, indent_diff);
 }
 
-static absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
-  CHECK(!range.empty());
+absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
+  if (range.empty()) return absl::string_view();
   return make_string_view_range(range.front().Text().begin(),
                                 range.back().Text().end());
 }

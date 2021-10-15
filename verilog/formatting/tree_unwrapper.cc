@@ -25,6 +25,7 @@
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/tree_unwrapper.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/range.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/constants.h"
@@ -1197,10 +1198,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       }
       break;
     }
-    case NodeEnum::kPatternExpression: {
-      VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
-      break;
-    }
 
     case NodeEnum::kExpressionList:
     case NodeEnum::kUntagged: {
@@ -1212,7 +1209,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
-    case NodeEnum::kAssignmentPattern: {
+    case NodeEnum::kAssignmentPattern:
+    case NodeEnum::kPatternExpression: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
@@ -1281,8 +1279,115 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
   return break_decision == verible::SpacingOptions::MustWrap;
 }
 
+// Joins partition containing only a ',' (and optionally comments) with
+// a partition preceding or following it.
+static void AttachSeparatorToPreviousOrNextPartition(
+    TokenPartitionTree* partition) {
+  CHECK_NOTNULL(partition);
+  VLOG(5) << __FUNCTION__ << ": subpartition:\n" << *partition;
+
+  if (!partition->is_leaf()) {
+    VLOG(5) << "  skip: not a leaf.";
+    return;
+  }
+
+  // Find a separator and make sure this is the only non-comment token
+  const verible::PreFormatToken* separator = nullptr;
+  for (const auto& token : partition->Value().TokensRange()) {
+    switch (token.TokenEnum()) {
+      case verilog_tokentype::TK_COMMENT_BLOCK:
+      case verilog_tokentype::TK_EOL_COMMENT:
+      case verilog_tokentype::TK_ATTRIBUTE:
+        break;
+      case ',':
+      case ':':
+        if (separator == nullptr) {
+          separator = &token;
+          break;
+        }
+        [[fallthrough]];
+      default:
+        VLOG(5) << "  skip: contains tokens other than separator and comments.";
+        return;
+    }
+  }
+  if (separator == nullptr) {
+    VLOG(5) << "  skip: separator token not found.";
+    return;
+  }
+
+  // Merge with previous partition if both partitions are in the same line in
+  // original text
+  const auto* previous_partition = partition->PreviousLeaf();
+  if (previous_partition != nullptr) {
+    if (!previous_partition->Value().TokensRange().empty()) {
+      const auto& previous_token =
+          previous_partition->Value().TokensRange().front();
+      absl::string_view original_text_between = verible::make_string_view_range(
+          previous_token.Text().end(), separator->Text().begin());
+      if (!absl::StrContains(original_text_between, '\n')) {
+        VLOG(5) << "  merge into previous partition.";
+        verible::MergeLeafIntoPreviousLeaf(partition);
+        return;
+      }
+    }
+  }
+
+  // Merge with next partition if both partitions are in the same line in
+  // original text
+  const auto* next_partition = partition->NextLeaf();
+  if (next_partition != nullptr) {
+    if (!next_partition->Value().TokensRange().empty()) {
+      const auto& next_token = next_partition->Value().TokensRange().back();
+      absl::string_view original_text_between = verible::make_string_view_range(
+          separator->Text().end(), next_token.Text().begin());
+      if (!absl::StrContains(original_text_between, '\n')) {
+        VLOG(5) << "  merge into next partition.";
+        verible::MergeLeafIntoNextLeaf(partition);
+        return;
+      }
+    }
+  }
+
+  // If there are no comments (separator is the only token)...
+  if (partition->Value().TokensRange().size() == 1) {
+    // Try merging with previous partition
+    if (!PartitionIsForcedIntoNewLine(*partition)) {
+      VLOG(5) << "  merge into previous partition.";
+      verible::MergeLeafIntoPreviousLeaf(partition);
+      return;
+    }
+
+    // Try merging with next partition
+    if (next_partition != nullptr &&
+        !PartitionIsForcedIntoNewLine(*next_partition)) {
+      VLOG(5) << "  merge into next partition.";
+      verible::MergeLeafIntoNextLeaf(partition);
+      return;
+    }
+  }
+
+  // Leave the separator in its own line and clear its Origin() to not confuse
+  // tabular alignment.
+  VLOG(5) << "  keep in separate line, remove origin.";
+  partition->Value().SetOrigin(nullptr);
+}
+
+void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
+  CHECK_NOTNULL(partition);
+  // Skip first and last partition, as those can't contain just a separator.
+  int size = partition->Children().size();
+  for (int i = 1; i < size - 1; ++i) {
+    auto& subpartition = partition->Children()[i];
+    AttachSeparatorToPreviousOrNextPartition(&subpartition);
+  }
+}
+
 static void AttachTrailingSemicolonToPreviousPartition(
     TokenPartitionTree* partition) {
+  // TODO(mglb): Replace this function with
+  // AttachSeparatorToPreviousOrNextPartition().
+
   // Attach the trailing ';' partition to the previous sibling leaf.
   // VisitIndentedSection() finished by starting a new partition,
   // so we need to back-track to the previous sibling partition.
@@ -1312,45 +1417,6 @@ static void AttachTrailingSemicolonToPreviousPartition(
   }
 }
 
-// Joins partition containing only a ',' (and optionally comments) with
-// previous partition.
-static void AttachCommaToPreviousOrNextPartition(
-    TokenPartitionTree* subpartition) {
-  CHECK_NOTNULL(subpartition);
-  VLOG(5) << __FUNCTION__ << ": subpartition:\n" << *subpartition;
-  int commas_count = 0;
-  for (const auto& token : subpartition->Value().TokensRange()) {
-    if (IsComment(verilog_tokentype(token.TokenEnum()))) continue;
-    if (token.TokenEnum() == ',')
-      ++commas_count;
-    else {
-      VLOG(5) << "  skip: contains tokens other than comma and comments";
-      return;
-    }
-  }
-
-  if (!subpartition->is_leaf() || commas_count != 1) {
-    VLOG(5) << "  skip: not comma-only partition";
-    return;
-  }
-
-  if (!PartitionIsForcedIntoNewLine(*subpartition)) {
-    VLOG(5) << "  merge back: previous not forced into new line";
-    verible::MergeLeafIntoPreviousLeaf(subpartition);
-    return;
-  }
-}
-
-void AttachCommasToListElementPartitions(TokenPartitionTree* partition) {
-  CHECK_NOTNULL(partition);
-  // Skip first and last partition, as those can't contain just a separator.
-  int size = partition->Children().size();
-  for (int i = 1; i < size - 1; ++i) {
-    auto& subpartition = partition->Children()[i];
-    AttachCommaToPreviousOrNextPartition(&subpartition);
-  }
-}
-
 static void AdjustSubsequentPartitionsIndentation(TokenPartitionTree* partition,
                                                   int indentation) {
   // Adjust indentation of subsequent partitions
@@ -1375,6 +1441,46 @@ static void AdjustSubsequentPartitionsIndentation(TokenPartitionTree* partition,
       for (unsigned int idx = 1; idx < npartitions; ++idx) {
         AdjustIndentationRelative(&partition->Children()[idx], indentation);
       }
+    }
+  }
+}
+
+// Merges first found subpartition ending with "=" or ":" with "'{" or "{"
+// from the subpartition following it.
+static void AttachOpeningBraceToDeclarationsAssignmentOperator(
+    TokenPartitionTree* partition) {
+  const int children_count = partition->Children().size();
+  if (children_count <= 1) return;
+
+  for (int i = 0; i < children_count - 1; ++i) {
+    auto* current = partition->Children()[i].RightmostDescendant();
+    const auto tokens = current->Value().TokensRange();
+    if (tokens.empty()) continue;
+
+    auto rbegin = std::make_reverse_iterator(tokens.end());
+    auto rend = std::make_reverse_iterator(tokens.begin());
+    auto last_non_comment_it =
+        std::find_if_not(rbegin, rend, [](const PreFormatToken& token) {
+          // Lines with EOL Comment are non-mergable, so don't skip it here.
+          return token.TokenEnum() == verilog_tokentype::TK_COMMENT_BLOCK;
+        });
+    if (last_non_comment_it == rend ||
+        !(last_non_comment_it->TokenEnum() == '=' ||
+          last_non_comment_it->TokenEnum() == ':'))
+      continue;
+
+    const auto& next = partition->Children()[i + 1];
+    if (next.Value().IsEmpty()) continue;
+
+    const auto& next_token = next.Value().TokensRange().front();
+    if (!(next_token.TokenEnum() == verilog_tokentype::TK_LP ||
+          next_token.TokenEnum() == '{'))
+      continue;
+
+    if (!PartitionIsForcedIntoNewLine(next)) {
+      verible::MergeLeafIntoNextLeaf(current);
+      // There shouldn't be more matching partitions
+      return;
     }
   }
 }
@@ -1656,11 +1762,15 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         VLOG(4) << "None of the special cases apply.";
       }
 
-      // Handle variable declaration with string concatenation assignment
+      // Handle variable declaration with an assignment
 
       const auto* assigned_expr =
           GetAssignedExpressionFromDataDeclaration(node);
       if (!assigned_expr || assigned_expr->children().empty()) break;
+
+      AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+
+      // Special handling for assignment of a string concatenation
 
       const auto* concat_expr_symbol = assigned_expr->children().front().get();
       if (concat_expr_symbol->Tag() !=
@@ -2097,54 +2207,25 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kEnumNameList:
     case NodeEnum::kFormalParameterList:
     case NodeEnum::kMacroArgList:
+    case NodeEnum::kOpenRangeList:
     case NodeEnum::kPortActualList:
     case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kPortList:
     case NodeEnum::kVariableDeclarationAssignmentList: {
-      AttachCommasToListElementPartitions(&partition);
+      AttachSeparatorsToListElementPartitions(&partition);
       break;
     }
 
-    case NodeEnum::kUntagged:
-    case NodeEnum::kExpressionList: {
-      AttachCommasToListElementPartitions(&partition);
+    case NodeEnum::kExpressionList:
+    case NodeEnum::kUntagged: {
+      AttachSeparatorsToListElementPartitions(&partition);
       skip_singleton_hoisting = true;
       break;
     }
 
     case NodeEnum::kParamDeclaration: {
       AttachTrailingSemicolonToPreviousPartition(&partition);
-      if (partition.Children().size() <= 1) break;
-
-      // Merge subpartitions ending with '=' with "'{" from the subpartition
-      // following it.
-      const int children_count = partition.Children().size();
-      for (int i = children_count - 2; i >= 0; --i) {
-        auto* current = partition.Children()[i].RightmostDescendant();
-        const auto tokens = current->Value().TokensRange();
-        if (tokens.empty()) continue;
-
-        auto rbegin = std::make_reverse_iterator(tokens.end());
-        auto rend = std::make_reverse_iterator(tokens.begin());
-        auto last_non_comment_it =
-            std::find_if_not(rbegin, rend, [](const PreFormatToken& token) {
-              // Lines with EOL Comment are non-mergable, so don't skip it here.
-              return token.TokenEnum() == verilog_tokentype::TK_COMMENT_BLOCK;
-            });
-        if (last_non_comment_it == rend ||
-            last_non_comment_it->TokenEnum() != '=')
-          continue;
-
-        const auto& next = partition.Children()[i + 1];
-        if (next.Value().IsEmpty()) continue;
-
-        const auto& next_token = next.Value().TokensRange().front();
-        if (verilog_tokentype(next_token.TokenEnum()) !=
-            verilog_tokentype::TK_LP)
-          continue;
-
-        if (!PartitionIsForcedIntoNewLine(next))
-          verible::MergeLeafIntoNextLeaf(current);
-      }
+      AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
       break;
     }
 
@@ -2153,9 +2234,14 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
-    case NodeEnum::kOpenRangeList: {
-        AttachCommasToListElementPartitions(&partition);
-        break;
+    case NodeEnum::kPatternExpression: {
+      if (partition.Children().size() >= 3) {
+        auto& colon = partition.Children()[1];
+        AttachSeparatorToPreviousOrNextPartition(&colon);
+      }
+      partition.FlattenOnlyChildrenWithChildren();
+      AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+      break;
     }
 
     default:

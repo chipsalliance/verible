@@ -344,9 +344,9 @@ ColumnPositionTree ScanPartitionForAlignmentCells(
   const UnwrappedLine& unwrapped_line = row.Value();
   // Walk the original syntax tree that spans a subset of the tokens spanned by
   // this 'row', and detect the sparse set of columns found by the scanner.
-  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
   ScannerType scanner = scanner_factory();
-  origin->Accept(&scanner);
+  const Symbol* origin = unwrapped_line.Origin();
+  if (origin != nullptr) origin->Accept(&scanner);
   return scanner.SparseColumns();
 }
 
@@ -357,6 +357,9 @@ ColumnPositionTree ScanPartitionForAlignmentCells(
       row, [] { return ScannerType(); });
 }
 
+using NonTreeTokensScannerFunction = std::function<void(
+    FormatTokenRange, FormatTokenRange, ColumnPositionTree*)>;
+
 // Similarly to the function above this function creates an instance of
 // ScannerType and extracts column alignment information. Firstly it reuses
 // existing column scanner for extracting column alignment information from
@@ -365,9 +368,8 @@ ColumnPositionTree ScanPartitionForAlignmentCells(
 // information for alignment with non_tree_column_scanner function.
 // A 'row' corresponds to a range of format tokens over which spacing is to be
 // adjusted to achieve alignment.
-// A 'non_tree_column_scanner' is a function which takes as an argument
-// TokenRange (containing all tokens excluded from SyntaxTree) and returns
-// data for appropriate alignment.
+// A 'non_tree_column_scanner' is a function that scans non-tree tokens in a
+// line (like comments) and creates columns for them.
 // Returns a concatenated sequence of column entries for tokens from SyntaxTree
 // and TokenPartitionTree that will be uniquified and ordered for alignment
 // purposes.
@@ -375,30 +377,61 @@ template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
     const std::function<ScannerType(void)>& scanner_factory,
-    const std::function<void(TokenRange, ColumnPositionTree*)>&
-        non_tree_column_scanner) {
+    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
   // re-use existing scanner
   ColumnPositionTree column_entries =
       ScanPartitionForAlignmentCells<ScannerType>(row, scanner_factory);
 
   const UnwrappedLine& unwrapped_line = row.Value();
-  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
-  // Identify the last token covered by the origin tree.
-  const SyntaxTreeLeaf* last_leaf = GetRightmostLeaf(*origin);
-  const TokenInfo last_tree_token = last_leaf->get();
+  const auto ftokens = unwrapped_line.TokensRange();
+  const Symbol* origin = unwrapped_line.Origin();
 
-  // Collect tokens excluded from SyntaxTree (delimiters and comments)
-  TokenSequence non_tree_tokens;
-  bool non_tree_flag = false;
-  for (auto i : unwrapped_line.TokensRange()) {
-    if (non_tree_flag) non_tree_tokens.push_back(*i.token);
+  FormatTokenRange leading_tokens(ftokens.begin(), ftokens.begin());
+  FormatTokenRange trailing_tokens(ftokens.end(), ftokens.end());
+  if (origin != nullptr) {
+    // Identify the last token covered by the origin tree.
+    const SyntaxTreeLeaf* first_leaf = GetLeftmostLeaf(*origin);
+    const SyntaxTreeLeaf* last_leaf = GetRightmostLeaf(*origin);
+    CHECK_NOTNULL(first_leaf);
+    CHECK_NOTNULL(last_leaf);
+    const TokenInfo& first_tree_token = first_leaf->get();
+    const TokenInfo& last_tree_token = last_leaf->get();
 
-    if (*i.token == last_tree_token) non_tree_flag = true;
+    // Collect tokens excluded from SyntaxTree (delimiters and comments)
+    CHECK(!ftokens.empty());
+    CHECK_LE(ftokens.front().Text().begin(), first_tree_token.text().begin());
+    CHECK_GE(ftokens.back().Text().end(), last_tree_token.text().end());
+
+    FormatTokenRange::const_iterator ftoken_it = ftokens.begin();
+    // Find leading non-tree tokens range end
+    while (*(ftoken_it->token) != first_tree_token) ++ftoken_it;
+    leading_tokens.set_end(ftoken_it);
+    const auto first_tree_token_it = ftoken_it;
+    // Skip tree tokens. Non-tree tokens located between tree tokens (e.g. block
+    // comments) are also skipped.
+    while (*(ftoken_it->token) != last_tree_token) ++ftoken_it;
+    // Use next token as begining of trailing non-tree tokens
+    trailing_tokens.set_begin(ftoken_it + 1);
+
+    // Breaking following condition leads to e.g. concatenation of EOL comment
+    // and code in a single line. To fix situation that lead to this, flatten
+    // token partitions that contain EOL comment subpartition just before a
+    // subpartition that starts with the same token as Origin(). Example of a
+    // partition that needs flattening:
+    //
+    //   { (>>[...], (origin: "input bit second"))
+    //     { (>>[// comment] }
+    //     { (>>[input bit second], (origin: "input")) }
+    //   }
+    CHECK(leading_tokens.empty() || first_tree_token_it == ftokens.end() ||
+          first_tree_token_it->before.break_decision !=
+              SpacingOptions::MustWrap);
+  } else {
+    // All tokens are passed as leading
+    leading_tokens.set_end(ftokens.end());
   }
 
-  auto remainder = make_range<TokenSequence::const_iterator>(
-      non_tree_tokens.begin(), non_tree_tokens.end());
-  non_tree_column_scanner(remainder, &column_entries);
+  non_tree_column_scanner(leading_tokens, trailing_tokens, &column_entries);
 
   return column_entries;
 }
@@ -406,8 +439,7 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     const TokenPartitionTree& row,
-    const std::function<void(TokenRange, ColumnPositionTree*)>&
-        non_tree_column_scanner) {
+    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
   return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
       row, [] { return ScannerType(); }, non_tree_column_scanner);
 }
@@ -444,8 +476,7 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
 // comments.
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-    const std::function<void(TokenRange, ColumnPositionTree*)>
-        non_tree_column_scanner) {
+    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
   return [non_tree_column_scanner](const TokenPartitionTree& row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
         row, non_tree_column_scanner);
@@ -455,8 +486,7 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
     const std::function<ScannerType(void)> scanner_factory,
-    const std::function<void(TokenRange, ColumnPositionTree*)>&
-        non_tree_column_scanner) {
+    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
   return [scanner_factory,
           non_tree_column_scanner](const TokenPartitionTree& row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(

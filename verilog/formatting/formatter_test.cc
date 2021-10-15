@@ -2006,8 +2006,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule",
      "module foo #(\n"
      "    parameter  bar = 1  //comment\n"
-     "    ,\n"
-     "    localparam baz = 2\n"
+     "    ,localparam baz = 2\n"  // TODO(mglb): expect space after comma
      ") ();\n"
      "endmodule\n"},
     {"module foo;"
@@ -4173,8 +4172,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ";\n"
      "  foo #(\n"
      "      .foobar(quuuuux)  // comment\n"
-     "      ,\n"
-     "      .cat   (dog)\n"
+     "      ,.cat   (dog)\n"  // TODO(mglb): expect space after comma
      "  ) baz  // comment\n"
      "  ;\n"
      "endclass\n"},
@@ -6835,8 +6833,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module m;\n"
      "  foo bar (\n"
      "      .a  (a)  //comment1\n"
-     "      ,\n"
-     "      .aaa(aaa)  //comment2\n"
+     "      ,.aaa(aaa)  //comment2\n"  // TODO(mglb): expect space after comma
      "  )  //comment3\n"
      "  ;\n"
      "endmodule\n"},

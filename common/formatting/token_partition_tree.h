@@ -114,6 +114,9 @@ void AdjustIndentationRelative(TokenPartitionTree* tree, int amount);
 // amount.
 void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount);
 
+// Returns the range of text spanned by tokens range.
+absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range);
+
 // Mark ranges of tokens (corresponding to formatting-disabled lines) to
 // have their original spacing preserved, except allow the first token
 // to follow the formatter's calculated indentation.
