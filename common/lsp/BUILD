@@ -84,7 +84,6 @@ cc_library(
         ":json-rpc-dispatcher",
         ":lsp-protocol",
         "@com_google_absl//absl/strings",
-        "@jsonhpp//:jsonhpp",
     ]
 )
 
