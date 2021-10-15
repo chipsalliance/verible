@@ -95,18 +95,6 @@ std::set<LintViolationWithStatus> GetSortedViolations(
   return violations;
 }
 
-void ViolationPrinter::HandleViolations(
-    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
-    absl::string_view path) {
-  verible::LintStatusFormatter formatter(base);
-  for (auto violation : violations) {
-    formatter.FormatViolation(stream_, *violation.violation, base, path,
-                              violation.status->url,
-                              violation.status->lint_rule_name);
-    (*stream_) << std::endl;
-  }
-}
-
 static void PrintFix(std::ostream& stream, absl::string_view text,
                      const verible::AutoFix& fix) {
   std::string after = fix.Apply(text);

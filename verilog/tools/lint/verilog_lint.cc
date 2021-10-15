@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
       [&](const OutputFormat& format) -> verible::ViolationHandler* {
     if (format == OutputFormat::kRDJson)
       return new verible::RDJsonPrinter(&std::cerr);
-    return new verilog::ViolationPrinter(&std::cerr);
+    return new verible::ViolationPrinter(&std::cerr);
   };
 
   std::unique_ptr<verible::ViolationHandler> violation_handler;

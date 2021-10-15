@@ -104,22 +104,6 @@ absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
 absl::Status AppendLinterConfigurationFromFile(
     LinterConfiguration* config, absl::string_view config_filename);
 
-// ViolationHandler that prints all violations in a form of user-friendly
-// messages.
-class ViolationPrinter : public verible::ViolationHandler {
- public:
-  explicit ViolationPrinter(std::ostream* stream)
-      : stream_(stream), formatter_(nullptr) {}
-
-  void HandleViolations(
-      const std::set<verible::LintViolationWithStatus>& violations,
-      absl::string_view base, absl::string_view path) final;
-
- protected:
-  std::ostream* const stream_;
-  verible::LintStatusFormatter* formatter_;
-};
-
 // ViolationHandler that prints all violations and gives an option to fix those
 // that have autofixes available.
 //

@@ -39,6 +39,19 @@ void SuggestionFromEdit(const verible::ReplacementEdit& edit,
 }
 
 }  // namespace
+
+void ViolationPrinter::HandleViolations(
+    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    absl::string_view path) {
+  verible::LintStatusFormatter formatter(base);
+  for (auto violation : violations) {
+    formatter.FormatViolation(stream_, *violation.violation, base, path,
+                              violation.status->url,
+                              violation.status->lint_rule_name);
+    (*stream_) << std::endl;
+  }
+}
+
 void RDJsonPrinter::HandleViolations(
     const std::set<LintViolationWithStatus>& violations, absl::string_view base,
     absl::string_view path) {
@@ -80,8 +93,8 @@ void RDJsonPrinter::HandleViolations(
         //   *removed code* ("edit.fragment") starts
         //   and ends where the *removed code* ends.
         // Which means we don't consider the length of the replacement text here
-        auto line_col_end = line_col_map(violation.violation->token.left(base)
-                                         + edit.fragment.length());
+        auto line_col_end = line_col_map(violation.violation->token.left(base) +
+                                         edit.fragment.length());
         SuggestionFromEdit(edit, line_col, line_col_end, &suggestion);
         diagnostic.suggestions.push_back(suggestion);
       }

@@ -34,6 +34,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/violation_handler.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
@@ -47,6 +48,7 @@ namespace {
 
 using ::testing::EndsWith;
 using ::testing::StartsWith;
+using verible::ViolationPrinter;
 using verible::file::GetContents;
 using verible::file::testing::ScopedTestFile;
 
@@ -70,7 +72,7 @@ class LintOneFileTest : public DefaultLinterConfigTestFixture,
 // Tests that nonexistent file is handled as a fatal error.
 TEST_F(LintOneFileTest, FileNotFound) {
   std::ostringstream output;
-  verilog::ViolationPrinter violation_printer(&output);
+  ViolationPrinter violation_printer(&output);
   const int exit_code =
       LintOneFile(&output, "FileNotFound.sv", config_, &violation_printer, true,
                   false, false, false);
@@ -89,7 +91,7 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -98,7 +100,7 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
     }
     {  // enable additional error context printing
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, true);
@@ -119,7 +121,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {  // continue even with syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -128,7 +130,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // continue even with syntax error with additional error context
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, true);
@@ -137,7 +139,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // abort on syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, true, false, false);
@@ -146,7 +148,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // ignore syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, false, false, false, false);
@@ -166,7 +168,7 @@ TEST_F(LintOneFileTest, LintError) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {  // continue even with lint error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -175,7 +177,7 @@ TEST_F(LintOneFileTest, LintError) {
     }
     {  // abort on lint error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, true, false);

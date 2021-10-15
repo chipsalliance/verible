@@ -15,6 +15,9 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 #define VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 
+#include <ostream>
+#include <set>
+
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 
@@ -35,6 +38,22 @@ class ViolationHandler {
   virtual void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
       absl::string_view base, absl::string_view path) = 0;
+};
+
+// ViolationHandler that prints all violations in a form of user-friendly
+// messages.
+class ViolationPrinter : public ViolationHandler {
+ public:
+  explicit ViolationPrinter(std::ostream* stream)
+      : stream_(stream), formatter_(nullptr) {}
+
+  void HandleViolations(
+      const std::set<verible::LintViolationWithStatus>& violations,
+      absl::string_view base, absl::string_view path) final;
+
+ protected:
+  std::ostream* const stream_;
+  verible::LintStatusFormatter* formatter_;
 };
 
 // ViolationHandler that prints all violations in Reviewdog Diagnostic Format
