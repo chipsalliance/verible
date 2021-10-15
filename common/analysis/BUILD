@@ -93,6 +93,10 @@ cc_library(
     deps = [
         ":lint_rule_status",
         ":rdformat",
+        "//common/strings:diff",
+        "//common/util:file_util",
+        "//common/util:user_interaction",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@jsonhpp//:jsonhpp",
     ]

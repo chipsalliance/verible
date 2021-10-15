@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 #define VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 
+#include <functional>
+#include <map>
 #include <ostream>
 #include <set>
 
@@ -54,6 +56,94 @@ class ViolationPrinter : public ViolationHandler {
  protected:
   std::ostream* const stream_;
   verible::LintStatusFormatter* formatter_;
+};
+
+// ViolationHandler that prints all violations and gives an option to fix those
+// that have autofixes available.
+//
+// By default, when violation has an autofix available, ViolationFixer asks an
+// user what to do. The answers can be provided by AnswerChooser callback passed
+// to the constructor as the answer_chooser parameter. The callback is called
+// once for each fixable violation with a current violation object and a
+// violated rule name as arguments, and must return one of the values from
+// AnswerChoice enum.
+//
+// When the constructor's patch_stream parameter is not null, the fixes are
+// written to specified stream in unified diff format. Otherwise the fixes are
+// applied directly to the source file.
+//
+// The HandleLintRuleStatuses method can be called multiple times with statuses
+// generated from different files. The state of answers like "apply all for
+// rule" or "apply all" is kept between the calls.
+class ViolationFixer : public verible::ViolationHandler {
+ public:
+  enum class AnswerChoice {
+    kUnknown,
+    kApply,              // apply fix
+    kReject,             // reject fix
+    kApplyAllForRule,    // apply this and all remaining fixes for violations
+                         // of this rule
+    kRejectAllForRule,   // reject this and all remaining fixes for violations
+                         // of this rule
+    kApplyAll,           // apply this and all remaining fixes
+    kRejectAll,          // reject this and all remaining fixes
+    kPrintFix,           // show fix
+    kPrintAppliedFixes,  // show fixes applied so far
+  };
+
+  struct Answer {
+    AnswerChoice choice;
+    // If there are multiple alternatives for fixes available, this is
+    // the one chosen. By default the first one.
+    size_t alternative = 0;
+  };
+
+  using AnswerChooser =
+      std::function<Answer(const verible::LintViolation&, absl::string_view)>;
+
+  // Violation fixer with user-chosen answer chooser.
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
+                 const AnswerChooser& answer_chooser)
+      : ViolationFixer(message_stream, patch_stream, answer_chooser, false) {}
+
+  // Violation fixer with interactive answer choice.
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream)
+      : ViolationFixer(message_stream, patch_stream, InteractiveAnswerChooser,
+                       true) {}
+
+  void HandleViolations(
+      const std::set<verible::LintViolationWithStatus>& violations,
+      absl::string_view base, absl::string_view path) final;
+
+ private:
+  ViolationFixer(std::ostream* message_stream, std::ostream* patch_stream,
+                 const AnswerChooser& answer_chooser, bool is_interactive)
+      : message_stream_(message_stream),
+        patch_stream_(patch_stream),
+        answer_chooser_(answer_chooser),
+        is_interactive_(is_interactive),
+        ultimate_answer_({AnswerChoice::kUnknown, 0}) {}
+
+  void HandleViolation(const verible::LintViolation& violation,
+                       absl::string_view base, absl::string_view path,
+                       absl::string_view url, absl::string_view rule_name,
+                       const verible::LintStatusFormatter& formatter,
+                       verible::AutoFix* fix);
+
+  static Answer InteractiveAnswerChooser(
+      const verible::LintViolation& violation, absl::string_view rule_name);
+
+  void CommitFixes(absl::string_view source_content,
+                   absl::string_view source_path,
+                   const verible::AutoFix& fix) const;
+
+  std::ostream* const message_stream_;
+  std::ostream* const patch_stream_;
+  const AnswerChooser answer_chooser_;
+  const bool is_interactive_;
+
+  Answer ultimate_answer_;
+  std::map<absl::string_view, Answer> rule_answers_;
 };
 
 // ViolationHandler that prints all violations in Reviewdog Diagnostic Format

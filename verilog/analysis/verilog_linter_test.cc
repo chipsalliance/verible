@@ -48,6 +48,7 @@ namespace {
 
 using ::testing::EndsWith;
 using ::testing::StartsWith;
+using verible::ViolationFixer;
 using verible::ViolationPrinter;
 using verible::file::GetContents;
 using verible::file::testing::ScopedTestFile;
@@ -519,8 +520,7 @@ class ViolationFixerTest : public testing::Test {
       choice_it = choices.begin();
       // intentionally unopened, diagnostics are discarded
       std::ofstream diagnostics;
-      verilog::ViolationFixer violation_fixer(&diagnostics, nullptr,
-                                              answer_chooser);
+      ViolationFixer violation_fixer(&diagnostics, nullptr, answer_chooser);
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
@@ -550,8 +550,7 @@ class ViolationFixerTest : public testing::Test {
       // intentionally unopened, diagnostics are discarded
       std::ofstream diagnostics;
       std::ostringstream patch;
-      verilog::ViolationFixer violation_fixer(&diagnostics, &patch,
-                                              answer_chooser);
+      ViolationFixer violation_fixer(&diagnostics, &patch, answer_chooser);
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
