@@ -1190,7 +1190,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else if (Context().IsInside(NodeEnum::kAssignmentPattern)) {
-        VisitIndentedSection(node, style_.wrap_spaces,
+        VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
@@ -1198,8 +1198,22 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kPatternExpression: {
-      VisitIndentedSection(node, style_.wrap_spaces,
-                           PartitionPolicyEnum::kFitOnLineElseExpand);
+      VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+
+    case NodeEnum::kExpressionList:
+    case NodeEnum::kUntagged: {
+      if (Context().DirectParentIs(NodeEnum::kAssignmentPattern))
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      else
+        TraverseChildren(node);
+      break;
+    }
+
+    case NodeEnum::kAssignmentPattern: {
+      VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
 
@@ -1295,6 +1309,45 @@ static void AttachTrailingSemicolonToPreviousPartition(
       verible::MergeLeafIntoPreviousLeaf(semicolon_partition);
     }
     VLOG(4) << "after moving semicolon:\n" << *partition;
+  }
+}
+
+// Joins partition containing only a ',' (and optionally comments) with
+// previous partition.
+static void AttachCommaToPreviousOrNextPartition(
+    TokenPartitionTree* subpartition) {
+  CHECK_NOTNULL(subpartition);
+  VLOG(5) << __FUNCTION__ << ": subpartition:\n" << *subpartition;
+  int commas_count = 0;
+  for (const auto& token : subpartition->Value().TokensRange()) {
+    if (IsComment(verilog_tokentype(token.TokenEnum()))) continue;
+    if (token.TokenEnum() == ',')
+      ++commas_count;
+    else {
+      VLOG(5) << "  skip: contains tokens other than comma and comments";
+      return;
+    }
+  }
+
+  if (!subpartition->is_leaf() || commas_count != 1) {
+    VLOG(5) << "  skip: not comma-only partition";
+    return;
+  }
+
+  if (!PartitionIsForcedIntoNewLine(*subpartition)) {
+    VLOG(5) << "  merge back: previous not forced into new line";
+    verible::MergeLeafIntoPreviousLeaf(subpartition);
+    return;
+  }
+}
+
+void AttachCommasToListElementPartitions(TokenPartitionTree* partition) {
+  CHECK_NOTNULL(partition);
+  // Skip first and last partition, as those can't contain just a separator.
+  int size = partition->Children().size();
+  for (int i = 1; i < size - 1; ++i) {
+    auto& subpartition = partition->Children()[i];
+    AttachCommaToPreviousOrNextPartition(&subpartition);
   }
 }
 
@@ -1520,6 +1573,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
   VLOG(3) << __FUNCTION__ << " node: " << tag;
   auto& partition = *recent_partition;
   VLOG(4) << "before reshaping " << tag << ":\n" << partition;
+
+  // Few node types that need to skip hoisting at the end of this function set
+  // this flag to true.
+  bool skip_singleton_hoisting = false;
 
   // Tips, when making reshaping decisions based on subtrees:
   //   * Manipulate the partition *incrementally* and as close to the
@@ -2030,6 +2087,77 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
+
+    case NodeEnum::kGateInstanceRegisterVariableList:
+      // parent: kDataDeclaration
+      skip_singleton_hoisting = true;
+      [[fallthrough]];
+    case NodeEnum::kActualParameterByNameList:
+    case NodeEnum::kDistributionItemList:
+    case NodeEnum::kEnumNameList:
+    case NodeEnum::kFormalParameterList:
+    case NodeEnum::kMacroArgList:
+    case NodeEnum::kPortActualList:
+    case NodeEnum::kPortDeclarationList:
+    case NodeEnum::kVariableDeclarationAssignmentList: {
+      AttachCommasToListElementPartitions(&partition);
+      break;
+    }
+
+    case NodeEnum::kUntagged:
+    case NodeEnum::kExpressionList: {
+      AttachCommasToListElementPartitions(&partition);
+      skip_singleton_hoisting = true;
+      break;
+    }
+
+    case NodeEnum::kParamDeclaration: {
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      if (partition.Children().size() <= 1) break;
+
+      // Merge subpartitions ending with '=' with "'{" from the subpartition
+      // following it.
+      const int children_count = partition.Children().size();
+      for (int i = children_count - 2; i >= 0; --i) {
+        auto* current = partition.Children()[i].RightmostDescendant();
+        const auto tokens = current->Value().TokensRange();
+        if (tokens.empty()) continue;
+
+        auto rbegin = std::make_reverse_iterator(tokens.end());
+        auto rend = std::make_reverse_iterator(tokens.begin());
+        auto last_non_comment_it =
+            std::find_if_not(rbegin, rend, [](const PreFormatToken& token) {
+              // Lines with EOL Comment are non-mergable, so don't skip it here.
+              return token.TokenEnum() == verilog_tokentype::TK_COMMENT_BLOCK;
+            });
+        if (last_non_comment_it == rend ||
+            last_non_comment_it->TokenEnum() != '=')
+          continue;
+
+        const auto& next = partition.Children()[i + 1];
+        if (next.Value().IsEmpty()) continue;
+
+        const auto& next_token = next.Value().TokensRange().front();
+        if (verilog_tokentype(next_token.TokenEnum()) !=
+            verilog_tokentype::TK_LP)
+          continue;
+
+        if (!PartitionIsForcedIntoNewLine(next))
+          verible::MergeLeafIntoNextLeaf(current);
+      }
+      break;
+    }
+
+    case NodeEnum::kAssignmentPattern: {
+      partition.FlattenOnlyChildrenWithChildren();
+      break;
+    }
+
+    case NodeEnum::kOpenRangeList: {
+        AttachCommasToListElementPartitions(&partition);
+        break;
+    }
+
     default:
       break;
   }
@@ -2038,12 +2166,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
   // A few node types, however, will wish to delay the hoisting change,
   // so that the parent node can make reshaping decisions based on the
   // child node's original unhoisted form.
-  // Exceptions:
-  if (!node.MatchesTagAnyOf({
-          //
-          NodeEnum::kGateInstanceRegisterVariableList  // parent:
-                                                       // kDataDeclaration)
-      })) {
+  if (!skip_singleton_hoisting) {
     HoistOnlyChildPartition(&partition);
   }
 
@@ -2105,42 +2228,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
     case ',': {
-      // In many cases (in particular lists), we want to attach delimiters like
-      // ',' to the item that preceded it (on its rightmost leaf).
-      // This adjustment is necessary for lists of element types that beget
-      // their own indented sections.
-      //
-      // TODO(fangism): See also AttachTrailingSemicolonToPreviousPartition().
-      // There should be one consistent way of attaching trailing delimiters.
-      // Pick one, even if both work.
-      if (current_context_.DirectParentIsOneOf({
-              // NodeEnum:xxxx                             // due to element:
-              NodeEnum::kMacroArgList,               // MacroArg
-              NodeEnum::kFormalParameterList,        // kParamDeclaration
-              NodeEnum::kEnumNameList,               // kEnumName
-              NodeEnum::kDistributionItemList,       // kDistribution
-              NodeEnum::kActualParameterByNameList,  // kParamByName
-              NodeEnum::kPortDeclarationList,        // kPort, kPortDeclaration
-              NodeEnum::kPortActualList,             // kActualNamedPort,
-                                                     // kActualPositionalPort
-              NodeEnum::kGateInstanceRegisterVariableList,  // kGateInstance,
-                                                            // kRegisterVariable
-              NodeEnum::kVariableDeclarationAssignmentList  // due to element:
-              // kVariableDeclarationAssignment
-          }) ||
-          (current_context_.DirectParentIsOneOf(
-               {NodeEnum::kUntagged, NodeEnum::kExpressionList}) &&
-           current_context_.IsInside(NodeEnum::kAssignmentPattern)) ||
-          (current_context_.DirectParentsAre(
-               {NodeEnum::kOpenRangeList, NodeEnum::kConcatenationExpression,
-                NodeEnum::kExpression}) &&
-           !current_context_.IsInside(NodeEnum::kCoverageBin) &&
-           !current_context_.IsInside(NodeEnum::kConditionExpression) &&
-           (!current_context_.IsInside(NodeEnum::kBinaryExpression) ||
-            current_context_.IsInside(NodeEnum::kPropertyImplicationList)))) {
-        if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
-          MergeLastTwoPartitions();
-      } else if (CurrentUnwrappedLine().Size() == 1) {
+      if (CurrentUnwrappedLine().Size() == 1) {
         // Partition would begin with a comma,
         // instead add this token to previous partition
         if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
