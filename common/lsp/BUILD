@@ -100,6 +100,16 @@ cc_test(
 )
 
 cc_binary(
+    name = "json-rpc-expect",
+    srcs = [ "json-rpc-expect.cc"],
+    deps = [
+      ":message-stream-splitter",
+      "@com_google_absl//absl/status",
+      "@jsonhpp//:jsonhpp",
+    ]
+)
+
+cc_binary(
     name = "dummy-ls",
     srcs = ["dummy-ls.cc"],
     deps = [
@@ -114,7 +124,10 @@ sh_test_with_runfiles_lib(
     name = "dummy-ls_test",
     size = "small",
     srcs = ["dummy-ls_test.sh"],
-    args = ["$(location :dummy-ls)"],
-    data = [":dummy-ls"],
+    args = ["$(location :dummy-ls)", "$(location :json-rpc-expect)"],
+    data = [
+       ":dummy-ls",
+       ":json-rpc-expect"
+    ],
     deps = [],
 )

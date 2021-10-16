@@ -13,14 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[[ "$#" == 1 ]] || {
-  echo "Expecting 1 positional argument, dummy-lsp path."
+[[ "$#" == 2 ]] || {
+  echo "Expecting 2 positional arguments: lsp-server json-rpc-expect"
   exit 1
 }
-DUMMY_LSP="$(rlocation ${TEST_WORKSPACE}/$1)"
+LSP_SERVER="$(rlocation ${TEST_WORKSPACE}/$1)"
+JSON_RPC_EXPECT="$(rlocation ${TEST_WORKSPACE}/$2)"
 
 TMP_IN=${TEST_TMPDIR:-/tmp/}/test-lsp-in.txt
-JSON_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-json.txt
+JSON_EXPECTED=${TEST_TMPDIR:-/tmp/}/test-lsp-json-expect.txt
+
 MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 
 # One message per line, converted by the awk script to header/body.
@@ -30,20 +32,34 @@ awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0","method":"shutdown","params":{},"id":2}
 EOF
 
-"${DUMMY_LSP}" < ${TMP_IN} > "${JSON_OUT}" 2> "${MSG_OUT}"
+cat > "${JSON_EXPECTED}" <<EOF
+[
+  {
+    "json_contains": {
+        "id":1,
+        "result": {
+          "serverInfo": {"name" : "Verible testing language server."}
+        }
+    }
+  },
+  {
+    "json_contains": { "id":2 }
+  }
+]
+EOF
 
-echo "-- JSON protocol output --"
-cat ${JSON_OUT}
+"${LSP_SERVER}" < ${TMP_IN} 2> "${MSG_OUT}" \
+  | ${JSON_RPC_EXPECT} ${JSON_EXPECTED}
+
+JSON_RPC_EXIT=$?
+
+if [ $JSON_RPC_EXIT -ne 0 ]; then
+   echo "Exit code of json rpc expect; first error at $JSON_RPC_EXIT"
+   exit 1
+fi
 
 echo "-- stderr messages --"
 cat ${MSG_OUT}
-
-# Check if an expected content is returned
-grep "testing language server" "${JSON_OUT}" > /dev/null
-if [ $? -ne 0 ]; then
-  echo "Didn't get initialize feedback message"
-  exit 1
-fi
 
 grep "shutdown request" "${MSG_OUT}" > /dev/null
 if [ $? -ne 0 ]; then
