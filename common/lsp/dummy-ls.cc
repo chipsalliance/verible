@@ -53,6 +53,8 @@ InitializeResult InitializeServer(const nlohmann::json &params) {
               {"change", 2},        // Incremental updates
           },
       },
+      // This is mostly to test array support in json-rpc-expect
+      {"ignored_property", nlohmann::json::array({1, 2, 3})},
   };
   return result;
 }
