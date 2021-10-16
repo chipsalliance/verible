@@ -296,6 +296,18 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
 
   int64_t last_global_version = 0;
 
+  // Let's check that the callback is called on opening and contains
+  // the right content.
+  int change_callback_called = 0;
+  collection.SetChangeListener(
+      [&](const std::string &uri, const EditTextBuffer *buffer) {
+        EXPECT_EQ(uri, "file:///foo.cc");
+        buffer->RequestContent([](absl::string_view s) {
+          EXPECT_EQ(std::string(s), "Hello\nworld");
+        });
+        change_callback_called++;
+      });
+
   // ------ Opening new document
   // Simulate an incoming event from the client
   rpc_dispatcher.DispatchMessage(R"({
@@ -312,29 +324,18 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
 
   // We now expect one document to be open.
   EXPECT_EQ(collection.documents_open(), 1);
-
-  // Let's check that the buffer we have now is indeed stored with that
-  // uri and content. Request all buffers since the last remembered version.
-  int uri_content_validation_called = 0;
-  const int count_changed = collection.MapBuffersChangedSince(
-      last_global_version,
-      [&](const std::string &uri, const EditTextBuffer &buffer) {
-        EXPECT_EQ(uri, "file:///foo.cc");
-        buffer.RequestContent([](absl::string_view s) {
-          EXPECT_EQ(std::string(s), "Hello\nworld");
-        });
-        uri_content_validation_called++;
-      });
-
-  EXPECT_EQ(count_changed, 1);
-  EXPECT_EQ(uri_content_validation_called, 1);
+  EXPECT_EQ(change_callback_called, 1);
 
   EXPECT_GT(collection.global_version(), last_global_version);
 
-  // Remember the current global version and confirm that indeed there are
-  // no changes since.
-  last_global_version = collection.global_version();
-  EXPECT_EQ(0, collection.MapBuffersChangedSince(last_global_version, nullptr));
+  // Prepare for the next expected change
+  collection.SetChangeListener(
+      [&](const std::string &uri, const EditTextBuffer *buffer) {
+        EXPECT_EQ(uri, "file:///foo.cc");
+        buffer->RequestContent(
+            [](absl::string_view s) { EXPECT_EQ(std::string(s), "Hey"); });
+        change_callback_called++;
+      });
 
   // ------ Editing document: receive content changes
   rpc_dispatcher.DispatchMessage(R"({
@@ -345,12 +346,14 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
         "contentChanges": [ {"text":"Hey"} ]
      }})");
 
-  // We expect one buffer to have changed now.
-  EXPECT_EQ(1, collection.MapBuffersChangedSince(last_global_version, nullptr));
+  EXPECT_EQ(change_callback_called, 2);
 
-  collection.findBufferByUri("file:///foo.cc")
-      ->RequestContent(
-          [](absl::string_view s) { EXPECT_EQ(std::string(s), "Hey"); });
+  // Upcoming change will send us a nullptr buffer as it is removed.
+  collection.SetChangeListener(
+      [&](const std::string &uri, const EditTextBuffer *buffer) {
+        EXPECT_EQ(buffer, nullptr);
+        change_callback_called++;
+      });
 
   // ------ Closing document
   rpc_dispatcher.DispatchMessage(R"({
@@ -362,6 +365,7 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
 
   // No document open anymore
   EXPECT_EQ(collection.documents_open(), 0);
+  EXPECT_EQ(change_callback_called, 3);
 }
 
 }  // namespace lsp
