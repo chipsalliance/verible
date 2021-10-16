@@ -254,8 +254,7 @@ class ViolationFixer : public ViolationHandler {
 //   Vector of LintRuleStatuses on success, otherwise error code.
 absl::StatusOr<std::vector<verible::LintRuleStatus>> VerilogLintTextStructure(
     absl::string_view filename, const LinterConfiguration& config,
-    const verible::TextStructureView& text_structure,
-    bool show_context = false);
+    const verible::TextStructureView& text_structure);
 
 // Prints the rule, description and default_enabled.
 absl::Status PrintRuleInfo(std::ostream*,
