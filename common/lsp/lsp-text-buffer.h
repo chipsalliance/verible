@@ -111,21 +111,27 @@ class BufferCollection {
   // only changed buffers when calling MapBuffersChangedSince()
   int64_t global_version() const { return global_version_; }
 
-  // Calls "map_fun"() on each buffer that has changed since the given version.
-  // This allows to only process changed buffers.
-  // Use 0 (zero) as last version to have the map function receive all buffers.
-  // "map_fun" can be nullptr in which case only the number of changed buffers.
-  // are returned.
-  // Returns number of buffers for which the condition applied.
-  int MapBuffersChangedSince(
-      int64_t last_global_version,
-      const std::function<void(const std::string &uri,
-                               const EditTextBuffer &buffer)> &map_fun) const;
+  using UriBufferCallback =
+      std::function<void(const std::string &uri, const EditTextBuffer *buffer)>;
+
+  // Set a callback that is called with each change on the buffer collection.
+  //
+  // If a new buffer has been added or received a change, the callback is
+  // called with the uri and a pointer to the buffer.
+  // If a buffer has been removed, the uri of the removed buffer
+  // and a nullptr will be sent.
+  //
+  // Note, there can only be one callback at a time, which is sufficient
+  // for the current uses; if that changes, need some Add/Remove calls.
+  void SetChangeListener(const UriBufferCallback &listener) {
+    change_listener_ = listener;
+  }
 
   size_t documents_open() const { return buffers_.size(); }
 
  private:
   int64_t global_version_ = 0;
+  UriBufferCallback change_listener_ = nullptr;
   std::unordered_map<std::string, std::unique_ptr<EditTextBuffer>> buffers_;
 };
 }  // namespace lsp

@@ -138,10 +138,17 @@ void BufferCollection::didOpenEvent(const DidOpenTextDocumentParams &o) {
   if (inserted.second) {
     inserted.first->second.reset(new EditTextBuffer(o.textDocument.text));
     inserted.first->second->set_last_global_version(++global_version_);
+    if (change_listener_)
+      change_listener_(o.textDocument.uri, inserted.first->second.get());
   }
 }
 
 void BufferCollection::didCloseEvent(const DidCloseTextDocumentParams &o) {
+  if (change_listener_) {
+    // Let's call the callback first in case our users still have a dangeling
+    // reference.
+    change_listener_(o.textDocument.uri, nullptr);
+  }
   buffers_.erase(o.textDocument.uri);
 }
 
@@ -151,20 +158,7 @@ void BufferCollection::didChangeEvent(const DidChangeTextDocumentParams &o) {
   EditTextBuffer *const buffer = found->second.get();
   buffer->ApplyChanges(o.contentChanges);
   buffer->set_last_global_version(++global_version_);
-}
-
-int BufferCollection::MapBuffersChangedSince(
-    int64_t last_global_version,
-    const std::function<void(const std::string &uri,
-                             const EditTextBuffer &buffer)> &map_fun) const {
-  if (global_version_ <= last_global_version) return 0;
-  int count = 0;
-  for (const auto &b : buffers_) {
-    if (b.second->last_global_version() <= last_global_version) continue;
-    ++count;
-    if (map_fun) map_fun(b.first, *b.second);
-  }
-  return count;
+  if (change_listener_) change_listener_(o.textDocument.uri, buffer);
 }
 
 void EditTextBuffer::RequestContent(const ContentProcessFun &processor) const {
