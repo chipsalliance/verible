@@ -86,6 +86,7 @@ compilation_database(
         "//verilog/tools/preprocessor:verible-verilog-preprocessor",
         "//verilog/tools/project:verible-verilog-project",
         "//verilog/tools/syntax:verible-verilog-syntax",
+        "//verilog/tools/ls:verible-verilog-ls",
         "//common/lsp:dummy-ls",
     ],
 
