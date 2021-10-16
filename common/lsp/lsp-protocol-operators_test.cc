@@ -18,17 +18,19 @@
 
 namespace verible {
 namespace lsp {
-TEST(LspPositionTest, BasicOperatorsLessThan) {
+TEST(LspPositionTest, BasicOperatorsLessThanGreaterEqual) {
   constexpr Position lowerLine = {.line = 32, .character = 0};
   constexpr Position higherLine = {.line = 42, .character = 0};
   EXPECT_LT(lowerLine, higherLine);
+  EXPECT_GE(higherLine, lowerLine);
 
   constexpr Position lowerChar = {.line = 32, .character = 7};
   constexpr Position higherChar = {.line = 32, .character = 8};
   EXPECT_LT(lowerChar, higherChar);
+  EXPECT_GE(higherChar, lowerChar);
 }
 
-TEST(LspPositionTest, BasicOperatorsInsideRange) {
+TEST(LspPositionTest, InsideRangeNested) {
   constexpr Range large_range = {
       .start = {.line = 10, .character = 1},
       .end = {.line = 20, .character = 1},
@@ -45,6 +47,13 @@ TEST(LspPositionTest, BasicOperatorsInsideRange) {
   // Also self-overlapping.
   EXPECT_TRUE(rangeOverlap(inside_large, inside_large));
   EXPECT_TRUE(rangeOverlap(large_range, large_range));
+}
+
+TEST(LspPositionTest, InsideRangeOverlapAtEnd) {
+  constexpr Range large_range = {
+      .start = {.line = 10, .character = 1},
+      .end = {.line = 20, .character = 1},
+  };
 
   // Overlaps the large range at the end range
   constexpr Range overlap_at_end = {
@@ -53,23 +62,44 @@ TEST(LspPositionTest, BasicOperatorsInsideRange) {
   };
   EXPECT_TRUE(rangeOverlap(large_range, overlap_at_end));
   EXPECT_TRUE(rangeOverlap(overlap_at_end, large_range));
+}
 
-  // Overlap just with the edge of the
+TEST(LspPositionTest, InsideRangeOverlapUpperEndEdge) {
+  // Overlap right at the upper end.
+  constexpr Range large_range = {
+      .start = {.line = 10, .character = 1},
+      .end = {.line = 20, .character = 1},
+  };
+
   constexpr Range overlap_at_edge = {
       .start = {.line = 20, .character = 0},
       .end = {.line = 25, .character = 1},
   };
   EXPECT_TRUE(rangeOverlap(overlap_at_edge, large_range));
   EXPECT_TRUE(rangeOverlap(large_range, overlap_at_edge));
+}
+
+TEST(LspPositionTest, OutsideRangeNoOverlapAtUpperEnd) {
+  constexpr Range large_range = {
+      .start = {.line = 10, .character = 1},
+      .end = {.line = 20, .character = 1},  // This marks the char beyond end
+  };
 
   // The end range is one character beyond the actual range. So if we
   // start at that character (chara 1 at line 20), we're outside.
   constexpr Range just_outside_at_edge = {
-      .start = {.line = 20, .character = 1},
+      .start = {.line = 20, .character = 1},  // This starts at the beyond other
       .end = {.line = 25, .character = 1},
   };
   EXPECT_FALSE(rangeOverlap(just_outside_at_edge, large_range));
   EXPECT_FALSE(rangeOverlap(large_range, just_outside_at_edge));
+}
+
+TEST(LspPositionTest, CompletelyOutsideRange) {
+  constexpr Range large_range = {
+      .start = {.line = 10, .character = 1},
+      .end = {.line = 20, .character = 1},  // This marks the char beyond end
+  };
 
   // Solidly outside range.
   constexpr Range outside_range = {

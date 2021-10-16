@@ -28,12 +28,11 @@ inline constexpr bool operator<(const Position &a, const Position &b) {
   if (a.line < b.line) return true;
   return a.character < b.character;
 }
-inline constexpr bool operator==(const Position &a, const Position &b) {
-  return a.line == b.line && a.character == b.character;
+inline constexpr bool operator>=(const Position &a, const Position &b) {
+  return !(a < b);
 }
 inline constexpr bool rangeOverlap(const Range &a, const Range &b) {
-  return a.start == b.start || a.end == b.end ||
-         (a.start < b.end && b.start < a.end);
+  return !(a.start >= b.end || b.start >= a.end);
 }
 }  // namespace lsp
 }  // namespace verible
