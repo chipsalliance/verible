@@ -38,12 +38,13 @@ cat > "${JSON_EXPECTED}" <<EOF
     "json_contains": {
         "id":1,
         "result": {
-          "serverInfo": {"name" : "Verible testing language server."}
+          "serverInfo": {"name" : "Verible testing language server."},
+          "capabilities": { "ignored_property":[1,2,3] }
         }
     }
   },
   {
-    "json_contains": { "id":2 }
+    "json_contains": { "id":2, "result":null }
   }
 ]
 EOF

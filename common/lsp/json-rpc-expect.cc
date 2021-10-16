@@ -58,21 +58,42 @@ A typical expect-script file would be a json array like this
   return 1;
 }
 
+static bool ValuesMatch(const json &expected, const json &received);
 static bool CheckNested(const json &expected, const json &received) {
   for (const auto &[key, value] : expected.items()) {
-    auto found = received.find(key);
-    if (found == received.end()) {
+    auto received_value = received.find(key);
+    if (received_value == received.end()) {
       std::cerr << "key '" << key << "' missing in " << received << std::endl;
       return false;
     }
-    if (value.is_object()) {
-      return CheckNested(value, *found);
-    }
-    if (value != *found) {
-      std::cerr << key << ": expected: " << value << "; got: " << *found
-                << std::endl;
+    if (!ValuesMatch(value, *received_value)) {
+      std::cerr << "^ Issue with value at key '" << key << "'" << std::endl;
       return false;
     }
+  }
+  return true;
+}
+static bool ValuesMatch(const json &expected, const json &received) {
+  if (expected.type() != received.type()) {
+    std::cerr << "type mismatch " << received << std::endl;
+    return false;
+  }
+  if (expected.is_object()) {
+    return CheckNested(expected, received);
+  } else if (expected.is_array()) {
+    if (expected.size() != received.size()) {
+      std::cerr << "array size mismatch. Expected: " << expected.size()
+                << "; got: " << received.size() << std::endl;
+      return false;
+    }
+    for (size_t i = 0; i < expected.size(); ++i) {
+      if (!ValuesMatch(expected[i], received[i])) return false;
+    }
+    return true;
+  }
+  if (expected != received) {
+    std::cerr << "expected: " << expected << "; got: " << received << std::endl;
+    return false;
   }
   return true;
 }
