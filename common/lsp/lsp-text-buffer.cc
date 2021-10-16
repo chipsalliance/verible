@@ -145,7 +145,7 @@ void BufferCollection::didOpenEvent(const DidOpenTextDocumentParams &o) {
 
 void BufferCollection::didCloseEvent(const DidCloseTextDocumentParams &o) {
   if (change_listener_) {
-    // Let's call the callback first in case our users still have a dangeling
+    // Let's call the callback first in case our users still have a dangling
     // reference.
     change_listener_(o.textDocument.uri, nullptr);
   }
