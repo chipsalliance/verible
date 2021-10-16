@@ -77,6 +77,21 @@ jcxxgen(
 )
 
 cc_library(
+    name = "lsp-protocol-operators",
+    hdrs = [ "lsp-protocol-operators.h" ],
+    deps = [ ":lsp-protocol" ],
+)
+
+cc_test(
+    name = "lsp-protocol-operators_test",
+    srcs = ["lsp-protocol-operators_test.cc"],
+    deps = [
+        ":lsp-protocol-operators",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
+cc_library(
     name = "lsp-text-buffer",
     srcs = ["lsp-text-buffer.cc"],
     hdrs = ["lsp-text-buffer.h"],
