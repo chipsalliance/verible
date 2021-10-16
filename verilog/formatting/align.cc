@@ -1334,16 +1334,16 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
             &FormatStyle::module_net_variable_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualParameters,
        {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedParameterColumnSchemaScanner>(),
+            ActualNamedParameterColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::named_parameter_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualPorts,
        {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedPortColumnSchemaScanner>(),
+            ActualNamedPortColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
       {AlignableSyntaxSubtype::kParameterDeclaration,
        {UnstyledAlignmentCellScannerGenerator<
-            ParameterDeclarationColumnSchemaScanner>(),
+            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,

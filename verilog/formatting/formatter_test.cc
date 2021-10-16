@@ -1996,7 +1996,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule",
      "module foo #(\n"
      "    parameter  bar = 1,\n"
-     "    localparam baz = 2  //comment\n"
+     "    localparam baz = 2   //comment\n"
      ") ();\n"
      "endmodule\n"},
     {"module foo #("
@@ -2005,8 +2005,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ") ();"
      "endmodule",
      "module foo #(\n"
-     "    parameter  bar = 1  //comment\n"
-     "    ,localparam baz = 2\n"  // TODO(mglb): expect space after comma
+     "      parameter  bar = 1  //comment\n"
+     "    , localparam baz = 2\n"
      ") ();\n"
      "endmodule\n"},
     {"module foo;"
@@ -4171,8 +4171,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "class i_love_params  // comment\n"
      ";\n"
      "  foo #(\n"
-     "      .foobar(quuuuux)  // comment\n"
-     "      ,.cat   (dog)\n"  // TODO(mglb): expect space after comma
+     "        .foobar(quuuuux)  // comment\n"
+     "      , .cat   (dog)\n"
      "  ) baz  // comment\n"
      "  ;\n"
      "endclass\n"},
@@ -5224,7 +5224,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  bar #(\n"
      "      .N(N),\n"
-     "      .M(M)  //comment\n"  // EOL comment after last param
+     "      .M(M)   //comment\n"  // EOL comment after last param
      "  ) bq ();\n"
      "endmodule\n"},
     {"  module foo   ; bar bq(aa,bb,cc);endmodule\n",
@@ -5394,7 +5394,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "      .aa(aa),\n"
      "      .bb(bb),\n"
      "      .cc(cc),\n"
-     "      .dd(dd)  //\n"  // forced to expand by //
+     "      .dd(dd)   //\n"  // forced to expand by //
      "  );\n"
      "endmodule\n"},
     {// gate instantiation test
@@ -6807,7 +6807,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module m;\n"
      "  foo bar (\n"
-     "      .a  (a),  //comment1\n"
+     "      .a  (a),   //comment1\n"
      "      .aaa(aaa)  //comment2\n"
      "  );\n"
      "endmodule\n"},
@@ -6832,8 +6832,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module m;\n"
      "  foo bar (\n"
-     "      .a  (a)  //comment1\n"
-     "      ,.aaa(aaa)  //comment2\n"  // TODO(mglb): expect space after comma
+     "        .a  (a)    //comment1\n"
+     "      , .aaa(aaa)  //comment2\n"
      "  )  //comment3\n"
      "  ;\n"
      "endmodule\n"},
@@ -7101,7 +7101,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo #(\n"
      "    type T   = int,\n"
-     "    type TT  = bit,  //comment\n"
+     "    type TT  = bit,       //comment\n"
      "    type TTT = C#(logic)\n"
      ");\n"
      "endmodule\n"},
@@ -7411,7 +7411,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endclass\n",
      "class foo #(\n"
      "    type T   = int,\n"
-     "    type TT  = bit,  //comment\n"
+     "    type TT  = bit,       //comment\n"
      "    type TTT = C#(logic)\n"
      ");\n"
      "endclass\n"},
@@ -7659,7 +7659,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endinterface\n",
      "interface foo #(\n"
      "    type T   = int,\n"
-     "    type TT  = bit,  //comment\n"
+     "    type TT  = bit,       //comment\n"
      "    type TTT = C#(logic)\n"
      ");\n"
      "endinterface\n"},
