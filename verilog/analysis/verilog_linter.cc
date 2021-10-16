@@ -355,7 +355,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
   // Analyze the parsed structure for lint violations.
   const auto& text_structure = analyzer->Data();
   const auto linter_result =
-      VerilogLintTextStructure(filename, config, text_structure, show_context);
+      VerilogLintTextStructure(filename, config, text_structure);
   if (!linter_result.ok()) {
     // Something went wrong with running the lint analysis itself.
     LOG(ERROR) << "Fatal error: " << linter_result.status().message();
@@ -531,7 +531,7 @@ absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
 
 absl::StatusOr<std::vector<LintRuleStatus>> VerilogLintTextStructure(
     absl::string_view filename, const LinterConfiguration& config,
-    const TextStructureView& text_structure, bool show_context) {
+    const TextStructureView& text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
   const absl::Status configuration_status = linter.Configure(config, filename);

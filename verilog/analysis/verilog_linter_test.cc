@@ -221,7 +221,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
     // lint success, so as long as we have a syntax tree (even if there
     // are errors), run the lint checks.
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
-        VerilogLintTextStructure(filename, config_, text_structure, false);
+        VerilogLintTextStructure(filename, config_, text_structure);
     verilog::ViolationPrinter violation_printer(&diagnostics);
     const std::set<LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
