@@ -55,6 +55,7 @@ std::vector<char*> InitCommandLine(
   absl::SetFlagsUsageConfig(usage_config);
   absl::SetProgramUsageMessage(usage);  // copies usage string
   google::InitGoogleLogging(**argv);
+  google::InstallFailureSignalHandler();
   return absl::ParseCommandLine(*argc, *argv);
 }
 
