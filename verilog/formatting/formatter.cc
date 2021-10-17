@@ -243,8 +243,6 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
   // Commit verified formatted text to the output stream.
   formatted_stream << formatted_text;
 
-  return format_status;
-
   // For now, unconditionally verify.
   if (Status verify_status =
           VerifyFormatting(text_structure, formatted_text, filename);
