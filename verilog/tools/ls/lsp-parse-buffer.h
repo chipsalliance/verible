@@ -68,6 +68,8 @@ class BufferTracker {
   const ParsedBuffer *last_good() const { return last_good_.get(); }
 
  private:
+  // The same ParsedBuffer can in both, current and last_good, or last_good can
+  // be an older version. Use shared_ptr to keep track of the reference count.
   std::shared_ptr<ParsedBuffer> current_;
   std::shared_ptr<ParsedBuffer> last_good_;
 };

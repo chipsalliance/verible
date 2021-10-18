@@ -64,8 +64,9 @@ EOF
 JSON_RPC_EXIT=$?
 
 if [ $JSON_RPC_EXIT -ne 0 ]; then
-   echo "Exit code of json rpc expect; first error at $JSON_RPC_EXIT"
-   exit 1
+  # json-rpc-expect outputs the entry, where the mismatch occured, in exit code
+  echo "Exit code of json rpc expect; first error at $JSON_RPC_EXIT"
+  exit 1
 fi
 
 echo "-- stderr messages --"
