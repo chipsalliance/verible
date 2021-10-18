@@ -61,4 +61,24 @@ SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path) {
   return next;
 }
 
+static int CompareSyntaxTreePath(const SyntaxTreePath& a,
+                                 const SyntaxTreePath& b, int index) {
+  // a[index] ? b[index]
+  if (int(a.size()) > index && int(b.size()) > index) {
+    if (a[index] < b[index]) return -1;
+    if (a[index] > b[index]) return 1;
+    if (a[index] == b[index]) return CompareSyntaxTreePath(a, b, index + 1);
+  }
+  // a[index] ? (out-of-bounds)
+  if (int(a.size()) > index) return (a[index] < 0) ? -1 : 1;
+  // (out-of-bounds) ? b[index]
+  if (int(b.size()) > index) return (0 > b[index]) ? 1 : -1;
+  // (out-of-bounds) == (out-of-bounds)
+  return 0;
+}
+
+int CompareSyntaxTreePath(const SyntaxTreePath& a, const SyntaxTreePath& b) {
+  return CompareSyntaxTreePath(a, b, 0);
+}
+
 }  // namespace verible

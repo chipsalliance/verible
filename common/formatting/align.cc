@@ -371,26 +371,6 @@ static void CopyTreeStructure(
   }
 }
 
-// Recursively compares two SyntaxTreePaths element by element. Out of bound
-// elements are assumed to have values that are less than 0 but greater than any
-// negative number. First non-matching elements pair determines the result:
-// -1 if a < b, 1 if a > b. If all pairs are equal the result is 0.
-static int CompareSyntaxTreePath(const SyntaxTreePath& a,
-                                 const SyntaxTreePath& b, int index = 0) {
-  // a[index] ? b[index]
-  if (int(a.size()) > index && int(b.size()) > index) {
-    if (a[index] < b[index]) return -1;
-    if (a[index] > b[index]) return 1;
-    if (a[index] == b[index]) return CompareSyntaxTreePath(a, b, index + 1);
-  }
-  // a[index] ? (out-of-bounds)
-  if (int(a.size()) > index) return (a[index] < 0) ? -1 : 1;
-  // (out-of-bounds) ? b[index]
-  if (int(b.size()) > index) return (0 > b[index]) ? 1 : -1;
-  // (out-of-bounds) == (out-of-bounds)
-  return 0;
-}
-
 class ColumnSchemaAggregator {
  public:
   void Collect(const ColumnPositionTree& columns) {
@@ -414,8 +394,7 @@ class ColumnSchemaAggregator {
         // columns) before empty, zero, and positive ones.
         std::sort(node.Children().begin(), node.Children().end(),
                   [](const auto& a, const auto& b) {
-                    return CompareSyntaxTreePath(a.Value().path,
-                                                 b.Value().path) < 0;
+                    return a.Value().path < b.Value().path;
                   });
         // Propagate left_border_override property to the left subcolumn
         auto& left_child_data = node.Children().front().Value();
