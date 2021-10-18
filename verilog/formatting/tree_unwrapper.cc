@@ -2078,7 +2078,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // Merge the 'assign' keyword with the (first) x=y assignment.
       // TODO(fangism): reshape for multiple assignments.
-      verible::MergeConsecutiveSiblings(&partition, 0);
+      verible::MergeLeafIntoNextLeaf(&partition.Children().front());
       VLOG(4) << "after merging 'assign':\n" << partition;
       AdjustSubsequentPartitionsIndentation(&partition, style.wrap_spaces);
       VLOG(4) << "after adjusting partitions indentation:\n" << partition;
