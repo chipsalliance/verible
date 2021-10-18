@@ -234,11 +234,19 @@ done
 
 # Let's see if there are any issues that are fixed in the meantime.
 if [ ${#KnownIssue[@]} -ne 0 ]; then
-  echo "::warning ::There are ${#KnownIssue[@]} issues, that are no longer issues"
+  echo "::warning ::There are ${#KnownIssue[@]} tool/file combinations, that no longer fail"
+  declare -A DistinctIssues
   for key in "${!KnownIssue[@]}"; do
     echo " 🎉 ${key}"
+    DistinctIssues[${KnownIssue[${key}]}]=1
   done
+  echo
+  echo "::notice ::These were referencing the following issues. Maybe they are fixed now ?"
+  for issue_id in "${!DistinctIssues[@]}"; do
+    echo " 🐞 https://github.com/chipsalliance/verible/issues/$issue_id"
+  done
+  echo
 fi
 
-echo "There were a total of ${status_sum} new issues."
+echo "There were a total of ${status_sum} new, undocumented issues."
 exit ${status_sum}
