@@ -296,8 +296,17 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
 }
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
+  CHECK_NOTNULL(tree);
+  CHECK_LT(pos + 1, tree->Children().size());
+  const auto& current = tree->Children()[pos];
+  const auto& next = tree->Children()[pos + 1];
+  // Merge of a non-leaf partition and a leaf partition produces a non-leaf
+  // partition with token range wider than concatenated token ranges of its
+  // children.
+  CHECK(current.is_leaf() == next.is_leaf()) << "left:\n"
+                                             << current << "\nright:" << next;
   // Effectively concatenate unwrapped line ranges of sibling subpartitions.
-  ABSL_DIE_IF_NULL(tree)->MergeConsecutiveSiblings(
+  tree->MergeConsecutiveSiblings(
       pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
         // Verify token range continuity.
         CHECK(left->TokensRange().end() == right.TokensRange().begin());
