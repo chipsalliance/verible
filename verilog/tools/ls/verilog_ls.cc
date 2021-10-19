@@ -16,10 +16,8 @@
 #include <iomanip>  // Only needed for json debugging right now
 #include <iostream>
 
-#include "absl/flags/flag.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "common/lsp/lsp-protocol.h"
-#include "common/lsp/lsp-text-buffer.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
