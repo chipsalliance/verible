@@ -90,6 +90,9 @@ class BufferTrackerContainer {
       std::function<void(const std::string &uri, const BufferTracker &tracker)>;
   void SetChangeListener(const ChangeCallback &cb) { change_listener_ = cb; }
 
+  // Given the URI, find the associated parse buffer if it exists.
+  const BufferTracker *FindBufferTrackerOrNull(const std::string &uri) const;
+
  private:
   // Update internal state of the given "uri" with the content of the text
   // buffer. Return the buffer tracker.

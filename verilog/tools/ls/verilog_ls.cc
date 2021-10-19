@@ -63,6 +63,7 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
               {"change", 2},        // Incremental updates
           },
       },
+      {"codeActionProvider", true},  // Autofixes for lint errors
   };
 
   return result;
@@ -132,6 +133,14 @@ int main(int argc, char *argv[]) {
 
   // Exchange of capabilities.
   dispatcher.AddRequestHandler("initialize", InitializeServer);
+
+  // Provide autofixes
+  dispatcher.AddRequestHandler(
+      "textDocument/codeAction",
+      [&parsed_buffers](const verible::lsp::CodeActionParams &p) {
+        return verilog::GenerateLinterCodeActions(
+            parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
+      });
 
   // The client sends a request to shut down. Use that to exit our loop.
   bool shutdown_requested = false;

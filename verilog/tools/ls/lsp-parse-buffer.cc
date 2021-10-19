@@ -83,4 +83,10 @@ BufferTracker *BufferTrackerContainer::Update(
   return inserted.first->second.get();
 }
 
+const BufferTracker *BufferTrackerContainer::FindBufferTrackerOrNull(
+    const std::string &uri) const {
+  auto found = buffers_.find(uri);
+  if (found == buffers_.end()) return nullptr;
+  return found->second.get();
+}
 }  // namespace verilog
