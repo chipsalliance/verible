@@ -81,9 +81,7 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 declare -A KnownIssue
 
 #--- Opentitan
-KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/otp_ctrl/dv/env/otp_ctrl_if.sv]=1005
 KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_model_dpi_pkg.sv]=1006
-KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/top_earlgrey/ip/ast/rtl/aon_osc.sv]=1007
 # There is also bug 1008 which only shows up if compiled with asan
 
 #--- ivtest
@@ -102,49 +100,8 @@ KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Basejump
 # These mostly crash for all the same reason except the first.
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_cache/bsg_cache_pkg.v]=1011
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_comm_link/bsg_source_sync_input.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_comm_link/bsg_source_sync_output.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_comm_link/tests/test_bsg_assembler/test_bsg_assembler.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_comm_link/tests/test_bsg_source_sync/test_bsg_source_sync.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_dataflow/bsg_flow_convert.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_fsb/bsg_fsb_node_trace_replay.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_link/bsg_link_source_sync_downstream.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_link/bsg_link_source_sync_upstream.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_mem/bsg_cam_1r1w_replacement.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_mesosync_io/tests/mesosynctb_gate_level.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_mesosync_io/tests/mesosynctb.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_misc/bsg_idiv_iterative_controller.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_misc/bsg_imul_iterative.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_noc/bsg_wormhole_router_decoder_dor.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_riscv/bsg_hasti/bsg_vscale_hasti_converter.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_riscv/bsg_nasti/bsg_fsb_to_nasti_master_connector.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_riscv/bsg_nasti/bsg_fsb_to_nasti_slave_connector.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_tag/legacy/config_net/src/cfgtaggw.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_tag/legacy/config_net/tests/cfgtaggw_test/cfgtag.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/bsg_test/bsg_trace_replay.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/hard/tsmc_40/bsg_clk_gen/bsg_rp_clk_gen_atomic_delay_tuner.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_dataflow/bsg_channel_tunnel/test_bsg.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_dataflow/bsg_parallel_in_serial_out/bsg_parallel_in_serial_out_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_link/bsg_link_ddr_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_link/bsg_link_sdr/bsg_link_sdr_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_noc/bsg_wormhole_concentrator/bsg_wormhole_concentrator_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_noc/bsg_wormhole_network/bsg_wormhole_network_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_noc/bsg_wormhole_router/bsg_wormhole_router_tester.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_test/bsg_nonsynth_dramsim3/testbench_multi.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_test/bsg_nonsynth_dramsim3/testbench.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_test/bsg_trace_replay/dut.v]=1012
-KnownIssue[formatter:$BASE_TEST_DIR/basejump_stl/testing/bsg_test/bsg_trace_replay/test_bench.v]=1012
 
 #--- Blackparrot
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_me/src/v/network/axi_fifo.sv]=1004
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_me/src/v/cce/bp_cce_inst_stall.sv]=1004
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_be/src/include/bp_be_ctl_pkgdef.svh]=1016
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_common/src/include/bp_common_aviary_pkgdef.svh]=1016
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_common/src/include/bp_common_bedrock_pkgdef.svh]=1016
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_common/src/include/bp_common_cache_engine_if.svh]=1016
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_common/src/include/bp_common_rv64_pkgdef.svh]=1016
-KnownIssue[formatter:$BASE_TEST_DIR/black-parrot/bp_me/src/include/bp_me_cce_inst_pkgdef.svh]=1016
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue

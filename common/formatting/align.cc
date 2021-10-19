@@ -390,7 +390,8 @@ class ColumnSchemaAggregator {
         node.Path(it->second);
       }
       if (!node.is_leaf()) {
-        // Sort subcolumns
+        // Sort subcolumns. This puts negative paths (leading non-tree token
+        // columns) before empty, zero, and positive ones.
         std::sort(node.Children().begin(), node.Children().end(),
                   [](const auto& a, const auto& b) {
                     return a.Value().path < b.Value().path;
@@ -870,8 +871,7 @@ static MutableFormatTokenRange GetMutableFormatTokenRange(
     const UnwrappedLine& unwrapped_line,
     MutableFormatTokenRange::iterator ftoken_base) {
   // Each row should correspond to an individual list element
-  const Symbol* origin = ABSL_DIE_IF_NULL(unwrapped_line.Origin());
-  VLOG(2) << "row: " << StringSpanOfSymbol(*origin);
+  VLOG(2) << "row: " << StringSpanOfTokenRange(unwrapped_line.TokensRange());
 
   const auto range_begin = unwrapped_line.TokensRange().begin();
   auto range_end = unwrapped_line.TokensRange().end();
@@ -957,12 +957,19 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
     // Each row should correspond to an individual list element
     const UnwrappedLine& unwrapped_line = row->Value();
 
+    // Scan each token-range for cell boundaries based on syntax,
+    // and establish partial ordering based on syntax tree paths.
+    auto sparse_columns = cell_scanner_gen(*row);
+    // Make sure columns are properly ordered.
+    std::sort(
+        sparse_columns.Children().begin(), sparse_columns.Children().end(),
+        [](const auto& a, const auto& b) {
+          return CompareSyntaxTreePath(a.Value().path, b.Value().path) < 0;
+        });
     const AlignmentRowData row_data{
         // Extract the range of format tokens whose spacings should be adjusted.
         GetMutableFormatTokenRange(unwrapped_line, ftoken_base),
-        // Scan each token-range for cell boundaries based on syntax,
-        // and establish partial ordering based on syntax tree paths.
-        cell_scanner_gen(*row)};
+        std::move(sparse_columns)};
 
     alignment_row_data.emplace_back(row_data);
     VLOG(2) << "Row sparse columns:\n" << row_data.sparse_columns;
@@ -982,6 +989,10 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
   {
     auto row_data_iter = alignment_row_data.cbegin();
     for (auto& row : result.matrix) {
+      VLOG(3) << "Row tokens: "
+              << StringSpanOfTokenRange(
+                     FormatTokenRange(row_data_iter->ftoken_range.begin(),
+                                      row_data_iter->ftoken_range.end()));
       CopyTreeStructure<AggregateColumnData, AlignmentCell>(
           column_schema.Columns(), &row,
           [](const AggregateColumnData&) { return AlignmentCell{}; });

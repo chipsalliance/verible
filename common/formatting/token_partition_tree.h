@@ -114,6 +114,9 @@ void AdjustIndentationRelative(TokenPartitionTree* tree, int amount);
 // amount.
 void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount);
 
+// Returns the range of text spanned by tokens range.
+absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range);
+
 // Mark ranges of tokens (corresponding to formatting-disabled lines) to
 // have their original spacing preserved, except allow the first token
 // to follow the formatter's calculated indentation.
@@ -123,6 +126,15 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
 
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
+
+// Groups this leaf with the leaf partition that preceded it, which could be
+// a distant relative. The grouping node is created in place of the preceding
+// leaf.
+// Both grouped partitions retain their indentation level and partition
+// policies. The group partition's indentation level and partition policy is
+// copied from the first partition in the group.
+// Returns the grouped partition if operation succeeded, else nullptr.
+TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf);
 
 // Merges this leaf into the leaf partition that preceded it, which could be
 // a distant relative.  The leaf is destroyed in the process.

@@ -69,9 +69,16 @@ static constexpr AlignmentColumnProperties FlushLeft(true);
 static constexpr AlignmentColumnProperties FlushRight(false);
 
 // Special SyntaxTreePath index used for non-tree tokens
-static const size_t kNonTreeTokenPathIndex = std::numeric_limits<size_t>::max();
+static const SyntaxTreePath::value_type kNonTreeTokenPathIndex =
+    std::numeric_limits<SyntaxTreePath::value_type>::max();
+
+static const SyntaxTreePath::value_type kLeadingNonTreeTokenPathIndex = -1;
+static const SyntaxTreePath::value_type kTrailingNonTreeTokenPathIndex =
+    std::numeric_limits<SyntaxTreePath::value_type>::max();
+
 // Maximum SyntaxTreePath index available for tree tokens
-static const size_t kMaxPathIndex = std::numeric_limits<size_t>::max() - 1;
+static const SyntaxTreePath::value_type kMaxPathIndex =
+    std::numeric_limits<SyntaxTreePath::value_type>::max() - 1;
 
 template <class T>
 static bool TokensAreAllCommentsOrAttributes(const T& tokens) {
@@ -91,9 +98,13 @@ static bool TokensHaveParenthesis(const T& tokens) {
                      });
 }
 
-static bool IgnoreWithinPortDeclarationPartitionGroup(
+static bool IgnoreCommentsAndPreprocessingDirectives(
     const TokenPartitionTree& partition) {
   const auto& uwline = partition.Value();
+
+  // ignore partitions with only non-tree tokens (comments, comma-only lines)
+  if (!uwline.Origin()) return true;
+
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
   // ignore lines containing only comments
@@ -103,12 +114,22 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
   if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
     return true;
 
+  return false;
+}
+
+static bool IgnoreWithinPortDeclarationPartitionGroup(
+    const TokenPartitionTree& partition) {
+  const auto& uwline = partition.Value();
+  const auto token_range = uwline.TokensRange();
+  CHECK(!token_range.empty());
+  if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
+
   // Ignore .x or .x(x) port declarations.
   // These can appear in a list_of_port_or_port_declarations.
-  if (verible::SymbolCastToNode(*uwline.Origin()).MatchesTag(NodeEnum::kPort)) {
-    return true;
-  }
-  return false;
+  CHECK_NOTNULL(uwline.Origin());
+  return uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
+         verible::SymbolCastToNode(*uwline.Origin())
+             .MatchesTag(NodeEnum::kPort);
 }
 
 static bool IgnoreWithinStructUnionMemberPartitionGroup(
@@ -116,6 +137,10 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
   const auto& uwline = partition.Value();
   const auto token_range = uwline.TokensRange();
   CHECK(!token_range.empty());
+  // TODO(mglb): Verify whether `IgnoreCommentsAndPreprocessingDirectives` can
+  // be used instead of a direct comments/preprocessor tests (like in other
+  // IgnoreWithin* functions). If so, use it.
+
   // ignore lines containing only comments
   if (TokensAreAllCommentsOrAttributes(token_range)) {
     return true;
@@ -139,29 +164,16 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
   return false;
 }
 
-static bool IgnoreCommentsAndPreprocessingDirectives(
-    const TokenPartitionTree& partition) {
-  const auto& uwline = partition.Value();
-  const auto token_range = uwline.TokensRange();
-  CHECK(!token_range.empty());
-  // ignore lines containing only comments
-  if (TokensAreAllCommentsOrAttributes(token_range)) return true;
-
-  // ignore partitions belonging to preprocessing directives
-  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
-    return true;
-
-  return false;
-}
-
 static bool IgnoreWithinActualNamedParameterPartitionGroup(
     const TokenPartitionTree& partition) {
   if (IgnoreCommentsAndPreprocessingDirectives(partition)) return true;
 
   // ignore everything that isn't passing a parameter by name
   const auto& uwline = partition.Value();
-  return !verible::SymbolCastToNode(*uwline.Origin())
-              .MatchesTag(NodeEnum::kParamByName);
+  CHECK_NOTNULL(uwline.Origin());
+  return !(uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
+           verible::SymbolCastToNode(*uwline.Origin())
+               .MatchesTag(NodeEnum::kParamByName));
 }
 
 static bool IgnoreWithinActualNamedPortPartitionGroup(
@@ -176,6 +188,9 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
       verilog_tokentype::TK_DOTSTAR) {
     return true;
   }
+
+  CHECK_NOTNULL(uwline.Origin());
+  if (uwline.Origin()->Kind() != verible::SymbolKind::kNode) return true;
 
   // ignore implicit connections .aaa
   if (verible::SymbolCastToNode(*uwline.Origin())
@@ -234,9 +249,7 @@ UnstyledAlignmentCellScannerGenerator() {
 template <class ScannerType>
 std::function<verible::AlignmentCellScannerFunction(const FormatStyle&)>
 UnstyledAlignmentCellScannerGenerator(
-    const std::function<void(verible::TokenRange,
-                             verible::ColumnPositionTree*)>&
-        non_tree_column_scanner) {
+    const verible::NonTreeTokensScannerFunction& non_tree_column_scanner) {
   return [non_tree_column_scanner](const FormatStyle& vstyle) {
     return AlignmentCellScannerGenerator<ScannerType>(
         [vstyle] { return ScannerType(vstyle); }, non_tree_column_scanner);
@@ -1260,30 +1273,51 @@ using AlignmentHandlerMapType =
     std::map<AlignableSyntaxSubtype, AlignmentGroupHandlers>;
 
 static void non_tree_column_scanner(
-    verible::TokenRange token_range,
+    verible::FormatTokenRange leading_tokens,
+    verible::FormatTokenRange trailing_tokens,
     verible::ColumnPositionTree* column_entries) {
-  static const SyntaxTreePath kCommaPath = {kNonTreeTokenPathIndex, 0};
-  static const SyntaxTreePath kCommentPath = {kNonTreeTokenPathIndex, 1};
+  static const SyntaxTreePath kLeadingTokensPath = {
+      kLeadingNonTreeTokenPathIndex};
+  static const SyntaxTreePath kTrailingCommaPath = {
+      kTrailingNonTreeTokenPathIndex, 0};
+  static const SyntaxTreePath kTrailingCommentPath = {
+      kTrailingNonTreeTokenPathIndex, 1};
 
-  for (auto token : token_range) {
-    switch (token.token_enum()) {
-      case ',': {
-        AlignmentColumnProperties prop;
-        prop.contains_delimiter = true;
-        const verible::ColumnPositionTree column({kCommaPath, token, prop});
-        column_entries->NewChild(column);
-        break;
-      }
-      case TK_COMMENT_BLOCK:
-      case TK_EOL_COMMENT: {
-        const verible::ColumnPositionTree column(
-            {kCommentPath, token, FlushLeft});
-        column_entries->NewChild(column);
-        break;
-      }
-      default:
-        break;
-    }
+  VLOG(4) << __FUNCTION__ << "\nleading tokens: "
+          << verible::StringSpanOfTokenRange(leading_tokens)
+          << "\ntrailing tokens: "
+          << verible::StringSpanOfTokenRange(trailing_tokens);
+
+  if (!leading_tokens.empty()) {
+    column_entries->NewChild(verible::ColumnPositionEntry{
+        kLeadingTokensPath, *leading_tokens.front().token, FlushLeft});
+  }
+
+  if (trailing_tokens.empty()) return;
+
+  const auto separator_it =
+      std::find_if(trailing_tokens.begin(), trailing_tokens.end(),
+                   [](const PreFormatToken& tok) {
+                     return tok.TokenEnum() == ',' || tok.TokenEnum() == ':';
+                   });
+
+  auto comment_it = trailing_tokens.begin();
+
+  if (separator_it != trailing_tokens.end()) {
+    AlignmentColumnProperties prop;
+    prop.contains_delimiter = true;
+    const verible::ColumnPositionEntry column{kTrailingCommaPath,
+                                              *separator_it->token, prop};
+    column_entries->NewChild(column);
+
+    comment_it = separator_it + 1;
+  }
+  if (comment_it != trailing_tokens.end() &&
+      (comment_it->token->token_enum() == TK_COMMENT_BLOCK ||
+       comment_it->token->token_enum() == TK_EOL_COMMENT)) {
+    const verible::ColumnPositionEntry column{kTrailingCommentPath,
+                                              *comment_it->token, FlushLeft};
+    column_entries->NewChild(column);
   }
 }
 
@@ -1300,16 +1334,16 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
             &FormatStyle::module_net_variable_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualParameters,
        {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedParameterColumnSchemaScanner>(),
+            ActualNamedParameterColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::named_parameter_alignment)}},
       {AlignableSyntaxSubtype::kNamedActualPorts,
        {UnstyledAlignmentCellScannerGenerator<
-            ActualNamedPortColumnSchemaScanner>(),
+            ActualNamedPortColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(&FormatStyle::named_port_alignment)}},
       {AlignableSyntaxSubtype::kParameterDeclaration,
        {UnstyledAlignmentCellScannerGenerator<
-            ParameterDeclarationColumnSchemaScanner>(),
+            ParameterDeclarationColumnSchemaScanner>(non_tree_column_scanner),
         function_from_pointer_to_member(
             &FormatStyle::formal_parameters_alignment)}},
       {AlignableSyntaxSubtype::kPortDeclaration,

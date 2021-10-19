@@ -337,5 +337,83 @@ TEST(TreePathFormatterTest, Various) {
   }
 }
 
+TEST(SyntaxTreePathTest, Equal) {
+  static const std::pair<SyntaxTreePath, SyntaxTreePath> kTestCases[] = {
+      {
+          SyntaxTreePath{},
+          SyntaxTreePath{},
+      },
+      {
+          SyntaxTreePath{1},
+          SyntaxTreePath{1},
+      },
+      {
+          SyntaxTreePath{-1},
+          SyntaxTreePath{-1},
+      },
+      {
+          SyntaxTreePath{0},
+          SyntaxTreePath{0},
+      },
+      {
+          SyntaxTreePath{0, 1, 2},
+          SyntaxTreePath{0, 1, 2},
+      },
+      {
+          SyntaxTreePath{-1, 0, 2},
+          SyntaxTreePath{-1, 0, 2},
+      },
+      {
+          SyntaxTreePath{11, 0, -2},
+          SyntaxTreePath{11, 0, -2},
+      },
+  };
+  for (const auto& test : kTestCases) {
+    EXPECT_TRUE(test.first == test.second);
+    EXPECT_TRUE(test.first >= test.second);
+    EXPECT_TRUE(test.first <= test.second);
+  }
+}
+
+TEST(SyntaxTreePathTest, LessThanAndGreaterThan) {
+  static const std::pair<SyntaxTreePath, SyntaxTreePath> kTestCases[] = {
+      {
+          SyntaxTreePath{},
+          SyntaxTreePath{0},
+      },
+      {
+          SyntaxTreePath{},
+          SyntaxTreePath{1},
+      },
+      {
+          SyntaxTreePath{-1},
+          SyntaxTreePath{},
+      },
+      {
+          SyntaxTreePath{-1},
+          SyntaxTreePath{0},
+      },
+      {
+          SyntaxTreePath{0, 0},
+          SyntaxTreePath{0, 0, 0},
+      },
+      {
+          SyntaxTreePath{-1, 0, 8},
+          SyntaxTreePath{0},
+      },
+      {
+          SyntaxTreePath{1, 0, 1},
+          SyntaxTreePath{1, 0, 2},
+      },
+  };
+  for (const auto& test : kTestCases) {
+    EXPECT_TRUE(test.first < test.second);
+    EXPECT_TRUE(test.first <= test.second);
+    EXPECT_TRUE(test.second > test.first);
+    EXPECT_TRUE(test.second >= test.first);
+    EXPECT_TRUE(test.second != test.first);
+  }
+}
+
 }  // namespace
 }  // namespace verible

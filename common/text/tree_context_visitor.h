@@ -37,17 +37,45 @@ class TreeContextVisitor : public SymbolVisitor {
   SyntaxTreeContext current_context_;
 };
 
+class SyntaxTreePath;
+
+// Recursively compares two SyntaxTreePaths element by element. Out of bound
+// elements are assumed to have values that are less than 0 but greater than any
+// negative number. First non-matching elements pair determines the result:
+// -1 if a < b, 1 if a > b. If all pairs are equal the result is 0.
+int CompareSyntaxTreePath(const SyntaxTreePath& a, const SyntaxTreePath& b);
+
 // Type that is used to keep track of positions descended from a root
 // node to reach a particular node.
-// Path types should be lexicographically comparable.
+//
 // This is very similar in spirit to VectorTree<>::Path(), but
 // needs to be tracked in a stack-like manner during visitation
 // because SyntaxTreeNode and Leaf do not maintain upward pointers
 // to their parent nodes.
-// e.g. use the LexicographicalLess comparator in common/util/algorithm.h.
+//
+// Its comparison operators use slightly modified lexicographicall comparison.
+// Negative values are always less than empty and non-negative values, e.g.
+// [-1] < [] < [0].
+//
 // TODO(fangism): consider replacing with hybrid "small" vector to
 // minimize heap allocations, because these are expected to be small.
-using SyntaxTreePath = std::vector<size_t>;
+class SyntaxTreePath : public std::vector<int> {
+ public:
+  using std::vector<int>::vector;
+
+  bool operator==(const SyntaxTreePath& rhs) const {
+    return CompareSyntaxTreePath(*this, rhs) == 0;
+  }
+  bool operator<(const SyntaxTreePath& rhs) const {
+    return CompareSyntaxTreePath(*this, rhs) < 0;
+  }
+  bool operator>(const SyntaxTreePath& rhs) const {
+    return CompareSyntaxTreePath(*this, rhs) > 0;
+  }
+  bool operator!=(const SyntaxTreePath& rhs) const { return !(*this == rhs); }
+  bool operator<=(const SyntaxTreePath& rhs) const { return !(*this > rhs); }
+  bool operator>=(const SyntaxTreePath& rhs) const { return !(*this < rhs); }
+};
 
 // This visitor traverses a tree and maintains a stack of offsets
 // that represents the positional path taken from the root to
