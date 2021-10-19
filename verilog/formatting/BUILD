@@ -50,6 +50,7 @@ cc_library(
         "//common/formatting:token_partition_tree",
         "//common/formatting:tree_unwrapper",
         "//common/formatting:unwrapped_line",
+        "//common/strings:range",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:constants",
