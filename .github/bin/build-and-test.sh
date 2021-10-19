@@ -18,7 +18,7 @@ set -e
 
 source ./.github/settings.sh
 
-if [[ "${MODE}" == "compile-clang" ]]; then
+if [[ "${MODE}" == *-clang ]]; then
   # clang versions supported. Starting with 13, we
   # get some warnings in absl, so let's not go beyond
   # 12 for now.
@@ -67,12 +67,12 @@ if [[ ! "${CXX}" == clang* ]]; then
 fi
 
 case "$MODE" in
-  test)
+  test|test-clang)
     bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
     ;;
 
-  asan)
-    bazel test --config=asan $BAZEL_OPTS //...
+  asan|asan-clang)
+    bazel test --config=asan $BAZEL_OPTS -c fastbuild //...
     ;;
 
   coverage)
