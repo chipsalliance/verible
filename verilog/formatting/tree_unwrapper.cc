@@ -1201,11 +1201,12 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 
     case NodeEnum::kExpressionList:
     case NodeEnum::kUntagged: {
-      if (Context().DirectParentIs(NodeEnum::kAssignmentPattern))
+      if (Context().DirectParentIs(NodeEnum::kAssignmentPattern)) {
         VisitIndentedSection(node, style_.wrap_spaces,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
-      else
+      } else {
         TraverseChildren(node);
+      }
       break;
     }
 
