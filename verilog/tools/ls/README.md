@@ -38,6 +38,7 @@ mention what you had to do and we add it here).
 In alphabetical order
 
 ### Emacs
+
 The `lsp-mode` needs to be installed from wherever you get your emacs
 packages.
 
@@ -58,9 +59,6 @@ and make sure the binary is in your `$PATH` (or use full path).
 ### Kate
 
 https://docs.kde.org/trunk5/en/kate/kate/kate-application-plugin-lspclient.html
-
-For our example, it seems that kate does not consider 'text' a separate
-language, so let's configure that in markdown.
 
 First, enable LSP by checking `Settings > Configure Kate > Plugins > LSP Client`
 Then, there is a new `{} LSP Client` icon appearing on the left of the configure dialog. In the _User Server Settings_ tab, enter the lsp server configuration
@@ -85,9 +83,10 @@ to get it started up on our Verilog/SystemVerilog projects.
 
 ### Neovim
 
-TBD (similar to Vim ?)
+TBD (similar to [Vim](#vim) ?)
 
 ### Sublime
+
 Consult https://lsp.readthedocs.io/
 
 Installation steps
@@ -122,4 +121,4 @@ be helpful in case of issues.
 
 TBD. What I found so far, there is
 [vim-lsp](https://github.com/prabirshrestha/vim-lsp) that can be used.
-There is also neovim.
+There is also [neovim](#neovim).
