@@ -73,7 +73,7 @@ cat > "${JSON_EXPECTED}" <<EOF
        "method":"textDocument/publishDiagnostics",
        "params": {
           "uri": "file://mini.sv",
-          "diagnostics":[{"message":"File must end with a newline. [Style: posix-file-endings][posix-eof] (fix available)"}]
+          "diagnostics":[{"message":"File must end with a newline."}]
        }
     }
   },

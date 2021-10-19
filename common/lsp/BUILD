@@ -119,6 +119,7 @@ cc_binary(
     deps = [
       ":message-stream-splitter",
       "@com_google_absl//absl/status",
+      "@com_google_absl//absl/strings",
       "@jsonhpp//:jsonhpp",
     ]
 )
