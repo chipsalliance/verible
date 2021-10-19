@@ -18,6 +18,11 @@ set -e
 
 source ./.github/settings.sh
 
+if [[ "${MODE}" == "compile-clang" ]]; then
+  export CXX=clang++-10
+  export CC=clang-10
+fi
+
 # Make sure we don't have cc_library rules that use exceptions but do not
 # declare copts = ["-fexceptions"] in the rule. We want to make it as simple
 # as possible to compile without exceptions.
@@ -26,6 +31,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"
+
+# The following warning only reports with clang++; it is ignored by gcc
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wunreachable-code"
 
 # -- now disable some of the warnings that happen, so that the compile finishes.
 
@@ -45,11 +53,14 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 # tight warnings on for 'our' code-base.
 # TODO(hzeller): Remove after
 #            https://github.com/chipsalliance/verible/issues/747 is figured out
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
+# This option is only recognized by gcc
+if [[ ! "${CXX}" == clang* ]]; then
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
+fi
 
 case "$MODE" in
   test)
-    bazel test --test_output=errors $BAZEL_OPTS //...
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
     ;;
 
   asan)
@@ -64,8 +75,8 @@ case "$MODE" in
     # output will be in bazel-out/_coverage/_coverage_report.dat
     ;;
 
-  compile|clean)
-    bazel build $BAZEL_OPTS //...
+  compile|compile-clang|clean)
+    bazel build --keep_going $BAZEL_OPTS //...
     ;;
 
   smoke-test)

@@ -538,7 +538,7 @@ static void DisableSyntaxBasedRanges(ByteOffsetSet* disabled_ranges,
 class ContinuationCommentAligner {
   // Maximum accepted difference between continuation and starting comments'
   // starting columns
-  static constexpr std::size_t kMaxColumnDifference = 1;
+  static constexpr int kMaxColumnDifference = 1;
 
  public:
   ContinuationCommentAligner(const verible::LineColumnMap& line_column_map,
