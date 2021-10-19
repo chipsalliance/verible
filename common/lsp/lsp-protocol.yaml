@@ -85,7 +85,8 @@ TextEdit:
 
 WorkspaceEdit:
   #changes?: string->TextEdit+   # Map of file URI to associated edits...
-  changes: object                # ...not yet supporte by jcxxgen. Let's object
+  # ...not yet supported by jcxxgen. Let's use object and directly add JSON
+  changes: object
 
 # textDocument/codeAction will return an array of these.
 CodeAction:
