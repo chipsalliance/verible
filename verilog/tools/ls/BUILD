@@ -20,6 +20,7 @@ cc_library(
       "//verilog/analysis:verilog_analyzer",
       "//verilog/analysis:verilog_linter",
       "//common/lsp:lsp-text-buffer",
+      "@com_google_absl//absl/status",
     ]
 )
 
@@ -33,12 +34,13 @@ cc_library(
       "//common/lsp:lsp-protocol-operators",
       "//verilog/analysis:verilog_analyzer",
       "//verilog/analysis:verilog_linter",
+      "@jsonhpp//:jsonhpp",
     ]
 )
 
 cc_binary(
     name = "verible-verilog-ls",
-    srcs = ["verilog_ls.cc", "lsp-parse-buffer.h"],
+    srcs = ["verilog_ls.cc"],
     deps = [
       ":lsp-parse-buffer",
       ":verible-lsp-adapter",
