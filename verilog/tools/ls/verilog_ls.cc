@@ -23,6 +23,7 @@
 #include "common/lsp/message-stream-splitter.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/verible-lsp-adapter.h"
 
 // Windows specific implementation of read()
 #ifndef _WIN32
@@ -67,6 +68,19 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
   return result;
 }
 
+// Publish a diagnostic sent to the server.
+static void SendDiagnostics(const std::string &uri,
+                            const verilog::BufferTracker &buffer_tracker,
+                            JsonRpcDispatcher *dispatcher) {
+  // TODO(hzeller): Cache result and rate-limit.
+  // This should not send anything if the diagnostics we're about to
+  // send would be exactly the same as last time.
+  verible::lsp::PublishDiagnosticsParams params;
+  params.uri = uri;
+  params.diagnostics = verilog::CreateDiagnostics(buffer_tracker);
+  dispatcher->SendNotification("textDocument/publishDiagnostics", params);
+}
+
 int main(int argc, char *argv[]) {
   const auto file_args = verible::InitCommandLine(argv[0], &argc, &argv);
 
@@ -105,6 +119,14 @@ int main(int argc, char *argv[]) {
 
   // Subscribe the parsed buffers to changes updating the text edit buffers
   buffers.SetChangeListener(parsed_buffers.GetSubscriptionCallback());
+
+  // Whenever there is a new parse result ready, use that as an opportunity
+  // to send diagnostics to the client.
+  parsed_buffers.SetChangeListener(
+      [&dispatcher](const std::string &uri,
+                    const verilog::BufferTracker &buffer_tracker) {
+        SendDiagnostics(uri, buffer_tracker, &dispatcher);
+      });
 
   // -- Register JSON RPC callbacks
 

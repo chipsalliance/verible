@@ -30,6 +30,12 @@ MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 # Starting up server, sending two files, a file with a parse error and
 # a file that parses, but has a EOF newline linting diagnostic.
 #
+# We get the diagnostic messages for both of these files, one reporting
+# a syntax error, one reporting a lint error.
+#
+# We then modify the second file and edit the needed newline at the end of
+# the buffer, and then get an update with zero diagnostic errors back.
+#
 # TODO: maybe this awk-script should be replaced with something that allows
 # multi-line input with comment.
 awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
@@ -50,6 +56,33 @@ cat > "${JSON_EXPECTED}" <<EOF
         "result": {
           "serverInfo": {"name" : "Verible Verilog language server."}
         }
+    }
+  },
+  {
+    "json_contains": {
+       "method":"textDocument/publishDiagnostics",
+       "params": {
+          "uri": "file://syntaxerror.sv",
+          "diagnostics":[{"message":"syntax error"}]
+       }
+     }
+  },
+  {
+    "json_contains": {
+       "method":"textDocument/publishDiagnostics",
+       "params": {
+          "uri": "file://mini.sv",
+          "diagnostics":[{"message":"File must end with a newline. [Style: posix-file-endings][posix-eof] (fix available)"}]
+       }
+    }
+  },
+  {
+    "json_contains": {
+       "method":"textDocument/publishDiagnostics",
+       "params": {
+          "uri": "file://mini.sv",
+          "diagnostics":[]
+       }
     }
   },
   {
