@@ -28,23 +28,54 @@
 # crash Verible, we're good.
 ###
 
-set -u
+# Suppress '... aborted' messages bash would print when a tool crashes.
+# Comment out to see syntax errors in bash while working on it.
+exec 2>/dev/null
 
-readonly BASE_TEST_DIR=/tmp/test/verible-smoke-test
+set -u   # Be strict: only allow using a variable after it is assigned
+
+# Use address sanitizer for running the smoke test. Better, but slower.
+readonly USE_ASAN=${USE_ASAN:-1}
+
+export CXX=${CXX:-g++}
+if [! command -v ${CXX} ] ; then
+  echo "Compiler ${CXX} not found"
+  exit 1
+fi
+
+# Some asan errors are only reported with certain compilers. Collect necessary
+# information here to be used later.
+readonly IS_GCC=$([[ "${CXX}" != g* ]]; echo $?)
+readonly COMPILER_VERSION=$(${CXX} -dumpversion | sed 's/\([0-9]*\).*/\1/g')
+
+TMPDIR="${TMPDIR:-/tmp}"
+readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
+
+# Some terminal codes to highlight
+readonly TERM_RED="\033[1;31m"
+readonly TERM_BLD="\033[1m"
+readonly TERM_RST="\033[0m"
 
 # Build all the installable binaries that we're going to use below.
-# Ideally, we'd use --config=asan, but unfortunately, asan exits with exit
-# code 1, so we can't distinguish from regular 1 exit :(
-#
-# (TODO: maybe consider asan and capture the output and grep for
-# "AddressSanitizer" string if we get an exit code of 1.)
-bazel build :install-binaries
+# Use address sanitizer to find subtle issues.
+echo -e "\n[ Compiling tools with USE_ASAN=${USE_ASAN} and CXX=${CXX}; is-gcc=${IS_GCC} compiler-version=${COMPILER_VERSION} ]\n"
+bazel clean
+if [ $USE_ASAN -eq 1 ]; then
+  bazel build --config=asan -c opt :install-binaries
+else
+  bazel build -c opt :install-binaries
+fi
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
 
-readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
-                               lint/verible-verilog-lint \
-                               formatter/verible-verilog-format \
-                               project/verible-verilog-project"
+# By default, failing asan binaries exit with exit code 1.
+# Let's change it to something that we can distinguish from 'normal operation'
+export ASAN_OPTIONS="exitcode=140"
+
+# readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
+#                                lint/verible-verilog-lint \
+#                                formatter/verible-verilog-format \
+#                                project/verible-verilog-project"
+readonly VERIBLE_TOOLS_TO_RUN="formatter/verible-verilog-format"
 
 # A few projects that can be fetched from git and represent a good
 # cross-section of different styles.
@@ -56,19 +87,19 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 #
 # There are some known issues which are all recorded in the associative
 # array below, mapping them to Verible issue tracker numbers.
-readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
-         https://github.com/lowRISC/opentitan \
-         https://github.com/chipsalliance/Cores-SweRV \
-         https://github.com/openhwgroup/cva6 \
-         https://github.com/SymbiFlow/uvm \
-         https://github.com/taichi-ishitani/tnoc \
-         https://github.com/ijor/fx68k \
-         https://github.com/jamieiles/80x86 \
-         https://github.com/SymbiFlow/XilinxUnisimLibrary \
-         https://github.com/black-parrot/black-parrot
-         https://github.com/steveicarus/ivtest \
-         https://github.com/bespoke-silicon-group/basejump_stl"
-
+# readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
+#          https://github.com/lowRISC/opentitan \
+#          https://github.com/chipsalliance/Cores-SweRV \
+#          https://github.com/openhwgroup/cva6 \
+#          https://github.com/SymbiFlow/uvm \
+#          https://github.com/taichi-ishitani/tnoc \
+#          https://github.com/ijor/fx68k \
+#          https://github.com/jamieiles/80x86 \
+#          https://github.com/SymbiFlow/XilinxUnisimLibrary \
+#          https://github.com/black-parrot/black-parrot
+#          https://github.com/steveicarus/ivtest \
+#          https://github.com/bespoke-silicon-group/basejump_stl"
+readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/opentitan"
 ##
 # Some of the files in the projects will have issues.
 # We record each of them with the associated bug number in this set so that
@@ -82,7 +113,10 @@ declare -A KnownIssue
 
 #--- Opentitan
 KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_model_dpi_pkg.sv]=1006
-# There is also bug 1008 which only shows up if compiled with asan
+#if [ $USE_ASAN -eq 1 -a ${IS_GCC} -eq 1 -a $COMPILER_VERSION -ge 10 ]; then
+  # This issue only shows up with asan enabled, and only on gcc >= 10
+  #KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/top_earlgrey/ip/pinmux/rtl/autogen/pinmux_reg_top.sv]=1008
+#fi
 
 #--- ivtest
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/stask_sens_null_arg.v]=1010
@@ -116,12 +150,13 @@ KnownProjectToolIssue[project:opentitan]="#917 #1002 #1003"
 # First parameter : project name
 # Second parameter: name of file containing a list of {System}Verilog files
 function run_smoke_test() {
-  local PROJECT_FILE_LIST=/tmp/filelist.$$.list
+  local PROJECT_FILE_LIST=${TMPDIR}/filelist.$$.list
+  local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
   local result=0
 
-  echo "== Running verible on $PROJECT_NAME with $(wc -l < ${FILELIST}) files"
+  echo -e "== Running verible on ${TERM_BLD}${PROJECT_NAME}${TERM_RST} with $(wc -l < ${FILELIST}) files =="
 
   for tool in $VERIBLE_TOOLS_TO_RUN ; do
     printf "%-20s %-32s\n" ${PROJECT_NAME} ${tool}
@@ -138,7 +173,7 @@ function run_smoke_test() {
         file_param=${single_file}
       fi
 
-      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} >/dev/null 2>&1
+      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
       local EXIT_CODE=$?
 
       # A regular error exit code we accept as normal operation of the tool if
@@ -148,7 +183,10 @@ function run_smoke_test() {
       # and >= 128 (128 + signal-number)
       # https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html
       if [ $EXIT_CODE -ge 126 ]; then
-        echo ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param}
+        if [[ $tool == *-project ]]; then
+          file_param="<(echo $single_file)"   # make easy to reproduce
+        fi
+        echo -e "${TERM_RED}${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} ${TERM_RST}"
         waive_file_key="${short_tool_name}:${single_file}"
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
@@ -159,14 +197,15 @@ function run_smoke_test() {
           echo "  --> Known issue 🐞🐞 possibly one of ${KnownProjectToolIssue[${waive_project_key}]}"
         else
           # This is an so far unknown issue
-          echo "😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          echo "::error ::😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          head -10 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
       fi
     done < ${FILELIST}
   done  # for tool
 
-  rm -f ${PROJECT_FILE_LIST}
+  rm -f ${PROJECT_FILE_LIST} ${TOOL_OUT}
   return ${result}
 }
 

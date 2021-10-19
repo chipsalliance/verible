@@ -87,7 +87,7 @@ case "$MODE" in
     bazel build --keep_going $BAZEL_OPTS //...
     ;;
 
-  smoke-test)
+  smoke-test|smoke-test-clang)
     $(dirname $0)/smoke-test.sh
     ;;
 
