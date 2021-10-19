@@ -23,11 +23,25 @@ cc_library(
     ]
 )
 
+cc_library(
+    name = "verible-lsp-adapter",
+    srcs = [ "verible-lsp-adapter.cc"],
+    hdrs = [ "verible-lsp-adapter.h" ],
+    deps = [
+      ":lsp-parse-buffer",
+      "//common/lsp:lsp-protocol",
+      "//common/lsp:lsp-protocol-operators",
+      "//verilog/analysis:verilog_analyzer",
+      "//verilog/analysis:verilog_linter",
+    ]
+)
+
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc", "lsp-parse-buffer.h"],
     deps = [
       ":lsp-parse-buffer",
+      ":verible-lsp-adapter",
       "//common/lsp:lsp-protocol",
       "//common/lsp:json-rpc-dispatcher",
       "//common/lsp:message-stream-splitter",

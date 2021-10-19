@@ -62,3 +62,14 @@ DidSaveTextDocumentParams:      # textDocument/didSave
 
 DidCloseTextDocumentParams:     # textDocument/didClose
   textDocument: TextDocumentIdentifier
+
+# -- textDocument/publishDiagnostics
+Diagnostic:
+  range: Range
+  source: string = "verible"
+  message: string
+
+# This is a notification we send when we found something.
+PublishDiagnosticsParams:
+  uri: string
+  diagnostics+: Diagnostic
