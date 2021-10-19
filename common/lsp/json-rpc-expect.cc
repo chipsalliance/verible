@@ -20,6 +20,7 @@
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "nlohmann/json.hpp"
 
@@ -38,7 +39,7 @@ using verible::lsp::MessageStreamSplitter;
 
 static int usage(const char *progname, const char *msg) {
   fprintf(stderr, "%s\n\nUsage: %s <expect-script-file>\n", msg, progname);
-  std::cerr << R"(
+  fprintf(stderr, "%s", R"(
 The program receives JSON-RPC header/body responses on stdin
 and compares if the response is contained in the response array.
 Right now, the responses are checked to arrive in the same sequence they
@@ -48,13 +49,21 @@ async responses).
 The exit code will be 0 if all expected responses have been received or the
 index (1-based) where they failed.
 
+Matching done 'fuzzy' so that expect strings can only contain what is relevant.
+ - json structures are only checked for the keys mentioned and ignores
+   additional keys
+ - arrays must match in length and contain the matching content (by these
+   matching rules)
+ - strings are substring matched
+ - numeric literals are matched exactly.
+
 A typical expect-script file would be a json array like this
 [
  {
    "json_contains": { ... some json, but only interesting fields ... }
  },
 ]
-)";
+)");
   return 1;
 }
 
@@ -90,6 +99,10 @@ static bool ValuesMatch(const json &expected, const json &received) {
       if (!ValuesMatch(expected[i], received[i])) return false;
     }
     return true;
+
+  } else if (expected.is_string()) {
+    return absl::StrContains(received.get<std::string>(),
+                             expected.get<std::string>());
   }
   if (expected != received) {
     std::cerr << "expected: " << expected << "; got: " << received << std::endl;
