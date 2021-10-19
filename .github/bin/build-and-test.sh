@@ -19,8 +19,16 @@ set -e
 source ./.github/settings.sh
 
 if [[ "${MODE}" == "compile-clang" ]]; then
-  export CXX=clang++-10
-  export CC=clang-10
+  # clang versions supported. Starting with 13, we
+  # get some warnings in absl, so let's not go beyond
+  # 12 for now.
+  for version in 12 11 10 ; do
+    if command -v clang++-${version}; then
+      export CXX=clang++-${version}
+      export CC=clang-${version}
+      break
+    fi
+  done
 fi
 
 # Make sure we don't have cc_library rules that use exceptions but do not
