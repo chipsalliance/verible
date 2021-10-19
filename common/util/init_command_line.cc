@@ -55,7 +55,13 @@ std::vector<char*> InitCommandLine(
   absl::SetFlagsUsageConfig(usage_config);
   absl::SetProgramUsageMessage(usage);  // copies usage string
   google::InitGoogleLogging(**argv);
+
+  // Print stacktrace on issue, but not if --config=asan
+  // which comes with its own stacktrace handling.
+#if !defined(__SANITIZE_ADDRESS__)
   google::InstallFailureSignalHandler();
+#endif
+
   return absl::ParseCommandLine(*argc, *argv);
 }
 
