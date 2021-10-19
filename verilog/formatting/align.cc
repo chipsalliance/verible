@@ -68,10 +68,6 @@ using verible::ValueSaver;
 static constexpr AlignmentColumnProperties FlushLeft(true);
 static constexpr AlignmentColumnProperties FlushRight(false);
 
-// Special SyntaxTreePath index used for non-tree tokens
-static const SyntaxTreePath::value_type kNonTreeTokenPathIndex =
-    std::numeric_limits<SyntaxTreePath::value_type>::max();
-
 static const SyntaxTreePath::value_type kLeadingNonTreeTokenPathIndex = -1;
 static const SyntaxTreePath::value_type kTrailingNonTreeTokenPathIndex =
     std::numeric_limits<SyntaxTreePath::value_type>::max();
