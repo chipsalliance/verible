@@ -30,5 +30,8 @@ namespace verilog {
 // output to be sent in textDocument/publishDiagnostics notification.
 std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &);
 
+// Generate code actions from autofixes provided by the linter.
+std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
+    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
 }  // namespace verilog
 #endif  // VERILOG_TOOLS_LS_VERIBLE_LSP_ADAPTER_H

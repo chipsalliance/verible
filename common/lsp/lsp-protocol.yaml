@@ -73,3 +73,24 @@ Diagnostic:
 PublishDiagnosticsParams:
   uri: string
   diagnostics+: Diagnostic
+
+# -- textDocument/codeAction
+CodeActionParams:
+  textDocument: TextDocumentIdentifier
+  range: Range
+
+TextEdit:
+  range: Range
+  newText: string
+
+WorkspaceEdit:
+  #changes?: string->TextEdit+   # Map of file URI to associated edits...
+  changes: object                # ...not yet supporte by jcxxgen. Let's object
+
+# textDocument/codeAction will return an array of these.
+CodeAction:
+  title: string
+  kind: string                 # Kind of change e.g quickfix, refactor, ...
+  diagnostics+: Diagnostic     # What diagnostic is this referring to ?
+  isPreferred: boolean = false
+  edit: WorkspaceEdit

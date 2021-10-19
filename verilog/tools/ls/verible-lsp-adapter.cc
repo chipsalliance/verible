@@ -90,4 +90,66 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
   return result;
 }
 
+static std::vector<verible::lsp::TextEdit> AutofixToTextEdits(
+    const verible::AutoFix &fix, absl::string_view base,
+    const verible::LineColumnMap &lc_map) {
+  std::vector<verible::lsp::TextEdit> result;
+  // TODO(hzeller): figure out if edits are stacking or are all based
+  // on the same start status.
+  for (const verible::ReplacementEdit &edit : fix.Edits()) {
+    verible::LineColumn start = lc_map(edit.fragment.begin() - base.begin());
+    verible::LineColumn end = lc_map(edit.fragment.end() - base.begin());
+    result.emplace_back(verible::lsp::TextEdit{
+        .range =
+            {
+                .start = {.line = start.line, .character = start.column},
+                .end = {.line = end.line, .character = end.column},
+            },
+        .newText = edit.replacement,
+    });
+  }
+  return result;
+}
+
+std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
+    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p) {
+  std::vector<verible::lsp::CodeAction> result;
+  if (!tracker) return result;
+  const ParsedBuffer *const current = tracker->current();
+  if (!current) return result;
+
+  auto const &lint_violations =
+      verilog::GetSortedViolations(current->lint_result());
+  if (lint_violations.empty()) return result;
+
+  const absl::string_view base = current->parser().Data().Contents();
+  verible::LineColumnMap line_column_map(base);
+
+  for (const auto &v : lint_violations) {
+    const verible::LintViolation &violation = *v.violation;
+    if (violation.autofixes.empty()) continue;
+    auto diagnostic = ViolationToDiagnostic(v, base, line_column_map);
+
+    // The editor usually has the cursor on a line or word, so we
+    // only want to output edits that are relevant.
+    if (!rangeOverlap(diagnostic.range, p.range)) continue;
+
+    bool preferred_fix = true;
+    for (const auto &fix : violation.autofixes) {
+      result.emplace_back(verible::lsp::CodeAction{
+          .title = fix.Description(),
+          .kind = "quickfix",
+          .diagnostics = {diagnostic},
+          .isPreferred = preferred_fix,
+          // The following is translated from json, map uri -> edits.
+          // We're only sending changes for one document, the current one.
+          .edit = {.changes = {{p.textDocument.uri,
+                                AutofixToTextEdits(fix, base,
+                                                   line_column_map)}}},
+      });
+      preferred_fix = false;  // only the first is preferred.
+    }
+  }
+  return result;
+}
 }  // namespace verilog
