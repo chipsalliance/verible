@@ -42,6 +42,9 @@ namespace layout_optimizer_internal {
 enum class LayoutType {
   // Single line. LayoutItem of this type is always a leaf in LayoutTree.
   kLine,
+
+  // Stacks child items vertically. See also: LayoutFunctionFactory::Stack.
+  kStack,
 };
 
 std::ostream& operator<<(std::ostream& stream, LayoutType type);
@@ -425,6 +428,34 @@ class LayoutFunctionFactory {
   // Creates CostFunction for a single line from UnwrappedLine 'uwline'.
   LayoutFunction Line(const UnwrappedLine& uwline) const;
 
+  // Combines two or more layouts vertically.
+  // All combined layouts start at the same column. The first line of layout
+  // n+1 is immediately below the last line of layout n.
+  LayoutFunction Stack(std::initializer_list<LayoutFunction> lfs) const {
+    return Stack(lfs.begin(), lfs.end());
+  }
+
+  // See Stack(std::initializer_list<LayoutFunction> lfs).
+  //
+  // Iterator: iterator type that dereferences to LayoutFunction.
+  template <class Iterator>
+  LayoutFunction Stack(const Iterator begin, const Iterator end) const {
+    static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
+                  "Iterator's value type must LayoutFunction.");
+    const auto lfs = make_container_range(begin, end);
+
+    if (lfs.empty()) return LayoutFunction();
+    if (lfs.size() == 1) return lfs.front();
+
+    // Create a segment iterator for each LayoutFunction.
+    auto segments =
+        absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
+    std::transform(lfs.begin(), lfs.end(), segments.begin(),
+                   [](const LayoutFunction& lf) { return lf.begin(); });
+
+    return Stack(segments);
+  }
+
   // Creates the piecewise minimum function of a set of LayoutFunctions.
   //
   // The combinator is intended to choose optimal layout from a set of
@@ -461,6 +492,9 @@ class LayoutFunctionFactory {
   LayoutFunction Indent(const LayoutFunction& lf, int indent) const;
 
  private:
+  LayoutFunction Stack(
+      absl::FixedArray<LayoutFunction::const_iterator>& segments) const;
+
   static LayoutFunction Choice(
       absl::FixedArray<LayoutFunction::const_iterator>& segments);
 

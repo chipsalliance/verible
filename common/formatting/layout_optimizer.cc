@@ -35,6 +35,26 @@ namespace layout_optimizer_internal {
 
 namespace {
 
+// Adopts sublayouts of 'source' into 'destination' if 'source' and
+// 'destination' types are equal and 'source' doesn't have extra indentation.
+// Otherwise adopts whole 'source'.
+void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
+                                     LayoutTree* destination) {
+  CHECK_NOTNULL(destination);
+  const auto& src_item = source.Value();
+  const auto& dst_item = destination->Value();
+  if (!source.is_leaf() && src_item.Type() == dst_item.Type() &&
+      src_item.IndentationSpaces() == 0) {
+    const auto& first_subitem = source.Children().front().Value();
+    CHECK(src_item.MustWrap() == first_subitem.MustWrap());
+    CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
+    for (const auto& sublayout : source.Children())
+      destination->AdoptSubtree(sublayout);
+  } else {
+    destination->AdoptSubtree(source);
+  }
+}
+
 // Largest possible column value, used as infinity.
 constexpr int kInfinity = std::numeric_limits<int>::max();
 
@@ -44,6 +64,8 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
   switch (type) {
     case LayoutType::kLine:
       return stream << "line";
+    case LayoutType::kStack:
+      return stream << "stack";
   }
   LOG(FATAL) << "Unknown layout type: " << int(type);
   return stream;
@@ -172,6 +194,61 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
     column = segment->column;
     indent_column = column - indent;
   }
+
+  return result;
+}
+
+LayoutFunction LayoutFunctionFactory::Stack(
+    absl::FixedArray<LayoutFunction::const_iterator>& segments) const {
+  CHECK(!segments.empty());
+
+  LayoutFunction result;
+
+  // Use fist line's spacing for new layouts.
+  const auto& first_layout_item = segments.front()->layout.Value();
+  const auto spaces_before = first_layout_item.SpacesBefore();
+  const auto break_decision = first_layout_item.MustWrap();
+  // Use last line's span for new layouts. Other lines won't be modified by
+  // any further layout combinations.
+  const int span = segments.back()->span;
+
+  const float line_breaks_penalty =
+      (segments.size() - 1) * style_.line_break_penalty;
+
+  // Iterate over columns from left to right and process a segment of each
+  // LayoutFunction that is under currently iterated column.
+  int current_column = 0;
+  do {
+    // Point iterators to segments under current column.
+    for (auto& segment_it : segments) {
+      segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
+    }
+
+    auto new_segment = LayoutFunctionSegment{
+        current_column,
+        LayoutTree(
+            LayoutItem(LayoutType::kStack, spaces_before, break_decision)),
+        span, line_breaks_penalty, 0};
+
+    for (const auto& segment_it : segments) {
+      new_segment.intercept += segment_it->CostAt(current_column);
+      new_segment.gradient += segment_it->gradient;
+      AdoptLayoutAndFlattenIfSameType(segment_it->layout, &new_segment.layout);
+    }
+    result.push_back(std::move(new_segment));
+
+    {
+      // Find next column.
+      int next_column = kInfinity;
+      for (auto segment_it : segments) {
+        if ((segment_it + 1).IsEnd()) continue;
+        const int column = (segment_it + 1)->column;
+        CHECK_GE(column, current_column);
+        if (column < next_column) next_column = column;
+      }
+      current_column = next_column;
+    }
+  } while (current_column < kInfinity);
 
   return result;
 }
