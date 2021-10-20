@@ -930,8 +930,29 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kSystemTFCall: {
-      // TODO(fangism): Create own section only for standalone calls
-      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+      // TODO(ldk): Targeting into one-level nested call,
+      //     need to expand it into more general solution
+      if (Context().DirectParentsAre(
+              {NodeEnum::kExpression, NodeEnum::kMacroArgList,
+               NodeEnum::kParenGroup, NodeEnum::kMacroCall,
+               NodeEnum::kModuleItemList})) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
+      } else if (Context().DirectParentsAre(
+                     {NodeEnum::kExpression, NodeEnum::kMacroArgList,
+                      NodeEnum::kParenGroup, NodeEnum::kMacroCall,
+                      NodeEnum::kStatementList, NodeEnum::kTaskDeclaration})) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
+      } else if (Context().DirectParentsAre(
+                     {NodeEnum::kExpression, NodeEnum::kMacroArgList,
+                      NodeEnum::kParenGroup, NodeEnum::kMacroCall,
+                      NodeEnum::kBlockItemStatementList, NodeEnum::kSeqBlock,
+                      NodeEnum::kIfBody, NodeEnum::kIfClause})) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
+        // TODO(fangism): Create own section only for standalone calls
+      } else if (Context().DirectParentIs(NodeEnum::kStatement)) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kAppendFittingSubPartitions);
       } else {
@@ -946,8 +967,17 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       const int indent = ShouldIndentRelativeToDirectParent(Context())
                              ? style_.indentation_spaces
                              : 0;
-      VisitIndentedSection(node, indent,
-                           PartitionPolicyEnum::kAppendFittingSubPartitions);
+      // Apply optimal formatting just for standalone macro calls (for now)
+      const auto policy =
+          Context().DirectParentIs(NodeEnum::kModuleItemList) ||
+                  Context().DirectParentsAre(
+                      {NodeEnum::kStatementList, NodeEnum::kTaskDeclaration}) ||
+                  Context().DirectParentsAre(
+                      {NodeEnum::kBlockItemStatementList, NodeEnum::kSeqBlock,
+                       NodeEnum::kIfBody, NodeEnum::kIfClause})
+              ? PartitionPolicyEnum::kOptimalFunctionCallLayout
+              : PartitionPolicyEnum::kAppendFittingSubPartitions;
+      VisitIndentedSection(node, indent, policy);
       break;
     }
 
@@ -1913,8 +1943,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
     case NodeEnum::kRandomizeFunctionCall:
     case NodeEnum::kSystemTFCall: {
-      if (partition.Value().PartitionPolicy() ==
-          PartitionPolicyEnum::kAppendFittingSubPartitions) {
+      // Function/system calls don't always have it's own section.
+      // So before we do any adjuments we check that.
+      // We're checking for partition policy because those two policies
+      // force own partition section.
+      const auto policy = partition.Value().PartitionPolicy();
+      if (policy == PartitionPolicyEnum::kAppendFittingSubPartitions ||
+          policy == PartitionPolicyEnum::kOptimalFunctionCallLayout) {
         auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
