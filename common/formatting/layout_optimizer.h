@@ -261,6 +261,20 @@ class LayoutFunction {
     return segments_[index];
   }
 
+  // Returns whether to force line break just before this layout.
+  bool MustWrap() const {
+    if (empty()) return false;
+    const bool must_wrap = segments_.front().layout.Value().MustWrap();
+    // If for some reason not all layouts have the same "MustWrap" status, it
+    // should be taken into account in the code that uses this method. This
+    // shouldn't be the case, as every layout should wrap the same token range.
+    CHECK(std::all_of(segments_.begin(), segments_.end(),
+                      [must_wrap](const auto& segment) {
+                        return segment.layout.Value().MustWrap() == must_wrap;
+                      }));
+    return must_wrap;
+  }
+
  private:
   bool AreSegmentsSorted() const {
     return std::is_sorted(
@@ -513,6 +527,60 @@ class LayoutFunctionFactory {
 
   // Returns LayoutFunction 'lf' with layout indented using 'indent' spaces.
   LayoutFunction Indent(const LayoutFunction& lf, int indent) const;
+
+  // Joins layouts horizontally and wraps them into multiple lines to stay under
+  // column limit. Kind of like a words in a paragraph.
+  LayoutFunction Wrap(std::initializer_list<LayoutFunction> lfs) const {
+    return Wrap(lfs.begin(), lfs.end());
+  }
+
+  // See Wrap(std::initializer_list<LayoutFunction> lfs).
+  //
+  // Iterator: iterator type that dereferences to LayoutFunction.
+  template <class Iterator>
+  LayoutFunction Wrap(const Iterator begin, const Iterator end) const {
+    static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
+                  "Iterator's value type must LayoutFunction.");
+
+    const auto lfs = make_container_range(begin, end);
+
+    if (lfs.empty()) return LayoutFunction();
+    if (lfs.size() == 1) return lfs.front();
+
+    absl::FixedArray<LayoutFunction> results(lfs.size());
+
+    int size = lfs.size();
+    for (int i = size - 1; i >= 0; --i) {
+      absl::FixedArray<LayoutFunction> results_i(size - i);
+      LayoutFunction incremental = lfs[i];
+      for (int j = i; j < size - 1; ++j) {
+        auto result_j = Stack({
+            incremental,
+            results[j + 1],
+        });
+        // Penalty used to favor layouts with elements packed into earlier
+        // lines.
+        static const float kEarlierLinesFavoringPenalty = 1e-3;
+        for (auto& segment : result_j)
+          segment.intercept += style_.line_break_penalty +
+                               kEarlierLinesFavoringPenalty * (lfs.size() - j);
+        results_i[j - i] = std::move(result_j);
+
+        const auto& next_element = lfs[j + 1];
+
+        const auto layout_functions = {std::move(incremental), next_element};
+        if (next_element.MustWrap())
+          incremental = Stack(layout_functions);
+        else
+          incremental = Choice(
+              {Juxtaposition(layout_functions), Stack(layout_functions)});
+      }
+      results_i.back() = std::move(incremental);
+
+      results[i] = Choice(results_i.begin(), results_i.end());
+    }
+    return results[0];
+  }
 
  private:
   LayoutFunction Juxtaposition(const LayoutFunction& left,
