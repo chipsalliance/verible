@@ -43,6 +43,10 @@ enum class LayoutType {
   // Single line. LayoutItem of this type is always a leaf in LayoutTree.
   kLine,
 
+  // Joins child items horizontally. See also:
+  // LayoutFunctionFactory::Juxtaposition.
+  kJuxtaposition,
+
   // Stacks child items vertically. See also: LayoutFunctionFactory::Stack.
   kStack,
 };
@@ -456,6 +460,25 @@ class LayoutFunctionFactory {
     return Stack(segments);
   }
 
+  // Combines two or more layouts so that the layout N+1 is directy to the
+  // right of the last line of layout N.
+  //
+  // EXAMPLE:
+  //
+  // Layout 1:
+  //     First First First First First First
+  //     First First First
+  //
+  // Layout 2:
+  //     Second Second Second
+  //     Second Second
+  //
+  // Juxtaposition:
+  //     First First First First First First
+  //     First First First Second Second Second
+  //                       Second Second
+  LayoutFunction Juxtaposition(std::initializer_list<LayoutFunction> lfs) const;
+
   // Creates the piecewise minimum function of a set of LayoutFunctions.
   //
   // The combinator is intended to choose optimal layout from a set of
@@ -492,6 +515,9 @@ class LayoutFunctionFactory {
   LayoutFunction Indent(const LayoutFunction& lf, int indent) const;
 
  private:
+  LayoutFunction Juxtaposition(const LayoutFunction& left,
+                               const LayoutFunction& right) const;
+
   LayoutFunction Stack(
       absl::FixedArray<LayoutFunction::const_iterator>& segments) const;
 

@@ -64,6 +64,8 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
   switch (type) {
     case LayoutType::kLine:
       return stream << "line";
+    case LayoutType::kJuxtaposition:
+      return stream << "juxtaposition";
     case LayoutType::kStack:
       return stream << "stack";
   }
@@ -161,6 +163,22 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
   }
 }
 
+LayoutFunction LayoutFunctionFactory::Juxtaposition(
+    std::initializer_list<LayoutFunction> lfs) const {
+  auto lfs_container = make_container_range(lfs.begin(), lfs.end());
+
+  if (lfs_container.empty()) return LayoutFunction();
+  if (lfs_container.size() == 1) return lfs_container.front();
+
+  LayoutFunction incremental = lfs_container.front();
+  lfs_container.pop_front();
+  for (auto& lf : lfs_container) {
+    incremental = Juxtaposition(incremental, lf);
+  }
+
+  return incremental;
+}
+
 LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
                                              int indent) const {
   LayoutFunction result;
@@ -193,6 +211,73 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
     if (segment == lf.end()) break;
     column = segment->column;
     indent_column = column - indent;
+  }
+
+  return result;
+}
+
+LayoutFunction LayoutFunctionFactory::Juxtaposition(
+    const LayoutFunction& left, const LayoutFunction& right) const {
+  LayoutFunction result;
+
+  auto segment_l = left.begin();
+  auto segment_r = right.begin();
+
+  auto column_l = 0;
+  auto column_r = segment_l->span + segment_r->layout.Value().SpacesBefore();
+  segment_r = right.AtOrToTheLeftOf(column_r);
+
+  while (true) {
+    const int columns_over_limit = column_r - style_.column_limit;
+
+    const float new_intercept =
+        segment_l->CostAt(column_l) + segment_r->CostAt(column_r) -
+        style_.over_column_limit_penalty * std::max(columns_over_limit, 0);
+    const int new_gradient =
+        segment_l->gradient + segment_r->gradient -
+        (columns_over_limit >= 0 ? style_.over_column_limit_penalty : 0);
+
+    const auto& layout_l = segment_l->layout;
+    const auto& layout_r = segment_r->layout;
+    auto new_layout = LayoutTree(LayoutItem(LayoutType::kJuxtaposition,
+                                            layout_l.Value().SpacesBefore(),
+                                            layout_l.Value().MustWrap()));
+
+    AdoptLayoutAndFlattenIfSameType(layout_l, &new_layout);
+    AdoptLayoutAndFlattenIfSameType(layout_r, &new_layout);
+
+    const int new_span =
+        segment_l->span + segment_r->span + layout_r.Value().SpacesBefore();
+
+    result.push_back(LayoutFunctionSegment{column_l, std::move(new_layout),
+                                           new_span, new_intercept,
+                                           new_gradient});
+
+    auto next_segment_l = segment_l + 1;
+    auto next_column_l = kInfinity;
+    if (next_segment_l != left.end()) next_column_l = next_segment_l->column;
+
+    auto next_segment_r = segment_r + 1;
+    auto next_column_r = kInfinity;
+    if (next_segment_r != right.end()) next_column_r = next_segment_r->column;
+
+    if (next_segment_l == left.end() && next_segment_r == right.end()) break;
+
+    if (next_segment_r == right.end() ||
+        (next_column_l - column_l) <= (next_column_r - column_r)) {
+      column_l = next_column_l;
+      column_r = next_column_l + next_segment_l->span +
+                 layout_r.Value().SpacesBefore();
+
+      segment_l = next_segment_l;
+      segment_r = right.AtOrToTheLeftOf(column_r);
+    } else {
+      column_r = next_column_r;
+      column_l =
+          next_column_r - segment_l->span - layout_r.Value().SpacesBefore();
+
+      segment_r = next_segment_r;
+    }
   }
 
   return result;
