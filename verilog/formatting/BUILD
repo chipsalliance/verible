@@ -137,6 +137,7 @@ cc_library(
         ":tree_unwrapper",
         "//common/formatting:format_token",
         "//common/formatting:line_wrap_searcher",
+        "//common/formatting:layout_optimizer",
         "//common/formatting:token_partition_tree",
         "//common/formatting:unwrapped_line",
         "//common/formatting:verification",

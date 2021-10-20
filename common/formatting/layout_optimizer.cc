@@ -16,6 +16,8 @@
 // algorithm documented in https://research.google/pubs/pub44667/
 // (similar tool for R language: https://github.com/google/rfmt)
 
+#include "common/formatting/layout_optimizer.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <ostream>
@@ -29,6 +31,102 @@
 #include "common/util/value_saver.h"
 
 namespace verible {
+
+void OptimizeTokenPartitionTree(TokenPartitionTree* node,
+                                const BasicFormatStyle& style) {
+  CHECK_NOTNULL(node);
+
+  VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
+  const auto indentation = node->Value().IndentationSpaces();
+
+  LayoutFunctionFactory factory(style);
+
+  const std::function<LayoutFunction(const TokenPartitionTree&)> TraverseTree =
+      [&TraverseTree, &style, &factory](const TokenPartitionTree& subnode) {
+        const auto policy = subnode.Value().PartitionPolicy();
+
+        if (subnode.is_leaf()) {
+          return factory.Line(subnode.Value());
+        }
+
+        switch (policy) {
+          case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
+            // Support only function/macro/system calls for now
+            CHECK_EQ(subnode.Children().size(), 2);
+
+            const auto& function_header = subnode.Children()[0];
+            const auto& function_args = subnode.Children()[1];
+
+            auto header = TraverseTree(function_header);
+            auto args = TraverseTree(function_args);
+
+            auto stack_layout = factory.Stack({
+                header,
+                factory.Indent(args, style.wrap_spaces),
+            });
+            if (args.MustWrap()) {
+              return stack_layout;
+            }
+            auto juxtaposed_layout = factory.Juxtaposition({
+                header,
+                args,
+            });
+            return factory.Choice({
+                std::move(juxtaposed_layout),
+                std::move(stack_layout),
+            });
+          }
+
+          case PartitionPolicyEnum::kAppendFittingSubPartitions:
+          case PartitionPolicyEnum::kFitOnLineElseExpand: {
+            absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
+            std::transform(subnode.Children().begin(), subnode.Children().end(),
+                           layouts.begin(),
+                           [&TraverseTree](const TokenPartitionTree& subnode) {
+                             return TraverseTree(subnode);
+                           });
+            return factory.Wrap(layouts.begin(), layouts.end());
+          }
+
+          case PartitionPolicyEnum::kAlwaysExpand:
+          case PartitionPolicyEnum::kTabularAlignment: {
+            absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
+            std::transform(subnode.Children().begin(), subnode.Children().end(),
+                           layouts.begin(),
+                           [&TraverseTree](const TokenPartitionTree& subnode) {
+                             return TraverseTree(subnode);
+                           });
+            return factory.Stack(layouts.begin(), layouts.end());
+          }
+
+            // TODO(mglb): Think about introducing PartitionPolicies that
+            // correspond directly to combinators in LayoutFunctionFactory.
+            // kOptimalFunctionCallLayout strategy could then be implemented
+            // directly in TreeUnwrapper. It would also allow for proper
+            // handling of other policies (e.g. kTabularAlignment) in subtrees.
+
+          default: {
+            LOG(FATAL) << "Unsupported policy: " << policy << "\n"
+                       << "Node:\n"
+                       << subnode;
+            return LayoutFunction();
+          }
+        }
+      };
+
+  const LayoutFunction layout_function = TraverseTree(*node);
+  CHECK(!layout_function.empty());
+  VLOG(4) << __FUNCTION__ << ", layout function:\n" << layout_function;
+
+  auto iter = layout_function.AtOrToTheLeftOf(indentation);
+  CHECK(iter != layout_function.end());
+  VLOG(4) << __FUNCTION__ << ", layout:\n" << iter->layout;
+
+  TreeReconstructor tree_reconstructor(indentation, style);
+  tree_reconstructor.TraverseTree(iter->layout);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(node);
+  VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
+}
 
 namespace {
 
@@ -403,6 +501,98 @@ LayoutFunction LayoutFunctionFactory::Choice(
   } while (current_column < kInfinity);
 
   return result;
+}
+
+void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
+  const auto type = layout_tree.Value().Type();
+
+  const auto relative_indentation = layout_tree.Value().IndentationSpaces();
+  const ValueSaver<int> indent_saver(
+      &current_indentation_spaces_,
+      current_indentation_spaces_ + relative_indentation);
+
+  // Apply indentation for children by enforcing
+  // start of new line
+  if (relative_indentation > 0) active_unwrapped_line_ = nullptr;
+
+  switch (type) {
+    case LayoutType::kLine: {
+      CHECK(layout_tree.Children().empty());
+
+      if (active_unwrapped_line_ == nullptr) {
+        auto uwline = layout_tree.Value().ToUnwrappedLine();
+        uwline.SetIndentationSpaces(current_indentation_spaces_);
+        active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
+      } else {
+        active_unwrapped_line_->SpanUpToToken(
+            layout_tree.Value().ToUnwrappedLine().TokensRange().end());
+      }
+      break;
+    }
+
+    case LayoutType::kJuxtaposition: {
+      // Organize children horizontally (by appending to current unwrapped
+      // line)
+      for (const auto& child : layout_tree.Children()) {
+        TraverseTree(child);
+      }
+      break;
+    }
+
+    case LayoutType::kStack: {
+      if (layout_tree.Children().empty()) {
+        break;
+      }
+      if (layout_tree.Children().size() == 1) {
+        TraverseTree(layout_tree.Children().front());
+        break;
+      }
+
+      int indentation = current_indentation_spaces_;
+
+      // Appending. Need to calculate new indentation for
+      // second and later layouts
+      if (active_unwrapped_line_ != nullptr) {
+        indentation = FitsOnLine(*active_unwrapped_line_, style_).final_column +
+                      layout_tree.Value().SpacesBefore();
+      }
+
+      // Append that child
+      TraverseTree(layout_tree.Children().front());
+
+      // Wrap other ones
+      const ValueSaver<int> indent_saver(&current_indentation_spaces_,
+                                         indentation);
+      for (auto itr = std::next(layout_tree.Children().begin());
+           itr != layout_tree.Children().end(); ++itr) {
+        // Organize childrens vertically
+        active_unwrapped_line_ = nullptr;
+        TraverseTree(*itr);
+      }
+      break;
+    }
+  }
+}
+
+void TreeReconstructor::ReplaceTokenPartitionTreeNode(
+    TokenPartitionTree* node) const {
+  CHECK_NOTNULL(node);
+  CHECK(!unwrapped_lines_.empty());
+
+  const auto& first_line = unwrapped_lines_.front();
+  const auto& last_line = unwrapped_lines_.back();
+
+  node->Value() = UnwrappedLine(first_line);
+  node->Value().SpanUpToToken(last_line.TokensRange().end());
+  node->Value().SetIndentationSpaces(current_indentation_spaces_);
+
+  node->Children().clear();
+  for (const auto& uwline : unwrapped_lines_) {
+    // TODO(mglb): Do something like `CommitAlignmentDecisionToRow()` does and
+    // mark lines and tokens as already formatted and prevent further line
+    // wrapping.
+    node->AdoptSubtree(uwline);
+  }
 }
 
 }  // namespace verible

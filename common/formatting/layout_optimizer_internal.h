@@ -618,6 +618,32 @@ class LayoutFunctionFactory {
   const BasicFormatStyle& style_;
 };
 
+class TreeReconstructor {
+ public:
+  TreeReconstructor(int indentation_spaces, const BasicFormatStyle& style)
+      : current_indentation_spaces_(indentation_spaces), style_(style) {}
+  ~TreeReconstructor() = default;
+
+  // Delete standard interfaces
+  TreeReconstructor(const TreeReconstructor&) = delete;
+  TreeReconstructor(TreeReconstructor&&) = delete;
+  TreeReconstructor& operator=(const TreeReconstructor&) = delete;
+  TreeReconstructor& operator=(TreeReconstructor&&) = delete;
+
+  void TraverseTree(const LayoutTree& layout_tree);
+
+  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node) const;
+
+ private:
+  std::vector<UnwrappedLine> unwrapped_lines_;
+
+  UnwrappedLine* active_unwrapped_line_ = nullptr;
+
+  int current_indentation_spaces_;
+
+  const BasicFormatStyle& style_;
+};
+
 }  // namespace verible
 
 #endif  // VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_INTERNAL_H_

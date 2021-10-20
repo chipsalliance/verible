@@ -110,6 +110,7 @@ cc_library(
         "layout_optimizer.cc",
         "layout_optimizer_internal.h",
     ],
+    hdrs = ["layout_optimizer.h"],
     deps = [
         ":basic_format_style",
         ":line_wrap_searcher",
