@@ -1237,5 +1237,241 @@ TEST_F(LayoutFunctionFactoryTest, Indent) {
   }
 }
 
+TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
+
+  {
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 9),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0),        //
+                                    LI(uwlines_[k10ColumnsLineId], 9),        //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 39, 0.0F, 0},
+        {1, expected_layout, 39, 0.0F, 100},
+        {11, expected_layout, 39, 1000.0F, 100},
+        {30, expected_layout, 39, 2900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 10),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0),        //
+                                    LI(uwlines_[k10ColumnsLineId], 10),       //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 40, 0.0F, 100},
+        {10, expected_layout, 40, 1000.0F, 100},
+        {30, expected_layout, 40, 3000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Juxtaposition({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 11),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0),        //
+                                    LI(uwlines_[k10ColumnsLineId], 11),       //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 41, 100.0F, 100},
+        {9, expected_layout, 41, 1000.0F, 100},
+        {30, expected_layout, 41, 3100.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 29),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LI(uwlines_[k10ColumnsLineId], 0),   //
+                                    LI(uwlines_[k10ColumnsLineId], 29),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 4.0F, 0},
+        {1, expected_layout, 10, 4.0F, 100},
+        {30, expected_layout, 10, 2904.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 30),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LI(uwlines_[k10ColumnsLineId], 0),   //
+                                    LI(uwlines_[k10ColumnsLineId], 30),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 4.0F, 100},
+        {30, expected_layout, 10, 3004.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+        factory_.Indent(factory_.Line(uwlines_[k10ColumnsLineId]), 31),
+        factory_.Line(uwlines_[k10ColumnsLineId]),
+    });
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LI(uwlines_[k10ColumnsLineId], 0),   //
+                                    LI(uwlines_[k10ColumnsLineId], 31),  //
+                                    LI(uwlines_[k10ColumnsLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 10, 104.0F, 100},
+        {30, expected_layout, 10, 3104.0F, 300},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 1),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 0),             //
+           LI(uwlines_[kShortLineId], 1));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 0),     //
+                                      LI(uwlines_[kShortLineId], 1));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 39, 0.0F, 0},
+        {1, expected_layout_h, 39, 0.0F, 100},
+        {2, expected_layout_v, 20, 2.0F, 0},
+        {20, expected_layout_v, 20, 2.0F, 100},
+        {21, expected_layout_v, 20, 102.0F, 200},
+        {40, expected_layout_h, 39, 3900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 2),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 0),             //
+           LI(uwlines_[kShortLineId], 2));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 0),     //
+                                      LI(uwlines_[kShortLineId], 2));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 40, 0.0F, 100},
+        {1, expected_layout_v, 21, 2.0F, 0},
+        {19, expected_layout_v, 21, 2.0F, 100},
+        {21, expected_layout_v, 21, 202.0F, 200},
+        {40, expected_layout_h, 40, 4000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Line(uwlines_[kShortLineId]),
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 3),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 0),             //
+           LI(uwlines_[kShortLineId], 3));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 0),     //
+                                      LI(uwlines_[kShortLineId], 3));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_v, 22, 2.0F, 0},
+        {18, expected_layout_v, 22, 2.0F, 100},
+        {21, expected_layout_v, 22, 302.0F, 200},
+        {40, expected_layout_h, 41, 4100.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 1),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 1),             //
+           LI(uwlines_[kShortLineId], 0));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 1),     //
+                                      LI(uwlines_[kShortLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 39, 0.0F, 0},
+        {1, expected_layout_h, 39, 0.0F, 100},
+        {2, expected_layout_v, 19, 2.0F, 0},
+        {20, expected_layout_v, 19, 2.0F, 100},
+        {21, expected_layout_v, 19, 102.0F, 200},
+        {40, expected_layout_h, 39, 3900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 2),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 2),             //
+           LI(uwlines_[kShortLineId], 0));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 2),     //
+                                      LI(uwlines_[kShortLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 40, 0.0F, 100},
+        {1, expected_layout_v, 19, 2.0F, 0},
+        {19, expected_layout_v, 19, 2.0F, 100},
+        {21, expected_layout_v, 19, 202.0F, 200},
+        {40, expected_layout_h, 40, 4000.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Indent(factory_.Line(uwlines_[kShortLineId]), 3),
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(uwlines_[kShortLineId], 3),             //
+           LI(uwlines_[kShortLineId], 0));
+    const auto expected_layout_v = LT(LI(LayoutType::kStack, 0, false),  //
+                                      LI(uwlines_[kShortLineId], 3),     //
+                                      LI(uwlines_[kShortLineId], 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_v, 19, 2.0F, 0},
+        {18, expected_layout_v, 19, 2.0F, 100},
+        {21, expected_layout_v, 19, 302.0F, 200},
+        {40, expected_layout_h, 41, 4100.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+}
+
 }  // namespace
 }  // namespace verible
