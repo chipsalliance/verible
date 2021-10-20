@@ -72,7 +72,8 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
                               std::string *str) {
   int end_char = c.range.end.character;
 
-  const int str_end = str->back() == '\n' ? str->length() - 1 : str->length();
+  const int str_end = (!str->empty() && str->back() == '\n') ? str->length() - 1
+                                                             : str->length();
   if (c.range.start.character > str_end) return false;
   if (end_char > str_end) end_char = str_end;
   if (end_char < c.range.start.character) return false;
