@@ -38,7 +38,7 @@ readonly BASE_TEST_DIR=/tmp/test/verible-smoke-test
 #
 # (TODO: maybe consider asan and capture the output and grep for
 # "AddressSanitizer" string if we get an exit code of 1.)
-bazel build :install-binaries
+bazel build ${BAZEL_OPTS} :install-binaries
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
 
 readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \

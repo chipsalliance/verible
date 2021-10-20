@@ -31,6 +31,14 @@ if [[ "${MODE}" == *-clang ]]; then
   done
 fi
 
+# Make sure that bazel will write to the ccache if enabled.
+for cdir in /home/runner/work/verible/verible/.ccache ~/.ccache; do
+  if [ -d $cdir ]; then
+    BAZEL_OPTS="${BAZEL_OPTS} --sandbox_writable_path=$cdir"
+    break
+  fi
+done
+
 # Make sure we don't have cc_library rules that use exceptions but do not
 # declare copts = ["-fexceptions"] in the rule. We want to make it as simple
 # as possible to compile without exceptions.
@@ -66,6 +74,8 @@ if [[ ! "${CXX}" == clang* ]]; then
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 fi
 
+export BAZEL_OPTS
+
 case "$MODE" in
   test|test-clang)
     bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
@@ -84,7 +94,7 @@ case "$MODE" in
     ;;
 
   compile|compile-clang|clean)
-    bazel build --keep_going $BAZEL_OPTS //...
+    bazel build --subcommands --keep_going $BAZEL_OPTS //...
     ;;
 
   smoke-test)

@@ -115,8 +115,12 @@ jobs:
 
     - name: Set environment
       run: |
-        export PATH=/usr/lib/ccache:$PATH
-        command -v g++ clang++
+        mkdir -p /home/runner/work/verible/verible/.ccache
+        if [ -x /usr/bin/ccache ]; then
+          sudo ln -sf ../../bin/ccache /usr/lib/ccache/clang-10
+          sudo ln -sf ../../bin/ccache /usr/lib/ccache/clang++-10
+        fi
+        echo 'PATH=/usr/lib/ccache:'"$PATH" >> $GITHUB_ENV
 
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/bin/build-and-test.sh
