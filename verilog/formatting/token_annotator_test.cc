@@ -194,7 +194,7 @@ constexpr ExpectedInterTokenInfo kUnhandledSpacing{kUnhandledSpaces,
 // was not explicitly handled and just defaulted.
 // This test covers cases that are not context-sensitive.
 TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
-  const AnnotateFormattingInformationTestCase kTestCases[] = {
+  static const AnnotateFormattingInformationTestCase kTestCases[] = {
       // (empty array of tokens)
       {DefaultStyle, 0, {}, {}},
 
@@ -1835,7 +1835,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
 // These test cases support the use of syntactic context, but it is not
 // required to specify context.
 TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
-  const AnnotateWithContextTestCase kTestCases[] = {
+  static const AnnotateWithContextTestCase kTestCases[] = {
       {
           DefaultStyle,
           {'=', "="},
@@ -4761,7 +4761,7 @@ static const auto CompactIndexSelectionStyle = []() {
 
 // These tests are allowed to be sensitive to original inter-token spacing.
 TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
-  const OriginalSpacingSensitiveTestCase kTestCases[] = {
+  static const OriginalSpacingSensitiveTestCase kTestCases[] = {
       {// No comments
        DefaultStyle,
        '=',  // left token
