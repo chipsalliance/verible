@@ -532,6 +532,7 @@ cc_test(
     deps = [
         ":with_reason",
         "@com_google_googletest//:gtest_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

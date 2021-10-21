@@ -314,7 +314,8 @@ TEST(VerilogProjectTest, LookupFileOriginTest) {
 TEST(VerilogProjectTest, LookupFileOriginTestMoreFiles) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, __FUNCTION__);
-  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  const auto create_status = CreateDir(sources_dir);
+  EXPECT_TRUE(create_status.ok()) << create_status << " " << sources_dir;
   VerilogProject project(sources_dir, {});
   // no files yet
 

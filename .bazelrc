@@ -14,10 +14,7 @@ common:linux --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXX
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
 common:macos --features=-supports_dynamic_linker --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
 
-# Force the use clang-cl on Windows instead of MSVC. MSVC has some issues with
-# the codebase, so we focus the effort for now is to have a Windows Verible
-# compiled with clang-cl before fixing the issues unique to MSVC.
-common:windows --compiler=clang-cl --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --client_env=BAZEL_CXXOPTS=/std:c++17
+common:windows --cxxopt=/std:c++20 --cxxopt=/Zc:__cplusplus --host_cxxopt=/std:c++20 --host_cxxopt=/Zc:__cplusplus --client_env=BAZEL_CXXOPTS=/std:c++20
 
 # Address sanitizer settings.
 build:asan --strip=never
@@ -27,4 +24,3 @@ build:asan --copt -O1
 build:asan --copt -g
 build:asan --copt -fno-omit-frame-pointer
 build:asan --linkopt -fsanitize=address
-

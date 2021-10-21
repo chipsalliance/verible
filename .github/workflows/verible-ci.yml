@@ -282,11 +282,8 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install dependencies
-      run: choco install llvm
-
     - name: Tests
-      run: bazel test --test_output=errors ...
+      run: bazel test --test_output=errors --keep_going ...
 
     - name: Build Verible
       run: bazel build -c opt //...

@@ -109,16 +109,16 @@ struct ReferenceComponent {
   // locate the originating VerilogSourceFile via
   // VerilogProject::LookupFileOrigin() and in-file position from the file's
   // LineColumnMap.
-  const absl::string_view identifier;
+  absl::string_view identifier;
 
   // What kind of reference is this, and how should it be resolved?
   // See enum definition above.
-  const ReferenceType ref_type;
+  ReferenceType ref_type;
 
   // Inform the symbol resolver that this symbol must be of a certain metatype.
   // SymbolInfo::kUnspecified is interpreted as "any metatype" for cases
   // where it is not known in advance.
-  const SymbolMetaType required_metatype = SymbolMetaType::kUnspecified;
+  SymbolMetaType required_metatype = SymbolMetaType::kUnspecified;
 
   // This points to the definition with which this symbol was resolved.
   // During symbol table construction, this remains nullptr.

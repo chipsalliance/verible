@@ -16,6 +16,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace {
@@ -36,26 +37,26 @@ static WithReason<const char*> FizzBuzzer(int i) {
 
 TEST(WithReason, Fizz) {
   const auto result = FizzBuzzer(6);
-  EXPECT_EQ(result.value, "fizz");
-  EXPECT_EQ(result.reason, "value is only divisible by 3.");
+  EXPECT_STREQ(result.value, "fizz") << result.value;
+  EXPECT_STREQ(result.reason, "value is only divisible by 3.") << result.reason;
 }
 
 TEST(WithReason, Buzz) {
   const auto result = FizzBuzzer(10);
-  EXPECT_EQ(result.value, "buzz");
-  EXPECT_EQ(result.reason, "value is only divisible by 5.");
+  EXPECT_STREQ(result.value, "buzz");
+  EXPECT_STREQ(result.reason, "value is only divisible by 5.");
 }
 
 TEST(WithReason, Neither) {
   const auto result = FizzBuzzer(16);
-  EXPECT_EQ(result.value, ".");
-  EXPECT_EQ(result.reason, "value is neither divisible by 3 nor 5.");
+  EXPECT_STREQ(result.value, ".");
+  EXPECT_STREQ(result.reason, "value is neither divisible by 3 nor 5.");
 }
 
 TEST(WithReason, Both) {
   const auto result = FizzBuzzer(30);
-  EXPECT_EQ(result.value, "fizzbuzz");
-  EXPECT_EQ(result.reason, "value is divisible by 3 and 5.");
+  EXPECT_STREQ(result.value, "fizzbuzz");
+  EXPECT_STREQ(result.reason, "value is divisible by 3 and 5.");
 }
 
 }  // namespace
