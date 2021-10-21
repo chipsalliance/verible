@@ -91,9 +91,11 @@ TEST(ParserVerifierTest, AllUnmatched) {
 }
 
 TEST(ParserVerifierTest, PartialUnmatched) {
-  auto root = Node(Leaf(NOT_EOF, "foo"));
-  TokenSequence stream = {Token("foo"), Token("bar")};
-  TokenSequence unmatched_expected = {Token("bar")};
+  constexpr absl::string_view foo("foo");
+  constexpr absl::string_view bar("bar");
+  auto root = Node(Leaf(NOT_EOF, foo));
+  TokenSequence stream = {Token(foo), Token(bar)};
+  TokenSequence unmatched_expected = {Token(bar)};
 
   TokenStreamView view;
   InitTokenStreamView(stream, &view);
@@ -106,10 +108,14 @@ TEST(ParserVerifierTest, PartialUnmatched) {
 }
 
 TEST(ParserVerifierTest, SeveralPartialUnmatched) {
-  auto root = Node(Leaf(NOT_EOF, "foo"), Node(Leaf(NOT_EOF, "mee")));
-  TokenSequence stream = {Token("foo"), Token("bar1"), Token("bar2"),
-                          Token("mee")};
-  TokenSequence unmatched_expected = {Token("bar1"), Token("bar2")};
+  constexpr absl::string_view foo("foo");
+  constexpr absl::string_view bar1("bar1");
+  constexpr absl::string_view bar2("bar2");
+  constexpr absl::string_view mee("mee");
+
+  auto root = Node(Leaf(NOT_EOF, foo), Node(Leaf(NOT_EOF, mee)));
+  TokenSequence stream = {Token(foo), Token(bar1), Token(bar2), Token(mee)};
+  TokenSequence unmatched_expected = {Token(bar1), Token(bar2)};
 
   TokenStreamView view;
   InitTokenStreamView(stream, &view);
