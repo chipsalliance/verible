@@ -38,16 +38,18 @@ class FakeTokenSequenceLexer : public Lexer, public FakeLexer {
 };
 
 TEST(MakeTokenGeneratorTest, Generate) {
+  static constexpr absl::string_view abc("abc");
+  static constexpr absl::string_view xyz("xyz");
   FakeTokenSequenceLexer lexer;
   std::initializer_list<TokenInfo> tokens = {
-      {1, "abc"},
-      {2, "xyz"},
+      {1, abc},
+      {2, xyz},
       {TK_EOF, ""},
   };
   lexer.SetTokensData(tokens);
   auto generator = MakeTokenGenerator(&lexer);
-  EXPECT_EQ(generator(), TokenInfo(1, "abc"));
-  EXPECT_EQ(generator(), TokenInfo(2, "xyz"));
+  EXPECT_EQ(generator(), TokenInfo(1, abc));
+  EXPECT_EQ(generator(), TokenInfo(2, xyz));
   EXPECT_TRUE(generator().isEOF());
   // cannot call this generator any further after an EOF
 }

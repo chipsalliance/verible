@@ -92,6 +92,7 @@ cc_test(
     deps = [
         ":concrete_syntax_leaf",
         ":token_info",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

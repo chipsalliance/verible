@@ -16,6 +16,7 @@
 
 #include "common/text/concrete_syntax_leaf.h"
 
+#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "gtest/gtest.h"
 
@@ -30,12 +31,17 @@ TEST(ValueSymbolTest, EqualityArity1Args) {
   EXPECT_EQ(info1, info2);
 }
 
-TEST(ValueSymbolTest, EqualityArity2Args) {
-  SyntaxTreeLeaf value1(5, "Foo");
-  TokenInfo info1(5, "Foo");
-  auto info2 = value1.get();
-  EXPECT_EQ(info1, info2);
-}
+TEST(ValueSymbolTest, InequalityDifferentStringLocations) {
+  // Check that two tokens with the same text content but different
+  // location are _not_ considered equal.
+  constexpr absl::string_view longtext("foofoo");
+  constexpr absl::string_view first = longtext.substr(0, 3);
+  constexpr absl::string_view second = longtext.substr(3);
 
+  SyntaxTreeLeaf value1(10, first);
+  TokenInfo info1(10, second);
+  auto info2 = value1.get();
+  EXPECT_NE(info1, info2);
+}
 }  // namespace
 }  // namespace verible
