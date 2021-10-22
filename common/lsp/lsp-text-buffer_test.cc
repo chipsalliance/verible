@@ -104,6 +104,24 @@ TEST(TextBufferTest, ChangeApplySingleLine_Insert) {
   });
 }
 
+TEST(TextBufferTest, ChangeApplySingleLineWithUTF8Characters_Insert) {
+  EditTextBuffer buffer("Hëllö World");
+  const TextDocumentContentChangeEvent change = {
+      .range =
+          {
+              .start = {0, 6},
+              .end = {0, 6},
+          },
+      .has_range = true,
+      .text = "brave ",
+  };
+  EXPECT_TRUE(buffer.ApplyChange(change));
+  EXPECT_EQ(buffer.document_length(), 19);
+  buffer.RequestContent([&](absl::string_view s) {
+    EXPECT_EQ("Hëllö brave World", std::string(s));
+  });
+}
+
 TEST(TextBufferTest, ChangeApplySingleLine_InsertFromEmptyFile) {
   EditTextBuffer buffer("");
   const TextDocumentContentChangeEvent change = {
@@ -135,6 +153,23 @@ TEST(TextBufferTest, ChangeApplySingleLine_Replace) {
   EXPECT_TRUE(buffer.ApplyChange(change));
   buffer.RequestContent([&](absl::string_view s) {
     EXPECT_EQ("Hello Planet\n", std::string(s));
+  });
+}
+
+TEST(TextBufferTest, ChangeApplySingleLineWihtUTF8Characters_Replace) {
+  EditTextBuffer buffer("Heizölrückstoßabdämpfung\n");
+  const TextDocumentContentChangeEvent change = {
+      .range =
+          {
+              .start = {0, 6},
+              .end = {0, 14},
+          },
+      .has_range = true,
+      .text = "brandgefahr",
+  };
+  EXPECT_TRUE(buffer.ApplyChange(change));
+  buffer.RequestContent([&](absl::string_view s) {
+    EXPECT_EQ("Heizölbrandgefahrabdämpfung\n", std::string(s));
   });
 }
 
@@ -216,7 +251,24 @@ TEST(TextBufferTest, ChangeApplyMultiLine_EraseBetweenLines) {
   buffer.RequestContent([&](absl::string_view s) {  //
     EXPECT_EQ("Hey World\n", std::string(s));
   });
-  EXPECT_EQ(buffer.document_length(), 10);  // won't work yet.
+  EXPECT_EQ(buffer.document_length(), 10);
+}
+
+TEST(TextBufferTest, ChangeApplyMultiLineWithUTF8Characters_Modify) {
+  EditTextBuffer buffer("Heizölrück-\nstoßabdämpfung\n");
+  const TextDocumentContentChangeEvent change = {
+      .range =
+          {
+              .start = {0, 6},  // From here to end of line
+              .end = {1, 4},
+          },
+      .has_range = true,
+      .text = "brand-\ngefahr",
+  };
+  EXPECT_TRUE(buffer.ApplyChange(change));
+  buffer.RequestContent([&](absl::string_view s) {  //
+    EXPECT_EQ("Heizölbrand-\ngefahrabdämpfung\n", std::string(s));
+  });
 }
 
 TEST(TextBufferTest, ChangeApplyMultiLine_InsertMoreLines) {
