@@ -383,7 +383,7 @@ static void DeterminePartitionExpansion(
       break;
     }
 
-    case PartitionPolicyEnum::kSuccessfullyAligned:
+    case PartitionPolicyEnum::kAlreadyFormatted:
       VLOG(3) << "Aligned fits, un-expanding.";
       node_view.Unexpand();
       break;
@@ -783,7 +783,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     // uwline.PartitionPolicy().
     if (continuation_comment_aligner.HandleLine(uwline, &formatted_lines_)) {
     } else if (uwline.PartitionPolicy() ==
-               PartitionPolicyEnum::kSuccessfullyAligned) {
+               PartitionPolicyEnum::kAlreadyFormatted) {
       // For partitions that were successfully aligned, do not search
       // line-wrapping, but instead accept the adjusted padded spacing.
       formatted_lines_.emplace_back(uwline);

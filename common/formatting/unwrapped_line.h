@@ -51,12 +51,12 @@ enum class PartitionPolicyEnum {
   // columns that use space-padding to achieve vertical alignment.
   kTabularAlignment,
 
-  // Signal that this unwrapped line (a direct child of a partition marked with
-  // kTabularAlignment) has been successfully aligned with spacing padded.
-  // In this case, do NOT bother to call SearchLineWraps or perform any other
-  // spacing/wrapping optimization.
-  // Reserved for setting only from align.cc.
-  kSuccessfullyAligned,
+  // Signal that this unwrapped line has been successfully formatted with
+  // spacing added. In this case, do NOT bother to call SearchLineWraps or
+  // perform any other spacing/wrapping optimization.
+  // Reserved for setting only from policy-specific formatters, like Layout
+  // Optimizer and Tabular Aligner.
+  kAlreadyFormatted,
 
   // Treats subpartitions as units, and appends them to the same line as
   // long as they fit, else wrap them aligned to the position of the first

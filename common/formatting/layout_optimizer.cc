@@ -524,7 +524,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         auto uwline = layout_tree.Value().ToUnwrappedLine();
         uwline.SetIndentationSpaces(current_indentation_spaces_);
         // Prevent SearchLineWraps from processing optimized lines.
-        uwline.SetPartitionPolicy(PartitionPolicyEnum::kSuccessfullyAligned);
+        uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
         active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
       } else {
         active_unwrapped_line_->SpanUpToToken(

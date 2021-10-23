@@ -840,8 +840,7 @@ static void CommitAlignmentDecisionToRow(
     }
     // Tag every subtree as having already been committed to alignment.
     partition->ApplyPostOrder([](TokenPartitionTree& node) {
-      node.Value().SetPartitionPolicy(
-          PartitionPolicyEnum::kSuccessfullyAligned);
+      node.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
     });
   }
 }
