@@ -23,6 +23,7 @@
 #include "common/strings/display_utils.h"
 #include "common/strings/range.h"
 #include "common/text/token_info.h"
+#include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 
@@ -295,6 +296,14 @@ void PreserveSpacesOnDisabledTokenRanges(
     // start next iteration search from previous iteration's end
     saved_iter = disable_range.end();
   }
+}
+
+MutableFormatTokenRange ConvertToMutableFormatTokenRange(
+    const FormatTokenRange& const_range,
+    MutableFormatTokenRange::iterator base) {
+  return MutableFormatTokenRange(
+      ConvertToMutableIterator(const_range.begin(), base),
+      ConvertToMutableIterator(const_range.end(), base));
 }
 
 }  // namespace verible

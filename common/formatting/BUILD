@@ -83,6 +83,7 @@ cc_library(
         "//common/text:concrete_syntax_leaf",
         "//common/text:token_info",
         "//common/util:container_iterator_range",
+        "//common/util:iterator_adaptors",
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/base:core_headers",
