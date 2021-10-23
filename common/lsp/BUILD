@@ -98,6 +98,7 @@ cc_library(
     deps = [
         ":json-rpc-dispatcher",
         ":lsp-protocol",
+        "//common/strings:utf8",
         "@com_google_absl//absl/strings",
     ]
 )

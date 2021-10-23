@@ -14,6 +14,8 @@
 
 #include "common/lsp/lsp-text-buffer.h"
 
+#include "common/strings/utf8.h"
+
 namespace verible {
 namespace lsp {
 EditTextBuffer::EditTextBuffer(absl::string_view initial_text) {
@@ -72,15 +74,17 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
                               std::string *str) {
   int end_char = c.range.end.character;
 
-  const int str_end = (!str->empty() && str->back() == '\n') ? str->length() - 1
-                                                             : str->length();
+  int str_end = utf8_len(*str);
+  if (!str->empty() && str->back() == '\n') --str_end;
+
   if (c.range.start.character > str_end) return false;
   if (end_char > str_end) end_char = str_end;
   if (end_char < c.range.start.character) return false;
+
   document_length_ -= str->length();
   const absl::string_view assembly = *str;
-  const auto before = assembly.substr(0, c.range.start.character);
-  const auto after = assembly.substr(end_char);
+  const auto before = utf8_substr(assembly, 0, c.range.start.character);
+  const auto after = utf8_substr(assembly, end_char);
   *str = absl::StrCat(before, c.text, after);
   document_length_ += str->length();
   return true;
@@ -89,10 +93,10 @@ bool EditTextBuffer::LineEdit(const TextDocumentContentChangeEvent &c,
 // Returns success (always succeeds);
 bool EditTextBuffer::MultiLineEdit(const TextDocumentContentChangeEvent &c) {
   const absl::string_view start_line = *lines_[c.range.start.line];
-  const auto before = start_line.substr(0, c.range.start.character);
+  const auto before = utf8_substr(start_line, 0, c.range.start.character);
 
   const absl::string_view end_line = *lines_[c.range.end.line];
-  const auto after = end_line.substr(c.range.end.character);
+  const auto after = utf8_substr(end_line, c.range.end.character);
 
   // Assemble the full content to replace the range of lines with including
   // the parts that come from the first and last line to be edited.
