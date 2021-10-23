@@ -159,8 +159,6 @@ TEST_F(LayoutTest, AsUnwrappedLine) {
 
   const auto uwline = layout_short.ToUnwrappedLine();
   EXPECT_EQ(uwline.IndentationSpaces(), 0);
-  EXPECT_EQ(uwline.PartitionPolicy(), PartitionPolicyEnum::kAlwaysExpand);
-
   EXPECT_EQ(uwline.TokensRange().begin(), short_line.TokensRange().begin());
   EXPECT_EQ(uwline.TokensRange().end(), short_line.TokensRange().end());
 }
@@ -1851,7 +1849,8 @@ TEST_F(TreeReconstructorTest, SingleLine) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{single_line,  //
@@ -1878,7 +1877,8 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutWithOneLine) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{uwline,  //
@@ -1911,7 +1911,8 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected(all,  //
@@ -1944,7 +1945,8 @@ TEST_F(TreeReconstructorTest, EmptyHorizontalLayout) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,  //
@@ -1970,7 +1972,8 @@ TEST_F(TreeReconstructorTest, VerticalLayoutWithOneLine) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{uwline,  //
@@ -2003,7 +2006,8 @@ TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2037,7 +2041,8 @@ TEST_F(TreeReconstructorTest, EmptyVerticalLayout) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2083,7 +2088,8 @@ TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2132,7 +2138,8 @@ TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,                //
@@ -2161,7 +2168,8 @@ TEST_F(TreeReconstructorTest, IndentSingleLine) {
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
+                                                   &pre_format_tokens_);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{single_line,  //
@@ -2247,7 +2255,7 @@ TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
 
   BasicFormatStyle style;
   style.column_limit = 40;
-  OptimizeTokenPartitionTree(&tree_under_test, style);
+  OptimizeTokenPartitionTree(&tree_under_test, &pre_format_tokens_, style);
 
   UnwrappedLine args_top_line(0, arg_a.TokensRange().begin());
   args_top_line.SpanUpToToken(arg_b.TokensRange().end());

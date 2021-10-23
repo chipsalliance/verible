@@ -123,7 +123,6 @@ class LayoutItem {
 
     UnwrappedLine uwline(0, tokens_.begin());
     uwline.SpanUpToToken(tokens_.end());
-    uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
     return uwline;
   }
 
@@ -632,7 +631,8 @@ class TreeReconstructor {
 
   void TraverseTree(const LayoutTree& layout_tree);
 
-  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node) const;
+  void ReplaceTokenPartitionTreeNode(
+      TokenPartitionTree* node, std::vector<PreFormatToken>* ftokens) const;
 
  private:
   std::vector<UnwrappedLine> unwrapped_lines_;

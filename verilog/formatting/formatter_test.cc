@@ -11761,8 +11761,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
      "  `uvm_info(\n"
      "      `gfn,\n"
      "      $sformatf(\n"
-     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\"\n"
-     "              ,\n"
+     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\",\n"
      "          cfg.num_pulses, i), UVM_DEBUG)\n"
      "endmodule\n"},
     {"module foo;`uvm_info(`gfn, $sformatf("
@@ -11773,8 +11772,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
      "  `uvm_info(\n"
      "      `gfn,\n"
      "      $sformatf(\n"
-     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\"\n"
-     "              ,\n"
+     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\",\n"
      "          cfg.convert2string()),\n"
      "      UVM_LOW)\n"  // FIXME: Wrapped by SearchLineWraps
      "endmodule\n"},
@@ -11808,8 +11806,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases60ColumnsLimit[] = {
      "  `uvm_info(\n"
      "      `gfn,\n"
      "      $sformatf(\n"
-     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\"\n"
-     "              ,\n"
+     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\",\n"
      "          cfg.num_pulses, i), UVM_DEBUG)\n"
      "endmodule\n"},
     {"module foo;`uvm_info(`gfn, $sformatf("
@@ -11820,8 +11817,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases60ColumnsLimit[] = {
      "  `uvm_info(\n"
      "      `gfn,\n"
      "      $sformatf(\n"
-     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\"\n"
-     "              ,\n"
+     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\",\n"
      "          cfg.convert2string()), UVM_LOW)\n"
      "endmodule\n"},
 };
@@ -11876,8 +11872,7 @@ static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
      "      `gfn,\n"
      "      $sformatf(\n"
      "          \"The data 0x%0h written to the signature address is formatted "
-     "incorrectly.\"\n"
-     "              ,\n"  // FIXME: Wrapped by SearchLineWraps
+     "incorrectly.\",\n"
      "          signature_data))\n"
      "endmodule\n"},
 };

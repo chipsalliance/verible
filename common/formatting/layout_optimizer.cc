@@ -33,6 +33,7 @@
 namespace verible {
 
 void OptimizeTokenPartitionTree(TokenPartitionTree* node,
+                                std::vector<PreFormatToken>* ftokens,
                                 const BasicFormatStyle& style) {
   CHECK_NOTNULL(node);
 
@@ -124,7 +125,7 @@ void OptimizeTokenPartitionTree(TokenPartitionTree* node,
 
   TreeReconstructor tree_reconstructor(indentation, style);
   tree_reconstructor.TraverseTree(iter->layout);
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(node);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(node, ftokens);
   VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
 
@@ -522,6 +523,8 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
       if (active_unwrapped_line_ == nullptr) {
         auto uwline = layout_tree.Value().ToUnwrappedLine();
         uwline.SetIndentationSpaces(current_indentation_spaces_);
+        // Prevent SearchLineWraps from processing optimized lines.
+        uwline.SetPartitionPolicy(PartitionPolicyEnum::kSuccessfullyAligned);
         active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
       } else {
         active_unwrapped_line_->SpanUpToToken(
@@ -575,8 +578,9 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 }
 
 void TreeReconstructor::ReplaceTokenPartitionTreeNode(
-    TokenPartitionTree* node) const {
+    TokenPartitionTree* node, std::vector<PreFormatToken>* ftokens) const {
   CHECK_NOTNULL(node);
+  CHECK_NOTNULL(ftokens);
   CHECK(!unwrapped_lines_.empty());
 
   const auto& first_line = unwrapped_lines_.front();
@@ -585,12 +589,28 @@ void TreeReconstructor::ReplaceTokenPartitionTreeNode(
   node->Value() = UnwrappedLine(first_line);
   node->Value().SpanUpToToken(last_line.TokensRange().end());
   node->Value().SetIndentationSpaces(current_indentation_spaces_);
+  node->Value().SetPartitionPolicy(
+      PartitionPolicyEnum::kOptimalFunctionCallLayout);
 
   node->Children().clear();
-  for (const auto& uwline : unwrapped_lines_) {
-    // TODO(mglb): Do something like `CommitAlignmentDecisionToRow()` does and
-    // mark lines and tokens as already formatted and prevent further line
-    // wrapping.
+  for (auto& uwline : unwrapped_lines_) {
+    if (!uwline.IsEmpty()) {
+      auto line_ftokens = ConvertToMutableFormatTokenRange(uwline.TokensRange(),
+                                                           ftokens->begin());
+
+      // Discard first token's original spacing (the partition has already
+      // proper indentation set).
+      line_ftokens.front().before.break_decision = SpacingOptions::MustWrap;
+      line_ftokens.front().before.spaces_required = 0;
+      line_ftokens.pop_front();
+
+      for (auto& line_ftoken : line_ftokens) {
+        SpacingOptions& decision = line_ftoken.before.break_decision;
+        if (decision == SpacingOptions::Undecided) {
+          decision = SpacingOptions::MustAppend;
+        }
+      }
+    }
     node->AdoptSubtree(uwline);
   }
 }

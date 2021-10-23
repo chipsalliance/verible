@@ -36,6 +36,7 @@ namespace verible {
 // Handles formatting of TokenPartitionTree nodes with
 // kOptimalFunctionCallLayout partition policy.
 void OptimizeTokenPartitionTree(TokenPartitionTree* node,
+                                std::vector<PreFormatToken>* ftokens,
                                 const BasicFormatStyle& style);
 
 }  // namespace verible
