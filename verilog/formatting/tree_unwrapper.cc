@@ -1377,9 +1377,9 @@ static void AttachSeparatorToPreviousOrNextPartition(
 void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
   CHECK_NOTNULL(partition);
   // Skip first and last partition, as those can't contain just a separator.
-  int size = partition->Children().size();
-  for (int i = 1; i < size - 1; ++i) {
+  for (int i = 1; i < static_cast<int>(partition->Children().size()) - 1; ++i) {
     auto& subpartition = partition->Children()[i];
+    // This can change children count
     AttachSeparatorToPreviousOrNextPartition(&subpartition);
   }
 }
