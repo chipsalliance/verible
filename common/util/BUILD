@@ -531,6 +531,7 @@ cc_test(
     srcs = ["with_reason_test.cc"],
     deps = [
         ":with_reason",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
