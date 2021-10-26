@@ -64,6 +64,12 @@ iterator_range<Iter> make_range(std::pair<Iter, Iter> p) {
   return iterator_range<Iter>(std::move(p.first), std::move(p.second));
 }
 
+// Test if range is empty
+template <typename Iter>
+bool empty_range(Iter begin, Iter end) {
+  return begin == end;
+}
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_ITERATOR_RANGE_H_

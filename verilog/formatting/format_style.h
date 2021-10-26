@@ -149,6 +149,13 @@ struct FormatStyle : public verible::BasicFormatStyle {
     enum_assignment_statement_alignment = policy;
     distribution_items_alignment = policy;
   }
+
+  absl::string_view StyleName() const {
+    return style_name_;
+  }
+
+ protected:
+  std::string style_name_ = "default";
 };
 
 }  // namespace formatter
