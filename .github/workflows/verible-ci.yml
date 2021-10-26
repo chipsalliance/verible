@@ -98,6 +98,13 @@ jobs:
        # Download complete repository + tags
        fetch-depth: 0
 
+    - name: Mount bazel cache
+      uses: actions/cache@v1
+      if: matrix.mode != 'clean' && matrix.mode != 'coverage'
+      with:
+        path: "/home/runner/.cache/bazel"
+        key: bazelcache-${{ matrix.mode }}
+
     - name: Install Dependencies
       run: |
         set -x
@@ -106,17 +113,6 @@ jobs:
         ./.github/bin/set-compiler.sh 9
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-python.sh
-
-    - name: Use ccache
-      if: matrix.mode != 'clean' && matrix.mode != 'coverage'
-      uses: hendrikmuhs/ccache-action@v1
-      with:
-        key: bazel-compile-${{ matrix.mode }}
-
-    - name: Set environment
-      run: |
-        export PATH=/usr/lib/ccache:$PATH
-        command -v g++ clang++
 
     - name: ${{ matrix.env.mode }} Verible
       run: ./.github/bin/build-and-test.sh
