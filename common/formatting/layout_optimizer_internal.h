@@ -73,6 +73,9 @@ class LayoutItem {
   LayoutItem(const LayoutItem&) = default;
   LayoutItem& operator=(const LayoutItem&) = default;
 
+  LayoutItem(LayoutItem&&) = default;
+  LayoutItem& operator=(LayoutItem&&) = default;
+
   LayoutType Type() const { return type_; }
 
   // Returns "hard" indent, which is never removed when the layout is joined
