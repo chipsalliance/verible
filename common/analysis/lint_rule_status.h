@@ -179,6 +179,19 @@ struct LintRuleStatus {
   std::set<LintViolation> violations;
 };
 
+struct LintViolationWithStatus {
+  const LintViolation* violation;
+  const LintRuleStatus* status;
+
+  LintViolationWithStatus(const LintViolation* v, const LintRuleStatus* s)
+      : violation(v), status(s) {}
+
+  bool operator<(const LintViolationWithStatus& r) const {
+    // compares addresses which correspond to locations within the same string
+    return violation->token.text().data() < r.violation->token.text().data();
+  }
+};
+
 // LintStatusFormatter is a class for printing LintRuleStatus's and
 // LintViolations to an output stream
 // Usage:

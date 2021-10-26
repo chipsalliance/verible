@@ -1,0 +1,37 @@
+Position:
+  line?: integer
+  column?: integer
+
+Range:
+  start: Position
+  end?: Position
+
+Location:
+  path: string
+  range?: Range
+
+Source:
+  name: string
+  url?: string
+
+Code:
+  value: string
+  url?: string
+
+Suggestion:
+  range: Range
+  text: string
+
+Diagnostic:
+  message: string
+  location: Location
+  severity?: string # TODO this is an enum
+  source?: Source
+  code?: Code
+  suggestions+?: Suggestion
+  original_output?: string
+
+DiagnosticResult:
+  diagnostics+: Diagnostic
+  source?: Source
+  severity?: string # TODO this is an enum

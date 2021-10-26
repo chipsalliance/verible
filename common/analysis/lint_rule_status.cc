@@ -92,19 +92,6 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
   }
 }
 
-struct LintViolationWithStatus {
-  const LintViolation* violation;
-  const LintRuleStatus* status;
-
-  LintViolationWithStatus(const LintViolation* v, const LintRuleStatus* s)
-      : violation(v), status(s) {}
-
-  bool operator<(const LintViolationWithStatus& r) const {
-    // compares addresses which correspond to locations within the same string
-    return violation->token.text().data() < r.violation->token.text().data();
-  }
-};
-
 void LintStatusFormatter::FormatLintRuleStatuses(
     std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
     absl::string_view base, absl::string_view path,

@@ -1,6 +1,7 @@
 # This package contains functions and classes for analyzing text structures.
 
 load("//bazel:flex.bzl", "genlex")
+load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 licenses(["notice"])
 
@@ -9,6 +10,7 @@ package(
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
         "//verilog/tools/kythe:__pkg__",
+        "//verilog/tools/lint:__subpackages__",
     ],
 )
 
@@ -82,6 +84,39 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
+)
+
+cc_library(
+    name = "violation_handler",
+    srcs = ["violation_handler.cc"],
+    hdrs = ["violation_handler.h"],
+    deps = [
+        ":lint_rule_status",
+        ":rdformat",
+        "//common/strings:diff",
+        "//common/util:file_util",
+        "//common/util:user_interaction",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@jsonhpp//:jsonhpp",
+    ]
+)
+
+jcxxgen(
+    name = "rdformat",
+    src = "rdformat.yaml",
+    out = "rdformat.h",
+    namespace = "verible::rdformat",
+)
+
+cc_test(
+    name = "violation_handler_test",
+    srcs = ["violation_handler_test.cc"], 
+    deps = [
+        ":violation_handler",
+        ":rdformat",
+        "@com_google_googletest//:gtest_main",
+    ]
 )
 
 cc_test(
