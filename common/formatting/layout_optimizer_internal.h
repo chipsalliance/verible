@@ -54,8 +54,7 @@ class LayoutItem {
   // Prevent creation of uninitialized LayoutItem
   LayoutItem() = delete;
 
-  explicit LayoutItem(LayoutType type, int spacing, bool must_wrap,
-                      int indentation = 0)
+  LayoutItem(LayoutType type, int spacing, bool must_wrap, int indentation = 0)
       : type_(type),
         indentation_(indentation),
         spaces_before_(spacing),
