@@ -101,7 +101,7 @@ ByteOffsetSet EnabledLinesToDisabledByteRanges(
         return line_column_map.OffsetAtLine(n - 1);
       }));
   // Invert set to get disabled ranges.
-  const int end_byte = line_column_map.EndOffset();
+  const int end_byte = line_column_map.LastLineOffset();
   byte_offsets.Complement({0, end_byte});
   return byte_offsets;
 }

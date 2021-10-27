@@ -134,7 +134,7 @@ TEST(LineColumnMapTest, OffsetsFromLines) {
 TEST(LineColumnMapTest, EndOffsetNoLines) {
   const std::vector<absl::string_view> lines;
   const LineColumnMap map(lines);
-  EXPECT_EQ(map.EndOffset(), 0);
+  EXPECT_EQ(map.LastLineOffset(), 0);
 }
 
 struct EndOffsetTestCase {
@@ -154,7 +154,8 @@ TEST(LineColumnMapTest, EndOffsetVarious) {
   };
   for (const auto& test : kTestCases) {
     const LineColumnMap map(test.text);
-    EXPECT_EQ(map.EndOffset(), test.expected_offset) << "text:\n" << test.text;
+    EXPECT_EQ(map.LastLineOffset(), test.expected_offset) << "text:\n"
+                                                          << test.text;
   }
 }
 

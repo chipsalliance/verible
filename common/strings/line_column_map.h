@@ -82,7 +82,8 @@ class LineColumnMap {
     return beginning_of_line_offsets_;
   }
 
-  int EndOffset() const {
+  // Byte-offset of start of last line after last newline in file.
+  int LastLineOffset() const {
     if (Empty()) return 0;
     return beginning_of_line_offsets_.back();
   }
