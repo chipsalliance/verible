@@ -28,18 +28,32 @@
 # crash Verible, we're good.
 ###
 
-set -u
+# Suppress '... aborted' messages bash would print when a tool crashes.
+# Comment out to see syntax errors in bash while working on script.
+exec 2>/dev/null
 
-readonly BASE_TEST_DIR=/tmp/test/verible-smoke-test
+set -u   # Be strict: only allow using a variable after it is assigned
+
+TMPDIR="${TMPDIR:-/tmp}"
+readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
+
+# Some terminal codes to highlight
+readonly TERM_RED="\033[1;31m"
+readonly TERM_BOLD="\033[1m"
+readonly TERM_RESET="\033[0m"
 
 # Build all the installable binaries that we're going to use below.
-# Ideally, we'd use --config=asan, but unfortunately, asan exits with exit
-# code 1, so we can't distinguish from regular 1 exit :(
-#
-# (TODO: maybe consider asan and capture the output and grep for
-# "AddressSanitizer" string if we get an exit code of 1.)
+# TODO: Consider running with
+#  * address sanitizer (best result with libc++). CAVE: slow
+#  * running with -D_GLIBCXX_DEBUG (also see #1056)
 bazel build :install-binaries
+
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
+
+# In case the binaries are run with ASAN:
+# By default, failing asan binaries exit with exit code 1.
+# Let's change it to something that we can distinguish from 'normal operation'
+export ASAN_OPTIONS="exitcode=140"
 
 readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
                                lint/verible-verilog-lint \
@@ -116,12 +130,13 @@ KnownProjectToolIssue[project:opentitan]="#917 #1002 #1003"
 # First parameter : project name
 # Second parameter: name of file containing a list of {System}Verilog files
 function run_smoke_test() {
-  local PROJECT_FILE_LIST=/tmp/filelist.$$.list
+  local PROJECT_FILE_LIST=${TMPDIR}/filelist.$$.list
+  local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
   local result=0
 
-  echo "== Running verible on $PROJECT_NAME with $(wc -l < ${FILELIST}) files"
+  echo -e "== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with $(wc -l < ${FILELIST}) files =="
 
   for tool in $VERIBLE_TOOLS_TO_RUN ; do
     printf "%-20s %-32s\n" ${PROJECT_NAME} ${tool}
@@ -138,7 +153,7 @@ function run_smoke_test() {
         file_param=${single_file}
       fi
 
-      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} >/dev/null 2>&1
+      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
       local EXIT_CODE=$?
 
       # A regular error exit code we accept as normal operation of the tool if
@@ -148,7 +163,10 @@ function run_smoke_test() {
       # and >= 128 (128 + signal-number)
       # https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html
       if [ $EXIT_CODE -ge 126 ]; then
-        echo ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param}
+        if [[ $tool == *-project ]]; then
+          file_param="<(echo $single_file)"   # make easy to reproduce
+        fi
+        echo -e "${TERM_RED}${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} ${TERM_RESET}"
         waive_file_key="${short_tool_name}:${single_file}"
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
@@ -159,14 +177,15 @@ function run_smoke_test() {
           echo "  --> Known issue 🐞🐞 possibly one of ${KnownProjectToolIssue[${waive_project_key}]}"
         else
           # This is an so far unknown issue
-          echo "😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          echo "::error ::😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          head -10 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
       fi
     done < ${FILELIST}
   done  # for tool
 
-  rm -f ${PROJECT_FILE_LIST}
+  rm -f ${PROJECT_FILE_LIST} ${TOOL_OUT}
   return ${result}
 }
 
