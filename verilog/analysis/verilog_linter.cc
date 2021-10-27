@@ -481,7 +481,7 @@ static void AppendLintRuleStatuses(
           [&](const verible::LintViolation& violation) {
             // Lookup the line number on which the offending token resides.
             const size_t offset = violation.token.left(text_base);
-            const size_t line = line_map(offset).line;
+            const size_t line = line_map.LineAtOffset(offset);
             // Check that line number against the set of waived lines.
             const bool waived =
                 LintWaiver::LineNumberSetContains(*waived_lines, line);

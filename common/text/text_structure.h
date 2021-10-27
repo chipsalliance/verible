@@ -95,6 +95,10 @@ class TextStructureView {
 
   const LineColumnMap& GetLineColumnMap() const { return line_column_map_; }
 
+  LineColumn GetLineColAtOffset(int bytes_offset) const {
+    return line_column_map_.GetLineColAtOffset(contents_, bytes_offset);
+  }
+
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const {
     return line_token_map_;
   }
@@ -201,7 +205,7 @@ class TextStructureView {
   // the contents_ string view.
   absl::Status SyntaxTreeConsistencyCheck() const;
 
-private:
+ private:
   void RecalculateLineColumnMap() {
     line_column_map_ = LineColumnMap(contents_);
   }

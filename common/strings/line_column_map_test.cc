@@ -49,8 +49,9 @@ struct LineColumnMapTestData {
 
 // Raw line and column are 0-indexed.
 const LineColumnMapTestData map_test_data[] = {
-    {"", {0}, {{0, {0, 0}}, {1, {0, 1}}}},   // empty file
-    {"_", {0}, {{0, {0, 0}}, {1, {0, 1}}}},  // no \n before EOF
+    // Also testing beyond the end of the file - it should return last position
+    {"", {0}, {{0, {0, 0}}, {1, {0, 0}}, {100, {0, 0}}}},  // empty file
+    {"_", {0}, {{0, {0, 0}}, {1, {0, 1}}}},                // no \n before EOF
     {"abc", {0}, {{0, {0, 0}}, {2, {0, 2}}, {3, {0, 3}}}},
     {"\n", {0, 1}, {{0, {0, 0}}, {1, {1, 0}}}},  // one empty line
     {"\n\n", {0, 1, 2}, {{0, {0, 0}}, {1, {1, 0}}, {2, {2, 0}}}},
@@ -60,6 +61,12 @@ const LineColumnMapTestData map_test_data[] = {
     {"hello\ndarkness\nmy old friend\n",
      {0, 6, 15, 29},
      {{0, {0, 0}}, {10, {1, 4}}, {15, {2, 0}}, {20, {2, 5}}}},
+    // Multi-byte characters. Let's use strlen() to count the bytes, the
+    // column should accurately point to the character.
+    {"😀😀😀", {0}, {{static_cast<int>(2 * strlen("😀")), {0, 2}}}},
+    {"Heizölrückstoßabdämpfung",
+     {0},
+     {{static_cast<int>(strlen("Heizölrückstoß")), {0, 14}}}},
 };
 
 // Test test verifies that line-column offset appear to the user correctly.
@@ -163,7 +170,8 @@ TEST(LineColumnMapTest, Lookup) {
   for (const auto& test_case : map_test_data) {
     const LineColumnMap line_map(test_case.text);
     for (const auto& q : test_case.queries) {
-      EXPECT_EQ(q.line_col, line_map(q.offset))
+      EXPECT_EQ(q.line_col,
+                line_map.GetLineColAtOffset(test_case.text, q.offset))
           << "Text: \"" << test_case.text << "\"\n"
           << "Failed testing offset " << q.offset;
     }

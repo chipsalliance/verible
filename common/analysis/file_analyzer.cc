@@ -104,13 +104,12 @@ absl::Status FileAnalyzer::Parse(Parser* parser) {
 std::string FileAnalyzer::TokenErrorMessage(
     const TokenInfo& error_token) const {
   // TODO(fangism): accept a RejectedToken to get an explanation message.
-  const LineColumnMap& line_column_map = Data().GetLineColumnMap();
   const absl::string_view base_text = Data().Contents();
   std::ostringstream output_stream;
   if (!error_token.isEOF()) {
     // TODO(hzeller): simply print LineColumnRange ?
-    const auto left = line_column_map(error_token.left(base_text));
-    auto right = line_column_map(error_token.right(base_text));
+    const auto left = Data().GetLineColAtOffset(error_token.left(base_text));
+    auto right = Data().GetLineColAtOffset(error_token.right(base_text));
     --right.column;  // Point to last character, not one-past-the-end.
     output_stream << "token: \"" << error_token.text() << "\" at " << left;
     if (left.line == right.line) {
@@ -124,7 +123,7 @@ std::string FileAnalyzer::TokenErrorMessage(
       output_stream << '-' << right;
     }
   } else {
-    const auto end = line_column_map(base_text.length());
+    const auto end = Data().GetLineColAtOffset(base_text.length());
     output_stream << "token: <<EOF>> at " << end;
   }
   return output_stream.str();
@@ -142,17 +141,16 @@ std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
 void FileAnalyzer::ExtractLinterTokenErrorDetail(
     const RejectedToken& error_token,
     const ReportLinterErrorFunction& error_report) const {
-  const LineColumnMap& line_column_map = Data().GetLineColumnMap();
   const absl::string_view base_text = Data().Contents();
 
   const LineColumn start =
       error_token.token_info.isEOF()
-          ? line_column_map(base_text.length())
-          : line_column_map(error_token.token_info.left(base_text));
+          ? Data().GetLineColAtOffset(base_text.length())
+          : Data().GetLineColAtOffset(error_token.token_info.left(base_text));
   const LineColumn end =
       error_token.token_info.isEOF()
           ? start
-          : line_column_map(error_token.token_info.right(base_text));
+          : Data().GetLineColAtOffset(error_token.token_info.right(base_text));
 
   absl::string_view context_line = "";
   const auto& lines = Data().Lines();

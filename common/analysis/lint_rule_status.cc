@@ -125,7 +125,8 @@ void LintStatusFormatter::FormatLintRuleStatuses(
       *stream << " (autofix available)";
     }
     *stream << std::endl;
-    auto cursor = line_column_map_(violation.violation->token.left(base));
+    auto cursor = line_column_map_.GetLineColAtOffset(
+        base, violation.violation->token.left(base));
     if (cursor.line < static_cast<int>(lines.size())) {
       *stream << lines[cursor.line] << std::endl;
       *stream << verible::Spacer(cursor.column) << "^" << std::endl;
@@ -143,7 +144,9 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
                                           absl::string_view rule_name) const {
   // TODO(fangism): Use the context member to print which named construct or
   // design element the violation appears in (or full stack thereof).
-  (*stream) << path << ':' << line_column_map_(violation.token.left(base))
+  (*stream) << path << ':'
+            << line_column_map_.GetLineColAtOffset(base,
+                                                   violation.token.left(base))
             << ": " << violation.reason << ' ' << url << " [" << rule_name
             << ']';
 }

@@ -75,8 +75,17 @@ class LineColumnMap {
     return beginning_of_line_offsets_[index];
   }
 
-  // Translate byte-offset into line and column.
-  LineColumn operator()(int bytes_offset) const;
+  // Get line number at the given byte offset.
+  int LineAtOffset(int bytes_offset) const;
+
+  // Get line and column at the given offset. The column takes multi-byte
+  // encodings into account, so the column represents the true character not
+  // simply the byte-offset within the line.
+  //
+  // TODO(hzeller): technically, we don't need the base as we already got it
+  // in the constructor, but change separately after lifetime questions have
+  // been considered.
+  LineColumn GetLineColAtOffset(absl::string_view base, int bytes_offset) const;
 
   const std::vector<int>& GetBeginningOfLineOffsets() const {
     return beginning_of_line_offsets_;

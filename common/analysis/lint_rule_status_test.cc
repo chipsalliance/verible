@@ -238,6 +238,25 @@ TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
   RunLintStatusesTest(test, true);
 }
 
+TEST(LintRuleStatusFormatterTestWithContext, PointToCorrectUtf8Char) {
+  SymbolPtr root = Node();
+  static const int dont_care_tag = 0;
+  constexpr absl::string_view text("äöüß\n");
+  //                                ^ä^ü
+  LintStatusTest test = {
+      "rule",
+      "URL",
+      "some/file.sv",
+      text,
+      {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 2)),
+        "some/file.sv:1:1: reason1 URL "
+        "[rule]\näöüß\n"},
+       {"reason2", TokenInfo(dont_care_tag, text.substr(strlen("äö"), 2)),
+        "some/file.sv:1:3: reason2 URL "
+        "[rule]\näöüß\n  "}}};
+  RunLintStatusesTest(test, true);
+}
+
 TEST(AutoFixTest, ValidUseCases) {
   //                                       0123456789abcdef
   static constexpr absl::string_view text("This is an image");
