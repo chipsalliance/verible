@@ -505,8 +505,8 @@ cc_test(
     name = "vector_tree_iterators_test",
     srcs = ["vector_tree_iterators_test.cc"],
     deps = [
-        ":vector_tree_iterators",
         ":vector_tree",
+        ":vector_tree_iterators",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

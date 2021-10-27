@@ -36,7 +36,7 @@ cc_library(
     hdrs = ["token_info_json.h"],
     deps = [
         ":token_info",
-        "@jsonhpp//:jsonhpp",
+        "@jsonhpp",
     ],
 )
 

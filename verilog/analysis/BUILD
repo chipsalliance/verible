@@ -69,7 +69,7 @@ cc_library(
         "//common/analysis:file_analyzer",
         "//common/strings:line_column_map",
         "@com_google_absl//absl/strings",
-        "@jsonhpp//:jsonhpp",
+        "@jsonhpp",
     ],
 )
 
@@ -101,7 +101,7 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:jsonhpp",
+        "@jsonhpp",
     ],
 )
 
@@ -227,8 +227,8 @@ cc_library(
         "//common/analysis:text_structure_linter",
         "//common/analysis:token_stream_lint_rule",
         "//common/analysis:token_stream_linter",
-        "//common/strings:line_column_map",
         "//common/strings:diff",
+        "//common/strings:line_column_map",
         "//common/text:concrete_syntax_tree",
         "//common/text:text_structure",
         "//common/text:token_info",

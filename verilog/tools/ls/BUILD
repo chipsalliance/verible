@@ -14,40 +14,40 @@ package(
 
 cc_library(
     name = "lsp-parse-buffer",
-    srcs = [ "lsp-parse-buffer.cc"],
-    hdrs = [ "lsp-parse-buffer.h" ],
+    srcs = ["lsp-parse-buffer.cc"],
+    hdrs = ["lsp-parse-buffer.h"],
     deps = [
-      "//verilog/analysis:verilog_analyzer",
-      "//verilog/analysis:verilog_linter",
-      "//common/lsp:lsp-text-buffer",
-      "@com_google_absl//absl/status",
-    ]
+        "//common/lsp:lsp-text-buffer",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_linter",
+        "@com_google_absl//absl/status",
+    ],
 )
 
 cc_library(
     name = "verible-lsp-adapter",
-    srcs = [ "verible-lsp-adapter.cc"],
-    hdrs = [ "verible-lsp-adapter.h" ],
+    srcs = ["verible-lsp-adapter.cc"],
+    hdrs = ["verible-lsp-adapter.h"],
     deps = [
-      ":lsp-parse-buffer",
-      "//common/lsp:lsp-protocol",
-      "//common/lsp:lsp-protocol-operators",
-      "//verilog/analysis:verilog_analyzer",
-      "//verilog/analysis:verilog_linter",
-      "@jsonhpp//:jsonhpp",
-    ]
+        ":lsp-parse-buffer",
+        "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-protocol-operators",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog_linter",
+        "@jsonhpp",
+    ],
 )
 
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
     deps = [
-      ":lsp-parse-buffer",
-      ":verible-lsp-adapter",
-      "//common/lsp:lsp-protocol",
-      "//common/lsp:json-rpc-dispatcher",
-      "//common/lsp:message-stream-splitter",
-      "//common/util:init_command_line",
+        ":lsp-parse-buffer",
+        ":verible-lsp-adapter",
+        "//common/lsp:json-rpc-dispatcher",
+        "//common/lsp:lsp-protocol",
+        "//common/lsp:message-stream-splitter",
+        "//common/util:init_command_line",
     ],
 )
 
@@ -56,12 +56,12 @@ sh_test_with_runfiles_lib(
     size = "small",
     srcs = ["verible-verilog-ls_test.sh"],
     args = [
-      "$(location :verible-verilog-ls)",
-      "$(location //common/lsp:json-rpc-expect)",
+        "$(location :verible-verilog-ls)",
+        "$(location //common/lsp:json-rpc-expect)",
     ],
     data = [
-     ":verible-verilog-ls",
-     "//common/lsp:json-rpc-expect",
+        ":verible-verilog-ls",
+        "//common/lsp:json-rpc-expect",
     ],
     deps = [],
 )

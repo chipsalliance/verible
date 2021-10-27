@@ -5,7 +5,6 @@ load(
     "verilog_style_lint",
     "verilog_syntax",
 )
-
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
 licenses(["notice"])
@@ -100,8 +99,8 @@ _linter_test_configs = [
         verilog_style_lint.test(
             name = testfilebase + "-allrules-test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
-            flags = ["--ruleset=all"],
             expect_fail = True,
+            flags = ["--ruleset=all"],
         ) if "=" not in rule else (),  # Only useful when not configured
         # Verifies that the rule is/is not enabled in the 'default' set.
         verilog_style_lint.test(
@@ -113,11 +112,11 @@ _linter_test_configs = [
         verilog_style_lint.test(
             name = testfilebase + "-onerule-test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
+            expect_fail = True,
             flags = [
                 "--ruleset=none",
                 "--rules=" + rule,
             ],
-            expect_fail = True,
         ),
         # Verifies that all rules *except* this one is lint clean.
         verilog_style_lint.test(
@@ -188,11 +187,11 @@ verilog_style_lint.test(
     srcs = [
         "testdata/line-length-in-module-body.sv",
     ],
+    expect_fail = True,
     flags = [
         "--ruleset=none",
         "--rules=line-length",
     ],
-    expect_fail = True,
 )
 
 # Test that one long line is caught and waived.
@@ -201,11 +200,11 @@ verilog_style_lint.test(
     srcs = [
         ":line-length-in-module-body-waived",
     ],
+    expect_fail = False,
     flags = [
         "--ruleset=none",
         "--rules=line-length",
     ],
-    expect_fail = False,
 )
 
 # Verifies that lexer errors are properly rejected.

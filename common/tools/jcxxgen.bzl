@@ -33,9 +33,9 @@ def jcxxgen(name, src, out, namespace = ""):
         name = name + "_gen",
         srcs = [src],
         outs = [out],
-        cmd = ('$(location //common/tools:jcxxgen) --json_header=\''
-               + json_header + '\' --class_namespace '
-               + namespace + ' --output $@ $<'),
+        cmd = ("$(location //common/tools:jcxxgen) --json_header='" +
+               json_header + "' --class_namespace " +
+               namespace + " --output $@ $<"),
         tools = [tool],
     )
     native.cc_library(

@@ -15,9 +15,9 @@ cc_binary(
     deps = [
         "//common/strings:patch",
         "//common/util:file_util",
-        "//common/util:user_interaction",
         "//common/util:init_command_line",
         "//common/util:subcommand",
+        "//common/util:user_interaction",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -62,7 +62,7 @@ cc_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:init_command_line",
-       "@com_google_absl//absl/strings",
-       "@com_google_absl//absl/flags:flag",
-    ]
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
 )
