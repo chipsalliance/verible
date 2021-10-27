@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/formatting/layout_optimizer.h"
-
 #include <sstream>
 #include <string>
 #include <vector>
@@ -22,6 +20,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
+#include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
@@ -30,14 +29,6 @@
 #include "gtest/gtest.h"
 
 namespace verible {
-
-using layout_optimizer_internal::LayoutItem;
-using layout_optimizer_internal::LayoutTree;
-using layout_optimizer_internal::LayoutType;
-
-using layout_optimizer_internal::LayoutFunction;
-using layout_optimizer_internal::LayoutFunctionFactory;
-using layout_optimizer_internal::LayoutFunctionSegment;
 
 namespace {
 

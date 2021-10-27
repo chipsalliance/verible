@@ -106,9 +106,9 @@ cc_test(
 
 cc_library(
     name = "layout_optimizer",
-    srcs = ["layout_optimizer.cc"],
-    hdrs = [
-        "layout_optimizer.h",
+    srcs = [
+        "layout_optimizer.cc",
+        "layout_optimizer_internal.h",
     ],
     deps = [
         ":basic_format_style",
@@ -125,7 +125,10 @@ cc_library(
 
 cc_test(
     name = "layout_optimizer_test",
-    srcs = ["layout_optimizer_test.cc"],
+    srcs = [
+        "layout_optimizer_internal.h",
+        "layout_optimizer_test.cc",
+    ],
     deps = [
         ":basic_format_style",
         ":layout_optimizer",

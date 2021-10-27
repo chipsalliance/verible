@@ -16,22 +16,19 @@
 // algorithm documented in https://research.google/pubs/pub44667/
 // (similar tool for R language: https://github.com/google/rfmt)
 
-#include "common/formatting/layout_optimizer.h"
-
 #include <algorithm>
 #include <iomanip>
 #include <ostream>
 
 #include "absl/container/fixed_array.h"
 #include "common/formatting/basic_format_style.h"
+#include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/value_saver.h"
 
 namespace verible {
-
-namespace layout_optimizer_internal {
 
 namespace {
 
@@ -403,7 +400,5 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
   return result;
 }
-
-}  // namespace layout_optimizer_internal
 
 }  // namespace verible

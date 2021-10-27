@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Improve code formatting by optimizing token partitions layout with
-// algorithm documented in https://research.google/pubs/pub44667/
-// (similar tool for R language: https://github.com/google/rfmt)
+// Implementation details of layout_optimizer.cc exported for tests.
 
-#ifndef VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
-#define VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
+#ifndef VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_INTERNAL_H_
+#define VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_INTERNAL_H_
 
 #include <algorithm>
 #include <iterator>
@@ -34,9 +32,6 @@
 #include "common/util/vector_tree.h"
 
 namespace verible {
-
-// Implementation details exported for tests.
-namespace layout_optimizer_internal {
 
 // LayoutItem type
 enum class LayoutType {
@@ -595,8 +590,6 @@ class LayoutFunctionFactory {
   const BasicFormatStyle& style_;
 };
 
-}  // namespace layout_optimizer_internal
-
 }  // namespace verible
 
-#endif  // VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
+#endif  // VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_INTERNAL_H_
