@@ -19,11 +19,11 @@ package(
 
 cc_library(
     name = "message-stream-splitter",
-    hdrs = ["message-stream-splitter.h"],
     srcs = ["message-stream-splitter.cc"],
+    hdrs = ["message-stream-splitter.h"],
     deps = [
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -40,8 +40,8 @@ cc_test(
 
 cc_library(
     name = "json-rpc-dispatcher",
-    hdrs = ["json-rpc-dispatcher.h"],
     srcs = ["json-rpc-dispatcher.cc"],
+    hdrs = ["json-rpc-dispatcher.h"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-fexceptions"],
@@ -49,7 +49,7 @@ cc_library(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         "@com_google_absl//absl/strings",
-        "@jsonhpp//:jsonhpp",
+        "@jsonhpp",
     ],
 )
 
@@ -78,8 +78,8 @@ jcxxgen(
 
 cc_library(
     name = "lsp-protocol-operators",
-    hdrs = [ "lsp-protocol-operators.h" ],
-    deps = [ ":lsp-protocol" ],
+    hdrs = ["lsp-protocol-operators.h"],
+    deps = [":lsp-protocol"],
 )
 
 cc_test(
@@ -88,7 +88,7 @@ cc_test(
     deps = [
         ":lsp-protocol-operators",
         "@com_google_googletest//:gtest_main",
-    ]
+    ],
 )
 
 cc_library(
@@ -100,7 +100,7 @@ cc_library(
         ":lsp-protocol",
         "//common/strings:utf8",
         "@com_google_absl//absl/strings",
-    ]
+    ],
 )
 
 cc_test(
@@ -111,28 +111,28 @@ cc_test(
         ":lsp-text-buffer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
-    ]
+    ],
 )
 
 cc_binary(
     name = "json-rpc-expect",
-    srcs = [ "json-rpc-expect.cc"],
+    srcs = ["json-rpc-expect.cc"],
     deps = [
-      ":message-stream-splitter",
-      "@com_google_absl//absl/status",
-      "@com_google_absl//absl/strings",
-      "@jsonhpp//:jsonhpp",
-    ]
+        ":message-stream-splitter",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@jsonhpp",
+    ],
 )
 
 cc_binary(
     name = "dummy-ls",
     srcs = ["dummy-ls.cc"],
     deps = [
-      ":lsp-protocol",
-      ":json-rpc-dispatcher",
-      ":lsp-text-buffer",
-      ":message-stream-splitter",
+        ":json-rpc-dispatcher",
+        ":lsp-protocol",
+        ":lsp-text-buffer",
+        ":message-stream-splitter",
     ],
 )
 
@@ -140,10 +140,13 @@ sh_test_with_runfiles_lib(
     name = "dummy-ls_test",
     size = "small",
     srcs = ["dummy-ls_test.sh"],
-    args = ["$(location :dummy-ls)", "$(location :json-rpc-expect)"],
+    args = [
+        "$(location :dummy-ls)",
+        "$(location :json-rpc-expect)",
+    ],
     data = [
-       ":dummy-ls",
-       ":json-rpc-expect"
+        ":dummy-ls",
+        ":json-rpc-expect",
     ],
     deps = [],
 )

@@ -33,8 +33,8 @@ cc_library(
         "//common/text:syntax_tree_context",
         "//common/text:token_info",
         "//common/text:tree_utils",
-        "//common/util:spacer",
         "//common/util:logging",
+        "//common/util:spacer",
         "@com_google_absl//absl/strings",
     ],
 )
