@@ -280,6 +280,8 @@ class LayoutFunction {
           return a.column < b.column;
         });
   }
+  // Elements in 'segments_' must have unique columns and be sorted by column.
+  // The first segment must start at column 0.
   // std::set would be more appropriate generally, but due to really
   // small amount of elements the container has to hold and ordered inserts, it
   // probably wouldn't help in anything.
