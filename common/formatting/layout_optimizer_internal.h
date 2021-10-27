@@ -430,9 +430,9 @@ std::ostream& operator<<(std::ostream& stream,
 std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf);
 
 template <typename Iterator, typename ValueType>
-inline constexpr bool IsIteratorDereferencingTo =
-    std::is_same_v<typename std::iterator_traits<Iterator>::value_type,
-                   ValueType>;
+inline constexpr bool IsIteratorDereferencingTo = std::is_same_v<
+    std::remove_const_t<typename std::iterator_traits<Iterator>::value_type>,
+    ValueType>;
 
 // Methods for creating and combining LayoutFunctions
 class LayoutFunctionFactory {
