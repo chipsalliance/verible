@@ -66,8 +66,8 @@ std::ostream& operator<<(std::ostream& stream, LayoutType type) {
     case LayoutType::kStack:
       return stream << "stack";
   }
-  LOG(FATAL) << "Unknown layout type: " << int(type);
-  return stream;
+  LOG(WARNING) << "Unknown layout type: " << int(type);
+  return stream << "???";
 }
 
 std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout) {
@@ -177,6 +177,9 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
 
 LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
                                              int indent) const {
+  CHECK(!lf.empty());
+  CHECK_GE(indent, 0);
+
   LayoutFunction result;
 
   auto indent_column = 0;
@@ -214,6 +217,9 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
 
 LayoutFunction LayoutFunctionFactory::Juxtaposition(
     const LayoutFunction& left, const LayoutFunction& right) const {
+  CHECK(!left.empty());
+  CHECK(!right.empty());
+
   LayoutFunction result;
 
   auto segment_l = left.begin();
@@ -387,8 +393,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
                        min_cost_segment->CostAt(current_column)) /
                       (min_cost_segment->gradient - segment->gradient);
         int column = current_column + std::ceil(gamma);
-        if (column > current_column && column < next_knot &&
-            column < next_column) {
+        if (column > current_column && column < next_column) {
           next_column = column;
         }
       }

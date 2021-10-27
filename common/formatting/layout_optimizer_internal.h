@@ -442,6 +442,13 @@ std::ostream& operator<<(std::ostream& stream,
 
 std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf);
 
+template <bool IsConstIterator>
+std::ostream& operator<<(std::ostream& stream,
+                         const LayoutFunctionIterator<IsConstIterator>& it) {
+  return stream << &it.Container() << "[" << it.Index() << "/"
+                << it.Container().size() << "]";
+}
+
 template <typename Iterator, typename ValueType>
 inline constexpr bool IsIteratorDereferencingTo = std::is_same_v<
     std::remove_const_t<typename std::iterator_traits<Iterator>::value_type>,
@@ -479,7 +486,10 @@ class LayoutFunctionFactory {
     auto segments =
         absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
     std::transform(lfs.begin(), lfs.end(), segments.begin(),
-                   [](const LayoutFunction& lf) { return lf.begin(); });
+                   [](const LayoutFunction& lf) {
+                     CHECK(!lf.empty());
+                     return lf.begin();
+                   });
 
     return Stack(segments);
   }
@@ -530,7 +540,10 @@ class LayoutFunctionFactory {
     auto segments =
         absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
     std::transform(lfs.begin(), lfs.end(), segments.begin(),
-                   [](const LayoutFunction& lf) { return lf.begin(); });
+                   [](const LayoutFunction& lf) {
+                     CHECK(!lf.empty());
+                     return lf.begin();
+                   });
 
     return Choice(segments);
   }

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
@@ -31,6 +32,20 @@
 namespace verible {
 
 namespace {
+
+template <typename T>
+std::string ToString(const T& value) {
+  std::ostringstream s;
+  s << value;
+  return s.str();
+}
+
+TEST(LayoutTypeTest, ToString) {
+  EXPECT_EQ(ToString(LayoutType::kLine), "line");
+  EXPECT_EQ(ToString(LayoutType::kJuxtaposition), "juxtaposition");
+  EXPECT_EQ(ToString(LayoutType::kStack), "stack");
+  EXPECT_EQ(ToString(static_cast<LayoutType>(-1)), "???");
+}
 
 class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
  public:
@@ -50,6 +65,82 @@ class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
   const std::vector<absl::string_view> tokens_;
   std::vector<TokenInfo> ftokens_;
 };
+
+TEST_F(LayoutTest, LineLayoutItemToString) {
+  const auto begin = pre_format_tokens_.begin();
+
+  UnwrappedLine short_line(0, begin);
+  short_line.SpanUpToToken(begin + 1);
+  UnwrappedLine long_line(0, begin + 1);
+  long_line.SpanUpToToken(begin + 2);
+  UnwrappedLine empty_line(0, begin);
+
+  pre_format_tokens_[0].before.spaces_required = 1;
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+
+  {
+    LayoutItem item(short_line, 0);
+    EXPECT_EQ(ToString(item),
+              "[ short_line ], length: 10, indentation: 0, spacing: 1, must "
+              "wrap: no");
+  }
+  {
+    LayoutItem item(short_line, 3);
+    EXPECT_EQ(ToString(item),
+              "[ short_line ], length: 10, indentation: 3, spacing: 1, must "
+              "wrap: no");
+  }
+  {
+    LayoutItem item(long_line, 5);
+    EXPECT_EQ(
+        ToString(item),
+        "[ loooooong_line ], length: 14, indentation: 5, spacing: 0, must "
+        "wrap: YES");
+  }
+  {
+    LayoutItem item(long_line, 7);
+    EXPECT_EQ(
+        ToString(item),
+        "[ loooooong_line ], length: 14, indentation: 7, spacing: 0, must "
+        "wrap: YES");
+  }
+  {
+    LayoutItem item(empty_line, 11);
+    EXPECT_EQ(ToString(item),
+              "[  ], length: 0, indentation: 11, spacing: 0, must wrap: no");
+  }
+  {
+    LayoutItem item(empty_line, 13);
+    EXPECT_EQ(ToString(item),
+              "[  ], length: 0, indentation: 13, spacing: 0, must wrap: no");
+  }
+}
+
+TEST_F(LayoutTest, JuxtapositionLayoutItemToString) {
+  {
+    LayoutItem item(LayoutType::kJuxtaposition, 3, false, 5);
+    EXPECT_EQ(ToString(item),
+              "[<juxtaposition>], indentation: 5, spacing: 3, must wrap: no");
+  }
+  {
+    LayoutItem item(LayoutType::kJuxtaposition, 7, true, 11);
+    EXPECT_EQ(ToString(item),
+              "[<juxtaposition>], indentation: 11, spacing: 7, must wrap: YES");
+  }
+}
+
+TEST_F(LayoutTest, StackLayoutItemToString) {
+  {
+    LayoutItem item(LayoutType::kStack, 3, false, 5);
+    EXPECT_EQ(ToString(item),
+              "[<stack>], indentation: 5, spacing: 3, must wrap: no");
+  }
+  {
+    LayoutItem item(LayoutType::kStack, 7, true, 11);
+    EXPECT_EQ(ToString(item),
+              "[<stack>], indentation: 11, spacing: 7, must wrap: YES");
+  }
+}
 
 TEST_F(LayoutTest, AsUnwrappedLine) {
   const auto& preformat_tokens = pre_format_tokens_;
@@ -96,6 +187,21 @@ TEST_F(LayoutTest, LineLayout) {
   }
 }
 
+TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
+  const auto spaces_before = 3;
+
+  LayoutItem horizontal_layout(LayoutType::kJuxtaposition, spaces_before,
+                               false);
+  EXPECT_EQ(horizontal_layout.Type(), LayoutType::kJuxtaposition);
+  EXPECT_EQ(horizontal_layout.SpacesBefore(), spaces_before);
+  EXPECT_EQ(horizontal_layout.MustWrap(), false);
+
+  LayoutItem vertical_layout(LayoutType::kStack, spaces_before, true);
+  EXPECT_EQ(vertical_layout.Type(), LayoutType::kStack);
+  EXPECT_EQ(vertical_layout.SpacesBefore(), spaces_before);
+  EXPECT_EQ(vertical_layout.MustWrap(), true);
+}
+
 class LayoutFunctionTest : public ::testing::Test {
  public:
   LayoutFunctionTest()
@@ -114,6 +220,42 @@ class LayoutFunctionTest : public ::testing::Test {
 };
 const LayoutTree LayoutFunctionTest::layout_ =
     LayoutTree(LayoutItem(LayoutType::kLine, 0, false));
+
+TEST_F(LayoutFunctionTest, LayoutFunctionSegmentToString) {
+  EXPECT_EQ(
+      ToString(layout_function_[0]),
+      "[  0] (101.000 + 11*x), span: 10, layout:\n"
+      "      { ([  ], length: 0, indentation: 0, spacing: 0, must wrap: no) }");
+  EXPECT_EQ(
+      ToString(layout_function_[5]),
+      "[ 50] (606.000 + 66*x), span: 60, layout:\n"
+      "      { ([  ], length: 0, indentation: 0, spacing: 0, must wrap: no) }");
+}
+
+TEST_F(LayoutFunctionTest, LayoutFunctionToString) {
+  EXPECT_EQ(ToString(layout_function_),
+            "{\n"
+            "  [  0] ( 101.000 +   11*x), span:  10, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "  [  1] ( 202.000 +   22*x), span:  20, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "  [  2] ( 303.000 +   33*x), span:  30, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "  [  3] ( 404.000 +   44*x), span:  40, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "  [ 40] ( 505.000 +   55*x), span:  50, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "  [ 50] ( 606.000 +   66*x), span:  60, layout:\n"
+            "        { ([  ], length: 0, indentation: 0, spacing: 0, must "
+            "wrap: no) }\n"
+            "}");
+  EXPECT_EQ(ToString(LayoutFunction{}), "{}");
+}
 
 TEST_F(LayoutFunctionTest, Size) {
   EXPECT_EQ(layout_function_.size(), 6);
@@ -170,32 +312,76 @@ TEST_F(LayoutFunctionTest, Iteration) {
 }
 
 TEST_F(LayoutFunctionTest, AtOrToTheLeftOf) {
-  EXPECT_EQ(layout_function_.AtOrToTheLeftOf(0), layout_function_.begin());
-  EXPECT_EQ(layout_function_.AtOrToTheLeftOf(1), layout_function_.begin() + 1);
-  EXPECT_EQ(layout_function_.AtOrToTheLeftOf(2), layout_function_.begin() + 2);
-  for (int i = 3; i < 40; ++i) {
-    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i), layout_function_.begin() + 3)
-        << "i: " << i;
+  {
+    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(0), layout_function_.begin());
+    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(1),
+              layout_function_.begin() + 1);
+    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(2),
+              layout_function_.begin() + 2);
+    for (int i = 3; i < 40; ++i) {
+      EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i),
+                layout_function_.begin() + 3)
+          << "i: " << i;
+    }
+    for (int i = 40; i < 50; ++i) {
+      EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i),
+                layout_function_.begin() + 4)
+          << "i: " << i;
+    }
+    for (int i = 50; i < 70; ++i) {
+      EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i),
+                layout_function_.begin() + 5)
+          << "i: " << i;
+    }
+    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
+              layout_function_.begin() + 5);
   }
-  for (int i = 40; i < 50; ++i) {
-    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i), layout_function_.begin() + 4)
-        << "i: " << i;
+  {
+    LayoutFunction empty_layout_function{};
+    EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(0),
+              empty_layout_function.end());
+    EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(1),
+              empty_layout_function.end());
+    EXPECT_EQ(
+        empty_layout_function.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
+        empty_layout_function.end());
   }
-  for (int i = 50; i < 70; ++i) {
-    EXPECT_EQ(layout_function_.AtOrToTheLeftOf(i), layout_function_.begin() + 5)
-        << "i: " << i;
+  {
+    EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(0),
+              const_layout_function_.begin());
+    EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(1),
+              const_layout_function_.begin() + 1);
+    EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(2),
+              const_layout_function_.begin() + 2);
+    for (int i = 3; i < 40; ++i) {
+      EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(i),
+                const_layout_function_.begin() + 3)
+          << "i: " << i;
+    }
+    for (int i = 40; i < 50; ++i) {
+      EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(i),
+                const_layout_function_.begin() + 4)
+          << "i: " << i;
+    }
+    for (int i = 50; i < 70; ++i) {
+      EXPECT_EQ(const_layout_function_.AtOrToTheLeftOf(i),
+                const_layout_function_.begin() + 5)
+          << "i: " << i;
+    }
+    EXPECT_EQ(
+        const_layout_function_.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
+        const_layout_function_.begin() + 5);
   }
-  EXPECT_EQ(layout_function_.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
-            layout_function_.begin() + 5);
-
-  LayoutFunction empty_layout_function{};
-  EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(0),
-            empty_layout_function.end());
-  EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(1),
-            empty_layout_function.end());
-  EXPECT_EQ(
-      empty_layout_function.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
-      empty_layout_function.end());
+  {
+    const LayoutFunction empty_layout_function{};
+    EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(0),
+              empty_layout_function.end());
+    EXPECT_EQ(empty_layout_function.AtOrToTheLeftOf(1),
+              empty_layout_function.end());
+    EXPECT_EQ(
+        empty_layout_function.AtOrToTheLeftOf(std::numeric_limits<int>::max()),
+        empty_layout_function.end());
+  }
 }
 
 TEST_F(LayoutFunctionTest, Insertion) {
@@ -232,19 +418,143 @@ TEST_F(LayoutFunctionTest, Subscript) {
   EXPECT_EQ(const_layout_function_[5].column, 50);
 }
 
-TEST_F(LayoutTest, TestHorizontalAndVerticalLayouts) {
-  const auto spaces_before = 3;
+class LayoutFunctionIteratorTest : public LayoutFunctionTest {};
 
-  LayoutItem horizontal_layout(LayoutType::kJuxtaposition, spaces_before,
-                               false);
-  EXPECT_EQ(horizontal_layout.Type(), LayoutType::kJuxtaposition);
-  EXPECT_EQ(horizontal_layout.SpacesBefore(), spaces_before);
-  EXPECT_EQ(horizontal_layout.MustWrap(), false);
+TEST_F(LayoutFunctionIteratorTest, ToString) {
+  {
+    std::ostringstream addr;
+    addr << &layout_function_;
+    EXPECT_EQ(ToString(layout_function_.begin()),
+              absl::StrCat(addr.str(), "[0/6]"));
+    EXPECT_EQ(ToString(layout_function_.end()),
+              absl::StrCat(addr.str(), "[6/6]"));
+  }
+  {
+    std::ostringstream addr;
+    addr << &const_layout_function_;
+    EXPECT_EQ(ToString(const_layout_function_.begin()),
+              absl::StrCat(addr.str(), "[0/6]"));
+    EXPECT_EQ(ToString(const_layout_function_.end()),
+              absl::StrCat(addr.str(), "[6/6]"));
+  }
+  {
+    LayoutFunction empty_layout_function{};
+    std::ostringstream addr;
+    addr << &empty_layout_function;
+    EXPECT_EQ(ToString(empty_layout_function.begin()),
+              absl::StrCat(addr.str(), "[0/0]"));
+    EXPECT_EQ(ToString(empty_layout_function.end()),
+              absl::StrCat(addr.str(), "[0/0]"));
+  }
+}
 
-  LayoutItem vertical_layout(LayoutType::kStack, spaces_before, true);
-  EXPECT_EQ(vertical_layout.Type(), LayoutType::kStack);
-  EXPECT_EQ(vertical_layout.SpacesBefore(), spaces_before);
-  EXPECT_EQ(vertical_layout.MustWrap(), true);
+TEST_F(LayoutFunctionIteratorTest, MoveToKnotAtOrToTheLeftOf) {
+  {
+    auto it = layout_function_.begin();
+
+    it.MoveToKnotAtOrToTheLeftOf(2);
+    EXPECT_EQ(it, layout_function_.begin() + 2);
+    it.MoveToKnotAtOrToTheLeftOf(0);
+    EXPECT_EQ(it, layout_function_.begin());
+    it.MoveToKnotAtOrToTheLeftOf(std::numeric_limits<int>::max());
+    EXPECT_EQ(it, layout_function_.begin() + 5);
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, layout_function_.begin() + 1);
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, layout_function_.begin() + 1);
+    for (int i = 3; i < 40; ++i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, layout_function_.begin() + 3) << "i: " << i;
+    }
+    for (int i = 50; i < 70; ++i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, layout_function_.begin() + 5) << "i: " << i;
+    }
+    for (int i = 49; i >= 40; --i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, layout_function_.begin() + 4) << "i: " << i;
+    }
+  }
+  {
+    LayoutFunction empty_layout_function{};
+    auto it = empty_layout_function.begin();
+
+    it.MoveToKnotAtOrToTheLeftOf(0);
+    EXPECT_EQ(it, empty_layout_function.end());
+    it.MoveToKnotAtOrToTheLeftOf(std::numeric_limits<int>::max());
+    EXPECT_EQ(it, empty_layout_function.end());
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, empty_layout_function.end());
+  }
+
+  {
+    auto it = const_layout_function_.begin();
+
+    it.MoveToKnotAtOrToTheLeftOf(2);
+    EXPECT_EQ(it, const_layout_function_.begin() + 2);
+    it.MoveToKnotAtOrToTheLeftOf(0);
+    EXPECT_EQ(it, const_layout_function_.begin());
+    it.MoveToKnotAtOrToTheLeftOf(std::numeric_limits<int>::max());
+    EXPECT_EQ(it, const_layout_function_.begin() + 5);
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, const_layout_function_.begin() + 1);
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, const_layout_function_.begin() + 1);
+    for (int i = 3; i < 40; ++i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, const_layout_function_.begin() + 3) << "i: " << i;
+    }
+    for (int i = 50; i < 70; ++i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, const_layout_function_.begin() + 5) << "i: " << i;
+    }
+    for (int i = 49; i >= 40; --i) {
+      it.MoveToKnotAtOrToTheLeftOf(i);
+      EXPECT_EQ(it, const_layout_function_.begin() + 4) << "i: " << i;
+    }
+  }
+  {
+    const LayoutFunction empty_layout_function{};
+    auto it = empty_layout_function.begin();
+
+    it.MoveToKnotAtOrToTheLeftOf(0);
+    EXPECT_EQ(it, empty_layout_function.end());
+    it.MoveToKnotAtOrToTheLeftOf(std::numeric_limits<int>::max());
+    EXPECT_EQ(it, empty_layout_function.end());
+    it.MoveToKnotAtOrToTheLeftOf(1);
+    EXPECT_EQ(it, empty_layout_function.end());
+  }
+}
+
+TEST_F(LayoutFunctionIteratorTest, ContainerRelatedMethods) {
+  {
+    int i = 0;
+    auto it = layout_function_.begin();
+    while (it != layout_function_.end()) {
+      EXPECT_EQ(&it.Container(), &layout_function_);
+      EXPECT_EQ(it.Index(), i);
+      EXPECT_FALSE(it.IsEnd());
+      ++it;
+      ++i;
+    }
+    EXPECT_EQ(&it.Container(), &layout_function_);
+    EXPECT_EQ(it.Index(), i);
+    EXPECT_TRUE(it.IsEnd());
+  }
+  {
+    int i = 0;
+    auto it = const_layout_function_.begin();
+    while (it != const_layout_function_.end()) {
+      EXPECT_EQ(&it.Container(), &const_layout_function_);
+      EXPECT_EQ(it.Index(), i);
+      EXPECT_FALSE(it.IsEnd());
+      ++it;
+      ++i;
+    }
+    EXPECT_EQ(&it.Container(), &const_layout_function_);
+    EXPECT_EQ(it.Index(), i);
+    EXPECT_TRUE(it.IsEnd());
+  }
 }
 
 std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
@@ -458,6 +768,17 @@ TEST_F(LayoutFunctionFactoryTest, Stack) {
   using LT = LayoutTree;
   using LI = LayoutItem;
 
+  {
+    const auto lf = factory_.Stack({});
+    const auto expected_lf = LayoutFunction{};
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto line = factory_.Line(uwlines_[kShortLineId]);
+    const auto lf = factory_.Stack({line});
+    const auto& expected_lf = line;
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
   {
     const auto lf = factory_.Stack({
         factory_.Line(uwlines_[kShortLineId]),
@@ -718,6 +1039,17 @@ TEST_F(LayoutFunctionFactoryTest, Juxtaposition) {
   };
 
   {
+    const auto lf = factory_.Juxtaposition({});
+    const auto expected_lf = LayoutFunction{};
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto line = factory_.Line(uwlines_[kShortLineId]);
+    const auto lf = factory_.Juxtaposition({line});
+    const auto& expected_lf = line;
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
     const auto lf = factory_.Juxtaposition({
         factory_.Line(uwlines_[kShortLineId]),
         factory_.Line(uwlines_[k10ColumnsLineId]),
@@ -943,6 +1275,12 @@ TEST_F(LayoutFunctionFactoryTest, Choice) {
   static const auto layout = LT(LI(LayoutType::kLine, 0, false));
 
   static const ChoiceTestCase kTestCases[] = {
+      {__LINE__, {}, LayoutFunction{}},
+      {__LINE__,
+       {
+           LayoutFunction{{0, layout, 10, 100.0F, 10}},
+       },
+       LayoutFunction{{0, layout, 10, 100.0F, 10}}},
       {__LINE__,
        {
            LayoutFunction{{0, layout, 10, 100.0F, 10}},
@@ -1069,6 +1407,18 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
   using LT = LayoutTree;
   using LI = LayoutItem;
 
+  {
+    const auto lf = factory_.Wrap({});
+    const auto expected_lf = LayoutFunction{};
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Wrap({
+        factory_.Line(uwlines_[kShortLineId]),
+    });
+    const auto expected_lf = factory_.Line(uwlines_[kShortLineId]);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
   {
     const auto lf = factory_.Wrap({
         factory_.Line(uwlines_[k10ColumnsLineId]),
