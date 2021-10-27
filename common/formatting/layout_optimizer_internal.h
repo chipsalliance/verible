@@ -456,7 +456,7 @@ class LayoutFunctionFactory {
   template <class Iterator>
   LayoutFunction Stack(const Iterator begin, const Iterator end) const {
     static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
-                  "Iterator's value type must LayoutFunction.");
+                  "Iterator's value type must be LayoutFunction.");
     const auto lfs = make_container_range(begin, end);
 
     if (lfs.empty()) return LayoutFunction();
@@ -507,7 +507,7 @@ class LayoutFunctionFactory {
   template <class Iterator>
   LayoutFunction Choice(const Iterator begin, const Iterator end) const {
     static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
-                  "Iterator's value type must LayoutFunction.");
+                  "Iterator's value type must be LayoutFunction.");
     const auto lfs = make_container_range(begin, end);
 
     if (lfs.empty()) return LayoutFunction();
@@ -537,7 +537,7 @@ class LayoutFunctionFactory {
   template <class Iterator>
   LayoutFunction Wrap(const Iterator begin, const Iterator end) const {
     static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
-                  "Iterator's value type must LayoutFunction.");
+                  "Iterator's value type must be LayoutFunction.");
 
     const auto lfs = make_container_range(begin, end);
 

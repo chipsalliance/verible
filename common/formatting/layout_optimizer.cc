@@ -286,7 +286,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
 
   LayoutFunction result;
 
-  // Use fist line's spacing for new layouts.
+  // Use first line's spacing for new layouts.
   const auto& first_layout_item = segments.front()->layout.Value();
   const auto spaces_before = first_layout_item.SpacesBefore();
   const auto break_decision = first_layout_item.MustWrap();
