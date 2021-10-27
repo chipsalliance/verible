@@ -82,7 +82,7 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
   }
 
   const absl::string_view base = current->parser().Data().Contents();
-  verible::LineColumnMap line_column_map(base);
+  const verible::LineColumnMap& line_column_map = current->parser().Data().GetLineColumnMap();
   for (const auto &v : lint_violations) {
     result.emplace_back(ViolationToDiagnostic(v, base, line_column_map));
     if (--remaining <= 0) break;
@@ -123,7 +123,7 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
   if (lint_violations.empty()) return result;
 
   const absl::string_view base = current->parser().Data().Contents();
-  verible::LineColumnMap line_column_map(base);
+  const verible::LineColumnMap& line_column_map = current->parser().Data().GetLineColumnMap();
 
   for (const auto &v : lint_violations) {
     const verible::LintViolation &violation = *v.violation;
