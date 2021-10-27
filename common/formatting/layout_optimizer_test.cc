@@ -200,11 +200,11 @@ TEST_F(LayoutFunctionTest, AtOrToTheLeftOf) {
 
 TEST_F(LayoutFunctionTest, Insertion) {
   layout_function_.push_back({60, layout_, 1, 6.0F, 6});
-  EXPECT_EQ(layout_function_.size(), 7);
+  ASSERT_EQ(layout_function_.size(), 7);
   EXPECT_EQ(layout_function_[6].column, 60);
 
   layout_function_.push_back({70, layout_, 1, 6.0F, 6});
-  EXPECT_EQ(layout_function_.size(), 8);
+  ASSERT_EQ(layout_function_.size(), 8);
   EXPECT_EQ(layout_function_[6].column, 60);
   EXPECT_EQ(layout_function_[7].column, 70);
 
