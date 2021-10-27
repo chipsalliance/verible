@@ -130,13 +130,12 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
     int column) const {
   if (empty()) return end();
 
-  auto left_it = begin();
-  auto it = left_it + 1;
-  while (it != end() && it->column <= column) {
-    left_it = it;
-    ++it;
-  }
-  return left_it;
+  const auto it = std::lower_bound(
+      begin(), end(), column, [](const LayoutFunctionSegment& s, int column) {
+        return s.column <= column;
+      });
+  CHECK_NE(it, begin());
+  return it - 1;
 }
 
 LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {

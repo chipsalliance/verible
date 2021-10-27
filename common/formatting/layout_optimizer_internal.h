@@ -364,9 +364,9 @@ class LayoutFunctionIterator {
     return *this;
   }
 
-  iterator& operator++() { return *this += 1; }
+  iterator operator++() { return *this += 1; }
 
-  iterator& operator--() { return *this -= 1; }
+  iterator operator--() { return *this -= 1; }
 
   iterator operator++(int) {
     auto tmp = *this;
@@ -392,6 +392,17 @@ class LayoutFunctionIterator {
   }
   friend iterator operator-(difference_type lhs, const iterator& rhs) {
     return iterator(*rhs.lf_, lhs - rhs.index_);
+  }
+
+  template <bool RhsIsConst>
+  difference_type operator+(
+      const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+    return this->index_ + rhs.index_;
+  }
+  template <bool RhsIsConst>
+  difference_type operator-(
+      const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+    return this->index_ - rhs.index_;
   }
 
   template <bool RhsIsConst>
