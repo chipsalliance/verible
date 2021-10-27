@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/strings/utf8.h"
 
 namespace verible {
 
@@ -71,16 +72,23 @@ LineColumnMap::LineColumnMap(const std::vector<absl::string_view>& lines) {
   }
 }
 
-// Translate byte-offset into line-column.
-// Byte offsets beyond the end-of-file will return an unspecified result.
-LineColumn LineColumnMap::operator()(int offset) const {
+LineColumn LineColumnMap::GetLineColAtOffset(absl::string_view base,
+                                             int bytes_offset) const {
   const auto begin = beginning_of_line_offsets_.begin();
   const auto end = beginning_of_line_offsets_.end();
-  const auto base = std::upper_bound(begin, end, offset) - 1;
   // std::upper_bound is a binary search.
-  const int line_number = std::distance(begin, base);
-  const int column = offset - *base;
-  return LineColumn{line_number, column};
+  const auto line_at_offset = std::upper_bound(begin, end, bytes_offset) - 1;
+  const int line_number = std::distance(begin, line_at_offset);
+  const int len_within_line = bytes_offset - *line_at_offset;
+  absl::string_view line = base.substr(*line_at_offset, len_within_line);
+  return LineColumn{line_number, utf8_len(line)};
 }
 
+int LineColumnMap::LineAtOffset(int bytes_offset) const {
+  const auto begin = beginning_of_line_offsets_.begin();
+  const auto end = beginning_of_line_offsets_.end();
+  // std::upper_bound is a binary search.
+  const auto line_at_offset = std::upper_bound(begin, end, bytes_offset) - 1;
+  return std::distance(begin, line_at_offset);
+}
 }  // namespace verible

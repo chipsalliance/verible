@@ -95,8 +95,8 @@ class TextStructureView {
 
   const LineColumnMap& GetLineColumnMap() const { return line_column_map_; }
 
-  void RecalculateLineColumnMap() {
-    line_column_map_ = LineColumnMap(contents_);
+  LineColumn GetLineColAtOffset(int bytes_offset) const {
+    return line_column_map_.GetLineColAtOffset(contents_, bytes_offset);
   }
 
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const {
@@ -105,9 +105,6 @@ class TextStructureView {
 
   // Create the EOF token given the contents.
   TokenInfo EOFToken() const;
-
-  // Resets all fields.
-  void Clear();
 
   // Compute the token stream iterators that start each line.
   // This populates the line_token_map_ array with token iterators.
@@ -192,6 +189,9 @@ class TextStructureView {
       DeferredExpansion* expansion, TokenSequence* combined_tokens,
       std::vector<int>* token_view_indices, const char* offset);
 
+  // Resets all fields. Only needed in tests.
+  void Clear();
+
   // Verify that internal iterators point to locations owned by this object,
   // and that all string_views in the tokens_view_ are substring views of the
   // contents_ string view.
@@ -204,6 +204,11 @@ class TextStructureView {
   // Verify that the string views in the syntax tree are contained within
   // the contents_ string view.
   absl::Status SyntaxTreeConsistencyCheck() const;
+
+ private:
+  void RecalculateLineColumnMap() {
+    line_column_map_ = LineColumnMap(contents_);
+  }
 };
 
 // TextStructure holds the results of lexing and parsing.

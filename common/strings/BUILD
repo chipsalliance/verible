@@ -282,7 +282,10 @@ cc_library(
         "//verilog/analysis:__pkg__",
         "//verilog/formatting:__pkg__",
     ],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = [
+       "utf8",
+       "@com_google_absl//absl/strings"
+    ],
 )
 
 cc_test(

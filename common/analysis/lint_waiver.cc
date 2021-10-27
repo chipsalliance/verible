@@ -69,7 +69,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
       for (std::cregex_iterator i(contents.begin(), contents.end(), *re);
            i != std::cregex_iterator(); i++) {
         std::cmatch match = *i;
-        WaiveOneLine(rule.first, line_map(match.position()).line);
+        WaiveOneLine(rule.first, line_map.LineAtOffset(match.position()));
       }
     }
   }
@@ -251,7 +251,8 @@ static absl::Status WaiveCommandHandler(
   LineColumn regex_token_pos = {};
 
   for (const auto& token : tokens) {
-    token_pos = line_map(token.left(waive_content));
+    token_pos =
+        line_map.GetLineColAtOffset(waive_content, token.left(waive_content));
 
     switch (token.token_enum()) {
       case CFG_TK_COMMAND:
@@ -434,7 +435,8 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
   for (const auto c_range : commands) {
     const auto command = make_container_range(c_range.begin(), c_range.end());
 
-    command_pos = line_map(command.begin()->left(waivers_config_content));
+    command_pos = line_map.GetLineColAtOffset(
+        waivers_config_content, command.begin()->left(waivers_config_content));
 
     if (command[0].token_enum() == CFG_TK_COMMENT) {
       continue;

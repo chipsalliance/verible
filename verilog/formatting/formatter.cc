@@ -484,7 +484,8 @@ static void PrintLargestPartitions(
     stream << hline << "\n[" << partition->Size() << " tokens";
     if (!partition->IsEmpty()) {
       stream << ", starting at line:col "
-             << line_column_map(
+             << line_column_map.GetLineColAtOffset(
+                    base_text,
                     partition->TokensRange().front().token->left(base_text));
     }
     stream << "]: " << *partition << std::endl;
@@ -616,7 +617,9 @@ class ContinuationCommentAligner {
  private:
   int GetTokenColumn(const verible::TokenInfo* token) {
     CHECK_NOTNULL(token);
-    const int column = line_column_map_(token->left(base_text_)).column;
+    const int column =
+        line_column_map_.GetLineColAtOffset(base_text_, token->left(base_text_))
+            .column;
     CHECK_GE(column, 0);
     return column;
   }
