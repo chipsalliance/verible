@@ -283,8 +283,8 @@ cc_library(
         "//verilog/formatting:__pkg__",
     ],
     deps = [
-       "utf8",
-       "@com_google_absl//absl/strings"
+        ":utf8",
+        "@com_google_absl//absl/strings",
     ],
 )
 
