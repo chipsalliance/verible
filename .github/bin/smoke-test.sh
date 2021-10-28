@@ -208,6 +208,8 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   echo
 done
 
+echo "::group::There were a total of ${status_sum} new, undocumented issues."
+
 # Let's see if there are any issues that are fixed in the meantime.
 if [ ${#KnownIssue[@]} -ne 0 ]; then
   echo "::warning ::There are ${#KnownIssue[@]} tool/file combinations, that no longer fail"
@@ -224,5 +226,4 @@ if [ ${#KnownIssue[@]} -ne 0 ]; then
   echo
 fi
 
-echo "There were a total of ${status_sum} new, undocumented issues."
 exit ${status_sum}
