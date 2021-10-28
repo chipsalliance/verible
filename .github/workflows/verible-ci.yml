@@ -98,12 +98,19 @@ jobs:
        # Download complete repository + tags
        fetch-depth: 0
 
+    - name: Create Cache Timestamp
+      id: cache_timestamp
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
     - name: Mount bazel cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/home/runner/.cache/bazel"
-        key: bazelcache-${{ matrix.mode }}
+        key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
@@ -266,8 +273,21 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Create Cache Timestamp
+      id: cache_timestamp
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
+    - name: Mount bazel cache
+      uses: actions/cache@v2
+      with:
+        path: "/private/var/tmp/_bazel_runner"
+        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_macos_
+
     - name: Tests
-      run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis ...
+      run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
 
   WindowsBuild:
@@ -278,11 +298,29 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Create Cache Timestamp
+      id: cache_timestamp
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
+    # TODO: there seems to be a permission problem in accessing the
+    # bazel dir. Result: no caching is happening.
+    - name: Mount bazel cache
+      uses: actions/cache@v2
+      with:
+        path: "c:/users/runneradmin/_bazel_runneradmin"
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows_
+
     - name: Install dependencies
       run: choco install llvm
 
-    - name: Tests
-      run: bazel test --test_output=errors ...
+    - name: Debug bazel directory settings
+      run: bazel info
 
-    - name: Build Verible
-      run: bazel build -c opt //...
+    - name: Tests
+      run: bazel test --test_output=errors //...
+
+    - name: Build Verible Binaries
+      run: bazel build -c opt :install-binaries
