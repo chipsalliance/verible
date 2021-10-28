@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo "::group::Setting up compilation parameters"
+
 set -x
 set -e
 
@@ -65,6 +67,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 if [[ ! "${CXX}" == clang* ]]; then
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
 fi
+
+echo >&2  # flush stderr from bash
+echo "::group::Running MODE=$MODE"
 
 case "$MODE" in
   test|test-clang)
