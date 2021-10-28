@@ -72,7 +72,7 @@ case "$MODE" in
     ;;
 
   asan|asan-clang)
-    bazel test --config=asan $BAZEL_OPTS -c fastbuild //...
+    bazel test --config=asan --test_output=errors $BAZEL_OPTS -c fastbuild //...
     ;;
 
   coverage)
@@ -84,7 +84,7 @@ case "$MODE" in
     ;;
 
   compile|compile-clang|clean)
-    bazel build --keep_going $BAZEL_OPTS //...
+    bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
 
   smoke-test)
