@@ -38,9 +38,9 @@ TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
 
 # Some terminal codes to highlight
-readonly TERM_RED="\033[1;31m"
-readonly TERM_BOLD="\033[1m"
-readonly TERM_RESET="\033[0m"
+readonly TERM_RED=$'\033[1;31m'
+readonly TERM_BOLD=$'\033[1m'
+readonly TERM_RESET=$'\033[0m'
 
 # Build all the installable binaries that we're going to use below.
 # TODO: Consider running with
@@ -136,7 +136,7 @@ function run_smoke_test() {
   local FILELIST=$2
   local result=0
 
-  echo -e "== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with $(wc -l < ${FILELIST}) files =="
+  echo "::group::== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with $(wc -l < ${FILELIST}) files =="
 
   for tool in $VERIBLE_TOOLS_TO_RUN ; do
     printf "%-20s %-32s\n" ${PROJECT_NAME} ${tool}
@@ -166,7 +166,7 @@ function run_smoke_test() {
         if [[ $tool == *-project ]]; then
           file_param="<(echo $single_file)"   # make easy to reproduce
         fi
-        echo -e "${TERM_RED}${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} ${TERM_RESET}"
+        echo "${TERM_RED}${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} ${TERM_RESET}"
         waive_file_key="${short_tool_name}:${single_file}"
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
