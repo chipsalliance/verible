@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

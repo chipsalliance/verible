@@ -349,6 +349,7 @@ cc_test(
         ":interval_map",
         ":range",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -522,6 +523,7 @@ cc_test(
     deps = [
         ":map_tree",
         ":spacer",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
