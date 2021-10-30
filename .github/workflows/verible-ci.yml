@@ -60,6 +60,22 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt -qq -y install clang-tidy-12
+        echo "TMPDIR=/tmp" >> $GITHUB_ENV
+
+    - name: Create Cache Timestamp
+      id: cache_timestamp
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
+    - name: Retrieve cached results
+      uses: actions/cache@v2
+      with:
+        path: |
+          /tmp/clang-tidy-hashes.cache
+          /home/runner/.cache/bazel
+        key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clang-tidy-
 
     - name: Run clang tidy
       run: ./.github/bin/run-clang-tidy.sh
