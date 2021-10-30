@@ -78,15 +78,17 @@ class LayoutItem {
 
   LayoutType Type() const { return type_; }
 
-  // Returns "hard" indent, which is never removed when the layout is joined
-  // with another layout.
+  // Indentation used for a layout when it is placed at the beginning of a line.
+  // Effective indentation in this case is a sum of the item's and its
+  // ancestors' indetation
   int IndentationSpaces() const { return indentation_; }
 
-  // Sets "hard" indent, which is never removed when the layout is joined
-  // with another layout.
+  // Sets indentation used for a layout when it is placed at the beginning of
+  // a line.
   void SetIndentationSpaces(int indent) { indentation_ = indent; }
 
-  // Returns amount of spaces before first token.
+  // Returns number of spaces required before the first token. The spaces are
+  // used when the layout is appended to a non-empty line.
   int SpacesBefore() const { return spaces_before_; }
 
   // Returns whether to force line break just before this layout.

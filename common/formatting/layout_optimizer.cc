@@ -505,21 +505,20 @@ LayoutFunction LayoutFunctionFactory::Choice(
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
-  const auto type = layout_tree.Value().Type();
-
   const auto relative_indentation = layout_tree.Value().IndentationSpaces();
   const ValueSaver<int> indent_saver(
       &current_indentation_spaces_,
       current_indentation_spaces_ + relative_indentation);
+  // Setting indentation for a line that is going to be appended is invalid and
+  // probably has been done for some reason that is not going to work as
+  // intended.
+  LOG_IF(WARNING,
+         ((relative_indentation > 0) && (active_unwrapped_line_ != nullptr)))
+      << "Discarding indentation of a line that's going to be appended.";
 
-  // Apply indentation for children by enforcing
-  // start of new line
-  if (relative_indentation > 0) active_unwrapped_line_ = nullptr;
-
-  switch (type) {
+  switch (layout_tree.Value().Type()) {
     case LayoutType::kLine: {
       CHECK(layout_tree.Children().empty());
-
       if (active_unwrapped_line_ == nullptr) {
         auto uwline = layout_tree.Value().ToUnwrappedLine();
         uwline.SetIndentationSpaces(current_indentation_spaces_);
@@ -527,52 +526,48 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
         active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
       } else {
-        active_unwrapped_line_->SpanUpToToken(
-            layout_tree.Value().ToUnwrappedLine().TokensRange().end());
+        const auto tokens = layout_tree.Value().ToUnwrappedLine().TokensRange();
+        active_unwrapped_line_->SpanUpToToken(tokens.end());
       }
-      break;
+      return;
     }
 
     case LayoutType::kJuxtaposition: {
-      // Organize children horizontally (by appending to current unwrapped
-      // line)
+      // Append all children
       for (const auto& child : layout_tree.Children()) {
         TraverseTree(child);
       }
-      break;
+      return;
     }
 
     case LayoutType::kStack: {
       if (layout_tree.Children().empty()) {
-        break;
+        return;
       }
       if (layout_tree.Children().size() == 1) {
         TraverseTree(layout_tree.Children().front());
-        break;
+        return;
       }
 
+      // Calculate indent for 2nd and further lines.
       int indentation = current_indentation_spaces_;
-
-      // Appending. Need to calculate new indentation for
-      // second and later layouts
       if (active_unwrapped_line_ != nullptr) {
         indentation = FitsOnLine(*active_unwrapped_line_, style_).final_column +
                       layout_tree.Value().SpacesBefore();
       }
 
-      // Append that child
+      // Append first child
       TraverseTree(layout_tree.Children().front());
 
-      // Wrap other ones
+      // Put remaining children in their own (indented) lines
       const ValueSaver<int> indent_saver(&current_indentation_spaces_,
                                          indentation);
-      for (auto itr = std::next(layout_tree.Children().begin());
-           itr != layout_tree.Children().end(); ++itr) {
-        // Organize childrens vertically
+      for (const auto& child : make_range(layout_tree.Children().begin() + 1,
+                                          layout_tree.Children().end())) {
         active_unwrapped_line_ = nullptr;
-        TraverseTree(*itr);
+        TraverseTree(child);
       }
-      break;
+      return;
     }
   }
 }
