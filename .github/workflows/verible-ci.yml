@@ -121,7 +121,7 @@ jobs:
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-python.sh
 
-    - name: ${{ matrix.env.mode }} Verible
+    - name: ${{ matrix.mode }} Verible
       run: ./.github/bin/build-and-test.sh
 
     - name: Set up things for GitHub Pages deployment
@@ -304,14 +304,12 @@ jobs:
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
-    # TODO: there seems to be a permission problem in accessing the
-    # bazel dir. Result: no caching is happening.
     - name: Mount bazel cache
       uses: actions/cache@v2
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows_
+        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows2_
 
     - name: Install dependencies
       run: choco install llvm
@@ -319,8 +317,18 @@ jobs:
     - name: Debug bazel directory settings
       run: bazel info
 
-    - name: Tests
+    - name: Run Tests
       run: bazel test --test_output=errors //...
 
     - name: Build Verible Binaries
       run: bazel build -c opt :install-binaries
+
+    # We need to shut down bazel to let go of the filedescriptors in the
+    # cache directory. Because of strange filesystem semantics on Windows, this
+    # prevents packaging up the cache.
+    - name: Stop Bazel
+      run: |
+        bazel shutdown
+        # The cache pack/restore has issues with these symbolic links
+        rm c:/users/runneradmin/_bazel_runneradmin/*/install
+        rm c:/users/runneradmin/_bazel_runneradmin/*/java.log

@@ -68,11 +68,11 @@ fi
 
 case "$MODE" in
   test|test-clang)
-    bazel test --keep_going --test_output=errors $BAZEL_OPTS //...
+    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS //...
     ;;
 
   asan|asan-clang)
-    bazel test --config=asan --test_output=errors $BAZEL_OPTS -c fastbuild //...
+    bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild //...
     ;;
 
   coverage)
@@ -96,3 +96,6 @@ case "$MODE" in
     exit 1
     ;;
 esac
+
+# Shutdown to make sure all files in the cache are flushed.
+bazel shutdown
