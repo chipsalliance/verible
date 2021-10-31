@@ -348,6 +348,20 @@ EOF
 "$lint_tool" --ruleset=none --rules_config="${RULES_CONFIG_FILE}" --autofix=inplace \
     "${TEST_FILE}" > /dev/null 2>&1
 
+visualize_invisible_characters() {
+  local -r TAB=$'\t'
+  local -r CR=$'\r'
+  local -r LF=$'\n'
+  sed \
+      -e ':join' \
+      -e 'N' \
+      -e '$!b join' \
+      -e 's/ /·/g' \
+      -e "s/${TAB}/├───/g" \
+      -e "s/${CR}/⁋/g" \
+      -e "s/\\n/¶\\${LF}/g"
+}
+
 check_diff() {
   local reference_file_="$1"
   local test_file_="$2"
@@ -357,10 +371,9 @@ check_diff() {
   local vis_reference_file_="${reference_file_}.vis"
   local vis_test_file_="${test_file_}.vis"
 
-  # Show invisible characters
-  local invisible_chars_expr_=':join;N;$!b join; s/ /·/g;s/'$'\t''/├───/g;s/'$'\r''/⁋/g;s/\n/¶\n/g'
-  sed "$invisible_chars_expr_" "$reference_file_" > "$vis_reference_file_"
-  sed "$invisible_chars_expr_" "$test_file_"      > "$vis_test_file_"
+  # Show invisible characters, return error when visualization failed
+  visualize_invisible_characters < "$reference_file_" > "$vis_reference_file_" || return 1
+  visualize_invisible_characters < "$test_file_"      > "$vis_test_file_"      || return 1
 
   diff -u "${vis_reference_file_}" "${vis_test_file_}" >"${diff_file_}"
   status="$?"
