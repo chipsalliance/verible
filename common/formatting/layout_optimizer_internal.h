@@ -491,7 +491,7 @@ class LayoutFunctionFactory {
                      return lf.begin();
                    });
 
-    return Stack(segments);
+    return Stack(&segments);
   }
 
   // Combines two or more layouts so that the layout N+1 is directy to the
@@ -545,7 +545,7 @@ class LayoutFunctionFactory {
                      return lf.begin();
                    });
 
-    return Choice(segments);
+    return Choice(&segments);
   }
 
   // Returns LayoutFunction 'lf' with layout indented using 'indent' spaces.
@@ -610,10 +610,10 @@ class LayoutFunctionFactory {
                                const LayoutFunction& right) const;
 
   LayoutFunction Stack(
-      absl::FixedArray<LayoutFunction::const_iterator>& segments) const;
+      absl::FixedArray<LayoutFunction::const_iterator>* segments) const;
 
   static LayoutFunction Choice(
-      absl::FixedArray<LayoutFunction::const_iterator>& segments);
+      absl::FixedArray<LayoutFunction::const_iterator>* segments);
 
   const BasicFormatStyle& style_;
 };

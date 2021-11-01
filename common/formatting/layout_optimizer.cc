@@ -286,28 +286,28 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
 }
 
 LayoutFunction LayoutFunctionFactory::Stack(
-    absl::FixedArray<LayoutFunction::const_iterator>& segments) const {
-  CHECK(!segments.empty());
+    absl::FixedArray<LayoutFunction::const_iterator>* segments) const {
+  CHECK(!segments->empty());
 
   LayoutFunction result;
 
   // Use first line's spacing for new layouts.
-  const auto& first_layout_item = segments.front()->layout.Value();
+  const auto& first_layout_item = segments->front()->layout.Value();
   const auto spaces_before = first_layout_item.SpacesBefore();
   const auto break_decision = first_layout_item.MustWrap();
   // Use last line's span for new layouts. Other lines won't be modified by
   // any further layout combinations.
-  const int span = segments.back()->span;
+  const int span = segments->back()->span;
 
   const float line_breaks_penalty =
-      (segments.size() - 1) * style_.line_break_penalty;
+      (segments->size() - 1) * style_.line_break_penalty;
 
   // Iterate over columns from left to right and process a segment of each
   // LayoutFunction that is under currently iterated column.
   int current_column = 0;
   do {
     // Point iterators to segments under current column.
-    for (auto& segment_it : segments) {
+    for (auto& segment_it : *segments) {
       segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
     }
 
@@ -317,7 +317,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
             LayoutItem(LayoutType::kStack, spaces_before, break_decision)),
         span, line_breaks_penalty, 0};
 
-    for (const auto& segment_it : segments) {
+    for (const auto& segment_it : *segments) {
       new_segment.intercept += segment_it->CostAt(current_column);
       new_segment.gradient += segment_it->gradient;
       AdoptLayoutAndFlattenIfSameType(segment_it->layout, &new_segment.layout);
@@ -327,7 +327,7 @@ LayoutFunction LayoutFunctionFactory::Stack(
     {
       // Find next column.
       int next_column = kInfinity;
-      for (auto segment_it : segments) {
+      for (auto segment_it : *segments) {
         if ((segment_it + 1).IsEnd()) continue;
         const int column = (segment_it + 1)->column;
         CHECK_GE(column, current_column);
@@ -341,15 +341,15 @@ LayoutFunction LayoutFunctionFactory::Stack(
 }
 
 LayoutFunction LayoutFunctionFactory::Choice(
-    absl::FixedArray<LayoutFunction::const_iterator>& segments) {
-  CHECK(!segments.empty());
+    absl::FixedArray<LayoutFunction::const_iterator>* segments) {
+  CHECK(!segments->empty());
 
   LayoutFunction result;
 
   // Initial value set to an iterator that doesn't point to any existing
   // segment.
   LayoutFunction::const_iterator last_min_cost_segment =
-      segments.front().Container().end();
+      segments->front().Container().end();
 
   int current_column = 0;
   // Iterate (in increasing order) over starting columns (knots) of all
@@ -358,7 +358,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
     // Starting column of the next closest segment.
     int next_knot = kInfinity;
 
-    for (auto& segment_it : segments) {
+    for (auto& segment_it : *segments) {
       segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
 
       const int column =
@@ -368,7 +368,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
     do {
       const LayoutFunction::const_iterator min_cost_segment = *std::min_element(
-          segments.begin(), segments.end(),
+          segments->begin(), segments->end(),
           [current_column](const auto& a, const auto& b) {
             if (a->CostAt(current_column) != b->CostAt(current_column))
               return (a->CostAt(current_column) < b->CostAt(current_column));
@@ -387,7 +387,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
       // Find closest crossover point located before next knot.
       int next_column = next_knot;
-      for (const auto& segment : segments) {
+      for (const auto& segment : *segments) {
         if (segment->gradient >= min_cost_segment->gradient) continue;
         float gamma = (segment->CostAt(current_column) -
                        min_cost_segment->CostAt(current_column)) /
