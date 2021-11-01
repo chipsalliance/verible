@@ -105,6 +105,46 @@ cc_test(
 )
 
 cc_library(
+    name = "layout_optimizer",
+    srcs = [
+        "layout_optimizer.cc",
+        "layout_optimizer_internal.h",
+    ],
+    deps = [
+        ":basic_format_style",
+        ":line_wrap_searcher",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        "//common/util:container_iterator_range",
+        "//common/util:value_saver",
+        "//common/util:vector_tree",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "layout_optimizer_test",
+    srcs = [
+        "layout_optimizer_internal.h",
+        "layout_optimizer_test.cc",
+    ],
+    deps = [
+        ":basic_format_style",
+        ":layout_optimizer",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        ":unwrapped_line_test_utils",
+        "//common/strings:split",
+        "//common/util:spacer",
+        "//common/util:vector_tree",
+        "@com_google_absl//absl/container:fixed_array",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "token_partition_tree",
     srcs = ["token_partition_tree.cc"],
     hdrs = [
