@@ -41,9 +41,12 @@ cc_library(
 
 cc_library(
   name = "document-symbol-filler",
+  srcs = ["document-symbol-filler.cc"],
   hdrs = ["document-symbol-filler.h"],
   deps = [
       "//common/lsp:lsp-protocol-enums",
+      "//common/lsp:lsp-protocol",
+      "//common/text:text_structure",
       "//verilog/CST:module",
       "//verilog/CST:class",
       "//verilog/CST:package",
