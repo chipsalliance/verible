@@ -29,6 +29,7 @@ cc_library(
     srcs = ["verible-lsp-adapter.cc"],
     hdrs = ["verible-lsp-adapter.h"],
     deps = [
+        ":document-symbol-filler",
         ":lsp-parse-buffer",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-operators",
@@ -36,6 +37,19 @@ cc_library(
         "//verilog/analysis:verilog_linter",
         "@jsonhpp",
     ],
+)
+
+cc_library(
+  name = "document-symbol-filler",
+  hdrs = ["document-symbol-filler.h"],
+  deps = [
+      "//common/lsp:lsp-protocol-enums",
+      "//verilog/CST:module",
+      "//verilog/CST:class",
+      "//verilog/CST:package",
+      "//verilog/CST:functions",
+      "//verilog/CST:seq_block",
+  ]
 )
 
 cc_binary(

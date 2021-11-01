@@ -17,9 +17,11 @@
 
 #include "common/lsp/lsp-protocol-operators.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/text/text_structure.h"
 #include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter.h"
+#include "verilog/tools/ls/document-symbol-filler.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
 namespace verilog {
@@ -153,4 +155,23 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
   }
   return result;
 }
+
+nlohmann::json CreateDocumentSymbolOutline(
+    const BufferTracker *tracker, const verible::lsp::DocumentSymbolParams &p,
+    bool kate_compatible_tags) {
+  if (!tracker) return nlohmann::json::array();
+  // Only if the tree has been fully parsed, it makes sense to create an outline
+  const ParsedBuffer *const last_good = tracker->last_good();
+  if (!last_good) return nlohmann::json::array();
+
+  verible::lsp::DocumentSymbol toplevel;
+  const auto &text_structure = last_good->parser().Data();
+  verilog::DocumentSymbolFiller filler(kate_compatible_tags, text_structure,
+                                       &toplevel);
+  const auto &syntax_tree = text_structure.SyntaxTree();
+  syntax_tree->Accept(&filler);
+  // We cut down one level, not interested in toplevel file:
+  return toplevel.children;
+}
+
 }  // namespace verilog

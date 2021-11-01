@@ -95,3 +95,16 @@ CodeAction:
   diagnostics+: Diagnostic     # What diagnostic is this referring to ?
   isPreferred: boolean = false
   edit: WorkspaceEdit
+
+# -- textDocument/documentSymbol
+DocumentSymbolParams:
+  textDocument: TextDocumentIdentifier
+
+DocumentSymbol:
+  name: string
+  kind: integer   # SymbolKind enum
+  range: Range    # The whole range this symbol (e.g. function/class) covers
+  selectionRange: Range  # Part to be highlighted (e.g. name of class)
+  # children: DocumentSymbol[]. Since we can't to that recursively in jcxxgen,
+  # these are directly emitted as json
+  children?: object = nullptr
