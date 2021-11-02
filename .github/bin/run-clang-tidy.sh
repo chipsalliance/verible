@@ -50,11 +50,12 @@ cat bazel-bin/compile_commands.json \
 # (TODO: could the tidy result be different if an include content changes ?
 #  Then we have to do g++ -E (using compilation database knowing about -I etc.)
 #  or combine hashes of all mentioned #includes that are also in our list)
-find . -name "*.cc" -and -not -name "*test*.cc" \
-     -or -name "*.h" -and -not -name "*test*.h" \
-  | grep -v "verilog/tools/kythe" \
-  | xargs md5sum | sort \
-  > ${CLANG_TIDY_SEEN_CACHE}.new
+# Make need to re-run file dependent on clang-tidy configuration + file content.
+for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
+                -or -name "*.h" -and -not -name "*test*.h" \
+             | grep -v "verilog/tools/kythe") ; do
+  (echo $CLANG_TIDY ; cat .clang-tidy $f) | md5sum | sed "s|-|$f|g"
+done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 
 join -v2 ${CLANG_TIDY_SEEN_CACHE} ${CLANG_TIDY_SEEN_CACHE}.new \
   | awk '{print $2}' | sort > ${FILES_TO_PROCESS}
