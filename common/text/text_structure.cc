@@ -129,6 +129,12 @@ TokenRange TextStructureView::TokenRangeSpanningOffsets(size_t lower,
 
 LineColumnRange TextStructureView::GetRangeForToken(
     const TokenInfo& token) const {
+  if (token.isEOF()) {
+    // In particular some unit tests pass in an artificial EOF token, not a
+    // EOF token generated from this view. So handle this directly.
+    const LineColumn eofPos = GetLineColAtOffset(Contents().length());
+    return {eofPos, eofPos};
+  }
   return {GetLineColAtOffset(token.left(Contents())),
           GetLineColAtOffset(token.right(Contents()))};
 }
