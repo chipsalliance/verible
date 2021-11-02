@@ -147,11 +147,8 @@ verible::lsp::Range DocumentSymbolFiller::RangeFromLeaf(
 
 verible::lsp::Range DocumentSymbolFiller::RangeFromToken(
     const verible::TokenInfo &token) const {
-  verible::LineColumn start =
-      text_view_.GetLineColAtOffset(token.left(text_view_.Contents()));
-  verible::LineColumn end =
-      text_view_.GetLineColAtOffset(token.right(text_view_.Contents()));
-  return {.start = {.line = start.line, .character = start.column},
-          .end = {.line = end.line, .character = end.column}};
+  const verible::LineColumnRange range = text_view_.GetRangeForToken(token);
+  return {.start = {.line = range.start.line, .character = range.start.column},
+          .end = {.line = range.end.line, .character = range.end.column}};
 }
 }  // namespace verilog

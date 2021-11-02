@@ -38,20 +38,29 @@ struct LineColumn {
   int line;    // 0-based index
   int column;  // 0-based index
 
-  bool operator==(const LineColumn& r) const {
+  constexpr bool operator==(const LineColumn& r) const {
     return line == r.line && column == r.column;
   }
+  constexpr bool operator<(const LineColumn& r) const {
+    if (line < r.line) return true;
+    if (line > r.line) return false;
+    return column < r.column;
+  }
+  constexpr bool operator>=(const LineColumn& r) const { return !(*this < r); }
 };
 
 std::ostream& operator<<(std::ostream&, const LineColumn&);
 
 // A complete range.
 struct LineColumnRange {
-  LineColumn start;
-  LineColumn end;
+  LineColumn start;  // Inclusive
+  LineColumn end;    // Exclusive
 
-  bool operator==(const LineColumnRange& r) const {
+  constexpr bool operator==(const LineColumnRange& r) const {
     return start == r.start && end == r.end;
+  }
+  constexpr bool PositionInRange(const LineColumn& pos) const {
+    return pos >= start && pos < end;
   }
 };
 

@@ -179,5 +179,32 @@ TEST(LineColumnMapTest, Lookup) {
   }
 }
 
+TEST(LineColumnTest, LineColumnComparison) {
+  constexpr LineColumn before_line{.line = 41, .column = 1};
+  constexpr LineColumn before_col{.line = 42, .column = 1};
+  constexpr LineColumn center{.line = 42, .column = 8};
+  constexpr LineColumn after_col{.line = 42, .column = 8};
+
+  EXPECT_LT(before_line, center);
+  EXPECT_LT(before_col, center);
+  EXPECT_EQ(center, center);
+  EXPECT_GE(center, center);
+  EXPECT_GE(after_col, center);
+}
+
+TEST(LineColumnTest, LineColumnRangeComparison) {
+  constexpr LineColumnRange range{{.line = 42, .column = 17},
+                                  {.line = 42, .column = 22}};
+
+  constexpr LineColumn before{.line = 42, .column = 16};
+  constexpr LineColumn inside_start{.line = 42, .column = 17};
+  constexpr LineColumn inside_end{.line = 42, .column = 21};
+  constexpr LineColumn outside_after_end{.line = 42, .column = 22};
+
+  EXPECT_FALSE(range.PositionInRange(before));
+  EXPECT_TRUE(range.PositionInRange(inside_start));
+  EXPECT_TRUE(range.PositionInRange(inside_end));
+  EXPECT_FALSE(range.PositionInRange(outside_after_end));
+}
 }  // namespace
 }  // namespace verible

@@ -127,6 +127,12 @@ TokenRange TextStructureView::TokenRangeSpanningOffsets(size_t lower,
   return make_range(left, right);
 }
 
+LineColumnRange TextStructureView::GetRangeForToken(
+    const TokenInfo& token) const {
+  return {GetLineColAtOffset(token.left(Contents())),
+          GetLineColAtOffset(token.right(Contents()))};
+}
+
 TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
   if (lineno + 1 < line_token_map_.size()) {
     return make_range(line_token_map_[lineno], line_token_map_[lineno + 1]);
