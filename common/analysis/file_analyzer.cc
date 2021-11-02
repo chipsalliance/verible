@@ -104,26 +104,25 @@ absl::Status FileAnalyzer::Parse(Parser* parser) {
 std::string FileAnalyzer::TokenErrorMessage(
     const TokenInfo& error_token) const {
   // TODO(fangism): accept a RejectedToken to get an explanation message.
-  const absl::string_view base_text = Data().Contents();
   std::ostringstream output_stream;
   if (!error_token.isEOF()) {
     // TODO(hzeller): simply print LineColumnRange ?
-    const auto left = Data().GetLineColAtOffset(error_token.left(base_text));
-    auto right = Data().GetLineColAtOffset(error_token.right(base_text));
-    --right.column;  // Point to last character, not one-past-the-end.
-    output_stream << "token: \"" << error_token.text() << "\" at " << left;
-    if (left.line == right.line) {
+    LineColumnRange range = Data().GetRangeForToken(error_token);
+    --range.end.column;  // Point to last character, not one-past-the-end.
+    output_stream << "token: \"" << error_token.text() << "\" at "
+                  << range.start;
+    if (range.start.line == range.end.line) {
       // Only print upper bound if it differs by > 1 character.
-      if (left.column + 1 < right.column) {
+      if (range.start.column + 1 < range.end.column) {
         // .column is 0-based index, so +1 to get 1-based index.
-        output_stream << '-' << right.column + 1;
+        output_stream << '-' << range.end.column + 1;
       }
     } else {
       // Already prints 1-based index.
-      output_stream << '-' << right;
+      output_stream << '-' << range.end;
     }
   } else {
-    const auto end = Data().GetLineColAtOffset(base_text.length());
+    const auto end = Data().GetLineColAtOffset(Data().Contents().length());
     output_stream << "token: <<EOF>> at " << end;
   }
   return output_stream.str();
@@ -141,25 +140,15 @@ std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
 void FileAnalyzer::ExtractLinterTokenErrorDetail(
     const RejectedToken& error_token,
     const ReportLinterErrorFunction& error_report) const {
-  const absl::string_view base_text = Data().Contents();
-
-  const LineColumn start =
-      error_token.token_info.isEOF()
-          ? Data().GetLineColAtOffset(base_text.length())
-          : Data().GetLineColAtOffset(error_token.token_info.left(base_text));
-  const LineColumn end =
-      error_token.token_info.isEOF()
-          ? start
-          : Data().GetLineColAtOffset(error_token.token_info.right(base_text));
-
+  const LineColumnRange range = Data().GetRangeForToken(error_token.token_info);
   absl::string_view context_line = "";
   const auto& lines = Data().Lines();
-  if (start.line < static_cast<int>(lines.size())) {
-    context_line = lines[start.line];
+  if (range.start.line < static_cast<int>(lines.size())) {
+    context_line = lines[range.start.line];
   }
   // TODO(b/63893567): Explain syntax errors by inspecting state stack.
   error_report(
-      filename_, {start, end}, error_token.phase,
+      filename_, range, error_token.phase,
       error_token.token_info.isEOF() ? "<EOF>" : error_token.token_info.text(),
       context_line, error_token.explanation);
 }

@@ -95,9 +95,13 @@ class TextStructureView {
 
   const LineColumnMap& GetLineColumnMap() const { return line_column_map_; }
 
+  // Given a byte offset, return the line/column
   LineColumn GetLineColAtOffset(int bytes_offset) const {
     return line_column_map_.GetLineColAtOffset(contents_, bytes_offset);
   }
+
+  // Convenience function: Given the token, return the range it covers.
+  LineColumnRange GetRangeForToken(const TokenInfo& token) const;
 
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const {
     return line_token_map_;

@@ -204,6 +204,25 @@ TEST_F(TokenRangeTest, CalculateFirstTokensPerLineTest) {
   EXPECT_EQ(line_token_map[3], tokens.begin() + 11);
 }
 
+TEST_F(TokenRangeTest, GetRangeOfTokenVerifyAllRangesExclusive) {
+  // Bulk testing: let's see that we constantly progress in emitted ranges.
+  LineColumnRange previous{{0, 0}, {0, 0}};
+  for (const TokenInfo& token : data_.TokenStream()) {
+    LineColumnRange token_range = data_.GetRangeForToken(token);
+    EXPECT_EQ(token_range.start, previous.end);
+    EXPECT_LT(previous.end, token_range.end);
+    EXPECT_GE(token_range.end, token_range.start);
+    previous = token_range;
+  }
+}
+
+TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
+  // For the EOF token, the returned range should automatically be relative
+  // to the TextView no matter where it comes from.
+  EXPECT_EQ(data_.GetRangeForToken(data_.EOFToken()),
+            data_.GetRangeForToken(TokenInfo::EOFToken()));
+}
+
 // Checks that when lower == upper, returned range is empty.
 TEST_F(TokenRangeTest, TokenRangeSpanningOffsetsEmpty) {
   const size_t test_offsets[] = {0, 1, 4, 12, 18, 22, 26};

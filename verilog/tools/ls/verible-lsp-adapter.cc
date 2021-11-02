@@ -30,16 +30,14 @@ static verible::lsp::Diagnostic ViolationToDiagnostic(
     const verilog::LintViolationWithStatus &v,
     const verible::TextStructureView &text) {
   const verible::LintViolation &violation = *v.violation;
-  verible::LineColumn start =
-      text.GetLineColAtOffset(violation.token.left(text.Contents()));
-  verible::LineColumn end =
-      text.GetLineColAtOffset(violation.token.right(text.Contents()));
+  const verible::LineColumnRange range = text.GetRangeForToken(violation.token);
   const char *fix_msg = violation.autofixes.empty() ? "" : " (fix available)";
   return verible::lsp::Diagnostic{
       .range =
           {
-              .start = {.line = start.line, .character = start.column},
-              .end = {.line = end.line, .character = end.column},
+              .start = {.line = range.start.line,
+                        .character = range.start.column},
+              .end = {.line = range.end.line, .character = range.end.column},
           },
       .message = absl::StrCat(violation.reason, " ", v.status->url, "[",
                               v.status->lint_rule_name, "]", fix_msg),
