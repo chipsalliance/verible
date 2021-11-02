@@ -44,6 +44,7 @@ awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
 {"jsonrpc":"2.0", "id":2, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":0,"character":0},"end":{"line":2,"character":0}}}}
 {"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}}
+{"jsonrpc":"2.0", "id":3, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
 {"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://mini.sv"}}}
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
@@ -95,6 +96,14 @@ cat > "${JSON_EXPECTED}" <<EOF
     }
   },
   {
+    "json_contains": {
+       "id":3,
+       "result": [
+          {"kind":6, "name":"mini"}
+        ]
+    }
+  },
+  {
     "json_contains": { "id":100 }
   }
 ]
@@ -105,14 +114,14 @@ EOF
 
 JSON_RPC_EXIT=$?
 
+echo "-- stderr messages --"
+cat ${MSG_OUT}
+
 if [ $JSON_RPC_EXIT -ne 0 ]; then
   # json-rpc-expect outputs the entry, where the mismatch occured, in exit code
   echo "Exit code of json rpc expect; first error at $JSON_RPC_EXIT"
   exit 1
 fi
-
-echo "-- stderr messages --"
-cat ${MSG_OUT}
 
 grep "shutdown request" "${MSG_OUT}" > /dev/null
 if [ $? -ne 0 ]; then

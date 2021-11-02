@@ -33,5 +33,14 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &);
 // Generate code actions from autofixes provided by the linter.
 std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
     const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
+
+// Given a parse tree, generate a document symbol outline
+// textDocument/documentSymbol request
+// There is a workaround for the kate editor currently. Goal is to actually
+// fix this upstream in the kate editor, but for now let's have an explicit
+// boolean to make it visible what is needed.
+nlohmann::json CreateDocumentSymbolOutline(
+    const BufferTracker *tracker, const verible::lsp::DocumentSymbolParams &p,
+    bool kate_compatible_tags = true);
 }  // namespace verilog
 #endif  // VERILOG_TOOLS_LS_VERIBLE_LSP_ADAPTER_H

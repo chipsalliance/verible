@@ -77,6 +77,11 @@ jcxxgen(
 )
 
 cc_library(
+    name = "lsp-protocol-enums",
+    hdrs = ["lsp-protocol-enums.h"]
+)
+
+cc_library(
     name = "lsp-protocol-operators",
     hdrs = ["lsp-protocol-operators.h"],
     deps = [":lsp-protocol"],
