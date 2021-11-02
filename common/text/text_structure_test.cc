@@ -216,6 +216,21 @@ TEST_F(TokenRangeTest, GetRangeOfTokenVerifyAllRangesExclusive) {
   }
 }
 
+TEST_F(TokenRangeTest, FindTokenAtPosition) {
+  EXPECT_EQ(data_.FindTokenAt({0, 0}).text(), "hello");
+  EXPECT_EQ(data_.FindTokenAt({0, 4}).text(), "hello");
+  EXPECT_EQ(data_.FindTokenAt({0, 5}).text(), ",");
+  EXPECT_EQ(data_.FindTokenAt({0, 6}).text(), " ");
+  EXPECT_EQ(data_.FindTokenAt({0, 7}).text(), "world");
+
+  // Out of range column: return last token in line.
+  EXPECT_EQ(data_.FindTokenAt({0, 200}).text(), "\n");
+
+  // Graceful handling of values out of range: EOF
+  EXPECT_TRUE(data_.FindTokenAt({-1, -1}).isEOF());
+  EXPECT_TRUE(data_.FindTokenAt({42, 7}).isEOF());
+}
+
 TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
   // For the EOF token, the returned range should automatically be relative
   // to the TextView no matter where it comes from.
