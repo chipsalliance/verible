@@ -147,6 +147,15 @@ TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
   }
 }
 
+TokenInfo TextStructureView::FindTokenAt(const LineColumn& pos) const {
+  if (pos.line < 0 || pos.column < 0) return EOFToken();
+  // Maybe do binary search here if we have a huge amount tokens per line.
+  for (const TokenInfo& token : TokenRangeOnLine(pos.line)) {
+    if (GetRangeForToken(token).PositionInRange(pos)) return token;
+  }
+  return EOFToken();
+}
+
 TokenInfo TextStructureView::EOFToken() const {
   return TokenInfo::EOFToken(Contents());
 }

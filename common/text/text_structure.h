@@ -107,6 +107,10 @@ class TextStructureView {
     return line_token_map_;
   }
 
+  // Given line/column, find token that is available there. If this is out of
+  // range, returns EOF.
+  TokenInfo FindTokenAt(const LineColumn& pos) const;
+
   // Create the EOF token given the contents.
   TokenInfo EOFToken() const;
 
