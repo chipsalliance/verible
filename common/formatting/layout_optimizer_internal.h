@@ -627,7 +627,6 @@ class TreeReconstructor {
       : current_indentation_spaces_(indentation_spaces), style_(style) {}
   ~TreeReconstructor() = default;
 
-  // Delete standard interfaces
   TreeReconstructor(const TreeReconstructor&) = delete;
   TreeReconstructor(TreeReconstructor&&) = delete;
   TreeReconstructor& operator=(const TreeReconstructor&) = delete;

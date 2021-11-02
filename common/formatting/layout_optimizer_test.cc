@@ -2255,7 +2255,7 @@ TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
 
   BasicFormatStyle style;
   style.column_limit = 40;
-  OptimizeTokenPartitionTree(&tree_under_test, &pre_format_tokens_, style);
+  OptimizeTokenPartitionTree(style, &tree_under_test, &pre_format_tokens_);
 
   UnwrappedLine args_top_line(0, arg_a.TokensRange().begin());
   args_top_line.SpanUpToToken(arg_b.TokensRange().end());

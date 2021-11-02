@@ -33,11 +33,45 @@
 
 namespace verible {
 
-// Handles formatting of TokenPartitionTree nodes with
-// kOptimalFunctionCallLayout partition policy.
-void OptimizeTokenPartitionTree(TokenPartitionTree* node,
-                                std::vector<PreFormatToken>* ftokens,
-                                const BasicFormatStyle& style);
+// Handles formatting of TokenPartitionTree 'node' that uses
+// PartitionPolicyEnum::kOptimalFunctionCallLayout partition policy.
+// 'ftokens' is used to get mutable iterators to tokens of formatted partitions.
+// The function changes only tokens that are spanned by the passed partitions
+// tree.
+//
+// It is designed to format function calls and requires specific partition
+// tree structure:
+//
+//   <function call node, policy: kOptimalFunctionCallLayout> {
+//     <function header> { ... },
+//     <function arguments> { ... }
+//   }
+//
+// Nested kOptimalFunctionCallLayout partitions are supported.
+//
+// EXAMPLE INPUT TREE
+//
+// Code: `uvm_info(`gfn, $sformatf("%0d %0d\n", cfg.num_pulses, i), UVM_DEBUG)
+//
+// Partition tree:
+// { (>>[...], policy: optimal-function-call-layout) // call:
+//   { (>>[`uvm_info (]) }                           // - header
+//   { (>>>>>>[...])                                 // - arguments:
+//     { (>>>>>>[`gfn ,]) }                          //   - (arg)
+//     { (>>>>>>[...], policy: optimal-function-call-layout) // nested call:
+//       { (>>>>>>[$sformatf (]) }                           // - header
+//       { (>>>>>>>>>>[...])                                 // - arguments
+//         { (>>>>>>>>>>["%0d %0d\n" ,]) }                   //   - (arg)
+//         { (>>>>>>>>>>[cfg . num_pulses ,]) }              //   - (arg)
+//         { (>>>>>>>>>>[i ) ,]) }                           //   - (arg)
+//       }
+//     }
+//     { (>>>>>>[UVM_DEBUG )]) }                     //   - (arg)
+//   }
+// }
+void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
+                                TokenPartitionTree* node,
+                                std::vector<PreFormatToken>* ftokens);
 
 }  // namespace verible
 

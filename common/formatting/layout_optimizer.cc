@@ -32,9 +32,9 @@
 
 namespace verible {
 
-void OptimizeTokenPartitionTree(TokenPartitionTree* node,
-                                std::vector<PreFormatToken>* ftokens,
-                                const BasicFormatStyle& style) {
+void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
+                                TokenPartitionTree* node,
+                                std::vector<PreFormatToken>* ftokens) {
   CHECK_NOTNULL(node);
 
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
