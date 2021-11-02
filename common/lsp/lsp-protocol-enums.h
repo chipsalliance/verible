@@ -24,17 +24,21 @@ namespace lsp {
 // Interesting is, that not all of them are actually supported by all
 // editors (playing around with Kate (https://kate-editor.org/)). So maybe
 // these editors need to be made understanding.
+//
+// Deliberately no enum class as this enum is used as set of integer constants
+// in the context of the Language Server Protocol, so static_cast<int>-ing
+// them would be needed every time.
 enum SymbolKind {
   File = 1,
-  Module = 2,  // SV module. Kate does not seem to support that ?
-  Namespace = 3,
-  Package = 4,  // SV package
-  Class = 5,    // SV class
-  Method = 6,   // SV class -> method
+  Module = 2,     // SV module. Kate does not seem to support that ?
+  Namespace = 3,  // SV labelled begin/end blocks (Kate also has trouble here)
+  Package = 4,    // SV package
+  Class = 5,      // SV class
+  Method = 6,     // SV class -> method
   Property = 7,
   Field = 8,
   Constructor = 9,
-  Enum = 10,  // SV enum
+  Enum = 10,  // SV enum type
   Interface = 11,
   Function = 12,  // SV function
   Variable = 13,
@@ -46,7 +50,7 @@ enum SymbolKind {
   Object = 19,
   Key = 20,
   Null = 21,
-  EnumMember = 22,
+  EnumMember = 22,  // SV enum member
   Struct = 23,
   Event = 24,
   Operator = 25,

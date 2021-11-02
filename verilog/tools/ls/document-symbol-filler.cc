@@ -116,7 +116,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       break;
   }
 
-  // Independent of visible or not, we always descent to our children.
+  // Independent of visible or not, we always descend to our children.
   if (is_visible_node) {
     const verible::ValueSaver<verible::lsp::DocumentSymbol *> value_saver(
         &current_symbol_, &node_symbol);
