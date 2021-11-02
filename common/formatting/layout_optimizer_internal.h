@@ -70,6 +70,8 @@ class LayoutItem {
         must_wrap_(!tokens_.empty() && tokens_.front().before.break_decision ==
                                            SpacingOptions::MustWrap) {}
 
+  // Multiple LayoutFunctionSegments can store copies of the same layout.
+  // The objects are copied mostly in LayoutFunctionFactory::* functions.
   LayoutItem(const LayoutItem&) = default;
   LayoutItem& operator=(const LayoutItem&) = default;
 
