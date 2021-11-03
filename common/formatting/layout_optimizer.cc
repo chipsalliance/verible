@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Improve code formatting by optimizing token partitions layout with
-// algorithm documented in https://research.google/pubs/pub44667/
-// (similar tool for R language: https://github.com/google/rfmt)
+// Implementation of a code layout optimizer described by
+// Phillip Yelland in "A New Approach to Optimal Code Formatting"
+// (https://research.google/pubs/pub44667/) and originally implemented
+// in rfmt (https://github.com/google/rfmt).
 
 #include "common/formatting/layout_optimizer.h"
 
