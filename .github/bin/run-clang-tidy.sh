@@ -32,16 +32,9 @@ hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
 
 echo ::group::Build compilation database
 
-# First, build the compilation database.
-time bazel build :compdb > /dev/null 2>&1
+time $(dirname $0)/make-compilation-db.sh
 
 readonly EXEC_ROOT=$(bazel info execution_root)
-
-# Fix up the __EXEC_ROOT__ to the path used by bazel.
-cat bazel-bin/compile_commands.json \
-  | sed "s|__EXEC_ROOT__|$EXEC_ROOT|" \
-  | sed 's/-fno-canonical-system-headers//g' \
-        > compile_commands.json
 
 # The compdb doesn't include tests currently, so we exclude all test files
 # for now.
