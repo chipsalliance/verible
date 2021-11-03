@@ -34,6 +34,15 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   FormatStyle(const FormatStyle&) = default;
 
+  /*
+   * InitializeFromFlags() [format_style_init.h] provides flags that are
+   * named like these fields and allow configuration on the command line.
+   * So field foo here can be configured with flag --foo
+   */
+
+  // TODO(hzeller): some of these are plural, some singular. Come up with
+  // a consistent scheme.
+
   // Control indentation amount for port declarations.
   IndentationStyle port_declarations_indentation = IndentationStyle::kWrap;
 
@@ -103,6 +112,8 @@ struct FormatStyle : public verible::BasicFormatStyle {
 
   // Compact binary expressions inside indexing / bit selection operators
   bool compact_indexing_and_selections = true;
+
+  // -- Note: when adding new fields, add them in format_style_init.cc
 
   // TODO(fangism): introduce the following knobs:
   //

@@ -58,22 +58,31 @@ ABSL_FLAG(AlignmentPolicy, named_port_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format named port connections: {align,flush-left,preserve,infer}");
 ABSL_FLAG(
-    AlignmentPolicy, net_variable_alignment,  //
+    AlignmentPolicy, module_net_variable_alignment,  //
     AlignmentPolicy::kInferUserIntent,
     "Format net/variable declarations: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, formal_parameters_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format formal parameters: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, class_member_variables_alignment,
+ABSL_FLAG(AlignmentPolicy, class_member_variable_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format class member variables: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, case_items_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format case items: {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, distribution_items_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Aligh distribution items: {align,flush-left,preserve,infer}");
 ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
           AlignmentPolicy::kInferUserIntent,
           "Format various assignments: {align,flush-left,preserve,infer}");
+ABSL_FLAG(AlignmentPolicy, enum_assignment_statement_alignment,
+          AlignmentPolicy::kInferUserIntent,
+          "Format assignments with enums: {align,flush-left,preserve,infer}");
 
+ABSL_FLAG(bool, compact_indexing_and_selections, true,
+          "Use compact binary expressions inside indexing / bit selection "
+          "operators");
 ABSL_FLAG(bool, port_declarations_right_align_packed_dimensions, false,
           "If true, packed dimensions in contexts with enabled alignment are "
           "aligned to the right.");
@@ -82,44 +91,45 @@ ABSL_FLAG(bool, port_declarations_right_align_unpacked_dimensions, false,
           "If true, unpacked dimensions in contexts with enabled alignment are "
           "aligned to the right.");
 
+// -- Deprecated flags. These were typos. Remove after 2022-01-01
+ABSL_RETIRED_FLAG(
+    AlignmentPolicy, net_variable_alignment,  //
+    AlignmentPolicy::kInferUserIntent,
+    "Format net/variable declarations: {align,flush-left,preserve,infer}");
+
+ABSL_RETIRED_FLAG(
+    AlignmentPolicy, class_member_variables_alignment,
+    AlignmentPolicy::kInferUserIntent,
+    "Format class member variables: {align,flush-left,preserve,infer}");
+
 namespace verilog {
 namespace formatter {
 void InitializeFromFlags(FormatStyle *style) {
-  // formatting style flags
-  style->try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
-  style->expand_coverpoints = absl::GetFlag(FLAGS_expand_coverpoints);
+#define STYLE_FROM_FLAG(name) style->name = absl::GetFlag(FLAGS_##name)
 
-  // various indentation control
-  style->port_declarations_indentation =
-      absl::GetFlag(FLAGS_port_declarations_indentation);
-  style->formal_parameters_indentation =
-      absl::GetFlag(FLAGS_formal_parameters_indentation);
-  style->named_parameter_indentation =
-      absl::GetFlag(FLAGS_named_parameter_indentation);
-  style->named_port_indentation = absl::GetFlag(FLAGS_named_port_indentation);
+  // Simply in the sequence as declared in struct FormatStyle
+  STYLE_FROM_FLAG(port_declarations_indentation);
+  STYLE_FROM_FLAG(port_declarations_alignment);
+  STYLE_FROM_FLAG(struct_union_members_alignment);
+  STYLE_FROM_FLAG(named_parameter_indentation);
+  STYLE_FROM_FLAG(named_parameter_alignment);
+  STYLE_FROM_FLAG(named_port_indentation);
+  STYLE_FROM_FLAG(named_port_alignment);
+  STYLE_FROM_FLAG(module_net_variable_alignment);
+  STYLE_FROM_FLAG(assignment_statement_alignment);
+  STYLE_FROM_FLAG(enum_assignment_statement_alignment);
+  STYLE_FROM_FLAG(formal_parameters_indentation);
+  STYLE_FROM_FLAG(formal_parameters_alignment);
+  STYLE_FROM_FLAG(class_member_variable_alignment);
+  STYLE_FROM_FLAG(case_items_alignment);
+  STYLE_FROM_FLAG(distribution_items_alignment);
+  STYLE_FROM_FLAG(port_declarations_right_align_packed_dimensions);
+  STYLE_FROM_FLAG(port_declarations_right_align_unpacked_dimensions);
+  STYLE_FROM_FLAG(try_wrap_long_lines);
+  STYLE_FROM_FLAG(expand_coverpoints);
+  STYLE_FROM_FLAG(compact_indexing_and_selections);
 
-  // various alignment control
-  style->port_declarations_alignment =
-      absl::GetFlag(FLAGS_port_declarations_alignment);
-  style->struct_union_members_alignment =
-      absl::GetFlag(FLAGS_struct_union_members_alignment);
-  style->named_parameter_alignment =
-      absl::GetFlag(FLAGS_named_parameter_alignment);
-  style->named_port_alignment = absl::GetFlag(FLAGS_named_port_alignment);
-  style->module_net_variable_alignment =
-      absl::GetFlag(FLAGS_net_variable_alignment);
-  style->formal_parameters_alignment =
-      absl::GetFlag(FLAGS_formal_parameters_alignment);
-  style->class_member_variable_alignment =
-      absl::GetFlag(FLAGS_class_member_variables_alignment);
-  style->case_items_alignment = absl::GetFlag(FLAGS_case_items_alignment);
-  style->assignment_statement_alignment =
-      absl::GetFlag(FLAGS_assignment_statement_alignment);
-
-  style->port_declarations_right_align_packed_dimensions =
-      absl::GetFlag(FLAGS_port_declarations_right_align_packed_dimensions);
-  style->port_declarations_right_align_unpacked_dimensions =
-      absl::GetFlag(FLAGS_port_declarations_right_align_unpacked_dimensions);
+#undef STYLE_FROM_FLAG
 }
 
 }  // namespace formatter

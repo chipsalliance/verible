@@ -18,13 +18,21 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --case_items_alignment (Format case items:
       {align,flush-left,preserve,infer}); default: infer;
-    --class_member_variables_alignment (Format class member variables:
+    --class_member_variable_alignment (Format class member variables:
+      {align,flush-left,preserve,infer}); default: infer;
+    --compact_indexing_and_selections (Use compact binary expressions inside
+      indexing / bit selection operators); default: true;
+    --distribution_items_alignment (Aligh distribution items:
+      {align,flush-left,preserve,infer}); default: infer;
+    --enum_assignment_statement_alignment (Format assignments with enums:
       {align,flush-left,preserve,infer}); default: infer;
     --expand_coverpoints (If true, always expand coverpoints.); default: false;
     --formal_parameters_alignment (Format formal parameters:
       {align,flush-left,preserve,infer}); default: infer;
     --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
       default: wrap;
+    --module_net_variable_alignment (Format net/variable declarations:
+      {align,flush-left,preserve,infer}); default: infer;
     --named_parameter_alignment (Format named actual parameters:
       {align,flush-left,preserve,infer}); default: infer;
     --named_parameter_indentation (Indent named parameter assignments:
@@ -33,8 +41,6 @@ To pipe from stdin, use '-' as <file>.
       {align,flush-left,preserve,infer}); default: infer;
     --named_port_indentation (Indent named port connections: {indent,wrap});
       default: wrap;
-    --net_variable_alignment (Format net/variable declarations:
-      {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_alignment (Format port declarations:
       {align,flush-left,preserve,infer}); default: infer;
     --port_declarations_indentation (Indent port declarations: {indent,wrap});
