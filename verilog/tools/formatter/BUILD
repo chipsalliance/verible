@@ -17,6 +17,7 @@ cc_binary(
         "//common/util:interval_set",
         "//common/util:logging",
         "//verilog/formatting:format_style",
+        "//verilog/formatting:format_style_init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",

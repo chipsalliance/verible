@@ -4,13 +4,52 @@
 freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 *-->
 
-`verible-verilog-format` is the SystemVerilog formatter tool.
+`verible-verilog-format` is the SystemVerilog formatter tool. You can can
+get a full set of avilable flags using the `--helpfull` flag.
 
 ## Usage
 
 ```
-usage: verible-verilog-format [options] <file>
+usage: verible-verilog-format [options] <file> [<file...>]
 To pipe from stdin, use '-' as <file>.
+
+  Flags from verilog/formatting/format_style_init.cc:
+    --assignment_statement_alignment (Format various assignments:
+      {align,flush-left,preserve,infer}); default: infer;
+    --case_items_alignment (Format case items:
+      {align,flush-left,preserve,infer}); default: infer;
+    --class_member_variables_alignment (Format class member variables:
+      {align,flush-left,preserve,infer}); default: infer;
+    --expand_coverpoints (If true, always expand coverpoints.); default: false;
+    --formal_parameters_alignment (Format formal parameters:
+      {align,flush-left,preserve,infer}); default: infer;
+    --formal_parameters_indentation (Indent formal parameters: {indent,wrap});
+      default: wrap;
+    --named_parameter_alignment (Format named actual parameters:
+      {align,flush-left,preserve,infer}); default: infer;
+    --named_parameter_indentation (Indent named parameter assignments:
+      {indent,wrap}); default: wrap;
+    --named_port_alignment (Format named port connections:
+      {align,flush-left,preserve,infer}); default: infer;
+    --named_port_indentation (Indent named port connections: {indent,wrap});
+      default: wrap;
+    --net_variable_alignment (Format net/variable declarations:
+      {align,flush-left,preserve,infer}); default: infer;
+    --port_declarations_alignment (Format port declarations:
+      {align,flush-left,preserve,infer}); default: infer;
+    --port_declarations_indentation (Indent port declarations: {indent,wrap});
+      default: wrap;
+    --port_declarations_right_align_packed_dimensions (If true, packed
+      dimensions in contexts with enabled alignment are aligned to the right.);
+      default: false;
+    --port_declarations_right_align_unpacked_dimensions (If true, unpacked
+      dimensions in contexts with enabled alignment are aligned to the right.);
+      default: false;
+    --struct_union_members_alignment (Format struct/union members:
+      {align,flush-left,preserve,infer}); default: infer;
+    --try_wrap_long_lines (If true, let the formatter attempt to optimize line
+      wrapping decisions where wrapping is needed, else leave them unformatted.
+      This is a short-term measure to reduce risk-of-harm.); default: false;
 
   Flags from verilog/tools/formatter/verilog_format.cc:
     --failsafe_success (If true, always exit with 0 status, even if there were
@@ -37,6 +76,7 @@ To pipe from stdin, use '-' as <file>.
     --stdin_name (When using '-' to read from stdin, this gives an alternate
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
+    --verbose (Be more verbose.); default: false;
     --verify_convergence (If true, and not incrementally formatting with
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
