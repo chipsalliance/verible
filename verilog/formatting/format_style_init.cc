@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2021 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include "verilog/formatting/format_style_init.h"
 
 #include "absl/flags/flag.h"
+#include "common/formatting/basic_format_style_init.h"
 
 using verible::AlignmentPolicy;
 using verible::IndentationStyle;
@@ -105,6 +106,8 @@ ABSL_RETIRED_FLAG(
 namespace verilog {
 namespace formatter {
 void InitializeFromFlags(FormatStyle *style) {
+  verible::InitializeFromFlags(style);  // Initialize BasicFormatStyle
+
 #define STYLE_FROM_FLAG(name) style->name = absl::GetFlag(FLAGS_##name)
 
   // Simply in the sequence as declared in struct FormatStyle

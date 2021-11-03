@@ -13,6 +13,21 @@ get a full set of avilable flags using the `--helpfull` flag.
 usage: verible-verilog-format [options] <file> [<file...>]
 To pipe from stdin, use '-' as <file>.
 
+  Flags from common/formatting/basic_format_style_init.cc:
+    --column_limit (Target line length limit to stay under when formatting.);
+      default: 100;
+    --indentation_spaces (Each indentation level adds this many spaces.);
+      default: 2;
+    --line_break_penalty (Penalty added to solution for each introduced line
+      break.); default: 2;
+    --over_column_limit_penalty (For penalty minimization, this represents the
+      baseline penalty value of exceeding the column limit. Additional penalty
+      of 1 is incurred for each character over this limit); default: 100;
+    --wrap_spaces (Each wrap level adds this many spaces. This applies when the
+      first element after an open-group section is wrapped. Otherwise, the
+      indentation level is set to the column position of the open-group
+      operator.); default: 4;
+
   Flags from verilog/formatting/format_style_init.cc:
     --assignment_statement_alignment (Format various assignments:
       {align,flush-left,preserve,infer}); default: infer;

@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_INIT_H_
-#define VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_INIT_H_
+#ifndef VERIBLE_COMMON_FORMATTING_BASIC_FORMAT_STYLE_INIT_H_
+#define VERIBLE_COMMON_FORMATTING_BASIC_FORMAT_STYLE_INIT_H_
 
-#include "verilog/formatting/format_style.h"
+#include "common/formatting/basic_format_style.h"
 
-namespace verilog {
-namespace formatter {
+namespace verible {
 
 // Initialize format style from flags.
-void InitializeFromFlags(FormatStyle *style);
+void InitializeFromFlags(BasicFormatStyle *style);
 
 // TODO: initialize from configuration file.
 // https://github.com/chipsalliance/verible/issues/898
 // Possibly using common/text/config_utils.h
-}  // namespace formatter
-}  // namespace verilog
-#endif  // VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_INIT_H_
+}  // namespace verible
+#endif  // VERIBLE_COMMON_FORMATTING_BASIC_FORMAT_STYLE_INIT_H_

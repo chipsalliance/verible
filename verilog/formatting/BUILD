@@ -244,6 +244,7 @@ cc_library(
     hdrs = ["format_style_init.h"],
     deps = [
         ":format_style",
+        "//common/formatting:basic_format_style_init",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

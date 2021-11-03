@@ -63,6 +63,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "basic_format_style_init",
+    srcs = ["basic_format_style_init.cc"],
+    hdrs = ["basic_format_style_init.h"],
+    deps = [
+        ":basic_format_style",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_test(
     name = "basic_format_style_test",
     srcs = ["basic_format_style_test.cc"],

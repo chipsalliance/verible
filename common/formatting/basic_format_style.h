@@ -42,6 +42,8 @@ struct BasicFormatStyle {
 
   // Penalty added to solution for each introduced line break.
   int line_break_penalty = 2;
+
+  // -- Note: when adding new fields, add them in basic_format_style_init.cc
 };
 
 // Control how a section of code is indented.
