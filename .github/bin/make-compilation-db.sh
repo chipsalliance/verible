@@ -15,6 +15,7 @@
 
 set -u
 set -e
+set -o pipefail
 
 readonly EXEC_ROOT=$(bazel info execution_root)
 
