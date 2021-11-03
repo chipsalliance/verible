@@ -86,11 +86,11 @@ TEST(ReversedViewTest, NonEmptySet) {
   EXPECT_THAT(reversed_view(v), ElementsAre(7, 6, 3));
 }
 
-TEST(ConvertToMutableIteratorTest, TemporaryTemporary) {
+TEST(ConvertToMutableIteratorTest, Convert) {
   std::vector<int> v{3, 6, 7};
   const std::vector<int>::const_iterator const_it = v.cbegin() + 1;
   auto it = ConvertToMutableIterator(const_it, v.begin());
-  EXPECT_TRUE((std::is_same_v<decltype(it), std::vector<int>::iterator>));
+  static_assert(std::is_same_v<decltype(it), std::vector<int>::iterator>);
   EXPECT_EQ(*it, 6);
   *it = 42;
   EXPECT_EQ(*it, 42);
