@@ -239,6 +239,18 @@ cc_library(
 )
 
 cc_library(
+    name = "format_style_init",
+    srcs = ["format_style_init.cc"],
+    hdrs = ["format_style_init.h"],
+    deps = [
+        ":format_style",
+        "//common/formatting:basic_format_style_init",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "token_annotator",
     srcs = ["token_annotator.cc"],
     hdrs = ["token_annotator.h"],

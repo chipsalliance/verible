@@ -43,11 +43,10 @@
 #include "common/util/interval_set.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/formatting/format_style.h"
+#include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 
 using absl::StatusCode;
-using verible::AlignmentPolicy;
-using verible::IndentationStyle;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
 using verilog::formatter::FormatStyle;
@@ -122,69 +121,6 @@ ABSL_FLAG(int, max_search_states, 100000,
           "Limits the number of search states explored during "
           "line wrap optimization.");
 
-// These flags exist in the short term to disable formatting of some regions.
-// Do not expect to be able to use these in the long term, once they find
-// a better home in a configuration struct.
-
-// "indent" means 2 spaces, "wrap" means 4 spaces.
-ABSL_FLAG(IndentationStyle, port_declarations_indentation,
-          IndentationStyle::kWrap, "Indent port declarations: {indent,wrap}");
-ABSL_FLAG(IndentationStyle, formal_parameters_indentation,
-          IndentationStyle::kWrap, "Indent formal parameters: {indent,wrap}");
-ABSL_FLAG(IndentationStyle, named_parameter_indentation,
-          IndentationStyle::kWrap,
-          "Indent named parameter assignments: {indent,wrap}");
-ABSL_FLAG(IndentationStyle, named_port_indentation, IndentationStyle::kWrap,
-          "Indent named port connections: {indent,wrap}");
-
-// For most of the following in this group, kInferUserIntent is a reasonable
-// default behavior because it allows for user-control with minimal invasiveness
-// and burden on the user.
-ABSL_FLAG(AlignmentPolicy, port_declarations_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format port declarations: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, struct_union_members_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format struct/union members: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, named_parameter_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format named actual parameters: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, named_port_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format named port connections: {align,flush-left,preserve,infer}");
-ABSL_FLAG(
-    AlignmentPolicy, net_variable_alignment,  //
-    AlignmentPolicy::kInferUserIntent,
-    "Format net/variable declarations: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, formal_parameters_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format formal parameters: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, class_member_variables_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format class member variables: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, case_items_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format case items: {align,flush-left,preserve,infer}");
-ABSL_FLAG(AlignmentPolicy, assignment_statement_alignment,
-          AlignmentPolicy::kInferUserIntent,
-          "Format various assignments: {align,flush-left,preserve,infer}");
-
-ABSL_FLAG(bool, port_declarations_right_align_packed_dimensions, false,
-          "If true, packed dimensions in contexts with enabled alignment are "
-          "aligned to the right.");
-
-ABSL_FLAG(bool, port_declarations_right_align_unpacked_dimensions, false,
-          "If true, unpacked dimensions in contexts with enabled alignment are "
-          "aligned to the right.");
-
-ABSL_FLAG(bool, expand_coverpoints, false,
-          "If true, always expand coverpoints.");
-
-ABSL_FLAG(bool, try_wrap_long_lines, false,
-          "If true, let the formatter attempt to optimize line wrapping "
-          "decisions where wrapping is needed, else leave them unformatted.  "
-          "This is a short-term measure to reduce risk-of-harm.");
-
 static std::ostream& FileMsg(absl::string_view filename) {
   std::cerr << filename << ": ";
   return std::cerr;
@@ -215,8 +151,8 @@ static bool formatOneFile(absl::string_view filename,
   // TODO(fangism): When requesting --inplace, verify that file
   // is write-able, and fail-early if it is not.
 
-  // TODO(fangism): support style configuration from flags.
   FormatStyle format_style;
+  verilog::formatter::InitializeFromFlags(&format_style);
 
   // Handle special debugging modes.
   ExecutionControl formatter_control;
@@ -235,45 +171,6 @@ static bool formatOneFile(absl::string_view filename,
         absl::GetFlag(FLAGS_max_search_states);
     formatter_control.verify_convergence =
         absl::GetFlag(FLAGS_verify_convergence);
-
-    // formatting style flags
-    format_style.try_wrap_long_lines = absl::GetFlag(FLAGS_try_wrap_long_lines);
-    format_style.expand_coverpoints = absl::GetFlag(FLAGS_expand_coverpoints);
-
-    // various indentation control
-    format_style.port_declarations_indentation =
-        absl::GetFlag(FLAGS_port_declarations_indentation);
-    format_style.formal_parameters_indentation =
-        absl::GetFlag(FLAGS_formal_parameters_indentation);
-    format_style.named_parameter_indentation =
-        absl::GetFlag(FLAGS_named_parameter_indentation);
-    format_style.named_port_indentation =
-        absl::GetFlag(FLAGS_named_port_indentation);
-
-    // various alignment control
-    format_style.port_declarations_alignment =
-        absl::GetFlag(FLAGS_port_declarations_alignment);
-    format_style.struct_union_members_alignment =
-        absl::GetFlag(FLAGS_struct_union_members_alignment);
-    format_style.named_parameter_alignment =
-        absl::GetFlag(FLAGS_named_parameter_alignment);
-    format_style.named_port_alignment =
-        absl::GetFlag(FLAGS_named_port_alignment);
-    format_style.module_net_variable_alignment =
-        absl::GetFlag(FLAGS_net_variable_alignment);
-    format_style.formal_parameters_alignment =
-        absl::GetFlag(FLAGS_formal_parameters_alignment);
-    format_style.class_member_variable_alignment =
-        absl::GetFlag(FLAGS_class_member_variables_alignment);
-    format_style.case_items_alignment =
-        absl::GetFlag(FLAGS_case_items_alignment);
-    format_style.assignment_statement_alignment =
-        absl::GetFlag(FLAGS_assignment_statement_alignment);
-
-    format_style.port_declarations_right_align_packed_dimensions =
-        absl::GetFlag(FLAGS_port_declarations_right_align_packed_dimensions);
-    format_style.port_declarations_right_align_unpacked_dimensions =
-        absl::GetFlag(FLAGS_port_declarations_right_align_unpacked_dimensions);
   }
 
   std::ostringstream stream;
