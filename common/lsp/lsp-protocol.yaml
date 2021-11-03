@@ -49,6 +49,11 @@ TextDocumentContentChangeEvent:
   range?: Range     # Range optional; if no range given, full document replace
   text: string
 
+# For hover or highlight
+TextDocumentPositionParams:
+  textDocument: TextDocumentIdentifier
+  position: Position
+
 # -- Text document notifiations. These allow us to keep track of the content.
 DidOpenTextDocumentParams:      # textDocument/didOpen
   textDocument: TextDocumentItem
@@ -108,3 +113,11 @@ DocumentSymbol:
   # children: DocumentSymbol[]. Since we can't to that recursively in jcxxgen,
   # these are directly emitted as json
   children?: object = nullptr
+
+# -- textDocument/documentHighlight
+DocumentHighlightParams:
+  <: TextDocumentPositionParams
+
+DocumentHighlight:         # response documentHighlight is [] of this.
+  range: Range
+  # there is also a highlight kind to distinguish read/write

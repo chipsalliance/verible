@@ -36,6 +36,7 @@ cc_library(
         "//common/text:text_structure",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_linter",
+        "//verilog/parser:verilog_token_enum",
         "@jsonhpp",
     ],
 )

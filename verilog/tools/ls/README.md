@@ -17,7 +17,8 @@ progress
   - [x] Provide code actions for autofixes provided by lint rules
   - [x] Generate file symbol outline ('navigation tree')
   - [ ] Provide formatting.
-  - [ ] Highlight all the symbols that are the same as current under cursor.
+  - [x] Highlight all the symbols that are the same as current under cursor.
+    - [ ] Take scope and type into account to only highlight _same_ symbols.
   - [ ] Find definition of symbol even if in another file.
   - [ ] Rename refactor a symbol
 
