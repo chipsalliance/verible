@@ -83,10 +83,7 @@ void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
           case PartitionPolicyEnum::kFitOnLineElseExpand: {
             absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
             std::transform(subnode.Children().begin(), subnode.Children().end(),
-                           layouts.begin(),
-                           [&TraverseTree](const TokenPartitionTree& subnode) {
-                             return TraverseTree(subnode);
-                           });
+                           layouts.begin(), TraverseTree);
             return factory.Wrap(layouts.begin(), layouts.end());
           }
 
@@ -94,10 +91,7 @@ void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
           case PartitionPolicyEnum::kTabularAlignment: {
             absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
             std::transform(subnode.Children().begin(), subnode.Children().end(),
-                           layouts.begin(),
-                           [&TraverseTree](const TokenPartitionTree& subnode) {
-                             return TraverseTree(subnode);
-                           });
+                           layouts.begin(), TraverseTree);
             return factory.Stack(layouts.begin(), layouts.end());
           }
 
