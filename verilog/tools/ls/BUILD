@@ -41,21 +41,21 @@ cc_library(
 )
 
 cc_library(
-  name = "document-symbol-filler",
-  srcs = ["document-symbol-filler.cc"],
-  hdrs = ["document-symbol-filler.h"],
-  deps = [
-      "//common/lsp:lsp-protocol-enums",
-      "//common/lsp:lsp-protocol",
-      "//common/text:text_structure",
-      "//common/text:visitors",
-      "//common/util:value_saver",
-      "//verilog/CST:module",
-      "//verilog/CST:class",
-      "//verilog/CST:package",
-      "//verilog/CST:functions",
-      "//verilog/CST:seq_block",
-  ]
+    name = "document-symbol-filler",
+    srcs = ["document-symbol-filler.cc"],
+    hdrs = ["document-symbol-filler.h"],
+    deps = [
+        "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-protocol-enums",
+        "//common/text:text_structure",
+        "//common/text:visitors",
+        "//common/util:value_saver",
+        "//verilog/CST:class",
+        "//verilog/CST:functions",
+        "//verilog/CST:module",
+        "//verilog/CST:package",
+        "//verilog/CST:seq_block",
+    ],
 )
 
 cc_binary(
