@@ -5916,23 +5916,23 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {// wait statements (null)
      "task t; wait  (a==b);wait(c<d); endtask",
      "task t;\n"
-     "  wait(a == b);\n"
-     "  wait(c < d);\n"
+     "  wait (a == b);\n"
+     "  wait (c < d);\n"
      "endtask\n"},
     {// wait statements, single action statement
      "task t; wait  (a==b) p();wait(c<d) q(); endtask",
      "task t;\n"
-     "  wait(a == b) p();\n"
-     "  wait(c < d) q();\n"
+     "  wait (a == b) p();\n"
+     "  wait (c < d) q();\n"
      "endtask\n"},
     {// wait statements, block action statement
      "task t; wait  (a==b) begin p(); end "
      "wait(c<d) begin q(); end endtask",
      "task t;\n"
-     "  wait(a == b) begin\n"
+     "  wait (a == b) begin\n"
      "    p();\n"
      "  end\n"
-     "  wait(c < d) begin\n"
+     "  wait (c < d) begin\n"
      "    q();\n"
      "  end\n"
      "endtask\n"},
