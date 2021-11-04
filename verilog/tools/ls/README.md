@@ -15,7 +15,7 @@ progress
   - [x] Publish diagnostics for syntax errors and lint rules
     - [ ] Use lint configuration from `.rules.verible_lint` instead of all enabled
   - [x] Provide code actions for autofixes provided by lint rules
-  - [ ] Generate file symbol outline ('navigation tree')
+  - [x] Generate file symbol outline ('navigation tree')
   - [ ] Provide formatting.
   - [ ] Highlight all the symbols that are the same as current under cursor.
   - [ ] Find definition of symbol even if in another file.
