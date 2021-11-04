@@ -21,6 +21,7 @@
 #include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter.h"
+#include "verilog/parser/verilog_token_enum.h"
 #include "verilog/tools/ls/document-symbol-filler.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
@@ -170,6 +171,37 @@ nlohmann::json CreateDocumentSymbolOutline(
   syntax_tree->Accept(&filler);
   // We cut down one level, not interested in toplevel file:
   return toplevel.children;
+}
+
+std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
+    const BufferTracker *tracker,
+    const verible::lsp::DocumentHighlightParams &p) {
+  std::vector<verible::lsp::DocumentHighlight> result;
+  if (!tracker) return result;
+  const ParsedBuffer *const current = tracker->current();
+  if (!current) return result;
+  const verible::LineColumn cursor{p.position.line, p.position.character};
+  const verible::TextStructureView &text = current->parser().Data();
+  const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
+
+  if (cursor_token.token_enum() == SymbolIdentifier) {
+    // Find all the symbols with the same name in the buffer.
+    // Note, this is very simplistic as it does _not_ take scopes into account.
+    // For that, we'd need the symbol table, but that implementation is not
+    // complete yet.
+    for (const verible::TokenInfo &tok : text.TokenStream()) {
+      if (tok.token_enum() != cursor_token.token_enum()) continue;
+      if (tok.text() != cursor_token.text()) continue;
+      const verible::LineColumnRange range = text.GetRangeForToken(tok);
+      result.push_back(verible::lsp::DocumentHighlight{
+          .range = {
+              .start = {.line = range.start.line,
+                        .character = range.start.column},
+              .end = {.line = range.end.line, .character = range.end.column},
+          }});
+    }
+  }
+  return result;
 }
 
 }  // namespace verilog

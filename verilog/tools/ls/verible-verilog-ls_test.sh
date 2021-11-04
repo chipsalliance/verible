@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -u
+
 [[ "$#" == 2 ]] || {
   echo "Expecting 2 positional arguments: lsp-server json-rpc-expect"
   exit 1
@@ -38,14 +40,23 @@ MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 #
 # TODO: maybe this awk-script should be replaced with something that allows
 # multi-line input with comment.
-awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
+awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0", "id":1, "method":"initialize","params":null}
+
+# Testing a file with syntax errors: this should output some diagnostic
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://syntaxerror.sv","text":"brokenfile\n"}}}
+
+# A file with a lint error (no newline at EOF). The editing it and watching diagnostic go away
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
-{"jsonrpc":"2.0", "id":2, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":0,"character":0},"end":{"line":2,"character":0}}}}
+{"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":0,"character":0},"end":{"line":2,"character":0}}}}
 {"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}}
-{"jsonrpc":"2.0", "id":3, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
+{"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
 {"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://mini.sv"}}}
+
+# Symbol highlight
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://sym.sv","text":"module sym();\nassign a=1;assign b=a+1;endmodule\n"}}}
+{"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}}
+
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
 
@@ -80,7 +91,7 @@ cat > "${JSON_EXPECTED}" <<EOF
   },
   {
     "json_contains": {
-       "id":2,
+       "id":10,
        "result": [
           {"edit": {"changes": {"file://mini.sv":[{"newText":"\n"}]}}}
         ]
@@ -97,9 +108,27 @@ cat > "${JSON_EXPECTED}" <<EOF
   },
   {
     "json_contains": {
-       "id":3,
+       "id":11,
        "result": [
           {"kind":6, "name":"mini"}
+        ]
+    }
+  },
+  {
+    "json_contains": {
+       "method":"textDocument/publishDiagnostics",
+       "params": {
+          "uri": "file://sym.sv",
+          "diagnostics":[]
+       }
+    }
+  },
+  {
+    "json_contains":{
+       "id":20,
+       "result": [
+          {"range":{"start":{"line":1, "character": 7}, "end":{"line":1, "character": 8}}},
+          {"range":{"start":{"line":1, "character":20}, "end":{"line":1, "character":21}}}
         ]
     }
   },

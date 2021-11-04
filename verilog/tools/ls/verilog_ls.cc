@@ -61,8 +61,9 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
               {"change", 2},        // Incremental updates
           },
       },
-      {"codeActionProvider", true},      // Autofixes for lint errors
-      {"documentSymbolProvider", true},  // Outline of file
+      {"codeActionProvider", true},         // Autofixes for lint errors
+      {"documentSymbolProvider", true},     // Symbol-outline of file
+      {"documentHighlightProvider", true},  // Highlight same symbol
   };
 
   return result;
@@ -133,19 +134,24 @@ int main(int argc, char *argv[]) {
   // Exchange of capabilities.
   dispatcher.AddRequestHandler("initialize", InitializeServer);
 
-  // Provide autofixes
-  dispatcher.AddRequestHandler(
+  dispatcher.AddRequestHandler(  // Provide autofixes
       "textDocument/codeAction",
       [&parsed_buffers](const verible::lsp::CodeActionParams &p) {
         return verilog::GenerateLinterCodeActions(
             parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
 
-  // Provide outline
-  dispatcher.AddRequestHandler(
+  dispatcher.AddRequestHandler(  // Provide document outline/index
       "textDocument/documentSymbol",
       [&parsed_buffers](const verible::lsp::DocumentSymbolParams &p) {
         return verilog::CreateDocumentSymbolOutline(
+            parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
+      });
+
+  dispatcher.AddRequestHandler(  // Highlight related symbols under cursor
+      "textDocument/documentHighlight",
+      [&parsed_buffers](const verible::lsp::DocumentHighlightParams &p) {
+        return verilog::CreateHighlightRanges(
             parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
 
