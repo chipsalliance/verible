@@ -150,6 +150,15 @@ TODO(fangism): a demo GIF animation here.
 See https://github.com/chipsalliance/verible/issues/528
 -->
 
+### Language Server
+
+The [`verible-verilog-ls`](./verilog/tools/ls) is a language server that
+provides the functionalities that come with the Verible command line tools
+also directly in your edtior.
+
+It implements the standardized [language server protocol] that is supported
+by a myriad of editors and IDEs.
+
 ### Lexical Diff
 
 [`verible-verilog-diff`](./verilog/tools/diff) compares two input files for
@@ -205,3 +214,4 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
 [lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
 [binary releases]: https://github.com/chipsalliance/verible/releases
+[language server protocol]: https://microsoft.github.io/language-server-protocol/
