@@ -43,8 +43,8 @@ nlohmann::json CreateDocumentSymbolOutline(
     const BufferTracker *tracker, const verible::lsp::DocumentSymbolParams &p,
     bool kate_compatible_tags = true);
 
-// Give a position in a document, return ranges in the buffer that should
-// be hi-lit.
+// Given a position in a document, return ranges in the buffer that should
+// be highlighted.
 // Current implementation: if cursor is over a symbol, highlight all symbols
 // with the same name (NB: Does _not_ take scoping into account yet).
 std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
