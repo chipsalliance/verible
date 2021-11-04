@@ -86,7 +86,6 @@ static bool IsKeywordCallable(verilog_tokentype e) {
     case TK_sort:
     case TK_sum:
     case TK_unique:  // array method
-    case TK_wait:    // wait statement
     case TK_xor:     // array method
       // TODO(fangism): Verilog-AMS functions, like sin, cos, ...
       return true;

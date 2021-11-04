@@ -1388,6 +1388,12 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
            {verilog_tokentype::TK_end, "end"},
        }},
 
+      // wait ()
+      {DefaultStyle,
+       1,
+       {{0, SpacingOptions::Undecided}, {1, SpacingOptions::Undecided}},
+       {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
+
       // various built-in function calls
       {DefaultStyle,
        1,
@@ -1491,10 +1497,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
        1,
        {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
        {{verilog_tokentype::TK_unique, "unique"}, {'(', "("}}},
-      {DefaultStyle,
-       1,
-       {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
-       {{verilog_tokentype::TK_wait, "wait"}, {'(', "("}}},
       {DefaultStyle,
        1,
        {{0, SpacingOptions::Undecided}, {0, SpacingOptions::Undecided}},
