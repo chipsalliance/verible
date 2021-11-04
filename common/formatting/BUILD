@@ -70,7 +70,6 @@ cc_library(
     deps = [
         ":basic_format_style",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
     ],
 )
 

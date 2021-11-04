@@ -11,8 +11,8 @@ package(
         "//verilog/formatting:__subpackages__",
         "//verilog/parser:__subpackages__",
         "//verilog/tools/kythe:__pkg__",
-        "//verilog/tools/syntax:__pkg__",  # for printing
         "//verilog/tools/ls:__pkg__",  # DocumentSymbol
+        "//verilog/tools/syntax:__pkg__",  # for printing
     ],
 )
 
