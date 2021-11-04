@@ -42,10 +42,12 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
       return stream << "fit-else-expand";
     case PartitionPolicyEnum::kTabularAlignment:
       return stream << "tabular-alignment";
-    case PartitionPolicyEnum::kSuccessfullyAligned:
-      return stream << "aligned-success";
+    case PartitionPolicyEnum::kAlreadyFormatted:
+      return stream << "already-formatted";
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
       return stream << "append-fitting-sub-partitions";
+    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
+      return stream << "optimal-function-call-layout";
   }
   LOG(FATAL) << "Unknown partition policy " << int(p);
 }

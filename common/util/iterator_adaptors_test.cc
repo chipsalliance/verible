@@ -17,6 +17,7 @@
 #include <initializer_list>
 #include <list>
 #include <set>
+#include <type_traits>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -83,6 +84,17 @@ TEST(ReversedViewTest, EmptySet) {
 TEST(ReversedViewTest, NonEmptySet) {
   std::set<int> v{3, 6, 7};
   EXPECT_THAT(reversed_view(v), ElementsAre(7, 6, 3));
+}
+
+TEST(ConvertToMutableIteratorTest, Convert) {
+  std::vector<int> v{3, 6, 7};
+  const std::vector<int>::const_iterator const_it = v.cbegin() + 1;
+  auto it = ConvertToMutableIterator(const_it, v.begin());
+  static_assert(std::is_same_v<decltype(it), std::vector<int>::iterator>);
+  EXPECT_EQ(*it, 6);
+  *it = 42;
+  EXPECT_EQ(*it, 42);
+  EXPECT_EQ(v[1], 42);
 }
 
 }  // namespace

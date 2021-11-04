@@ -93,6 +93,7 @@ cc_library(
         "//common/text:concrete_syntax_leaf",
         "//common/text:token_info",
         "//common/util:container_iterator_range",
+        "//common/util:iterator_adaptors",
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/base:core_headers",
@@ -120,6 +121,7 @@ cc_library(
         "layout_optimizer.cc",
         "layout_optimizer_internal.h",
     ],
+    hdrs = ["layout_optimizer.h"],
     deps = [
         ":basic_format_style",
         ":line_wrap_searcher",

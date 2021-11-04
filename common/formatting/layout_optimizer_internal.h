@@ -70,6 +70,8 @@ class LayoutItem {
         must_wrap_(!tokens_.empty() && tokens_.front().before.break_decision ==
                                            SpacingOptions::MustWrap) {}
 
+  // Multiple LayoutFunctionSegments can store copies of the same layout.
+  // The objects are copied mostly in LayoutFunctionFactory::* functions.
   LayoutItem(const LayoutItem&) = default;
   LayoutItem& operator=(const LayoutItem&) = default;
 
@@ -78,15 +80,17 @@ class LayoutItem {
 
   LayoutType Type() const { return type_; }
 
-  // Returns "hard" indent, which is never removed when the layout is joined
-  // with another layout.
+  // Indentation used for a layout when it is placed at the beginning of a line.
+  // Effective indentation in this case is a sum of the item's and its
+  // ancestors' indetation
   int IndentationSpaces() const { return indentation_; }
 
-  // Sets "hard" indent, which is never removed when the layout is joined
-  // with another layout.
+  // Sets indentation used for a layout when it is placed at the beginning of
+  // a line.
   void SetIndentationSpaces(int indent) { indentation_ = indent; }
 
-  // Returns amount of spaces before first token.
+  // Returns number of spaces required before the first token. The spaces are
+  // used when the layout is appended to a non-empty line.
   int SpacesBefore() const { return spaces_before_; }
 
   // Returns whether to force line break just before this layout.
@@ -123,7 +127,6 @@ class LayoutItem {
 
     UnwrappedLine uwline(0, tokens_.begin());
     uwline.SpanUpToToken(tokens_.end());
-    uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
     return uwline;
   }
 
@@ -614,6 +617,32 @@ class LayoutFunctionFactory {
 
   static LayoutFunction Choice(
       absl::FixedArray<LayoutFunction::const_iterator>* segments);
+
+  const BasicFormatStyle& style_;
+};
+
+class TreeReconstructor {
+ public:
+  TreeReconstructor(int indentation_spaces, const BasicFormatStyle& style)
+      : current_indentation_spaces_(indentation_spaces), style_(style) {}
+  ~TreeReconstructor() = default;
+
+  TreeReconstructor(const TreeReconstructor&) = delete;
+  TreeReconstructor(TreeReconstructor&&) = delete;
+  TreeReconstructor& operator=(const TreeReconstructor&) = delete;
+  TreeReconstructor& operator=(TreeReconstructor&&) = delete;
+
+  void TraverseTree(const LayoutTree& layout_tree);
+
+  void ReplaceTokenPartitionTreeNode(
+      TokenPartitionTree* node, std::vector<PreFormatToken>* ftokens) const;
+
+ private:
+  std::vector<UnwrappedLine> unwrapped_lines_;
+
+  UnwrappedLine* active_unwrapped_line_ = nullptr;
+
+  int current_indentation_spaces_;
 
   const BasicFormatStyle& style_;
 };

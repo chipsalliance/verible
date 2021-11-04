@@ -22,6 +22,7 @@
 
 #include "absl/status/status.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/layout_optimizer.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
@@ -355,6 +356,7 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
+    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -381,7 +383,7 @@ static void DeterminePartitionExpansion(
       break;
     }
 
-    case PartitionPolicyEnum::kSuccessfullyAligned:
+    case PartitionPolicyEnum::kAlreadyFormatted:
       VLOG(3) << "Aligned fits, un-expanding.";
       node_view.Unexpand();
       break;
@@ -746,6 +748,10 @@ Status Formatter::Format(const ExecutionControl& control) {
           // Reshape partition tree with kAppendFittingSubPartitions policy
           verible::ReshapeFittingSubpartitions(&node, style_);
           break;
+        case PartitionPolicyEnum::kOptimalFunctionCallLayout:
+          verible::OptimizeTokenPartitionTree(
+              style_, &node, &unwrapper_data.preformatted_tokens);
+          break;
         case PartitionPolicyEnum::kTabularAlignment:
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
           // but leave partitioning intact.
@@ -777,7 +783,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     // uwline.PartitionPolicy().
     if (continuation_comment_aligner.HandleLine(uwline, &formatted_lines_)) {
     } else if (uwline.PartitionPolicy() ==
-               PartitionPolicyEnum::kSuccessfullyAligned) {
+               PartitionPolicyEnum::kAlreadyFormatted) {
       // For partitions that were successfully aligned, do not search
       // line-wrapping, but instead accept the adjusted padded spacing.
       formatted_lines_.emplace_back(uwline);

@@ -805,27 +805,6 @@ static std::vector<DeferredTokenAlignment> ComputeAlignedRowSpacings(
   return align_actions;
 }
 
-// Given a const_iterator and the original mutable container, return
-// the corresponding mutable iterator (without resorting to const_cast).
-// The 'Container' type is not deducible from function arguments alone.
-// TODO(fangism): provide this from common/util/iterator_adaptors.
-template <class Container>
-typename Container::iterator ConvertToMutableIterator(
-    typename Container::const_iterator const_iter,
-    typename Container::iterator base) {
-  const typename Container::const_iterator cbase(base);
-  return base + std::distance(cbase, const_iter);
-}
-
-static MutableFormatTokenRange ConvertToMutableFormatTokenRange(
-    const FormatTokenRange& const_range,
-    MutableFormatTokenRange::iterator base) {
-  using array_type = std::vector<PreFormatToken>;
-  return MutableFormatTokenRange(
-      ConvertToMutableIterator<array_type>(const_range.begin(), base),
-      ConvertToMutableIterator<array_type>(const_range.end(), base));
-}
-
 static const AlignmentRow* RightmostSubcolumnWithTokens(
     const AlignmentRow& node) {
   if (!node.Value().tokens.empty()) return &node;
@@ -861,8 +840,7 @@ static void CommitAlignmentDecisionToRow(
     }
     // Tag every subtree as having already been committed to alignment.
     partition->ApplyPostOrder([](TokenPartitionTree& node) {
-      node.Value().SetPartitionPolicy(
-          PartitionPolicyEnum::kSuccessfullyAligned);
+      node.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
     });
   }
 }

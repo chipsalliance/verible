@@ -6683,7 +6683,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  `ppgJH3JoxhwyTmZ2dgPiuMQzpRAWiSs(\n"
         "      {xYtxuh6.FIMcVPEWfhtoI2FSe, xYtxuh6.ZVL5XASVGLYz32} == "
         "SqRgavM[15:2];\n"
-        "JgQLBG == 4'h0;, \"foo\")\n"
+        "JgQLBG == 4'h0;,\n"
+        "      \"foo\")\n"
         "endtask\n",
     },
 
@@ -11749,6 +11750,283 @@ TEST(FormatterEndToEndTest, PortDeclarationDimensionsAlignmentTest) {
 }
 
 // TODO(fangism): directed tests using style variations
+
+static constexpr FormatterTestCase kNestedFunctionsTestCases40ColumnsLimit[] = {
+    {"module foo;"
+     "`uvm_info(`gfn, $sformatf(\n"
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
+     "i), UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(\n"
+     "      `gfn,\n"
+     "      $sformatf(\n"
+     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\",\n"
+     "          cfg.num_pulses, i), UVM_DEBUG)\n"
+     "endmodule\n"},
+    {"module foo;`uvm_info(`gfn, $sformatf("
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
+     "cfg.convert2string()), UVM_LOW)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(\n"
+     "      `gfn,\n"
+     "      $sformatf(\n"
+     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\",\n"
+     "          cfg.convert2string()),\n"
+     "      UVM_LOW)\n"  // FIXME: Wrapped by SearchLineWraps
+     "endmodule\n"},
+};
+
+TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases40ColumnsLimit) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  for (const auto& test_case : kNestedFunctionsTestCases40ColumnsLimit) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase kNestedFunctionsTestCases60ColumnsLimit[] = {
+    {"module foo;"
+     "`uvm_info(`gfn, $sformatf(\n"
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
+     "i), UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(\n"
+     "      `gfn,\n"
+     "      $sformatf(\n"
+     "          \"\\n  base_vseq: generate %0d pulse in channel %0d\",\n"
+     "          cfg.num_pulses, i), UVM_DEBUG)\n"
+     "endmodule\n"},
+    {"module foo;`uvm_info(`gfn, $sformatf("
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
+     "cfg.convert2string()), UVM_LOW)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(\n"
+     "      `gfn,\n"
+     "      $sformatf(\n"
+     "          \"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\",\n"
+     "          cfg.convert2string()), UVM_LOW)\n"
+     "endmodule\n"},
+};
+
+TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases60ColumnsLimit) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 60;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  for (const auto& test_case : kNestedFunctionsTestCases60ColumnsLimit) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase kNestedFunctionsTestCases80ColumnsLimit[] = {
+    {"module foo;"
+     "`uvm_info(`gfn, $sformatf(\n"
+     "\"\\n  base_vseq: generate %0d pulse in channel %0d\", cfg.num_pulses, "
+     "i), UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d pulse in "
+     "channel %0d\",\n"
+     "                            cfg.num_pulses, i), UVM_DEBUG)\n"
+     "endmodule\n"},
+    {"module foo;`uvm_info(`gfn, $sformatf("
+     "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
+     "cfg.convert2string()), UVM_LOW)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(\n"
+     "      `gfn, $sformatf(\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE "
+     "|----\\n %s\",\n"
+     "                      cfg.convert2string()), UVM_LOW)\n"
+     "endmodule\n"},
+    {"module x;"
+     "`uvm_fatal(`gfn, $sformatf("
+     "\"The data 0x%0h written to the signature address is formatted "
+     "incorrectly.\","
+     "signature_data))\n"
+     "endmodule",
+     "module x;\n"
+     "  `uvm_fatal(\n"
+     "      `gfn,\n"
+     "      $sformatf(\n"
+     "          \"The data 0x%0h written to the signature address is formatted "
+     "incorrectly.\",\n"
+     "          signature_data))\n"
+     "endmodule\n"},
+};
+
+TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases80ColumnsLimit) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 80;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  for (const auto& test_case : kNestedFunctionsTestCases80ColumnsLimit) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase kNestedFunctionsTestCases100ColumnsLimit[] =
+    {
+        {"module foo;"
+         "`uvm_info(`gfn, $sformatf(\n"
+         "\"\\n  base_vseq: generate %0d pulse in channel %0d\", "
+         "cfg.num_pulses, i), UVM_DEBUG)\n"
+         "endmodule",
+         "module foo;\n"
+         "  `uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d pulse in "
+         "channel %0d\", cfg.num_pulses, i),\n"
+         "            UVM_DEBUG)\n"
+         "endmodule\n"},
+        {"module foo;`uvm_info(`gfn, $sformatf("
+         "\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE |----\\n %s\","
+         "cfg.convert2string()), UVM_LOW)\n"
+         "endmodule",
+         "module foo;\n"
+         "  `uvm_info(\n"
+         "      `gfn, $sformatf(\"\\n\\n\\t ----| STARTING AES MAIN SEQUENCE "
+         "|----\\n %s\", cfg.convert2string()),\n"
+         "      UVM_LOW)\n"
+         "endmodule\n"},
+        {"module x;"
+         "`uvm_fatal(`gfn, $sformatf("
+         "\"The data 0x%0h written to the signature address is formatted "
+         "incorrectly.\","
+         "signature_data))\n"
+         "endmodule",
+         "module x;\n"
+         "  `uvm_fatal(\n"
+         "      `gfn, $sformatf(\"The data 0x%0h written to the signature "
+         "address is formatted incorrectly.\",\n"
+         "                      signature_data))\n"
+         "endmodule\n"},
+        {// nested modules, three-levels
+         "module x; module y; module z;"
+         "`uvm_fatal(`gfn, $sformatf("
+         "\"The data 0x%0h written to the signature address is formatted "
+         "incorrectly.\","
+         "signature_data))\n"
+         "endmodule endmodule endmodule",
+         "module x;\n"
+         "  module y;\n"
+         "    module z;\n"
+         "      `uvm_fatal(\n"
+         "          `gfn,\n"
+         "          $sformatf(\"The data 0x%0h written to the signature "
+         "address is formatted incorrectly.\",\n"
+         "                    signature_data))\n"
+         "    endmodule\n"
+         "  endmodule\n"
+         "endmodule\n"},
+};
+
+TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases100ColumnsLimit) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 100;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  for (const auto& test_case : kNestedFunctionsTestCases100ColumnsLimit) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+static constexpr FormatterTestCase kFunctionCallsWithComments[] = {
+    {// no comments
+     "module foo;\n"
+     "`uvm_info(`gfn, \"xx\",\n"
+     "cfg.num_pulses, i, UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(`gfn, \"xx\", cfg.num_pulses, i, UVM_DEBUG)\n"
+     "endmodule\n"},
+    {// one comment
+     "module foo;\n"
+     "`uvm_info(`gfn, \"xx\",  // yy\n"
+     "cfg.num_pulses, i, UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(`gfn, \"xx\",  // yy\n"
+     "            cfg.num_pulses, i, UVM_DEBUG)\n"
+     "endmodule\n"},
+    {// two comments
+     "module foo;\n"
+     "`uvm_info(`gfn, \"xx\",  "
+     "    cfg.num_pulses, // xx\n"
+     " i, UVM_DEBUG)// uuu\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(`gfn, \"xx\", cfg.num_pulses,  // xx\n"
+     "            i, UVM_DEBUG)  // uuu\n"
+     "endmodule\n"},
+
+    {// nested function calls with comments
+     "module foo;"
+     "`uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d"
+     " pulse in channel %0d\", cfg.num_pulses, // comment\n"
+     " i), UVM_DEBUG)\n"
+     "endmodule",
+     "module foo;\n"
+     "  `uvm_info(`gfn, $sformatf(\"\\n  base_vseq: generate %0d pulse in "
+     "channel %0d\",\n"
+     "                            cfg.num_pulses,  // comment\n"
+     "                            i), UVM_DEBUG)\n"
+     "endmodule\n"},
+};
+
+TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 100;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+
+  for (const auto& test_case : kFunctionCallsWithComments) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
 
 }  // namespace
 }  // namespace formatter

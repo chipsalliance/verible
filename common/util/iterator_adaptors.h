@@ -50,6 +50,15 @@ reversed_view(T& t) {
   // in std:: when compiling with C++14 or newer.
 }
 
+// Given a const_iterator and a mutable iterator to the original mutable
+// container, return the corresponding mutable iterator (without resorting to
+// const_cast).
+template <class Iter, class ConstIter>
+Iter ConvertToMutableIterator(ConstIter const_iter, Iter base) {
+  auto cbase = ConstIter(base);
+  return base + std::distance(cbase, const_iter);
+}
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_ITERATOR_ADAPTORS_H_
