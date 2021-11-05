@@ -369,9 +369,9 @@ class LayoutFunctionIterator {
     return *this;
   }
 
-  iterator operator++() { return *this += 1; }
+  iterator& operator++() { return *this += 1; }
 
-  iterator operator--() { return *this -= 1; }
+  iterator& operator--() { return *this -= 1; }
 
   iterator operator++(int) {
     auto tmp = *this;
