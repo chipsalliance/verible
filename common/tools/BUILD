@@ -62,6 +62,7 @@ cc_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:init_command_line",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

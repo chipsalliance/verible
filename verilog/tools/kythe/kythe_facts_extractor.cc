@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/btree_map.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
@@ -295,7 +296,8 @@ KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
 
   // Create a reverse map from resolved path to referenced path.
   // All string_views reference memory owned inside 'project'.
-  std::map<absl::string_view, absl::string_view, verible::StringViewCompare>
+  absl::btree_map<absl::string_view, absl::string_view,
+                  verible::StringViewCompare>
       file_path_reverse_map;
   for (const auto& file_entry : project) {
     const VerilogSourceFile& source(*file_entry.second);
