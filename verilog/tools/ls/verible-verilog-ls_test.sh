@@ -46,16 +46,20 @@ awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN}
 # Testing a file with syntax errors: this should output some diagnostic
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://syntaxerror.sv","text":"brokenfile\n"}}}
 
-# A file with a lint error (no newline at EOF). The editing it and watching diagnostic go away
+# A file with a lint error (no newline at EOF). Then editing it and watching diagnostic go away.
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
 {"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":0,"character":0},"end":{"line":2,"character":0}}}}
 {"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}}
 {"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
 {"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://mini.sv"}}}
 
-# Symbol highlight
+# Attempt to query closed file should gracefully return an empty response.
+{"jsonrpc":"2.0", "id":12, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
+
+# Highlight, but only symbols not highlighting 'assign' non-symbol.
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://sym.sv","text":"module sym();\nassign a=1;assign b=a+1;endmodule\n"}}}
 {"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}}
+{"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}}
 
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
@@ -71,6 +75,8 @@ cat > "${JSON_EXPECTED}" <<EOF
         }
     }
   },
+
+
   {
     "json_contains": {
        "method":"textDocument/publishDiagnostics",
@@ -80,6 +86,8 @@ cat > "${JSON_EXPECTED}" <<EOF
        }
      }
   },
+
+
   {
     "json_contains": {
        "method":"textDocument/publishDiagnostics",
@@ -115,6 +123,14 @@ cat > "${JSON_EXPECTED}" <<EOF
     }
   },
   {
+    "json_contains":{
+       "id":12  ,
+       "result": []
+    }
+  },
+
+
+  {
     "json_contains": {
        "method":"textDocument/publishDiagnostics",
        "params": {
@@ -132,6 +148,14 @@ cat > "${JSON_EXPECTED}" <<EOF
         ]
     }
   },
+  {
+    "json_contains":{
+       "id":21,
+       "result": []
+    }
+  },
+
+
   {
     "json_contains": { "id":100 }
   }
