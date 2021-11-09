@@ -116,9 +116,11 @@ int main(int argc, char *argv[]) {
   // The buffer collection keeps track of all the buffers opened in the editor.
   // It registers callbacks to receive the relevant events on the dispatcher.
   BufferCollection buffers(&dispatcher);
-  verilog::BufferTrackerContainer parsed_buffers;
 
-  // Subscribe the parsed buffers to changes updating the text edit buffers
+  // The parsed buffers convert the raw text into the SystemVerilog parsed
+  // representation, basis for all high-level features we provide from it.
+  // Subscribe them to text edit updates to trigger parse.
+  verilog::BufferTrackerContainer parsed_buffers;
   buffers.SetChangeListener(parsed_buffers.GetSubscriptionCallback());
 
   // Whenever there is a new parse result ready, use that as an opportunity
