@@ -9,6 +9,9 @@ constructs that are deemed undesirable according to the implemented lint rules.
 Ideally, each lint rule should reference a passage from an authoritative style
 guide. The style linter operates on *single unpreprocessed files* in isolation.
 
+For automatic code-reviews on github, there is a [easy to integrate github
+action available][github-lint-action].
+
 The style linter excels at:
 
 *   Finding patterns in code that can be expressed in terms of syntax tree or
@@ -292,3 +295,4 @@ autofixtest.sv:3:19: Hex literal 32'h1 has less digits than expected for 32 bits
 [lint-rule-list_enum-name-style]: https://chipsalliance.github.io/verible/lint.html#enum-name-style
 [lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
 [lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
+[github-lint-action]: https://github.com/chipsalliance/verible-linter-action

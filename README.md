@@ -116,9 +116,10 @@ violations.
 
 Features:
 
-*   Style guide citations in diagnostics
-*   Rule deck configurability
-*   Waiver mechanisms: in-file, external waiver file
+ * Style guide citations in diagnostics
+ * Rule deck configurability
+ * Waiver mechanisms: in-file, external waiver file
+ * [Github SystemVerilog linter action][github-lint-action] available.
 
 Documentation:
 
@@ -135,12 +136,13 @@ editor-independent consistency.
 
 Features (various degress of work-in-progress):
 
-*   Corrects indentation
-*   Corrects inter-token spacing, with syntax context awareness
-*   Line-wrapping to a column limit
-*   Support for incremental formatting, only touched changed lines.
-*   Interactive formatting: accept or decline formatting changes
-*   Tabular alignment
+ * Corrects indentation
+ * Corrects inter-token spacing, with syntax context awareness
+ * Line-wrapping to a column limit
+ * Support for incremental formatting, only touched changed lines.
+ * Interactive formatting: accept or decline formatting changes
+ * Tabular alignment
+ * [Github SystemVerilog formatter action][github-format-action] available.
 
 <!--
 TODO(fangism): a demo GIF animation here.
@@ -207,8 +209,7 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
-[lint-rule-list_enum-name-style]: https://chipsalliance.github.io/verible/lint.html#enum-name-style
-[lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
-[lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
+[github-lint-action]: https://github.com/chipsalliance/verible-linter-action
+[github-format-action]: https://github.com/chipsalliance/verible-formatter-action
 [binary releases]: https://github.com/chipsalliance/verible/releases
 [language server protocol]: https://microsoft.github.io/language-server-protocol/
