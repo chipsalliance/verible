@@ -29,6 +29,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/violation_handler.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
@@ -157,33 +158,33 @@ int main(int argc, char** argv) {
               << autofix_mode << std::endl;
   }
 
-  const verilog::ViolationFixer::AnswerChooser applyAllFixes =
+  const verible::ViolationFixer::AnswerChooser applyAllFixes =
       [](const verible::LintViolation&,
-         absl::string_view) -> verilog::ViolationFixer::Answer {
-    return {verilog::ViolationFixer::AnswerChoice::kApplyAll, 0};
+         absl::string_view) -> verible::ViolationFixer::Answer {
+    return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
 
-  std::unique_ptr<verilog::ViolationHandler> violation_handler;
+  std::unique_ptr<verible::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
-      violation_handler.reset(new verilog::ViolationPrinter(&std::cerr));
+      violation_handler.reset(new verible::ViolationPrinter(&std::cerr));
       break;
     case AutofixMode::kPatchInteractive:
       CHECK(autofix_output_stream);
       violation_handler.reset(
-          new verilog::ViolationFixer(&std::cerr, autofix_output_stream));
+          new verible::ViolationFixer(&std::cerr, autofix_output_stream));
       break;
     case AutofixMode::kPatch:
       CHECK(autofix_output_stream);
-      violation_handler.reset(new verilog::ViolationFixer(
+      violation_handler.reset(new verible::ViolationFixer(
           &std::cerr, autofix_output_stream, applyAllFixes));
       break;
     case AutofixMode::kInplaceInteractive:
-      violation_handler.reset(new verilog::ViolationFixer(&std::cerr, nullptr));
+      violation_handler.reset(new verible::ViolationFixer(&std::cerr, nullptr));
       break;
     case AutofixMode::kInplace:
       violation_handler.reset(
-          new verilog::ViolationFixer(&std::cerr, nullptr, applyAllFixes));
+          new verible::ViolationFixer(&std::cerr, nullptr, applyAllFixes));
       break;
   }
 

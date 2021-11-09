@@ -34,6 +34,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/violation_handler.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
@@ -47,6 +48,8 @@ namespace {
 
 using ::testing::EndsWith;
 using ::testing::StartsWith;
+using verible::ViolationFixer;
+using verible::ViolationPrinter;
 using verible::file::GetContents;
 using verible::file::testing::ScopedTestFile;
 
@@ -70,7 +73,7 @@ class LintOneFileTest : public DefaultLinterConfigTestFixture,
 // Tests that nonexistent file is handled as a fatal error.
 TEST_F(LintOneFileTest, FileNotFound) {
   std::ostringstream output;
-  verilog::ViolationPrinter violation_printer(&output);
+  ViolationPrinter violation_printer(&output);
   const int exit_code =
       LintOneFile(&output, "FileNotFound.sv", config_, &violation_printer, true,
                   false, false, false);
@@ -89,7 +92,7 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -98,7 +101,7 @@ TEST_F(LintOneFileTest, LintCleanFiles) {
     }
     {  // enable additional error context printing
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, true);
@@ -119,7 +122,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {  // continue even with syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -128,7 +131,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // continue even with syntax error with additional error context
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, true);
@@ -137,7 +140,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // abort on syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, true, false, false);
@@ -146,7 +149,7 @@ TEST_F(LintOneFileTest, SyntaxError) {
     }
     {  // ignore syntax error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, false, false, false, false);
@@ -166,7 +169,7 @@ TEST_F(LintOneFileTest, LintError) {
     const ScopedTestFile temp_file(testing::TempDir(), test_code);
     {  // continue even with lint error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, false, false);
@@ -175,7 +178,7 @@ TEST_F(LintOneFileTest, LintError) {
     }
     {  // abort on lint error
       std::ostringstream output;
-      verilog::ViolationPrinter violation_printer(&output);
+      ViolationPrinter violation_printer(&output);
       const int exit_code =
           LintOneFile(&output, temp_file.filename(), config_,
                       &violation_printer, true, false, true, false);
@@ -223,7 +226,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
         VerilogLintTextStructure(filename, config_, text_structure);
     verilog::ViolationPrinter violation_printer(&diagnostics);
-    const std::set<LintViolationWithStatus> violations =
+    const std::set<verible::LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
     violation_printer.HandleViolations(violations, text_structure.Contents(),
                                        filename);
@@ -460,7 +463,7 @@ class ViolationFixerTest : public testing::Test {
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
         VerilogLintTextStructure(temp_file.filename(), config_, text_structure);
 
-    const std::set<LintViolationWithStatus> violations =
+    const std::set<verible::LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
     violation_fixer.HandleViolations(violations, text_structure.Contents(),
                                      temp_file.filename());
@@ -517,8 +520,7 @@ class ViolationFixerTest : public testing::Test {
       choice_it = choices.begin();
       // intentionally unopened, diagnostics are discarded
       std::ofstream diagnostics;
-      verilog::ViolationFixer violation_fixer(&diagnostics, nullptr,
-                                              answer_chooser);
+      ViolationFixer violation_fixer(&diagnostics, nullptr, answer_chooser);
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
@@ -548,8 +550,7 @@ class ViolationFixerTest : public testing::Test {
       // intentionally unopened, diagnostics are discarded
       std::ofstream diagnostics;
       std::ostringstream patch;
-      verilog::ViolationFixer violation_fixer(&diagnostics, &patch,
-                                              answer_chooser);
+      ViolationFixer violation_fixer(&diagnostics, &patch, answer_chooser);
       std::vector<std::string> fixed_sources(input_sources.size());
 
       for (size_t i = 0; i < input_sources.size(); ++i) {

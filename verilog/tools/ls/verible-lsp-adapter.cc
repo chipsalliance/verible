@@ -28,7 +28,7 @@
 namespace verilog {
 // Convert our representation of a linter violation to a LSP-Diagnostic
 static verible::lsp::Diagnostic ViolationToDiagnostic(
-    const verilog::LintViolationWithStatus &v,
+    const verible::LintViolationWithStatus &v,
     const verible::TextStructureView &text) {
   const verible::LintViolation &violation = *v.violation;
   const verible::LineColumnRange range = text.GetRangeForToken(violation.token);

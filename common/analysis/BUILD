@@ -9,6 +9,7 @@ package(
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
         "//verilog/tools/kythe:__pkg__",
+        "//verilog/tools/lint:__subpackages__",
     ],
 )
 
@@ -82,6 +83,20 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
+)
+
+cc_library(
+    name = "violation_handler",
+    srcs = ["violation_handler.cc"],
+    hdrs = ["violation_handler.h"],
+    deps = [
+        ":lint_rule_status",
+        "//common/strings:diff",
+        "//common/util:file_util",
+        "//common/util:user_interaction",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ]
 )
 
 cc_test(
