@@ -1508,11 +1508,11 @@ static std::vector<AlignablePartitionGroup> AlignDistItems(
       &IgnoreCommentsAndPreprocessingDirectives, full_range, vstyle);
 }
 
-void TabularAlignTokenPartitions(TokenPartitionTree* partition_ptr,
-                                 std::vector<PreFormatToken>* ftokens,
+void TabularAlignTokenPartitions(const FormatStyle& style,
                                  absl::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
-                                 const FormatStyle& style) {
+                                 TokenPartitionTree* partition_ptr,
+                                 std::vector<PreFormatToken>* ftokens) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();

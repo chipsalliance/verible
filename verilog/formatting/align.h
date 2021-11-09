@@ -32,10 +32,10 @@ namespace formatter {
 // of being able to modify inter-token spacing.
 // TODO(fangism): pass in disabled formatting ranges
 void TabularAlignTokenPartitions(
-    verible::TokenPartitionTree* partition_ptr,
-    std::vector<verible::PreFormatToken>* ftokens, absl::string_view full_text,
+    const FormatStyle& style, absl::string_view full_text,
     const verible::ByteOffsetSet& disabled_byte_ranges,
-    const FormatStyle& style);
+    verible::TokenPartitionTree* partition_ptr,
+    std::vector<verible::PreFormatToken>* ftokens);
 
 }  // namespace formatter
 }  // namespace verilog

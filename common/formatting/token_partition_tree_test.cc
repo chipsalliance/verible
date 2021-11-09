@@ -1386,7 +1386,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoArguments) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   // Check tree structure
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
@@ -1429,7 +1429,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartition) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1475,7 +1475,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartitionAndTrailer) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1512,7 +1512,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlat) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1555,7 +1555,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlatAndTrailer) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1605,7 +1605,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoArguments) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1660,7 +1660,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoArgumentsAndTrailer) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1723,7 +1723,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePartition) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1787,7 +1787,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePartitionWithTrailer) {
   };
 
   verible::BasicFormatStyle style;  // default
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1859,7 +1859,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoPartitions) {
 
   verible::BasicFormatStyle style;  // default
   style.column_limit = 14;
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -1935,7 +1935,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoPartitionsWithTrailer) {
 
   verible::BasicFormatStyle style;  // default
   style.column_limit = 14;
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2005,7 +2005,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
       tree_type{arg5, tree_type{arg5}},
   };
 
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2071,7 +2071,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFitsWithTrailer) {
       tree_type{trailer, tree_type{trailer}},
   };
 
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2148,7 +2148,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartition) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2215,7 +2215,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartitionWithTrailer) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2298,7 +2298,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2387,7 +2387,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitionsWithTrailer) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2468,7 +2468,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePerLine) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2566,7 +2566,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePerLineWithTrailer) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2663,7 +2663,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, AvoidExceedingColumnLimit) {
   };
 
   auto saved_tree(tree);
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2778,7 +2778,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
       tree_type{arg6, tree_type{arg6}},
   };
 
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2876,7 +2876,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
                                     tree_type{arg6},
                                 }};
 
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
@@ -2960,7 +2960,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
 
   verible::BasicFormatStyle style;
   style.column_limit = 56;
-  ReshapeFittingSubpartitions(&tree, style);
+  ReshapeFittingSubpartitions(style, &tree);
 
   const auto diff = DeepEqual(tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
