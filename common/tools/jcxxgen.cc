@@ -23,6 +23,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -148,7 +149,7 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
 
 // Validate types and return if successful.
 static bool ValidateTypes(ObjectTypeVector *object_types) {
-  std::unordered_map<std::string, ObjectType *> typeByName;
+  absl::flat_hash_map<std::string, ObjectType *> typeByName;
 
   for (auto &obj : *object_types) {
     // We only insert types as they come, so that we can make sure they are
@@ -186,7 +187,7 @@ static bool ValidateTypes(ObjectTypeVector *object_types) {
 
     // Validate that we don't have properties with the same name twice in
     // one class (including superclasses)
-    std::unordered_map<std::string, const Property *> my_property_names;
+    absl::flat_hash_map<std::string, const Property *> my_property_names;
     for (const auto &p : obj->properties) {
       auto inserted = my_property_names.insert({p.name, &p});
       if (inserted.second) continue;

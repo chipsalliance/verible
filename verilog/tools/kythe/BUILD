@@ -93,6 +93,7 @@ cc_library(
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/container:btree",
     ],
 )
 
