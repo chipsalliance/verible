@@ -714,8 +714,8 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 //
 // When "subpartitions" group has kAlwaysExpand policy, line break is forced
 // between each subpartition from the group.
-void ReshapeFittingSubpartitions(TokenPartitionTree* node,
-                                 const BasicFormatStyle& style) {
+void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
+                                 TokenPartitionTree* node) {
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
   VectorTree<TokenPartitionTreeWrapper>* fitted_tree = nullptr;
 

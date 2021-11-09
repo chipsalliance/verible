@@ -236,8 +236,8 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf);
 //     { (>>>>>>[type_f ffff ) ;]) }
 //   }
 // }
-void ReshapeFittingSubpartitions(TokenPartitionTree* node,
-                                 const verible::BasicFormatStyle& style);
+void ReshapeFittingSubpartitions(const verible::BasicFormatStyle& style,
+                                 TokenPartitionTree* node);
 
 }  // namespace verible
 

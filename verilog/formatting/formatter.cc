@@ -446,10 +446,10 @@ static void DeterminePartitionExpansion(
 
 // Produce a worklist of independently formattable UnwrappedLines.
 static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
+    const FormatStyle& style, absl::string_view full_text,
+    const ByteOffsetSet& disabled_ranges,
     const TokenPartitionTree& format_tokens_partitions,
-    std::vector<verible::PreFormatToken>* preformatted_tokens,
-    absl::string_view full_text, const ByteOffsetSet& disabled_ranges,
-    const FormatStyle& style) {
+    std::vector<verible::PreFormatToken>* preformatted_tokens) {
   // Initialize a tree view that treats partitions as fully-expanded.
   ExpandableTreeView<UnwrappedLine> format_tokens_partition_view(
       format_tokens_partitions);
@@ -746,7 +746,7 @@ Status Formatter::Format(const ExecutionControl& control) {
       switch (partition_policy) {
         case PartitionPolicyEnum::kAppendFittingSubPartitions:
           // Reshape partition tree with kAppendFittingSubPartitions policy
-          verible::ReshapeFittingSubpartitions(&node, style_);
+          verible::ReshapeFittingSubpartitions(style_, &node);
           break;
         case PartitionPolicyEnum::kOptimalFunctionCallLayout:
           verible::OptimizeTokenPartitionTree(
@@ -756,9 +756,9 @@ Status Formatter::Format(const ExecutionControl& control) {
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
           // but leave partitioning intact.
           // This relies on inter-token spacing having already been annotated.
-          TabularAlignTokenPartitions(&node,
-                                      &unwrapper_data.preformatted_tokens,
-                                      full_text, disabled_ranges_, style_);
+          TabularAlignTokenPartitions(style_, full_text, disabled_ranges_,
+                                      &node,
+                                      &unwrapper_data.preformatted_tokens);
           break;
         default:
           break;
@@ -768,8 +768,8 @@ Status Formatter::Format(const ExecutionControl& control) {
 
   // Produce sequence of independently operable UnwrappedLines.
   const auto unwrapped_lines = MakeUnwrappedLinesWorklist(
-      *format_tokens_partitions, &unwrapper_data.preformatted_tokens, full_text,
-      disabled_ranges_, style_);
+      style_, full_text, disabled_ranges_, *format_tokens_partitions,
+      &unwrapper_data.preformatted_tokens);
 
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written
