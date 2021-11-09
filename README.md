@@ -116,9 +116,10 @@ violations.
 
 Features:
 
-*   Style guide citations in diagnostics
-*   Rule deck configurability
-*   Waiver mechanisms: in-file, external waiver file
+ * Style guide citations in diagnostics
+ * Rule deck configurability
+ * Waiver mechanisms: in-file, external waiver file
+ * [Github SystemVerilog linter action][github-lint-action] available.
 
 Documentation:
 
@@ -207,8 +208,6 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [bazel]: https://bazel.build/
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
-[lint-rule-list_enum-name-style]: https://chipsalliance.github.io/verible/lint.html#enum-name-style
-[lint-rule-list_line-length]: https://chipsalliance.github.io/verible/lint.html#line-length
-[lint-rule-list_no-tabs]: https://chipsalliance.github.io/verible/lint.html#no-tabs
+[github-lint-action]: https://github.com/chipsalliance/verible-linter-action
 [binary releases]: https://github.com/chipsalliance/verible/releases
 [language server protocol]: https://microsoft.github.io/language-server-protocol/
