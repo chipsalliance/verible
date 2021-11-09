@@ -136,12 +136,13 @@ editor-independent consistency.
 
 Features (various degress of work-in-progress):
 
-*   Corrects indentation
-*   Corrects inter-token spacing, with syntax context awareness
-*   Line-wrapping to a column limit
-*   Support for incremental formatting, only touched changed lines.
-*   Interactive formatting: accept or decline formatting changes
-*   Tabular alignment
+ * Corrects indentation
+ * Corrects inter-token spacing, with syntax context awareness
+ * Line-wrapping to a column limit
+ * Support for incremental formatting, only touched changed lines.
+ * Interactive formatting: accept or decline formatting changes
+ * Tabular alignment
+ * [Github SystemVerilog formatter action][github-format-action] available.
 
 <!--
 TODO(fangism): a demo GIF animation here.
@@ -209,5 +210,6 @@ abstract syntax tree (AST). If you are interested in collaborating, contact us.
 [SV-LRM]: https://ieeexplore.ieee.org/document/8299595
 [lint-rule-list]: https://chipsalliance.github.io/verible/lint.html
 [github-lint-action]: https://github.com/chipsalliance/verible-linter-action
+[github-format-action]: https://github.com/chipsalliance/verible-formatter-action
 [binary releases]: https://github.com/chipsalliance/verible/releases
 [language server protocol]: https://microsoft.github.io/language-server-protocol/

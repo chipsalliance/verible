@@ -7,6 +7,9 @@ freshness: { owner: 'hzeller' reviewed: '2020-10-07' }
 `verible-verilog-format` is the SystemVerilog formatter tool. You can can
 get a full set of avilable flags using the `--helpfull` flag.
 
+For automatic formatting suggestions on github pull requests, there is a
+[easy to integrate github action available][github-format-action].
+
 ## Usage
 
 ```
@@ -364,3 +367,5 @@ If the formatter crashes for any other reason, it will leave the original file
 intact. The formatter does not attempt to open any file for writing in-place
 until all formatting calculations have been done and internal verifications
 pass.
+
+[github-format-action]: https://github.com/chipsalliance/verible-formatter-action
