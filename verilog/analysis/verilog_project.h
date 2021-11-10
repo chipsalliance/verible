@@ -160,6 +160,13 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
       : VerilogSourceFile(filename, filename, corpus),
         contents_for_open_(contents) {}
 
+  InMemoryVerilogSourceFile(absl::string_view referenced_filename,
+                            absl::string_view resolved_filename,
+                            absl::string_view contents,
+                            absl::string_view corpus)
+      : VerilogSourceFile(referenced_filename, resolved_filename, corpus),
+        contents_for_open_(contents) {}
+
   // Load text into analyzer structure without actually opening a file.
   absl::Status Open() override;
 
@@ -247,7 +254,7 @@ class VerilogProject {
       absl::string_view referenced_filename);
 
   // Adds an already opened file by directly passing its content.
-  void AddVirtualFile(absl::string_view referenced_filename,
+  void AddVirtualFile(absl::string_view resolved_filename,
                       absl::string_view content);
 
   // Returns a collection of non-ok diagnostics for the entire project.
@@ -310,9 +317,25 @@ class VerilogProject {
       buffer_to_analyzer_map_;
 };
 
-// Reads in a list of files line-by-line from 'file_list_file'.
-absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
+// File list for compiling a System Verilog project.
+struct FileList {
+  // Ordered list of files to compile.
+  std::vector<std::string> file_paths;
+  // Directories where to search for the included files.
+  std::vector<std::string> include_dirs;
+  // Path to the file list.
+  std::string file_list_path;
+};
+
+// Reads in a list of files line-by-line from 'file_list_file'. The include
+// directories are prefixed by "+incdir+"
+absl::StatusOr<FileList> ParseSourceFileListFromFile(
     absl::string_view file_list_file);
+
+// Reads in a list of files line-by-line from the given string. The include
+// directories are prefixed by "+incdir+"
+FileList ParseSourceFileList(absl::string_view file_list_path,
+                             const std::string& file_list_content);
 
 }  // namespace verilog
 

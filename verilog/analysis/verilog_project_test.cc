@@ -446,6 +446,53 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
             nullptr);
 }
 
+TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, "srcs");
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  VerilogProject project(sources_dir, {includes_dir});
+
+  constexpr absl::string_view text("`define FOO 1\n");
+  const std::string basename = "virtual_include_file1";
+  const std::string full_path = JoinPath(includes_dir, basename);
+  // The virtual file is added by its full path. But th include is opened by the
+  // basename.
+  project.AddVirtualFile(full_path, text);
+
+  const auto status_or_file = project.OpenIncludedFile(basename);
+  VerilogSourceFile* verilog_source_file = *status_or_file;
+  EXPECT_TRUE(verilog_source_file->Status().ok());
+  EXPECT_EQ(verilog_source_file->ReferencedPath(), basename);
+  EXPECT_EQ(verilog_source_file->ResolvedPath(), full_path);
+  EXPECT_EQ(project.LookupRegisteredFile(basename), verilog_source_file);
+  {  // const-lookup overload
+    const VerilogProject& cproject(project);
+    EXPECT_EQ(cproject.LookupRegisteredFile(Basename(full_path)),
+              verilog_source_file);
+  }
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
+
+  // Re-opening same file, changes nothing
+  {
+    const auto status_or_file2 = project.OpenIncludedFile(basename);
+    VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+    EXPECT_EQ(verilog_source_file2, verilog_source_file);
+    EXPECT_TRUE(verilog_source_file2->Status().ok());
+  }
+
+  // includes aren't required to be parse-able, so just open
+  EXPECT_TRUE(verilog_source_file->Open().ok());
+  EXPECT_EQ(verilog_source_file->GetTextStructure()->SyntaxTree().get(),
+            nullptr);
+
+  // re-opening the file changes nothing
+  EXPECT_TRUE(verilog_source_file->Open().ok());
+  EXPECT_EQ(verilog_source_file->GetTextStructure()->SyntaxTree().get(),
+            nullptr);
+}
+
 TEST(VerilogProjectTest, TranslationUnitNotFound) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");

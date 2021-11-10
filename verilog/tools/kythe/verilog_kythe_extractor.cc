@@ -155,10 +155,6 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
 )");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  // List of the directories for where to look for included files.
-  const std::vector<std::string> include_dir_paths =
-      absl::GetFlag(FLAGS_include_dir_paths);
-
   const std::string file_list_path = absl::GetFlag(FLAGS_file_list_path);
   if (file_list_path.empty()) {
     LOG(ERROR) << "No file list path was specified";
@@ -167,20 +163,26 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
   // Load file list.
-  const auto files_names_or_status(
-      verilog::ParseSourceFileListFromFile(file_list_path));
-  if (!files_names_or_status.ok()) {
+  const auto file_list_or(verilog::ParseSourceFileListFromFile(file_list_path));
+  if (!file_list_or.ok()) {
     LOG(ERROR) << "Error while reading file list: "
-               << files_names_or_status.status().message();
+               << file_list_or.status().message();
     return 1;
   }
-  const std::vector<std::string>& files_names(*files_names_or_status);
+  const std::vector<std::string>& file_paths(file_list_or->file_paths);
 
+  // List of the directories for where to look for included files.
+  std::vector<std::string> include_dir_paths =
+      absl::GetFlag(FLAGS_include_dir_paths);
+  // Merge the include dirs from the file list.
+  include_dir_paths.insert(include_dir_paths.end(),
+                           file_list_or->include_dirs.begin(),
+                           file_list_or->include_dirs.end());
   verilog::VerilogProject project(file_list_root, include_dir_paths);
 
   const std::vector<absl::Status> errors(
       verilog::kythe::ExtractTranslationUnits(file_list_path, &project,
-                                              files_names));
+                                              file_paths));
   if (!errors.empty()) {
     LOG(ERROR) << "Encountered some issues while indexing files (could result "
                   "in missing indexing data):"

@@ -58,21 +58,15 @@ using verible::SubcommandEntry;
 // invocation.
 // TODO: refactor for re-use in verilog/tools/kythe/verilog_kythe_extractor.cc
 struct VerilogProjectConfig {
-  // See --include_dir_paths above.
-  std::vector<std::string> include_dir_paths;
-  // See --file_list_path above.
-  std::string file_list_path;
+  verilog::FileList file_list;
   // See --file_list_root above.
   std::string file_list_root;
 
-  // Not a flag, but loaded from file_list_path.
-  std::vector<std::string> files_names;
-
   absl::Status LoadFromGlobalFlags() {
-    include_dir_paths = absl::GetFlag(FLAGS_include_dir_paths);
+    file_list.include_dirs = absl::GetFlag(FLAGS_include_dir_paths);
 
-    file_list_path = absl::GetFlag(FLAGS_file_list_path);
-    if (file_list_path.empty()) {
+    file_list.file_list_path = absl::GetFlag(FLAGS_file_list_path);
+    if (file_list.file_list_path.empty()) {
       return absl::InvalidArgumentError(
           "--file_list_path is required but missing.");
     }
@@ -80,10 +74,10 @@ struct VerilogProjectConfig {
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
     // Load file list.
-    auto files_names_or_status(
-        verilog::ParseSourceFileListFromFile(file_list_path));
-    if (!files_names_or_status.ok()) return files_names_or_status.status();
-    files_names = std::move(*files_names_or_status);
+    auto file_list_or(
+        verilog::ParseSourceFileListFromFile(file_list.file_list_path));
+    if (!file_list_or.ok()) return file_list_or.status();
+    file_list = std::move(*file_list_or);
 
     return absl::OkStatus();
   }
@@ -116,8 +110,8 @@ struct ProjectSymbols {
     // Load all source files first.
     // Error-out early if any files failed to open.
     project = absl::make_unique<verilog::VerilogProject>(
-        config.file_list_root, config.include_dir_paths);
-    for (const auto& file : config.files_names) {
+        config.file_list_root, config.file_list.include_dirs);
+    for (const auto& file : config.file_list.file_paths) {
       const auto open_status = project->OpenTranslationUnit(file);
       if (!open_status.ok()) return open_status.status();
     }
@@ -132,7 +126,7 @@ struct ProjectSymbols {
     VLOG(1) << __FUNCTION__;
     // For now, ingest files in the order they were listed.
     // Without conflicting definitions in files, this order should not matter.
-    for (const auto& file : config.files_names) {
+    for (const auto& file : config.file_list.file_paths) {
       symbol_table->BuildSingleTranslationUnit(file, build_statuses);
     }
   }

@@ -22,6 +22,8 @@
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/strip.h"
 #include "absl/strings/str_join.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
@@ -195,11 +197,22 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   return inserted.first->second->Status();
 }
 
-void VerilogProject::AddVirtualFile(absl::string_view referenced_filename,
+void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
                                     absl::string_view content) {
+  std::string referenced_filename(resolved_filename);
+  // Make the virtual file relative to the include directory.
+  for (absl::string_view include_path : include_paths_) {
+    if (absl::StartsWith(resolved_filename, include_path)) {
+      referenced_filename =
+          absl::StripPrefix(resolved_filename, absl::StrCat(include_path, "/"));
+      break;
+    }
+  }
+
   const auto inserted = files_.emplace(
-      referenced_filename, absl::make_unique<InMemoryVerilogSourceFile>(
-                               referenced_filename, content));
+      referenced_filename,
+      absl::make_unique<InMemoryVerilogSourceFile>(
+          referenced_filename, resolved_filename, content, /*corpus=*/""));
   CHECK(inserted.second);
   const auto file_iter = inserted.first;
 
@@ -240,23 +253,41 @@ const VerilogSourceFile* VerilogProject::LookupFileOrigin(
   return file;
 }
 
-absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
+FileList ParseSourceFileList(absl::string_view file_list_path,
+                             const std::string& file_list_content) {
+  constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
+  FileList file_list_out;
+  file_list_out.file_list_path = file_list_path;
+  file_list_out.include_dirs.push_back(".");
+  std::string file_path;
+  std::istringstream stream(file_list_content);
+  while (std::getline(stream, file_path)) {
+    absl::RemoveExtraAsciiWhitespace(&file_path);
+    // Ignore blank lines
+    if (file_path.empty()) continue;
+    // Ignore "# ..." comments
+    if (file_path.front() == '#') continue;
+    // Ignore "// ..." comments
+    if (absl::StartsWith(file_path, "//")) continue;
+
+    if (absl::StartsWith(file_path, kIncludeDirPrefix)) {
+      // Handle includes
+      file_list_out.include_dirs.emplace_back(
+          absl::StripPrefix(file_path, kIncludeDirPrefix));
+    } else {
+      // A regular file
+      file_list_out.file_paths.push_back(file_path);
+    }
+  }
+  return file_list_out;
+}
+
+absl::StatusOr<FileList> ParseSourceFileListFromFile(
     absl::string_view file_list_file) {
   std::string content;
   const auto read_status = verible::file::GetContents(file_list_file, &content);
   if (!read_status.ok()) return read_status;
-
-  std::vector<std::string> files_names;
-  std::string filename;
-  std::istringstream stream(content);
-  while (std::getline(stream, filename)) {
-    // Ignore blank lines and "# ..." comments
-    if (filename.empty()) continue;
-    if (filename.front() == '#') continue;
-    absl::RemoveExtraAsciiWhitespace(&filename);
-    files_names.push_back(filename);
-  }
-  return files_names;
+  return ParseSourceFileList(file_list_file, content);
 }
 
 }  // namespace verilog
