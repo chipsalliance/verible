@@ -203,8 +203,8 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
   // Make the virtual file relative to the include directory.
   for (absl::string_view include_path : include_paths_) {
     if (absl::StartsWith(resolved_filename, include_path)) {
-      referenced_filename =
-          absl::StripPrefix(resolved_filename, absl::StrCat(include_path, "/"));
+      referenced_filename = std::string(absl::StripPrefix(
+          resolved_filename, absl::StrCat(include_path, "/")));
       break;
     }
   }

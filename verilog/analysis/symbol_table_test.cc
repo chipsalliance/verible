@@ -8779,7 +8779,8 @@ TEST(ParseSourceFileListFromFileTest, VariousValidFiles) {
     const auto files_or_status(
         ParseSourceFileListFromFile(test_file.filename()));
     ASSERT_TRUE(files_or_status.ok()) << files_or_status.status().message();
-    EXPECT_THAT(*files_or_status, ElementsAreArray(test.expected_files))
+    EXPECT_THAT(files_or_status->file_paths,
+                ElementsAreArray(test.expected_files))
         << "input: " << test.contents;
   }
 }
