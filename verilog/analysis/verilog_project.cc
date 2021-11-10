@@ -257,7 +257,7 @@ FileList ParseSourceFileList(absl::string_view file_list_path,
                              const std::string& file_list_content) {
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
   FileList file_list_out;
-  file_list_out.file_list_path = file_list_path;
+  file_list_out.file_list_path = std::string(file_list_path);
   file_list_out.include_dirs.push_back(".");
   std::string file_path;
   std::istringstream stream(file_list_content);
