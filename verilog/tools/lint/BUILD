@@ -226,11 +226,11 @@ cc_binary(
     srcs = ["verilog_lint.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//common/analysis:violation_handler",
         "//common/util:enum_flags",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
-        "//common/analysis:violation_handler",
         "//verilog/analysis:verilog_linter",
         "//verilog/analysis:verilog_linter_configuration",
         "@com_google_absl//absl/flags:flag",

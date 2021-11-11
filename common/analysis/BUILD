@@ -96,7 +96,7 @@ cc_library(
         "//common/util:user_interaction",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-    ]
+    ],
 )
 
 cc_test(
