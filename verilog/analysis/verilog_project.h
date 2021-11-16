@@ -23,6 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include "common/strings/string_memory_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -160,13 +161,6 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
       : VerilogSourceFile(filename, filename, corpus),
         contents_for_open_(contents) {}
 
-  InMemoryVerilogSourceFile(absl::string_view referenced_filename,
-                            absl::string_view resolved_filename,
-                            absl::string_view contents,
-                            absl::string_view corpus)
-      : VerilogSourceFile(referenced_filename, resolved_filename, corpus),
-        contents_for_open_(contents) {}
-
   // Load text into analyzer structure without actually opening a file.
   absl::Status Open() override;
 
@@ -263,17 +257,13 @@ class VerilogProject {
   // Returns a previously referenced file, or else nullptr.
   VerilogSourceFile* LookupRegisteredFile(
       absl::string_view referenced_filename) {
-    const auto found = files_.find(referenced_filename);
-    if (found == files_.end()) return nullptr;
-    return found->second.get();
+    return LookupRegisteredFileInternal(referenced_filename);
   }
 
   // Non-modifying variant of lookup.
   const VerilogSourceFile* LookupRegisteredFile(
       absl::string_view referenced_filename) const {
-    const auto found = files_.find(referenced_filename);
-    if (found == files_.end()) return nullptr;
-    return found->second.get();
+    return LookupRegisteredFileInternal(referenced_filename);
   }
 
   // Find the source file that a particular string_view came from.
@@ -289,6 +279,15 @@ class VerilogProject {
   // Error status factory, when include file is not found.
   absl::Status IncludeFileNotFoundError(
       absl::string_view referenced_filename) const;
+
+  // Returns a previously referenced file, or else nullptr.
+  VerilogSourceFile* LookupRegisteredFileInternal(
+      absl::string_view referenced_filename) const;
+
+  // Returns the opened file or parse/not found error. If the file is not
+  // opened, returns nullopt.
+  absl::optional<absl::StatusOr<VerilogSourceFile*>> FindOpenedFile(
+      absl::string_view filename) const;
 
   // The path from which top-level translation units are referenced relatively
   // (often from a file list).  This path can be relative or absolute.
