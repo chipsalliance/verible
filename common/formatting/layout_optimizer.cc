@@ -37,90 +37,14 @@ void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
                                 TokenPartitionTree* node,
                                 std::vector<PreFormatToken>* ftokens) {
   CHECK_NOTNULL(node);
+  CHECK_NOTNULL(ftokens);
 
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
+
+  const auto optimizer = TokenPartitionsLayoutOptimizer(style);
   const auto indentation = node->Value().IndentationSpaces();
+  optimizer.Optimize(indentation, node, ftokens);
 
-  LayoutFunctionFactory factory(style);
-
-  const std::function<LayoutFunction(const TokenPartitionTree&)> TraverseTree =
-      [&TraverseTree, &style, &factory](const TokenPartitionTree& subnode) {
-        const auto policy = subnode.Value().PartitionPolicy();
-
-        if (subnode.is_leaf()) {
-          return factory.Line(subnode.Value());
-        }
-
-        switch (policy) {
-          case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
-            // Support only function/macro/system calls for now
-            CHECK_EQ(subnode.Children().size(), 2);
-
-            const auto& function_header = subnode.Children()[0];
-            const auto& function_args = subnode.Children()[1];
-
-            auto header = TraverseTree(function_header);
-            auto args = TraverseTree(function_args);
-
-            auto stack_layout = factory.Stack({
-                header,
-                factory.Indent(args, style.wrap_spaces),
-            });
-            if (args.MustWrap()) {
-              return stack_layout;
-            }
-            auto juxtaposed_layout = factory.Juxtaposition({
-                header,
-                args,
-            });
-            return factory.Choice({
-                std::move(juxtaposed_layout),
-                std::move(stack_layout),
-            });
-          }
-
-          case PartitionPolicyEnum::kAppendFittingSubPartitions:
-          case PartitionPolicyEnum::kFitOnLineElseExpand: {
-            absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
-            std::transform(subnode.Children().begin(), subnode.Children().end(),
-                           layouts.begin(), TraverseTree);
-            return factory.Wrap(layouts.begin(), layouts.end());
-          }
-
-          case PartitionPolicyEnum::kAlwaysExpand:
-          case PartitionPolicyEnum::kTabularAlignment: {
-            absl::FixedArray<LayoutFunction> layouts(subnode.Children().size());
-            std::transform(subnode.Children().begin(), subnode.Children().end(),
-                           layouts.begin(), TraverseTree);
-            return factory.Stack(layouts.begin(), layouts.end());
-          }
-
-            // TODO(mglb): Think about introducing PartitionPolicies that
-            // correspond directly to combinators in LayoutFunctionFactory.
-            // kOptimalFunctionCallLayout strategy could then be implemented
-            // directly in TreeUnwrapper. It would also allow for proper
-            // handling of other policies (e.g. kTabularAlignment) in subtrees.
-
-          default: {
-            LOG(FATAL) << "Unsupported policy: " << policy << "\n"
-                       << "Node:\n"
-                       << subnode;
-            return LayoutFunction();
-          }
-        }
-      };
-
-  const LayoutFunction layout_function = TraverseTree(*node);
-  CHECK(!layout_function.empty());
-  VLOG(4) << __FUNCTION__ << ", layout function:\n" << layout_function;
-
-  auto iter = layout_function.AtOrToTheLeftOf(indentation);
-  CHECK(iter != layout_function.end());
-  VLOG(4) << __FUNCTION__ << ", layout:\n" << iter->layout;
-
-  TreeReconstructor tree_reconstructor(indentation, style);
-  tree_reconstructor.TraverseTree(iter->layout);
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(node, ftokens);
   VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
 
@@ -497,6 +421,98 @@ LayoutFunction LayoutFunctionFactory::Choice(
   } while (current_column < kInfinity);
 
   return result;
+}
+
+void TokenPartitionsLayoutOptimizer::Optimize(
+    int indentation, TokenPartitionTree* node,
+    std::vector<PreFormatToken>* ftokens) const {
+  CHECK_NOTNULL(node);
+  CHECK_NOTNULL(ftokens);
+  CHECK_GE(indentation, 0);
+
+  const LayoutFunction layout_function = CalculateOptimalLayout(*node);
+
+  CHECK(!layout_function.empty());
+  VLOG(4) << __FUNCTION__ << ", layout function:\n" << layout_function;
+
+  auto iter = layout_function.AtOrToTheLeftOf(indentation);
+  CHECK(iter != layout_function.end());
+  VLOG(4) << __FUNCTION__ << ", layout:\n" << iter->layout;
+
+  TreeReconstructor tree_reconstructor(indentation, style_);
+  tree_reconstructor.TraverseTree(iter->layout);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(node, ftokens);
+}
+
+LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
+    const TokenPartitionTree& node) const {
+  const auto policy = node.Value().PartitionPolicy();
+
+  if (node.is_leaf()) {
+    return factory_.Line(node.Value());
+  }
+
+  const auto calculate_optimal_layout_func =
+      std::bind(&TokenPartitionsLayoutOptimizer::CalculateOptimalLayout, this,
+                std::placeholders::_1);
+
+  switch (policy) {
+    case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
+      // Support only function/macro/system calls for now
+      CHECK_EQ(node.Children().size(), 2);
+
+      const auto& function_header = node.Children()[0];
+      const auto& function_args = node.Children()[1];
+
+      auto header = CalculateOptimalLayout(function_header);
+      auto args = CalculateOptimalLayout(function_args);
+
+      auto stack_layout = factory_.Stack({
+          header,
+          factory_.Indent(args, style_.wrap_spaces),
+      });
+      if (args.MustWrap()) {
+        return stack_layout;
+      }
+      auto juxtaposed_layout = factory_.Juxtaposition({
+          header,
+          args,
+      });
+      return factory_.Choice({
+          std::move(juxtaposed_layout),
+          std::move(stack_layout),
+      });
+    }
+
+    case PartitionPolicyEnum::kAppendFittingSubPartitions:
+    case PartitionPolicyEnum::kFitOnLineElseExpand: {
+      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), calculate_optimal_layout_func);
+      return factory_.Wrap(layouts.begin(), layouts.end());
+    }
+
+    case PartitionPolicyEnum::kAlwaysExpand:
+    case PartitionPolicyEnum::kTabularAlignment: {
+      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), calculate_optimal_layout_func);
+      return factory_.Stack(layouts.begin(), layouts.end());
+    }
+
+      // TODO(mglb): Think about introducing PartitionPolicies that
+      // correspond directly to combinators in LayoutFunctionFactory.
+      // kOptimalFunctionCallLayout strategy could then be implemented
+      // directly in TreeUnwrapper. It would also allow for proper
+      // handling of other policies (e.g. kTabularAlignment) in subtrees.
+
+    default: {
+      LOG(FATAL) << "Unsupported policy: " << policy << "\n"
+                 << "Node:\n"
+                 << node;
+      return LayoutFunction();
+    }
+  }
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {

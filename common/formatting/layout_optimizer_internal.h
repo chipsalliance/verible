@@ -621,6 +621,29 @@ class LayoutFunctionFactory {
   const BasicFormatStyle& style_;
 };
 
+class TokenPartitionsLayoutOptimizer {
+ public:
+  explicit TokenPartitionsLayoutOptimizer(const BasicFormatStyle& style)
+      : style_(style), factory_(style) {}
+
+  TokenPartitionsLayoutOptimizer(const TokenPartitionsLayoutOptimizer&) =
+      delete;
+  TokenPartitionsLayoutOptimizer(TokenPartitionsLayoutOptimizer&&) = delete;
+  TokenPartitionsLayoutOptimizer& operator=(
+      const TokenPartitionsLayoutOptimizer&) = delete;
+  TokenPartitionsLayoutOptimizer& operator=(TokenPartitionsLayoutOptimizer&&) =
+      delete;
+
+  void Optimize(int indentation, TokenPartitionTree* node,
+                std::vector<PreFormatToken>* ftokens) const;
+
+  LayoutFunction CalculateOptimalLayout(const TokenPartitionTree& node) const;
+
+ private:
+  const BasicFormatStyle& style_;
+  const LayoutFunctionFactory factory_;
+};
+
 class TreeReconstructor {
  public:
   TreeReconstructor(int indentation_spaces, const BasicFormatStyle& style)
