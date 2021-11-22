@@ -51,12 +51,35 @@ enum class PartitionPolicyEnum {
   // columns that use space-padding to achieve vertical alignment.
   kTabularAlignment,
 
-  // Signal that this unwrapped line has been successfully formatted with
-  // spacing added. In this case, do NOT bother to call SearchLineWraps or
-  // perform any other spacing/wrapping optimization.
-  // Reserved for setting only from policy-specific formatters, like Layout
-  // Optimizer and Tabular Aligner.
+  // Signal that this unwrapped line has been already formatted. In this case,
+  // do NOT bother to call SearchLineWraps or perform any other wrapping
+  // optimization. Partitions with this policy can contain kInline
+  // subpartitions.
+  // Reserved for policy-specific formatters, like Layout Optimizer and Tabular
+  // Aligner.
   kAlreadyFormatted,
+
+  // Represents slice of kAlreadyFormatted line.
+  //
+  // The partition replaces spacing before its first token (i.e. token's
+  // '.before.spaces_required' value) with number of spaces equal to
+  // IndentationSpaces(). When the first token is at the beginning of a line,
+  // the spacing is added to line's indentation.
+  //
+  // The policy is intended to add non-permanent spacing between tokens in
+  // situations where multiple token partition trees with different token
+  // spacings can coexist (e.g. in multiple layouts passed to Layout Optimizer).
+  //
+  // Invariants:
+  // * Can exist only inside kAlreadyFormatted partition node.
+  // * All siblings (if they exist) of kInline partition must themselves
+  //   be kInline partitions.
+  // * kInline node must be a leaf.
+  //
+  // See ApplyAlreadyFormattedPartitionPropertiesToTokens() for a code that
+  // finalizes kAlreadyFormatted partition and applies kInline spacing to
+  // tokens.
+  kInline,
 
   // Treats subpartitions as units, and appends them to the same line as
   // long as they fit, else wrap them aligned to the position of the first

@@ -26,6 +26,7 @@
 #include "common/text/tree_utils.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 #include "common/util/top_n.h"
@@ -293,6 +294,60 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
     PreserveSpacesOnDisabledTokenRanges(ftokens, ByteOffsetSet{byte_range},
                                         full_text);
   }
+}
+
+void ApplyAlreadyFormattedPartitionPropertiesToTokens(
+    TokenPartitionTree* already_formatted_partition_node,
+    std::vector<PreFormatToken>* ftokens) {
+  CHECK_NOTNULL(already_formatted_partition_node);
+  CHECK_NOTNULL(ftokens);
+
+  VLOG(4) << __FUNCTION__ << ": partition:\n"
+          << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
+
+  const auto& uwline = already_formatted_partition_node->Value();
+  CHECK_EQ(uwline.PartitionPolicy(), PartitionPolicyEnum::kAlreadyFormatted)
+      << *already_formatted_partition_node;
+  if (uwline.IsEmpty()) {
+    CHECK(already_formatted_partition_node->is_leaf());
+    return;
+  }
+
+  auto mutable_tokens_begin =
+      ConvertToMutableIterator(uwline.TokensRange().begin(), ftokens->begin());
+
+  // Might be replaced with AppendAligned in the loop below.
+  mutable_tokens_begin->before.break_decision =
+      verible::SpacingOptions::MustWrap;
+
+  for (auto& child : already_formatted_partition_node->Children()) {
+    auto slice = child.Value();
+    if (slice.PartitionPolicy() != PartitionPolicyEnum::kInline) {
+      VLOG(1) << "Partition policy is not kInline - ignoring. Parent "
+                 "partition:\n"
+              << *already_formatted_partition_node;
+      continue;
+    }
+
+    auto token = verible::ConvertToMutableIterator(slice.TokensRange().begin(),
+                                                   ftokens->begin());
+
+    token->before.spaces_required = slice.IndentationSpaces();
+    token->before.break_decision = verible::SpacingOptions::AppendAligned;
+  }
+
+  auto mutable_tokens_end =
+      ConvertToMutableIterator(uwline.TokensRange().end(), ftokens->begin());
+
+  for (auto& token : make_range(mutable_tokens_begin, mutable_tokens_end)) {
+    auto& decision = token.before.break_decision;
+    if (decision == verible::SpacingOptions::Undecided)
+      decision = verible::SpacingOptions::MustAppend;
+  }
+  // Children are no longer needed
+  already_formatted_partition_node->Children().clear();
+  VLOG(4) << __FUNCTION__ << ": partition after:\n"
+          << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
 }
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {

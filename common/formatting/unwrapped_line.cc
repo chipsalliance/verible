@@ -44,6 +44,8 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
       return stream << "tabular-alignment";
     case PartitionPolicyEnum::kAlreadyFormatted:
       return stream << "already-formatted";
+    case PartitionPolicyEnum::kInline:
+      return stream << "inline";
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
       return stream << "append-fitting-sub-partitions";
     case PartitionPolicyEnum::kOptimalFunctionCallLayout:

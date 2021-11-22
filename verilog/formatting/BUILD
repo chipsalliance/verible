@@ -155,6 +155,7 @@ cc_library(
         "//common/util:range",
         "//common/util:spacer",
         "//common/util:vector_tree",
+        "//common/util:vector_tree_iterators",
         "//verilog/CST:declaration",
         "//verilog/CST:module",
         "//verilog/analysis:verilog_analyzer",

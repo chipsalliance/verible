@@ -173,6 +173,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
+        "//common/util:iterator_adaptors",
         "//common/util:logging",
         "//common/util:spacer",
         "//common/util:top_n",

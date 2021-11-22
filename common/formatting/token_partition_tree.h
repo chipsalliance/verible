@@ -124,6 +124,14 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
                                    absl::string_view full_text,
                                    std::vector<PreFormatToken>* ftokens);
 
+// Finalizes formatting of a partition with kAlreadyFormatted policy and
+// optional kTokenModifer subpartitions.
+// Spacing described by the partitions is applied to underlying tokens. All
+// subpartitions of the passed node are removed.
+void ApplyAlreadyFormattedPartitionPropertiesToTokens(
+    TokenPartitionTree* already_formatted_partition_node,
+    std::vector<PreFormatToken>* ftokens);
+
 // Merges the two subpartitions of tree at index pos and pos+1.
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos);
 

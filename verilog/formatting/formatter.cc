@@ -41,6 +41,7 @@
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/vector_tree.h"
+#include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -60,12 +61,12 @@ using absl::StatusCode;
 using verible::ByteOffsetSet;
 using verible::ExpandableTreeView;
 using verible::LineNumberSet;
-using verible::MutableFormatTokenRange;
 using verible::PartitionPolicyEnum;
 using verible::TokenPartitionTree;
 using verible::TreeViewNodeInfo;
 using verible::UnwrappedLine;
 using verible::VectorTree;
+using verible::VectorTreeLeavesIterator;
 
 typedef VectorTree<TreeViewNodeInfo<UnwrappedLine>> partition_node_type;
 
@@ -383,10 +384,21 @@ static void DeterminePartitionExpansion(
       break;
     }
 
-    case PartitionPolicyEnum::kAlreadyFormatted:
-      VLOG(3) << "Aligned fits, un-expanding.";
+    case PartitionPolicyEnum::kAlreadyFormatted: {
+      // All partitions with this policy should be leafs at this point, which
+      // are handled above. Just in case - unexpand.
       node_view.Unexpand();
       break;
+    }
+
+    case PartitionPolicyEnum::kInline: {
+      // All partitions with this policy should be already applied and removed
+      // by calls to ApplyAlreadyFormattedPartitionPropertiesToTokens on their
+      // parent partitions.
+      LOG(FATAL) << "Unreachable. " << partition_policy;
+      break;
+    }
+
     // Try to fit kAppendFittingSubPartitions partition into single line.
     // If it doesn't fit expand to grouped nodes.
     case PartitionPolicyEnum::kAppendFittingSubPartitions: {
@@ -764,6 +776,36 @@ Status Formatter::Format(const ExecutionControl& control) {
           break;
       }
     });
+  }
+
+  // Apply token spacing from partitions to tokens. This is permanent, so it
+  // must be done after all reshaping is done.
+  {
+    auto* root = tree_unwrapper.CurrentTokenPartition();
+    auto node_iter = VectorTreeLeavesIterator(root->LeftmostDescendant());
+    const auto end = ++VectorTreeLeavesIterator(root->RightmostDescendant());
+
+    // Iterate over leaves. kAlreadyFormatted partitions are either leaves
+    // themselves or parents of leaf partitions with kInline policy.
+    for (; node_iter != end; ++node_iter) {
+      const auto partition_policy = node_iter->Value().PartitionPolicy();
+
+      if (partition_policy == PartitionPolicyEnum::kAlreadyFormatted) {
+        verible::ApplyAlreadyFormattedPartitionPropertiesToTokens(
+            &(*node_iter), &unwrapper_data.preformatted_tokens);
+      } else if (partition_policy == PartitionPolicyEnum::kInline) {
+        auto* parent = node_iter->Parent();
+        CHECK_NOTNULL(parent);
+        CHECK_EQ(parent->Value().PartitionPolicy(),
+                 PartitionPolicyEnum::kAlreadyFormatted);
+        // This removes the node pointed to by node_iter (and all other
+        // siblings)
+        verible::ApplyAlreadyFormattedPartitionPropertiesToTokens(
+            parent, &unwrapper_data.preformatted_tokens);
+        // Move to the parent which is now a leaf
+        node_iter = verible::VectorTreeLeavesIterator(parent);
+      }
+    }
   }
 
   // Produce sequence of independently operable UnwrappedLines.
