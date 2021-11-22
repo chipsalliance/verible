@@ -57,6 +57,9 @@ enum class PartitionPolicyEnum {
   // subpartitions.
   // Reserved for policy-specific formatters, like Layout Optimizer and Tabular
   // Aligner.
+  //
+  // Currently lines with this policy are generated in Tabular Aligner and
+  // Layout Optimizer. They are supported as an input in Layout Optimizer.
   kAlreadyFormatted,
 
   // Represents slice of kAlreadyFormatted line.
@@ -79,6 +82,9 @@ enum class PartitionPolicyEnum {
   // See ApplyAlreadyFormattedPartitionPropertiesToTokens() for a code that
   // finalizes kAlreadyFormatted partition and applies kInline spacing to
   // tokens.
+  //
+  // Currently partitions with this policy are generated in Tabular Aligner and
+  // Layout Optimizer. They are supported as an input in Layout Optimizer.
   kInline,
 
   // Treats subpartitions as units, and appends them to the same line as

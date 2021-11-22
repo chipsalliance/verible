@@ -38,7 +38,6 @@ namespace verible {
 
 // Handles formatting of TokenPartitionTree 'node' that uses
 // PartitionPolicyEnum::kOptimalFunctionCallLayout partition policy.
-// 'ftokens' is used to get mutable iterators to tokens of formatted partitions.
 // The function changes only tokens that are spanned by the passed partitions
 // tree.
 //
@@ -73,8 +72,7 @@ namespace verible {
 //   }
 // }
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
-                                TokenPartitionTree* node,
-                                std::vector<PreFormatToken>* ftokens);
+                                TokenPartitionTree* node);
 
 }  // namespace verible
 

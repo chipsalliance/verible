@@ -761,8 +761,7 @@ Status Formatter::Format(const ExecutionControl& control) {
           verible::ReshapeFittingSubpartitions(style_, &node);
           break;
         case PartitionPolicyEnum::kOptimalFunctionCallLayout:
-          verible::OptimizeTokenPartitionTree(
-              style_, &node, &unwrapper_data.preformatted_tokens);
+          verible::OptimizeTokenPartitionTree(style_, &node);
           break;
         case PartitionPolicyEnum::kTabularAlignment:
           // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
