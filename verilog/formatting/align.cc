@@ -52,7 +52,6 @@ using verible::ColumnSchemaScanner;
 using verible::down_cast;
 using verible::ExtractAlignmentGroupsFunction;
 using verible::FormatTokenRange;
-using verible::MutableFormatTokenRange;
 using verible::PreFormatToken;
 using verible::Symbol;
 using verible::SyntaxTreeLeaf;
@@ -1511,8 +1510,7 @@ static std::vector<AlignablePartitionGroup> AlignDistItems(
 void TabularAlignTokenPartitions(const FormatStyle& style,
                                  absl::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
-                                 TokenPartitionTree* partition_ptr,
-                                 std::vector<PreFormatToken>* ftokens) {
+                                 TokenPartitionTree* partition_ptr) {
   VLOG(1) << __FUNCTION__;
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
@@ -1555,7 +1553,7 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
 
   verible::TabularAlignTokens(style.column_limit, full_text,
                               disabled_byte_ranges, extract_alignment_groups,
-                              &partition, ftokens);
+                              &partition);
 
   VLOG(1) << "end of " << __FUNCTION__;
 }

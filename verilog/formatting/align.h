@@ -28,14 +28,11 @@ namespace formatter {
 
 // For certain Verilog language construct groups, vertically align some
 // tokens by inserting padding-spaces.
-// 'ftokens' is only used to provide a base mutable iterator for the purpose
-// of being able to modify inter-token spacing.
 // TODO(fangism): pass in disabled formatting ranges
 void TabularAlignTokenPartitions(
     const FormatStyle& style, absl::string_view full_text,
     const verible::ByteOffsetSet& disabled_byte_ranges,
-    verible::TokenPartitionTree* partition_ptr,
-    std::vector<verible::PreFormatToken>* ftokens);
+    verible::TokenPartitionTree* partition_ptr);
 
 }  // namespace formatter
 }  // namespace verilog
