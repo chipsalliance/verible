@@ -576,12 +576,13 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
       CHECK(layout_tree.Children().empty());
 
       if (current_node_ == nullptr) {
-        auto uwline = layout.ToUnwrappedLine();
-        uwline.SetIndentationSpaces(current_indentation_spaces_);
-        uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
+        auto uwline = UnwrappedLine(current_indentation_spaces_,
+                                    layout.TokensRange().begin(),
+                                    PartitionPolicyEnum::kAlreadyFormatted);
+        uwline.SpanUpToToken(layout.TokensRange().end());
         current_node_ = tree_.NewChild(uwline);
       } else {
-        const auto tokens = layout.ToUnwrappedLine().TokensRange();
+        const auto tokens = layout.TokensRange();
         CHECK(current_node_->Value().TokensRange().end() == tokens.begin());
 
         current_node_->Value().SpanUpToToken(tokens.end());

@@ -140,14 +140,11 @@ class LayoutItem {
     return len;
   }
 
-  // Returns the item as UnwrappedLine.
+  // Returns tokens range spanned by the Line item.
   // Can be called only on Line items.
-  UnwrappedLine ToUnwrappedLine() const {
+  FormatTokenRange TokensRange() const {
     CHECK_EQ(type_, LayoutType::kLine);
-
-    UnwrappedLine uwline(0, tokens_.begin());
-    uwline.SpanUpToToken(tokens_.end());
-    return uwline;
+    return tokens_;
   }
 
   friend bool operator==(const LayoutItem& lhs, const LayoutItem& rhs) {

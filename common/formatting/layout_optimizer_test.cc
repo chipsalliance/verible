@@ -317,19 +317,17 @@ TEST_F(LayoutTest, StackLayoutItemToString) {
   }
 }
 
-TEST_F(LayoutTest, AsUnwrappedLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
+TEST_F(LayoutTest, TokensRange) {
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine short_line(0, begin);
   short_line.SpanUpToToken(begin + 1);
 
   LayoutItem layout_short(short_line);
 
-  const auto uwline = layout_short.ToUnwrappedLine();
-  EXPECT_EQ(uwline.IndentationSpaces(), 0);
-  EXPECT_EQ(uwline.TokensRange().begin(), short_line.TokensRange().begin());
-  EXPECT_EQ(uwline.TokensRange().end(), short_line.TokensRange().end());
+  const auto tokens = layout_short.TokensRange();
+  EXPECT_EQ(tokens.begin(), short_line.TokensRange().begin());
+  EXPECT_EQ(tokens.end(), short_line.TokensRange().end());
 }
 
 TEST_F(LayoutTest, LineLayout) {
@@ -346,6 +344,8 @@ TEST_F(LayoutTest, LineLayout) {
     EXPECT_EQ(layout.MustWrap(), false);
     EXPECT_EQ(layout.Length(), 10);
     EXPECT_EQ(layout.Text(), "short_line");
+    EXPECT_EQ(layout.TokensRange().begin(), begin);
+    EXPECT_EQ(layout.TokensRange().end(), begin + 1);
   }
   {
     UnwrappedLine empty_line(0, begin);
@@ -357,6 +357,8 @@ TEST_F(LayoutTest, LineLayout) {
     EXPECT_EQ(layout.MustWrap(), false);
     EXPECT_EQ(layout.Length(), 0);
     EXPECT_EQ(layout.Text(), "");
+    EXPECT_EQ(layout.TokensRange().begin(), begin);
+    EXPECT_EQ(layout.TokensRange().end(), begin);
   }
 }
 
