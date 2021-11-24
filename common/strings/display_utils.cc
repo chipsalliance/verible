@@ -14,6 +14,7 @@
 
 #include "common/strings/display_utils.h"
 
+#include <iomanip>
 #include <iostream>
 
 namespace verible {
@@ -30,6 +31,48 @@ std::ostream& operator<<(std::ostream& stream, const AutoTruncate& trunc) {
   const auto tail_start = length - tail_length;
   return stream << text.substr(0, head_length) << kEllipses
                 << text.substr(tail_start, tail_length);
+}
+
+std::ostream& operator<<(std::ostream& stream, const EscapeString& vis) {
+  for (const unsigned char c : vis.text) {
+    switch (c) {
+      case '\a':
+        stream << "\\a";
+        break;
+      case '\b':
+        stream << "\\b";
+        break;
+      case '\f':
+        stream << "\\f";
+        break;
+      case '\n':
+        stream << "\\n";
+        break;
+      case '\r':
+        stream << "\\r";
+        break;
+      case '\t':
+        stream << "\\t";
+        break;
+      case '\v':
+        stream << "\\v";
+        break;
+
+      case '\\':
+      case '\'':
+      case '\"':
+        stream << "\\" << c;
+        break;
+
+      default:
+        if (c < 0x20 || c > 0x7E)
+          stream << "\\x" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<unsigned>(c);
+        else
+          stream << c;
+    }
+  }
+  return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const VisualizeWhitespace& vis) {

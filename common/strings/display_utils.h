@@ -37,6 +37,19 @@ struct AutoTruncate {
 
 std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
 
+// To help visualize strings with non-alphanumeric characters, this stream
+// adapter prints special characters escaped using C escape sequences, without
+// modifying or copying the original string.
+//
+// usage: stream << EscapeString(text);
+struct EscapeString {
+  const absl::string_view text;  // original text to be printed
+
+  explicit EscapeString(absl::string_view text) : text(text) {}
+};
+
+std::ostream& operator<<(std::ostream&, const EscapeString& vis);
+
 // To help visualize strings that consist of whitespace, this stream adapter
 // prints spaces, tabs, and newlines with alternate text, without modifying or
 // copying the original string.
