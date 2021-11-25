@@ -828,7 +828,9 @@ void Formatter::Emit(std::ostream& stream) const {
   for (const auto& line : formatted_lines_) {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
     // some of it is handled here, some of it is inside FormattedToken.
-    const auto front_offset = line.Tokens().front().token->left(full_text);
+    const auto front_offset =
+        line.Tokens().empty() ? position
+                              : line.Tokens().front().token->left(full_text);
     const absl::string_view leading_whitespace(
         full_text.substr(position, front_offset - position));
     FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
@@ -837,8 +839,10 @@ void Formatter::Emit(std::ostream& stream) const {
     // already cover the space up to the front token, in which case,
     // the left-indentation for this line should be suppressed to avoid
     // being printed twice.
-    line.FormattedText(stream, !disabled_ranges_.Contains(front_offset));
-    position = line.Tokens().back().token->right(full_text);
+    if (!line.Tokens().empty()) {
+      line.FormattedText(stream, !disabled_ranges_.Contains(front_offset));
+      position = line.Tokens().back().token->right(full_text);
+    }
   }
   // Handle trailing spaces after last token.
   const absl::string_view trailing_whitespace(full_text.substr(position));
