@@ -31,14 +31,14 @@ absl::Status ReformatMustMatch(absl::string_view original_text,
     diff_stream << formatting_diffs;
     std::ostringstream lines_stream;
     lines_stream << lines;
-    return absl::DataLossError(
-        absl::StrCat("Re-formatted text does not match formatted text; "
-                     "formatting failed to converge!  Please file a bug.\n"
-                     "Original: --lines: ",
-                     lines_stream.str(), "\n", original_text,  //
-                     "Formatted:\n", formatted_text,           //
-                     "Re-formatted:\n", reformatted_text,      //
-                     "Diffs are:\n", diff_stream.str()));
+    return absl::DataLossError(absl::StrCat(
+        "Re-formatted text does not match formatted text; "
+        "formatting failed to converge!  Please file a bug.\n"
+        "========== Original: --lines: ==========",
+        lines_stream.str(), "\n", original_text,                         //
+        "============== Formatted: ==============\n", formatted_text,    //
+        "============= Re-formatted: ============\n", reformatted_text,  //
+        "============== Diffs are: ==============\n", diff_stream.str()));
   }
   return absl::OkStatus();
 }

@@ -27,8 +27,9 @@ TEST(ReformatMustMatch, ReformatDifferent) {
       ReformatMustMatch("foo  bar ;\n", lines, "foo bar;\n", "foo  bar;\n");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kDataLoss);
-  EXPECT_TRUE(
-      absl::StrContains(status.message(), "Re-formatted:\nfoo  bar;\n"));
+  EXPECT_TRUE(absl::StrContains(status.message(),
+                                "============= Re-formatted: ============\n"
+                                "foo  bar;\n"));
 }
 
 TEST(ReformatMustMatch, ReformatSame) {
