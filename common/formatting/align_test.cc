@@ -143,8 +143,8 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
   all.SpanUpToToken(pre_format_tokens_.end());
   using tree_type = TokenPartitionTree;
   tree_type partition{all};  // no children subpartitions
-  TabularAlignTokens(&partition, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition, &pre_format_tokens_);
   // Not crashing is success.
   // Ideally, we would like to verify that partition was *not* modified
   // by making a deep copy and then checking DeepEqual, however,
@@ -228,8 +228,8 @@ class Sparse3x3MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
 };
 
 TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Sanity check: "three" (length 5) is the long-pole of the first column:
   EXPECT_EQ(pre_format_tokens_[0].before.spaces_required, tokens_[2].length());
@@ -244,8 +244,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, ZeroInterTokenPadding) {
 }
 
 TEST_F(Sparse3x3MatrixAlignmentTest, AlignmentPolicyFlushLeft) {
-  TabularAlignTokens(&partition_, kFlushLeftAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kFlushLeftAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  // minimum spaces in this example is 0
             "onetwo\n"
@@ -258,8 +258,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, AlignmentPolicyPreserve) {
   ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
                                              &pre_format_tokens_);
 
-  TabularAlignTokens(&partition_, kPreserveAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kPreserveAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  // original spacing was 1
             "one two\n"
@@ -274,8 +274,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPadding) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -293,8 +293,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingExceptFront) {
   pre_format_tokens_[2].before.spaces_required = 0;
   pre_format_tokens_[4].before.spaces_required = 0;
 
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -315,8 +315,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, RightFlushed) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kFlushRightAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kFlushRightAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -335,8 +335,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {
     child.Value().SetIndentationSpaces(4);
   }
 
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -363,8 +363,8 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
       &PartitionBetweenBlankLines, ignore_threes,
       AlignmentCellScannerGenerator<TokenColumnizer>(),
       AlignmentPolicy::kAlign);
-  TabularAlignTokens(&partition_, handler, &pre_format_tokens_, sample_,
-                     ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), handler, &partition_,
+                     &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),         //
@@ -380,10 +380,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignment) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(
-      &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
-      // Alignment disabled over entire range.
-      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
+  TabularAlignTokens(40, sample_,
+                     // Alignment disabled over entire range.
+                     ByteOffsetSet({{0, static_cast<int>(sample_.length())}}),
+                     kDefaultAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -404,10 +405,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
   pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
   pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
 
-  TabularAlignTokens(
-      &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
-      // Alignment disabled over entire range.
-      ByteOffsetSet({{0, static_cast<int>(sample_.length())}}), 40);
+  TabularAlignTokens(40, sample_,
+                     // Alignment disabled over entire range.
+                     ByteOffsetSet({{0, static_cast<int>(sample_.length())}}),
+                     kDefaultAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -441,11 +443,11 @@ TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
   pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
 
   TabularAlignTokens(
-      &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
+      40, sample_,
       // Alignment disabled over line 2
       ByteOffsetSet({{static_cast<int>(sample_.find_first_of('\n') + 1),
                       static_cast<int>(sample_.find("four") + 4)}}),
-      40);
+      kDefaultAlignmentHandler, &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(pre_format_tokens_[1].before.break_decision,
             SpacingOptions::Preserve);
@@ -469,10 +471,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, PartiallyDisabledNoAlignment) {
   }
 
   int midpoint = sample_.length() / 2;
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_,
+  TabularAlignTokens(40, sample_,
                      // Alignment disabled over partial range.
-                     ByteOffsetSet({{midpoint, midpoint + 1}}), 40);
+                     ByteOffsetSet({{midpoint, midpoint + 1}}),
+                     kDefaultAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -487,11 +490,11 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimit) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(),
+  TabularAlignTokens(13, sample_, ByteOffsetSet(),
                      // Column limit chosen to be smaller than sum of columns'
                      // widths. 5 (no left padding) +4 +5 = 14, so we choose 13
-                     13);
+                     kDefaultAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -510,11 +513,10 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimitIndented) {
   }
 
   TabularAlignTokens(
-      &partition_, kDefaultAlignmentHandler, &pre_format_tokens_, sample_,
-      ByteOffsetSet(),
+      16, sample_, ByteOffsetSet(),
       // Column limit chosen to be smaller than sum of columns' widths.
       // 3 (indent) +5 (no left padding) +4 +5 = 17, so we choose 16
-      16);
+      kDefaultAlignmentHandler, &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -617,8 +619,8 @@ TEST_F(MultiAlignmentGroupTest, BlankLineSeparatedGroups) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kDefaultAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kDefaultAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   // Verify string rendering of result.
   EXPECT_EQ(Render(),  //
@@ -900,8 +902,8 @@ TEST_F(InferSmallAlignDifferenceTest, DifferenceSufficientlySmall) {
   // flushed-left looks only different by a maximum of 2 spaces ("one" vs.
   // "three", so just align it.
 
-  TabularAlignTokens(&partition_, kInferAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kInferAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),      //
             "one   two\n"  //
@@ -924,8 +926,8 @@ TEST_F(InferFlushLeftTest, DifferenceSufficientlySmall) {
   // The original text contains no error greater than 2 spaces relative to
   // flush-left, therefore flush-left.
 
-  TabularAlignTokens(&partition_, kInferAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kInferAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),    //
             "one two\n"  //
@@ -946,8 +948,8 @@ TEST_F(InferForceAlignTest, DifferenceSufficientlySmall) {
   // The original text contains 4 excess spaces before "four" which should
   // trigger alignment.
 
-  TabularAlignTokens(&partition_, kInferAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kInferAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),         //
             "one      two\n"  //
@@ -968,8 +970,8 @@ TEST_F(InferAmbiguousAlignIntentTest, DifferenceSufficientlySmall) {
   // The original text contains only 3 excess spaces before "four" which should
   // not trigger alignment, but fall back to preserving original spacing.
 
-  TabularAlignTokens(&partition_, kInferAlignmentHandler, &pre_format_tokens_,
-                     sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kInferAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),    //
             "one two\n"  //
@@ -1117,8 +1119,9 @@ static const ExtractAlignmentGroupsFunction kPreserveTreeAlignmentHandler =
         AlignmentPolicy::kPreserve);
 
 TEST_F(SubcolumnsTreeAlignmentTest, ZeroInterTokenPadding) {
-  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kLeftAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1129,8 +1132,9 @@ TEST_F(SubcolumnsTreeAlignmentTest, ZeroInterTokenPadding) {
 }
 
 TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyFlushLeft) {
-  TabularAlignTokens(&partition_, kFlushLeftTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kFlushLeftTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1144,8 +1148,9 @@ TEST_F(SubcolumnsTreeAlignmentTest, AlignmentPolicyPreserve) {
   ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
                                              &pre_format_tokens_);
 
-  TabularAlignTokens(&partition_, kPreserveTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kPreserveTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1160,8 +1165,9 @@ TEST_F(SubcolumnsTreeAlignmentTest, OneInterTokenPadding) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kLeftAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1191,8 +1197,9 @@ TEST_F(SubcolumnsTreeAlignmentTest, OneInterTokenPaddingExceptFront) {
     }
   }
 
-  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kLeftAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1207,8 +1214,9 @@ TEST_F(SubcolumnsTreeAlignmentTest, RightFlushed) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kRightAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kRightAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "                                 zero\n"
@@ -1227,8 +1235,9 @@ TEST_F(SubcolumnsTreeAlignmentTest,
     line.Value().SetIndentationSpaces(2);
   }
 
-  TabularAlignTokens(&partition_, kRightAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kRightAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "                                   zero\n"
@@ -1274,8 +1283,9 @@ TEST_F(MultiSubcolumnsTreeAlignmentTest, BlankLineSeparatedGroups) {
     ftoken.before.spaces_required = 1;
   }
 
-  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kLeftAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1317,8 +1327,8 @@ static const ExtractAlignmentGroupsFunction kInferTreeAlignmentHandler =
         AlignmentPolicy::kInferUserIntent);
 
 TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
-  TabularAlignTokens(&partition_, kInferTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(), kInferTreeAlignmentHandler,
+                     &partition_, &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "zero\n"
@@ -1340,8 +1350,9 @@ class SubcolumnsTreeWithDelimitersTest : public SubcolumnsTreeAlignmentTest {
 };
 
 TEST_F(SubcolumnsTreeWithDelimitersTest, ContainsDelimiterTest) {
-  TabularAlignTokens(&partition_, kLeftAligningTreeAlignmentHandler,
-                     &pre_format_tokens_, sample_, ByteOffsetSet(), 40);
+  TabularAlignTokens(40, sample_, ByteOffsetSet(),
+                     kLeftAligningTreeAlignmentHandler, &partition_,
+                     &pre_format_tokens_);
 
   EXPECT_EQ(Render(),  //
             "(One  Two,)\n"

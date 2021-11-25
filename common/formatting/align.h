@@ -536,10 +536,10 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
 //    ccc[33] dd [444]
 //
 void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr,
+    int column_limit, absl::string_view full_text,
+    const ByteOffsetSet& disabled_byte_ranges,
     const ExtractAlignmentGroupsFunction& extract_alignment_groups,
-    std::vector<PreFormatToken>* ftokens, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges, int column_limit);
+    TokenPartitionTree* partition_ptr, std::vector<PreFormatToken>* ftokens);
 
 }  // namespace verible
 

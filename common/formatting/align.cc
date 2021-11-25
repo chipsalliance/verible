@@ -1208,10 +1208,10 @@ void AlignablePartitionGroup::Align(
 }
 
 void TabularAlignTokens(
-    TokenPartitionTree* partition_ptr,
+    int column_limit, absl::string_view full_text,
+    const ByteOffsetSet& disabled_byte_ranges,
     const ExtractAlignmentGroupsFunction& extract_alignment_groups,
-    std::vector<PreFormatToken>* ftokens, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges, int column_limit) {
+    TokenPartitionTree* partition_ptr, std::vector<PreFormatToken>* ftokens) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a list element or
   // possibly some other ignored element like comments.

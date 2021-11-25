@@ -1549,39 +1549,14 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
   const auto handler_iter = kAlignHandlers->find(NodeEnum(node->Tag().tag));
   if (handler_iter == kAlignHandlers->end()) return;
 
-  const AlignSyntaxGroupsFunction& alignment_partitioner(handler_iter->second);
+  const AlignSyntaxGroupsFunction& alignment_partitioner = handler_iter->second;
+  const ExtractAlignmentGroupsFunction extract_alignment_groups =
+      std::bind(alignment_partitioner, std::placeholders::_1, style);
 
-  auto& subpartitions = partition.Children();
-  // Identify groups of partitions to align, separated by blank lines.
-  const TokenPartitionRange subpartitions_range(subpartitions.begin(),
-                                                subpartitions.end());
-  if (subpartitions_range.empty()) return;
-  VLOG(1) << "extracting alignment partition groups...";
-  const std::vector<AlignablePartitionGroup> alignment_groups(
-      alignment_partitioner(subpartitions_range, style));
-  for (const auto& alignment_group : alignment_groups) {
-    const TokenPartitionRange partition_range(alignment_group.Range());
-    if (partition_range.empty()) continue;
-    if (AnyPartitionSubRangeIsDisabled(partition_range, full_text,
-                                       disabled_byte_ranges)) {
-      // Within an aligned group, if the group is partially disabled
-      // due to incremental formatting, then leave the new lines
-      // unformatted rather than falling back to compact-left formatting.
-      // However, allow the first token to be correctly indented.
-      IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
-      continue;
+  verible::TabularAlignTokens(style.column_limit, full_text,
+                              disabled_byte_ranges, extract_alignment_groups,
+                              &partition, ftokens);
 
-      // TODO(fangism): instead of disabling the whole range, sub-partition
-      // it one more level, and operate on those ranges, essentially treating
-      // no-format ranges like alignment group boundaries.
-      // Requires IntervalSet::Intersect operation.
-
-      // TODO(b/159824483): attempt to detect and re-use pre-existing alignment
-    }
-
-    // Calculate alignment and possibly apply it depending on alignment policy.
-    alignment_group.Align(full_text, style.column_limit, ftokens);
-  }
   VLOG(1) << "end of " << __FUNCTION__;
 }
 
