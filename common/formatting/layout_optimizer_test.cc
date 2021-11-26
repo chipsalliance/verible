@@ -35,11 +35,172 @@ namespace verible {
 
 namespace {
 
+// Helper class for creating TokenPartitionTree hierarchy using compact and easy
+// to read/write/modify syntax.
+class TokenPartitionTreeBuilder {
+ public:
+  TokenPartitionTreeBuilder(
+      int indent, std::pair<int, int> token_indexes_range,
+      PartitionPolicyEnum policy,
+      std::initializer_list<TokenPartitionTreeBuilder> children = {})
+      : indent_(indent),
+        token_indexes_range_(token_indexes_range),
+        policy_(policy),
+        children_(children) {}
+
+  TokenPartitionTreeBuilder(
+      int indent, std::pair<int, int> token_indexes_range,
+      std::initializer_list<TokenPartitionTreeBuilder> children = {})
+      : indent_(indent),
+        token_indexes_range_(token_indexes_range),
+        children_(children) {}
+
+  TokenPartitionTreeBuilder(
+      std::pair<int, int> token_indexes_range, PartitionPolicyEnum policy,
+      std::initializer_list<TokenPartitionTreeBuilder> children = {})
+      : token_indexes_range_(token_indexes_range),
+        policy_(policy),
+        children_(children) {}
+
+  TokenPartitionTreeBuilder(
+      std::pair<int, int> token_indexes_range,
+      std::initializer_list<TokenPartitionTreeBuilder> children = {})
+      : token_indexes_range_(token_indexes_range), children_(children) {}
+
+  TokenPartitionTreeBuilder(
+      PartitionPolicyEnum policy,
+      std::initializer_list<TokenPartitionTreeBuilder> children)
+      : policy_(policy), children_(children) {}
+
+  TokenPartitionTreeBuilder(
+      std::initializer_list<TokenPartitionTreeBuilder> children)
+      : children_(children) {}
+
+  TokenPartitionTree build(
+      const std::vector<verible::PreFormatToken>& tokens) const {
+    TokenPartitionTree node;
+
+    auto& child_nodes = node.Children();
+    child_nodes.reserve(children_.size());
+    for (const auto& child : children_) {
+      node.NewChild(child.build(tokens));
+    }
+
+    FormatTokenRange node_tokens;
+    if (token_indexes_range_.first < 0) {
+      CHECK(!child_nodes.empty());
+      CHECK_LT(token_indexes_range_.second, 0);
+      node_tokens.set_begin(child_nodes.front().Value().TokensRange().begin());
+      node_tokens.set_end(child_nodes.back().Value().TokensRange().end());
+    } else {
+      CHECK_GE(token_indexes_range_.second, token_indexes_range_.first);
+      node_tokens.set_begin(tokens.begin() + token_indexes_range_.first);
+      node_tokens.set_end(tokens.begin() + token_indexes_range_.second);
+    }
+
+    node.Value() = UnwrappedLine(indent_, node_tokens.begin(), policy_);
+    node.Value().SpanUpToToken(node_tokens.end());
+    return node;
+  }
+
+ private:
+  int indent_ = 0;
+  std::pair<int, int> token_indexes_range_ = {-1, -1};
+  PartitionPolicyEnum policy_ = PartitionPolicyEnum::kUninitialized;
+
+  const std::vector<TokenPartitionTreeBuilder> children_;
+};
+
 template <typename T>
 std::string ToString(const T& value) {
   std::ostringstream s;
   s << value;
   return s.str();
+}
+
+std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
+                            int indentation) {
+  for (const auto& line : verible::SplitLinesKeepLineTerminator(str))
+    stream << verible::Spacer(indentation) << line;
+  return stream;
+}
+
+template <typename Value>
+void PrintInvalidValueMessage(std::ostream& stream,
+                              absl::string_view value_name, const Value& actual,
+                              const Value& expected, int indentation = 0,
+                              bool multiline = false) {
+  using ::testing::PrintToString;
+  using verible::Spacer;
+
+  stream << Spacer(indentation) << "invalid " << value_name << ":\n";
+  if (multiline) {
+    stream << Spacer(indentation) << "  actual:\n";
+    PrintIndented(stream, PrintToString(actual), indentation + 4) << "\n";
+    stream << Spacer(indentation) << "  expected:\n";
+    PrintIndented(stream, PrintToString(expected), indentation + 4) << "\n";
+  } else {
+    stream << Spacer(indentation) << "  actual:   " << actual << "\n"
+           << Spacer(indentation) << "  expected: " << expected << "\n\n";
+  }
+}
+
+void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
+                                const LayoutFunction& expected, int line_no) {
+  using ::testing::PrintToString;
+  std::ostringstream msg;
+  if (actual.size() != expected.size()) {
+    PrintInvalidValueMessage(msg, "size()", actual.size(), expected.size());
+  }
+
+  for (int i = 0; i < std::min(actual.size(), expected.size()); ++i) {
+    std::ostringstream segment_msg;
+
+    if (actual[i].column != expected[i].column) {
+      PrintInvalidValueMessage(segment_msg, "column", actual[i].column,
+                               expected[i].column, 2);
+    }
+    if (actual[i].intercept != expected[i].intercept) {
+      PrintInvalidValueMessage(segment_msg, "intercept", actual[i].intercept,
+                               expected[i].intercept, 2);
+    }
+    if (actual[i].gradient != expected[i].gradient) {
+      PrintInvalidValueMessage(segment_msg, "gradient", actual[i].gradient,
+                               expected[i].gradient, 2);
+    }
+    if (actual[i].span != expected[i].span) {
+      PrintInvalidValueMessage(segment_msg, "span", actual[i].span,
+                               expected[i].span, 2);
+    }
+    auto layout_diff = DeepEqual(actual[i].layout, expected[i].layout);
+    if (layout_diff.left != nullptr) {
+      PrintInvalidValueMessage(segment_msg, "layout (fragment)",
+                               *layout_diff.left, *layout_diff.right, 2, true);
+    }
+
+    if (auto str = segment_msg.str(); !str.empty())
+      msg << "segment[" << i << "]:\n" << str << "\n";
+  }
+
+  if (const auto str = msg.str(); !str.empty()) {
+    ADD_FAILURE_AT(__FILE__, line_no) << "LayoutFunctions differ.\nActual:\n"
+                                      << actual << "\nExpected:\n"
+                                      << expected << "\n\nDetails:\n\n"
+                                      << str;
+  } else {
+    SUCCEED();
+  }
+}
+
+BasicFormatStyle CreateStyle() {
+  BasicFormatStyle style;
+  // Hardcode everything to prevent failures when defaults change.
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.column_limit = 40;
+  style.over_column_limit_penalty = 100;
+  style.line_break_penalty = 2;
+  return style;
 }
 
 TEST(LayoutTypeTest, ToString) {
@@ -51,6 +212,14 @@ TEST(LayoutTypeTest, ToString) {
 
 bool TokenRangeEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
   return left.TokensRange() == right.TokensRange();
+}
+
+bool PartitionsEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
+  return (left.TokensRange() == right.TokensRange()) &&
+         (left.IndentationSpaces() == right.IndentationSpaces()) &&
+         (left.PartitionPolicy() == right.PartitionPolicy()) &&
+         (left.PartitionPolicy() == right.PartitionPolicy()) &&
+         (left.Origin() == right.Origin());
 }
 
 class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
@@ -561,13 +730,6 @@ TEST_F(LayoutFunctionIteratorTest, ContainerRelatedMethods) {
   }
 }
 
-std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
-                            int indentation) {
-  for (const auto& line : verible::SplitLinesKeepLineTerminator(str))
-    stream << verible::Spacer(indentation) << line;
-  return stream;
-}
-
 class LayoutFunctionFactoryTest : public ::testing::Test,
                                   public UnwrappedLineMemoryHandler {
  public:
@@ -639,74 +801,6 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
   static constexpr int kOneOver30LimitLineId = 8;
 
   static constexpr int k10ColumnsLineId = 9;
-
-  static BasicFormatStyle CreateStyle() {
-    BasicFormatStyle style;
-    // Hardcode everything to prevent failures when defaults change.
-    style.indentation_spaces = 2;
-    style.wrap_spaces = 4;
-    style.column_limit = 40;
-    style.over_column_limit_penalty = 100;
-    style.line_break_penalty = 2;
-    return style;
-  }
-
-  static void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
-                                         const LayoutFunction& expected,
-                                         int line_no) {
-    using ::testing::PrintToString;
-    std::ostringstream msg;
-    if (actual.size() != expected.size()) {
-      msg << "invalid value of size():\n"
-          << "  actual:   " << actual.size() << "\n"
-          << "  expected: " << expected.size() << "\n\n";
-    }
-
-    for (int i = 0; i < std::min(actual.size(), expected.size()); ++i) {
-      std::ostringstream segment_msg;
-
-      if (actual[i].column != expected[i].column) {
-        segment_msg << "  invalid column:\n"
-                    << "    actual:   " << actual[i].column << "\n"
-                    << "    expected: " << expected[i].column << "\n";
-      }
-      if (actual[i].intercept != expected[i].intercept) {
-        segment_msg << "  invalid intercept:\n"
-                    << "    actual:   " << actual[i].intercept << "\n"
-                    << "    expected: " << expected[i].intercept << "\n";
-      }
-      if (actual[i].gradient != expected[i].gradient) {
-        segment_msg << "  invalid gradient:\n"
-                    << "    actual:   " << actual[i].gradient << "\n"
-                    << "    expected: " << expected[i].gradient << "\n";
-      }
-      if (actual[i].span != expected[i].span) {
-        segment_msg << "  invalid span:\n"
-                    << "    actual:   " << actual[i].span << "\n"
-                    << "    expected: " << expected[i].span << "\n";
-      }
-      auto layout_diff = DeepEqual(actual[i].layout, expected[i].layout);
-      if (layout_diff.left != nullptr) {
-        segment_msg << "  invalid layout (fragment):\n"
-                    << "    actual:\n";
-        PrintIndented(segment_msg, PrintToString(*layout_diff.left), 6) << "\n";
-        segment_msg << "    expected:\n";
-        PrintIndented(segment_msg, PrintToString(*layout_diff.right), 6)
-            << "\n";
-      }
-      if (auto str = segment_msg.str(); !str.empty())
-        msg << "segment[" << i << "]:\n" << str << "\n";
-    }
-
-    if (const auto str = msg.str(); !str.empty()) {
-      ADD_FAILURE_AT(__FILE__, line_no) << "LayoutFunctions differ.\nActual:\n"
-                                        << actual << "\nExpected:\n"
-                                        << expected << "\n\nDetails:\n\n"
-                                        << str;
-    } else {
-      SUCCEED();
-    }
-  }
 
   const std::string sample_;
   const std::vector<absl::string_view> tokens_;
@@ -2204,85 +2298,182 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
 };
 
 TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
+  using TPT = TokenPartitionTreeBuilder;
 
-  UnwrappedLine function_name(0, begin);
-  function_name.SpanUpToToken(begin + 1);
-  UnwrappedLine arg_a(0, begin + 1);
-  arg_a.SpanUpToToken(begin + 2);
-  UnwrappedLine arg_b(0, begin + 2);
-  arg_b.SpanUpToToken(begin + 3);
-  UnwrappedLine arg_c(0, begin + 3);
-  arg_c.SpanUpToToken(begin + 4);
-  UnwrappedLine arg_d(0, begin + 4);
-  arg_d.SpanUpToToken(begin + 5);
-  UnwrappedLine arg_e(0, begin + 5);
-  arg_e.SpanUpToToken(begin + 6);
-  UnwrappedLine arg_f(0, begin + 6);
-  arg_f.SpanUpToToken(begin + 7);
+  auto tree_under_test =
+      TPT(PartitionPolicyEnum::kOptimalFunctionCallLayout,
+          {
+              TPT({0, 1}, PartitionPolicyEnum::kFitOnLineElseExpand),
+              TPT(PartitionPolicyEnum::kFitOnLineElseExpand,
+                  {
+                      TPT({1, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                      TPT({2, 3}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                      TPT({3, 4}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                      TPT({4, 5}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                      TPT({5, 6}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                      TPT({6, 7}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                  }),
+          })
+          .build(pre_format_tokens_);
 
-  function_name.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
-  arg_a.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  arg_b.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  arg_c.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  arg_d.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  arg_e.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  arg_f.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
+  const auto tree_expected =
+      TPT(PartitionPolicyEnum::kOptimalFunctionCallLayout,
+          {
+              TPT({0, 1}, PartitionPolicyEnum::kAlreadyFormatted),
+              TPT(4, {1, 3}, PartitionPolicyEnum::kAlreadyFormatted),
+              TPT(4, {3, 5}, PartitionPolicyEnum::kAlreadyFormatted),
+              TPT(4, {5, 7}, PartitionPolicyEnum::kAlreadyFormatted),
+          })
+          .build(pre_format_tokens_);
 
-  UnwrappedLine header(0, function_name.TokensRange().begin());
-  header.SpanUpToToken(function_name.TokensRange().end());
-  UnwrappedLine args(0, arg_a.TokensRange().begin());
-  args.SpanUpToToken(arg_f.TokensRange().end());
-
-  header.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-  args.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
-
-  UnwrappedLine all(0, header.TokensRange().begin());
-  all.SpanUpToToken(args.TokensRange().end());
-  all.SetPartitionPolicy(PartitionPolicyEnum::kOptimalFunctionCallLayout);
-
-  using Tree = TokenPartitionTree;
-  Tree tree_under_test{all,               //
-                       Tree{header},      //
-                       Tree{args,         //
-                            Tree{arg_a},  //
-                            Tree{arg_b},  //
-                            Tree{arg_c},  //
-                            Tree{arg_d},  //
-                            Tree{arg_e},  //
-                            Tree{arg_f}}};
-
-  BasicFormatStyle style;
-  style.column_limit = 40;
+  static const BasicFormatStyle style = CreateStyle();
   OptimizeTokenPartitionTree(style, &tree_under_test, &pre_format_tokens_);
 
-  UnwrappedLine args_top_line(0, arg_a.TokensRange().begin());
-  args_top_line.SpanUpToToken(arg_b.TokensRange().end());
-  UnwrappedLine args_middle_line(0, arg_c.TokensRange().begin());
-  args_middle_line.SpanUpToToken(arg_d.TokensRange().end());
-  UnwrappedLine args_bottom_line(0, arg_e.TokensRange().begin());
-  args_bottom_line.SpanUpToToken(arg_f.TokensRange().end());
-
-  const Tree tree_expected{all,                     //
-                           Tree{header},            //
-                           Tree{args_top_line},     //
-                           Tree{args_middle_line},  //
-                           Tree{args_bottom_line}};
-
-  const auto diff = DeepEqual(tree_under_test, tree_expected, TokenRangeEqual);
+  const auto diff = DeepEqual(tree_under_test, tree_expected, PartitionsEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << tree_under_test << "\n";
+}
 
-  // header
-  EXPECT_EQ(tree_under_test.Children()[0].Value().IndentationSpaces(), 0);
-  // args_top_line (wrapped)
-  EXPECT_EQ(tree_under_test.Children()[1].Value().IndentationSpaces(), 4);
-  // args_middle_line (wrapped)
-  EXPECT_EQ(tree_under_test.Children()[2].Value().IndentationSpaces(), 4);
-  // args_bottom_line (wrapped)
-  EXPECT_EQ(tree_under_test.Children()[3].Value().IndentationSpaces(), 4);
+class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
+                                           public UnwrappedLineMemoryHandler {
+ public:
+  TokenPartitionsLayoutOptimizerTest()
+      : sample_(
+            //   :    |10  :    |20  :    |30  :    |40
+            "one two three four\n"
+            "eleven twelve thirteen fourteen\n"),
+        tokens_(
+            absl::StrSplit(sample_, absl::ByAnyChar(" \n"), absl::SkipEmpty())),
+        style_(CreateStyle()),
+        factory_(LayoutFunctionFactory(style_)) {
+    for (const auto token : tokens_) {
+      ftokens_.emplace_back(TokenInfo{1, token});
+    }
+    CreateTokenInfosExternalStringBuffer(ftokens_);
+    ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
+                                               &pre_format_tokens_);
+
+    // Set token properties
+    for (auto token_it = pre_format_tokens_.begin();
+         token_it != pre_format_tokens_.end(); ++token_it) {
+      const auto leading_spaces = token_it->OriginalLeadingSpaces();
+
+      // First token in a line
+      if (absl::StrContains(leading_spaces, '\n')) {
+        token_it->before.break_decision = SpacingOptions::MustWrap;
+        auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
+        if (last_non_space_offset != absl::string_view::npos) {
+          token_it->before.spaces_required =
+              leading_spaces.size() - 1 - last_non_space_offset;
+        }
+      } else {
+        token_it->before.spaces_required = leading_spaces.size();
+      }
+    }
+    pre_format_tokens_.front().before.break_decision = SpacingOptions::MustWrap;
+  }
+
+ protected:
+  const std::string sample_;
+  const std::vector<absl::string_view> tokens_;
+  std::vector<TokenInfo> ftokens_;
+  const BasicFormatStyle style_;
+  const LayoutFunctionFactory factory_;
+};
+
+TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
+  using TPT = TokenPartitionTreeBuilder;
+  using PP = PartitionPolicyEnum;
+  using LT = LayoutTree;
+  using LI = LayoutItem;
+
+  const auto optimizer = TokenPartitionsLayoutOptimizer(style_);
+
+  {
+    const auto tree = TPT(PP::kAlwaysExpand,
+                          {
+                              TPT(1, {0, 1}),
+                              TPT(2, {1, 2}),
+                              TPT(3, {2, 3}),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LT(LI(tree.Children()[0].Value())),  //
+                                    LT(LI(tree.Children()[1].Value())),  //
+                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 5, 4.0F, 0},
+        {35, expected_layout, 5, 4.0F, 100},
+        {37, expected_layout, 5, 204.0F, 300},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto tree = TPT(PP::kTabularAlignment,
+                          {
+                              TPT(1, {0, 1}, PP::kAlreadyFormatted),
+                              TPT(2, {1, 2}, PP::kAlreadyFormatted),
+                              TPT(3, {2, 3}, PP::kAlreadyFormatted),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LT(LI(tree.Children()[0].Value())),  //
+                                    LT(LI(tree.Children()[1].Value())),  //
+                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 5, 4.0F, 0},
+        {35, expected_layout, 5, 4.0F, 100},
+        {37, expected_layout, 5, 204.0F, 300},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto tree = TPT(PP::kAppendFittingSubPartitions,
+                          {
+                              TPT(3, {0, 4}),
+                              TPT(5, {4, 8}),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LT(LI(tree.Children()[0].Value())),  //
+                                    LT(LI(tree.Children()[1].Value())));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 31, 2.0F, 0},
+        {9, expected_layout, 31, 2.0F, 100},
+        {22, expected_layout, 31, 1302.0F, 200},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto tree = TPT(PP::kFitOnLineElseExpand,
+                          {
+                              TPT(3, {0, 4}),
+                              TPT(5, {4, 8}),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LT(LI(tree.Children()[0].Value())),  //
+                                    LT(LI(tree.Children()[1].Value())));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 31, 2.0F, 0},
+        {9, expected_layout, 31, 2.0F, 100},
+        {22, expected_layout, 31, 1302.0F, 200},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
 }
 
 }  // namespace
