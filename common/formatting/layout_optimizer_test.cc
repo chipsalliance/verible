@@ -25,6 +25,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/formatting/token_partition_tree_test_utils.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/split.h"
@@ -34,82 +35,6 @@
 namespace verible {
 
 namespace {
-
-// Helper class for creating TokenPartitionTree hierarchy using compact and easy
-// to read/write/modify syntax.
-class TokenPartitionTreeBuilder {
- public:
-  TokenPartitionTreeBuilder(
-      int indent, std::pair<int, int> token_indexes_range,
-      PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : indent_(indent),
-        token_indexes_range_(token_indexes_range),
-        policy_(policy),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      int indent, std::pair<int, int> token_indexes_range,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : indent_(indent),
-        token_indexes_range_(token_indexes_range),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::pair<int, int> token_indexes_range, PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : token_indexes_range_(token_indexes_range),
-        policy_(policy),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::pair<int, int> token_indexes_range,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : token_indexes_range_(token_indexes_range), children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children)
-      : policy_(policy), children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::initializer_list<TokenPartitionTreeBuilder> children)
-      : children_(children) {}
-
-  TokenPartitionTree build(
-      const std::vector<verible::PreFormatToken>& tokens) const {
-    TokenPartitionTree node;
-
-    auto& child_nodes = node.Children();
-    child_nodes.reserve(children_.size());
-    for (const auto& child : children_) {
-      node.NewChild(child.build(tokens));
-    }
-
-    FormatTokenRange node_tokens;
-    if (token_indexes_range_.first < 0) {
-      CHECK(!child_nodes.empty());
-      CHECK_LT(token_indexes_range_.second, 0);
-      node_tokens.set_begin(child_nodes.front().Value().TokensRange().begin());
-      node_tokens.set_end(child_nodes.back().Value().TokensRange().end());
-    } else {
-      CHECK_GE(token_indexes_range_.second, token_indexes_range_.first);
-      node_tokens.set_begin(tokens.begin() + token_indexes_range_.first);
-      node_tokens.set_end(tokens.begin() + token_indexes_range_.second);
-    }
-
-    node.Value() = UnwrappedLine(indent_, node_tokens.begin(), policy_);
-    node.Value().SpanUpToToken(node_tokens.end());
-    return node;
-  }
-
- private:
-  int indent_ = 0;
-  std::pair<int, int> token_indexes_range_ = {-1, -1};
-  PartitionPolicyEnum policy_ = PartitionPolicyEnum::kUninitialized;
-
-  const std::vector<TokenPartitionTreeBuilder> children_;
-};
 
 template <typename T>
 std::string ToString(const T& value) {
@@ -212,14 +137,6 @@ TEST(LayoutTypeTest, ToString) {
 
 bool TokenRangeEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
   return left.TokensRange() == right.TokensRange();
-}
-
-bool PartitionsEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
-  return (left.TokensRange() == right.TokensRange()) &&
-         (left.IndentationSpaces() == right.IndentationSpaces()) &&
-         (left.PartitionPolicy() == right.PartitionPolicy()) &&
-         (left.PartitionPolicy() == right.PartitionPolicy()) &&
-         (left.Origin() == right.Origin());
 }
 
 class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
@@ -2322,10 +2239,8 @@ TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
   static const BasicFormatStyle style = CreateStyle();
   OptimizeTokenPartitionTree(style, &tree_under_test);
 
-  const auto diff = DeepEqual(tree_under_test, tree_expected, PartitionsEqual);
-  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
-                                << tree_expected << "\nGot:\n"
-                                << tree_under_test << "\n";
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree_under_test,
+                      tree_expected);
 }
 
 TEST_F(OptimizeTokenPartitionTreeTest, AppendToLineWithInlinePartitions) {
