@@ -22,6 +22,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
+#include "common/formatting/token_partition_tree_test_utils.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/util/container_iterator_range.h"
@@ -2972,6 +2973,105 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
             header.TokensRange()[0].Length());
   EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(),
             header.TokensRange()[0].Length());
+}
+
+class TokenPartitionTreesEqualPredFormatTest
+    : public TokenPartitionTreeTestFixture {};
+
+TEST_F(TokenPartitionTreesEqualPredFormatTest, EqualityCheck) {
+  using TPT = TokenPartitionTreeBuilder;
+
+  static const auto ref_tree =
+      TPT(PartitionPolicyEnum::kAlwaysExpand,
+          {
+              TPT(2, {0, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
+              TPT(4, {2, 4}, PartitionPolicyEnum::kUninitialized),
+          })
+          .build(pre_format_tokens_);
+
+  {
+    static const auto tree = ref_tree;
+    const auto result =
+        TokenPartitionTreesEqualPredFormat("first", "second", ref_tree, tree);
+    EXPECT_TRUE(result);
+    EXPECT_STREQ(result.message(), "");
+  }
+
+  {
+    // Different indentation of the first child
+    static const auto tree =
+        TPT(PartitionPolicyEnum::kAlwaysExpand,
+            {
+                TPT(3, {0, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                TPT(4, {2, 4}, PartitionPolicyEnum::kUninitialized),
+            })
+            .build(pre_format_tokens_);
+    const auto result =
+        TokenPartitionTreesEqualPredFormat("first", "second", ref_tree, tree);
+    EXPECT_FALSE(result);
+    EXPECT_STREQ(result.message(),
+                 "Expected equality of these trees:\n"
+                 "Actual:\n"
+                 "{ ([one two three four], policy: always-expand)\n"
+                 "  { (>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four], policy: uninitialized) }\n"
+                 "}\n"
+                 "Expected:\n"
+                 "{ ([one two three four], policy: always-expand)\n"
+                 "  { (>>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four], policy: uninitialized) }\n"
+                 "}\n");
+  }
+  {
+    // Different tokens range
+    static const auto tree =
+        TPT(PartitionPolicyEnum::kAlwaysExpand,
+            {
+                TPT(2, {0, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                TPT(4, {2, 5}, PartitionPolicyEnum::kUninitialized),
+            })
+            .build(pre_format_tokens_);
+    const auto result =
+        TokenPartitionTreesEqualPredFormat("first", "second", ref_tree, tree);
+    EXPECT_FALSE(result);
+    EXPECT_STREQ(result.message(),
+                 "Expected equality of these trees:\n"
+                 "Actual:\n"
+                 "{ ([one two three four], policy: always-expand)\n"
+                 "  { (>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four], policy: uninitialized) }\n"
+                 "}\n"
+                 "Expected:\n"
+                 "{ ([one two three four five], policy: always-expand)\n"
+                 "  { (>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four five], policy: uninitialized) }\n"
+                 "}\n");
+  }
+  {
+    // Different policy
+    static const auto tree =
+        TPT(PartitionPolicyEnum::kFitOnLineElseExpand,
+            {
+                TPT(2, {0, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
+                TPT(4, {2, 4}, PartitionPolicyEnum::kUninitialized),
+            })
+            .build(pre_format_tokens_);
+    const auto result =
+        TokenPartitionTreesEqualPredFormat("first", "second", ref_tree, tree);
+    EXPECT_FALSE(result);
+    EXPECT_STREQ(result.message(),
+                 "Expected equality of these trees:\n"
+                 "Actual:\n"
+                 "{ ([one two three four], policy: always-expand)\n"
+                 "  { (>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four], policy: uninitialized) }\n"
+                 "}\n"
+                 "Expected:\n"
+                 "{ ([one two three four], policy: fit-else-expand)\n"
+                 "  { (>>[one two], policy: fit-else-expand) }\n"
+                 "  { (>>>>[three four], policy: uninitialized) }\n"
+                 "}\n");
+  }
 }
 
 }  // namespace

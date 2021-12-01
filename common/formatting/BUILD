@@ -201,6 +201,7 @@ cc_test(
     deps = [
         ":format_token",
         ":token_partition_tree",
+        ":token_partition_tree_test_utils",
         ":unwrapped_line",
         ":unwrapped_line_test_utils",
         "//common/util:container_iterator_range",
