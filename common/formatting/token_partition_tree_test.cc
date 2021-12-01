@@ -2975,6 +2975,82 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
             header.TokensRange()[0].Length());
 }
 
+class ApplyAlreadyFormattedPartitionPropertiesToTokensTest
+    : public TokenPartitionTreeTestFixture {};
+
+TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, EmptyTokenRange) {
+  using TPT = TokenPartitionTreeBuilder;
+  using SO = SpacingOptions;
+
+  auto tree = TPT(3, {0, 0}, PartitionPolicyEnum::kAlreadyFormatted)
+                  .build(pre_format_tokens_);
+
+  ApplyAlreadyFormattedPartitionPropertiesToTokens(&tree, &pre_format_tokens_);
+
+  static const int expected_spaces[] = {0, 0, 0, 0, 0, 0};
+  static const SpacingOptions expected_decision[] = {
+      SO::Undecided, SO::Undecided, SO::Undecided,
+      SO::Undecided, SO::Undecided, SO::Undecided,
+  };
+  for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
+    const auto& token = pre_format_tokens_.at(i);
+    EXPECT_EQ(token.before.spaces_required, expected_spaces[i])
+        << "Token " << i;
+    EXPECT_EQ(token.before.break_decision, expected_decision[i])
+        << "Token " << i;
+  }
+}
+
+TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, NoInlines) {
+  using TPT = TokenPartitionTreeBuilder;
+  using SO = SpacingOptions;
+
+  auto tree = TPT(1, {0, 5}, PartitionPolicyEnum::kAlreadyFormatted)
+                  .build(pre_format_tokens_);
+
+  ApplyAlreadyFormattedPartitionPropertiesToTokens(&tree, &pre_format_tokens_);
+
+  static const int expected_spaces[] = {0, 0, 0, 0, 0, 0};
+  static const SpacingOptions expected_decision[] = {
+      SO::MustWrap,   SO::MustAppend, SO::MustAppend,
+      SO::MustAppend, SO::MustAppend, SO::Undecided,
+  };
+  for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
+    const auto& token = pre_format_tokens_.at(i);
+    EXPECT_EQ(token.before.spaces_required, expected_spaces[i])
+        << "Token " << i;
+    EXPECT_EQ(token.before.break_decision, expected_decision[i])
+        << "Token " << i;
+  }
+}
+
+TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, TwoInlines) {
+  using TPT = TokenPartitionTreeBuilder;
+  using SO = SpacingOptions;
+
+  auto tree = TPT(7, PartitionPolicyEnum::kAlreadyFormatted,
+                  {
+                      TPT(2, {0, 2}, PartitionPolicyEnum::kInline),
+                      TPT(4, {2, 5}, PartitionPolicyEnum::kInline),
+                  })
+                  .build(pre_format_tokens_);
+
+  ApplyAlreadyFormattedPartitionPropertiesToTokens(&tree, &pre_format_tokens_);
+
+  static const int expected_spaces[] = {2, 0, 4, 0, 0, 0};
+  static const SpacingOptions expected_decision[] = {
+      SO::AppendAligned, SO::MustAppend, SO::AppendAligned,
+      SO::MustAppend,    SO::MustAppend, SO::Undecided,
+  };
+  for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
+    const auto& token = pre_format_tokens_.at(i);
+    EXPECT_EQ(token.before.spaces_required, expected_spaces[i])
+        << "Token " << i;
+    EXPECT_EQ(token.before.break_decision, expected_decision[i])
+        << "Token " << i;
+  }
+}
+
 class TokenPartitionTreesEqualPredFormatTest
     : public TokenPartitionTreeTestFixture {};
 
