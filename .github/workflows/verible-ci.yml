@@ -241,46 +241,6 @@ jobs:
       with:
         path: releasing/out/verible-*.tar.gz
 
-
-  Release:
-    needs: [ Check, Build ]
-    runs-on: ubuntu-20.04
-    name: 📦 Release
-    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
-
-    steps:
-
-    - uses: actions/checkout@v2
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
-
-    - name: 📥 Download artifacts
-      uses: actions/download-artifact@v2
-
-    - name: Generate and apply TAG
-      run: |
-        git config --local user.name "$BOT_USER"
-        git config --local user.email "$BOT_EMAIL"
-
-        # Create a tag of form v0.0-183-gdf2b162-20191112132344
-        TAG="${TAG:-$(git describe --match=v*)}"
-
-        git tag "$TAG" || true
-        echo "TAG=$TAG" >> $GITHUB_ENV
-
-        ls -lah artifact
-
-    - name: Deploy release and assets
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible-*.tar.gz
-        tag: ${{ env.TAG }}
-        overwrite: true
-        file_glob: true
-
-
   MacOsBuild:
     runs-on: macos-latest
     steps:
@@ -341,6 +301,17 @@ jobs:
     - name: Build Verible Binaries
       run: bazel build -c opt :install-binaries
 
+    - name: Prepare release
+      run: |
+        $VERSION = git describe --match=v*
+        bazel run -c opt :install -- "c:/verible-${VERSION}-win64"
+        7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: verible-*.zip
+
     # We need to shut down bazel to let go of the filedescriptors in the
     # cache directory. Because of strange filesystem semantics on Windows, this
     # prevents packaging up the cache.
@@ -350,3 +321,42 @@ jobs:
         # The cache pack/restore has issues with these symbolic links
         rm c:/users/runneradmin/_bazel_runneradmin/*/install
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
+
+
+  Release:
+    needs: [ Check, Build, WindowsBuild ]
+    runs-on: ubuntu-20.04
+    name: 📦 Release
+    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
+
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+       # Download complete repository + tags
+       fetch-depth: 0
+
+    - name: 📥 Download artifacts
+      uses: actions/download-artifact@v2
+
+    - name: Generate and apply TAG
+      run: |
+        git config --local user.name "$BOT_USER"
+        git config --local user.email "$BOT_EMAIL"
+
+        # Create a tag of form v0.0-183-gdf2b162-20191112132344
+        TAG="${TAG:-$(git describe --match=v*)}"
+
+        git tag "$TAG" || true
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+        ls -lah artifact
+
+    - name: Deploy release and assets
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: artifact/verible-*.{tar.gz,zip}
+        tag: ${{ env.TAG }}
+        overwrite: true
+        file_glob: true
