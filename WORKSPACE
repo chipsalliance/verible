@@ -52,9 +52,9 @@ http_archive(
 # 'make install' equivalent rule
 http_archive(
     name = "com_github_google_rules_install",
-    sha256 = "ac2c9c53aa022a110273c0e510d191a4c04c6adafefa069a5eeaa16313edc9b9",
-    strip_prefix = "bazel_rules_install-0.4",
-    urls = ["https://github.com/google/bazel_rules_install/releases/download/0.4/bazel_rules_install-0.4.tar.gz"],
+    sha256 = "9147455f1c234fba7922731fb32842f6b3ad01dcafe344be5292f80f82b25dad",
+    strip_prefix = "bazel_rules_install-4cd8ab0b5d8a0117bb5b8c89a0024508d5d4d5ed",
+    urls = ["https://github.com/google/bazel_rules_install/archive/4cd8ab0b5d8a0117bb5b8c89a0024508d5d4d5ed.zip"],
 )
 
 load("@com_github_google_rules_install//:deps.bzl", "install_rules_dependencies")
