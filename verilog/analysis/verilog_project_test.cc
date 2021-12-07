@@ -33,6 +33,8 @@ using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
 
+using ::testing::ElementsAre;
+
 class TempDirFile : public ScopedTestFile {
  public:
   TempDirFile(absl::string_view content)
@@ -446,6 +448,52 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
             nullptr);
 }
 
+TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string sources_dir = JoinPath(tempdir, "srcs");
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(sources_dir).ok());
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  VerilogProject project(sources_dir, {includes_dir});
+
+  constexpr absl::string_view text("`define FOO 1\n");
+  const std::string basename = "virtual_include_file1";
+  const std::string full_path = JoinPath(includes_dir, basename);
+  // The virtual file is added by its full path. But the include is opened by
+  // the basename.
+  project.AddVirtualFile(full_path, text);
+
+  const auto status_or_file = project.OpenIncludedFile(basename);
+  VerilogSourceFile* verilog_source_file = *status_or_file;
+  EXPECT_TRUE(verilog_source_file->Status().ok());
+  EXPECT_EQ(verilog_source_file->ReferencedPath(), full_path);
+  EXPECT_EQ(verilog_source_file->ResolvedPath(), full_path);
+  EXPECT_EQ(project.LookupRegisteredFile(basename), verilog_source_file);
+  {  // const-lookup overload
+    const VerilogProject& cproject(project);
+    EXPECT_EQ(cproject.LookupRegisteredFile(basename), verilog_source_file);
+  }
+  EXPECT_TRUE(project.GetErrorStatuses().empty());
+
+  // Re-opening same file, changes nothing
+  {
+    const auto status_or_file2 = project.OpenIncludedFile(basename);
+    VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+    EXPECT_EQ(verilog_source_file2, verilog_source_file);
+    EXPECT_TRUE(verilog_source_file2->Status().ok());
+  }
+
+  // includes aren't required to be parse-able, so just open
+  EXPECT_TRUE(verilog_source_file->Open().ok());
+  EXPECT_EQ(verilog_source_file->GetTextStructure()->SyntaxTree().get(),
+            nullptr);
+
+  // re-opening the file changes nothing
+  EXPECT_TRUE(verilog_source_file->Open().ok());
+  EXPECT_EQ(verilog_source_file->GetTextStructure()->SyntaxTree().get(),
+            nullptr);
+}
+
 TEST(VerilogProjectTest, TranslationUnitNotFound) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");
@@ -500,7 +548,7 @@ TEST(VerilogProjectTest, IncludeFileNotFound) {
   EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
-TEST(VerilogProjecTest, AddVirtualFile) {
+TEST(VerilogProjectTest, AddVirtualFile) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");
   const std::string includes_dir = JoinPath(tempdir, "includes");
@@ -518,6 +566,30 @@ TEST(VerilogProjecTest, AddVirtualFile) {
   EXPECT_TRUE(stored_file->Status().ok());
   ASSERT_NE(stored_file->GetTextStructure(), nullptr);
   EXPECT_EQ(stored_file->GetTextStructure()->Contents(), file_content);
+}
+
+TEST(VerilogProjectTest, ParseSourceFileList) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string file_list_content = R"(
+    # A comment to ignore.
+    +incdir+/an/include_dir1
+    // Another comment
+    // on two lines
+    +incdir+/an/include_dir2
+
+    /a/source/file/1.sv
+    /a/source/file/2.sv
+  )";
+  const ScopedTestFile file_list_file(tempdir, file_list_content);
+  auto parsed_file_list =
+      ParseSourceFileListFromFile(file_list_file.filename());
+  ASSERT_TRUE(parsed_file_list.ok());
+
+  EXPECT_EQ(parsed_file_list->file_list_path, file_list_file.filename());
+  EXPECT_THAT(parsed_file_list->file_paths,
+              ElementsAre("/a/source/file/1.sv", "/a/source/file/2.sv"));
+  EXPECT_THAT(parsed_file_list->include_dirs,
+              ElementsAre(".", "/an/include_dir1", "/an/include_dir2"));
 }
 
 }  // namespace

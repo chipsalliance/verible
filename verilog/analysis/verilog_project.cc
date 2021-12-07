@@ -22,7 +22,10 @@
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/strip.h"
+#include "absl/types/optional.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
@@ -136,21 +139,59 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   return &file;
 }
 
+VerilogSourceFile* VerilogProject::LookupRegisteredFileInternal(
+    absl::string_view referenced_filename) const {
+  const auto opened_file = FindOpenedFile(referenced_filename);
+  if (opened_file) {
+    if (!opened_file->ok()) {
+      return nullptr;
+    }
+    return opened_file->value();
+  }
+
+  // Check if this is already opened include file
+  for (const auto& include_path : include_paths_) {
+    const std::string resolved_filename =
+        verible::file::JoinPath(include_path, referenced_filename);
+    const auto opened_file = FindOpenedFile(resolved_filename);
+    if (opened_file) {
+      return opened_file->ok() ? opened_file->value() : nullptr;
+    }
+  }
+  return nullptr;
+}
+
+absl::optional<absl::StatusOr<VerilogSourceFile*>>
+VerilogProject::FindOpenedFile(absl::string_view filename) const {
+  const auto found = files_.find(filename);
+  if (found != files_.end()) {
+    const auto status = found->second->Status();
+    if (!status.ok()) return status;
+    return found->second.get();
+  }
+  return absl::nullopt;
+}
+
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenTranslationUnit(
     absl::string_view referenced_filename) {
   // Check for a pre-existing entry to avoid duplicate files.
   {
-    const auto found = files_.find(referenced_filename);
-    if (found != files_.end()) {
-      const auto status = found->second->Status();
-      if (!status.ok()) return status;
-      return found->second.get();
+    const auto opened_file = FindOpenedFile(referenced_filename);
+    if (opened_file) {
+      return *opened_file;
     }
   }
 
   // Locate the file among the base paths.
   const std::string resolved_filename =
       verible::file::JoinPath(TranslationUnitRoot(), referenced_filename);
+  // Check if this is already opened file
+  {
+    const auto opened_file = FindOpenedFile(resolved_filename);
+    if (opened_file) {
+      return *opened_file;
+    }
+  }
 
   return OpenFile(referenced_filename, resolved_filename, Corpus());
 }
@@ -167,11 +208,19 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   VLOG(1) << __FUNCTION__ << ", referenced: " << referenced_filename;
   // Check for a pre-existing entry to avoid duplicate files.
   {
-    const auto found = files_.find(referenced_filename);
-    if (found != files_.end()) {
-      const auto status = found->second->Status();
-      if (!status.ok()) return status;
-      return found->second.get();
+    const auto opened_file = FindOpenedFile(referenced_filename);
+    if (opened_file) {
+      return *opened_file;
+    }
+  }
+
+  // Check if this is already opened include file
+  for (const auto& include_path : include_paths_) {
+    const std::string resolved_filename =
+        verible::file::JoinPath(include_path, referenced_filename);
+    const auto opened_file = FindOpenedFile(resolved_filename);
+    if (opened_file) {
+      return *opened_file;
     }
   }
 
@@ -180,10 +229,13 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
     const std::string resolved_filename =
         verible::file::JoinPath(include_path, referenced_filename);
     if (verible::file::FileExists(resolved_filename).ok()) {
-      VLOG(2) << "File'" << resolved_filename << "' exists.";
+      VLOG(2) << "File '" << resolved_filename << "' exists. Resolved from '"
+              << referenced_filename << "'";
       return OpenFile(referenced_filename, resolved_filename, Corpus());
     }
-    VLOG(2) << "Checked for file'" << resolved_filename << "', but not found.";
+    VLOG(2) << "Checked for file'" << resolved_filename
+            << "', but not found. Resolved from '" << referenced_filename
+            << "'";
   }
 
   // Not found in any path.  Cache this status.
@@ -195,11 +247,11 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   return inserted.first->second->Status();
 }
 
-void VerilogProject::AddVirtualFile(absl::string_view referenced_filename,
+void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
                                     absl::string_view content) {
   const auto inserted = files_.emplace(
-      referenced_filename, absl::make_unique<InMemoryVerilogSourceFile>(
-                               referenced_filename, content));
+      resolved_filename, absl::make_unique<InMemoryVerilogSourceFile>(
+                             resolved_filename, content, /*corpus=*/""));
   CHECK(inserted.second);
   const auto file_iter = inserted.first;
 
@@ -240,23 +292,41 @@ const VerilogSourceFile* VerilogProject::LookupFileOrigin(
   return file;
 }
 
-absl::StatusOr<std::vector<std::string>> ParseSourceFileListFromFile(
+FileList ParseSourceFileList(absl::string_view file_list_path,
+                             const std::string& file_list_content) {
+  constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
+  FileList file_list_out;
+  file_list_out.file_list_path = std::string(file_list_path);
+  file_list_out.include_dirs.push_back(".");
+  std::string file_path;
+  std::istringstream stream(file_list_content);
+  while (std::getline(stream, file_path)) {
+    absl::RemoveExtraAsciiWhitespace(&file_path);
+    // Ignore blank lines
+    if (file_path.empty()) continue;
+    // Ignore "# ..." comments
+    if (file_path.front() == '#') continue;
+    // Ignore "// ..." comments
+    if (absl::StartsWith(file_path, "//")) continue;
+
+    if (absl::StartsWith(file_path, kIncludeDirPrefix)) {
+      // Handle includes
+      file_list_out.include_dirs.emplace_back(
+          absl::StripPrefix(file_path, kIncludeDirPrefix));
+    } else {
+      // A regular file
+      file_list_out.file_paths.push_back(file_path);
+    }
+  }
+  return file_list_out;
+}
+
+absl::StatusOr<FileList> ParseSourceFileListFromFile(
     absl::string_view file_list_file) {
   std::string content;
   const auto read_status = verible::file::GetContents(file_list_file, &content);
   if (!read_status.ok()) return read_status;
-
-  std::vector<std::string> files_names;
-  std::string filename;
-  std::istringstream stream(content);
-  while (std::getline(stream, filename)) {
-    // Ignore blank lines and "# ..." comments
-    if (filename.empty()) continue;
-    if (filename.front() == '#') continue;
-    absl::RemoveExtraAsciiWhitespace(&filename);
-    files_names.push_back(filename);
-  }
-  return files_names;
+  return ParseSourceFileList(file_list_file, content);
 }
 
 }  // namespace verilog
