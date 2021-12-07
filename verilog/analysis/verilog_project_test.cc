@@ -33,6 +33,8 @@ using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
 
+using ::testing::ElementsAre;
+
 class TempDirFile : public ScopedTestFile {
  public:
   TempDirFile(absl::string_view content)
@@ -546,7 +548,7 @@ TEST(VerilogProjectTest, IncludeFileNotFound) {
   EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
-TEST(VerilogProjecTest, AddVirtualFile) {
+TEST(VerilogProjectTest, AddVirtualFile) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");
   const std::string includes_dir = JoinPath(tempdir, "includes");
@@ -564,6 +566,30 @@ TEST(VerilogProjecTest, AddVirtualFile) {
   EXPECT_TRUE(stored_file->Status().ok());
   ASSERT_NE(stored_file->GetTextStructure(), nullptr);
   EXPECT_EQ(stored_file->GetTextStructure()->Contents(), file_content);
+}
+
+TEST(VerilogProjectTest, ParseSourceFileList) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string file_list_content = R"(
+    # A comment to ignore.
+    +incdir+/an/include_dir1
+    // Another comment
+    // on two lines
+    +incdir+/an/include_dir2
+
+    /a/source/file/1.sv
+    /a/source/file/2.sv
+  )";
+  const ScopedTestFile file_list_file(tempdir, file_list_content);
+  auto parsed_file_list =
+      ParseSourceFileListFromFile(file_list_file.filename());
+  ASSERT_TRUE(parsed_file_list.ok());
+
+  EXPECT_EQ(parsed_file_list->file_list_path, file_list_file.filename());
+  EXPECT_THAT(parsed_file_list->file_paths,
+              ElementsAre("/a/source/file/1.sv", "/a/source/file/2.sv"));
+  EXPECT_THAT(parsed_file_list->include_dirs,
+              ElementsAre(".", "/an/include_dir1", "/an/include_dir2"));
 }
 
 }  // namespace
