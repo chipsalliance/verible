@@ -204,8 +204,13 @@ const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
                                        E parent_must_be_node_enum,
                                        size_t child_position) {
   internal::MustBeCSTSymbolOrNode(symbol);
-  return SymbolCastToLeaf(*ABSL_DIE_IF_NULL(
-      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
+  const Symbol* subtree =
+      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position);
+  // TODO(ikr): avoid this check-failure.
+  CHECK(subtree != nullptr)
+      << symbol.Kind() << " e:" << parent_must_be_node_enum
+      << " p:" << child_position;
+  return SymbolCastToLeaf(*subtree);
 }
 
 template <class S, class E>
