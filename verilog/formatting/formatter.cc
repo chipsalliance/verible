@@ -868,6 +868,7 @@ void Formatter::Emit(std::ostream& stream) const {
   for (const auto& line : formatted_lines_) {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
     // some of it is handled here, some of it is inside FormattedToken.
+    // TODO(mglb): Test empty line handling when this method becomes testable.
     const auto front_offset =
         line.Tokens().empty() ? position
                               : line.Tokens().front().token->left(full_text);

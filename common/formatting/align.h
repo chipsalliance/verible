@@ -274,7 +274,7 @@ class AlignablePartitionGroup {
 
  private:
   struct GroupAlignmentData;
-  static AlignablePartitionGroup::GroupAlignmentData CalculateAlignmentSpacings(
+  static GroupAlignmentData CalculateAlignmentSpacings(
       const std::vector<TokenPartitionIterator>& rows,
       const AlignmentCellScannerFunction& cell_scanner_gen, int column_limit);
 
