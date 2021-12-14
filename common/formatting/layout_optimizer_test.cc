@@ -25,6 +25,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/formatting/token_partition_tree_test_utils.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/split.h"
@@ -34,82 +35,6 @@
 namespace verible {
 
 namespace {
-
-// Helper class for creating TokenPartitionTree hierarchy using compact and easy
-// to read/write/modify syntax.
-class TokenPartitionTreeBuilder {
- public:
-  TokenPartitionTreeBuilder(
-      int indent, std::pair<int, int> token_indexes_range,
-      PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : indent_(indent),
-        token_indexes_range_(token_indexes_range),
-        policy_(policy),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      int indent, std::pair<int, int> token_indexes_range,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : indent_(indent),
-        token_indexes_range_(token_indexes_range),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::pair<int, int> token_indexes_range, PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : token_indexes_range_(token_indexes_range),
-        policy_(policy),
-        children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::pair<int, int> token_indexes_range,
-      std::initializer_list<TokenPartitionTreeBuilder> children = {})
-      : token_indexes_range_(token_indexes_range), children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      PartitionPolicyEnum policy,
-      std::initializer_list<TokenPartitionTreeBuilder> children)
-      : policy_(policy), children_(children) {}
-
-  TokenPartitionTreeBuilder(
-      std::initializer_list<TokenPartitionTreeBuilder> children)
-      : children_(children) {}
-
-  TokenPartitionTree build(
-      const std::vector<verible::PreFormatToken>& tokens) const {
-    TokenPartitionTree node;
-
-    auto& child_nodes = node.Children();
-    child_nodes.reserve(children_.size());
-    for (const auto& child : children_) {
-      node.NewChild(child.build(tokens));
-    }
-
-    FormatTokenRange node_tokens;
-    if (token_indexes_range_.first < 0) {
-      CHECK(!child_nodes.empty());
-      CHECK_LT(token_indexes_range_.second, 0);
-      node_tokens.set_begin(child_nodes.front().Value().TokensRange().begin());
-      node_tokens.set_end(child_nodes.back().Value().TokensRange().end());
-    } else {
-      CHECK_GE(token_indexes_range_.second, token_indexes_range_.first);
-      node_tokens.set_begin(tokens.begin() + token_indexes_range_.first);
-      node_tokens.set_end(tokens.begin() + token_indexes_range_.second);
-    }
-
-    node.Value() = UnwrappedLine(indent_, node_tokens.begin(), policy_);
-    node.Value().SpanUpToToken(node_tokens.end());
-    return node;
-  }
-
- private:
-  int indent_ = 0;
-  std::pair<int, int> token_indexes_range_ = {-1, -1};
-  PartitionPolicyEnum policy_ = PartitionPolicyEnum::kUninitialized;
-
-  const std::vector<TokenPartitionTreeBuilder> children_;
-};
 
 template <typename T>
 std::string ToString(const T& value) {
@@ -214,14 +139,6 @@ bool TokenRangeEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
   return left.TokensRange() == right.TokensRange();
 }
 
-bool PartitionsEqual(const UnwrappedLine& left, const UnwrappedLine& right) {
-  return (left.TokensRange() == right.TokensRange()) &&
-         (left.IndentationSpaces() == right.IndentationSpaces()) &&
-         (left.PartitionPolicy() == right.PartitionPolicy()) &&
-         (left.PartitionPolicy() == right.PartitionPolicy()) &&
-         (left.Origin() == right.Origin());
-}
-
 class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
  public:
   LayoutTest()
@@ -317,19 +234,17 @@ TEST_F(LayoutTest, StackLayoutItemToString) {
   }
 }
 
-TEST_F(LayoutTest, AsUnwrappedLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
+TEST_F(LayoutTest, TokensRange) {
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine short_line(0, begin);
   short_line.SpanUpToToken(begin + 1);
 
   LayoutItem layout_short(short_line);
 
-  const auto uwline = layout_short.ToUnwrappedLine();
-  EXPECT_EQ(uwline.IndentationSpaces(), 0);
-  EXPECT_EQ(uwline.TokensRange().begin(), short_line.TokensRange().begin());
-  EXPECT_EQ(uwline.TokensRange().end(), short_line.TokensRange().end());
+  const auto tokens = layout_short.TokensRange();
+  EXPECT_EQ(tokens.begin(), short_line.TokensRange().begin());
+  EXPECT_EQ(tokens.end(), short_line.TokensRange().end());
 }
 
 TEST_F(LayoutTest, LineLayout) {
@@ -346,6 +261,8 @@ TEST_F(LayoutTest, LineLayout) {
     EXPECT_EQ(layout.MustWrap(), false);
     EXPECT_EQ(layout.Length(), 10);
     EXPECT_EQ(layout.Text(), "short_line");
+    EXPECT_EQ(layout.TokensRange().begin(), begin);
+    EXPECT_EQ(layout.TokensRange().end(), begin + 1);
   }
   {
     UnwrappedLine empty_line(0, begin);
@@ -357,6 +274,8 @@ TEST_F(LayoutTest, LineLayout) {
     EXPECT_EQ(layout.MustWrap(), false);
     EXPECT_EQ(layout.Length(), 0);
     EXPECT_EQ(layout.Text(), "");
+    EXPECT_EQ(layout.TokensRange().begin(), begin);
+    EXPECT_EQ(layout.TokensRange().end(), begin);
   }
 }
 
@@ -1931,62 +1850,48 @@ class TreeReconstructorTest : public ::testing::Test,
 };
 
 TEST_F(TreeReconstructorTest, SingleLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  using TPT = TokenPartitionTreeBuilder;
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-  UnwrappedLine single_line(0, begin);
-  single_line.SpanUpToToken(begin + 1);
+  const auto tree_expected =
+      TPT(0, {0, 1}, PartitionPolicyEnum::kAlreadyFormatted)
+          .build(pre_format_tokens_);
 
-  const auto layout_tree = LayoutTree(LayoutItem(single_line));
-  TreeReconstructor tree_reconstructor(0, style);
+  const auto layout_tree = LT(LI(tree_expected.Value()));
+
+  auto optimized_tree = TokenPartitionTree();
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
-
-  using Tree = TokenPartitionTree;
-  const Tree tree_expected{single_line,  //
-                           Tree{single_line}};
-  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
-  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
-                                << tree_expected << "\nGot:\n"
-                                << optimized_tree << "\n";
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, optimized_tree,
+                      tree_expected);
 }
 
 TEST_F(TreeReconstructorTest, HorizontalLayoutWithOneLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  using TPT = TokenPartitionTreeBuilder;
+  using LT = LayoutTree;
+  using LI = LayoutItem;
 
-  UnwrappedLine uwline(0, begin);
-  uwline.SpanUpToToken(begin + 1);
+  const auto tree_expected =
+      TPT(0, {0, 1}, PartitionPolicyEnum::kAlreadyFormatted)
+          .build(pre_format_tokens_);
 
-  const auto layout_tree =
-      LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false),
-                 LayoutTree(LayoutItem(uwline)));
+  const auto layout_tree = LT(LI(LayoutType::kJuxtaposition, 0, false),
+                              LT(LI(tree_expected.Value())));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  auto optimized_tree = TokenPartitionTree();
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
-  auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
-
-  using Tree = TokenPartitionTree;
-  const Tree tree_expected{uwline,  //
-                           Tree{uwline}};
-  const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
-  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
-                                << tree_expected << "\nGot:\n"
-                                << optimized_tree << "\n";
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, optimized_tree,
+                      tree_expected);
 }
 
 TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine left_line(0, begin);
   left_line.SpanUpToToken(begin + 1);
@@ -2001,16 +1906,14 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
                      SpacingOptions::MustWrap),
       LayoutTree(LayoutItem(left_line)), LayoutTree(LayoutItem(right_line)));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree(UnwrappedLine(0, begin));
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
-  const Tree tree_expected(all,  //
-                           Tree(all));
+  const Tree tree_expected(all);
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
@@ -2018,9 +1921,7 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
 }
 
 TEST_F(TreeReconstructorTest, EmptyHorizontalLayout) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine upper_line(0, begin);
   upper_line.SpanUpToToken(begin + 1);
@@ -2035,16 +1936,14 @@ TEST_F(TreeReconstructorTest, EmptyHorizontalLayout) {
                  LayoutTree(LayoutItem(LayoutType::kJuxtaposition, 0, false)),
                  LayoutTree(LayoutItem(lower_line)));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
-  const Tree tree_expected{all,  //
-                           Tree{all}};
+  const Tree tree_expected{all};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
@@ -2052,9 +1951,7 @@ TEST_F(TreeReconstructorTest, EmptyHorizontalLayout) {
 }
 
 TEST_F(TreeReconstructorTest, VerticalLayoutWithOneLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine uwline(0, begin);
   uwline.SpanUpToToken(begin + 1);
@@ -2062,16 +1959,14 @@ TEST_F(TreeReconstructorTest, VerticalLayoutWithOneLine) {
   const auto layout_tree = LayoutTree(LayoutItem(LayoutType::kStack, 0, false),
                                       LayoutTree(LayoutItem(uwline)));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
-  const Tree tree_expected{uwline,  //
-                           Tree{uwline}};
+  const Tree tree_expected{uwline};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
@@ -2079,9 +1974,7 @@ TEST_F(TreeReconstructorTest, VerticalLayoutWithOneLine) {
 }
 
 TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine upper_line(0, begin);
   upper_line.SpanUpToToken(begin + 1);
@@ -2096,12 +1989,11 @@ TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
                      SpacingOptions::MustWrap),
       LayoutTree(LayoutItem(upper_line)), LayoutTree(LayoutItem(lower_line)));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2114,9 +2006,7 @@ TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
 }
 
 TEST_F(TreeReconstructorTest, EmptyVerticalLayout) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine upper_line(0, begin);
   upper_line.SpanUpToToken(begin + 1);
@@ -2131,12 +2021,11 @@ TEST_F(TreeReconstructorTest, EmptyVerticalLayout) {
                  LayoutTree(LayoutItem(LayoutType::kStack, 0, false)),
                  LayoutTree(LayoutItem(lower_line)));
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2149,9 +2038,7 @@ TEST_F(TreeReconstructorTest, EmptyVerticalLayout) {
 }
 
 TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine first_line(0, begin);
   first_line.SpanUpToToken(begin + 1);
@@ -2178,12 +2065,11 @@ TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
                  LayoutTree(LayoutItem(third_line)),
                  LayoutTree(LayoutItem(fourth_line)))};
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,               //
@@ -2196,9 +2082,7 @@ TEST_F(TreeReconstructorTest, VerticallyJoinHorizontalLayouts) {
 }
 
 TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine first_line(0, begin);
   first_line.SpanUpToToken(begin + 1);
@@ -2228,12 +2112,11 @@ TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
                  LayoutTree(LayoutItem(third_line)),
                  LayoutTree(LayoutItem(fourth_line)))};
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
   const Tree tree_expected{all,                //
@@ -2247,9 +2130,7 @@ TEST_F(TreeReconstructorTest, HorizontallyJoinVerticalLayouts) {
 }
 
 TEST_F(TreeReconstructorTest, IndentSingleLine) {
-  const auto& preformat_tokens = pre_format_tokens_;
-  const auto begin = preformat_tokens.begin();
-  BasicFormatStyle style;
+  const auto begin = pre_format_tokens_.begin();
 
   UnwrappedLine single_line(0, begin);
   single_line.SpanUpToToken(begin + 1);
@@ -2258,22 +2139,50 @@ TEST_F(TreeReconstructorTest, IndentSingleLine) {
   LayoutTree layout_tree{LayoutItem(single_line)};
   layout_tree.Value().SetIndentationSpaces(indent);
 
-  TreeReconstructor tree_reconstructor(0, style);
+  TreeReconstructor tree_reconstructor(0);
   tree_reconstructor.TraverseTree(layout_tree);
 
   auto optimized_tree = TokenPartitionTree{UnwrappedLine(0, begin)};
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree,
-                                                   &pre_format_tokens_);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
 
   using Tree = TokenPartitionTree;
-  const Tree tree_expected{single_line,  //
-                           Tree{single_line}};
+  const Tree tree_expected{single_line};
   const auto diff = DeepEqual(optimized_tree, tree_expected, TokenRangeEqual);
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:\n"
                                 << optimized_tree << "\n";
 
-  EXPECT_EQ(optimized_tree.Children()[0].Value().IndentationSpaces(), indent);
+  EXPECT_EQ(optimized_tree.Value().IndentationSpaces(), indent);
+}
+
+TEST_F(TreeReconstructorTest, InlineSpacingReconstruction) {
+  using TPT = TokenPartitionTreeBuilder;
+  using LT = LayoutTree;
+  using LI = LayoutItem;
+
+  const auto tree_expected =
+      TPT(1, PartitionPolicyEnum::kAlreadyFormatted,
+          {
+              TPT(0, {0, 1}, PartitionPolicyEnum::kInline),
+              TPT(2, {1, 2}, PartitionPolicyEnum::kInline),
+              TPT(3, {2, 3}, PartitionPolicyEnum::kInline),
+          })
+          .build(pre_format_tokens_);
+
+  const auto layout_tree =
+      LT(LI(LayoutType::kJuxtaposition, 1, true),               //
+         LT(LI(tree_expected.Children()[0].Value(), true, 1)),  //
+         LT(LI(tree_expected.Children()[1].Value())),           //
+         LT(LI(tree_expected.Children()[2].Value())));
+
+  auto optimized_tree = TokenPartitionTree();
+
+  TreeReconstructor tree_reconstructor(0);
+  tree_reconstructor.TraverseTree(layout_tree);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(&optimized_tree);
+
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, optimized_tree,
+                      tree_expected);
 }
 
 class OptimizeTokenPartitionTreeTest : public ::testing::Test,
@@ -2283,7 +2192,8 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
       : sample_(
             "function_fffffffffff( type_a_aaaa, "
             "type_b_bbbbb, type_c_cccccc, "
-            "type_d_dddddddd, type_e_eeeeeeee, type_f_ffff);"),
+            "type_d_dddddddd, type_e_eeeeeeee, type_f_ffff); "
+            "seven eight nine ten eleven twelve"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
       ftokens_.emplace_back(TokenInfo{1, token});
@@ -2317,9 +2227,9 @@ TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
           .build(pre_format_tokens_);
 
   const auto tree_expected =
-      TPT(PartitionPolicyEnum::kOptimalFunctionCallLayout,
+      TPT(PartitionPolicyEnum::kAlwaysExpand,
           {
-              TPT({0, 1}, PartitionPolicyEnum::kAlreadyFormatted),
+              TPT(0, {0, 1}, PartitionPolicyEnum::kAlreadyFormatted),
               TPT(4, {1, 3}, PartitionPolicyEnum::kAlreadyFormatted),
               TPT(4, {3, 5}, PartitionPolicyEnum::kAlreadyFormatted),
               TPT(4, {5, 7}, PartitionPolicyEnum::kAlreadyFormatted),
@@ -2327,12 +2237,50 @@ TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
           .build(pre_format_tokens_);
 
   static const BasicFormatStyle style = CreateStyle();
-  OptimizeTokenPartitionTree(style, &tree_under_test, &pre_format_tokens_);
+  OptimizeTokenPartitionTree(style, &tree_under_test);
 
-  const auto diff = DeepEqual(tree_under_test, tree_expected, PartitionsEqual);
-  EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
-                                << tree_expected << "\nGot:\n"
-                                << tree_under_test << "\n";
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree_under_test,
+                      tree_expected);
+}
+
+TEST_F(OptimizeTokenPartitionTreeTest, AppendToLineWithInlinePartitions) {
+  using TPT = TokenPartitionTreeBuilder;
+  using PP = PartitionPolicyEnum;
+
+  auto tree = TPT(PP::kFitOnLineElseExpand,
+                  {
+                      TPT(PP::kAlreadyFormatted,
+                          {
+                              TPT(1, {7, 8}, PP::kInline),
+                              TPT(3, {8, 9}, PP::kInline),
+                              TPT(5, {9, 10}, PP::kInline),
+                          }),
+                      TPT(PP::kAlwaysExpand,
+                          {
+                              TPT({10, 11}, PP::kFitOnLineElseExpand),
+                              TPT({11, 12}, PP::kFitOnLineElseExpand),
+                              TPT({12, 13}, PP::kFitOnLineElseExpand),
+                          }),
+                  })
+                  .build(pre_format_tokens_);
+
+  const auto expected_tree = TPT(PP::kAlwaysExpand,
+                                 {
+                                     TPT(1, PP::kAlreadyFormatted,
+                                         {
+                                             TPT(0, {7, 8}, PP::kInline),
+                                             TPT(3, {8, 9}, PP::kInline),
+                                             TPT(5, {9, 11}, PP::kInline),
+                                         }),
+                                     TPT(23, {11, 12}, PP::kAlreadyFormatted),
+                                     TPT(23, {12, 13}, PP::kAlreadyFormatted),
+                                 })
+                                 .build(pre_format_tokens_);
+
+  static const BasicFormatStyle style = CreateStyle();
+  OptimizeTokenPartitionTree(style, &tree);
+
+  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree, expected_tree);
 }
 
 class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
@@ -2469,6 +2417,31 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
         {0, expected_layout, 31, 2.0F, 0},
         {9, expected_layout, 31, 2.0F, 100},
         {22, expected_layout, 31, 1302.0F, 200},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto tree = TPT(PP::kAlreadyFormatted,
+                          {
+                              TPT(3, {0, 1}, PP::kInline),
+                              TPT(5, {1, 2}, PP::kInline),
+                              TPT(7, {2, 4}, PP::kInline),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout =
+        LT(LI(LayoutType::kJuxtaposition, 3, true),
+           LT(LI(tree.Children()[0].Value(), true, 3)),
+           LT(LI(tree.Children()[1].Value(), false, 0)),
+           LT(LI(tree.Children()[2].Value(), false, 0)));
+
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 31, 0.0, 0},
+        {9, expected_layout, 31, 0.0, 100},
+        {26, expected_layout, 31, 1000.0, 100},
+        {34, expected_layout, 31, 1300.0, 100},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);

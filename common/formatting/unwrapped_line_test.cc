@@ -38,6 +38,16 @@ TEST(PartitionPolicyTest, Printing) {
     stream << PartitionPolicyEnum::kFitOnLineElseExpand;
     EXPECT_EQ(stream.str(), "fit-else-expand");
   }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kAlreadyFormatted;
+    EXPECT_EQ(stream.str(), "already-formatted");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kInline;
+    EXPECT_EQ(stream.str(), "inline");
+  }
 }
 
 // This test fixture inherits from UnwrappedLineMemoryHandler so that

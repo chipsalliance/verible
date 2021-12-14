@@ -43,6 +43,7 @@ cc_test(
         ":align",
         ":format_token",
         ":token_partition_tree",
+        ":token_partition_tree_test_utils",
         ":unwrapped_line_test_utils",
         "//common/text:tree_builder_test_util",
         "//common/util:range",
@@ -145,6 +146,7 @@ cc_test(
         ":basic_format_style",
         ":layout_optimizer",
         ":token_partition_tree",
+        ":token_partition_tree_test_utils",
         ":unwrapped_line",
         ":unwrapped_line_test_utils",
         "//common/strings:split",
@@ -173,10 +175,23 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:algorithm",
         "//common/util:container_iterator_range",
+        "//common/util:iterator_adaptors",
         "//common/util:logging",
         "//common/util:spacer",
         "//common/util:top_n",
         "//common/util:vector_tree",
+    ],
+)
+
+cc_library(
+    name = "token_partition_tree_test_utils",
+    srcs = ["token_partition_tree_test_utils.cc"],
+    hdrs = ["token_partition_tree_test_utils.h"],
+    deps = [
+        ":format_token",
+        ":token_partition_tree",
+        ":unwrapped_line",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -186,6 +201,7 @@ cc_test(
     deps = [
         ":format_token",
         ":token_partition_tree",
+        ":token_partition_tree_test_utils",
         ":unwrapped_line",
         ":unwrapped_line_test_utils",
         "//common/util:container_iterator_range",

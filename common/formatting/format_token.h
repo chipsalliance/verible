@@ -175,13 +175,6 @@ using FormatTokenRange =
 using MutableFormatTokenRange =
     container_iterator_range<std::vector<PreFormatToken>::iterator>;
 
-// Given a const_range and a mutable iterator to the original mutable container,
-// return the corresponding mutable iterator range (without resorting to
-// const_cast).
-MutableFormatTokenRange ConvertToMutableFormatTokenRange(
-    const FormatTokenRange& const_range,
-    MutableFormatTokenRange::iterator base);
-
 // Enumeration for the final decision about spacing between tokens.
 // Related enum: SpacingConstraint.
 // These values are also used during line wrap searching and optimization.

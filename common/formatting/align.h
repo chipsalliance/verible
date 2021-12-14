@@ -269,23 +269,16 @@ class AlignablePartitionGroup {
   }
 
   // This executes alignment, depending on the alignment_policy.
-  // 'full_text' is the original text buffer that spans all string_views
-  // referenced by format tokens and token partition trees.
   // 'column_limit' is the maximum text width allowed post-alignment.
-  // 'ftokens' is the original mutable array of formatting tokens from which
-  // token partition trees were created.
-  void Align(absl::string_view full_text, int column_limit,
-             std::vector<PreFormatToken>* ftokens) const;
+  void Align(int column_limit) const;
 
  private:
   struct GroupAlignmentData;
   static GroupAlignmentData CalculateAlignmentSpacings(
       const std::vector<TokenPartitionIterator>& rows,
-      const AlignmentCellScannerFunction& cell_scanner_gen,
-      MutableFormatTokenRange::iterator ftoken_base, int column_limit);
+      const AlignmentCellScannerFunction& cell_scanner_gen, int column_limit);
 
-  void ApplyAlignment(const GroupAlignmentData& align_data,
-                      MutableFormatTokenRange::iterator ftoken_base) const;
+  void ApplyAlignment(const GroupAlignmentData& align_data) const;
 
  private:
   // The set of partitions to treat as rows for tabular alignment.
@@ -494,6 +487,11 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
   };
 }
 
+// Converts partitions from 'partition_range' into partitions with
+// kAlreadyFormatted/kInline policies that emulate original spacing of token
+// range spanned by them.
+void FormatUsingOriginalSpacing(TokenPartitionRange partition_range);
+
 // This aligns sections of text by modifying the spacing between tokens.
 // 'partition_ptr' is a partition that can span one or more sections of
 // code to align.  The partitions themselves are not reshaped, however,
@@ -539,7 +537,7 @@ void TabularAlignTokens(
     int column_limit, absl::string_view full_text,
     const ByteOffsetSet& disabled_byte_ranges,
     const ExtractAlignmentGroupsFunction& extract_alignment_groups,
-    TokenPartitionTree* partition_ptr, std::vector<PreFormatToken>* ftokens);
+    TokenPartitionTree* partition_ptr);
 
 }  // namespace verible
 

@@ -86,7 +86,7 @@ static int EffectiveCellWidth(const FormatTokenRange& tokens) {
       });
 }
 
-static int EffectiveLeftBorderWidth(const MutableFormatTokenRange& tokens) {
+static int EffectiveLeftBorderWidth(const FormatTokenRange& tokens) {
   if (tokens.empty()) return 0;
   return tokens.front().before.spaces_required;
 }
@@ -95,7 +95,7 @@ using ColumnsTreePath = SyntaxTreePath;
 
 struct AlignmentCell {
   // Slice of format tokens in this cell (may be empty range).
-  MutableFormatTokenRange tokens;
+  FormatTokenRange tokens;
   // The width of this token excerpt that complies with minimum spacing.
   int compact_width = 0;
   // Width of the left-side spacing before this cell, which can be considered
@@ -532,7 +532,7 @@ std::ostream& operator<<(std::ostream& stream,
 
 struct AlignmentRowData {
   // Range of format tokens whose space is to be adjusted for alignment.
-  MutableFormatTokenRange ftoken_range;
+  FormatTokenRange ftoken_range;
 
   // Set of cells found that correspond to an ordered, sparse set of columns
   // to be aligned with other rows.
@@ -544,9 +544,9 @@ static void FillAlignmentRow(
     const std::map<SyntaxTreePath, ColumnsTreePath>& columns_map,
     AlignmentRow* row) {
   const auto& sparse_columns(row_data.sparse_columns);
-  MutableFormatTokenRange remaining_tokens_range(row_data.ftoken_range);
+  FormatTokenRange remaining_tokens_range(row_data.ftoken_range);
 
-  MutableFormatTokenRange* prev_cell_tokens = nullptr;
+  FormatTokenRange* prev_cell_tokens = nullptr;
   if (!sparse_columns.is_leaf()) {
     for (const auto& col : VectorTreeLeavesTraversal(sparse_columns)) {
       const auto column_loc_iter = columns_map.find(col.Value().path);
@@ -690,23 +690,17 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
 // alignment column boundary.
 struct DeferredTokenAlignment {
   // Points to the token to be modified.
-  PreFormatToken* ftoken;
+  FormatTokenRange::iterator ftoken;
   // This is the spacing that would produce aligned formatting.
   int new_before_spacing;
 
-  DeferredTokenAlignment(PreFormatToken* t, int spaces)
+  DeferredTokenAlignment(FormatTokenRange::iterator t, int spaces)
       : ftoken(t), new_before_spacing(spaces) {}
 
   // This value reflects an edit-distance (number of spaces) between aligned and
   // flushed-left formatting.
   int AlignVsFlushLeftSpacingDifference() const {
     return new_before_spacing - ftoken->before.spaces_required;
-  }
-
-  void Apply() const {
-    // force printing of spaces
-    ftoken->before.break_decision = SpacingOptions::AppendAligned;
-    ftoken->before.spaces_required = new_before_spacing;
   }
 };
 
@@ -764,7 +758,7 @@ static void ComputeAlignedRowCellSpacings(
       // before this one.
       const int padding =
           column_config_it->Value().width - cell.Value().compact_width;
-      PreFormatToken& ftoken = cell.Value().tokens.front();
+      FormatTokenRange::iterator ftoken = cell.Value().tokens.begin();
       int left_spacing;
       if (column_properties_it->Value().flush_left) {
         if (column_properties_it->Value().contains_delimiter) {
@@ -778,7 +772,7 @@ static void ComputeAlignedRowCellSpacings(
         left_spacing = *accrued_spaces + padding;
         *accrued_spaces = 0;
       }
-      align_actions->emplace_back(&ftoken, left_spacing);
+      align_actions->emplace_back(ftoken, left_spacing);
 
       VLOG(2) << TreePathFormatter(node_path)
               << " ... left_spacing: " << left_spacing;
@@ -823,42 +817,6 @@ static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
   auto partition_end = partition.Value().TokensRange().end();
   auto row_end = last_subcol.Value().tokens.end();
   return FormatTokenRange(row_end, partition_end);
-}
-
-// Mark format tokens as must-append to remove future decision-making.
-static void CommitAlignmentDecisionToRow(
-    const AlignmentRow& row, MutableFormatTokenRange::iterator ftoken_base,
-    TokenPartitionTree* partition) {
-  if (!row.Children().empty()) {
-    const auto ftoken_range = ConvertToMutableFormatTokenRange(
-        partition->Value().TokensRange(), ftoken_base);
-    for (auto& ftoken : ftoken_range) {
-      SpacingOptions& decision = ftoken.before.break_decision;
-      if (decision == SpacingOptions::Undecided) {
-        decision = SpacingOptions::MustAppend;
-      }
-    }
-    // Tag every subtree as having already been committed to alignment.
-    partition->ApplyPostOrder([](TokenPartitionTree& node) {
-      node.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
-    });
-  }
-}
-
-static MutableFormatTokenRange GetMutableFormatTokenRange(
-    const UnwrappedLine& unwrapped_line,
-    MutableFormatTokenRange::iterator ftoken_base) {
-  // Each row should correspond to an individual list element
-  VLOG(2) << "row: " << StringSpanOfTokenRange(unwrapped_line.TokensRange());
-
-  const auto range_begin = unwrapped_line.TokensRange().begin();
-  auto range_end = unwrapped_line.TokensRange().end();
-  CHECK(range_begin <= range_end);
-
-  // Scan each token-range for cell boundaries based on syntax,
-  // and establish partial ordering based on syntax tree paths.
-  return ConvertToMutableFormatTokenRange(
-      FormatTokenRange(range_begin, range_end), ftoken_base);
 }
 
 // This width calculation accounts for the unaligned tokens in the tail position
@@ -913,8 +871,7 @@ struct AlignablePartitionGroup::GroupAlignmentData {
 AlignablePartitionGroup::GroupAlignmentData
 AlignablePartitionGroup::CalculateAlignmentSpacings(
     const std::vector<TokenPartitionIterator>& rows,
-    const AlignmentCellScannerFunction& cell_scanner_gen,
-    MutableFormatTokenRange::iterator ftoken_base, int column_limit) {
+    const AlignmentCellScannerFunction& cell_scanner_gen, int column_limit) {
   VLOG(1) << __FUNCTION__;
   GroupAlignmentData result;
   // Alignment requires 2+ rows.
@@ -946,8 +903,7 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
         });
     const AlignmentRowData row_data{
         // Extract the range of format tokens whose spacings should be adjusted.
-        GetMutableFormatTokenRange(unwrapped_line, ftoken_base),
-        std::move(sparse_columns)};
+        unwrapped_line.TokensRange(), std::move(sparse_columns)};
 
     alignment_row_data.emplace_back(row_data);
     VLOG(2) << "Row sparse columns:\n" << row_data.sparse_columns;
@@ -1034,24 +990,46 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
 // This applies pre-calculated alignment spacings to aligned groups of format
 // tokens.
 void AlignablePartitionGroup::ApplyAlignment(
-    const GroupAlignmentData& align_data,
-    MutableFormatTokenRange::iterator ftoken_base) const {
-  // Apply spacing adjustments (mutates format tokens)
+    const GroupAlignmentData& align_data) const {
+  auto row = alignable_rows_.begin();
   for (const auto& align_actions : align_data.align_actions_2D) {
-    for (const auto& action : align_actions) action.Apply();
-  }
+    (*row)->Children().clear();
+    VLOG(3) << __FUNCTION__ << " processing row: " << **row;
+    if (!align_actions.empty()) {
+      auto& node = **row;
+      auto& line = node.Value();
+      auto ftokens = line.TokensRange();
 
-  // Signal that these partitions spacing/wrapping decisions have already been
-  // solved (append everything because they fit on one line).
-  {
-    auto partition_iter = alignable_rows_.begin();
-    for (auto& row : align_data.matrix) {
-      // Commits to appending all tokens in this row (mutates format tokens)
-      CommitAlignmentDecisionToRow(row, ftoken_base, &**partition_iter);
-      ++partition_iter;
+      line.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
+
+      verible::TokenPartitionTree* current_cell = nullptr;
+      if (align_actions.front().ftoken != ftokens.begin()) {
+        current_cell = node.NewChild(
+            UnwrappedLine(0, ftokens.begin(), PartitionPolicyEnum::kInline));
+      }
+
+      for (const auto& action : align_actions) {
+        if (current_cell) {
+          current_cell->Value().SpanUpToToken(action.ftoken);
+          VLOG(3) << "new cell: margin="
+                  << current_cell->Value().IndentationSpaces() << ", tokens=[ "
+                  << StringSpanOfTokenRange(current_cell->Value().TokensRange())
+                  << " ]";
+        }
+        current_cell = node.NewChild(
+            UnwrappedLine(action.new_before_spacing, action.ftoken,
+                          PartitionPolicyEnum::kInline));
+      }
+      if (current_cell) {
+        current_cell->Value().SpanUpToToken(ftokens.end());
+        VLOG(3) << "new cell: margin="
+                << current_cell->Value().IndentationSpaces() << ", tokens=[ "
+                << StringSpanOfTokenRange(current_cell->Value().TokensRange())
+                << " ]";
+      }
     }
+    ++row;
   }
-  VLOG(1) << "end of " << __FUNCTION__;
 }
 
 std::vector<TokenPartitionIterator> FilterAlignablePartitions(
@@ -1164,10 +1142,88 @@ AlignablePartitionGroup::GroupAlignmentData::InferUserIntendedAlignmentPolicy(
   return AlignmentPolicy::kPreserve;
 }
 
-void AlignablePartitionGroup::Align(
-    absl::string_view full_text, int column_limit,
-    std::vector<PreFormatToken>* ftokens) const {
-  const TokenPartitionRange partition_range(Range());
+// TODO(mglb): this eventually could be moved to token_partition_tree.cc.
+void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
+  for (auto& partition : partition_range) {
+    VLOG(4) << "partition before:\n"
+            << TokenPartitionTreePrinter(partition, true);
+
+    partition.Children().clear();
+    auto tokens = partition.Value().TokensRange();
+    if (tokens.empty()) {
+      partition.Value().SetPartitionPolicy(
+          PartitionPolicyEnum::kAlreadyFormatted);
+      VLOG(4) << "partition after:\n"
+              << TokenPartitionTreePrinter(partition, true);
+      continue;
+    }
+
+    // Emulate spacing preservation using kAlreadyFormatted and kInline
+    // partitions
+
+    const int indentation = partition.Value().IndentationSpaces();
+
+    auto line = UnwrappedLine(indentation, tokens.begin(),
+                              PartitionPolicyEnum::kAlreadyFormatted);
+    partition.NewChild(line);
+
+    if (tokens.size() > 1) {
+      // First token
+      VLOG(5) << "token: \""
+              << EscapeString(tokens.front().OriginalLeadingSpaces())
+              << EscapeString(tokens.front().Text()) << '\"';
+      auto slice =
+          UnwrappedLine(0, tokens.begin(), PartitionPolicyEnum::kInline);
+      slice.SpanNextToken();
+      partition.Children().back().NewChild(slice);
+
+      // Remaining tokens
+      for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) {
+        auto& token = *it;
+        const auto whitespace = token.OriginalLeadingSpaces();
+        VLOG(5) << "token: \"" << EscapeString(whitespace)
+                << EscapeString(token.Text()) << '\"';
+
+        int spacing = whitespace.size();
+        std::size_t last_newline_pos = whitespace.find_last_of('\n');
+        if (last_newline_pos != absl::string_view::npos) {
+          // Update end of current line.
+          partition.Children().back().Value().SpanUpToToken(it);
+          // Start a new line.
+          // Newlines count does not matter here. All newlines in leading
+          // whitespace of the first token in a line are always preserved.
+          // For details, see FormatWhitespaceWithDisabledByteRanges() called
+          // from Formatter::Emit().
+          //
+          // TODO(mglb): consider using correctly adjusted indentation to make
+          // all lines indented correctly. Something like:
+          // indentation + (this line orig. indent) - (1st line orig. indent)
+          const auto line =
+              UnwrappedLine(0, it, PartitionPolicyEnum::kAlreadyFormatted);
+          partition.NewChild(line);
+          // Count only spaces after the last '\n'.
+          spacing -= last_newline_pos + 1;
+        }
+
+        auto slice = UnwrappedLine(spacing, it, PartitionPolicyEnum::kInline);
+        slice.SpanNextToken();
+        partition.Children().back().NewChild(slice);
+      }
+    }
+    partition.Children().back().Value().SpanUpToToken(tokens.end());
+
+    if (partition.Children().size() == 1) {
+      partition.HoistOnlyChild();
+    } else {
+      partition.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+    }
+
+    VLOG(4) << "partition after:\n"
+            << TokenPartitionTreePrinter(partition, true);
+  }
+}
+
+void AlignablePartitionGroup::Align(int column_limit) const {
   // Compute dry-run of alignment spacings if it is needed.
   AlignmentPolicy policy = alignment_policy_;
   VLOG(2) << "AlignmentPolicy: " << policy;
@@ -1175,14 +1231,14 @@ void AlignablePartitionGroup::Align(
   switch (policy) {
     case AlignmentPolicy::kAlign:
     case AlignmentPolicy::kInferUserIntent:
-      align_data =
-          CalculateAlignmentSpacings(alignable_rows_, alignment_cell_scanner_,
-                                     ftokens->begin(), column_limit);
+      align_data = CalculateAlignmentSpacings(
+          alignable_rows_, alignment_cell_scanner_, column_limit);
       break;
     default:
       break;
   }
 
+  const TokenPartitionRange partition_range(Range());
   // If enabled, try to decide automatically based on heurstics.
   if (policy == AlignmentPolicy::kInferUserIntent) {
     policy = align_data.InferUserIntendedAlignmentPolicy(partition_range);
@@ -1194,15 +1250,21 @@ void AlignablePartitionGroup::Align(
     case AlignmentPolicy::kAlign: {
       if (!align_data.align_actions_2D.empty()) {
         // This modifies format tokens' spacing values.
-        ApplyAlignment(align_data, ftokens->begin());
+        ApplyAlignment(align_data);
       }
       break;
     }
     case AlignmentPolicy::kFlushLeft:
       // This is already the default behavior elsewhere.  Nothing else to do.
       break;
-    default:
-      IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
+    case AlignmentPolicy::kInferUserIntent:
+      // InferUserIntendedAlignmentPolicy() above should have set the policy to
+      // anything other.
+      LOG(ERROR) << "Alignment policy should have been decided at this point. "
+                    "Defaulting to kPreserve.";
+      [[fallthrough]];
+    case AlignmentPolicy::kPreserve:
+      FormatUsingOriginalSpacing(partition_range);
       break;
   }
 }
@@ -1211,7 +1273,7 @@ void TabularAlignTokens(
     int column_limit, absl::string_view full_text,
     const ByteOffsetSet& disabled_byte_ranges,
     const ExtractAlignmentGroupsFunction& extract_alignment_groups,
-    TokenPartitionTree* partition_ptr, std::vector<PreFormatToken>* ftokens) {
+    TokenPartitionTree* partition_ptr) {
   VLOG(1) << __FUNCTION__;
   // Each subpartition is presumed to correspond to a list element or
   // possibly some other ignored element like comments.
@@ -1234,7 +1296,7 @@ void TabularAlignTokens(
       // due to incremental formatting, then leave the new lines
       // unformatted rather than falling back to compact-left formatting.
       // However, allow the first token to be correctly indented.
-      IndentButPreserveOtherSpacing(partition_range, full_text, ftokens);
+      FormatUsingOriginalSpacing(partition_range);
       continue;
 
       // TODO(fangism): instead of disabling the whole range, sub-partition
@@ -1246,7 +1308,7 @@ void TabularAlignTokens(
     }
 
     // Calculate alignment and possibly apply it depending on alignment policy.
-    alignment_group.Align(full_text, column_limit, ftokens);
+    alignment_group.Align(column_limit);
   }
   VLOG(1) << "end of " << __FUNCTION__;
 }

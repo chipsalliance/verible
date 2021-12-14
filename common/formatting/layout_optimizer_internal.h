@@ -58,17 +58,33 @@ class LayoutItem {
       : type_(type),
         indentation_(indentation),
         spaces_before_(spacing),
-        must_wrap_(must_wrap) {}
+        must_wrap_(must_wrap) {
+    CHECK_GE(indentation_, 0);
+    CHECK_GE(spaces_before_, 0);
+  }
 
   // Creates Line item from UnwrappedLine.
   explicit LayoutItem(const UnwrappedLine& uwline, int indentation = 0)
       : type_(LayoutType::kLine),
         indentation_(indentation),
         tokens_(uwline.TokensRange()),
-        spaces_before_(!tokens_.empty() ? tokens_.front().before.spaces_required
-                                        : 0),
-        must_wrap_(!tokens_.empty() && tokens_.front().before.break_decision ==
-                                           SpacingOptions::MustWrap) {}
+        spaces_before_(SpacesRequiredBeforeUnwrappedLine(uwline)),
+        must_wrap_(UnwrappedLineMustWrap(uwline)) {
+    CHECK_GE(indentation_, 0);
+    CHECK_GE(spaces_before_, 0);
+  }
+
+  // Creates Line item from UnwrappedLine.
+  explicit LayoutItem(const UnwrappedLine& uwline, bool must_wrap,
+                      int indentation)
+      : type_(LayoutType::kLine),
+        indentation_(indentation),
+        tokens_(uwline.TokensRange()),
+        spaces_before_(SpacesRequiredBeforeUnwrappedLine(uwline)),
+        must_wrap_(must_wrap) {
+    CHECK_GE(indentation_, 0);
+    CHECK_GE(spaces_before_, 0);
+  }
 
   // Multiple LayoutFunctionSegments can store copies of the same layout.
   // The objects are copied mostly in LayoutFunctionFactory::* functions.
@@ -96,6 +112,9 @@ class LayoutItem {
   // Returns whether to force line break just before this layout.
   bool MustWrap() const { return must_wrap_; }
 
+  // Sets whether to force line break just before this layout.
+  void SetMustWrap(bool must_wrap) { must_wrap_ = must_wrap; }
+
   // Returns textual representation of spanned tokens for Line items, empty
   // string for other item types.
   std::string Text() const {
@@ -113,6 +132,7 @@ class LayoutItem {
     if (tokens_.empty()) return 0;
     int len = 0;
     for (const auto& token : tokens_) {
+      // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
       len += token.Length();
     }
@@ -120,14 +140,11 @@ class LayoutItem {
     return len;
   }
 
-  // Returns the item as UnwrappedLine.
+  // Returns tokens range spanned by the Line item.
   // Can be called only on Line items.
-  UnwrappedLine ToUnwrappedLine() const {
+  FormatTokenRange TokensRange() const {
     CHECK_EQ(type_, LayoutType::kLine);
-
-    UnwrappedLine uwline(0, tokens_.begin());
-    uwline.SpanUpToToken(tokens_.end());
-    return uwline;
+    return tokens_;
   }
 
   friend bool operator==(const LayoutItem& lhs, const LayoutItem& rhs) {
@@ -138,6 +155,27 @@ class LayoutItem {
   }
 
  private:
+  static bool UnwrappedLineMustWrap(const UnwrappedLine& uwline) {
+    if (uwline.TokensRange().empty()) return false;
+
+    const auto policy = uwline.PartitionPolicy();
+    if (policy == PartitionPolicyEnum::kInline) return false;
+    if (policy == PartitionPolicyEnum::kAlreadyFormatted) return true;
+
+    auto break_decision = uwline.TokensRange().front().before.break_decision;
+    return (break_decision == SpacingOptions::MustWrap);
+  }
+
+  static int SpacesRequiredBeforeUnwrappedLine(const UnwrappedLine& uwline) {
+    const auto tokens = uwline.TokensRange();
+    const auto policy = uwline.PartitionPolicy();
+    const auto indentation = uwline.IndentationSpaces();
+
+    if (policy == PartitionPolicyEnum::kInline) return indentation;
+    if (tokens.empty()) return 0;
+    return tokens.front().before.spaces_required;
+  }
+
   LayoutType type_;
   int indentation_;
   FormatTokenRange tokens_;
@@ -273,6 +311,12 @@ class LayoutFunction {
                         return segment.layout.Value().MustWrap() == must_wrap;
                       }));
     return must_wrap;
+  }
+
+  // Sets whether to force line break just before this layout.
+  void SetMustWrap(bool must_wrap) {
+    for (auto& segment : segments_)
+      segment.layout.Value().SetMustWrap(must_wrap);
   }
 
  private:
@@ -514,7 +558,32 @@ class LayoutFunctionFactory {
   //     First First First First First First
   //     First First First Second Second Second
   //                       Second Second
-  LayoutFunction Juxtaposition(std::initializer_list<LayoutFunction> lfs) const;
+  LayoutFunction Juxtaposition(
+      std::initializer_list<LayoutFunction> lfs) const {
+    return Juxtaposition(lfs.begin(), lfs.end());
+  }
+
+  // See Juxtaposition(std::initializer_list<LayoutFunction> lfs).
+  //
+  // Iterator: iterator type that dereferences to LayoutFunction.
+  template <class Iterator>
+  LayoutFunction Juxtaposition(Iterator begin, Iterator end) const {
+    static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
+                  "Iterator's value type must be LayoutFunction.");
+
+    auto lfs_container = make_container_range(begin, end);
+
+    if (lfs_container.empty()) return LayoutFunction();
+    if (lfs_container.size() == 1) return lfs_container.front();
+
+    LayoutFunction incremental = lfs_container.front();
+    lfs_container.pop_front();
+    for (auto& lf : lfs_container) {
+      incremental = Juxtaposition(incremental, lf);
+    }
+
+    return incremental;
+  }
 
   // Creates the piecewise minimum function of a set of LayoutFunctions.
   //
@@ -634,8 +703,7 @@ class TokenPartitionsLayoutOptimizer {
   TokenPartitionsLayoutOptimizer& operator=(TokenPartitionsLayoutOptimizer&&) =
       delete;
 
-  void Optimize(int indentation, TokenPartitionTree* node,
-                std::vector<PreFormatToken>* ftokens) const;
+  void Optimize(int indentation, TokenPartitionTree* node) const;
 
   LayoutFunction CalculateOptimalLayout(const TokenPartitionTree& node) const;
 
@@ -646,8 +714,8 @@ class TokenPartitionsLayoutOptimizer {
 
 class TreeReconstructor {
  public:
-  TreeReconstructor(int indentation_spaces, const BasicFormatStyle& style)
-      : current_indentation_spaces_(indentation_spaces), style_(style) {}
+  explicit TreeReconstructor(int indentation_spaces)
+      : current_indentation_spaces_(indentation_spaces) {}
   ~TreeReconstructor() = default;
 
   TreeReconstructor(const TreeReconstructor&) = delete;
@@ -657,17 +725,13 @@ class TreeReconstructor {
 
   void TraverseTree(const LayoutTree& layout_tree);
 
-  void ReplaceTokenPartitionTreeNode(
-      TokenPartitionTree* node, std::vector<PreFormatToken>* ftokens) const;
+  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node);
 
  private:
-  std::vector<UnwrappedLine> unwrapped_lines_;
-
-  UnwrappedLine* active_unwrapped_line_ = nullptr;
+  TokenPartitionTree tree_;
+  TokenPartitionTree* current_node_ = nullptr;
 
   int current_indentation_spaces_;
-
-  const BasicFormatStyle& style_;
 };
 
 }  // namespace verible

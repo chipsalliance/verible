@@ -34,16 +34,13 @@
 namespace verible {
 
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
-                                TokenPartitionTree* node,
-                                std::vector<PreFormatToken>* ftokens) {
+                                TokenPartitionTree* node) {
   CHECK_NOTNULL(node);
-  CHECK_NOTNULL(ftokens);
-
   VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
 
   const auto optimizer = TokenPartitionsLayoutOptimizer(style);
   const auto indentation = node->Value().IndentationSpaces();
-  optimizer.Optimize(indentation, node, ftokens);
+  optimizer.Optimize(indentation, node);
 
   VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
@@ -68,6 +65,35 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
   } else {
     destination->AdoptSubtree(source);
   }
+}
+
+int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
+  auto tokens = partition.Value().TokensRange();
+  if (tokens.empty()) return 0;
+  int width = 0;
+
+  width += partition.Value().IndentationSpaces();
+  width += tokens.front().Length();
+
+  for (const auto& token : make_range(tokens.begin() + 1, tokens.end())) {
+    // TODO(mglb): either handle tokens with kPreserve break_decision, or
+    // explicitly check for their absence. Preserved space is currently expected
+    // to be emulated with kAlreadyFormatted/kInline partitions. Only tabular
+    // aligner creates such partitions.
+    width += token.before.spaces_required + token.Length();
+  }
+
+  for (const auto& child : partition.Children()) {
+    CHECK_EQ(child.Value().PartitionPolicy(), PartitionPolicyEnum::kInline);
+    if (child.Value().TokensRange().begin() != tokens.begin()) {
+      auto& first_token = child.Value().TokensRange().front();
+      // Substract spacing added in the loop above
+      width -= first_token.before.spaces_required;
+    }
+    width += child.Value().IndentationSpaces();
+  }
+
+  return width;
 }
 
 // Largest possible column value, used as infinity.
@@ -175,22 +201,6 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
          style_.over_column_limit_penalty},
     };
   }
-}
-
-LayoutFunction LayoutFunctionFactory::Juxtaposition(
-    std::initializer_list<LayoutFunction> lfs) const {
-  auto lfs_container = make_container_range(lfs.begin(), lfs.end());
-
-  if (lfs_container.empty()) return LayoutFunction();
-  if (lfs_container.size() == 1) return lfs_container.front();
-
-  LayoutFunction incremental = lfs_container.front();
-  lfs_container.pop_front();
-  for (auto& lf : lfs_container) {
-    incremental = Juxtaposition(incremental, lf);
-  }
-
-  return incremental;
 }
 
 LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
@@ -423,11 +433,9 @@ LayoutFunction LayoutFunctionFactory::Choice(
   return result;
 }
 
-void TokenPartitionsLayoutOptimizer::Optimize(
-    int indentation, TokenPartitionTree* node,
-    std::vector<PreFormatToken>* ftokens) const {
+void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
+                                              TokenPartitionTree* node) const {
   CHECK_NOTNULL(node);
-  CHECK_NOTNULL(ftokens);
   CHECK_GE(indentation, 0);
 
   const LayoutFunction layout_function = CalculateOptimalLayout(*node);
@@ -439,24 +447,59 @@ void TokenPartitionsLayoutOptimizer::Optimize(
   CHECK(iter != layout_function.end());
   VLOG(4) << __FUNCTION__ << ", layout:\n" << iter->layout;
 
-  TreeReconstructor tree_reconstructor(indentation, style_);
+  TreeReconstructor tree_reconstructor(indentation);
   tree_reconstructor.TraverseTree(iter->layout);
-  tree_reconstructor.ReplaceTokenPartitionTreeNode(node, ftokens);
+  tree_reconstructor.ReplaceTokenPartitionTreeNode(node);
 }
 
 LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     const TokenPartitionTree& node) const {
-  const auto policy = node.Value().PartitionPolicy();
-
-  if (node.is_leaf()) {
-    return factory_.Line(node.Value());
-  }
+  if (node.is_leaf()) return factory_.Line(node.Value());
 
   const auto calculate_optimal_layout_func =
       std::bind(&TokenPartitionsLayoutOptimizer::CalculateOptimalLayout, this,
                 std::placeholders::_1);
 
-  switch (policy) {
+  switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kInline: {
+      // Shouldn't happen - the partition with this policy should always
+      // be a leaf. Anyway, try to handle it without aborting.
+      LOG(ERROR) << "Partition node with kInline policy should be "
+                    "a leaf. Dropping its children. Partition node:\n"
+                 << node << "\n\n*** Please file a bug. ***";
+      return factory_.Line(node.Value());
+    }
+
+    case PartitionPolicyEnum::kAlreadyFormatted: {
+      // When not a leaf, it contains partitions with kInline
+      // policy. Pack them horizontally.
+      const bool all_children_are_inlines =
+          std::all_of(node.Children().begin(), node.Children().end(),
+                      [](const TokenPartitionTree& child) {
+                        return child.Value().PartitionPolicy() ==
+                               PartitionPolicyEnum::kInline;
+                      });
+      LOG_IF(ERROR, !all_children_are_inlines)
+          << "Partition node with kAlreadyFormatted policy should not "
+             "contain children with policies other than kInline. "
+             "Partition node:\n"
+          << node << "\n\n*** Please file a bug. ***";
+
+      absl::FixedArray<LayoutFunction> slice_lfs(node.Children().size());
+      std::transform(node.Children().begin(), node.Children().end(),
+                     slice_lfs.begin(), calculate_optimal_layout_func);
+
+      slice_lfs.front().SetMustWrap(true);
+
+      // Preserve spacing of the first sublayout. This has to be done because
+      // the first layout in a line uses IndentationSpaces instead of
+      // SpacesBefore.
+      const auto indent = node.Children().front().Value().IndentationSpaces();
+      slice_lfs.front() = factory_.Indent(slice_lfs.front(), indent);
+
+      return factory_.Juxtaposition(slice_lfs.begin(), slice_lfs.end());
+    }
+
     case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
       // Support only function/macro/system calls for now
       CHECK_EQ(node.Children().size(), 2);
@@ -492,6 +535,14 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       return factory_.Wrap(layouts.begin(), layouts.end());
     }
 
+    default:
+      // Stack layout is probably syntax-safe in all situations. Try it without
+      // aborting.
+      LOG(ERROR) << "Unsupported partition policy: "
+                 << node.Value().PartitionPolicy()
+                 << ". Defaulting to stack layout. Partition node:\n"
+                 << node << "\n\n*** Please file a bug. ***";
+      [[fallthrough]];
     case PartitionPolicyEnum::kAlwaysExpand:
     case PartitionPolicyEnum::kTabularAlignment: {
       absl::FixedArray<LayoutFunction> layouts(node.Children().size());
@@ -505,40 +556,59 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       // kOptimalFunctionCallLayout strategy could then be implemented
       // directly in TreeUnwrapper. It would also allow for proper
       // handling of other policies (e.g. kTabularAlignment) in subtrees.
-
-    default: {
-      LOG(FATAL) << "Unsupported policy: " << policy << "\n"
-                 << "Node:\n"
-                 << node;
-      return LayoutFunction();
-    }
   }
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
-  const auto relative_indentation = layout_tree.Value().IndentationSpaces();
+  const auto& layout = layout_tree.Value();
+  const auto relative_indentation = layout.IndentationSpaces();
   const ValueSaver<int> indent_saver(
       &current_indentation_spaces_,
       current_indentation_spaces_ + relative_indentation);
   // Setting indentation for a line that is going to be appended is invalid and
   // probably has been done for some reason that is not going to work as
   // intended.
-  LOG_IF(WARNING,
-         ((relative_indentation > 0) && (active_unwrapped_line_ != nullptr)))
+  LOG_IF(WARNING, ((relative_indentation > 0) && (current_node_ != nullptr)))
       << "Discarding indentation of a line that's going to be appended.";
 
-  switch (layout_tree.Value().Type()) {
+  switch (layout.Type()) {
     case LayoutType::kLine: {
       CHECK(layout_tree.Children().empty());
-      if (active_unwrapped_line_ == nullptr) {
-        auto uwline = layout_tree.Value().ToUnwrappedLine();
-        uwline.SetIndentationSpaces(current_indentation_spaces_);
-        // Prevent SearchLineWraps from processing optimized lines.
-        uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
-        active_unwrapped_line_ = &unwrapped_lines_.emplace_back(uwline);
+
+      if (current_node_ == nullptr) {
+        auto uwline = UnwrappedLine(current_indentation_spaces_,
+                                    layout.TokensRange().begin(),
+                                    PartitionPolicyEnum::kAlreadyFormatted);
+        uwline.SpanUpToToken(layout.TokensRange().end());
+        current_node_ = tree_.NewChild(uwline);
       } else {
-        const auto tokens = layout_tree.Value().ToUnwrappedLine().TokensRange();
-        active_unwrapped_line_->SpanUpToToken(tokens.end());
+        const auto tokens = layout.TokensRange();
+        CHECK(current_node_->Value().TokensRange().end() == tokens.begin());
+
+        current_node_->Value().SpanUpToToken(tokens.end());
+
+        auto& slices = current_node_->Children();
+        // TODO(mglb): add support for break_decision == Preserve
+        if (layout.SpacesBefore() == tokens.front().before.spaces_required) {
+          // No need for separate inline partition
+          if (!slices.empty())
+            slices.back().Value().SpanUpToToken(tokens.end());
+          return;
+        }
+
+        // Wrap previous tokens in the line
+        if (slices.empty()) {
+          current_node_->NewChild(
+              UnwrappedLine(0, current_node_->Value().TokensRange().begin(),
+                            PartitionPolicyEnum::kInline));
+        }
+        slices.back().Value().SpanUpToToken(tokens.begin());
+
+        // Wrap tokens from current layout
+        auto slice = UnwrappedLine(layout.SpacesBefore(), tokens.begin(),
+                                   PartitionPolicyEnum::kInline);
+        slice.SpanUpToToken(tokens.end());
+        current_node_->NewChild(slice);
       }
       return;
     }
@@ -562,9 +632,9 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
       // Calculate indent for 2nd and further lines.
       int indentation = current_indentation_spaces_;
-      if (active_unwrapped_line_ != nullptr) {
-        indentation = FitsOnLine(*active_unwrapped_line_, style_).final_column +
-                      layout_tree.Value().SpacesBefore();
+      if (current_node_ != nullptr) {
+        indentation = AlreadyFormattedPartitionLength(*current_node_) +
+                      layout.SpacesBefore();
       }
 
       // Append first child
@@ -575,7 +645,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
                                          indentation);
       for (const auto& child : make_range(layout_tree.Children().begin() + 1,
                                           layout_tree.Children().end())) {
-        active_unwrapped_line_ = nullptr;
+        current_node_ = nullptr;
         TraverseTree(child);
       }
       return;
@@ -584,40 +654,22 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 }
 
 void TreeReconstructor::ReplaceTokenPartitionTreeNode(
-    TokenPartitionTree* node, std::vector<PreFormatToken>* ftokens) const {
+    TokenPartitionTree* node) {
   CHECK_NOTNULL(node);
-  CHECK_NOTNULL(ftokens);
-  CHECK(!unwrapped_lines_.empty());
+  CHECK(!tree_.Children().empty());
 
-  const auto& first_line = unwrapped_lines_.front();
-  const auto& last_line = unwrapped_lines_.back();
+  if (tree_.Children().size() == 1) {
+    *node = std::move(tree_.Children().front());
+  } else {
+    const auto& first_line = tree_.Children().front().Value();
+    const auto& last_line = tree_.Children().back().Value();
 
-  node->Value() = UnwrappedLine(first_line);
-  node->Value().SpanUpToToken(last_line.TokensRange().end());
-  node->Value().SetIndentationSpaces(current_indentation_spaces_);
-  node->Value().SetPartitionPolicy(
-      PartitionPolicyEnum::kOptimalFunctionCallLayout);
-
-  node->Children().clear();
-  for (auto& uwline : unwrapped_lines_) {
-    if (!uwline.IsEmpty()) {
-      auto line_ftokens = ConvertToMutableFormatTokenRange(uwline.TokensRange(),
-                                                           ftokens->begin());
-
-      // Discard first token's original spacing (the partition has already
-      // proper indentation set).
-      line_ftokens.front().before.break_decision = SpacingOptions::MustWrap;
-      line_ftokens.front().before.spaces_required = 0;
-      line_ftokens.pop_front();
-
-      for (auto& line_ftoken : line_ftokens) {
-        SpacingOptions& decision = line_ftoken.before.break_decision;
-        if (decision == SpacingOptions::Undecided) {
-          decision = SpacingOptions::MustAppend;
-        }
-      }
-    }
-    node->AdoptSubtree(uwline);
+    node->Value() = UnwrappedLine(current_indentation_spaces_,
+                                  first_line.TokensRange().begin(),
+                                  PartitionPolicyEnum::kAlwaysExpand);
+    node->Value().SpanUpToToken(last_line.TokensRange().end());
+    node->Children().clear();
+    node->AdoptSubtreesFrom(&tree_);
   }
 }
 

@@ -34,7 +34,7 @@ namespace verilog {
 namespace formatter {
 
 using verible::ByteOffsetSet;
-using verible::VisualizeWhitespace;
+using verible::EscapeString;
 
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
                                       const verible::TokenSequence& tokens) {
@@ -126,6 +126,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   // Special case if space_text is empty.
   if (space_text.empty() && start != 0) {
     if (!disabled_ranges.Contains(start)) {
+      VLOG(3) << "output: 1*\"\\n\" (empty space text)";
       stream << '\n';
       return;
     }
@@ -139,7 +140,7 @@ void FormatWhitespaceWithDisabledByteRanges(
     {  // for disabled intervals, print the original spacing
       const absl::string_view disabled(
           text_base.substr(next_start, range.first - next_start));
-      VLOG(3) << "preserved: \"" << VisualizeWhitespace{disabled} << '"';
+      VLOG(3) << "output: \"" << EscapeString{disabled} << "\" (preserved)";
       stream << disabled;
       total_enabled_newlines += NewlineCount(disabled);
     }
@@ -147,7 +148,7 @@ void FormatWhitespaceWithDisabledByteRanges(
       const absl::string_view enabled(
           text_base.substr(range.first, range.second - range.first));
       const size_t newline_count = NewlineCount(enabled);
-      VLOG(3) << "formatted: " << newline_count << "*\\n";
+      VLOG(3) << "output: " << newline_count << "*\"\\n\" (formatted)";
       stream << verible::Spacer(newline_count, '\n');
       partially_enabled = true;
       total_enabled_newlines += newline_count;
@@ -157,11 +158,14 @@ void FormatWhitespaceWithDisabledByteRanges(
   // If there is a disabled interval left over, print that.
   const absl::string_view final_disabled(
       text_base.substr(next_start, end - next_start));
+  VLOG(3) << "output: \"" << EscapeString(final_disabled)
+          << "\" (remaining disabled)";
   stream << final_disabled;
   total_enabled_newlines += NewlineCount(final_disabled);
 
   // Print at least one newline if some subrange was format-enabled.
   if (partially_enabled && total_enabled_newlines == 0 && start != 0) {
+    VLOG(3) << "output: 1*\"\\n\"";
     stream << '\n';
   }
 }

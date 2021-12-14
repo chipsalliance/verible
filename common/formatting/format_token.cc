@@ -298,12 +298,4 @@ void PreserveSpacesOnDisabledTokenRanges(
   }
 }
 
-MutableFormatTokenRange ConvertToMutableFormatTokenRange(
-    const FormatTokenRange& const_range,
-    MutableFormatTokenRange::iterator base) {
-  return MutableFormatTokenRange(
-      ConvertToMutableIterator(const_range.begin(), base),
-      ConvertToMutableIterator(const_range.end(), base));
-}
-
 }  // namespace verible

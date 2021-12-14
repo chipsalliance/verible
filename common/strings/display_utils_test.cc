@@ -79,6 +79,31 @@ TEST(VisualizeWhitespaceTest, OtherSubstitutions) {
   }
 }
 
+TEST(EscapeStringTest, Various) {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+      {"", ""},
+      {"abc", "abc"},
+      {"ABC", "ABC"},
+      {"123", "123"},
+      {"a\nb\r\nc", R"(a\nb\r\nc)"},
+      {"  a\nb  \r\nc  ", R"(  a\nb  \r\nc  )"},
+      {"    \x01\x02\x03\x04\x05\x06\x07", R"(    \x01\x02\x03\x04\x05\x06\a)"},
+      {"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f", R"(\b\t\n\v\f\r\x0e\x0f)"},
+      {"\x10\x11\x12\x13\x14\x15\x16\x17",
+       R"(\x10\x11\x12\x13\x14\x15\x16\x17)"},
+      {"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f",
+       R"(\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f)"},
+      {R"( ' " \ \\ )", R"( \' \" \\ \\\\ )"},
+      {" ~", " ~"},
+      {"\x7f\x80\xfe\xff", R"(\x7f\x80\xfe\xff)"},
+  };
+  for (const auto& test : kTestCases) {
+    std::ostringstream stream;
+    stream << EscapeString{test.first};
+    EXPECT_EQ(stream.str(), test.second);
+  }
+}
+
 typedef std::vector<int> IntVector;
 
 // Normally a definition like the following would appear in a header
