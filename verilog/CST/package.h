@@ -38,7 +38,7 @@ std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol&);
 
 // Return the node spanning the name of the package.
-const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s);
+const verible::SyntaxTreeLeaf* GetPackageNameLeaf(const verible::Symbol& s);
 
 // Extracts the node that spans the name of the package after endpackage if
 // exists.
@@ -57,7 +57,7 @@ const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
 // Extracts package name for package import (node tagged with
 // kPackageImportItem).
 // e.g import pkg::my_integer return the node spanning "pkg".
-const verible::SyntaxTreeLeaf& GetImportedPackageName(
+const verible::SyntaxTreeLeaf* GetImportedPackageName(
     const verible::Symbol& package_import_item);
 
 // Extracts the symbol identifier from PackageImportItem if exits.

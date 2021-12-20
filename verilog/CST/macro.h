@@ -64,12 +64,12 @@ const verible::SyntaxTreeNode& GetMacroCallArgs(const verible::Symbol&);
 bool MacroCallArgsIsEmpty(const verible::SyntaxTreeNode&);
 
 // Returns the leaf node containing the macro name from node tagged with
-// kPreprocessorDefine.
-const verible::SyntaxTreeLeaf& GetMacroName(const verible::Symbol&);
+// kPreprocessorDefine or nullptr if it doesn't exist.
+const verible::SyntaxTreeLeaf* GetMacroName(const verible::Symbol&);
 
 // Returns the leaf node containing the macro arg name from node tagged with
-// kMacroFormalArg.
-const verible::SyntaxTreeLeaf& GetMacroArgName(const verible::Symbol&);
+// kMacroFormalArg or nullptr if it doesn't exist.
+const verible::SyntaxTreeLeaf* GetMacroArgName(const verible::Symbol&);
 
 // Returns the leaf node containing the filename from the node tagged with
 // kPreprocessorInclude or nullptr if the argument is not a simple

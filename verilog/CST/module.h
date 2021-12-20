@@ -76,8 +76,9 @@ const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 // Returns the full header of an interface (params, ports, etc...).
 const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
 
-// Extract the subnode of a module declaration that is the module name.
-const verible::SyntaxTreeLeaf& GetModuleName(const verible::Symbol&);
+// Extract the subnode of a module declaration that is the module name or
+// nullptr if not found.
+const verible::SyntaxTreeLeaf* GetModuleName(const verible::Symbol&);
 
 // Extract the subnode of an interface declaration that is the module name.
 const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);

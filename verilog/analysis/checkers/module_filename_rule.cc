@@ -67,8 +67,8 @@ const LintRuleDescriptor& ModuleFilenameRule::GetDescriptor() {
 
 static bool ModuleNameMatches(const verible::Symbol& s,
                               absl::string_view name) {
-  const auto& token_info = GetModuleName(s).get();
-  return token_info.text() == name;
+  const auto* module_leaf = GetModuleName(s);
+  return module_leaf && module_leaf->get().text() == name;
 }
 
 void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
@@ -114,9 +114,11 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   }
 
   // Only report a violation on the last module declaration.
-  const auto& last_module_id = GetModuleName(*module_cleaned.back().match);
-  violations_.insert(verible::LintViolation(
-      last_module_id.get(), absl::StrCat(kMessage, "\"", unitname, "\"")));
+  const auto* last_module_id = GetModuleName(*module_cleaned.back().match);
+  if (last_module_id) {
+    violations_.insert(verible::LintViolation(
+        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\"")));
+  }
 }
 
 LintRuleStatus ModuleFilenameRule::Report() const {

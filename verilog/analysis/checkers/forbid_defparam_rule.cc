@@ -56,11 +56,14 @@ void ForbidDefparamRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (OverrideMatcher().Matches(symbol, &manager)) {
-    const auto& defparam_token =
-        GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0).get();
-    CHECK_EQ(defparam_token.token_enum(), TK_defparam);
-    violations_.insert(
-        verible::LintViolation(defparam_token, kMessage, context));
+    const verible::SyntaxTreeLeaf* defparam =
+        GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0);
+    if (defparam) {
+      const auto& defparam_token = defparam->get();
+      CHECK_EQ(defparam_token.token_enum(), TK_defparam);
+      violations_.insert(
+          verible::LintViolation(defparam_token, kMessage, context));
+    }
   }
 }
 

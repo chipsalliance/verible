@@ -325,8 +325,8 @@ TEST(GetActualNamedPort, GetActualPortName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& port : ports) {
-            const auto& name = GetActualNamedPortName(*port.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetActualNamedPortName(*port.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });

@@ -287,10 +287,10 @@ TEST(GetClassConstructorTest, GetNewKeyword) {
 
           std::vector<TreeSearchMatch> keywords;
           for (const auto& constructor : constructors) {
-            const auto& keyword =
+            const auto* keyword =
                 GetNewKeywordFromClassConstructor(*constructor.match);
             keywords.emplace_back(
-                TreeSearchMatch{&keyword, {/* ignored context */}});
+                TreeSearchMatch{keyword, {/* ignored context */}});
           }
           return keywords;
         });

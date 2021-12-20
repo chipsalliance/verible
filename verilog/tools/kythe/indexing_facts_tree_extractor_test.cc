@@ -962,47 +962,48 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
 TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
   constexpr int kTag = 1;  // value doesn't matter
 
-  const verible::SyntaxTreeSearchTestCase kTestCase = {{"module ",
-                                                        {kTag, "foo"},
-                                                        "(input ",
-                                                        {kTag, "a"},
-                                                        ", input ",
-                                                        {kTag, "b"},
-                                                        ", input wire ",
-                                                        {kTag, "z"},
-                                                        ", output ",
-                                                        {kTag, "h"},
-                                                        ");\nendmodule: ",
-                                                        {kTag, "foo"},
-                                                        "\nmodule ",
-                                                        {kTag, "bar"},
-                                                        "(input ",
-                                                        {kTag, "a"},
-                                                        ", ",
-                                                        {kTag, "b"},
-                                                        ", ",
-                                                        {kTag, "c"},
-                                                        ", ",
-                                                        {kTag, "h"},
-                                                        ");\n",
-                                                        {kTag, "foo"},
-                                                        " ",
-                                                        {kTag, "f1"},
-                                                        "(.",
-                                                        {kTag, "a"},
-                                                        "(",
-                                                        {kTag, "a"},
-                                                        "), .",
-                                                        {kTag, "b"},
-                                                        "(",
-                                                        {kTag, "b"},
-                                                        "), .",
-                                                        {kTag, "z"},
-                                                        "(",
-                                                        {kTag, "c"},
-                                                        "), .",
-                                                        {kTag, "h"},
-                                                        ");\nendmodule"}};
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",          // 0
+       {kTag, "foo"},      // 1
+       "(input ",          // 2
+       {kTag, "a"},        // 3
+       ", input ",         // 4
+       {kTag, "b"},        // 5
+       ", input wire ",    // 6
+       {kTag, "z"},        // 7
+       ", output ",        // 8
+       {kTag, "h"},        // 9
+       ");\nendmodule: ",  // 10
+       {kTag, "foo"},      // 11
+       "\nmodule ",        // 12
+       {kTag, "bar"},      // 13
+       "(input ",          // 14
+       {kTag, "a"},        // 15
+       ", ",               // 16
+       {kTag, "b"},        // 17
+       ", ",               // 18
+       {kTag, "c"},        // 19
+       ", ",               // 20
+       {kTag, "h"},        // 21
+       ");\n",             // 22
+       {kTag, "foo"},      // 23
+       " ",                // 24
+       {kTag, "f1"},       // 25
+       "(.",               // 26
+       {kTag, "a"},        // 27
+       "(",                // 28
+       {kTag, "a"},        // 29
+       "), .",             // 30
+       {kTag, "b"},        // 31
+       "(",                // 32
+       {kTag, "b"},        // 33
+       "), .",             // 34
+       {kTag, "z"},        // 35
+       "(",                // 36
+       {kTag, "c"},        // 37
+       "), .",             // 38
+       {kTag, "h"},        // 39
+       ");\nendmodule"}};
 
   SimpleTestProject project(kTestCase.code);
 
@@ -1113,6 +1114,75 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
                             IndexingFactType::kModuleNamedPort,
                             Anchor(kTestCase.expected_tokens[39]),
                         })))))));
+
+  const auto facts_tree = project.Extract();
+
+  const auto result_pair = DeepEqual(facts_tree, expected);
+  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
+  EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
+}
+
+TEST(FactsTreeExtractor, ModuleInstanceWitStarExpandedPorts) {
+  constexpr int kTag = 1;  // value doesn't matter
+
+  const verible::SyntaxTreeSearchTestCase kTestCase = {
+      {"module ",          // 00
+       {kTag, "foo"},      // 01
+       "(input ",          // 02
+       {kTag, "a"},        // 03
+       ");\nendmodule\n",  // 04
+       "\nmodule ",        // 05
+       {kTag, "bar"},      // 06
+       "(input ",          // 07
+       {kTag, "a"},        // 08
+       ");\n",             // 09
+       {kTag, "foo"},      // 10
+       " ",                // 11
+       {kTag, "f1"},       // 12
+       "(.",               // 13
+       {kTag, "*"},        // 14
+       ");\nendmodule"}};
+
+  SimpleTestProject project(kTestCase.code);
+  const IndexingFactNode expected(  //
+      project.ExpectedFileListData(),
+      project.XUnit().RebaseFileTree(
+          T(project.XUnit().ExpectedFileData(),
+            // refers to module foo.
+            T(
+                D{
+                    IndexingFactType::kModule,
+                    Anchor(kTestCase.expected_tokens[1]),
+                },
+                // refers to  a.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3]),
+                })),
+            // refers to module bar.
+            T(
+                D{
+                    IndexingFactType::kModule,
+                    Anchor(kTestCase.expected_tokens[6]),
+                },
+                // refers to input a.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[8]),
+                }),
+                // refers to foo.
+                T(
+                    D{
+                        IndexingFactType::kDataTypeReference,
+                        Anchor(kTestCase.expected_tokens[10]),
+                    },
+                    // refers to f1(.*)
+                    T(D{
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[12]),
+                    }  // The .* is not recorded as named module port.
+                      ))))));
 
   const auto facts_tree = project.Extract();
 

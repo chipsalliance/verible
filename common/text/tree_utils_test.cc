@@ -1436,7 +1436,7 @@ TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMismatches) {
 TEST(GetSubtreeAsLeafTest, ValidatedFoundLeaf) {
   auto root = TNode(FakeEnum::kZero, Leaf(7, "foo"));
   const auto& leaf = GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0);
-  EXPECT_EQ(leaf.get().token_enum(), 7);
+  EXPECT_EQ(leaf->get().token_enum(), 7);
 }
 
 TEST(GetSubtreeAsLeafTest, GotNodeInsteadOfLeaf) {

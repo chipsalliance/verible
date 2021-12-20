@@ -112,7 +112,7 @@ const SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
   return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(type_id_dimensions[1].get()));
 }
 
-const verible::SyntaxTreeLeaf& GetActualNamedPortName(
+const verible::SyntaxTreeLeaf* GetActualNamedPortName(
     const verible::Symbol& actual_named_port) {
   return verible::GetSubtreeAsLeaf(actual_named_port,
                                    NodeEnum::kActualNamedPort, 1);

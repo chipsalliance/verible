@@ -684,10 +684,11 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
     const SyntaxTreeNode& module_declaration_node) {
   // Extract module name e.g from "module my_module" extracts "my_module".
-  const SyntaxTreeLeaf& module_name_leaf =
+  const SyntaxTreeLeaf* module_name_leaf =
       GetModuleName(module_declaration_node);
+  if (!module_name_leaf) return;
   facts_tree_context_.top().Value().AppendAnchor(
-      Anchor(module_name_leaf.get()));
+      Anchor(module_name_leaf->get()));
 
   // Extract parameters if exist.
   const SyntaxTreeNode* param_declaration_list =
@@ -812,10 +813,10 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
 void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const SyntaxTreeNode& actual_named_port) {
+  const SyntaxTreeLeaf* named_port = GetActualNamedPortName(actual_named_port);
+  if (!named_port) return;
   IndexingFactNode actual_port_node(IndexingNodeData(
-      IndexingFactType::kModuleNamedPort,
-      Anchor(GetActualNamedPortName(actual_named_port).get())));
-
+      IndexingFactType::kModuleNamedPort, Anchor(named_port->get())));
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &actual_port_node);
@@ -916,8 +917,10 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &package_node);
     // Extract package name.
-    facts_tree_context_.top().Value().AppendAnchor(
-        Anchor(GetPackageNameLeaf(package_declaration_node).get()));
+    const SyntaxTreeLeaf* pname = GetPackageNameLeaf(package_declaration_node);
+    if (pname) {
+      facts_tree_context_.top().Value().AppendAnchor(Anchor(pname->get()));
+    }
 
     // Extract package name after endpackage if exists.
     const SyntaxTreeLeaf* package_end_name =
@@ -941,18 +944,22 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractMacroDefinition(
     const SyntaxTreeNode& preprocessor_definition) {
+  const SyntaxTreeLeaf* macro_name = GetMacroName(preprocessor_definition);
+  if (!macro_name) return;
   IndexingFactNode macro_node(
-      IndexingNodeData(IndexingFactType::kMacro,
-                       Anchor(GetMacroName(preprocessor_definition).get())));
+      IndexingNodeData(IndexingFactType::kMacro, Anchor(macro_name->get())));
 
   // TODO(fangism): access directly, instead of searching.
   const std::vector<TreeSearchMatch> args =
       FindAllMacroDefinitionsArgs(preprocessor_definition);
 
   for (const TreeSearchMatch& arg : args) {
-    macro_node.NewChild(
-        IndexingNodeData(IndexingFactType::kVariableDefinition,
-                         Anchor(GetMacroArgName(*arg.match).get())));
+    const SyntaxTreeLeaf* macro_arg_name = GetMacroArgName(*arg.match);
+    if (macro_arg_name) {
+      macro_node.NewChild(
+          IndexingNodeData(IndexingFactType::kVariableDefinition,
+                           Anchor(macro_arg_name->get())));
+    }
   }
 
   facts_tree_context_.top().NewChild(std::move(macro_node));
@@ -995,9 +1002,11 @@ void IndexingFactsTreeExtractor::ExtractMacroReference(
 
 void IndexingFactsTreeExtractor::ExtractClassConstructor(
     const SyntaxTreeNode& class_constructor) {
+  const SyntaxTreeLeaf* new_keyword =
+      GetNewKeywordFromClassConstructor(class_constructor);
+  if (!new_keyword) return;
   IndexingFactNode constructor_node(IndexingNodeData(
-      IndexingFactType::kConstructor,
-      Anchor(GetNewKeywordFromClassConstructor(class_constructor).get())));
+      IndexingFactType::kConstructor, Anchor(new_keyword->get())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1534,9 +1543,11 @@ void IndexingFactsTreeExtractor::ExtractParamByName(
 
 void IndexingFactsTreeExtractor::ExtractPackageImport(
     const SyntaxTreeNode& package_import_item) {
-  IndexingNodeData package_import_data(
-      IndexingFactType::kPackageImport,
-      Anchor(GetImportedPackageName(package_import_item).get()));
+  const SyntaxTreeLeaf* package_name =
+      GetImportedPackageName(package_import_item);
+  if (!package_name) return;
+  IndexingNodeData package_import_data(IndexingFactType::kPackageImport,
+                                       Anchor(package_name->get()));
 
   // Get the name of the imported item (if exists).
   // e.g pkg::var1 ==> return var1.
@@ -1688,9 +1699,10 @@ void IndexingFactsTreeExtractor::ExtractInclude(
 
 void IndexingFactsTreeExtractor::ExtractEnumName(
     const SyntaxTreeNode& enum_name) {
-  IndexingFactNode enum_node(IndexingNodeData(
-      IndexingFactType::kConstant,
-      Anchor(GetSymbolIdentifierFromEnumName(enum_name).get())));
+  const SyntaxTreeLeaf* symbol_id = GetSymbolIdentifierFromEnumName(enum_name);
+  if (!symbol_id) return;
+  IndexingFactNode enum_node(
+      IndexingNodeData(IndexingFactType::kConstant, Anchor(symbol_id->get())));
 
   // Iterate over the children and traverse them to extract facts from inner
   // nodes and ignore the leaves.

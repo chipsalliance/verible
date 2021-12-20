@@ -59,11 +59,13 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
   bool is_visible_node = false;
   switch (static_cast<verilog::NodeEnum>(node.Tag().tag)) {
     case verilog::NodeEnum::kModuleDeclaration: {
-      is_visible_node = true;
-      node_symbol.kind = kModuleSymbolKind;
-      const auto &name_leaf = verilog::GetModuleName(node);
-      node_symbol.selectionRange = RangeFromLeaf(name_leaf);
-      node_symbol.name = std::string(name_leaf.get().text());
+      const auto *name_leaf = verilog::GetModuleName(node);
+      if (name_leaf) {
+        is_visible_node = true;
+        node_symbol.kind = kModuleSymbolKind;
+        node_symbol.selectionRange = RangeFromLeaf(*name_leaf);
+        node_symbol.name = std::string(name_leaf->get().text());
+      }
       break;
     }
 

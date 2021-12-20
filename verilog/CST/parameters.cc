@@ -167,7 +167,7 @@ const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
 
 const verible::SyntaxTreeLeaf* GetIdentifierLeafFromTypeAssignment(
     const verible::Symbol& symbol) {
-  return &verible::GetSubtreeAsLeaf(symbol, NodeEnum::kTypeAssignment, 0);
+  return verible::GetSubtreeAsLeaf(symbol, NodeEnum::kTypeAssignment, 0);
 }
 
 const verible::SyntaxTreeNode* GetExpressionFromTypeAssignment(
@@ -224,8 +224,10 @@ bool IsTypeInfoEmpty(const verible::Symbol& symbol) {
 
 const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
     const verible::Symbol& param_by_name) {
-  return *AutoUnwrapIdentifier(
-      verible::GetSubtreeAsLeaf(param_by_name, NodeEnum::kParamByName, 1));
+  // TODO(hzeller): bubble up nullptr.
+  const verible::SyntaxTreeLeaf* param_name =
+      verible::GetSubtreeAsLeaf(param_by_name, NodeEnum::kParamByName, 1);
+  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(param_name));
 }
 
 const verible::SyntaxTreeNode* GetParenGroupFromActualParam(
