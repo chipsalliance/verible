@@ -115,6 +115,7 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 
   // Only report a violation on the last module declaration.
   const auto* last_module_id = GetModuleName(*module_cleaned.back().match);
+  if (!last_module_id) LOG(ERROR) << "Couldn't extract module name";
   if (last_module_id) {
     violations_.insert(verible::LintViolation(
         last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\"")));
