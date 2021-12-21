@@ -185,6 +185,7 @@ cc_library(
 
 cc_library(
     name = "token_partition_tree_test_utils",
+    testonly = 1,
     srcs = ["token_partition_tree_test_utils.cc"],
     hdrs = ["token_partition_tree_test_utils.h"],
     deps = [
