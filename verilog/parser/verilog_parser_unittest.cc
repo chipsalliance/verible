@@ -3004,13 +3004,18 @@ static const ParserTestCaseArray kModuleTests = {
     "  x5 = \'{bit:0};\n"
     "end\n"
     "endmodule",
-    /* TODO(b/149152101): optional assignment pattern expression type
     "module assignment_test3;\n"
     "initial begin\n"
     "  xx = byte\'{a, b, c};\n"
     "end\n"
     "endmodule",
-    */
+    // struct literals
+    "module struct_literal;\n"
+    "always_comb begin\n"
+    "  x = t_foo\'{bar: 0, boo: 1};\n"
+    "end\n"
+    "endmodule\n",
+
     // assertion items
     "module assertion_items;\n"
     "assert property ( A + B <= C );\n"

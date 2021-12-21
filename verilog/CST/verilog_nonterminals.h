@@ -276,6 +276,7 @@ enum class NodeEnum {
   kMacroFormalArg,
   kAssignmentPattern,
   kPatternExpression,
+  kAssignmentPatternExpression,
   kMinTypMaxList,
   kConstRef,
   kInterfacePortHeader,
