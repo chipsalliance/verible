@@ -52,11 +52,14 @@ std::vector<verible::TreeSearchMatch> FindAllMacroDefinitionsArgs(
 }
 
 const TokenInfo& GetMacroCallId(const Symbol& s) {
-  return GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0).get();
+  // TODO(hzeller): bubble up nullptr.
+  return ABSL_DIE_IF_NULL(GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0))->get();
 }
 
 const TokenInfo& GetMacroGenericItemId(const Symbol& s) {
-  return GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0).get();
+  // TODO(hzeller): bubble up nullptr.
+  return ABSL_DIE_IF_NULL(GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0))
+      ->get();
 }
 
 const SyntaxTreeNode& GetMacroCallParenGroup(const Symbol& s) {
@@ -77,13 +80,13 @@ bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
   return sub.front() == nullptr;
 }
 
-const verible::SyntaxTreeLeaf& GetMacroName(
+const verible::SyntaxTreeLeaf* GetMacroName(
     const verible::Symbol& preprocessor_define) {
   return GetSubtreeAsLeaf(preprocessor_define, NodeEnum::kPreprocessorDefine,
                           1);
 }
 
-const verible::SyntaxTreeLeaf& GetMacroArgName(
+const verible::SyntaxTreeLeaf* GetMacroArgName(
     const verible::Symbol& macro_formal_arg) {
   return GetSubtreeAsLeaf(macro_formal_arg, NodeEnum::kMacroFormalArg, 0);
 }

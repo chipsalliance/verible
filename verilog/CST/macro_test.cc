@@ -219,8 +219,8 @@ TEST(FindAllMacroDefinitions, MacroName) {
           const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
-            const auto& type = GetMacroName(*decl.match);
-            names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+            const auto* type = GetMacroName(*decl.match);
+            names.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return names;
         });
@@ -271,8 +271,8 @@ TEST(FindAllMacroDefinitions, MacroArgsName) {
           for (const auto& decl : decls) {
             const auto& args = FindAllMacroDefinitionsArgs(*decl.match);
             for (const auto& arg : args) {
-              const auto& name = GetMacroArgName(*arg.match);
-              names.push_back(TreeSearchMatch{&name, {/* ignored context */}});
+              const auto* name = GetMacroArgName(*arg.match);
+              names.push_back(TreeSearchMatch{name, {/* ignored context */}});
             }
           }
           return names;

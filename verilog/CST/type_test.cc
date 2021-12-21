@@ -535,8 +535,8 @@ TEST(GetEnumName, GetEnumNameIdentifier) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : instances) {
-            const auto& name = GetSymbolIdentifierFromEnumName(*decl.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetSymbolIdentifierFromEnumName(*decl.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });

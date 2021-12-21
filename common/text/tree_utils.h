@@ -199,18 +199,16 @@ typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a leaf.
+// If subtree does not exist, returns nullptr.
 template <class S, class E>
-const SyntaxTreeLeaf& GetSubtreeAsLeaf(const S& symbol,
+const SyntaxTreeLeaf* GetSubtreeAsLeaf(const S& symbol,
                                        E parent_must_be_node_enum,
                                        size_t child_position) {
   internal::MustBeCSTSymbolOrNode(symbol);
   const Symbol* subtree =
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position);
-  // TODO(ikr): avoid this check-failure.
-  CHECK(subtree != nullptr)
-      << symbol.Kind() << " e:" << parent_must_be_node_enum
-      << " p:" << child_position;
-  return SymbolCastToLeaf(*subtree);
+  if (!subtree) return nullptr;
+  return &SymbolCastToLeaf(*subtree);
 }
 
 template <class S, class E>

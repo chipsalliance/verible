@@ -71,7 +71,7 @@ const verible::SyntaxTreeNode& GetClassConstructorStatementList(
     const verible::Symbol& class_constructor);
 
 // Returns the leaf spanning the "new" keyword from class constructor.
-const verible::SyntaxTreeLeaf& GetNewKeywordFromClassConstructor(
+const verible::SyntaxTreeLeaf* GetNewKeywordFromClassConstructor(
     const verible::Symbol& class_constructor);
 
 }  // namespace verilog

@@ -263,8 +263,8 @@ GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
       identifier->Kind() == verible::SymbolKind::kLeaf) {
     return {&verible::SymbolCastToLeaf(*identifier), 2};
   }
-  return {&verible::GetSubtreeAsLeaf(
-              struct_union_member, NodeEnum::kDataTypeImplicitIdDimensions, 1),
+  return {verible::GetSubtreeAsLeaf(struct_union_member,
+                                    NodeEnum::kDataTypeImplicitIdDimensions, 1),
           1};
 }
 
@@ -288,12 +288,12 @@ const verible::SyntaxTreeNode* GetReferencedTypeOfTypeDeclaration(
                                     NodeEnum::kTypeDeclaration, 1);
 }
 
-const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
+const verible::SyntaxTreeLeaf* GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name) {
   return verible::GetSubtreeAsLeaf(enum_name, NodeEnum::kEnumName, 0);
 }
 
-const verible::SyntaxTreeLeaf& GetTypeIdentifierFromInterfaceType(
+const verible::SyntaxTreeLeaf* GetTypeIdentifierFromInterfaceType(
     const verible::Symbol& interface_type) {
   return verible::GetSubtreeAsLeaf(interface_type, NodeEnum::kInterfaceType, 2);
 }
@@ -306,7 +306,7 @@ const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     return GetTypeIdentifierFromDataType(data_type);
   }
   if (NodeEnum(data_type.Tag().tag) == NodeEnum::kInterfaceType) {
-    return &GetTypeIdentifierFromInterfaceType(data_type);
+    return GetTypeIdentifierFromInterfaceType(data_type);
   }
   return nullptr;
 }

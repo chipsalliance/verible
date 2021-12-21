@@ -39,11 +39,11 @@ std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
 }
 
 const verible::TokenInfo& GetPackageNameToken(const verible::Symbol& s) {
-  const auto& name_node = GetPackageNameLeaf(s);
-  return name_node.get();
+  // TODO(hzeller): bubble up nullptr.
+  return ABSL_DIE_IF_NULL(GetPackageNameLeaf(s))->get();
 }
 
-const verible::SyntaxTreeLeaf& GetPackageNameLeaf(const verible::Symbol& s) {
+const verible::SyntaxTreeLeaf* GetPackageNameLeaf(const verible::Symbol& s) {
   return verible::GetSubtreeAsLeaf(s, NodeEnum::kPackageDeclaration, 2);
 }
 
@@ -54,9 +54,8 @@ const verible::SyntaxTreeLeaf* GetPackageNameEndLabel(
   if (label_node == nullptr) {
     return nullptr;
   }
-  const auto& package_name = verible::GetSubtreeAsLeaf(
-      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
-  return &package_name;
+  return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),
+                                   NodeEnum::kLabel, 1);
 }
 
 const verible::Symbol* GetPackageItemList(
@@ -72,7 +71,7 @@ const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
                                    NodeEnum::kScopePrefix);
 }
 
-const verible::SyntaxTreeLeaf& GetImportedPackageName(
+const verible::SyntaxTreeLeaf* GetImportedPackageName(
     const verible::Symbol& package_import_item) {
   return verible::GetSubtreeAsLeaf(
       GetScopePrefixFromPackageImportItem(package_import_item),
@@ -81,14 +80,15 @@ const verible::SyntaxTreeLeaf& GetImportedPackageName(
 
 const verible::SyntaxTreeLeaf* GeImportedItemNameFromPackageImportItem(
     const verible::Symbol& package_import_item) {
-  const auto& imported_item = verible::GetSubtreeAsLeaf(
+  const verible::SyntaxTreeLeaf* imported_item = verible::GetSubtreeAsLeaf(
       package_import_item, NodeEnum::kPackageImportItem, 1);
 
-  if (imported_item.get().token_enum() != verilog_tokentype::SymbolIdentifier) {
+  if (!imported_item || imported_item->get().token_enum() !=
+                            verilog_tokentype::SymbolIdentifier) {
     return nullptr;
   }
 
-  return &imported_item;
+  return imported_item;
 }
 
 }  // namespace verilog

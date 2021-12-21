@@ -87,7 +87,8 @@ const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
 
 // Returns the leaf node containing the name of the actual named port.
 // example: from ".x(y)" this returns the leaf spanning "x".
-const verible::SyntaxTreeLeaf& GetActualNamedPortName(const verible::Symbol&);
+// Returns nullptr if it doesn't exist.
+const verible::SyntaxTreeLeaf* GetActualNamedPortName(const verible::Symbol&);
 
 // Returns the node containing the paren group of the actual named port (if
 // exists).

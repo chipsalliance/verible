@@ -310,9 +310,9 @@ TEST(GetNameLeafOfNetVariableTest, Various) {
 
           std::vector<TreeSearchMatch> net_ids;
           for (const auto& decl : net_decls) {
-            const auto& net_name = GetNameLeafOfNetVariable(*decl.match);
+            const auto* net_name = GetNameLeafOfNetVariable(*decl.match);
             net_ids.emplace_back(
-                TreeSearchMatch{&net_name, {/* ignored context */}});
+                TreeSearchMatch{net_name, {/* ignored context */}});
           }
           return net_ids;
         });
@@ -376,9 +376,9 @@ TEST(GetNameLeafOfRegisterVariableTest, Various) {
 
           std::vector<TreeSearchMatch> net_ids;
           for (const auto& decl : net_decls) {
-            const auto& net_name = GetNameLeafOfRegisterVariable(*decl.match);
+            const auto* net_name = GetNameLeafOfRegisterVariable(*decl.match);
             net_ids.emplace_back(
-                TreeSearchMatch{&net_name, {/* ignored context */}});
+                TreeSearchMatch{net_name, {/* ignored context */}});
           }
           return net_ids;
         });

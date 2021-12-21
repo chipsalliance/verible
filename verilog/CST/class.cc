@@ -56,9 +56,10 @@ const verible::SyntaxTreeNode& GetClassHeader(
 const verible::SyntaxTreeLeaf& GetClassName(
     const verible::Symbol& class_declaration) {
   const auto& header_node = GetClassHeader(class_declaration);
-  const auto& name_leaf =
+  const verible::SyntaxTreeLeaf* name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kClassHeader, 3);
-  return name_leaf;
+  // TODO(hzeller): bubble up nullptr.
+  return *ABSL_DIE_IF_NULL(name_leaf);
 }
 
 const verible::SyntaxTreeNode* GetExtendedClass(
@@ -79,9 +80,8 @@ const verible::SyntaxTreeLeaf* GetClassEndLabel(
   if (label_node == nullptr) {
     return nullptr;
   }
-  const auto& class_name = verible::GetSubtreeAsLeaf(
-      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
-  return &class_name;
+  return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),
+                                   NodeEnum::kLabel, 1);
 }
 
 const verible::SyntaxTreeNode& GetClassItemList(
@@ -112,7 +112,7 @@ const verible::SyntaxTreeNode& GetClassConstructorStatementList(
                                    NodeEnum::kClassConstructor, 2);
 }
 
-const verible::SyntaxTreeLeaf& GetNewKeywordFromClassConstructor(
+const verible::SyntaxTreeLeaf* GetNewKeywordFromClassConstructor(
     const verible::Symbol& class_constructor) {
   const verible::SyntaxTreeNode& constructor_prototype =
       verible::GetSubtreeAsNode(class_constructor, NodeEnum::kClassConstructor,

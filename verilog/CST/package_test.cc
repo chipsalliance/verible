@@ -302,8 +302,8 @@ TEST(GetPackageNameTokenTest, VariousPackageTokenTests) {
 
           std::vector<TreeSearchMatch> declIdentifiers;
           for (const auto& decl : declarations) {
-            const auto& packageToken = GetPackageNameLeaf(*decl.match);
-            declIdentifiers.push_back(TreeSearchMatch{&packageToken, {}});
+            const auto* packageToken = GetPackageNameLeaf(*decl.match);
+            declIdentifiers.push_back(TreeSearchMatch{packageToken, {}});
           }
           return declIdentifiers;
         });
@@ -418,8 +418,8 @@ TEST(PackageImportTest, GetImportedPackageName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
-            const auto& name = GetImportedPackageName(*decl.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetImportedPackageName(*decl.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });

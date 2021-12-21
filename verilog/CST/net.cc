@@ -54,12 +54,12 @@ static bool ExpectedTagPredicate(const Symbol& symbol) {
   return symbol.Tag() == var_symbol || symbol.Tag() == assign_symbol;
 }
 
-const verible::SyntaxTreeLeaf& GetNameLeafOfNetVariable(
+const verible::SyntaxTreeLeaf* GetNameLeafOfNetVariable(
     const verible::Symbol& net_variable) {
   return verible::GetSubtreeAsLeaf(net_variable, NodeEnum::kNetVariable, 0);
 }
 
-const verible::SyntaxTreeLeaf& GetNameLeafOfRegisterVariable(
+const verible::SyntaxTreeLeaf* GetNameLeafOfRegisterVariable(
     const verible::Symbol& register_variable) {
   return verible::GetSubtreeAsLeaf(register_variable,
                                    NodeEnum::kRegisterVariable, 0);

@@ -124,8 +124,8 @@ TEST(GetModuleNameTokenTest, ValidModule) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& instance : programs) {
-            const auto& name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });
@@ -148,8 +148,8 @@ TEST(GetModuleNameTokenTest, ValidInterface) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& instance : programs) {
-            const auto& name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });
@@ -172,8 +172,8 @@ TEST(GetModuleNameTokenTest, ValidProgram) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& instance : programs) {
-            const auto& name = GetModuleName(*instance.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            const auto* name = GetModuleName(*instance.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });

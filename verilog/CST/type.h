@@ -209,9 +209,10 @@ const verible::SyntaxTreeLeaf* GetNonprimitiveTypeOfDataTypeImplicitDimensions(
 const verible::SyntaxTreeNode* GetParamListFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
-// Extracts symbol identifier node from node tagged with kEnumName.
+// Extracts symbol identifier node from node tagged with kEnumName or
+// nullptr if it doesn't exist.
 // e.g from "enum {first}" extracts "first".
-const verible::SyntaxTreeLeaf& GetSymbolIdentifierFromEnumName(
+const verible::SyntaxTreeLeaf* GetSymbolIdentifierFromEnumName(
     const verible::Symbol& enum_name);
 
 // Returns symbol identifier node for the type name from node tagged with

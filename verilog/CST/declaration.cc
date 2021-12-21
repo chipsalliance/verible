@@ -119,16 +119,18 @@ const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol& gate_instance) {
-  const verible::SyntaxTreeLeaf& instance_name =
+  const verible::SyntaxTreeLeaf* instance_name =
       GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
-  return instance_name.get();
+  // TODO(hzeller): bubble up nullptr
+  return ABSL_DIE_IF_NULL(instance_name)->get();
 }
 
 const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol& regiseter_variable) {
-  const verible::SyntaxTreeLeaf& instance_name =
+  const verible::SyntaxTreeLeaf* instance_name =
       GetSubtreeAsLeaf(regiseter_variable, NodeEnum::kRegisterVariable, 0);
-  return instance_name.get();
+  // TODO(hzeller): bubble up nullptr.
+  return ABSL_DIE_IF_NULL(instance_name)->get();
 }
 
 const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(

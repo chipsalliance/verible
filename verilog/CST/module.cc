@@ -71,16 +71,17 @@ const SyntaxTreeNode& GetInterfaceHeader(const Symbol& module_symbol) {
                                    NodeEnum::kModuleHeader);
 }
 
-const verible::SyntaxTreeLeaf& GetModuleName(const Symbol& s) {
+const verible::SyntaxTreeLeaf* GetModuleName(const Symbol& s) {
   const auto& header_node = GetModuleHeader(s);
   return verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
 }
 
 const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
   const auto& header_node = GetInterfaceHeader(s);
-  const auto& name_leaf =
+  const verible::SyntaxTreeLeaf* name_leaf =
       verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
-  return name_leaf.get();
+  // TODO(hzeller): bubble up nullptr.
+  return ABSL_DIE_IF_NULL(name_leaf)->get();
 }
 
 const SyntaxTreeNode* GetModulePortParenGroup(
@@ -112,9 +113,8 @@ const verible::SyntaxTreeLeaf* GetModuleEndLabel(
   if (label_node == nullptr) {
     return nullptr;
   }
-  const auto& module_name = verible::GetSubtreeAsLeaf(
-      verible::SymbolCastToNode(*label_node), NodeEnum::kLabel, 1);
-  return &module_name;
+  return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),
+                                   NodeEnum::kLabel, 1);
 }
 
 const verible::SyntaxTreeNode& GetModuleItemList(

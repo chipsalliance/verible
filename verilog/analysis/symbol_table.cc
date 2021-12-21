@@ -912,7 +912,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareModule(const SyntaxTreeNode& module) {
-    DeclareScopedElementAndDescend(module, GetModuleName(module).get().text(),
+    const SyntaxTreeLeaf* module_name = GetModuleName(module);
+    if (!module_name) return;
+    DeclareScopedElementAndDescend(module, module_name->get().text(),
                                    SymbolMetaType::kModule);
   }
 
@@ -1089,16 +1091,20 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareNet(const SyntaxTreeNode& net_variable) {
-    const absl::string_view net_name(
-        GetNameLeafOfNetVariable(net_variable).get().text());
+    const SyntaxTreeLeaf* net_variable_name =
+        GetNameLeafOfNetVariable(net_variable);
+    if (!net_variable_name) return;
+    const absl::string_view net_name(net_variable_name->get().text());
     EmplaceTypedElementInCurrentScope(net_variable, net_name,
                                       SymbolMetaType::kDataNetVariableInstance);
     Descend(net_variable);
   }
 
   void DeclareRegister(const SyntaxTreeNode& reg_variable) {
-    const absl::string_view net_name(
-        GetNameLeafOfRegisterVariable(reg_variable).get().text());
+    const SyntaxTreeLeaf* register_variable_name =
+        GetNameLeafOfRegisterVariable(reg_variable);
+    if (!register_variable_name) return;
+    const absl::string_view net_name(register_variable_name->get().text());
     EmplaceTypedElementInCurrentScope(reg_variable, net_name,
                                       SymbolMetaType::kDataNetVariableInstance);
     Descend(reg_variable);

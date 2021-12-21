@@ -57,11 +57,13 @@ void BannedDeclaredNamePatternsRule::HandleNode(
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum::kModuleDeclaration: {
-      const auto& module_match = GetModuleName(node);
-      absl::string_view module_id = module_match.get().text();
+      const auto* module_match = GetModuleName(node);
+      if (module_match) {
+        const absl::string_view module_id = module_match->get().text();
 
-      if (absl::EqualsIgnoreCase(module_id, "ILLEGALNAME")) {
-        violations_.insert(LintViolation(module_match.get(), kMessage));
+        if (absl::EqualsIgnoreCase(module_id, "ILLEGALNAME")) {
+          violations_.insert(LintViolation(module_match->get(), kMessage));
+        }
       }
       break;
     }

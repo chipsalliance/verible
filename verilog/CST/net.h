@@ -38,12 +38,12 @@ std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
 std::vector<const verible::TokenInfo*> GetIdentifiersFromNetDeclaration(
     const verible::Symbol& symbol);
 
-// Returns the declared identifier from a kNetVariable.
-const verible::SyntaxTreeLeaf& GetNameLeafOfNetVariable(
+// Returns the declared identifier from a kNetVariable or nullptr if invalid.
+const verible::SyntaxTreeLeaf* GetNameLeafOfNetVariable(
     const verible::Symbol& net_variable);
 
 // Returns the declared identifier from a kRegisterVariable.
-const verible::SyntaxTreeLeaf& GetNameLeafOfRegisterVariable(
+const verible::SyntaxTreeLeaf* GetNameLeafOfRegisterVariable(
     const verible::Symbol& register_variable);
 
 }  // namespace verilog
