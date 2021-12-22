@@ -1058,6 +1058,18 @@ void KytheFactsExtractor::ReferenceExtendsInheritance(
     return;
   }
 
+  // TODO(hzeller): should this have been detected before ?
+  // NULL vname is not encountered, but NULL scope. Issue #1128
+  if (!definitions.back().first) {
+    LOG(ERROR) << "ReferenceExtendsInheritance: NULL vname";
+    return;
+  }
+  if (!definitions.back().second) {
+    LOG(ERROR) << "ReferenceExtendsInheritance: NULL scope for vname "
+               << *definitions.back().first;
+    return;
+  }
+
   // Create kythe facts for extends.
   const VName& derived_class_vname = vnames_context_.top();
   CreateEdge(derived_class_vname, kEdgeExtends, *definitions.back().first);
