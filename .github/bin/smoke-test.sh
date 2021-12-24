@@ -96,6 +96,7 @@ declare -A KnownIssue
 
 #--- Opentitan
 KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_model_dpi_pkg.sv]=1006
+KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/dv/sv/cip_lib/seq_lib/cip_base_vseq.sv]=1130
 # There is also bug 1008 which only shows up if compiled with asan
 
 #--- ivtest
