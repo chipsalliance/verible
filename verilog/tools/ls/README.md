@@ -84,7 +84,15 @@ to get it started up on our Verilog/SystemVerilog projects.
 
 ### Neovim
 
-TBD (similar to [Vim](#vim) ?)
+Make sure to have version `0.5.0` or newer and install the [nvim-lpsconfig](https://github.com/neovim/nvim-lspconfig/) plugin.
+Enable the verible config:
+
+```lua
+-- init.lua
+require'lspconfig'.verible.setup {}
+```
+
+See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#verible for configuration options.
 
 ### Sublime
 
