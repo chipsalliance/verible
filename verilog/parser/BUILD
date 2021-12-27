@@ -128,6 +128,7 @@ cc_library(
         "//conditions:default": [
             "-Wno-implicit-fallthrough",
             "-Wno-type-limits",
+            "-Wno-unreachable-code",
         ],
     }),
     deps = [
