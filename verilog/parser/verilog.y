@@ -999,7 +999,12 @@ assignment_pattern
   | TK_LP '}'
     { $$ = MakeTaggedNode(N::kAssignmentPattern, $1, $2); }
   ;
-
+assignment_pattern_expression
+  : assignment_pattern
+    { $$ = move($1); }
+  | data_type_base assignment_pattern
+    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
+  ;
 structure_or_array_pattern_expression_list
   : structure_or_array_pattern_expression_list ',' structure_or_array_pattern_expression
     { $$ = ExtendNode($1, $2, $3); }
@@ -4662,7 +4667,7 @@ expr_primary
    { $$ = move($1); }
   | expr_primary_braces
     { $$ = move($1); }
-  | assignment_pattern
+  | assignment_pattern_expression
     { $$ = move($1); }
   ;
 expr_primary_parens
