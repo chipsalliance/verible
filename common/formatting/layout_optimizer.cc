@@ -502,29 +502,44 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
 
     case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
       // Support only function/macro/system calls for now
-      CHECK_EQ(node.Children().size(), 2);
+      if (node.Children().size() == 2) {
+        const auto& function_header = node.Children()[0];
+        const auto& function_args = node.Children()[1];
 
-      const auto& function_header = node.Children()[0];
-      const auto& function_args = node.Children()[1];
+        auto header = CalculateOptimalLayout(function_header);
+        auto args = CalculateOptimalLayout(function_args);
 
-      auto header = CalculateOptimalLayout(function_header);
-      auto args = CalculateOptimalLayout(function_args);
-
-      auto stack_layout = factory_.Stack({
-          header,
-          factory_.Indent(args, style_.wrap_spaces),
-      });
-      if (args.MustWrap()) {
-        return stack_layout;
+        auto stack_layout = factory_.Stack({
+            header,
+            factory_.Indent(args, style_.wrap_spaces),
+        });
+        if (args.MustWrap()) {
+          return stack_layout;
+        }
+        auto juxtaposed_layout = factory_.Juxtaposition({
+            header,
+            args,
+        });
+        return factory_.Choice({
+            std::move(juxtaposed_layout),
+            std::move(stack_layout),
+        });
       }
-      auto juxtaposed_layout = factory_.Juxtaposition({
-          header,
-          args,
-      });
-      return factory_.Choice({
-          std::move(juxtaposed_layout),
-          std::move(stack_layout),
-      });
+
+      // Apply suboptimal but reasonable layout and report the problem instead
+      // of aborting.
+      LOG(ERROR) << "Partition with the " << node.Value().PartitionPolicy()
+                 << " policy contains unexpected subpartitions. "
+                 << "Applying fallback formatting. Partition node:\n"
+                 << node << "\n\n*** Please file a bug. ***";
+      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), calculate_optimal_layout_func);
+      const auto& first_token = node.Value().TokensRange().front();
+      // Preserve line break before the fragment if the original source has it.
+      if (absl::StrContains(first_token.OriginalLeadingSpaces(), "\n"))
+        layouts.front().SetMustWrap(true);
+      return factory_.Wrap(layouts.begin(), layouts.end());
     }
 
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
