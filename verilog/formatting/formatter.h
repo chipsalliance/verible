@@ -20,6 +20,7 @@
 
 #include "absl/status/status.h"
 #include "common/strings/position.h"
+#include "common/text/text_structure.h"
 #include "verilog/formatting/format_style.h"
 
 namespace verilog {
@@ -73,6 +74,28 @@ absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
                            std::ostream& formatted_stream,
                            const verible::LineNumberSet& lines = {},
                            const ExecutionControl& control = {});
+
+// Format only lines in line_range interval [min, max) in "full_content"
+// using "style". Emits _only_ the formatted code in the range
+// to "formatted_stream".
+// Used for interactive formatting, e.g. in editors and does not do convergence
+// tests.
+absl::Status FormatVerilogRange(absl::string_view full_content,
+                                absl::string_view filename,
+                                const FormatStyle& style,
+                                std::ostream& formatted_stream,
+                                const verible::Interval<int>& line_range,
+                                const ExecutionControl& control = {});
+
+// Format and emit only lines in "line_range" interval [min, max) from
+// text_structure using "style". Emits _only_ the formatted code in the range
+// to "formatted_stream".
+// Used for interactive formatting, e.g. in editors.
+absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
+                                const FormatStyle& style,
+                                std::ostream& formatted_stream,
+                                const verible::Interval<int>& line_range,
+                                const ExecutionControl& control = {});
 
 }  // namespace formatter
 }  // namespace verilog

@@ -46,7 +46,8 @@ verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
 // Output is written to 'stream'.
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
-    const verible::ByteOffsetSet& disabled_ranges, std::ostream& stream);
+    const verible::ByteOffsetSet& disabled_ranges, bool include_disabled_ranges,
+    std::ostream& stream);
 
 }  // namespace formatter
 }  // namespace verilog

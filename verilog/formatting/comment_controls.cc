@@ -112,7 +112,8 @@ static size_t NewlineCount(absl::string_view s) {
 
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
-    const ByteOffsetSet& disabled_ranges, std::ostream& stream) {
+    const ByteOffsetSet& disabled_ranges, bool include_disabled_ranges,
+    std::ostream& stream) {
   VLOG(3) << __FUNCTION__;
   CHECK(verible::IsSubRange(space_text, text_base));
   const int start = std::distance(text_base.begin(), space_text.begin());
@@ -137,7 +138,8 @@ void FormatWhitespaceWithDisabledByteRanges(
   size_t total_enabled_newlines = 0;
   int next_start = start;  // keep track of last consumed position
   for (const auto& range : enabled_ranges) {
-    {  // for disabled intervals, print the original spacing
+    if (include_disabled_ranges) {  // for disabled intervals, print the
+                                    // original spacing
       const absl::string_view disabled(
           text_base.substr(next_start, range.first - next_start));
       VLOG(3) << "output: \"" << EscapeString{disabled} << "\" (preserved)";
@@ -155,14 +157,15 @@ void FormatWhitespaceWithDisabledByteRanges(
     }
     next_start = range.second;
   }
-  // If there is a disabled interval left over, print that.
-  const absl::string_view final_disabled(
-      text_base.substr(next_start, end - next_start));
-  VLOG(3) << "output: \"" << EscapeString(final_disabled)
-          << "\" (remaining disabled)";
-  stream << final_disabled;
-  total_enabled_newlines += NewlineCount(final_disabled);
-
+  if (include_disabled_ranges) {
+    // If there is a disabled interval left over, print that.
+    const absl::string_view final_disabled(
+        text_base.substr(next_start, end - next_start));
+    VLOG(3) << "output: \"" << EscapeString(final_disabled)
+            << "\" (remaining disabled)";
+    stream << final_disabled;
+    total_enabled_newlines += NewlineCount(final_disabled);
+  }
   // Print at least one newline if some subrange was format-enabled.
   if (partially_enabled && total_enabled_newlines == 0 && start != 0) {
     VLOG(3) << "output: 1*\"\\n\"";

@@ -162,6 +162,7 @@ cc_library(
         "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

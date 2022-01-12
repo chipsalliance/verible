@@ -322,8 +322,9 @@ struct FormatWhitespaceTestCase {
 TEST(FormatWhitespaceWithDisabledByteRangesTest, InvalidSubstring) {
   const absl::string_view foo("foo"), bar("bar");
   std::ostringstream stream;
-  EXPECT_DEATH(FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, stream),
-               "IsSubRange");
+  EXPECT_DEATH(
+      FormatWhitespaceWithDisabledByteRanges(foo, bar, {}, true, stream),
+      "IsSubRange");
 }
 
 TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
@@ -382,7 +383,7 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
         test.substring_range.first,
         test.substring_range.second - test.substring_range.first);
     FormatWhitespaceWithDisabledByteRanges(test.full_text, substr,
-                                           test.disabled_ranges, stream);
+                                           test.disabled_ranges, true, stream);
     EXPECT_EQ(stream.str(), test.expected)
         << "text: \"" << test.full_text << "\", sub: \"" << substr
         << "\", disabled: " << test.disabled_ranges;

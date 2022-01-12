@@ -54,6 +54,7 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 namespace {
 
 using absl::StatusCode;
+using testing::HasSubstr;
 using verible::AlignmentPolicy;
 using verible::IndentationStyle;
 using verible::LineNumberSet;
@@ -12025,6 +12026,75 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+// first consecutive non-whitespace part of string.
+absl::string_view firstWord(absl::string_view str) {
+  const char* const end = str.data() + str.length();
+  const char* start_word = str.data();
+  while (start_word < end && isspace(*start_word)) start_word++;
+  const char* end_word = start_word;
+  while (end_word < end && !isspace(*end_word)) end_word++;
+  return absl::string_view(start_word, end_word - start_word);
+}
+
+absl::string_view lastWord(absl::string_view str) {
+  const char* const begin = str.data();
+  const char* end_word = str.data() + str.length() - 1;
+  while (end_word > begin && isspace(*end_word)) end_word--;
+  const char* start_word = end_word;
+  while (start_word > begin && !isspace(*start_word)) start_word--;
+  return absl::string_view(start_word + 1, end_word - start_word);
+}
+
+TEST(FormatterEndToEndTest, RangeFormattingOnlyEmittingRelevantLines) {
+  static constexpr absl::string_view unformatted =
+      R"(     module foo (// non-port comment
+     // some comment
+  input  logic  a, input logic  b,input bit [2]
+foobar, input    bit [4] foobaz,
+    input bit [2]    quux
+        ); endmodule
+)";
+
+  std::vector<absl::string_view> lines = absl::StrSplit(unformatted, '\n');
+  const int kLineCount = lines.size();
+
+  FormatStyle style;
+
+  // Go through all possible sub-ranges, format these, and compare that the
+  // output of the range output is contained inside the full format given the
+  // same sub-range.
+  for (int start_line = 0; start_line < kLineCount; ++start_line) {
+    for (int end_line = start_line; end_line < kLineCount; ++end_line) {
+      // Line numbers are 1-index based.
+      const verible::Interval<int> range = {start_line + 1, end_line + 1};
+      std::ostringstream range_format;
+      absl::Status status = FormatVerilogRange(unformatted, "<filename>", style,
+                                               range_format, range);
+      EXPECT_OK(status) << status.message();
+      if (range.empty()) {  // Nothing to format: expect empty output.
+        EXPECT_TRUE(range_format.str().empty());
+        continue;
+      }
+
+      std::ostringstream full_format;
+      status =
+          FormatVerilog(unformatted, "<filename>", style, full_format, {range});
+      EXPECT_OK(status) << status.message();
+
+      // Make sure that the first and last token in the input of the
+      // range to be formatted is exactly the first and last token that
+      // comes out of the range formatted snippet.
+      EXPECT_EQ(firstWord(lines[start_line]), firstWord(range_format.str()));
+
+      // ... same for the last word.
+      EXPECT_EQ(lastWord(lines[end_line - 1]), lastWord(range_format.str()));
+
+      EXPECT_LE(range_format.str().length(), full_format.str().length());
+      EXPECT_THAT(full_format.str(), HasSubstr(range_format.str()));
+    }
   }
 }
 
