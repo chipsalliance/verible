@@ -26,12 +26,10 @@ def genlex(name, src, out):
         outs = [out],
         cmd = select({
             "@platforms//os:windows": "$(FLEX) --outfile=$@ $<",
-            "@platforms//os:linux": "flex --outfile=$@ $<",
             "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
         }),
         toolchains = select({
             "@platforms//os:windows": ["@rules_flex//flex:current_flex_toolchain"],
-            "@platforms//os:linux": [], # use host m4/flex tools
             "//conditions:default": [
                 "@rules_flex//flex:current_flex_toolchain",
                 "@rules_m4//m4:current_m4_toolchain",
