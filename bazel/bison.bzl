@@ -32,10 +32,12 @@ def genyacc(
         outs = [header_out, source_out] + extra_outs,
         cmd = select({
             "@platforms//os:windows": "$(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
+            "@platforms//os:linux": "bison --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
             "//conditions:default": "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
         }),
         toolchains = select({
             "@platforms//os:windows": ["@rules_bison//bison:current_bison_toolchain"],
+            "@platforms//os:linux": [], # use host m4/bison
             "//conditions:default": [
                 "@rules_bison//bison:current_bison_toolchain",
                 "@rules_m4//m4:current_m4_toolchain",

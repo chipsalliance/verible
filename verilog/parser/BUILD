@@ -122,12 +122,13 @@ record_recovered_syntax_errors(
 cc_library(
     name = "verilog_y_cc",
     srcs = ["verilog-final.tab.cc"],
-    hdrs = ["verilog_parse_interface.h"],
+    hdrs = ["verilog_parse_interface.h", "verilog.tab.hh"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": [
             "-Wno-implicit-fallthrough",
             "-Wno-type-limits",
+            "-Wno-unreachable-code",
         ],
     }),
     deps = [
