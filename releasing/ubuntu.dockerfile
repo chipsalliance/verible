@@ -14,4 +14,6 @@ RUN apt-get install -y         \
     lsb-release                \
     software-properties-common \
     wget                       \
+    flex                       \
+    bison                      \
     python3

@@ -7,4 +7,6 @@ RUN yum install -y \
     redhat-lsb     \
     tar            \
     wget           \
+    flex           \
+    bison          \
     python3
