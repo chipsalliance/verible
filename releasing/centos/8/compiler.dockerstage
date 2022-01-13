@@ -1,9 +1,0 @@
-# Link libstdc++ statically so people don't have to install devtoolset-9
-# just to use verible.
-ENV BAZEL_LINKOPTS "-static-libstdc++:-lm -static-libstdc++:-lrt"
-ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
-
-# Get a newer GCC version
-RUN yum install -y --nogpgcheck gcc-toolset-9-toolchain
-
-SHELL [ "scl", "enable", "gcc-toolset-9" ]

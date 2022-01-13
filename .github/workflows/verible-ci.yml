@@ -230,11 +230,14 @@ jobs:
 
     - run: docker pull $MATRIX_OS
 
-    - name: Main script
-      run: |
-        set -x
-        source ./.github/settings.sh
-        ./releasing/docker-run.sh $MATRIX_OS
+    - name: Build container image 'basic'
+      run: source ./.github/settings.sh; ./releasing/docker-run.sh $MATRIX_OS prepare-image-basic
+
+    - name: Build container image 'build'
+      run: source ./.github/settings.sh; ./releasing/docker-run.sh $MATRIX_OS prepare-image-build
+
+    - name: Build Verible in container 'build'
+      run: source ./.github/settings.sh; ./releasing/docker-run.sh $MATRIX_OS build-verible-release
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2
