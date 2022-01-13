@@ -61,6 +61,15 @@ syntax checker will be at
 `bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
 target name `//verilog/tools/syntax:verible-verilog-syntax`).
 
+### Building on systems with glibc >= 2.34
+
+To build Verible on systems with glibc >= 2.34, you need to use install flex and bison. Then, build Verible with
+
+```bash
+# Also append the option '--//bazel:use_local_flex_bison' to test/install commands
+bazel build -c opt  --//bazel:use_local_flex_bison //...
+```
+
 ### Installation
 
 For simple installation, we provide regular [binary releases].
