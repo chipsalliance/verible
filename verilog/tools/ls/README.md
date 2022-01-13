@@ -131,3 +131,8 @@ be helpful in case of issues.
 TBD. What I found so far, there is
 [vim-lsp](https://github.com/prabirshrestha/vim-lsp) that can be used.
 There is also [neovim](#neovim).
+
+### VSCode
+
+In the [vscode/](vscode/) subdirectory, you find instructions how to
+build and install an extension for VSCode.
