@@ -31,10 +31,12 @@ def genyacc(
         srcs = [src],
         outs = [header_out, source_out] + extra_outs,
         cmd = select({
+            "//bazel:use_local_flex_bison_enabled": "bison --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
             "@platforms//os:windows": "$(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
             "//conditions:default": "M4=$(M4) $(BISON) --defines=$(location " + header_out + ") --output-file=$(location " + source_out + ") " + " ".join(extra_options) + " $<",
         }),
         toolchains = select({
+            "//bazel:use_local_flex_bison_enabled": [],
             "@platforms//os:windows": ["@rules_bison//bison:current_bison_toolchain"],
             "//conditions:default": [
                 "@rules_bison//bison:current_bison_toolchain",
