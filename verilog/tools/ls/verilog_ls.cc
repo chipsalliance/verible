@@ -61,9 +61,10 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
               {"change", 2},        // Incremental updates
           },
       },
-      {"codeActionProvider", true},         // Autofixes for lint errors
-      {"documentSymbolProvider", true},     // Symbol-outline of file
-      {"documentHighlightProvider", true},  // Highlight same symbol
+      {"codeActionProvider", true},               // Autofixes for lint errors
+      {"documentSymbolProvider", true},           // Symbol-outline of file
+      {"documentRangeFormattingProvider", true},  // format selection
+      {"documentHighlightProvider", true},        // Highlight same symbol
   };
 
   return result;
@@ -154,6 +155,13 @@ int main(int argc, char *argv[]) {
       "textDocument/documentHighlight",
       [&parsed_buffers](const verible::lsp::DocumentHighlightParams &p) {
         return verilog::CreateHighlightRanges(
+            parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
+      });
+
+  dispatcher.AddRequestHandler(  // format range of file
+      "textDocument/rangeFormatting",
+      [&parsed_buffers](const verible::lsp::DocumentFormattingParams &p) {
+        return verilog::FormatRange(
             parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
 

@@ -50,5 +50,11 @@ nlohmann::json CreateDocumentSymbolOutline(
 std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
     const BufferTracker *tracker,
     const verible::lsp::DocumentHighlightParams &p);
+
+// Format given range (or whole document) and emit and edit.
+std::vector<verible::lsp::TextEdit> FormatRange(
+    const BufferTracker *tracker,
+    const verible::lsp::DocumentFormattingParams &p);
+
 }  // namespace verilog
 #endif  // VERILOG_TOOLS_LS_VERIBLE_LSP_ADAPTER_H

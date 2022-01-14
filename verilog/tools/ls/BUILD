@@ -37,6 +37,9 @@ cc_library(
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_linter",
         "//verilog/parser:verilog_token_enum",
+        "//verilog/formatting:formatter",
+        "//verilog/formatting:format_style",
+        "//verilog/formatting:format_style_init",
         "@jsonhpp",
     ],
 )

@@ -21,6 +21,8 @@
 #include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter.h"
+#include "verilog/formatting/format_style_init.h"
+#include "verilog/formatting/formatter.h"
 #include "verilog/parser/verilog_token_enum.h"
 #include "verilog/tools/ls/document-symbol-filler.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
@@ -202,6 +204,43 @@ std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
         }});
   }
 
+  return result;
+}
+
+std::vector<verible::lsp::TextEdit> FormatRange(
+    const BufferTracker *tracker,
+    const verible::lsp::DocumentFormattingParams &p) {
+  std::vector<verible::lsp::TextEdit> result;
+  if (!tracker) return result;
+  const ParsedBuffer *const current = tracker->current();
+  if (!current) return result;  // Can only format if we have latest version.
+  const verible::TextStructureView &text = current->parser().Data();
+
+  if (p.has_range) {
+    // If the cursor is at the very beginning of last line, we don't include
+    // it in the formatting.
+    const int last_line_include = p.range.end.character > 0 ? 1 : 0;
+    const verible::Interval<int> format_lines{
+        p.range.start.line + 1,  // 1 index based
+        p.range.end.line + 1 + last_line_include};
+    verilog::formatter::FormatStyle format_style;
+    verilog::formatter::InitializeFromFlags(&format_style);
+    std::ostringstream formatted_range;
+    if (auto status = FormatVerilogRange(text, format_style, formatted_range,
+                                         format_lines);
+        status.ok()) {
+      result.push_back(verible::lsp::TextEdit{
+          .range =
+              {
+                  .start = {.line = format_lines.min - 1, .character = 0},
+                  .end = {.line = format_lines.max - 1, .character = 0},
+              },
+          .newText = formatted_range.str()});
+    }
+  } else {
+    // Formatting entire buffer. Not advertised in protocol yet.
+    return result;
+  }
   return result;
 }
 
