@@ -1,0 +1,3 @@
+RUN apt-get install -y  \
+    flex                \
+    bison
