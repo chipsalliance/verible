@@ -12031,21 +12031,14 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
 
 // first consecutive non-whitespace part of string.
 absl::string_view firstWord(absl::string_view str) {
-  const char* const end = str.data() + str.length();
-  const char* start_word = str.data();
-  while (start_word < end && isspace(*start_word)) start_word++;
-  const char* end_word = start_word;
-  while (end_word < end && !isspace(*end_word)) end_word++;
-  return absl::string_view(start_word, end_word - start_word);
+  return *absl::StrSplit(str, absl::ByAnyChar(" \t\n"), absl::SkipWhitespace())
+              .begin();
 }
 
 absl::string_view lastWord(absl::string_view str) {
-  const char* const begin = str.data();
-  const char* end_word = str.data() + str.length() - 1;
-  while (end_word > begin && isspace(*end_word)) end_word--;
-  const char* start_word = end_word;
-  while (start_word > begin && !isspace(*start_word)) start_word--;
-  return absl::string_view(start_word + 1, end_word - start_word);
+  std::vector<absl::string_view> words =
+      absl::StrSplit(str, absl::ByAnyChar(" \t\n"), absl::SkipWhitespace());
+  return words.back();
 }
 
 TEST(FormatterEndToEndTest, RangeFormattingOnlyEmittingRelevantLines) {
