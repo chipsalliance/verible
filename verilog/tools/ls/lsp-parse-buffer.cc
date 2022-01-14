@@ -21,16 +21,14 @@ namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
     absl::string_view filename, const verilog::VerilogAnalyzer &parser) {
   const auto &text_structure = parser.Data();
-  verilog::LinterConfiguration config;  // TODO: read from project context
-  verilog::RuleBundle bundle;
-  auto status = config.ConfigureFromOptions(verilog::LinterOptions{
-      .ruleset = verilog::RuleSet::kAll,
-      .rules = bundle,
-  });
-  if (!status.ok()) {
-    std::cerr << "Got an issue with the lint configuration" << std::endl;
-    return status;
+
+  verilog::LinterConfiguration config;
+  if (auto from_flags = LinterConfigurationFromFlags(); from_flags.ok()) {
+    config = *from_flags;
+  } else {
+    std::cerr << from_flags.status().message() << std::endl;
   }
+
   return VerilogLintTextStructure(filename, config, text_structure);
 }
 
