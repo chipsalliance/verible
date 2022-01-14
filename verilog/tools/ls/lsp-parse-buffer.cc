@@ -35,6 +35,7 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
 ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
                            absl::string_view content)
     : version_(version),
+      uri_(uri),
       parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, uri)) {
   std::cerr << "Analyzed " << uri << " lex:" << parser_->LexStatus()
             << "; parser:" << parser_->ParseStatus() << std::endl;

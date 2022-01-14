@@ -216,6 +216,9 @@ std::vector<verible::lsp::TextEdit> FormatRange(
   if (!current) return result;  // Can only format if we have latest version.
   const verible::TextStructureView &text = current->parser().Data();
 
+  verilog::formatter::FormatStyle format_style;
+  verilog::formatter::InitializeFromFlags(&format_style);
+
   if (p.has_range) {
     // If the cursor is at the very beginning of last line, we don't include
     // it in the formatting.
@@ -223,23 +226,31 @@ std::vector<verible::lsp::TextEdit> FormatRange(
     const verible::Interval<int> format_lines{
         p.range.start.line + 1,  // 1 index based
         p.range.end.line + 1 + last_line_include};
-    verilog::formatter::FormatStyle format_style;
-    verilog::formatter::InitializeFromFlags(&format_style);
     std::ostringstream formatted_range;
-    if (auto status = FormatVerilogRange(text, format_style, formatted_range,
-                                         format_lines);
-        status.ok()) {
-      result.push_back(verible::lsp::TextEdit{
-          .range =
-              {
-                  .start = {.line = format_lines.min - 1, .character = 0},
-                  .end = {.line = format_lines.max - 1, .character = 0},
-              },
-          .newText = formatted_range.str()});
-    }
+    if (!FormatVerilogRange(text, format_style, formatted_range, format_lines)
+             .ok())
+      return result;
+    result.push_back(verible::lsp::TextEdit{
+        .range =
+            {
+                .start = {.line = format_lines.min - 1, .character = 0},
+                .end = {.line = format_lines.max - 1, .character = 0},
+            },
+        .newText = formatted_range.str()});
   } else {
-    // Formatting entire buffer. Not advertised in protocol yet.
-    return result;
+    std::string newText;
+    if (!FormatVerilog(text, current->uri(), format_style, &newText).ok())
+      return result;
+    // Emit a single edit that replaces the full file. One could consider
+    // patches maybe; also be safe and don't emit anything if text is the same.
+    result.push_back(verible::lsp::TextEdit{
+        .range =
+            {
+                .start = {.line = 0, .character = 0},
+                .end = {.line = static_cast<int>(text.Lines().size() - 1),
+                        .character = 0},
+            },
+        .newText = newText});
   }
   return result;
 }

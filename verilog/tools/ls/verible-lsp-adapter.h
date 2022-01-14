@@ -51,7 +51,7 @@ std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
     const BufferTracker *tracker,
     const verible::lsp::DocumentHighlightParams &p);
 
-// Format given range (or whole document) and emit and edit.
+// Format given range (or whole document) and emit an edit.
 std::vector<verible::lsp::TextEdit> FormatRange(
     const BufferTracker *tracker,
     const verible::lsp::DocumentFormattingParams &p);

@@ -220,14 +220,11 @@ static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
   return analyzer;
 }
 
-Status FormatVerilog(absl::string_view text, absl::string_view filename,
-                     const FormatStyle& style, std::ostream& formatted_stream,
-                     const LineNumberSet& lines,
-                     const ExecutionControl& control) {
-  const auto analyzer = ParseWithStatus(text, filename);
-  if (!analyzer.ok()) return analyzer.status();
-
-  const verible::TextStructureView& text_structure = analyzer->get()->Data();
+absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
+                           absl::string_view filename, const FormatStyle& style,
+                           std::string* formatted_text,
+                           const verible::LineNumberSet& lines,
+                           const ExecutionControl& control) {
   Formatter fmt(text_structure, style);
   fmt.SelectLines(lines);
 
@@ -247,20 +244,35 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
     return absl::CancelledError("Halting for diagnostic operation.");
   }
 
-  // Render formatted text to a temporary buffer, so that it can be verified.
+  // Render formatted text to the output buffer.
   std::ostringstream output_buffer;
   fmt.Emit(true, output_buffer);
-  const std::string& formatted_text(output_buffer.str());
-
-  // Commit verified formatted text to the output stream.
-  formatted_stream << formatted_text;
+  *formatted_text = output_buffer.str();
 
   // For now, unconditionally verify.
   if (Status verify_status =
-          VerifyFormatting(text_structure, formatted_text, filename);
+          VerifyFormatting(text_structure, *formatted_text, filename);
       !verify_status.ok()) {
     return verify_status;
   }
+
+  return format_status;
+}
+
+Status FormatVerilog(absl::string_view text, absl::string_view filename,
+                     const FormatStyle& style, std::ostream& formatted_stream,
+                     const LineNumberSet& lines,
+                     const ExecutionControl& control) {
+  const auto analyzer = ParseWithStatus(text, filename);
+  if (!analyzer.ok()) return analyzer.status();
+
+  const verible::TextStructureView& text_structure = analyzer->get()->Data();
+  std::string formatted_text;
+  Status format_status = FormatVerilog(text_structure, filename, style,
+                                       &formatted_text, lines, control);
+  // Commit formatted text to the output stream independent of status.
+  formatted_stream << formatted_text;
+  if (!format_status.ok()) return format_status;
 
   // When formatting whole-file (no --lines are specified), ensure that
   // the formatting transformation is convergent after one iteration.

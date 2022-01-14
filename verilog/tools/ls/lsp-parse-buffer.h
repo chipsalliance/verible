@@ -49,9 +49,11 @@ class ParsedBuffer {
   }
 
   int64_t version() const { return version_; }
+  const std::string &uri() const { return uri_; }
 
  private:
   const int64_t version_;
+  const std::string uri_;
   std::unique_ptr<verilog::VerilogAnalyzer> parser_;
   std::vector<verible::LintRuleStatus> lint_statuses_;
 };
