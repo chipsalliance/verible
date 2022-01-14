@@ -121,3 +121,8 @@ DocumentHighlightParams:
 DocumentHighlight:         # response documentHighlight is [] of this.
   range: Range
   # there is also a highlight kind to distinguish read/write
+
+# -- textDocument/formatting, textDocument/rangeFormatting
+DocumentFormattingParams:
+  textDocument: TextDocumentIdentifier
+  range?: Range               # only used for textDocument/rangeFormatting

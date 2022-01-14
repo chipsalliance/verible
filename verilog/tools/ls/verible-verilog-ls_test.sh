@@ -61,6 +61,13 @@ awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN}
 {"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}}
 {"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}}
 
+# Formatting a file
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://fmt.sv","text":"module fmt();\nassign a=1;\nassign b=2;endmodule\n"}}}
+{"jsonrpc":"2.0", "id":30, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":2,"character":0}}}}
+{"jsonrpc":"2.0", "id":31, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":1,"character":1}}}}
+{"jsonrpc":"2.0", "id":32, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":2,"character":0},"end":{"line":2,"character":1}}}}
+{"jsonrpc":"2.0", "id":33, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":3,"character":0}}}}
+
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
 
@@ -155,6 +162,47 @@ cat > "${JSON_EXPECTED}" <<EOF
     }
   },
 
+  {
+    "json_contains": {
+       "method":"textDocument/publishDiagnostics",
+       "params": {
+          "uri": "file://fmt.sv",
+          "diagnostics":[]
+       }
+    }
+  },
+  {
+    "json_contains":{
+       "id":30,
+       "result": [
+           {"newText":"  assign a=1;\n","range":{"end":{"character":0,"line":2},"start":{"character":0,"line":1}}}
+        ]
+    }
+  },
+  {
+    "json_contains":{
+       "id":31,
+       "result": [
+           {"newText":"  assign a=1;\n","range":{"end":{"character":0,"line":2},"start":{"character":0,"line":1}}}
+        ]
+    }
+  },
+  {
+    "json_contains":{
+       "id":32,
+       "result": [
+           {"newText":"  assign b=2;\nendmodule\n","range":{"end":{"character":0,"line":3},"start":{"character":0,"line":2}}}
+        ]
+    }
+  },
+  {
+    "json_contains":{
+       "id":33,
+       "result": [
+           {"newText":"  assign a = 1;\n  assign b = 2;\nendmodule\n","range":{"end":{"character":0,"line":3},"start":{"character":0,"line":1}}}
+        ]
+    }
+  },
 
   {
     "json_contains": { "id":100 }
