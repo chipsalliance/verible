@@ -99,8 +99,9 @@ FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
                  [](const PreFormatToken& t) { return FormattedToken(t); });
 }
 
-std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream,
-                                              bool indent) const {
+std::ostream& FormattedExcerpt::FormattedText(
+    std::ostream& stream, bool indent,
+    const std::function<bool(const TokenInfo&)>& include_token_p) const {
   if (tokens_.empty()) return stream;
   // Let caller print the preceding/trailing newline.
   if (indent) {
@@ -111,18 +112,20 @@ std::ostream& FormattedExcerpt::FormattedText(std::ostream& stream,
   // We do not want the indentation before the first token, if it was
   // already handled separately.
   const auto& front = tokens_.front();
-  VLOG(2) << "action: " << front.before.action;
-  switch (front.before.action) {
-    case SpacingDecision::Align:
-      // When aligning tokens, the first token might be further indented.
-      stream << Spacer(front.before.spaces) << front.token->text();
-      break;
-    default:
-      stream << front.token->text();
+  if (include_token_p(*front.token)) {
+    VLOG(2) << "action: " << front.before.action;
+    switch (front.before.action) {
+      case SpacingDecision::Align:
+        // When aligning tokens, the first token might be further indented.
+        stream << Spacer(front.before.spaces) << front.token->text();
+        break;
+      default:
+        stream << front.token->text();
+    }
   }
   for (const auto& ftoken :
        verible::make_range(tokens_.begin() + 1, tokens_.end())) {
-    stream << ftoken;
+    if (include_token_p(*ftoken.token)) stream << ftoken;
   }
   return stream;
 }

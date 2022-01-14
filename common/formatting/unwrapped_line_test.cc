@@ -283,6 +283,25 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptyWithIndent) {
   EXPECT_EQ(expected, stream.str());
 }
 
+TEST_F(UnwrappedLineTest, FormattedTextSelectiveIncludeToken) {
+  const std::vector<TokenInfo> tokens = {
+      {0, "test_token1"}, {1, "test_token2"}, {2, "test_token3"}};
+  CreateTokenInfos(tokens);
+  UnwrappedLine uwline(4, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+  for (auto& t : pre_format_tokens_) {
+    t.before.spaces_required = 2;
+  }
+  FormattedExcerpt output(uwline);
+  std::ostringstream stream;
+  // Choose to not include test_token2 in output.
+  output.FormattedText(stream, false, [](const TokenInfo& t) {
+    return t.text() != "test_token2";
+  });
+  const char expected[] = R"(test_token1  test_token3)";
+  EXPECT_EQ(expected, stream.str());
+}
+
 // Make sure that formatting methods all handle the empty tokens case.
 TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesNoTokens) {
   const std::vector<TokenInfo> tokens;

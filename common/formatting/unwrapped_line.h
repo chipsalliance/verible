@@ -208,7 +208,14 @@ class FormattedExcerpt {
 
   // Prints formatted text.  If indent is true, include the spacing
   // that is to the left of the first token.
-  std::ostream& FormattedText(std::ostream&, bool indent) const;
+  // Only tokens for which include_token_p() return true are emitted (default:
+  // always emit).
+  // TODO(hzeller): instead of "indent" parameter, handle that with the
+  // include_token_p() predicate ?
+  std::ostream& FormattedText(
+      std::ostream&, bool indent,
+      const std::function<bool(const TokenInfo&)>& include_token_p =
+          [](const TokenInfo&) { return true; }) const;
 
   // Returns formatted code as a string.
   std::string Render() const;

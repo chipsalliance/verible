@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/layout_optimizer.h"
 #include "common/formatting/line_wrap_searcher.h"
@@ -85,7 +86,8 @@ class Formatter {
   void SelectLines(const LineNumberSet& lines);
 
   // Outputs all of the FormattedExcerpt lines to stream.
-  void Emit(std::ostream& stream) const;
+  // If "include_disabled" is false, does not contain the disabled ranges.
+  void Emit(bool include_disabled, std::ostream& stream) const;
 
  private:
   // Contains structural information about the code to format, such as
@@ -195,11 +197,10 @@ static Status ReformatVerilog(absl::string_view original_text,
   }
 }
 
-Status FormatVerilog(absl::string_view text, absl::string_view filename,
-                     const FormatStyle& style, std::ostream& formatted_stream,
-                     const LineNumberSet& lines,
-                     const ExecutionControl& control) {
-  const auto analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(text, filename);
+static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
+    absl::string_view text, absl::string_view filename) {
+  std::unique_ptr<VerilogAnalyzer> analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticMode(text, filename);
   {
     // Lex and parse code.  Exit on failure.
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -216,8 +217,17 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
       return absl::InvalidArgumentError(errstream.str());
     }
   }
+  return analyzer;
+}
 
-  const verible::TextStructureView& text_structure = analyzer->Data();
+Status FormatVerilog(absl::string_view text, absl::string_view filename,
+                     const FormatStyle& style, std::ostream& formatted_stream,
+                     const LineNumberSet& lines,
+                     const ExecutionControl& control) {
+  const auto analyzer = ParseWithStatus(text, filename);
+  if (!analyzer.ok()) return analyzer.status();
+
+  const verible::TextStructureView& text_structure = analyzer->get()->Data();
   Formatter fmt(text_structure, style);
   fmt.SelectLines(lines);
 
@@ -239,7 +249,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
   // Render formatted text to a temporary buffer, so that it can be verified.
   std::ostringstream output_buffer;
-  fmt.Emit(output_buffer);
+  fmt.Emit(true, output_buffer);
   const std::string& formatted_text(output_buffer.str());
 
   // Commit verified formatted text to the output stream.
@@ -268,6 +278,48 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
                                       reformatted_text);
   }
   return format_status;
+}
+
+absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
+                                const FormatStyle& style,
+                                std::ostream& formatted_stream,
+                                const verible::Interval<int>& line_range,
+                                const ExecutionControl& control) {
+  if (line_range.empty()) {
+    return absl::OkStatus();
+  }
+
+  Formatter fmt(structure, style);
+  fmt.SelectLines({line_range});
+
+  // Format code.
+  Status format_status = fmt.Format(control);
+  if (!format_status.ok()) return format_status;
+
+  // In any diagnostic mode, proceed no further.
+  if (control.AnyStop()) {
+    return absl::CancelledError("Halting for diagnostic operation.");
+  }
+
+  fmt.Emit(false, formatted_stream);
+
+  // We don't have verification tests here as we only have a subset of code
+  // so it would be more tricky. Since this output is used in interactive
+  // settings such as editors, this is less of an issue.
+
+  return absl::OkStatus();
+}
+
+absl::Status FormatVerilogRange(absl::string_view full_content,
+                                absl::string_view filename,
+                                const FormatStyle& style,
+                                std::ostream& formatted_stream,
+                                const verible::Interval<int>& line_range,
+                                const ExecutionControl& control) {
+  const auto analyzer = ParseWithStatus(full_content, filename);
+  if (!analyzer.ok()) return analyzer.status();
+  return FormatVerilogRange(analyzer->get()->Data(), style, formatted_stream,
+                            line_range, control);
 }
 
 static verible::Interval<int> DisableByteOffsetRange(
@@ -862,10 +914,19 @@ Status Formatter::Format(const ExecutionControl& control) {
   return absl::OkStatus();
 }
 
-void Formatter::Emit(std::ostream& stream) const {
+void Formatter::Emit(bool include_disabled, std::ostream& stream) const {
   const absl::string_view full_text(text_structure_.Contents());
+  std::function<bool(const verible::TokenInfo&)> include_token_p;
+  if (include_disabled) {
+    include_token_p = [](const verible::TokenInfo&) { return true; };
+  } else {
+    include_token_p = [this, &full_text](const verible::TokenInfo& tok) {
+      return !disabled_ranges_.Contains(tok.left(full_text));
+    };
+  }
+
   int position = 0;  // tracks with the position in the original full_text
-  for (const auto& line : formatted_lines_) {
+  for (const verible::FormattedExcerpt& line : formatted_lines_) {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
     // some of it is handled here, some of it is inside FormattedToken.
     // TODO(mglb): Test empty line handling when this method becomes testable.
@@ -875,20 +936,25 @@ void Formatter::Emit(std::ostream& stream) const {
     const absl::string_view leading_whitespace(
         full_text.substr(position, front_offset - position));
     FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
-                                           disabled_ranges_, stream);
+                                           disabled_ranges_, include_disabled,
+                                           stream);
+
     // When front of first token is format-disabled, the previous call will
     // already cover the space up to the front token, in which case,
     // the left-indentation for this line should be suppressed to avoid
     // being printed twice.
     if (!line.Tokens().empty()) {
-      line.FormattedText(stream, !disabled_ranges_.Contains(front_offset));
+      line.FormattedText(stream, !disabled_ranges_.Contains(front_offset),
+                         include_token_p);
       position = line.Tokens().back().token->right(full_text);
     }
   }
+
   // Handle trailing spaces after last token.
   const absl::string_view trailing_whitespace(full_text.substr(position));
   FormatWhitespaceWithDisabledByteRanges(full_text, trailing_whitespace,
-                                         disabled_ranges_, stream);
+                                         disabled_ranges_, include_disabled,
+                                         stream);
 }
 
 }  // namespace formatter
