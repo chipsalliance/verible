@@ -111,6 +111,7 @@ KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/param_times.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value1.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value3.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
+KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]=1146
 KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Basejump
@@ -178,7 +179,7 @@ function run_smoke_test() {
           echo "  --> Known issue 🐞🐞 possibly one of ${KnownProjectToolIssue[${waive_project_key}]}"
         else
           # This is an so far unknown issue
-          echo "::error ::😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
           head -10 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
