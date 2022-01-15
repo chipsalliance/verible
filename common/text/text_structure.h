@@ -76,7 +76,7 @@ class TextStructureView {
   absl::string_view Contents() const { return contents_; }
 
   const std::vector<absl::string_view>& Lines() const {
-    return lazy_line_info_.Get(contents_).lines;
+    return lazy_lines_info_.Get(contents_).lines;
   }
 
   const ConcreteSyntaxTree& SyntaxTree() const { return syntax_tree_; }
@@ -96,7 +96,7 @@ class TextStructureView {
   TokenStreamReferenceView MakeTokenStreamReferenceView();
 
   const LineColumnMap& GetLineColumnMap() const {
-    return *lazy_line_info_.Get(contents_).line_column_map;
+    return *lazy_lines_info_.Get(contents_).line_column_map;
   }
 
   // Given a byte offset, return the line/column
@@ -169,7 +169,7 @@ class TextStructureView {
   // TokenInfo::right() to calculate byte offsets, useful for diagnostics.
   absl::string_view contents_;
 
-  struct LineInfo {
+  struct LinesInfo {
     bool valid = false;
 
     // Line-by-line view of contents_.
@@ -178,10 +178,10 @@ class TextStructureView {
     // Map to translate byte-offsets to line and column for diagnostics.
     std::unique_ptr<LineColumnMap> line_column_map;
 
-    const LineInfo& Get(absl::string_view contents);
+    const LinesInfo& Get(absl::string_view contents);
   };
   // Mutable as we fill it lazily on request; conceptually the data is const.
-  mutable LineInfo lazy_line_info_;
+  mutable LinesInfo lazy_lines_info_;
 
   // Tokens that constitute the original file (contents_).
   // This should always be terminated with a sentinel EOF token.

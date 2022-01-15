@@ -63,7 +63,7 @@ TextStructureView::~TextStructureView() {
 
 void TextStructureView::Clear() {
   syntax_tree_ = nullptr;
-  lazy_line_info_.valid = false;
+  lazy_lines_info_.valid = false;
   line_token_map_.clear();
   tokens_view_.clear();
   tokens_.clear();
@@ -177,7 +177,7 @@ void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
   TrimSyntaxTree(left_offset, right_offset);
   TrimTokensToSubstring(left_offset, right_offset);
   TrimContents(left_offset, length);
-  lazy_line_info_.valid = false;
+  lazy_lines_info_.valid = false;
   CalculateFirstTokensPerLine();
   const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok())
@@ -259,7 +259,7 @@ void TextStructureView::TrimContents(int left_offset, int length) {
   contents_ = contents_.substr(left_offset, length);
 }
 
-const TextStructureView::LineInfo& TextStructureView::LineInfo::Get(
+const TextStructureView::LinesInfo& TextStructureView::LinesInfo::Get(
     absl::string_view contents) {
   if (valid) return *this;
 
@@ -280,7 +280,7 @@ void TextStructureView::RebaseTokensToSuperstring(absl::string_view superstring,
   });
   // Assigning superstring for the sake of maintaining range invariants.
   contents_ = superstring;
-  lazy_line_info_.valid = false;
+  lazy_lines_info_.valid = false;
 }
 
 void TextStructureView::MutateTokens(const LeafMutator& mutator) {
