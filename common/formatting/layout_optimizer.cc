@@ -248,6 +248,17 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
   CHECK(!left.empty());
   CHECK(!right.empty());
 
+  if (right.MustWrap()) {
+    // TODO(mglb): print code fragment that caused this.
+    LOG(ERROR) << "Tried to juxtapose partition that must wrap."
+               << "\n*** Please file a bug. ***";
+    // Do not crash, fallback to stack layout. Set huge penalty to let the
+    // layout be dropped in Choice() operator if it ends up in one.
+    auto result = Stack({left, right});
+    for (auto& segment : result) segment.intercept += 2e6;
+    return result;
+  }
+
   LayoutFunction result;
 
   auto segment_l = left.begin();
