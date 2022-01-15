@@ -63,7 +63,8 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
       },
       {"codeActionProvider", true},               // Autofixes for lint errors
       {"documentSymbolProvider", true},           // Symbol-outline of file
-      {"documentRangeFormattingProvider", true},  // format selection
+      {"documentRangeFormattingProvider", true},  // Format selection
+      {"documentFormattingProvider", true},       // Full file format
       {"documentHighlightProvider", true},        // Highlight same symbol
   };
 
@@ -160,6 +161,12 @@ int main(int argc, char *argv[]) {
 
   dispatcher.AddRequestHandler(  // format range of file
       "textDocument/rangeFormatting",
+      [&parsed_buffers](const verible::lsp::DocumentFormattingParams &p) {
+        return verilog::FormatRange(
+            parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
+      });
+  dispatcher.AddRequestHandler(  // format entire file
+      "textDocument/formatting",
       [&parsed_buffers](const verible::lsp::DocumentFormattingParams &p) {
         return verilog::FormatRange(
             parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);

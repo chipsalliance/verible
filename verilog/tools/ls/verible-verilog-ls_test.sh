@@ -67,6 +67,7 @@ awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN}
 {"jsonrpc":"2.0", "id":31, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":1,"character":1}}}}
 {"jsonrpc":"2.0", "id":32, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":2,"character":0},"end":{"line":2,"character":1}}}}
 {"jsonrpc":"2.0", "id":33, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":3,"character":0}}}}
+{"jsonrpc":"2.0", "id":34, "method":"textDocument/formatting","params":{"textDocument":{"uri":"file://fmt.sv"}}}
 
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
@@ -201,6 +202,15 @@ cat > "${JSON_EXPECTED}" <<EOF
        "result": [
            {"newText":"  assign a = 1;\n  assign b = 2;\nendmodule\n","range":{"end":{"character":0,"line":3},"start":{"character":0,"line":1}}}
         ]
+    }
+  },
+  {
+    "json_contains":{
+       "id":34,
+       "result": [{
+           "newText": "module fmt ();\n  assign a = 1;\n  assign b = 2;\nendmodule\n",
+           "range":   {"end":{"character":0,"line":3},"start":{"character":0,"line":0}}
+        }]
     }
   },
 
