@@ -44,9 +44,7 @@
 namespace verible {
 
 TextStructureView::TextStructureView(absl::string_view contents)
-    : contents_(contents),
-      lines_(absl::StrSplit(contents_, '\n')),  // SplitLines()
-      line_column_map_(lines_) {
+    : contents_(contents) {
   // more than sufficient memory as number-of-tokens <= bytes-in-file,
   // push_back() should never re-alloc because size <= initial capacity.
   tokens_.reserve(contents.length());
@@ -65,12 +63,11 @@ TextStructureView::~TextStructureView() {
 
 void TextStructureView::Clear() {
   syntax_tree_ = nullptr;
-  line_column_map_.Clear();
+  lazy_lines_info_.valid = false;
   line_token_map_.clear();
   tokens_view_.clear();
   tokens_.clear();
   contents_ = contents_.substr(0, 0);  // clear
-  lines_.clear();
 }
 
 static bool TokenLocationLess(const TokenInfo& token, const char* offset) {
@@ -100,7 +97,7 @@ TokenStreamReferenceView TextStructureView::MakeTokenStreamReferenceView() {
 void TextStructureView::CalculateFirstTokensPerLine() {
   line_token_map_.clear();
   auto token_iter = tokens_.cbegin();
-  const auto& offset_map = line_column_map_.GetBeginningOfLineOffsets();
+  const auto& offset_map = GetLineColumnMap().GetBeginningOfLineOffsets();
   for (const auto offset : offset_map) {
     // TODO(fangism): linear search might be as competitive as binary search
     token_iter =
@@ -180,8 +177,7 @@ void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
   TrimSyntaxTree(left_offset, right_offset);
   TrimTokensToSubstring(left_offset, right_offset);
   TrimContents(left_offset, length);
-  SplitLines();
-  RecalculateLineColumnMap();
+  lazy_lines_info_.valid = false;
   CalculateFirstTokensPerLine();
   const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok())
@@ -263,8 +259,15 @@ void TextStructureView::TrimContents(int left_offset, int length) {
   contents_ = contents_.substr(left_offset, length);
 }
 
-void TextStructureView::SplitLines() {
-  lines_ = absl::StrSplit(contents_, '\n');
+const TextStructureView::LinesInfo& TextStructureView::LinesInfo::Get(
+    absl::string_view contents) {
+  if (valid) return *this;
+
+  lines = absl::StrSplit(contents, '\n');
+  line_column_map.reset(new LineColumnMap(contents));
+  valid = true;
+
+  return *this;
 }
 
 void TextStructureView::RebaseTokensToSuperstring(absl::string_view superstring,
@@ -277,8 +280,7 @@ void TextStructureView::RebaseTokensToSuperstring(absl::string_view superstring,
   });
   // Assigning superstring for the sake of maintaining range invariants.
   contents_ = superstring;
-  // Re-split lines.
-  SplitLines();
+  lazy_lines_info_.valid = false;
 }
 
 void TextStructureView::MutateTokens(const LeafMutator& mutator) {
@@ -359,12 +361,13 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
 
 absl::Status TextStructureView::FastLineRangeConsistencyCheck() const {
   VLOG(2) << __FUNCTION__;
-  if (!lines_.empty()) {
-    if (lines_.front().cbegin() != contents_.cbegin()) {
+  const auto& lines = Lines();
+  if (!lines.empty()) {
+    if (lines.front().cbegin() != contents_.cbegin()) {
       return absl::InternalError(
           "First line does not match beginning of text.");
     }
-    if (lines_.back().cend() != contents_.cend()) {
+    if (lines.back().cend() != contents_.cend()) {
       return absl::InternalError("Last line does not match end of text.");
     }
   }
