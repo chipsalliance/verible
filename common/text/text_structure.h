@@ -75,7 +75,9 @@ class TextStructureView {
 
   absl::string_view Contents() const { return contents_; }
 
-  const std::vector<absl::string_view>& Lines() const { return lines_; }
+  const std::vector<absl::string_view>& Lines() const {
+    return lazy_line_info_.Get(contents_).lines;
+  }
 
   const ConcreteSyntaxTree& SyntaxTree() const { return syntax_tree_; }
 
@@ -93,11 +95,13 @@ class TextStructureView {
   // Uses tokens_view_ to create the iterators.
   TokenStreamReferenceView MakeTokenStreamReferenceView();
 
-  const LineColumnMap& GetLineColumnMap() const { return line_column_map_; }
+  const LineColumnMap& GetLineColumnMap() const {
+    return *lazy_line_info_.Get(contents_).line_column_map;
+  }
 
   // Given a byte offset, return the line/column
   LineColumn GetLineColAtOffset(int bytes_offset) const {
-    return line_column_map_.GetLineColAtOffset(contents_, bytes_offset);
+    return GetLineColumnMap().GetLineColAtOffset(contents_, bytes_offset);
   }
 
   // Convenience function: Given the token, return the range it covers.
@@ -165,8 +169,19 @@ class TextStructureView {
   // TokenInfo::right() to calculate byte offsets, useful for diagnostics.
   absl::string_view contents_;
 
-  // Line-by-line view of contents_.
-  std::vector<absl::string_view> lines_;
+  struct LineInfo {
+    bool valid = false;
+
+    // Line-by-line view of contents_.
+    std::vector<absl::string_view> lines;
+
+    // Map to translate byte-offsets to line and column for diagnostics.
+    std::unique_ptr<LineColumnMap> line_column_map;
+
+    const LineInfo& Get(absl::string_view contents);
+  };
+  // Mutable as we fill it lazily on request; conceptually the data is const.
+  mutable LineInfo lazy_line_info_;
 
   // Tokens that constitute the original file (contents_).
   // This should always be terminated with a sentinel EOF token.
@@ -174,9 +189,6 @@ class TextStructureView {
 
   // Possibly modified view of the tokens_ token sequence.
   TokenStreamView tokens_view_;
-
-  // Map to translate byte-offsets to line and column for diagnostics.
-  LineColumnMap line_column_map_;
 
   // Index of token iterators that mark the beginnings of each line.
   std::vector<TokenSequence::const_iterator> line_token_map_;
@@ -189,7 +201,6 @@ class TextStructureView {
   void TrimTokensToSubstring(int left_offset, int right_offset);
 
   void TrimContents(int left_offset, int length);
-  void SplitLines();
 
   void ConsumeDeferredExpansion(
       TokenSequence::const_iterator* next_token_iter,
@@ -212,11 +223,6 @@ class TextStructureView {
   // Verify that the string views in the syntax tree are contained within
   // the contents_ string view.
   absl::Status SyntaxTreeConsistencyCheck() const;
-
- private:
-  void RecalculateLineColumnMap() {
-    line_column_map_ = LineColumnMap(contents_);
-  }
 };
 
 // TextStructure holds the results of lexing and parsing.
