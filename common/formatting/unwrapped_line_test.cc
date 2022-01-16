@@ -476,5 +476,30 @@ TEST_F(UnwrappedLineTest, AsCodeTextIndent) {
   EXPECT_EQ(stream.str(), expected);
 }
 
+TEST_F(UnwrappedLineTest, AsCodeCustomOriginPrinter) {
+  const absl::string_view text("  aaa  bbb   cc");
+  const std::vector<TokenInfo> tokens = {// "aaa", "bbb", "cc"
+                                         {0, text.substr(2, 3)},
+                                         {1, text.substr(7, 3)},
+                                         {2, text.substr(13, 2)}};
+  CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
+  UnwrappedLine uwline(4, pre_format_tokens_.begin());
+  AddFormatTokens(&uwline);
+  auto tree = TNode(1, Leaf(tokens[0]), Leaf(tokens[1]), Leaf(tokens[2]));
+  uwline.SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
+  uwline.SetOrigin(&*tree);
+  {
+    std::ostringstream stream;
+    uwline.AsCode(&stream, false, [](std::ostream& out, const Symbol* symbol) {
+      EXPECT_NE(symbol, nullptr);
+      out << "Test/" << symbol->Tag().tag << "/";
+      UnwrappedLine::DefaultOriginPrinter(out, symbol);
+    });
+    EXPECT_EQ(stream.str(),
+              ">>>>[aaa bbb cc], policy: always-expand, "
+              "(origin: Test/1/\"aaa  bbb   cc\")");
+  }
+}
+
 }  // namespace
 }  // namespace verible

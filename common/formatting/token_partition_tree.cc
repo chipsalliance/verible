@@ -134,7 +134,7 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
   stream << Spacer(indent) << "{ ";
   if (children.empty()) {
     stream << '(';
-    value.AsCode(&stream, verbose);
+    value.AsCode(&stream, verbose, origin_printer);
     stream << ") }";
   } else {
     stream << '('
@@ -145,15 +145,15 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
            << "[<auto>], policy: " << value.PartitionPolicy() << ") @"
            << NodePath(node);
     if (value.Origin() != nullptr) {
-      static constexpr int kContextLimit = 25;
-      stream << ", (origin: \""
-             << AutoTruncate{StringSpanOfSymbol(*value.Origin()), kContextLimit}
-             << "\")";
+      stream << ", (origin: ";
+      origin_printer(stream, value.Origin());
+      stream << ")";
     }
     stream << '\n';
     // token range spans all of children nodes
     for (const auto& child : children) {
-      TokenPartitionTreePrinter(child, verbose).PrintTree(stream, indent + 2)
+      TokenPartitionTreePrinter(child, verbose, origin_printer)
+              .PrintTree(stream, indent + 2)
           << '\n';
     }
     stream << Spacer(indent) << '}';

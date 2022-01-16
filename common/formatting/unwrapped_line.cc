@@ -69,8 +69,16 @@ void UnwrappedLine::SetIndentationSpaces(int spaces) {
   indentation_spaces_ = spaces;
 }
 
-std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
-  constexpr int kContextLimit = 25;  // length limit for displaying spanned text
+void UnwrappedLine::DefaultOriginPrinter(std::ostream& stream,
+                                         const verible::Symbol* symbol) {
+  static constexpr int kContextLimit = 25;
+  stream << '"' << AutoTruncate{StringSpanOfSymbol(*symbol), kContextLimit}
+         << '"';
+}
+
+std::ostream* UnwrappedLine::AsCode(
+    std::ostream* stream, bool verbose,
+    const OriginPrinterFunction& origin_printer) const {
   *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
           << absl::StrJoin(tokens_, " ",
                            [=](std::string* out, const PreFormatToken& token) {
@@ -78,9 +86,9 @@ std::ostream* UnwrappedLine::AsCode(std::ostream* stream, bool verbose) const {
                            })
           << "], policy: " << partition_policy_;
   if (origin_ != nullptr) {
-    *stream << ", (origin: \""
-            << AutoTruncate{StringSpanOfSymbol(*origin_), kContextLimit}
-            << "\")";
+    *stream << ", (origin: ";
+    origin_printer(*stream, origin_);
+    *stream << ")";
   }
   return stream;
 }

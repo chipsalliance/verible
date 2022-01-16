@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <utility>
 #include <vector>
 
 #include "common/formatting/basic_format_style.h"
@@ -74,9 +75,11 @@ std::vector<std::vector<int>> FlushLeftSpacingDifferences(
 // that of all of its children.
 // Usage: stream << TokenPartitionTreePrinter(tree) << std::endl;
 struct TokenPartitionTreePrinter {
-  explicit TokenPartitionTreePrinter(const TokenPartitionTree& n,
-                                     bool verbose = false)
-      : node(n), verbose(verbose) {}
+  explicit TokenPartitionTreePrinter(
+      const TokenPartitionTree& n, bool verbose = false,
+      UnwrappedLine::OriginPrinterFunction origin_printer =
+          UnwrappedLine::DefaultOriginPrinter)
+      : node(n), verbose(verbose), origin_printer(std::move(origin_printer)) {}
 
   std::ostream& PrintTree(std::ostream& stream, int indent = 0) const;
 
@@ -84,6 +87,8 @@ struct TokenPartitionTreePrinter {
   const TokenPartitionTree& node;
   // If true, display inter-token information.
   bool verbose;
+
+  UnwrappedLine::OriginPrinterFunction origin_printer;
 };
 
 std::ostream& operator<<(std::ostream& stream,

@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_H_
 #define VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_H_
 
+#include <functional>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -163,8 +164,17 @@ class UnwrappedLine {
   // Returns true if the UnwrappedLine is empty, if it has no tokens
   bool IsEmpty() const { return tokens_.empty(); }
 
+  // Used by AsCode() and other code using it
+  using OriginPrinterFunction =
+      std::function<void(std::ostream&, const verible::Symbol*)>;
+
+  // Default origin printing function used by AsCode()
+  static void DefaultOriginPrinter(std::ostream&, const verible::Symbol*);
+
   // Currently for debugging, prints the UnwrappedLine as Code
-  std::ostream* AsCode(std::ostream*, bool verbose = false) const;
+  std::ostream* AsCode(
+      std::ostream*, bool verbose = false,
+      const OriginPrinterFunction& origin_printer = DefaultOriginPrinter) const;
 
  private:
   // Data members:
