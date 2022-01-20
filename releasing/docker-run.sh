@@ -64,7 +64,7 @@ case "$TARGET_OS" in
     # Use local flex/bison on Jammy
     if [ "$TARGET_VERSION" = jammy ]; then
       BAZEL_OPTS="${BAZEL_OPTS} --//bazel:use_local_flex_bison"
-      cat ${TARGET_OS}/${TARGET_VERSION}/flex_bison.dockerstage >> ${OUT_DIR}/Dockerfile
+      echo 'RUN apt-get install -y flex bison' >> ${OUT_DIR}/Dockerfile
     fi
 
     # Bazel
