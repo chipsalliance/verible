@@ -12136,11 +12136,6 @@ foobar, input    bit [4] foobaz,
       const absl::string_view range_unformatted(source_begin,
                                                 source_end - source_begin);
 
-#if 1
-      // Document #1150 and simple sample work-around.
-      if (range_formatted[0] == '\n' && range_unformatted[0] != '\n')
-        range_formatted = range_formatted.substr(1);
-#endif
       // To compare that we indeed formatted the requested reqgion, we make
       // sure that the first and last token (simplified: non-whitespace word)
       // in the input of the range to be formatted is
