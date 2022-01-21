@@ -330,14 +330,6 @@ LayoutFunction LayoutFunctionFactory::Stack(
 
   LayoutFunction result;
 
-  // Use first line's spacing for new layouts.
-  const auto& first_layout_item = segments->front()->layout.Value();
-  const auto spaces_before = first_layout_item.SpacesBefore();
-  const auto break_decision = first_layout_item.MustWrap();
-  // Use last line's span for new layouts. Other lines won't be modified by
-  // any further layout combinations.
-  const int span = segments->back()->span;
-
   const float line_breaks_penalty =
       (segments->size() - 1) * style_.line_break_penalty;
 
@@ -349,6 +341,14 @@ LayoutFunction LayoutFunctionFactory::Stack(
     for (auto& segment_it : *segments) {
       segment_it.MoveToKnotAtOrToTheLeftOf(current_column);
     }
+
+    // Use first line's spacing for new layouts.
+    const auto& first_layout_item = segments->front()->layout.Value();
+    const auto spaces_before = first_layout_item.SpacesBefore();
+    const auto break_decision = first_layout_item.MustWrap();
+    // Use last line's span for new layouts. Other lines won't be modified by
+    // any further layout combinations.
+    const int span = segments->back()->span;
 
     auto new_segment = LayoutFunctionSegment{
         current_column,
