@@ -12029,25 +12029,75 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
   }
 }
 
-// first consecutive non-whitespace part of string.
-absl::string_view firstWord(absl::string_view str) {
-  return *absl::StrSplit(str, absl::ByAnyChar(" \t\n"), absl::SkipWhitespace())
-              .begin();
+// Extracts the first non-whitespace token and prepends it with number of
+// of newlines seen in front of it. So "\n \n\n  foo" -> "3foo"
+std::string NLCountAndfirstWord(absl::string_view str) {
+  std::string result;
+  int newline_count = 0;
+  const char* begin = str.begin();
+  for (/**/; begin < str.end(); ++begin) {
+    if (!isspace(*begin)) break;
+    newline_count += (*begin == '\n');
+  }
+  // Emit number of newlines seen up to first token.
+  result.append(1,
+                static_cast<char>(newline_count + '0'));  // single digit itoa
+  const char* end_str = begin;
+  for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str)
+    ;
+  result.append(begin, end_str);
+  return result;
 }
 
-absl::string_view lastWord(absl::string_view str) {
-  std::vector<absl::string_view> words =
-      absl::StrSplit(str, absl::ByAnyChar(" \t\n"), absl::SkipWhitespace());
-  return words.back();
+// Similar to NLCountAndfirstWord() but looking at the last token and trailing
+// newlines.
+std::string lastWordAndNLCount(absl::string_view str) {
+  std::string result;
+  int newline_count = 0;
+  const char* back = str.end() - 1;
+  for (/**/; back >= str.begin(); --back) {
+    if (!isspace(*back)) break;
+    newline_count += (*back == '\n');
+  }
+
+  const char* start_str = back;
+  for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str)
+    ;
+  result.append(start_str + 1, back - start_str);
+  // Emit number of newlines seen following last token.
+  result.append(1,
+                static_cast<char>(newline_count + '0'));  // single digit itoa
+  return result;
+}
+
+// Testing the tester...
+TEST(FormatterTestInternal, TokenExtractorAndLineCounterTestFixtureTest) {
+  absl::string_view str = "\n \nhello world \n \n";
+  ASSERT_EQ(NLCountAndfirstWord(str), "2hello");
+  ASSERT_EQ(NLCountAndfirstWord(str.substr(1)), "1hello");
+  ASSERT_EQ(NLCountAndfirstWord(str.substr(3)), "0hello");
+
+  ASSERT_EQ(lastWordAndNLCount(str), "world2");
+  ASSERT_EQ(lastWordAndNLCount(str.substr(0, str.length() - 1)), "world1");
+  ASSERT_EQ(lastWordAndNLCount(str.substr(0, str.length() - 2)), "world1");
+  ASSERT_EQ(lastWordAndNLCount(str.substr(0, str.length() - 3)), "world0");
+
+  str = "aworld \n \n";  // Make sure to not overshoot begin.
+  ASSERT_EQ(lastWordAndNLCount(str.substr(1)), "world2");
 }
 
 TEST(FormatterEndToEndTest, RangeFormattingOnlyEmittingRelevantLines) {
+  // Including some empty lines to make sure the formatting
   static constexpr absl::string_view unformatted =
       R"(     module foo (// non-port comment
+
      // some comment
+
   input  logic  a, input logic  b,input bit [2]
 foobar, input    bit [4] foobaz,
     input bit [2]    quux
+
+
         ); endmodule
 )";
 
@@ -12063,27 +12113,54 @@ foobar, input    bit [4] foobaz,
     for (int end_line = start_line; end_line < kLineCount; ++end_line) {
       // Line numbers are 1-index based.
       const verible::Interval<int> range = {start_line + 1, end_line + 1};
+
+      // Format full text for reference
+      std::ostringstream full_format;
+      absl::Status status =
+          FormatVerilog(unformatted, "<filename>", style, full_format, {range});
+      EXPECT_OK(status) << status.message();
+
+      // To test: range formatted.
       std::ostringstream range_format;
-      absl::Status status = FormatVerilogRange(unformatted, "<filename>", style,
-                                               range_format, range);
+      status = FormatVerilogRange(unformatted, "<filename>", style,
+                                  range_format, range);
       EXPECT_OK(status) << status.message();
       if (range.empty()) {  // Nothing to format: expect empty output.
         EXPECT_TRUE(range_format.str().empty());
         continue;
       }
+      const std::string& range_formatted0 = range_format.str();
 
-      std::ostringstream full_format;
-      status =
-          FormatVerilog(unformatted, "<filename>", style, full_format, {range});
-      EXPECT_OK(status) << status.message();
+      // Area we cover in the input (include the final newline);
+      const auto source_begin = lines[start_line].begin();
+      const auto source_end = lines[end_line - 1].end() + 1;  // include \n
+      const absl::string_view range_unformatted(source_begin,
+                                                source_end - source_begin);
 
-      // Make sure that the first and last token in the input of the
-      // range to be formatted is exactly the first and last token that
-      // comes out of the range formatted snippet.
-      EXPECT_EQ(firstWord(lines[start_line]), firstWord(range_format.str()));
+      absl::string_view range_formatted = range_formatted0;
+#if 1
+      // Document #1150 and simple sample work-around.
+      if (range_formatted[0] == '\n' && range_unformatted[0] != '\n')
+        range_formatted = range_formatted.substr(1);
+#endif
+      // To compare that we indeed formatted the requested reqgion, we make
+      // sure that the first and last token (simplified: non-whitespace word)
+      // in the input of the range to be formatted is
+      // exactly the first and last token that comes out of the range
+      // formatted snippet.
+      //
+      // While the whitespace might be different at the beginning and end
+      // due to formatting, the number of _newlines_ at the beginning and end
+      // should be the same, so we include the newline count in the comparison.
+
+      EXPECT_EQ(NLCountAndfirstWord(range_unformatted),
+                NLCountAndfirstWord(range_formatted))
+          << "'" << range_unformatted << "' vs. '" << range_formatted << "'";
 
       // ... same for the last word.
-      EXPECT_EQ(lastWord(lines[end_line - 1]), lastWord(range_format.str()));
+      EXPECT_EQ(lastWordAndNLCount(range_unformatted),
+                lastWordAndNLCount(range_formatted))
+          << "'" << range_unformatted << "' vs. '" << range_formatted << "'";
 
       EXPECT_LE(range_format.str().length(), full_format.str().length());
       EXPECT_THAT(full_format.str(), HasSubstr(range_format.str()));
