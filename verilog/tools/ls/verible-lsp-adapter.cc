@@ -226,8 +226,8 @@ std::vector<verible::lsp::TextEdit> FormatRange(
     const verible::Interval<int> format_lines{
         p.range.start.line + 1,  // 1 index based
         p.range.end.line + 1 + last_line_include};
-    std::ostringstream formatted_range;
-    if (!FormatVerilogRange(text, format_style, formatted_range, format_lines)
+    std::string formatted_range;
+    if (!FormatVerilogRange(text, format_style, &formatted_range, format_lines)
              .ok())
       return result;
     result.push_back(verible::lsp::TextEdit{
@@ -236,7 +236,7 @@ std::vector<verible::lsp::TextEdit> FormatRange(
                 .start = {.line = format_lines.min - 1, .character = 0},
                 .end = {.line = format_lines.max - 1, .character = 0},
             },
-        .newText = formatted_range.str()});
+        .newText = formatted_range});
   } else {
     std::string newText;
     if (!FormatVerilog(text, current->uri(), format_style, &newText).ok())

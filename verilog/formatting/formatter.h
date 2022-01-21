@@ -92,13 +92,13 @@ absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
 absl::Status FormatVerilogRange(absl::string_view full_content,
                                 absl::string_view filename,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control = {});
 // Ditto, with TextStructureView as input.
 absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control = {});
 

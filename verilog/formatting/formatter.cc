@@ -294,7 +294,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
 absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control) {
   if (line_range.empty()) {
@@ -313,7 +313,9 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
     return absl::CancelledError("Halting for diagnostic operation.");
   }
 
-  fmt.Emit(false, formatted_stream);
+  std::ostringstream output_buffer;
+  fmt.Emit(false, output_buffer);
+  *formatted_text = output_buffer.str();
 
   // We don't have verification tests here as we only have a subset of code
   // so it would be more tricky. Since this output is used in interactive
@@ -325,12 +327,12 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
 absl::Status FormatVerilogRange(absl::string_view full_content,
                                 absl::string_view filename,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control) {
   const auto analyzer = ParseWithStatus(full_content, filename);
   if (!analyzer.ok()) return analyzer.status();
-  return FormatVerilogRange(analyzer->get()->Data(), style, formatted_stream,
+  return FormatVerilogRange(analyzer->get()->Data(), style, formatted_text,
                             line_range, control);
 }
 

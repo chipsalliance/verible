@@ -12121,15 +12121,14 @@ foobar, input    bit [4] foobaz,
       EXPECT_OK(status) << status.message();
 
       // To test: range formatted.
-      std::ostringstream range_format;
+      std::string range_formatted;
       status = FormatVerilogRange(unformatted, "<filename>", style,
-                                  range_format, range);
+                                  &range_formatted, range);
       EXPECT_OK(status) << status.message();
       if (range.empty()) {  // Nothing to format: expect empty output.
-        EXPECT_TRUE(range_format.str().empty());
+        EXPECT_TRUE(range_formatted.empty());
         continue;
       }
-      const std::string& range_formatted0 = range_format.str();
 
       // Area we cover in the input (include the final newline);
       const auto source_begin = lines[start_line].begin();
@@ -12137,7 +12136,6 @@ foobar, input    bit [4] foobaz,
       const absl::string_view range_unformatted(source_begin,
                                                 source_end - source_begin);
 
-      absl::string_view range_formatted = range_formatted0;
 #if 1
       // Document #1150 and simple sample work-around.
       if (range_formatted[0] == '\n' && range_unformatted[0] != '\n')
@@ -12162,8 +12160,8 @@ foobar, input    bit [4] foobaz,
                 lastWordAndNLCount(range_formatted))
           << "'" << range_unformatted << "' vs. '" << range_formatted << "'";
 
-      EXPECT_LE(range_format.str().length(), full_format.str().length());
-      EXPECT_THAT(full_format.str(), HasSubstr(range_format.str()));
+      EXPECT_LE(range_formatted.length(), full_format.str().length());
+      EXPECT_THAT(full_format.str(), HasSubstr(range_formatted));
     }
   }
 }
