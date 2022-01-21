@@ -60,6 +60,13 @@ case "$TARGET_OS" in
     # Compiler
     [ "$TARGET_VERSION" = xenial ] || [ "$TARGET_VERSION" = bionic ] && _version="$TARGET_VERSION" || _version="common"
     cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
+    
+    # Use local flex/bison on Jammy
+    if [ "$TARGET_VERSION" = jammy ]; then
+      BAZEL_OPTS="${BAZEL_OPTS} --//bazel:use_local_flex_bison"
+      echo 'RUN apt-get install -y flex bison' >> ${OUT_DIR}/Dockerfile
+    fi
+
     # Bazel
     cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
