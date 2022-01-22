@@ -294,7 +294,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
 
 absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control) {
   if (line_range.empty()) {
@@ -313,7 +313,24 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
     return absl::CancelledError("Halting for diagnostic operation.");
   }
 
-  fmt.Emit(false, formatted_stream);
+  std::ostringstream output_buffer;
+  fmt.Emit(false, output_buffer);
+  *formatted_text = output_buffer.str();
+
+  // The range-format can output a spurious newline in the beginning (#1150).
+  // Whitespace handling needs some rework in the formatter, and it is not
+  // trivial in the current state to fix at the source.
+  // However, we can easily see the effects and mitigate it here: if we see a
+  // newline at the beginning of the formatted range, but no newline at the
+  // beginning of the original range, erase it in the formatted output.
+  // TODO(hzeller): This can go when whitespace handling is revisited.
+  //                (Emit(), FormatWhitespaceWithDisabledByteRanges())
+  const auto& text_lines = structure.Lines();
+  const char unformatted_begin = *text_lines[line_range.min - 1].begin();
+  if (!formatted_text->empty() && (*formatted_text)[0] == '\n' &&
+      unformatted_begin != '\n') {
+    formatted_text->erase(0, 1);  // possibly expensive.
+  }
 
   // We don't have verification tests here as we only have a subset of code
   // so it would be more tricky. Since this output is used in interactive
@@ -325,12 +342,12 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
 absl::Status FormatVerilogRange(absl::string_view full_content,
                                 absl::string_view filename,
                                 const FormatStyle& style,
-                                std::ostream& formatted_stream,
+                                std::string* formatted_text,
                                 const verible::Interval<int>& line_range,
                                 const ExecutionControl& control) {
   const auto analyzer = ParseWithStatus(full_content, filename);
   if (!analyzer.ok()) return analyzer.status();
-  return FormatVerilogRange(analyzer->get()->Data(), style, formatted_stream,
+  return FormatVerilogRange(analyzer->get()->Data(), style, formatted_text,
                             line_range, control);
 }
 
