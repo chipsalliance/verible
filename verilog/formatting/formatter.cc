@@ -329,7 +329,7 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
   const char unformatted_begin = *text_lines[line_range.min - 1].begin();
   if (!formatted_text->empty() && (*formatted_text)[0] == '\n' &&
       unformatted_begin != '\n') {
-    formatted_text->erase(0, 1);
+    formatted_text->erase(0, 1);  // possibly expensive.
   }
 
   // We don't have verification tests here as we only have a subset of code
