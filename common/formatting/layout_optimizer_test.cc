@@ -1865,6 +1865,69 @@ TEST_F(LayoutFunctionFactoryTest, IndentWithOtherCombinators) {
   }
 }
 
+TEST_F(LayoutFunctionFactoryTest, DifferentLayoutsInDifferentSegments) {
+  using LT = LayoutTree;
+  using LI = LayoutItem;
+
+  const auto juxtaposition_or_wrap = factory_.Choice({
+      factory_.Juxtaposition({
+          factory_.Line(joinable_lines_.OneUnder30Limit()),
+          factory_.Line(joinable_lines_.Exactly10Columns()),
+      }),
+      factory_.Stack({
+          factory_.Line(joinable_lines_.OneUnder30Limit()),
+          factory_.Line(joinable_lines_.Exactly10Columns()),
+      }),
+  });
+
+  {
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+           LI(joinable_lines_.OneUnder30Limit(), 0),  //
+           LI(joinable_lines_.Exactly10Columns(), 0));
+    const auto expected_layout_v =
+        LT(LI(LayoutType::kStack, 0, false),          //
+           LI(joinable_lines_.OneUnder30Limit(), 0),  //
+           LI(joinable_lines_.Exactly10Columns(), 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 39, 0.0F, 0},
+        {1, expected_layout_h, 39, 0.0F, 100},
+        {2, expected_layout_v, 10, 2.0F, 0},
+        {11, expected_layout_v, 10, 2.0F, 100},
+        {30, expected_layout_v, 10, 1902.0F, 200},
+        {40, expected_layout_h, 39, 3900.0F, 100},
+    };
+    ExpectLayoutFunctionsEqual(juxtaposition_or_wrap, expected_lf, __LINE__);
+  }
+  {
+    const auto lf = factory_.Stack({
+        factory_.Line(joinable_lines_.Short()),
+        juxtaposition_or_wrap,
+    });
+    const auto expected_layout_h =
+        LT(LI(LayoutType::kStack, 0, false),             //
+           LI(joinable_lines_.Short(), 0),               //
+           LT(LI(LayoutType::kJuxtaposition, 0, false),  //
+              LI(joinable_lines_.OneUnder30Limit(), 0),  //
+              LI(joinable_lines_.Exactly10Columns(), 0)));
+    const auto expected_layout_v =
+        LT(LI(LayoutType::kStack, 0, false),          //
+           LI(joinable_lines_.Short(), 0),            //
+           LI(joinable_lines_.OneUnder30Limit(), 0),  //
+           LI(joinable_lines_.Exactly10Columns(), 0));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_h, 39, 2.0F, 0},
+        {1, expected_layout_h, 39, 2.0F, 100},
+        {2, expected_layout_v, 10, 4.0F, 0},
+        {11, expected_layout_v, 10, 4.0F, 100},
+        {21, expected_layout_v, 10, 1004.0F, 200},
+        {30, expected_layout_v, 10, 2804.0F, 300},
+        {40, expected_layout_h, 39, 5802.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+}
+
 class TreeReconstructorTest : public ::testing::Test,
                               public UnwrappedLineMemoryHandler {
  public:
