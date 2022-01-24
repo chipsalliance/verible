@@ -52,7 +52,6 @@
 
 namespace verilog {
 
-using verible::FileAnalyzer;
 using verible::TokenInfo;
 using verible::TokenSequence;
 using verible::container::InsertKeyOrDie;

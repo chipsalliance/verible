@@ -37,7 +37,6 @@
 namespace verilog {
 
 using verible::TokenGenerator;
-using verible::TokenInfo;
 using verible::TokenStreamView;
 using verible::container::InsertOrUpdate;
 
