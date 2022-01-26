@@ -432,7 +432,7 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
   std::vector<TokenRange> commands = lexer.GetCommandsTokenRanges();
 
   bool all_commands_ok = true;
-  for (const auto c_range : commands) {
+  for (const auto& c_range : commands) {
     const auto command = make_container_range(c_range.begin(), c_range.end());
 
     command_pos = line_map.GetLineColAtOffset(

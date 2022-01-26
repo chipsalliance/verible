@@ -38,7 +38,7 @@ void FilterTokenStreamView(const TokenFilterPredicate& keep,
                            const TokenStreamView& src, TokenStreamView* dest) {
   dest->clear();
   dest->reserve(src.size() / 2);  // Estimate size of filtered result.
-  for (const auto iter : src) {
+  for (const auto& iter : src) {
     if (keep(*iter)) {
       dest->push_back(iter);
     }
