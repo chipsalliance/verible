@@ -96,7 +96,7 @@ const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
 
 namespace internal {
 template <typename S>
-void MustBeCSTSymbolOrNode(S&) {
+void StaticAssertMustBeCSTSymbolOrNode(S&) {
   typedef typename std::remove_const<S>::type base_type;
   static_assert(std::is_same<base_type, Symbol>::value ||
                     std::is_same<base_type, SyntaxTreeNode>::value,
@@ -111,7 +111,7 @@ void MustBeCSTSymbolOrNode(S&) {
 template <typename E, typename S>
 typename match_const<SyntaxTreeNode, S>::type& CheckSymbolAsNode(S& symbol,
                                                                  E node_enum) {
-  internal::MustBeCSTSymbolOrNode(symbol);
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
   return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
 }
 
@@ -168,34 +168,39 @@ const SyntaxTreeLeaf* CheckOptionalSymbolAsLeaf(const std::nullptr_t& symbol,
 template <typename E, typename S>
 typename match_const<Symbol, S>::type* GetSubtreeAsSymbol(
     S& symbol, E parent_must_be_node_enum, size_t child_position) {
-  internal::MustBeCSTSymbolOrNode(symbol);
-  return CheckNodeEnum(SymbolCastToNode(symbol),
-                       parent_must_be_node_enum)[child_position]
-      .get();
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
+  if (symbol.Kind() != SymbolKind::kNode) return nullptr;
+  auto& node = SymbolCastToNode(symbol);
+  if (node.children().size() <= child_position) return nullptr;
+  return CheckNodeEnum(node, parent_must_be_node_enum)[child_position].get();
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a node.
 // S can be {const,non-const}x{Symbol,SyntaxTreeNode}
 // constness is deduced from S and reflected in the return type.
 template <class S, class E>
-typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
+typename match_const<SyntaxTreeNode, S>::type* GetSubtreeAsNode(
     S& symbol, E parent_must_be_node_enum, size_t child_position) {
-  internal::MustBeCSTSymbolOrNode(symbol);
-  return SymbolCastToNode(*ABSL_DIE_IF_NULL(
-      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position)));
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
+  auto* tree =
+      GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position);
+  if (!tree) return nullptr;
+  if (tree->Kind() != SymbolKind::kNode) return nullptr;
+  return &SymbolCastToNode(*tree);
 }
 
 // This variant further checks the returned node's enumeration.
 // S can be {const,non-const}x{Symbol,SyntaxTreeNode}
 // constness is deduced from S and reflected in the return type.
 template <class S, class E>
-typename match_const<SyntaxTreeNode, S>::type& GetSubtreeAsNode(
+typename match_const<SyntaxTreeNode, S>::type* GetSubtreeAsNode(
     S& symbol, E parent_must_be_node_enum, size_t child_position,
     E child_must_be_node_enum) {
-  internal::MustBeCSTSymbolOrNode(symbol);
-  return CheckNodeEnum(
-      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position),
-      child_must_be_node_enum);
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
+  auto* tree =
+      GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position);
+  if (!tree) return nullptr;
+  return &CheckNodeEnum(*tree, child_must_be_node_enum);
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a leaf.
@@ -204,7 +209,7 @@ template <class S, class E>
 const SyntaxTreeLeaf* GetSubtreeAsLeaf(const S& symbol,
                                        E parent_must_be_node_enum,
                                        size_t child_position) {
-  internal::MustBeCSTSymbolOrNode(symbol);
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
   const Symbol* subtree =
       GetSubtreeAsSymbol(symbol, parent_must_be_node_enum, child_position);
   if (!subtree) return nullptr;
@@ -214,7 +219,7 @@ const SyntaxTreeLeaf* GetSubtreeAsLeaf(const S& symbol,
 template <class S, class E>
 E GetSubtreeNodeEnum(const S& symbol, E parent_must_be_node_enum,
                      size_t child_position) {
-  internal::MustBeCSTSymbolOrNode(symbol);
+  internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
   return static_cast<E>(
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position)
           .Tag()

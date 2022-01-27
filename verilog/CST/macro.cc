@@ -62,13 +62,15 @@ const TokenInfo& GetMacroGenericItemId(const Symbol& s) {
       ->get();
 }
 
-const SyntaxTreeNode& GetMacroCallParenGroup(const Symbol& s) {
+const SyntaxTreeNode* GetMacroCallParenGroup(const Symbol& s) {
   return GetSubtreeAsNode(s, NodeEnum::kMacroCall, 1, NodeEnum::kParenGroup);
 }
 
-const SyntaxTreeNode& GetMacroCallArgs(const Symbol& s) {
+const SyntaxTreeNode* GetMacroCallArgs(const Symbol& s) {
   // See structure of (CST) MakeParenGroup().
-  return GetSubtreeAsNode(GetMacroCallParenGroup(s), NodeEnum::kParenGroup, 1,
+  const SyntaxTreeNode* parent = GetMacroCallParenGroup(s);
+  if (!parent) return nullptr;
+  return GetSubtreeAsNode(*parent, NodeEnum::kParenGroup, 1,
                           NodeEnum::kMacroArgList);
 }
 

@@ -26,6 +26,7 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/identifier.h"
+#include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 
 namespace verilog {
@@ -51,24 +52,24 @@ static const SyntaxTreeNode& GetGenericStatementBody(
   return SymbolCastToNode(*node.children().back());
 }
 
-const SyntaxTreeNode& GetIfClauseGenerateBody(const Symbol& if_clause) {
+const SyntaxTreeNode* GetIfClauseGenerateBody(const Symbol& if_clause) {
   const auto& body_node = GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(if_clause), NodeEnum::kGenerateIfClause));
   return GetSubtreeAsNode(body_node, NodeEnum::kGenerateIfBody, 0);
 }
 
-const SyntaxTreeNode& GetElseClauseGenerateBody(const Symbol& else_clause) {
+const SyntaxTreeNode* GetElseClauseGenerateBody(const Symbol& else_clause) {
   const auto& body_node = GetGenericStatementBody(CheckNodeEnum(
       SymbolCastToNode(else_clause), NodeEnum::kGenerateElseClause));
   return GetSubtreeAsNode(body_node, NodeEnum::kGenerateElseBody, 0);
 }
 
-const SyntaxTreeNode& GetLoopGenerateBody(const Symbol& loop) {
-  return GetGenericStatementBody(
+const SyntaxTreeNode* GetLoopGenerateBody(const Symbol& loop) {
+  return &GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(loop), NodeEnum::kLoopGenerateConstruct));
 }
 
-const SyntaxTreeNode& GetConditionalGenerateIfClause(
+const SyntaxTreeNode* GetConditionalGenerateIfClause(
     const Symbol& conditional) {
   return GetSubtreeAsNode(conditional, NodeEnum::kConditionalGenerateConstruct,
                           0, NodeEnum::kGenerateIfClause);
@@ -85,19 +86,19 @@ const SyntaxTreeNode* GetConditionalGenerateElseClause(
                         NodeEnum::kGenerateElseClause);
 }
 
-const SyntaxTreeNode& GetIfClauseStatementBody(const Symbol& if_clause) {
+const SyntaxTreeNode* GetIfClauseStatementBody(const Symbol& if_clause) {
   const auto& body_node = GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(if_clause), NodeEnum::kIfClause));
   return GetSubtreeAsNode(body_node, NodeEnum::kIfBody, 0);
 }
 
-const SyntaxTreeNode& GetElseClauseStatementBody(const Symbol& else_clause) {
+const SyntaxTreeNode* GetElseClauseStatementBody(const Symbol& else_clause) {
   const auto& body_node = GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(else_clause), NodeEnum::kElseClause));
   return GetSubtreeAsNode(body_node, NodeEnum::kElseBody, 0);
 }
 
-const SyntaxTreeNode& GetConditionalStatementIfClause(
+const SyntaxTreeNode* GetConditionalStatementIfClause(
     const Symbol& conditional) {
   return GetSubtreeAsNode(conditional, NodeEnum::kConditionalStatement, 0,
                           NodeEnum::kIfClause);
@@ -113,7 +114,7 @@ const SyntaxTreeNode* GetConditionalStatementElseClause(
   return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
 }
 
-const SyntaxTreeNode& GetAssertionStatementAssertClause(
+const SyntaxTreeNode* GetAssertionStatementAssertClause(
     const Symbol& assertion_statement) {
   return GetSubtreeAsNode(assertion_statement, NodeEnum::kAssertionStatement, 0,
                           NodeEnum::kAssertionClause);
@@ -136,7 +137,7 @@ const SyntaxTreeNode* GetAssertionStatementElseClause(
   return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
 }
 
-const SyntaxTreeNode& GetAssumeStatementAssumeClause(
+const SyntaxTreeNode* GetAssumeStatementAssumeClause(
     const Symbol& assume_statement) {
   return GetSubtreeAsNode(assume_statement, NodeEnum::kAssumeStatement, 0,
                           NodeEnum::kAssumeClause);
@@ -173,7 +174,7 @@ const SyntaxTreeNode* GetWaitStatementBody(const Symbol& wait_statement) {
       GetSubtreeAsSymbol(body_node, NodeEnum::kWaitBody, 0));
 }
 
-const SyntaxTreeNode& GetAssertPropertyStatementAssertClause(
+const SyntaxTreeNode* GetAssertPropertyStatementAssertClause(
     const Symbol& assert_property_statement) {
   return GetSubtreeAsNode(assert_property_statement,
                           NodeEnum::kAssertPropertyStatement, 0,
@@ -197,7 +198,7 @@ const SyntaxTreeNode* GetAssertPropertyStatementElseClause(
   return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
 }
 
-const SyntaxTreeNode& GetAssumePropertyStatementAssumeClause(
+const SyntaxTreeNode* GetAssumePropertyStatementAssumeClause(
     const Symbol& assume_property_statement) {
   return GetSubtreeAsNode(assume_property_statement,
                           NodeEnum::kAssumePropertyStatement, 0,
@@ -221,7 +222,7 @@ const SyntaxTreeNode* GetAssumePropertyStatementElseClause(
   return &CheckNodeEnum(SymbolCastToNode(*else_ptr), NodeEnum::kElseClause);
 }
 
-const SyntaxTreeNode& GetExpectPropertyStatementExpectClause(
+const SyntaxTreeNode* GetExpectPropertyStatementExpectClause(
     const Symbol& expect_property_statement) {
   return GetSubtreeAsNode(expect_property_statement,
                           NodeEnum::kExpectPropertyStatement, 0,
@@ -261,39 +262,39 @@ const SyntaxTreeNode* GetCoverSequenceStatementBody(
       GetSubtreeAsSymbol(body_node, NodeEnum::kCoverSequenceBody, 0));
 }
 
-const SyntaxTreeNode& GetLoopStatementBody(const Symbol& loop) {
-  return GetGenericStatementBody(
+const SyntaxTreeNode* GetLoopStatementBody(const Symbol& loop) {
+  return &GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(loop), NodeEnum::kForLoopStatement));
 }
 
-const SyntaxTreeNode& GetDoWhileStatementBody(const Symbol& do_while) {
+const SyntaxTreeNode* GetDoWhileStatementBody(const Symbol& do_while) {
   return GetSubtreeAsNode(SymbolCastToNode(do_while),
                           NodeEnum::kDoWhileLoopStatement, 1);
 }
 
-const SyntaxTreeNode& GetForeverStatementBody(const Symbol& forever) {
-  return GetGenericStatementBody(CheckNodeEnum(
+const SyntaxTreeNode* GetForeverStatementBody(const Symbol& forever) {
+  return &GetGenericStatementBody(CheckNodeEnum(
       SymbolCastToNode(forever), NodeEnum::kForeverLoopStatement));
 }
 
-const SyntaxTreeNode& GetForeachStatementBody(const Symbol& foreach) {
-  return GetGenericStatementBody(CheckNodeEnum(
+const SyntaxTreeNode* GetForeachStatementBody(const Symbol& foreach) {
+  return &GetGenericStatementBody(CheckNodeEnum(
       SymbolCastToNode(foreach), NodeEnum::kForeachLoopStatement));
 }
 
-const SyntaxTreeNode& GetRepeatStatementBody(const Symbol& repeat) {
-  return GetGenericStatementBody(
+const SyntaxTreeNode* GetRepeatStatementBody(const Symbol& repeat) {
+  return &GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(repeat), NodeEnum::kRepeatLoopStatement));
 }
 
-const SyntaxTreeNode& GetWhileStatementBody(const Symbol& while_stmt) {
-  return GetGenericStatementBody(CheckNodeEnum(SymbolCastToNode(while_stmt),
-                                               NodeEnum::kWhileLoopStatement));
+const SyntaxTreeNode* GetWhileStatementBody(const Symbol& while_stmt) {
+  return &GetGenericStatementBody(CheckNodeEnum(SymbolCastToNode(while_stmt),
+                                                NodeEnum::kWhileLoopStatement));
 }
 
-const SyntaxTreeNode& GetProceduralTimingControlStatementBody(
+const SyntaxTreeNode* GetProceduralTimingControlStatementBody(
     const Symbol& proc_timing_control) {
-  return GetGenericStatementBody(
+  return &GetGenericStatementBody(
       CheckNodeEnum(SymbolCastToNode(proc_timing_control),
                     NodeEnum::kProceduralTimingControlStatement));
 }
@@ -302,31 +303,31 @@ const SyntaxTreeNode* GetAnyControlStatementBody(const Symbol& statement) {
   switch (NodeEnum(SymbolCastToNode(statement).Tag().tag)) {
     // generate
     case NodeEnum::kGenerateIfClause:
-      return &GetIfClauseGenerateBody(statement);
+      return GetIfClauseGenerateBody(statement);
     case NodeEnum::kGenerateElseClause:
-      return &GetElseClauseGenerateBody(statement);
+      return GetElseClauseGenerateBody(statement);
     case NodeEnum::kLoopGenerateConstruct:
-      return &GetLoopGenerateBody(statement);
+      return GetLoopGenerateBody(statement);
 
     // statements
     case NodeEnum::kIfClause:
-      return &GetIfClauseStatementBody(statement);
+      return GetIfClauseStatementBody(statement);
     case NodeEnum::kElseClause:
-      return &GetElseClauseStatementBody(statement);
+      return GetElseClauseStatementBody(statement);
     case NodeEnum::kForLoopStatement:
-      return &GetLoopStatementBody(statement);
+      return GetLoopStatementBody(statement);
     case NodeEnum::kDoWhileLoopStatement:
-      return &GetDoWhileStatementBody(statement);
+      return GetDoWhileStatementBody(statement);
     case NodeEnum::kForeverLoopStatement:
-      return &GetForeverStatementBody(statement);
+      return GetForeverStatementBody(statement);
     case NodeEnum::kForeachLoopStatement:
-      return &GetForeachStatementBody(statement);
+      return GetForeachStatementBody(statement);
     case NodeEnum::kRepeatLoopStatement:
-      return &GetRepeatStatementBody(statement);
+      return GetRepeatStatementBody(statement);
     case NodeEnum::kWhileLoopStatement:
-      return &GetWhileStatementBody(statement);
+      return GetWhileStatementBody(statement);
     case NodeEnum::kProceduralTimingControlStatement:
-      return &GetProceduralTimingControlStatementBody(statement);
+      return GetProceduralTimingControlStatementBody(statement);
 
     // immediate assertions
     case NodeEnum::kAssertionClause:
@@ -361,25 +362,25 @@ const SyntaxTreeNode* GetAnyConditionalIfClause(const Symbol& conditional) {
   switch (NodeEnum(SymbolCastToNode(conditional).Tag().tag)) {
     // generate
     case NodeEnum::kConditionalGenerateConstruct:
-      return &GetConditionalGenerateIfClause(conditional);
+      return GetConditionalGenerateIfClause(conditional);
 
     // statement
     case NodeEnum::kConditionalStatement:
-      return &GetConditionalStatementIfClause(conditional);
+      return GetConditionalStatementIfClause(conditional);
 
       // immediate assertions
     case NodeEnum::kAssertionStatement:
-      return &GetAssertionStatementAssertClause(conditional);
+      return GetAssertionStatementAssertClause(conditional);
     case NodeEnum::kAssumeStatement:
-      return &GetAssumeStatementAssumeClause(conditional);
+      return GetAssumeStatementAssumeClause(conditional);
 
       // concurrent assertions
     case NodeEnum::kAssertPropertyStatement:
-      return &GetAssertPropertyStatementAssertClause(conditional);
+      return GetAssertPropertyStatementAssertClause(conditional);
     case NodeEnum::kAssumePropertyStatement:
-      return &GetAssumePropertyStatementAssumeClause(conditional);
+      return GetAssumePropertyStatementAssumeClause(conditional);
     case NodeEnum::kExpectPropertyStatement:
-      return &GetExpectPropertyStatementExpectClause(conditional);
+      return GetExpectPropertyStatementExpectClause(conditional);
 
     default:
       return nullptr;
@@ -427,32 +428,33 @@ const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
 }
 
 // Returns the variable name leaf from for loop initialization.
-const verible::SyntaxTreeLeaf& GetVariableNameFromForInitialization(
+const verible::SyntaxTreeLeaf* GetVariableNameFromForInitialization(
     const verible::Symbol& for_initialization) {
   const Symbol* child = verible::GetSubtreeAsSymbol(
       for_initialization, NodeEnum::kForInitialization, 2);
   if (child->Kind() == verible::SymbolKind::kLeaf) {
-    return SymbolCastToLeaf(*child);
+    return &SymbolCastToLeaf(*child);
   }
-  return *AutoUnwrapIdentifier(GetUnqualifiedIdFromReferenceCallBase(
-      verible::GetSubtreeAsNode(*child, NodeEnum::kLPValue, 0)));
+  const verible::SyntaxTreeNode* lpvalue =
+      verible::GetSubtreeAsNode(*child, NodeEnum::kLPValue, 0);
+  return AutoUnwrapIdentifier(*GetUnqualifiedIdFromReferenceCallBase(*lpvalue));
 }
 
 // Returns the rhs expression from for loop initialization.
-const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
+const verible::SyntaxTreeNode* GetExpressionFromForInitialization(
     const verible::Symbol& for_initialization) {
   return verible::GetSubtreeAsNode(for_initialization,
                                    NodeEnum::kForInitialization, 4,
                                    NodeEnum::kExpression);
 }
 
-const verible::SyntaxTreeNode& GetGenerateBlockBegin(
+const verible::SyntaxTreeNode* GetGenerateBlockBegin(
     const verible::Symbol& generate_block) {
   return verible::GetSubtreeAsNode(generate_block, NodeEnum::kGenerateBlock, 0,
                                    NodeEnum::kBegin);
 }
 
-const verible::SyntaxTreeNode& GetGenerateBlockEnd(
+const verible::SyntaxTreeNode* GetGenerateBlockEnd(
     const verible::Symbol& generate_block) {
   return verible::GetSubtreeAsNode(generate_block, NodeEnum::kGenerateBlock, 2,
                                    NodeEnum::kEnd);

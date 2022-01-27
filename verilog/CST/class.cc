@@ -47,30 +47,29 @@ std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
   return SearchSyntaxTree(root, NodekHierarchyExtension());
 }
 
-const verible::SyntaxTreeNode& GetClassHeader(
+const verible::SyntaxTreeNode* GetClassHeader(
     const verible::Symbol& class_symbol) {
   return verible::GetSubtreeAsNode(class_symbol, NodeEnum::kClassDeclaration, 0,
                                    NodeEnum::kClassHeader);
 }
 
-const verible::SyntaxTreeLeaf& GetClassName(
+const verible::SyntaxTreeLeaf* GetClassName(
     const verible::Symbol& class_declaration) {
-  const auto& header_node = GetClassHeader(class_declaration);
+  const auto* header_node = GetClassHeader(class_declaration);
+  if (!header_node) return nullptr;
   const verible::SyntaxTreeLeaf* name_leaf =
-      verible::GetSubtreeAsLeaf(header_node, NodeEnum::kClassHeader, 3);
-  // TODO(hzeller): bubble up nullptr.
-  return *ABSL_DIE_IF_NULL(name_leaf);
+      verible::GetSubtreeAsLeaf(*header_node, NodeEnum::kClassHeader, 3);
+  return name_leaf;
 }
 
 const verible::SyntaxTreeNode* GetExtendedClass(
     const verible::Symbol& class_declaration) {
-  const auto& class_header = GetClassHeader(class_declaration);
+  const auto* class_header = GetClassHeader(class_declaration);
+  if (!class_header) return nullptr;
   const auto* extends_list =
-      verible::GetSubtreeAsSymbol(class_header, NodeEnum::kClassHeader, 5);
-  if (extends_list == nullptr) {
-    return nullptr;
-  }
-  return &verible::GetSubtreeAsNode(*extends_list, NodeEnum::kExtendsList, 1);
+      verible::GetSubtreeAsSymbol(*class_header, NodeEnum::kClassHeader, 5);
+  if (!extends_list) return nullptr;
+  return verible::GetSubtreeAsNode(*extends_list, NodeEnum::kExtendsList, 1);
 }
 
 const verible::SyntaxTreeLeaf* GetClassEndLabel(
@@ -84,7 +83,7 @@ const verible::SyntaxTreeLeaf* GetClassEndLabel(
                                    NodeEnum::kLabel, 1);
 }
 
-const verible::SyntaxTreeNode& GetClassItemList(
+const verible::SyntaxTreeNode* GetClassItemList(
     const verible::Symbol& class_declaration) {
   return verible::GetSubtreeAsNode(
       class_declaration, NodeEnum::kClassDeclaration, 1, NodeEnum::kClassItems);
@@ -92,21 +91,22 @@ const verible::SyntaxTreeNode& GetClassItemList(
 
 const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol& hierarchy_extension) {
-  return *AutoUnwrapIdentifier(verible::GetSubtreeAsNode(
+  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(verible::GetSubtreeAsNode(
       hierarchy_extension, NodeEnum::kHierarchyExtension, 1,
-      NodeEnum::kUnqualifiedId));
+      NodeEnum::kUnqualifiedId)));
 }
 
 const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
     const verible::Symbol& class_declaration) {
-  const auto& header_node = GetClassHeader(class_declaration);
+  const auto* header_node = GetClassHeader(class_declaration);
+  if (!header_node) return nullptr;
   const verible::Symbol* param_declaration_list =
-      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kClassHeader, 4);
+      verible::GetSubtreeAsSymbol(*header_node, NodeEnum::kClassHeader, 4);
   return verible::CheckOptionalSymbolAsNode(
       param_declaration_list, NodeEnum::kFormalParameterListDeclaration);
 }
 
-const verible::SyntaxTreeNode& GetClassConstructorStatementList(
+const verible::SyntaxTreeNode* GetClassConstructorStatementList(
     const verible::Symbol& class_constructor) {
   return verible::GetSubtreeAsNode(class_constructor,
                                    NodeEnum::kClassConstructor, 2);
@@ -114,11 +114,11 @@ const verible::SyntaxTreeNode& GetClassConstructorStatementList(
 
 const verible::SyntaxTreeLeaf* GetNewKeywordFromClassConstructor(
     const verible::Symbol& class_constructor) {
-  const verible::SyntaxTreeNode& constructor_prototype =
+  const verible::SyntaxTreeNode* constructor_prototype =
       verible::GetSubtreeAsNode(class_constructor, NodeEnum::kClassConstructor,
                                 1, NodeEnum::kClassConstructorPrototype);
-
-  return verible::GetSubtreeAsLeaf(constructor_prototype,
+  if (!constructor_prototype) return nullptr;
+  return verible::GetSubtreeAsLeaf(*constructor_prototype,
                                    NodeEnum::kClassConstructorPrototype, 1);
 }
 

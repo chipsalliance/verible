@@ -1190,7 +1190,7 @@ TEST(SymbolCastToLeafTest, InvalidInputNode) {
 
 TEST(GetSubtreeAsSymbolTest, OutOfBounds) {
   auto root = TNode(1);
-  EXPECT_DEATH(GetSubtreeAsSymbol(*root, 1, 0), "");
+  EXPECT_EQ(GetSubtreeAsSymbol(*root, 1, 0), nullptr);
 }
 
 TEST(GetSubtreeAsSymbolTest, WrongParentIntegerTag) {
@@ -1414,12 +1414,12 @@ TEST(GetSubtreeAsSymbolTest, ValidAccessAtIndexOne) {
 TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnum) {
   auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
   const auto& child = GetSubtreeAsNode(*root, FakeEnum::kZero, 0);
-  EXPECT_EQ(FakeEnum(child.Tag().tag), FakeEnum::kOne);
+  EXPECT_EQ(FakeEnum(child->Tag().tag), FakeEnum::kOne);
 }
 
 TEST(GetSubtreeAsNodeTest, GotLeafInsteadOfNode) {
   auto root = TNode(FakeEnum::kZero, Leaf(1, "foo"));
-  EXPECT_DEATH(GetSubtreeAsNode(*root, FakeEnum::kZero, 0), "");
+  EXPECT_EQ(GetSubtreeAsNode(*root, FakeEnum::kZero, 0), nullptr);
 }
 
 TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMatches) {

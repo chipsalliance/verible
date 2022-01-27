@@ -83,7 +83,7 @@ std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
 }
 
 // Don't want to expose kInstantiationBase because it is an artificial grouping.
-static const SyntaxTreeNode& GetInstantiationBaseFromDataDeclaration(
+static const SyntaxTreeNode* GetInstantiationBaseFromDataDeclaration(
     const Symbol& data_declaration) {
   return GetSubtreeAsNode(data_declaration, NodeEnum::kDataDeclaration, 1,
                           NodeEnum::kInstantiationBase);
@@ -96,25 +96,26 @@ const SyntaxTreeNode* GetQualifiersOfDataDeclaration(
   return verible::CheckOptionalSymbolAsNode(quals, NodeEnum::kQualifierList);
 }
 
-const SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
+const SyntaxTreeNode* GetInstantiationTypeOfDataDeclaration(
     const Symbol& data_declaration) {
-  return GetSubtreeAsNode(
-      GetInstantiationBaseFromDataDeclaration(data_declaration),
-      NodeEnum::kInstantiationBase, 0);
+  const auto* base = GetInstantiationBaseFromDataDeclaration(data_declaration);
+  if (!base) return nullptr;
+  return GetSubtreeAsNode(*base, NodeEnum::kInstantiationBase, 0);
 }
 
-const SyntaxTreeNode& GetInstanceListFromDataDeclaration(
+const SyntaxTreeNode* GetInstanceListFromDataDeclaration(
     const Symbol& data_declaration) {
-  return GetSubtreeAsNode(
-      GetInstantiationBaseFromDataDeclaration(data_declaration),
-      NodeEnum::kInstantiationBase, 1);
+  const auto* base = GetInstantiationBaseFromDataDeclaration(data_declaration);
+  if (!base) return nullptr;
+  return GetSubtreeAsNode(*base, NodeEnum::kInstantiationBase, 1);
 }
 
 const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instantiation_type =
+  const SyntaxTreeNode* instantiation_type =
       GetInstantiationTypeOfDataDeclaration(data_declaration);
-  return GetParamListFromInstantiationType(instantiation_type);
+  if (!instantiation_type) return nullptr;
+  return GetParamListFromInstantiationType(*instantiation_type);
 }
 
 const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
@@ -133,7 +134,7 @@ const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
   return ABSL_DIE_IF_NULL(instance_name)->get();
 }
 
-const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
+const verible::SyntaxTreeNode* GetParenGroupFromModuleInstantiation(
     const verible::Symbol& gate_instance) {
   return GetSubtreeAsNode(gate_instance, NodeEnum::kGateInstance, 2,
                           NodeEnum::kParenGroup);
@@ -174,23 +175,24 @@ const verible::SyntaxTreeNode* GetTrailingExpressionFromRegisterVariable(
 
 const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const verible::SyntaxTreeNode& instantiation_type =
+  const verible::SyntaxTreeNode* instantiation_type =
       GetInstantiationTypeOfDataDeclaration(data_declaration);
+  if (!instantiation_type) return nullptr;
   const verible::Symbol* data_type = verible::GetSubtreeAsSymbol(
-      instantiation_type, NodeEnum::kInstantiationType, 0);
+      *instantiation_type, NodeEnum::kInstantiationType, 0);
   if (data_type == nullptr) return nullptr;
 
   return GetPackedDimensionFromDataType(*data_type);
 }
 
-const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
+const verible::SyntaxTreeNode* GetUnpackedDimensionFromRegisterVariable(
     const verible::Symbol& register_variable) {
   return verible::GetSubtreeAsNode(register_variable,
                                    NodeEnum::kRegisterVariable, 1,
                                    NodeEnum::kUnpackedDimensions);
 }
 
-const verible::SyntaxTreeNode&
+const verible::SyntaxTreeNode*
 GetUnpackedDimensionFromVariableDeclarationAssign(
     const verible::Symbol& variable_declaration_assign) {
   return verible::GetSubtreeAsNode(variable_declaration_assign,
@@ -200,26 +202,27 @@ GetUnpackedDimensionFromVariableDeclarationAssign(
 
 const verible::Symbol* GetTypeIdentifierFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instantiation_type =
+  const SyntaxTreeNode* instantiation_type =
       GetInstantiationTypeOfDataDeclaration(data_declaration);
-
+  if (!instantiation_type) return nullptr;
   const verible::Symbol* identifier =
-      GetTypeIdentifierFromInstantiationType(instantiation_type);
+      GetTypeIdentifierFromInstantiationType(*instantiation_type);
   if (identifier != nullptr) {
     return identifier;
   }
 
   const verible::Symbol* base_type =
-      GetBaseTypeFromInstantiationType(instantiation_type);
+      GetBaseTypeFromInstantiationType(*instantiation_type);
   if (base_type == nullptr) return nullptr;
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 
 const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const SyntaxTreeNode& instantiation_type =
+  const SyntaxTreeNode* instantiation_type =
       GetInstantiationTypeOfDataDeclaration(data_declaration);
-  return GetStructOrUnionOrEnumTypeFromInstantiationType(instantiation_type);
+  if (!instantiation_type) return nullptr;
+  return GetStructOrUnionOrEnumTypeFromInstantiationType(*instantiation_type);
 }
 
 }  // namespace verilog

@@ -169,7 +169,7 @@ TEST(FindAllFunctionPrototypesTest, Various) {
           std::vector<TreeSearchMatch> headers;
           for (const auto& proto : protos) {
             headers.push_back(TreeSearchMatch{
-                &GetFunctionPrototypeHeader(*proto.match), /* no context */});
+                GetFunctionPrototypeHeader(*proto.match), /* no context */});
           }
           return headers;
         });
@@ -210,7 +210,7 @@ TEST(FunctionPrototypesReturnTypesTest, Various) {
           std::vector<TreeSearchMatch> returns;
           for (const auto& proto : protos) {
             const auto* return_type = GetFunctionHeaderReturnType(
-                GetFunctionPrototypeHeader(*proto.match));
+                *GetFunctionPrototypeHeader(*proto.match));
             if (return_type == nullptr) continue;
             if (verible::StringSpanOfSymbol(*return_type).empty()) continue;
             returns.push_back(TreeSearchMatch{return_type, /* no context */});
@@ -258,7 +258,7 @@ TEST(FunctionPrototypesIdsTest, Various) {
           std::vector<TreeSearchMatch> ids;
           for (const auto& proto : protos) {
             const auto* id =
-                GetFunctionHeaderId(GetFunctionPrototypeHeader(*proto.match));
+                GetFunctionHeaderId(*GetFunctionPrototypeHeader(*proto.match));
             if (id == nullptr) continue;
             if (verible::StringSpanOfSymbol(*id).empty()) continue;
             ids.push_back(TreeSearchMatch{id, /* no context */});
@@ -353,7 +353,7 @@ TEST(GetFunctionHeaderTest, DeclarationHeader) {
           std::vector<TreeSearchMatch> headers;
           for (const auto& decl : function_declarations) {
             const auto& function_node = SymbolCastToNode(*decl.match);
-            headers.push_back(TreeSearchMatch{&GetFunctionHeader(function_node),
+            headers.push_back(TreeSearchMatch{GetFunctionHeader(function_node),
                                               /* no context */});
           }
           return headers;
@@ -624,7 +624,7 @@ TEST(GetFunctionHeaderTest, GetFunctionClassCallName) {
           for (const auto& Call : calls) {
             const auto& name =
                 GetFunctionCallNameFromCallExtension(*Call.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });
@@ -672,7 +672,7 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
           for (const auto& decl : decls) {
             const auto& body = GetFunctionBlockStatementList(*decl.match);
             functions_body.push_back(
-                TreeSearchMatch{&body, {/* ignored context */}});
+                TreeSearchMatch{body, {/* ignored context */}});
           }
           return functions_body;
         });
@@ -739,7 +739,7 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
           for (const auto& decl : instances) {
             const auto& paren_group = GetParenGroupFromCall(*decl.match);
             paren_groups.emplace_back(
-                TreeSearchMatch{&paren_group, {/* ignored context */}});
+                TreeSearchMatch{paren_group, {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -772,7 +772,7 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
             const auto& paren_group =
                 GetParenGroupFromCallExtension(*decl.match);
             paren_groups.emplace_back(
-                TreeSearchMatch{&paren_group, {/* ignored context */}});
+                TreeSearchMatch{paren_group, {/* ignored context */}});
           }
           return paren_groups;
         });

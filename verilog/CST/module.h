@@ -74,7 +74,7 @@ std::vector<verible::TreeSearchMatch> FindAllProgramDeclarations(
 const verible::SyntaxTreeNode& GetModuleHeader(const verible::Symbol&);
 
 // Returns the full header of an interface (params, ports, etc...).
-const verible::SyntaxTreeNode& GetInterfaceHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetInterfaceHeader(const verible::Symbol&);
 
 // Extract the subnode of a module declaration that is the module name or
 // nullptr if not found.

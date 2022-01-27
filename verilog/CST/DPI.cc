@@ -25,7 +25,7 @@ std::vector<verible::TreeSearchMatch> FindAllDPIImports(const Symbol& root) {
   return SearchSyntaxTree(root, NodekDPIImportItem());
 }
 
-const SyntaxTreeNode& GetDPIImportPrototype(const Symbol& symbol) {
+const SyntaxTreeNode* GetDPIImportPrototype(const Symbol& symbol) {
   return GetSubtreeAsNode(symbol, NodeEnum::kDPIImportItem, 5);
 }
 

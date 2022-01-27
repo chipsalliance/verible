@@ -58,12 +58,12 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
   return verible::SearchSyntaxTree(root, NodekMethodCallExtension());
 }
 
-const verible::SyntaxTreeNode& GetFunctionHeader(const Symbol& function_decl) {
+const verible::SyntaxTreeNode* GetFunctionHeader(const Symbol& function_decl) {
   return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionDeclaration, 0,
                           NodeEnum::kFunctionHeader);
 }
 
-const verible::SyntaxTreeNode& GetFunctionPrototypeHeader(
+const verible::SyntaxTreeNode* GetFunctionPrototypeHeader(
     const Symbol& function_decl) {
   return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionPrototype, 0,
                           NodeEnum::kFunctionHeader);
@@ -86,23 +86,23 @@ const Symbol* GetFunctionHeaderFormalPortsGroup(const Symbol& function_header) {
 }
 
 const Symbol* GetFunctionLifetime(const Symbol& function_decl) {
-  const auto& header = GetFunctionHeader(function_decl);
-  return GetFunctionHeaderLifetime(header);
+  const auto* header = GetFunctionHeader(function_decl);
+  return header ? GetFunctionHeaderLifetime(*header) : nullptr;
 }
 
 const Symbol* GetFunctionReturnType(const Symbol& function_decl) {
-  const auto& header = GetFunctionHeader(function_decl);
-  return GetFunctionHeaderReturnType(header);
+  const auto* header = GetFunctionHeader(function_decl);
+  return header ? GetFunctionHeaderReturnType(*header) : nullptr;
 }
 
 const Symbol* GetFunctionId(const Symbol& function_decl) {
-  const auto& header = GetFunctionHeader(function_decl);
-  return GetFunctionHeaderId(header);
+  const auto* header = GetFunctionHeader(function_decl);
+  return header ? GetFunctionHeaderId(*header) : nullptr;
 }
 
 const Symbol* GetFunctionFormalPortsGroup(const Symbol& function_decl) {
-  const auto& header = GetFunctionHeader(function_decl);
-  return GetFunctionHeaderFormalPortsGroup(header);
+  const auto* header = GetFunctionHeader(function_decl);
+  return header ? GetFunctionHeaderFormalPortsGroup(*header) : nullptr;
 }
 
 const verible::SyntaxTreeLeaf* GetFunctionName(
@@ -111,7 +111,7 @@ const verible::SyntaxTreeLeaf* GetFunctionName(
   return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
 }
 
-const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
+const verible::SyntaxTreeNode* GetLocalRootFromFunctionCall(
     const verible::Symbol& function_call) {
   return GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 0,
                           NodeEnum::kLocalRoot);
@@ -119,47 +119,47 @@ const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
 
 const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
     const verible::Symbol& function_call) {
-  const verible::SyntaxTreeNode& local_root = GetSubtreeAsNode(
+  const verible::SyntaxTreeNode* local_root = GetSubtreeAsNode(
       function_call, NodeEnum::kFunctionCall, 0, NodeEnum::kLocalRoot);
-  const verible::Symbol& identifier = GetIdentifiersFromLocalRoot(local_root);
-  if (identifier.Kind() != verible::SymbolKind::kNode) {
-    return nullptr;
-  }
+  if (!local_root) return nullptr;
+  const verible::Symbol& identifier = GetIdentifiersFromLocalRoot(*local_root);
+  if (identifier.Kind() != verible::SymbolKind::kNode) return nullptr;
   return &verible::SymbolCastToNode(identifier);
 }
 
 const verible::SyntaxTreeLeaf* GetFunctionCallName(
     const verible::Symbol& function_call) {
-  const auto& local_root = GetLocalRootFromFunctionCall(function_call);
+  const auto* local_root = GetLocalRootFromFunctionCall(function_call);
+  if (!local_root) return nullptr;
+  const auto* unqualified_id = GetSubtreeAsNode(
+      *local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);
+  if (!unqualified_id) return nullptr;
 
-  const auto& unqualified_id = GetSubtreeAsNode(
-      local_root, NodeEnum::kLocalRoot, 0, NodeEnum::kUnqualifiedId);
-
-  return ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
+  return GetIdentifier(*unqualified_id);
 }
 
-const verible::SyntaxTreeLeaf& GetFunctionCallNameFromCallExtension(
+const verible::SyntaxTreeLeaf* GetFunctionCallNameFromCallExtension(
     const verible::Symbol& function_call) {
-  const auto& unqualified_id =
+  const auto* unqualified_id =
       GetSubtreeAsNode(function_call, NodeEnum::kMethodCallExtension, 1,
                        NodeEnum::kUnqualifiedId);
-
-  return *ABSL_DIE_IF_NULL(GetIdentifier(unqualified_id));
+  if (!unqualified_id) return nullptr;
+  return GetIdentifier(*unqualified_id);
 }
 
-const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
+const verible::SyntaxTreeNode* GetFunctionBlockStatementList(
     const verible::Symbol& function_decl) {
   return verible::GetSubtreeAsNode(function_decl,
                                    NodeEnum::kFunctionDeclaration, 2);
 }
 
-const verible::SyntaxTreeNode& GetParenGroupFromCall(
+const verible::SyntaxTreeNode* GetParenGroupFromCall(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(function_call, NodeEnum::kFunctionCall, 1,
                                    NodeEnum::kParenGroup);
 }
 
-const verible::SyntaxTreeNode& GetParenGroupFromCallExtension(
+const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(
       function_call, NodeEnum::kMethodCallExtension, 2, NodeEnum::kParenGroup);

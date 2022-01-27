@@ -295,7 +295,7 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
           std::vector<TreeSearchMatch> types;
           for (const auto& decl : decls) {
             const auto* type = GetIdentifierFromPortReference(
-                GetPortReferenceFromPort(*decl.match));
+                *GetPortReferenceFromPort(*decl.match));
             types.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return types;
@@ -388,10 +388,10 @@ TEST(FunctionPort, GetUnpackedDimensions) {
 
           std::vector<TreeSearchMatch> dimensions;
           for (const auto& port : ports) {
-            const auto& dimension =
+            const auto* dimension =
                 GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
             dimensions.emplace_back(
-                TreeSearchMatch{&dimension, {/* ignored context */}});
+                TreeSearchMatch{dimension, {/* ignored context */}});
           }
           return dimensions;
         });

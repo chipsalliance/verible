@@ -78,7 +78,7 @@ TEST(GetClassNameTest, ClassName) {
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
             const auto& type = GetClassName(*decl.match);
-            names.push_back(TreeSearchMatch{&type, {/* ignored context */}});
+            names.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return names;
         });
@@ -262,8 +262,7 @@ TEST(GetClassConstructorTest, GetConstructorBody) {
           for (const auto& constructor : constructors) {
             const auto& body =
                 GetClassConstructorStatementList(*constructor.match);
-            bodies.emplace_back(
-                TreeSearchMatch{&body, {/* ignored context */}});
+            bodies.emplace_back(TreeSearchMatch{body, {/* ignored context */}});
           }
           return bodies;
         });

@@ -159,7 +159,7 @@ const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
     const auto& type_symbol = verible::GetSubtreeAsNode(
         *assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);
-    return &type_symbol;
+    return type_symbol;
   }
 
   return nullptr;

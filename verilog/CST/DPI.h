@@ -75,7 +75,7 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
 std::vector<verible::TreeSearchMatch> FindAllDPIImports(const verible::Symbol&);
 
 // Returns the function/task prototype.
-const verible::SyntaxTreeNode& GetDPIImportPrototype(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetDPIImportPrototype(const verible::Symbol&);
 
 }  // namespace verilog
 

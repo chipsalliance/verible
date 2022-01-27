@@ -1175,7 +1175,7 @@ TEST(FindAllForLoopsInitializations, FindForInitializationNames) {
             const auto& variable_name =
                 GetVariableNameFromForInitialization(*instance.match);
             names.emplace_back(
-                TreeSearchMatch{&variable_name, {/* ignored context */}});
+                TreeSearchMatch{variable_name, {/* ignored context */}});
           }
           return names;
         });
@@ -1252,7 +1252,7 @@ TEST(FindAllForLoopsInitializations, FindForInitializationExpressions) {
             const auto& expression =
                 GetExpressionFromForInitialization(*instance.match);
             expressions.emplace_back(
-                TreeSearchMatch{&expression, {/* ignored context */}});
+                TreeSearchMatch{expression, {/* ignored context */}});
           }
           return expressions;
         });
@@ -1309,7 +1309,7 @@ TEST(GetGenerateBlockBeginTest, Various) {
           for (const auto& block : blocks) {
             const auto& begin = GetGenerateBlockBegin(*block.match);
             begins.emplace_back(
-                TreeSearchMatch{&begin, {/* ignored context */}});
+                TreeSearchMatch{begin, {/* ignored context */}});
           }
           return begins;
         });
@@ -1366,7 +1366,7 @@ TEST(GetGenerateBlockEndTest, Various) {
           std::vector<TreeSearchMatch> ends;
           for (const auto& block : blocks) {
             const auto& end = GetGenerateBlockEnd(*block.match);
-            ends.emplace_back(TreeSearchMatch{&end, {/* ignored context */}});
+            ends.emplace_back(TreeSearchMatch{end, {/* ignored context */}});
           }
           return ends;
         });

@@ -134,9 +134,9 @@ TEST(MacroCallArgsTest, Emptiness) {
     const auto& root = analyzer.Data().SyntaxTree();
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     ASSERT_FALSE(macro_calls.empty());
-    const auto& args = GetMacroCallArgs(*macro_calls.front().match);
-    EXPECT_EQ(MacroCallArgsIsEmpty(args), test.expect_empty) << "code:\n"
-                                                             << test.code;
+    const auto* args = GetMacroCallArgs(*macro_calls.front().match);
+    EXPECT_EQ(MacroCallArgsIsEmpty(*args), test.expect_empty) << "code:\n"
+                                                              << test.code;
     // TODO(b/151371397): check exact substrings
   }
 }

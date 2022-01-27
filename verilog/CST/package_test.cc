@@ -315,8 +315,7 @@ TEST(GetPackageNameTokenTest, RootIsNotAPackage) {
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
   // Root node is a description list, not a package.
-  EXPECT_DEATH(GetPackageNameToken(*ABSL_DIE_IF_NULL(root)),
-               "kDescriptionList vs. kPackageDeclaration");
+  EXPECT_EQ(GetPackageNameToken(*ABSL_DIE_IF_NULL(root)), nullptr);
 }
 
 TEST(GetPackageNameTokenTest, ValidPackage) {
@@ -328,8 +327,8 @@ TEST(GetPackageNameTokenTest, ValidPackage) {
   const auto& package_node =
       down_cast<const SyntaxTreeNode&>(*package_declarations.front().match);
   // Root node is a description list, not a package.
-  const auto& token = GetPackageNameToken(package_node);
-  EXPECT_EQ(token.text(), "foo");
+  const auto* token = GetPackageNameToken(package_node);
+  EXPECT_EQ(token->text(), "foo");
 }
 
 TEST(GetPackageNameTest, GetPackageEndLabelName) {

@@ -36,10 +36,10 @@ std::vector<verible::TreeSearchMatch> FindAllHierarchyExtensions(
     const verible::Symbol&);
 
 // Returns the full header of a class.
-const verible::SyntaxTreeNode& GetClassHeader(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetClassHeader(const verible::Symbol&);
 
 // Returns the leaf node for class name.
-const verible::SyntaxTreeLeaf& GetClassName(const verible::Symbol&);
+const verible::SyntaxTreeLeaf* GetClassName(const verible::Symbol&);
 
 // Returns the node that spans the extended class name(if exists).
 // e.g from "class my_class extends other_class;" return "other_class".
@@ -52,7 +52,7 @@ const verible::SyntaxTreeNode* GetExtendedClass(const verible::Symbol&);
 const verible::SyntaxTreeLeaf* GetClassEndLabel(const verible::Symbol&);
 
 // Returns the node spanning class's Item list.
-const verible::SyntaxTreeNode& GetClassItemList(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetClassItemList(const verible::Symbol&);
 
 // Returns the identifier from node tagged with kHierarchyExtension.
 // e.g from "instance1.x" => return "x".
@@ -67,7 +67,7 @@ const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(
 
 // Returns the node spanning the class constructor body (tagged with
 // kStatementList) from node tagged with kClassConstructor.
-const verible::SyntaxTreeNode& GetClassConstructorStatementList(
+const verible::SyntaxTreeNode* GetClassConstructorStatementList(
     const verible::Symbol& class_constructor);
 
 // Returns the leaf spanning the "new" keyword from class constructor.

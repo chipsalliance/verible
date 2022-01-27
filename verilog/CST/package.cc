@@ -38,9 +38,10 @@ std::vector<verible::TreeSearchMatch> FindAllPackageImportItems(
   return SearchSyntaxTree(root, NodekPackageImportItem());
 }
 
-const verible::TokenInfo& GetPackageNameToken(const verible::Symbol& s) {
-  // TODO(hzeller): bubble up nullptr.
-  return ABSL_DIE_IF_NULL(GetPackageNameLeaf(s))->get();
+const verible::TokenInfo* GetPackageNameToken(const verible::Symbol& s) {
+  const auto* package_name = GetPackageNameLeaf(s);
+  if (!package_name) return nullptr;
+  return &GetPackageNameLeaf(s)->get();
 }
 
 const verible::SyntaxTreeLeaf* GetPackageNameLeaf(const verible::Symbol& s) {
@@ -64,7 +65,7 @@ const verible::Symbol* GetPackageItemList(
                                      NodeEnum::kPackageDeclaration, 4);
 }
 
-const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
+const verible::SyntaxTreeNode* GetScopePrefixFromPackageImportItem(
     const verible::Symbol& package_import_item) {
   return verible::GetSubtreeAsNode(package_import_item,
                                    NodeEnum::kPackageImportItem, 0,
@@ -73,9 +74,9 @@ const verible::SyntaxTreeNode& GetScopePrefixFromPackageImportItem(
 
 const verible::SyntaxTreeLeaf* GetImportedPackageName(
     const verible::Symbol& package_import_item) {
-  return verible::GetSubtreeAsLeaf(
-      GetScopePrefixFromPackageImportItem(package_import_item),
-      NodeEnum::kScopePrefix, 0);
+  const auto* prefix = GetScopePrefixFromPackageImportItem(package_import_item);
+  if (!prefix) return nullptr;
+  return verible::GetSubtreeAsLeaf(*prefix, NodeEnum::kScopePrefix, 0);
 }
 
 const verible::SyntaxTreeLeaf* GeImportedItemNameFromPackageImportItem(

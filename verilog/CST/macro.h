@@ -55,10 +55,10 @@ const verible::TokenInfo& GetMacroCallId(const verible::Symbol&);
 const verible::TokenInfo& GetMacroGenericItemId(const verible::Symbol&);
 
 // Returns the node containing the macro call paren group
-const verible::SyntaxTreeNode& GetMacroCallParenGroup(const verible::Symbol& s);
+const verible::SyntaxTreeNode* GetMacroCallParenGroup(const verible::Symbol& s);
 
 // Returns the node containing the macro call arguments (without parentheses).
-const verible::SyntaxTreeNode& GetMacroCallArgs(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetMacroCallArgs(const verible::Symbol&);
 
 // Returns true if there are no macro call args, e.g. `foo().
 bool MacroCallArgsIsEmpty(const verible::SyntaxTreeNode&);
