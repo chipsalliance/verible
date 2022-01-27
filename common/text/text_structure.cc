@@ -411,7 +411,7 @@ static void CopyTokensAndView(TokenSequence* destination,
                               const TokenViewRange& view_source) {
   // Translate token_view's iterators into array indices, adjusting for the
   // number of pre-existing tokens.
-  for (const auto token_iter : view_source) {
+  for (const auto& token_iter : view_source) {
     view_indices->push_back(destination->size() +
                             std::distance(token_source.begin(), token_iter));
   }
