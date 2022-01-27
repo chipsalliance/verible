@@ -67,31 +67,44 @@ const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol&);
 // multiple children.
 const Symbol* DescendThroughSingletons(const Symbol& symbol);
 
-// Succeeds if node's enum matches 'node_enum'.
+// Succeeds and returns node if node's enum matches 'node_enum'.
 // Returns same node reference, so that anywhere that expects a SyntaxTreeNode
-// can be passed CheckNodeEnum(node, node_enum).
+// can be passed MatchNodeEnumOrNull(node, node_enum).
 template <typename E>
-const SyntaxTreeNode& CheckNodeEnum(const SyntaxTreeNode& node,
-                                    E expected_node_enum) {
+const SyntaxTreeNode* MatchNodeEnumOrNull(const SyntaxTreeNode& node,
+                                          E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), expected_node_enum);
-  return node;
+  const bool enum_matches = (E(node.Tag().tag) == expected_node_enum);
+  if (!enum_matches) {
+    LOG(ERROR) << "Node: Programming error: expected " << expected_node_enum
+               << " but got " << E(node.Tag().tag);
+  }
+  return enum_matches ? &node : nullptr;
 }
+
 // Mutable variant.
 template <typename E>
-SyntaxTreeNode& CheckNodeEnum(SyntaxTreeNode& node,  // NOLINT
-                              E expected_node_enum) {
+SyntaxTreeNode* MatchNodeEnumOrNull(SyntaxTreeNode& node,  // NOLINT
+                                    E expected_node_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(node.Tag().tag), expected_node_enum);
-  return node;
+  const bool enum_matches = (E(node.Tag().tag) == expected_node_enum);
+  if (!enum_matches) {
+    LOG(ERROR) << "Node: Programming error: expected " << expected_node_enum
+               << " but got " << E(node.Tag().tag);
+  }
+  return enum_matches ? &node : nullptr;
 }
 
 template <typename E>
-const SyntaxTreeLeaf& CheckLeafEnum(const SyntaxTreeLeaf& leaf,
-                                    E expected_token_enum) {
+const SyntaxTreeLeaf* MatchLeafEnumOrNull(const SyntaxTreeLeaf& leaf,
+                                          E expected_token_enum) {
   // Uses operator<<(std::ostream&, E) for diagnostics.
-  CHECK_EQ(E(leaf.get().token_enum()), expected_token_enum);
-  return leaf;
+  const bool enum_matches = E(leaf.get().token_enum()) == expected_token_enum;
+  if (!enum_matches) {
+    LOG(ERROR) << "Leaf: Programming error: expected " << expected_token_enum
+               << " but got " << E(leaf.get().token_enum());
+  }
+  return enum_matches ? &leaf : nullptr;
 }
 
 namespace internal {
@@ -112,14 +125,18 @@ template <typename E, typename S>
 typename match_const<SyntaxTreeNode, S>::type& CheckSymbolAsNode(S& symbol,
                                                                  E node_enum) {
   internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
-  return CheckNodeEnum(SymbolCastToNode(symbol), node_enum);
+  // TODO(hzeller) bubble up nullptr.
+  return *ABSL_DIE_IF_NULL(
+      MatchNodeEnumOrNull(SymbolCastToNode(symbol), node_enum));
 }
 
 // Succeeds if symbol is a leaf enumerated 'leaf_enum'.
 // Returns a casted reference on success.
 template <typename E>
 const SyntaxTreeLeaf& CheckSymbolAsLeaf(const Symbol& symbol, E token_enum) {
-  return CheckLeafEnum(SymbolCastToLeaf(symbol), token_enum);
+  // TODO(hzeller) bubble up nullptr.
+  return *ABSL_DIE_IF_NULL(
+      MatchLeafEnumOrNull(SymbolCastToLeaf(symbol), token_enum));
 }
 
 // Succeeds if symbol is a node, or nullptr (returning nullptr).
@@ -171,8 +188,9 @@ typename match_const<Symbol, S>::type* GetSubtreeAsSymbol(
   internal::StaticAssertMustBeCSTSymbolOrNode(symbol);
   if (symbol.Kind() != SymbolKind::kNode) return nullptr;
   auto& node = SymbolCastToNode(symbol);
+  if (!MatchNodeEnumOrNull(node, parent_must_be_node_enum)) return nullptr;
   if (node.children().size() <= child_position) return nullptr;
-  return CheckNodeEnum(node, parent_must_be_node_enum)[child_position].get();
+  return node[child_position].get();
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a node.
@@ -200,7 +218,7 @@ typename match_const<SyntaxTreeNode, S>::type* GetSubtreeAsNode(
   auto* tree =
       GetSubtreeAsNode(symbol, parent_must_be_node_enum, child_position);
   if (!tree) return nullptr;
-  return &CheckNodeEnum(*tree, child_must_be_node_enum);
+  return MatchNodeEnumOrNull(*tree, child_must_be_node_enum);
 }
 
 // Same as GetSubtreeAsSymbol, but casts the result to a leaf.

@@ -1195,7 +1195,7 @@ TEST(GetSubtreeAsSymbolTest, OutOfBounds) {
 
 TEST(GetSubtreeAsSymbolTest, WrongParentIntegerTag) {
   auto root = TNode(1, TNode(4));
-  EXPECT_DEATH(GetSubtreeAsSymbol(*root, 2, 0), "");
+  EXPECT_EQ(GetSubtreeAsSymbol(*root, 2, 0), nullptr);
 }
 
 enum class FakeEnum {
@@ -1219,34 +1219,37 @@ std::ostream& operator<<(std::ostream& stream, FakeEnum e) {
   return stream;
 }
 
-TEST(CheckNodeEnumTest, MatchingEnum) {
+TEST(MatchNodeEnumOrNullTest, MatchingEnum) {
   const auto root = TNode(FakeEnum::kTwo);
-  CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kTwo);
+  EXPECT_NE(MatchNodeEnumOrNull(SymbolCastToNode(*root), FakeEnum::kTwo),
+            nullptr);
 }
 
-TEST(CheckNodeEnumTest, NonMatchingEnum) {
+TEST(MatchNodeEnumOrNullTest, NonMatchingEnum) {
   const auto root = TNode(FakeEnum::kTwo);
-  EXPECT_DEATH(CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kZero), "");
+  EXPECT_EQ(MatchNodeEnumOrNull(SymbolCastToNode(*root), FakeEnum::kZero),
+            nullptr);
 }
 
-TEST(CheckNodeEnumTest, MatchingEnumMutable) {
+TEST(MatchNodeEnumOrNullTest, MatchingEnumMutable) {
   auto root = TNode(FakeEnum::kTwo);
-  CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kTwo);
+  MatchNodeEnumOrNull(SymbolCastToNode(*root), FakeEnum::kTwo);
 }
 
-TEST(CheckNodeEnumTest, NonMatchingEnumMutable) {
+TEST(MatchNodeEnumOrNullTest, NonMatchingEnumMutable) {
   auto root = TNode(FakeEnum::kTwo);
-  EXPECT_DEATH(CheckNodeEnum(SymbolCastToNode(*root), FakeEnum::kZero), "");
+  EXPECT_EQ(MatchNodeEnumOrNull(SymbolCastToNode(*root), FakeEnum::kZero),
+            nullptr);
 }
 
-TEST(CheckLeafEnumTest, MatchingEnum) {
+TEST(MatchLeafEnumOrNullTest, MatchingEnum) {
   const auto root = Leaf(6, "six");
-  CheckLeafEnum(SymbolCastToLeaf(*root), 6);
+  MatchLeafEnumOrNull(SymbolCastToLeaf(*root), 6);
 }
 
-TEST(CheckLeafEnumTest, NonMatchingEnum) {
+TEST(MatchLeafEnumOrNullTest, NonMatchingEnum) {
   const auto root = Leaf(6, "six");
-  EXPECT_DEATH(CheckLeafEnum(SymbolCastToLeaf(*root), 5), "");
+  EXPECT_EQ(MatchLeafEnumOrNull(SymbolCastToLeaf(*root), 5), nullptr);
 }
 
 TEST(CheckSymbolAsNodeTest, MatchingEnum) {
@@ -1386,7 +1389,7 @@ TEST(CheckOptionalSymbolAsNodeTest, NotNodeNoEnum) {
 
 TEST(GetSubtreeAsSymbolTest, WrongParentEnumTag) {
   auto root = TNode(FakeEnum::kTwo, TNode(FakeEnum::kOne));
-  EXPECT_DEATH(GetSubtreeAsSymbol(*root, FakeEnum::kZero, 0), "");
+  EXPECT_EQ(GetSubtreeAsSymbol(*root, FakeEnum::kZero, 0), nullptr);
 }
 
 TEST(GetSubtreeAsSymbolTest, ValidAccessNode) {
@@ -1430,7 +1433,8 @@ TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMatches) {
 
 TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMismatches) {
   auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
-  EXPECT_DEATH(GetSubtreeAsNode(*root, FakeEnum::kZero, 0, FakeEnum::kTwo), "");
+  EXPECT_EQ(GetSubtreeAsNode(*root, FakeEnum::kZero, 0, FakeEnum::kTwo),
+            nullptr);
 }
 
 TEST(GetSubtreeAsLeafTest, ValidatedFoundLeaf) {
