@@ -39,4 +39,4 @@ export USE_BAZEL_VERSION=$BAZEL_VERSION
 # TODO(b/171989992): revert to using release version after upgrading system
 #   libraries/image (need: GLIBCXX_3.4.26, CXXABI_1.3.11, GLIBC_2.29).
 # KYTHE_VERSION=master
-export KYTHE_VERSION=v0.0.52
+export KYTHE_VERSION=v0.0.57
