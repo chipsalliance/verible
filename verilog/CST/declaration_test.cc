@@ -218,10 +218,10 @@ TEST(FindAllGateInstancesTest, FindArgumentListOfGateInstance) {
 
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
-            const auto& paren_group =
+            const auto* paren_group =
                 GetParenGroupFromModuleInstantiation(*decl.match);
             paren_groups.emplace_back(
-                TreeSearchMatch{&paren_group, {/* ignored context */}});
+                TreeSearchMatch{paren_group, {/* ignored context */}});
           }
           return paren_groups;
         });
@@ -340,9 +340,9 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
 
           std::vector<TreeSearchMatch> types;
           for (const auto& decl : decls) {
-            const auto& type =
+            const auto* type =
                 GetInstantiationTypeOfDataDeclaration(*decl.match);
-            types.emplace_back(TreeSearchMatch{&type, {/* ignored context */}});
+            types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return types;
         });
@@ -492,7 +492,7 @@ TEST(GetInstanceListFromDataDeclarationTest, InstanceLists) {
           for (const auto& decl : decls) {
             const auto& insts = GetInstanceListFromDataDeclaration(*decl.match);
             inst_lists.push_back(
-                TreeSearchMatch{&insts, {/* ignored context */}});
+                TreeSearchMatch{insts, {/* ignored context */}});
           }
 
           return inst_lists;
@@ -551,9 +551,9 @@ TEST(GetVariableDeclarationAssign, VariableName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
-            const auto& name =
+            const auto* name =
                 GetUnqualifiedIdFromVariableDeclarationAssignment(*decl.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });
@@ -791,10 +791,10 @@ TEST(GetVariableDeclarationAssign,
 
           std::vector<TreeSearchMatch> unpacked_dimensions;
           for (const auto& decl : instances) {
-            const auto& unpacked_dimension =
+            const auto* unpacked_dimension =
                 GetUnpackedDimensionFromVariableDeclarationAssign(*decl.match);
             unpacked_dimensions.emplace_back(
-                TreeSearchMatch{&unpacked_dimension, {/* ignored context */}});
+                TreeSearchMatch{unpacked_dimension, {/* ignored context */}});
           }
           return unpacked_dimensions;
         });
@@ -851,10 +851,10 @@ TEST(FindAllRegisterVariablesTest, FindUnpackedDimensionOfRegisterVariable) {
 
           std::vector<TreeSearchMatch> unpacked_dimensions;
           for (const auto& decl : instances) {
-            const auto& unpacked_dimension =
+            const auto* unpacked_dimension =
                 GetUnpackedDimensionFromRegisterVariable(*decl.match);
             unpacked_dimensions.emplace_back(
-                TreeSearchMatch{&unpacked_dimension, {/* ignored context */}});
+                TreeSearchMatch{unpacked_dimension, {/* ignored context */}});
           }
           return unpacked_dimensions;
         });

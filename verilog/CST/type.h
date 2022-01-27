@@ -149,11 +149,11 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
 // Extracts kUnqualifiedId or kQualifiedId node from nodes tagged with
 // kLocalRoot.
 // e.g from "pkg::some_type var1" return "pkg::some_type".
-const verible::Symbol& GetIdentifiersFromLocalRoot(
+const verible::Symbol* GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root);
 
 // Extracts kUnqualifiedId node from nodes tagged with kReferenceCallBase.
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
+const verible::SyntaxTreeNode* GetUnqualifiedIdFromReferenceCallBase(
     const verible::Symbol& reference_call_base);
 
 // Returns the node tagged with kStructType, kEnumType or kUnionType from node

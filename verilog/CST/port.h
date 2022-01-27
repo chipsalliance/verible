@@ -56,7 +56,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
     const verible::Symbol&);
 
 // Extracts the node tagged with kPortReference from a node tagged with kPort.
-const verible::SyntaxTreeNode& GetPortReferenceFromPort(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetPortReferenceFromPort(const verible::Symbol&);
 
 // Find all task/function port declarations.
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
@@ -82,7 +82,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol&);
 
 // Extract the unpacked dimensions from a task/function port item.
-const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
+const verible::SyntaxTreeNode* GetUnpackedDimensionsFromTaskFunctionPortItem(
     const verible::Symbol&);
 
 // Returns the leaf node containing the name of the actual named port.

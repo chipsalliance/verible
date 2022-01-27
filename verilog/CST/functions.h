@@ -105,11 +105,11 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
     const verible::Symbol&);
 
 // Returns the function declaration header (return type, id, ports)
-const verible::SyntaxTreeNode& GetFunctionHeader(
+const verible::SyntaxTreeNode* GetFunctionHeader(
     const verible::Symbol& function_decl);
 
 // Returns the function prototype header (return type, id, ports)
-const verible::SyntaxTreeNode& GetFunctionPrototypeHeader(
+const verible::SyntaxTreeNode* GetFunctionPrototypeHeader(
     const verible::Symbol& function_decl);
 
 // FunctionHeader accessors
@@ -152,7 +152,7 @@ const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
 const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
 
 // Returns local root node from node tagged with kFunctionCall.
-const verible::SyntaxTreeNode& GetLocalRootFromFunctionCall(
+const verible::SyntaxTreeNode* GetLocalRootFromFunctionCall(
     const verible::Symbol&);
 
 // Return the node spanning identifier for the function call node.
@@ -166,20 +166,20 @@ const verible::SyntaxTreeLeaf* GetFunctionCallName(const verible::Symbol&);
 
 // Returns leaf node for function name in function call extension.
 // e.g class_name.my_function(); return leaf node for "my_function".
-const verible::SyntaxTreeLeaf& GetFunctionCallNameFromCallExtension(
+const verible::SyntaxTreeLeaf* GetFunctionCallNameFromCallExtension(
     const verible::Symbol&);
 
 // Returns the function declaration body.
-const verible::SyntaxTreeNode& GetFunctionBlockStatementList(
+const verible::SyntaxTreeNode* GetFunctionBlockStatementList(
     const verible::Symbol&);
 
 // Return the node spanning the paren group of function call.
 // e.g my_function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode& GetParenGroupFromCall(const verible::Symbol&);
+const verible::SyntaxTreeNode* GetParenGroupFromCall(const verible::Symbol&);
 
 // Return the node spanning the paren group of function call extension.
 // e.g my_class.my_function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode& GetParenGroupFromCallExtension(
+const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(
     const verible::Symbol&);
 
 }  // namespace verilog

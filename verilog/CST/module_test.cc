@@ -103,9 +103,9 @@ TEST(GetModuleNameTokenTest, RootIsNotAModule) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   EXPECT_OK(analyzer.Analyze());
   const auto& root = analyzer.Data().SyntaxTree();
-  // CHECK should fail: root node is a description list, not a module.
+  // Root node is a description list, not a module.
   // If this happens, it is a programmer error, not user error.
-  EXPECT_DEATH(GetModuleName(*ABSL_DIE_IF_NULL(root)), "0 vs. 1");
+  EXPECT_EQ(GetModuleName(*ABSL_DIE_IF_NULL(root)), nullptr);
 }
 
 TEST(GetModuleNameTokenTest, ValidModule) {

@@ -93,11 +93,6 @@ std::vector<verible::TreeSearchMatch> FindAllGateInstances(
 std::vector<verible::TreeSearchMatch> FindAllVariableDeclarationAssignment(
     const verible::Symbol&);
 
-// Returns node tagged with unqualified id from node tagged with
-// kReferenceCallBase.
-const verible::SyntaxTreeNode& GetUnqualifiedIdFromReferenceCallBase(
-    const verible::Symbol&);
-
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing qualifiers.  e.g. from "const foo bar, baz;",
 // this returns the subtree spanning "const".  Returns nullptr if there
@@ -110,7 +105,7 @@ const verible::SyntaxTreeNode* GetQualifiersOfDataDeclaration(
 // this returns the subtree spanning "foo #(...)".
 // It is possible for type to be implicit, in which case, the node
 // will be an empty subtree.
-const verible::SyntaxTreeNode& GetInstantiationTypeOfDataDeclaration(
+const verible::SyntaxTreeNode* GetInstantiationTypeOfDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given data declaration returns the node spanning param declaration
@@ -121,28 +116,28 @@ const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
 // For a given data declaration (includes module instantiation), returns the
 // subtree containing instances.  e.g. from "foo bar..., baz...;",
 // this returns the subtree spanning "bar..., baz..."
-const verible::SyntaxTreeNode& GetInstanceListFromDataDeclaration(
+const verible::SyntaxTreeNode* GetInstanceListFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // For a given module gate instance return the node spanning the paren group.
 // e.g "module_type instance(a, b, c)" return the node spanning "(a, b, c)".
-const verible::SyntaxTreeNode& GetParenGroupFromModuleInstantiation(
+const verible::SyntaxTreeNode* GetParenGroupFromModuleInstantiation(
     const verible::Symbol& gate_instance);
 
 // For a given gate instance subtree returns the TokenInfo of the module name.
 // e.g. "bar b1();" returns TokenInfo for "b1".
-const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+const verible::TokenInfo* GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol&);
 
 // For a given register variable subtree returns the TokenInfo of the instance
 // name. e.g. "int b1;" returns TokenInfo for "b1".
-const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+const verible::TokenInfo* GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol&);
 
 // For a given node tagged with kVariableDeclarationAssign return the
 // unqualified id inside that node.
 // e.g from "int x" or "logic x" or "bit x" return the leaf spanning "x".
-const verible::SyntaxTreeLeaf&
+const verible::SyntaxTreeLeaf*
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign);
 
@@ -162,12 +157,12 @@ const verible::SyntaxTreeNode* GetPackedDimensionFromDataDeclaration(
     const verible::Symbol& data_declaration);
 
 // Extracts kUnpackedDimensions node from nodes tagged with kRegisterVariable.
-const verible::SyntaxTreeNode& GetUnpackedDimensionFromRegisterVariable(
+const verible::SyntaxTreeNode* GetUnpackedDimensionFromRegisterVariable(
     const verible::Symbol& register_variable);
 
 // Extracts kUnpackedDimensions node from nodes tagged with
 // kVariableDeclarationAssign.
-const verible::SyntaxTreeNode&
+const verible::SyntaxTreeNode*
 GetUnpackedDimensionFromVariableDeclarationAssign(
     const verible::Symbol& variable_declaration_assign);
 

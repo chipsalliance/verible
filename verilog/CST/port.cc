@@ -56,7 +56,8 @@ const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const Symbol& symbol) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 3);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+  if (!identifier_symbol) return nullptr;
+  return AutoUnwrapIdentifier(*identifier_symbol);
 }
 
 const SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
@@ -72,27 +73,29 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
     const verible::Symbol& port_reference) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(port_reference, NodeEnum::kPortReference, 0);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+  if (!identifier_symbol) return nullptr;
+  return AutoUnwrapIdentifier(*identifier_symbol);
 }
 
-const verible::SyntaxTreeNode& GetPortReferenceFromPort(
+const verible::SyntaxTreeNode* GetPortReferenceFromPort(
     const verible::Symbol& port) {
   return verible::GetSubtreeAsNode(port, NodeEnum::kPort, 0,
                                    NodeEnum::kPortReference);
 }
 
-static const verible::SyntaxTreeNode&
+static const verible::SyntaxTreeNode*
 GetTypeIdDimensionsFromTaskFunctionPortItem(const Symbol& symbol) {
   return verible::GetSubtreeAsNode(
       symbol, NodeEnum::kPortItem, 1,
       NodeEnum::kDataTypeImplicitBasicIdDimensions);
 }
 
-const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
+const verible::SyntaxTreeNode* GetUnpackedDimensionsFromTaskFunctionPortItem(
     const verible::Symbol& port_item) {
   const auto& type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(port_item);
-  return verible::GetSubtreeAsNode(type_id_dimensions,
+  if (!type_id_dimensions) return nullptr;
+  return verible::GetSubtreeAsNode(*type_id_dimensions,
                                    NodeEnum::kDataTypeImplicitBasicIdDimensions,
                                    2, NodeEnum::kUnpackedDimensions);
 }
@@ -100,16 +103,20 @@ const verible::SyntaxTreeNode& GetUnpackedDimensionsFromTaskFunctionPortItem(
 const Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol& symbol) {
   const auto& type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
-  return &verible::GetSubtreeAsNode(
-      type_id_dimensions, NodeEnum::kDataTypeImplicitBasicIdDimensions, 0,
-      NodeEnum::kDataType);
+  if (!type_id_dimensions) return nullptr;
+  return verible::GetSubtreeAsNode(*type_id_dimensions,
+                                   NodeEnum::kDataTypeImplicitBasicIdDimensions,
+                                   0, NodeEnum::kDataType);
 }
 
 const SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
     const verible::Symbol& symbol) {
-  const auto& type_id_dimensions =
+  const auto* type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(type_id_dimensions[1].get()));
+  if (!type_id_dimensions) return nullptr;
+  if (type_id_dimensions->children().size() <= 1) return nullptr;
+  const auto* port_item = (*type_id_dimensions)[1].get();
+  return port_item ? AutoUnwrapIdentifier(*port_item) : nullptr;
 }
 
 const verible::SyntaxTreeLeaf* GetActualNamedPortName(

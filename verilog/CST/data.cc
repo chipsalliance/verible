@@ -63,9 +63,9 @@ std::vector<const TokenInfo*> GetIdentifiersFromDataDeclaration(
 
   for (auto& id : identifier_nodes) {
     const auto* identifier = SymbolCastToNode(*id.match)[0].get();
+    if (!identifier) continue;
 
-    const auto* identifier_leaf =
-        AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier));
+    const auto* identifier_leaf = AutoUnwrapIdentifier(*identifier);
 
     identifiers.push_back(&identifier_leaf->get());
   }

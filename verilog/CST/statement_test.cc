@@ -1172,10 +1172,10 @@ TEST(FindAllForLoopsInitializations, FindForInitializationNames) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& instance : instances) {
-            const auto& variable_name =
+            const auto* variable_name =
                 GetVariableNameFromForInitialization(*instance.match);
             names.emplace_back(
-                TreeSearchMatch{&variable_name, {/* ignored context */}});
+                TreeSearchMatch{variable_name, {/* ignored context */}});
           }
           return names;
         });
@@ -1249,10 +1249,10 @@ TEST(FindAllForLoopsInitializations, FindForInitializationExpressions) {
 
           std::vector<TreeSearchMatch> expressions;
           for (const auto& instance : instances) {
-            const auto& expression =
+            const auto* expression =
                 GetExpressionFromForInitialization(*instance.match);
             expressions.emplace_back(
-                TreeSearchMatch{&expression, {/* ignored context */}});
+                TreeSearchMatch{expression, {/* ignored context */}});
           }
           return expressions;
         });
@@ -1307,9 +1307,9 @@ TEST(GetGenerateBlockBeginTest, Various) {
 
           std::vector<TreeSearchMatch> begins;
           for (const auto& block : blocks) {
-            const auto& begin = GetGenerateBlockBegin(*block.match);
+            const auto* begin = GetGenerateBlockBegin(*block.match);
             begins.emplace_back(
-                TreeSearchMatch{&begin, {/* ignored context */}});
+                TreeSearchMatch{begin, {/* ignored context */}});
           }
           return begins;
         });
@@ -1365,8 +1365,8 @@ TEST(GetGenerateBlockEndTest, Various) {
 
           std::vector<TreeSearchMatch> ends;
           for (const auto& block : blocks) {
-            const auto& end = GetGenerateBlockEnd(*block.match);
-            ends.emplace_back(TreeSearchMatch{&end, {/* ignored context */}});
+            const auto* end = GetGenerateBlockEnd(*block.match);
+            ends.emplace_back(TreeSearchMatch{end, {/* ignored context */}});
           }
           return ends;
         });

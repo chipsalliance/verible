@@ -24,6 +24,7 @@
 namespace verilog {
 
 using verible::Symbol;
+using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 
@@ -51,29 +52,33 @@ std::vector<verible::TreeSearchMatch> FindAllMacroDefinitionsArgs(
   return SearchSyntaxTree(macro_definition, NodekMacroFormalArg());
 }
 
-const TokenInfo& GetMacroCallId(const Symbol& s) {
-  // TODO(hzeller): bubble up nullptr.
-  return ABSL_DIE_IF_NULL(GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0))->get();
+const TokenInfo* GetMacroCallId(const Symbol& s) {
+  const SyntaxTreeLeaf* call = GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0);
+  return call ? &call->get() : nullptr;
 }
 
-const TokenInfo& GetMacroGenericItemId(const Symbol& s) {
-  // TODO(hzeller): bubble up nullptr.
-  return ABSL_DIE_IF_NULL(GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0))
-      ->get();
+const TokenInfo* GetMacroGenericItemId(const Symbol& s) {
+  const SyntaxTreeLeaf* generic =
+      GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0);
+  return generic ? &generic->get() : nullptr;
 }
 
-const SyntaxTreeNode& GetMacroCallParenGroup(const Symbol& s) {
+const SyntaxTreeNode* GetMacroCallParenGroup(const Symbol& s) {
   return GetSubtreeAsNode(s, NodeEnum::kMacroCall, 1, NodeEnum::kParenGroup);
 }
 
-const SyntaxTreeNode& GetMacroCallArgs(const Symbol& s) {
+const SyntaxTreeNode* GetMacroCallArgs(const Symbol& s) {
   // See structure of (CST) MakeParenGroup().
-  return GetSubtreeAsNode(GetMacroCallParenGroup(s), NodeEnum::kParenGroup, 1,
+  const SyntaxTreeNode* parent = GetMacroCallParenGroup(s);
+  if (!parent) return nullptr;
+  return GetSubtreeAsNode(*parent, NodeEnum::kParenGroup, 1,
                           NodeEnum::kMacroArgList);
 }
 
 bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
-  const auto& sub = CheckNodeEnum(args, NodeEnum::kMacroArgList).children();
+  const auto& sub =
+      ABSL_DIE_IF_NULL(MatchNodeEnumOrNull(args, NodeEnum::kMacroArgList))
+          ->children();
   // Empty macro args are always constructed with one nullptr child in
   // the semantic actions in verilog.y.
   if (sub.size() != 1) return false;
@@ -93,15 +98,15 @@ const verible::SyntaxTreeLeaf* GetMacroArgName(
 
 const verible::SyntaxTreeLeaf* GetFileFromPreprocessorInclude(
     const verible::Symbol& preprocessor_include) {
-  const verible::Symbol& included_filename =
-      *ABSL_DIE_IF_NULL(verible::GetSubtreeAsSymbol(
-          preprocessor_include, NodeEnum::kPreprocessorInclude, 1));
+  const verible::Symbol* included_filename = verible::GetSubtreeAsSymbol(
+      preprocessor_include, NodeEnum::kPreprocessorInclude, 1);
+  if (!included_filename) return nullptr;
   // Terminate if this isn't a string literal.
-  if (included_filename.Tag().tag != verilog_tokentype::TK_StringLiteral) {
+  if (included_filename->Tag().tag != verilog_tokentype::TK_StringLiteral) {
     return nullptr;
   }
 
-  return &verible::SymbolCastToLeaf(included_filename);
+  return &verible::SymbolCastToLeaf(*included_filename);
 }
 
 }  // namespace verilog

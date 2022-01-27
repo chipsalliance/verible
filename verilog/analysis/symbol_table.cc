@@ -920,8 +920,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   absl::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode& body) {
     if (body.MatchesTag(NodeEnum::kGenerateBlock)) {
+      const SyntaxTreeNode* gen_block = GetGenerateBlockBegin(body);
       const TokenInfo* label =
-          GetBeginLabelTokenInfo(GetGenerateBlockBegin(body));
+          gen_block ? GetBeginLabelTokenInfo(*gen_block) : nullptr;
       if (label != nullptr) {
         // TODO: Check for a matching end-label here, and if its name matches
         // the begin label, then immediately create a resolved reference because
@@ -934,36 +935,41 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareGenerateIf(const SyntaxTreeNode& generate_if) {
-    const SyntaxTreeNode& body(GetIfClauseGenerateBody(generate_if));
-
-    DeclareScopedElementAndDescend(generate_if,
-                                   GetScopeNameFromGenerateBody(body),
-                                   SymbolMetaType::kGenerate);
+    const SyntaxTreeNode* body(GetIfClauseGenerateBody(generate_if));
+    if (body) {
+      DeclareScopedElementAndDescend(generate_if,
+                                     GetScopeNameFromGenerateBody(*body),
+                                     SymbolMetaType::kGenerate);
+    }
   }
 
   void DeclareGenerateElse(const SyntaxTreeNode& generate_else) {
-    const SyntaxTreeNode& body(GetElseClauseGenerateBody(generate_else));
+    const SyntaxTreeNode* body(GetElseClauseGenerateBody(generate_else));
+    if (!body) return;
 
-    if (body.MatchesTag(NodeEnum::kConditionalGenerateConstruct)) {
+    if (body->MatchesTag(NodeEnum::kConditionalGenerateConstruct)) {
       // else-if chained.  Flatten the else block by not creating a new scope
       // and let the if-clause inside create a scope directly under the current
       // scope.
-      Descend(body);
+      Descend(*body);
     } else {
       DeclareScopedElementAndDescend(generate_else,
-                                     GetScopeNameFromGenerateBody(body),
+                                     GetScopeNameFromGenerateBody(*body),
                                      SymbolMetaType::kGenerate);
     }
   }
 
   void DeclarePackage(const SyntaxTreeNode& package) {
-    DeclareScopedElementAndDescend(package, GetPackageNameToken(package).text(),
+    const auto* token = GetPackageNameToken(package);
+    if (!token) return;
+    DeclareScopedElementAndDescend(package, token->text(),
                                    SymbolMetaType::kPackage);
   }
 
   void DeclareClass(const SyntaxTreeNode& class_node) {
-    DeclareScopedElementAndDescend(class_node,
-                                   GetClassName(class_node).get().text(),
+    const SyntaxTreeLeaf* class_name = GetClassName(class_node);
+    if (!class_name) return;
+    DeclareScopedElementAndDescend(class_node, class_name->get().text(),
                                    SymbolMetaType::kClass);
   }
 
@@ -1063,8 +1069,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Declare one (of potentially multiple) instances in a single declaration
   // statement.
   void DeclareInstance(const SyntaxTreeNode& instance) {
-    const absl::string_view instance_name(
-        GetModuleInstanceNameTokenInfoFromGateInstance(instance).text());
+    const verible::TokenInfo* instance_name_token =
+        GetModuleInstanceNameTokenInfoFromGateInstance(instance);
+    if (!instance_name_token) return;
+    const absl::string_view instance_name(instance_name_token->text());
     const SymbolTableNode& new_instance(EmplaceTypedElementInCurrentScope(
         instance, instance_name, SymbolMetaType::kDataNetVariableInstance));
 
@@ -1111,12 +1119,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareVariable(const SyntaxTreeNode& variable) {
-    const absl::string_view var_name(
-        GetUnqualifiedIdFromVariableDeclarationAssignment(variable)
-            .get()
-            .text());
-    EmplaceTypedElementInCurrentScope(variable, var_name,
-                                      SymbolMetaType::kDataNetVariableInstance);
+    const SyntaxTreeLeaf* unqualified_id =
+        GetUnqualifiedIdFromVariableDeclarationAssignment(variable);
+    if (unqualified_id) {
+      const absl::string_view var_name(unqualified_id->get().text());
+      EmplaceTypedElementInCurrentScope(
+          variable, var_name, SymbolMetaType::kDataNetVariableInstance);
+    }
     Descend(variable);
   }
 

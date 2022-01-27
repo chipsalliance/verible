@@ -68,11 +68,12 @@ void BannedDeclaredNamePatternsRule::HandleNode(
       break;
     }
     case NodeEnum::kPackageDeclaration: {
-      const auto& pack_match = GetPackageNameToken(node);
-      absl::string_view pack_id = pack_match.text();
-
-      if (absl::EqualsIgnoreCase(pack_id, "ILLEGALNAME")) {
-        violations_.insert(LintViolation(pack_match, kMessage));
+      const verible::TokenInfo* pack_match = GetPackageNameToken(node);
+      if (pack_match) {
+        absl::string_view pack_id = pack_match->text();
+        if (absl::EqualsIgnoreCase(pack_id, "ILLEGALNAME")) {
+          violations_.insert(LintViolation(*pack_match, kMessage));
+        }
       }
       break;
     }

@@ -75,14 +75,15 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       return;
     }
 
-    const auto& identifier_token =
+    const auto* identifier_token =
         GetSymbolIdentifierFromConstraintDeclaration(symbol);
+    if (!identifier_token) return;
 
-    const auto constraint_name = identifier_token.text();
+    const absl::string_view constraint_name = identifier_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(constraint_name) ||
         !absl::EndsWith(constraint_name, "_c"))
-      violations_.insert(LintViolation(identifier_token, kMessage, context));
+      violations_.insert(LintViolation(*identifier_token, kMessage, context));
   }
 }
 

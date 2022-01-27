@@ -38,18 +38,18 @@ std::vector<verible::TreeSearchMatch> FindAllGenerateBlocks(
 // TODO(fangism): consider moving the *GenerateBody functions to generate.{h,cc}
 
 // Returns the generate-item body of a generate-if construct.
-const verible::SyntaxTreeNode& GetIfClauseGenerateBody(
+const verible::SyntaxTreeNode* GetIfClauseGenerateBody(
     const verible::Symbol& if_clause);
 
 // Returns the generate-item body of a generate-else construct.
-const verible::SyntaxTreeNode& GetElseClauseGenerateBody(
+const verible::SyntaxTreeNode* GetElseClauseGenerateBody(
     const verible::Symbol& else_clause);
 
 // Returns the generate-item body of a generate-for-loop construct.
-const verible::SyntaxTreeNode& GetLoopGenerateBody(const verible::Symbol& loop);
+const verible::SyntaxTreeNode* GetLoopGenerateBody(const verible::Symbol& loop);
 
 // Returns the if-clause of a generate-if construct.
-const verible::SyntaxTreeNode& GetConditionalGenerateIfClause(
+const verible::SyntaxTreeNode* GetConditionalGenerateIfClause(
     const verible::Symbol& conditional);
 
 // Returns the else-clause of a generate-if construct, or nullptr.
@@ -60,16 +60,16 @@ const verible::SyntaxTreeNode* GetConditionalGenerateElseClause(
 
 // For if-conditional statement blocks, return the construct's
 // statement body (which should be some form of statement list).
-const verible::SyntaxTreeNode& GetIfClauseStatementBody(
+const verible::SyntaxTreeNode* GetIfClauseStatementBody(
     const verible::Symbol& if_clause);
 
 // For else-clause statement blocks, return the construct's
 // statement body (which should be some form of statement list).
-const verible::SyntaxTreeNode& GetElseClauseStatementBody(
+const verible::SyntaxTreeNode* GetElseClauseStatementBody(
     const verible::Symbol& else_clause);
 
 // Returns the if-clause of a conditional statement construct.
-const verible::SyntaxTreeNode& GetConditionalStatementIfClause(
+const verible::SyntaxTreeNode* GetConditionalStatementIfClause(
     const verible::Symbol& conditional);
 
 // Returns the else-clause of a conditional statement construct, or nullptr.
@@ -79,7 +79,7 @@ const verible::SyntaxTreeNode* GetConditionalStatementElseClause(
 // Immediate assertion statements
 
 // Returns the assert-clause of an assertion statement, or nullptr.
-const verible::SyntaxTreeNode& GetAssertionStatementAssertClause(
+const verible::SyntaxTreeNode* GetAssertionStatementAssertClause(
     const verible::Symbol& assertion_statement);
 
 // Returns the else-clause of an assertion statement, or nullptr.
@@ -87,7 +87,7 @@ const verible::SyntaxTreeNode* GetAssertionStatementElseClause(
     const verible::Symbol& assertion_statement);
 
 // Returns the assume-clause of an assume statement, or nullptr.
-const verible::SyntaxTreeNode& GetAssumeStatementAssumeClause(
+const verible::SyntaxTreeNode* GetAssumeStatementAssumeClause(
     const verible::Symbol& assume_statement);
 
 // Returns the else-clause of an assume statement, or nullptr.
@@ -105,7 +105,7 @@ const verible::SyntaxTreeNode* GetWaitStatementBody(
 // Concurrent assertion statements
 
 // Returns the assert-clause of an assert property statement, or nullptr.
-const verible::SyntaxTreeNode& GetAssertPropertyStatementAssertClause(
+const verible::SyntaxTreeNode* GetAssertPropertyStatementAssertClause(
     const verible::Symbol& assert_property_statement);
 
 // Returns the else-clause of an assert property statement, or nullptr.
@@ -113,7 +113,7 @@ const verible::SyntaxTreeNode* GetAssertPropertyStatementElseClause(
     const verible::Symbol& assert_property_statement);
 
 // Returns the assume-clause of an assume property statement, or nullptr.
-const verible::SyntaxTreeNode& GetAssumePropertyStatementAssumeClause(
+const verible::SyntaxTreeNode* GetAssumePropertyStatementAssumeClause(
     const verible::Symbol& assume_property_statement);
 
 // Returns the else-clause of an assume property statement, or nullptr.
@@ -121,7 +121,7 @@ const verible::SyntaxTreeNode* GetAssumePropertyStatementElseClause(
     const verible::Symbol& assume_property_statement);
 
 // Returns the expect-clause of an expect property statement, or nullptr.
-const verible::SyntaxTreeNode& GetExpectPropertyStatementExpectClause(
+const verible::SyntaxTreeNode* GetExpectPropertyStatementExpectClause(
     const verible::Symbol& expect_property_statement);
 
 // Returns the else-clause of an expect property statement, or nullptr.
@@ -131,33 +131,33 @@ const verible::SyntaxTreeNode* GetExpectPropertyStatementElseClause(
 // Loop-like statements
 
 // For loop statement blocks, return the looped statement body.
-const verible::SyntaxTreeNode& GetLoopStatementBody(
+const verible::SyntaxTreeNode* GetLoopStatementBody(
     const verible::Symbol& loop);
 
 // For do-while statement blocks, return the looped statement body.
-const verible::SyntaxTreeNode& GetDoWhileStatementBody(
+const verible::SyntaxTreeNode* GetDoWhileStatementBody(
     const verible::Symbol& do_while);
 
 // Return the statement body of forever blocks.
-const verible::SyntaxTreeNode& GetForeverStatementBody(
+const verible::SyntaxTreeNode* GetForeverStatementBody(
     const verible::Symbol& forever);
 
 // Return the statement body of foreach blocks.
-const verible::SyntaxTreeNode& GetForeachStatementBody(
+const verible::SyntaxTreeNode* GetForeachStatementBody(
     const verible::Symbol& foreach);
 
 // Return the statement body of repeat blocks.
-const verible::SyntaxTreeNode& GetRepeatStatementBody(
+const verible::SyntaxTreeNode* GetRepeatStatementBody(
     const verible::Symbol& repeat);
 
 // Return the statement body of while blocks.
-const verible::SyntaxTreeNode& GetWhileStatementBody(
+const verible::SyntaxTreeNode* GetWhileStatementBody(
     const verible::Symbol& while_stmt);
 
 // TODO(fangism): case-items
 
 // Return the statement body of procedural timing constructs.
-const verible::SyntaxTreeNode& GetProceduralTimingControlStatementBody(
+const verible::SyntaxTreeNode* GetProceduralTimingControlStatementBody(
     const verible::Symbol& proc_timing_control);
 
 // Combines all of the above Get*StatementBody.
@@ -179,19 +179,19 @@ const verible::SyntaxTreeNode* GetDataTypeFromForInitialization(
     const verible::Symbol&);
 
 // Returns the variable name leaf from for loop initialization.
-const verible::SyntaxTreeLeaf& GetVariableNameFromForInitialization(
+const verible::SyntaxTreeLeaf* GetVariableNameFromForInitialization(
     const verible::Symbol&);
 
 // Returns the rhs expression from for loop initialization.
-const verible::SyntaxTreeNode& GetExpressionFromForInitialization(
+const verible::SyntaxTreeNode* GetExpressionFromForInitialization(
     const verible::Symbol&);
 
 // Returns the 'begin' node of a generate block.
-const verible::SyntaxTreeNode& GetGenerateBlockBegin(
+const verible::SyntaxTreeNode* GetGenerateBlockBegin(
     const verible::Symbol& generate_block);
 
 // Returns the 'end' node of a generate block.
-const verible::SyntaxTreeNode& GetGenerateBlockEnd(
+const verible::SyntaxTreeNode* GetGenerateBlockEnd(
     const verible::Symbol& generate_block);
 
 }  // namespace verilog

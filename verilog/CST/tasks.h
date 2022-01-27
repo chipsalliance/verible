@@ -35,10 +35,10 @@ std::vector<verible::TreeSearchMatch> FindAllTaskPrototypes(
     const verible::Symbol&);
 
 // Returns the task declaration header
-const verible::SyntaxTreeNode& GetTaskHeader(const verible::Symbol& task_decl);
+const verible::SyntaxTreeNode* GetTaskHeader(const verible::Symbol& task_decl);
 
 // Returns the task prototype header
-const verible::SyntaxTreeNode& GetTaskPrototypeHeader(
+const verible::SyntaxTreeNode* GetTaskPrototypeHeader(
     const verible::Symbol& task_proto);
 
 // task header accessors
@@ -63,7 +63,7 @@ const verible::Symbol* GetTaskId(const verible::Symbol& task_decl);
 const verible::SyntaxTreeLeaf* GetTaskName(const verible::Symbol& task_decl);
 
 // Returns the task declaration body.
-const verible::SyntaxTreeNode& GetTaskStatementList(
+const verible::SyntaxTreeNode* GetTaskStatementList(
     const verible::Symbol& task_decl);
 
 }  // namespace verilog

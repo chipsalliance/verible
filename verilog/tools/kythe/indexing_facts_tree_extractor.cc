@@ -674,8 +674,8 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
     ExtractModuleOrInterfaceOrProgramHeader(declaration_node);
     ExtractModuleOrInterfaceOrProgramEnd(declaration_node);
 
-    const SyntaxTreeNode& item_list = GetModuleItemList(declaration_node);
-    Visit(item_list);
+    const SyntaxTreeNode* item_list = GetModuleItemList(declaration_node);
+    if (item_list) Visit(*item_list);
   }
 
   facts_tree_context_.top().NewChild(std::move(facts_node));
@@ -728,8 +728,8 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
       has_propagated_type = true;
       ExtractModulePort(port_node, has_propagated_type);
     } else if (tag == NodeEnum::kPort) {
-      ExtractModulePort(GetPortReferenceFromPort(port_node),
-                        has_propagated_type);
+      const SyntaxTreeNode* ref_port = GetPortReferenceFromPort(port_node);
+      if (ref_port) ExtractModulePort(*ref_port, has_propagated_type);
     }
   }
 }
@@ -875,16 +875,18 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     IndexingFactNode module_instance_node(
         IndexingNodeData{IndexingFactType::kModuleInstance});
 
-    const TokenInfo& variable_name =
+    const TokenInfo* variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
-    module_instance_node.Value().AppendAnchor(Anchor(variable_name));
+    if (variable_name) {
+      module_instance_node.Value().AppendAnchor(Anchor(*variable_name));
+    }
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                                 &module_instance_node);
-      const SyntaxTreeNode& paren_group =
+      const SyntaxTreeNode* paren_group =
           GetParenGroupFromModuleInstantiation(*instance.match);
-      Visit(paren_group);
+      if (paren_group) Visit(*paren_group);
     }
 
     type_node.NewChild(std::move(module_instance_node));
@@ -977,17 +979,18 @@ Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info) {
 
 void IndexingFactsTreeExtractor::ExtractMacroCall(
     const SyntaxTreeNode& macro_call) {
-  const TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
+  const TokenInfo* macro_call_name_token = GetMacroCallId(macro_call);
+  if (!macro_call_name_token) return;
   IndexingFactNode macro_node(
       IndexingNodeData(IndexingFactType::kMacroCall,
-                       GetMacroAnchorFromTokenInfo(macro_call_name_token)));
+                       GetMacroAnchorFromTokenInfo(*macro_call_name_token)));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &macro_node);
 
-    const SyntaxTreeNode& macro_call_args = GetMacroCallArgs(macro_call);
-    Visit(macro_call_args);
+    const SyntaxTreeNode* macro_call_args = GetMacroCallArgs(macro_call);
+    if (macro_call_args) Visit(*macro_call_args);
   }
 
   facts_tree_context_.top().NewChild(std::move(macro_node));
@@ -1016,9 +1019,9 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
     ExtractFunctionOrTaskOrConstructorPort(class_constructor);
 
     // Extract constructor body.
-    const SyntaxTreeNode& constructor_body =
+    const SyntaxTreeNode* constructor_body =
         GetClassConstructorStatementList(class_constructor);
-    Visit(constructor_body);
+    if (constructor_body) Visit(*constructor_body);
   }
 
   facts_tree_context_.top().NewChild(std::move(constructor_node));
@@ -1030,9 +1033,9 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
       IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
   // Extract function header.
-  const SyntaxTreeNode& function_header =
+  const SyntaxTreeNode* function_header =
       GetFunctionPrototypeHeader(function_prototype);
-  ExtractFunctionHeader(function_header, function_node);
+  if (function_header) ExtractFunctionHeader(*function_header, function_node);
 
   facts_tree_context_.top().NewChild(std::move(function_node));
 }
@@ -1043,8 +1046,8 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
       IndexingNodeData{IndexingFactType::kFunctionOrTaskForwardDeclaration});
 
   // Extract task header.
-  const SyntaxTreeNode& task_header = GetTaskPrototypeHeader(task_prototype);
-  ExtractTaskHeader(task_header, task_node);
+  const SyntaxTreeNode* task_header = GetTaskPrototypeHeader(task_prototype);
+  if (task_header) ExtractTaskHeader(*task_header, task_node);
 
   facts_tree_context_.top().NewChild(std::move(task_node));
 }
@@ -1055,17 +1058,17 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
   // Extract function header.
-  const SyntaxTreeNode& function_header =
+  const SyntaxTreeNode* function_header =
       GetFunctionHeader(function_declaration_node);
-  ExtractFunctionHeader(function_header, function_node);
+  if (function_header) ExtractFunctionHeader(*function_header, function_node);
 
   {
     // Extract function body.
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-    const SyntaxTreeNode& function_body =
+    const SyntaxTreeNode* function_body =
         GetFunctionBlockStatementList(function_declaration_node);
-    Visit(function_body);
+    if (function_body) Visit(*function_body);
   }
 
   facts_tree_context_.top().NewChild(std::move(function_node));
@@ -1077,15 +1080,15 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
       IndexingNodeData{IndexingFactType::kFunctionOrTask});
 
   // Extract task header.
-  const SyntaxTreeNode& task_header = GetTaskHeader(task_declaration_node);
-  ExtractTaskHeader(task_header, task_node);
+  const SyntaxTreeNode* task_header = GetTaskHeader(task_declaration_node);
+  if (task_header) ExtractTaskHeader(*task_header, task_node);
 
   {
     // Extract task body.
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
-    const SyntaxTreeNode& task_body =
+    const SyntaxTreeNode* task_body =
         GetTaskStatementList(task_declaration_node);
-    Visit(task_body);
+    if (task_body) Visit(*task_body);
   }
 
   facts_tree_context_.top().NewChild(std::move(task_node));
@@ -1176,9 +1179,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
             packed_dim->Accept(this);
           }
 
-          const SyntaxTreeNode& unpacked_dimension =
+          const SyntaxTreeNode* unpacked_dimension =
               GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
-          unpacked_dimension.Accept(this);
+          if (unpacked_dimension) unpacked_dimension->Accept(this);
         }
 
         facts_tree_context_.top().NewChild(std::move(variable_node));
@@ -1205,9 +1208,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
           packed_dim->Accept(this);
         }
 
-        const SyntaxTreeNode& unpacked_dimension =
+        const SyntaxTreeNode* unpacked_dimension =
             GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
-        unpacked_dimension.Accept(this);
+        if (unpacked_dimension) unpacked_dimension->Accept(this);
       }
 
       facts_tree_context_.top().NewChild(std::move(type_node));
@@ -1242,9 +1245,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-    const SyntaxTreeNode& arguments = GetParenGroupFromCall(function_call_node);
+    const SyntaxTreeNode* arguments = GetParenGroupFromCall(function_call_node);
     // Extract function or task parameters.
-    Visit(arguments);
+    if (arguments) Visit(*arguments);
   }
 
   facts_tree_context_.top().NewChild(std::move(function_node));
@@ -1265,16 +1268,19 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
     return;
   }
 
-  function_node.Value().AppendAnchor(
-      Anchor(GetFunctionCallNameFromCallExtension(call_extension_node).get()));
+  {
+    const SyntaxTreeLeaf* fun_call =
+        GetFunctionCallNameFromCallExtension(call_extension_node);
+    if (fun_call) function_node.Value().AppendAnchor(Anchor(fun_call->get()));
+  }
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &function_node);
-    const SyntaxTreeNode& arguments =
+    const SyntaxTreeNode* arguments =
         GetParenGroupFromCallExtension(call_extension_node);
     // parameters.
-    Visit(arguments);
+    if (arguments) Visit(*arguments);
   }
 
   facts_tree_context_.top().NewChild(std::move(function_node));
@@ -1289,8 +1295,13 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   // that last node.
   MoveAndDeleteLastExtractedNode(member_node);
 
-  member_node.Value().AppendAnchor(Anchor(  // member name
-      GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node).get()));
+  {
+    const verible::SyntaxTreeLeaf* unqualified =
+        GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node);
+    // member name
+    if (unqualified)
+      member_node.Value().AppendAnchor(Anchor(unqualified->get()));
+  }
 
   facts_tree_context_.top().NewChild(std::move(member_node));
 }
@@ -1303,8 +1314,9 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &class_node);
     // Extract class name.
-    facts_tree_context_.top().Value().AppendAnchor(
-        Anchor(GetClassName(class_declaration).get()));
+    const SyntaxTreeLeaf* class_name = GetClassName(class_declaration);
+    if (class_name)
+      facts_tree_context_.top().Value().AppendAnchor(Anchor(class_name->get()));
 
     // Extract class name after endclass.
     const SyntaxTreeLeaf* class_end_name = GetClassEndLabel(class_declaration);
@@ -1342,8 +1354,8 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     }
 
     // Visit class body.
-    const SyntaxTreeNode& class_item_list = GetClassItemList(class_declaration);
-    Visit(class_item_list);
+    const SyntaxTreeNode* class_item_list = GetClassItemList(class_declaration);
+    if (class_item_list) Visit(*class_item_list);
   }
 
   facts_tree_context_.top().NewChild(std::move(class_node));
@@ -1388,16 +1400,19 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
     const SyntaxTreeNode& register_variable) {
+  const TokenInfo* instance_name =
+      GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
+  if (!instance_name) return;
+
   IndexingFactNode variable_node(IndexingNodeData(
-      IndexingFactType::kVariableDefinition,
-      Anchor(GetInstanceNameTokenInfoFromRegisterVariable(register_variable))));
+      IndexingFactType::kVariableDefinition, Anchor(*instance_name)));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &variable_node);
-    const SyntaxTreeNode& unpacked_dimension =
+    const SyntaxTreeNode* unpacked_dimension =
         GetUnpackedDimensionFromRegisterVariable(register_variable);
-    Visit(unpacked_dimension);
+    if (unpacked_dimension) Visit(*unpacked_dimension);
 
     const SyntaxTreeNode* expression =
         GetTrailingExpressionFromRegisterVariable(register_variable);
@@ -1414,19 +1429,20 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
 
 void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
     const SyntaxTreeNode& variable_declaration_assignment) {
-  IndexingFactNode variable_node(
-      IndexingNodeData(IndexingFactType::kVariableDefinition,
-                       Anchor(GetUnqualifiedIdFromVariableDeclarationAssignment(
-                                  variable_declaration_assignment)
-                                  .get())));
+  const SyntaxTreeLeaf* unqualified_id =
+      GetUnqualifiedIdFromVariableDeclarationAssignment(
+          variable_declaration_assignment);
+  if (!unqualified_id) return;
+  IndexingFactNode variable_node(IndexingNodeData(
+      IndexingFactType::kVariableDefinition, Anchor(unqualified_id->get())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &variable_node);
-    const SyntaxTreeNode& unpacked_dimension =
+    const SyntaxTreeNode* unpacked_dimension =
         GetUnpackedDimensionFromVariableDeclarationAssign(
             variable_declaration_assignment);
-    Visit(unpacked_dimension);
+    if (unpacked_dimension) Visit(*unpacked_dimension);
 
     const SyntaxTreeNode* expression =
         GetTrailingExpressionFromVariableDeclarationAssign(
@@ -1501,8 +1517,9 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
   } else {
     // 2nd => parameter int x;
     // Extract Param name.
-    param_node.Value().AppendAnchor(
-        Anchor(GetParameterNameToken(param_declaration)));
+    const TokenInfo* parameter_name = GetParameterNameToken(param_declaration);
+    if (!parameter_name) return;
+    param_node.Value().AppendAnchor(Anchor(*parameter_name));
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1524,9 +1541,11 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractParamByName(
     const SyntaxTreeNode& param_by_name) {
+  const verible::SyntaxTreeLeaf* named_param =
+      GetNamedParamFromActualParam(param_by_name);
+  if (!named_param) return;
   IndexingFactNode named_param_node(IndexingNodeData(
-      IndexingFactType::kNamedParam,
-      Anchor(GetNamedParamFromActualParam(param_by_name).get())));
+      IndexingFactType::kNamedParam, Anchor(named_param->get())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1615,10 +1634,12 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
     const SyntaxTreeNode& for_initialization) {
   // Extracts the variable name from for initialization.
   // e.g from "int i = 0"; ==> extracts "i".
-  const SyntaxTreeLeaf& variable_name =
+  const SyntaxTreeLeaf* variable_name =
       GetVariableNameFromForInitialization(for_initialization);
-  facts_tree_context_.top().NewChild(IndexingNodeData(
-      IndexingFactType::kVariableDefinition, Anchor(variable_name.get())));
+  if (variable_name) {
+    facts_tree_context_.top().NewChild(IndexingNodeData(
+        IndexingFactType::kVariableDefinition, Anchor(variable_name->get())));
+  }
 
   // Extracts the data the in case it contains packed or unpacked dimension.
   // e.g bit [x : y] var [x : y].
@@ -1630,9 +1651,9 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
 
   // Extracts the RHS of the declaration.
   // e.g int i = x; ==> extracts "x".
-  const SyntaxTreeNode& expression =
+  const SyntaxTreeNode* expression =
       GetExpressionFromForInitialization(for_initialization);
-  Visit(expression);
+  if (expression) Visit(*expression);
 }
 
 // Returns string_view of `text` with outermost double-quotes removed.
