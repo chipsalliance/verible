@@ -553,9 +553,10 @@ static bool IsAlignableDeclaration(const SyntaxTreeNode& node) {
   // * it declares exactly one identifier
   switch (static_cast<NodeEnum>(node.Tag().tag)) {
     case NodeEnum::kDataDeclaration: {
-      const SyntaxTreeNode& instances(GetInstanceListFromDataDeclaration(node));
-      if (FindAllRegisterVariables(instances).size() > 1) return false;
-      return FindAllGateInstances(instances).empty();
+      const SyntaxTreeNode* instances(GetInstanceListFromDataDeclaration(node));
+      if (!instances) return false;
+      if (FindAllRegisterVariables(*instances).size() > 1) return false;
+      return FindAllGateInstances(*instances).empty();
     }
     case NodeEnum::kNetDeclaration: {
       return FindAllNetVariables(node).size() <= 1;

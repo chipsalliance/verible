@@ -920,8 +920,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   absl::string_view GetScopeNameFromGenerateBody(const SyntaxTreeNode& body) {
     if (body.MatchesTag(NodeEnum::kGenerateBlock)) {
+      const SyntaxTreeNode* gen_block = GetGenerateBlockBegin(body);
       const TokenInfo* label =
-          GetBeginLabelTokenInfo(GetGenerateBlockBegin(body));
+          gen_block ? GetBeginLabelTokenInfo(*gen_block) : nullptr;
       if (label != nullptr) {
         // TODO: Check for a matching end-label here, and if its name matches
         // the begin label, then immediately create a resolved reference because
@@ -934,36 +935,41 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareGenerateIf(const SyntaxTreeNode& generate_if) {
-    const SyntaxTreeNode& body(GetIfClauseGenerateBody(generate_if));
-
-    DeclareScopedElementAndDescend(generate_if,
-                                   GetScopeNameFromGenerateBody(body),
-                                   SymbolMetaType::kGenerate);
+    const SyntaxTreeNode* body(GetIfClauseGenerateBody(generate_if));
+    if (body) {
+      DeclareScopedElementAndDescend(generate_if,
+                                     GetScopeNameFromGenerateBody(*body),
+                                     SymbolMetaType::kGenerate);
+    }
   }
 
   void DeclareGenerateElse(const SyntaxTreeNode& generate_else) {
-    const SyntaxTreeNode& body(GetElseClauseGenerateBody(generate_else));
+    const SyntaxTreeNode* body(GetElseClauseGenerateBody(generate_else));
+    if (!body) return;
 
-    if (body.MatchesTag(NodeEnum::kConditionalGenerateConstruct)) {
+    if (body->MatchesTag(NodeEnum::kConditionalGenerateConstruct)) {
       // else-if chained.  Flatten the else block by not creating a new scope
       // and let the if-clause inside create a scope directly under the current
       // scope.
-      Descend(body);
+      Descend(*body);
     } else {
       DeclareScopedElementAndDescend(generate_else,
-                                     GetScopeNameFromGenerateBody(body),
+                                     GetScopeNameFromGenerateBody(*body),
                                      SymbolMetaType::kGenerate);
     }
   }
 
   void DeclarePackage(const SyntaxTreeNode& package) {
-    DeclareScopedElementAndDescend(package, GetPackageNameToken(package).text(),
+    const auto* token = GetPackageNameToken(package);
+    if (!token) return;
+    DeclareScopedElementAndDescend(package, token->text(),
                                    SymbolMetaType::kPackage);
   }
 
   void DeclareClass(const SyntaxTreeNode& class_node) {
-    DeclareScopedElementAndDescend(class_node,
-                                   GetClassName(class_node).get().text(),
+    const SyntaxTreeLeaf* class_name = GetClassName(class_node);
+    if (!class_name) return;
+    DeclareScopedElementAndDescend(class_node, class_name->get().text(),
                                    SymbolMetaType::kClass);
   }
 

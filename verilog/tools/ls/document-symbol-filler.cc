@@ -85,20 +85,24 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       break;
 
     case verilog::NodeEnum::kClassDeclaration: {
-      const auto &class_name_leaf = verilog::GetClassName(node);
-      is_visible_node = true;
-      node_symbol.kind = verible::lsp::SymbolKind::Class;
-      node_symbol.selectionRange = RangeFromToken(class_name_leaf.get());
-      node_symbol.name = std::string(class_name_leaf.get().text());
+      const auto *class_name_leaf = verilog::GetClassName(node);
+      if (class_name_leaf) {
+        is_visible_node = true;
+        node_symbol.kind = verible::lsp::SymbolKind::Class;
+        node_symbol.selectionRange = RangeFromToken(class_name_leaf->get());
+        node_symbol.name = std::string(class_name_leaf->get().text());
+      }
       break;
     }
 
     case verilog::NodeEnum::kPackageDeclaration: {
-      const auto &package_name = verilog::GetPackageNameToken(node);
-      is_visible_node = true;
-      node_symbol.kind = verible::lsp::SymbolKind::Package;
-      node_symbol.selectionRange = RangeFromToken(package_name);
-      node_symbol.name = std::string(package_name.text());
+      const auto *package_name = verilog::GetPackageNameToken(node);
+      if (package_name) {
+        is_visible_node = true;
+        node_symbol.kind = verible::lsp::SymbolKind::Package;
+        node_symbol.selectionRange = RangeFromToken(*package_name);
+        node_symbol.name = std::string(package_name->text());
+      }
       break;
     }
 

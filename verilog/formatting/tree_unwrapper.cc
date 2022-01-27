@@ -1673,11 +1673,11 @@ static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
 
 static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
     const verible::Symbol& data_declaration) {
-  const auto& instance_list =
+  const auto* instance_list =
       GetInstanceListFromDataDeclaration(data_declaration);
-  if (instance_list.children().empty()) return nullptr;
+  if (!instance_list || instance_list->children().empty()) return nullptr;
 
-  const auto& variable_or_gate = *instance_list.children().front();
+  const auto& variable_or_gate = *instance_list->children().front();
   if (variable_or_gate.Tag().kind != verible::SymbolKind::kNode) return nullptr;
 
   const verible::Symbol* trailing_assign;
@@ -1755,7 +1755,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             &instance_list_partition,
             data_declaration_partition.Value().IndentationSpaces());
         HoistOnlyChildPartition(&instance_list_partition);
-      } else if (GetInstanceListFromDataDeclaration(node).children().size() ==
+      } else if (GetInstanceListFromDataDeclaration(node)->children().size() ==
                  1) {
         VLOG(4) << "Instance list has only one child, singleton.";
 
@@ -2030,7 +2030,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
     case NodeEnum::kMacroCall: {
       // If there are no call args, join the '(' and ')' together.
-      if (MacroCallArgsIsEmpty(GetMacroCallArgs(node))) {
+      if (MacroCallArgsIsEmpty(*GetMacroCallArgs(node))) {
         // FIXME HERE: flattening wrong place!  Should merge instead.
         partition.FlattenOnce();
         VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
@@ -2099,7 +2099,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       VLOG(4) << "before moving semicolon:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // Check body, for kSeqBlock, merge 'begin' with previous sibling
-      if (NodeIsBeginEndBlock(GetProceduralTimingControlStatementBody(node))) {
+      if (const auto* tbody = GetProceduralTimingControlStatementBody(node);
+          tbody != nullptr && NodeIsBeginEndBlock(*tbody)) {
         verible::MergeConsecutiveSiblings(&partition, offsets[1] - 1);
         VLOG(4) << "after merge siblings:\n" << partition;
       }
@@ -2192,7 +2193,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
     case NodeEnum::kDoWhileLoopStatement: {
-      if (NodeIsBeginEndBlock(GetDoWhileStatementBody(node))) {
+      if (const auto* dw = GetDoWhileStatementBody(node);
+          dw != nullptr && NodeIsBeginEndBlock(*dw)) {
         // between do... and while (...);
         auto& seq_block_partition = partition.Children()[1];
 
@@ -2213,8 +2215,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
     case NodeEnum::kAlwaysStatement: {
       if (GetSubtreeAsNode(node, tag, node.children().size() - 1)
-              .MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
-                                NodeEnum::kSeqBlock})) {
+              ->MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
+                                 NodeEnum::kSeqBlock})) {
         // Merge 'always' keyword with next sibling, and adjust subtree indent.
         verible::MergeLeafIntoNextLeaf(&partition.Children().front());
         verible::AdjustIndentationAbsolute(
