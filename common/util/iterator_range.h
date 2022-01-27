@@ -51,14 +51,19 @@ class iterator_range {
   iterator end_;
 };
 
+template <typename Iter>
+iterator_range(Iter, Iter) -> iterator_range<Iter>;
+
 // Helper function returning an iterator_range using template argument
 // deduction.
+// OBSOLETE: Use iterator_traits constructor directly.
 template <typename Iter>
 iterator_range<Iter> make_range(Iter begin, Iter end) {
   return iterator_range<Iter>(std::move(begin), std::move(end));
 }
 
 // Overload to operator on a std::pair of iterators.
+// OBSOLETE: Use iterator_traits constructor directly.
 template <typename Iter>
 iterator_range<Iter> make_range(std::pair<Iter, Iter> p) {
   return iterator_range<Iter>(std::move(p.first), std::move(p.second));
