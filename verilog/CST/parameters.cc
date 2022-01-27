@@ -57,8 +57,7 @@ verilog_tokentype GetParamKeyword(const verible::Symbol& symbol) {
   const auto* param_keyword_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 0);
   if (param_keyword_symbol == nullptr) return TK_parameter;
-  const auto* leaf =
-      down_cast<const SyntaxTreeLeaf*>(ABSL_DIE_IF_NULL(param_keyword_symbol));
+  const auto* leaf = down_cast<const SyntaxTreeLeaf*>(param_keyword_symbol);
   return static_cast<verilog_tokentype>(leaf->get().token_enum());
 }
 
@@ -66,39 +65,41 @@ const verible::Symbol* GetParamTypeSymbol(const verible::Symbol& symbol) {
   return verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 1);
 }
 
-const verible::TokenInfo& GetParameterNameToken(const verible::Symbol& symbol) {
+const verible::TokenInfo* GetParameterNameToken(const verible::Symbol& symbol) {
   const auto* param_type_symbol = GetParamTypeSymbol(symbol);
-
+  if (!param_type_symbol) return nullptr;
   // Check for implicit type declaration, in which case [2] will be a leaf.
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(*param_type_symbol, NodeEnum::kParamType, 2);
-  auto t = ABSL_DIE_IF_NULL(identifier_symbol)->Tag();
+  if (!identifier_symbol) return nullptr;
+  auto t = identifier_symbol->Tag();
   const SyntaxTreeLeaf* identifier_leaf = nullptr;
   if (t.kind == verible::SymbolKind::kNode)
     identifier_leaf = GetIdentifier(*identifier_symbol);
   else
     identifier_leaf = down_cast<const SyntaxTreeLeaf*>(identifier_symbol);
-
-  return ABSL_DIE_IF_NULL(identifier_leaf)->get();
+  if (!identifier_leaf) return nullptr;
+  return &identifier_leaf->get();
 }
 
 std::vector<const verible::TokenInfo*> GetAllParameterNameTokens(
     const verible::Symbol& symbol) {
   std::vector<const verible::TokenInfo*> identifiers;
-  identifiers.push_back(&GetParameterNameToken(symbol));
+  identifiers.push_back(GetParameterNameToken(symbol));
 
   for (const auto* s : GetAllAssignedParameterSymbols(symbol)) {
-    identifiers.push_back(&GetAssignedParameterNameToken(*s));
+    identifiers.push_back(GetAssignedParameterNameToken(*s));
   }
 
   return identifiers;
 }
 
-const verible::TokenInfo& GetAssignedParameterNameToken(
+const verible::TokenInfo* GetAssignedParameterNameToken(
     const verible::Symbol& symbol) {
   const auto* identifier = SymbolCastToNode(symbol)[0].get();
+  if (!identifier) return nullptr;
 
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier))->get();
+  return &AutoUnwrapIdentifier(*identifier)->get();
 }
 
 std::vector<const verible::Symbol*> GetAllAssignedParameterSymbols(
@@ -112,15 +113,17 @@ std::vector<const verible::Symbol*> GetAllAssignedParameterSymbols(
   return symbols;
 }
 
-const verible::TokenInfo& GetSymbolIdentifierFromParamDeclaration(
+const verible::TokenInfo* GetSymbolIdentifierFromParamDeclaration(
     const verible::Symbol& symbol) {
   // Assert that symbol is a 'parameter type' declaration.
-  CHECK(IsParamTypeDeclaration(symbol));
+  if (!IsParamTypeDeclaration(symbol)) return nullptr;
 
   const auto* type_symbol = GetTypeAssignmentFromParamDeclaration(symbol);
+  if (!type_symbol) return nullptr;
   const auto* symbol_identifier_leaf =
-      GetIdentifierLeafFromTypeAssignment(*ABSL_DIE_IF_NULL(type_symbol));
-  return ABSL_DIE_IF_NULL(symbol_identifier_leaf)->get();
+      GetIdentifierLeafFromTypeAssignment(*type_symbol);
+  if (!symbol_identifier_leaf) return nullptr;
+  return &symbol_identifier_leaf->get();
 }
 
 bool IsParamTypeDeclaration(const verible::Symbol& symbol) {
@@ -222,12 +225,12 @@ bool IsTypeInfoEmpty(const verible::Symbol& symbol) {
           type_info_node[2] == nullptr);
 }
 
-const verible::SyntaxTreeLeaf& GetNamedParamFromActualParam(
+const verible::SyntaxTreeLeaf* GetNamedParamFromActualParam(
     const verible::Symbol& param_by_name) {
-  // TODO(hzeller): bubble up nullptr.
   const verible::SyntaxTreeLeaf* param_name =
       verible::GetSubtreeAsLeaf(param_by_name, NodeEnum::kParamByName, 1);
-  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(param_name));
+  if (!param_name) return nullptr;
+  return AutoUnwrapIdentifier(*param_name);
 }
 
 const verible::SyntaxTreeNode* GetParenGroupFromActualParam(

@@ -101,7 +101,7 @@ TEST(GetMacroCallIdsTest, Various) {
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     std::vector<absl::string_view> found_names;
     for (const auto& match : macro_calls) {
-      found_names.push_back(GetMacroCallId(*match.match).text());
+      found_names.push_back(GetMacroCallId(*match.match)->text());
     }
     EXPECT_THAT(found_names, ElementsAreArray(test.expected_names))
         << "code:\n"
@@ -162,7 +162,7 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
     ASSERT_EQ(macro_items.size(), 1);
     const auto& macro_item = *macro_items.front().match;
     const auto& id = GetMacroGenericItemId(macro_item);
-    const absl::string_view id_text = id.text();
+    const absl::string_view id_text = id->text();
 
     // TODO(b/151371397): Refactor this test code along with
     // common/analysis/linter_test_util.h to be able to compare set-symmetric

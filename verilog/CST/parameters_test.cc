@@ -203,7 +203,7 @@ TEST(GetParameterNameTokenTest, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token =
         GetParameterNameToken(*param_declarations.front().match);
-    EXPECT_EQ(name_token.text(), test.second);
+    EXPECT_EQ(name_token->text(), test.second);
   }
 }
 
@@ -287,7 +287,7 @@ TEST(GetAssignedParameterNameToken, BasicTests) {
 
     const auto name_token =
         GetAssignedParameterNameToken(*assigned_parameters.front());
-    EXPECT_EQ(name_token.text(), test.second);
+    EXPECT_EQ(name_token->text(), test.second);
   }
 }
 
@@ -311,7 +311,7 @@ TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token = GetSymbolIdentifierFromParamDeclaration(
         *param_declarations.front().match);
-    EXPECT_EQ(name_token.text(), test.second);
+    EXPECT_EQ(name_token->text(), test.second);
   }
 }
 
@@ -519,10 +519,9 @@ TEST(FindAllParamByNameTest, FindNamesOfParams) {
 
           std::vector<TreeSearchMatch> params;
           for (const auto& instance : instances) {
-            const auto& decl = GetNamedParamFromActualParam(*instance.match);
+            const auto* decl = GetNamedParamFromActualParam(*instance.match);
 
-            params.emplace_back(
-                TreeSearchMatch{&decl, {/* ignored context */}});
+            params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
           }
           return params;
         });

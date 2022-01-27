@@ -68,7 +68,8 @@ SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
     // Only [] indices are valid, any others are syntax errors.
     // We discard syntax errors for now, but in the future should retain these
     // error nodes for diagnostics.
-    const auto tag = ABSL_DIE_IF_NULL(child)->Tag();
+    if (!child) continue;
+    const auto tag = child->Tag();
     if (tag.kind != verible::SymbolKind::kNode) continue;
     auto& node = verible::SymbolCastToNode(*child);
     if (node.MatchesTagAnyOf(
@@ -136,7 +137,7 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
   // For enum, struct and union identifier is found at the same position
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kTypeDeclaration, 2);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+  return identifier_symbol ? AutoUnwrapIdentifier(*identifier_symbol) : nullptr;
 }
 
 const verible::Symbol* GetBaseTypeFromDataType(
@@ -169,10 +170,9 @@ static const verible::SyntaxTreeNode* GetLocalRootFromReference(
   return verible::GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
 }
 
-const verible::Symbol& GetIdentifiersFromLocalRoot(
+const verible::Symbol* GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root) {
-  return *ABSL_DIE_IF_NULL(
-      verible::GetSubtreeAsSymbol(local_root, NodeEnum::kLocalRoot, 0));
+  return verible::GetSubtreeAsSymbol(local_root, NodeEnum::kLocalRoot, 0);
 }
 
 const verible::SyntaxTreeNode* GetUnqualifiedIdFromReferenceCallBase(
@@ -183,7 +183,8 @@ const verible::SyntaxTreeNode* GetUnqualifiedIdFromReferenceCallBase(
   const verible::SyntaxTreeNode* local_root =
       GetLocalRootFromReference(*reference);
   if (!local_root) return nullptr;
-  return &verible::SymbolCastToNode(GetIdentifiersFromLocalRoot(*local_root));
+  const verible::Symbol* identifiers = GetIdentifiersFromLocalRoot(*local_root);
+  return identifiers ? &verible::SymbolCastToNode(*identifiers) : nullptr;
 }
 
 const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataType(

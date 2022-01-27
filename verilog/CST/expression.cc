@@ -110,11 +110,12 @@ std::vector<TreeSearchMatch> FindAllReferenceFullExpressions(
 
 static const verible::TokenInfo* ReferenceBaseIsSimple(
     const verible::SyntaxTreeNode& reference_base) {
-  const verible::Symbol& bottom(
-      *ABSL_DIE_IF_NULL(verible::DescendThroughSingletons(reference_base)));
-  const auto tag = bottom.Tag();
+  const Symbol* bottom = verible::DescendThroughSingletons(reference_base);
+  if (!bottom) return nullptr;
+
+  const auto tag = bottom->Tag();
   if (tag.kind == verible::SymbolKind::kLeaf) {
-    const auto& token(verible::SymbolCastToLeaf(bottom).get());
+    const auto& token(verible::SymbolCastToLeaf(*bottom).get());
     return token.token_enum() == SymbolIdentifier ? &token : nullptr;
   }
   // Expect to hit kUnqualifiedId, which has two children.
@@ -122,7 +123,7 @@ static const verible::TokenInfo* ReferenceBaseIsSimple(
   // child[1] are optional #(parameters), which would imply child[0] is
   // referring to a parameterized type.
   const auto& unqualified_id(
-      verible::CheckSymbolAsNode(bottom, NodeEnum::kUnqualifiedId));
+      verible::CheckSymbolAsNode(*bottom, NodeEnum::kUnqualifiedId));
   const auto* params = GetParamListFromUnqualifiedId(unqualified_id);
   // If there are parameters, it is not simple reference.
   // It is most likely a class-qualified static reference.
@@ -139,8 +140,9 @@ const verible::TokenInfo* ReferenceIsSimpleIdentifier(
   // A simple reference contains one component without hierarchy, indexing, or
   // calls; it looks like just an identifier.
   if (reference_node.children().size() > 1) return nullptr;
-  const auto& base_node = verible::SymbolCastToNode(
-      *ABSL_DIE_IF_NULL(reference_node.children().front()));
+  const auto& base_symbol = reference_node.children().front();
+  if (!base_symbol) return nullptr;
+  const auto& base_node = verible::SymbolCastToNode(*base_symbol);
   if (!base_node.MatchesTag(NodeEnum::kReference)) return nullptr;
   return ReferenceBaseIsSimple(base_node);
 }

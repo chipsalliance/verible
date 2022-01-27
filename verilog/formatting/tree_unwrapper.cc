@@ -2228,9 +2228,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
 
     case NodeEnum::kMacroGenericItem: {
-      const auto& token = GetMacroGenericItemId(node);
-      if (absl::StartsWith(token.text(), "`uvm_") &&
-          absl::EndsWith(token.text(), "_end")) {
+      const auto* token = GetMacroGenericItemId(node);
+      if (token && absl::StartsWith(token->text(), "`uvm_") &&
+          absl::EndsWith(token->text(), "_end")) {
         VLOG(4) << "Found `uvm_*_end macro call";
         IndentBetweenUVMBeginEndMacros(&partition, style.indentation_spaces);
       }

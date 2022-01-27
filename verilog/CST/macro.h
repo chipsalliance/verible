@@ -49,10 +49,10 @@ std::vector<verible::TreeSearchMatch> FindAllMacroDefinitionsArgs(
     const verible::Symbol&);
 
 // Returns the leaf containing the macro call name.
-const verible::TokenInfo& GetMacroCallId(const verible::Symbol&);
+const verible::TokenInfo* GetMacroCallId(const verible::Symbol&);
 
 // Returns the leaf containing the macro (as generic item) name.
-const verible::TokenInfo& GetMacroGenericItemId(const verible::Symbol&);
+const verible::TokenInfo* GetMacroGenericItemId(const verible::Symbol&);
 
 // Returns the node containing the macro call paren group
 const verible::SyntaxTreeNode* GetMacroCallParenGroup(const verible::Symbol& s);

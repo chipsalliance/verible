@@ -81,7 +81,7 @@ const verible::SyntaxTreeNode* GetInterfaceHeader(const verible::Symbol&);
 const verible::SyntaxTreeLeaf* GetModuleName(const verible::Symbol&);
 
 // Extract the subnode of an interface declaration that is the module name.
-const verible::TokenInfo& GetInterfaceNameToken(const verible::Symbol&);
+const verible::TokenInfo* GetInterfaceNameToken(const verible::Symbol&);
 
 // Returns the node spanning the module's port paren group, or nullptr.
 // e.g. from "module foo(input x); endmodule", this returns the node that spans
@@ -100,7 +100,7 @@ const verible::SyntaxTreeNode* GetModulePortDeclarationList(
 const verible::SyntaxTreeLeaf* GetModuleEndLabel(const verible::Symbol&);
 
 // Returns the node spanning module's Item list.
-const verible::SyntaxTreeNode& GetModuleItemList(
+const verible::SyntaxTreeNode* GetModuleItemList(
     const verible::Symbol& module_declaration);
 
 // Extract the subnode of a param declaration list from module decalration.

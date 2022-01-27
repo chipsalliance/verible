@@ -674,8 +674,8 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
     ExtractModuleOrInterfaceOrProgramHeader(declaration_node);
     ExtractModuleOrInterfaceOrProgramEnd(declaration_node);
 
-    const SyntaxTreeNode& item_list = GetModuleItemList(declaration_node);
-    Visit(item_list);
+    const SyntaxTreeNode* item_list = GetModuleItemList(declaration_node);
+    if (item_list) Visit(*item_list);
   }
 
   facts_tree_context_.top().NewChild(std::move(facts_node));
@@ -979,10 +979,11 @@ Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info) {
 
 void IndexingFactsTreeExtractor::ExtractMacroCall(
     const SyntaxTreeNode& macro_call) {
-  const TokenInfo& macro_call_name_token = GetMacroCallId(macro_call);
+  const TokenInfo* macro_call_name_token = GetMacroCallId(macro_call);
+  if (!macro_call_name_token) return;
   IndexingFactNode macro_node(
       IndexingNodeData(IndexingFactType::kMacroCall,
-                       GetMacroAnchorFromTokenInfo(macro_call_name_token)));
+                       GetMacroAnchorFromTokenInfo(*macro_call_name_token)));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1516,8 +1517,9 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
   } else {
     // 2nd => parameter int x;
     // Extract Param name.
-    param_node.Value().AppendAnchor(
-        Anchor(GetParameterNameToken(param_declaration)));
+    const TokenInfo* parameter_name = GetParameterNameToken(param_declaration);
+    if (!parameter_name) return;
+    param_node.Value().AppendAnchor(Anchor(*parameter_name));
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1539,9 +1541,11 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractParamByName(
     const SyntaxTreeNode& param_by_name) {
+  const verible::SyntaxTreeLeaf* named_param =
+      GetNamedParamFromActualParam(param_by_name);
+  if (!named_param) return;
   IndexingFactNode named_param_node(IndexingNodeData(
-      IndexingFactType::kNamedParam,
-      Anchor(GetNamedParamFromActualParam(param_by_name).get())));
+      IndexingFactType::kNamedParam, Anchor(named_param->get())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,

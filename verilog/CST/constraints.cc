@@ -43,11 +43,12 @@ bool IsOutOfLineConstraintDefinition(const verible::Symbol& symbol) {
   return IdIsQualified(*identifier_symbol);
 }
 
-const verible::TokenInfo& GetSymbolIdentifierFromConstraintDeclaration(
+const verible::TokenInfo* GetSymbolIdentifierFromConstraintDeclaration(
     const verible::Symbol& symbol) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kConstraintDeclaration, 2);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol))->get();
+  if (!identifier_symbol) return nullptr;
+  return &AutoUnwrapIdentifier(*identifier_symbol)->get();
 }
 
 }  // namespace verilog

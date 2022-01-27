@@ -83,9 +83,9 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
     const auto* type_info_symbol = GetParamTypeInfoSymbol(symbol);
     if (IsTypeInfoEmpty(*ABSL_DIE_IF_NULL(type_info_symbol))) {
       if (exempt_string_ && HasStringAssignment(symbol)) return;
-      const verible::TokenInfo& param_name = GetParameterNameToken(symbol);
+      const verible::TokenInfo* param_name = GetParameterNameToken(symbol);
       violations_.insert(LintViolation(
-          param_name, absl::StrCat(kMessage, "(", param_name.text(), ")."),
+          *param_name, absl::StrCat(kMessage, "(", param_name->text(), ")."),
           context));
     }
   }

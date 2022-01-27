@@ -37,7 +37,7 @@ std::vector<verible::TreeSearchMatch> FindAllConstraintDeclarations(
 
 bool IsOutOfLineConstraintDefinition(const verible::Symbol& symbol);
 
-const verible::TokenInfo& GetSymbolIdentifierFromConstraintDeclaration(
+const verible::TokenInfo* GetSymbolIdentifierFromConstraintDeclaration(
     const verible::Symbol& symbol);
 
 }  // namespace verilog

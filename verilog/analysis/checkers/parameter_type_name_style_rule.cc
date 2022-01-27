@@ -71,7 +71,7 @@ void ParameterTypeNameStyleRule::HandleSymbol(
     const verible::TokenInfo* param_name_token = nullptr;
     if (!IsParamTypeDeclaration(symbol)) return;
 
-    param_name_token = &GetSymbolIdentifierFromParamDeclaration(symbol);
+    param_name_token = GetSymbolIdentifierFromParamDeclaration(symbol);
     const auto param_name = param_name_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(param_name) ||
