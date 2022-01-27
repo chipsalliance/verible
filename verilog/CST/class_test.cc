@@ -77,7 +77,7 @@ TEST(GetClassNameTest, ClassName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : decls) {
-            const auto& type = GetClassName(*decl.match);
+            const auto* type = GetClassName(*decl.match);
             names.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return names;
@@ -166,9 +166,9 @@ TEST(GetClassMemberTest, GetMemberName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& decl : members) {
-            const auto& name =
+            const auto* name =
                 GetUnqualifiedIdFromHierarchyExtension(*decl.match);
-            names.emplace_back(TreeSearchMatch{&name, {/* ignored context */}});
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
         });
@@ -260,7 +260,7 @@ TEST(GetClassConstructorTest, GetConstructorBody) {
 
           std::vector<TreeSearchMatch> bodies;
           for (const auto& constructor : constructors) {
-            const auto& body =
+            const auto* body =
                 GetClassConstructorStatementList(*constructor.match);
             bodies.emplace_back(TreeSearchMatch{body, {/* ignored context */}});
           }

@@ -56,7 +56,7 @@ const verible::SyntaxTreeNode* GetClassItemList(const verible::Symbol&);
 
 // Returns the identifier from node tagged with kHierarchyExtension.
 // e.g from "instance1.x" => return "x".
-const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
+const verible::SyntaxTreeLeaf* GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol&);
 
 // Extract the subnode of a param declaration list from class decalration.

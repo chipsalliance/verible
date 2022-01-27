@@ -58,11 +58,13 @@ bool IsModuleOrInterfaceOrProgramDeclaration(
                                       NodeEnum::kProgramDeclaration});
 }
 
-const SyntaxTreeNode& GetModuleHeader(const Symbol& module_declaration) {
+const SyntaxTreeNode* GetModuleHeader(const Symbol& module_declaration) {
+  if (module_declaration.Kind() != verible::SymbolKind::kNode) return nullptr;
   const SyntaxTreeNode& module_node =
       verible::SymbolCastToNode(module_declaration);
-  CHECK_EQ(IsModuleOrInterfaceOrProgramDeclaration(module_node), true);
-  return verible::SymbolCastToNode(*module_node[0].get());
+  if (!IsModuleOrInterfaceOrProgramDeclaration(module_node)) return nullptr;
+  if (module_node.children().empty()) return nullptr;
+  return &verible::SymbolCastToNode(*module_node[0].get());
 }
 
 const SyntaxTreeNode* GetInterfaceHeader(const Symbol& module_symbol) {
@@ -72,8 +74,9 @@ const SyntaxTreeNode* GetInterfaceHeader(const Symbol& module_symbol) {
 }
 
 const verible::SyntaxTreeLeaf* GetModuleName(const Symbol& s) {
-  const auto& header_node = GetModuleHeader(s);
-  return verible::GetSubtreeAsLeaf(header_node, NodeEnum::kModuleHeader, 2);
+  const auto* header_node = GetModuleHeader(s);
+  if (!header_node) return nullptr;
+  return verible::GetSubtreeAsLeaf(*header_node, NodeEnum::kModuleHeader, 2);
 }
 
 const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
@@ -86,9 +89,10 @@ const TokenInfo& GetInterfaceNameToken(const Symbol& s) {
 
 const SyntaxTreeNode* GetModulePortParenGroup(
     const Symbol& module_declaration) {
-  const auto& header_node = GetModuleHeader(module_declaration);
+  const auto* header_node = GetModuleHeader(module_declaration);
+  if (!header_node) return nullptr;
   const auto* ports =
-      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 5);
+      verible::GetSubtreeAsSymbol(*header_node, NodeEnum::kModuleHeader, 5);
   return verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
 }
 
@@ -128,9 +132,10 @@ const verible::SyntaxTreeNode& GetModuleItemList(
 
 const verible::SyntaxTreeNode* GetParamDeclarationListFromModuleDeclaration(
     const verible::Symbol& module_declaration) {
-  const auto& header_node = GetModuleHeader(module_declaration);
+  const auto* header_node = GetModuleHeader(module_declaration);
+  if (!header_node) return nullptr;
   const verible::Symbol* param_declaration_list =
-      verible::GetSubtreeAsSymbol(header_node, NodeEnum::kModuleHeader, 4);
+      verible::GetSubtreeAsSymbol(*header_node, NodeEnum::kModuleHeader, 4);
   return verible::CheckOptionalSymbolAsNode(
       param_declaration_list, NodeEnum::kFormalParameterListDeclaration);
 }

@@ -89,11 +89,13 @@ const verible::SyntaxTreeNode* GetClassItemList(
       class_declaration, NodeEnum::kClassDeclaration, 1, NodeEnum::kClassItems);
 }
 
-const verible::SyntaxTreeLeaf& GetUnqualifiedIdFromHierarchyExtension(
+const verible::SyntaxTreeLeaf* GetUnqualifiedIdFromHierarchyExtension(
     const verible::Symbol& hierarchy_extension) {
-  return *AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(verible::GetSubtreeAsNode(
+  const verible::SyntaxTreeNode* unqualified = verible::GetSubtreeAsNode(
       hierarchy_extension, NodeEnum::kHierarchyExtension, 1,
-      NodeEnum::kUnqualifiedId)));
+      NodeEnum::kUnqualifiedId);
+  if (!unqualified) return nullptr;
+  return AutoUnwrapIdentifier(*unqualified);
 }
 
 const verible::SyntaxTreeNode* GetParamDeclarationListFromClassDeclaration(

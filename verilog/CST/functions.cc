@@ -108,7 +108,8 @@ const Symbol* GetFunctionFormalPortsGroup(const Symbol& function_decl) {
 const verible::SyntaxTreeLeaf* GetFunctionName(
     const verible::Symbol& function_decl) {
   const auto* function_id = GetFunctionId(function_decl);
-  return ABSL_DIE_IF_NULL(GetIdentifier(*function_id));
+  if (!function_id) return nullptr;
+  return GetIdentifier(*function_id);
 }
 
 const verible::SyntaxTreeNode* GetLocalRootFromFunctionCall(

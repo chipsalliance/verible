@@ -826,7 +826,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // section, otherwise, indent single statements here.
       // In the case of else-if, suppress further indentation, deferring to
       // the conditional construct.
-      const auto& subnode = GetSubtreeAsNode(node, tag, 0);
+      const auto* subnode = GetSubtreeAsNode(node, tag, 0);
       const auto next_indent = subnode && NodeIsConditionalOrBlock(*subnode)
                                    ? 0
                                    : style_.indentation_spaces;

@@ -118,20 +118,20 @@ const verible::SyntaxTreeNode* GetParamListFromDataDeclaration(
   return GetParamListFromInstantiationType(*instantiation_type);
 }
 
-const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+const verible::TokenInfo* GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol& gate_instance) {
   const verible::SyntaxTreeLeaf* instance_name =
       GetSubtreeAsLeaf(gate_instance, NodeEnum::kGateInstance, 0);
-  // TODO(hzeller): bubble up nullptr
-  return ABSL_DIE_IF_NULL(instance_name)->get();
+  if (!instance_name) return nullptr;
+  return &instance_name->get();
 }
 
-const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+const verible::TokenInfo* GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol& regiseter_variable) {
   const verible::SyntaxTreeLeaf* instance_name =
       GetSubtreeAsLeaf(regiseter_variable, NodeEnum::kRegisterVariable, 0);
-  // TODO(hzeller): bubble up nullptr.
-  return ABSL_DIE_IF_NULL(instance_name)->get();
+  if (!instance_name) return nullptr;
+  return &instance_name->get();
 }
 
 const verible::SyntaxTreeNode* GetParenGroupFromModuleInstantiation(
@@ -140,20 +140,20 @@ const verible::SyntaxTreeNode* GetParenGroupFromModuleInstantiation(
                           NodeEnum::kParenGroup);
 }
 
-const verible::SyntaxTreeLeaf&
+const verible::SyntaxTreeLeaf*
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign) {
-  const verible::Symbol* identifier = ABSL_DIE_IF_NULL(
-      GetSubtreeAsSymbol(variable_declaration_assign,
-                         NodeEnum::kVariableDeclarationAssignment, 0));
+  const verible::Symbol* identifier = GetSubtreeAsSymbol(
+      variable_declaration_assign, NodeEnum::kVariableDeclarationAssignment, 0);
+  if (!identifier) return nullptr;
   if (identifier->Kind() == verible::SymbolKind::kLeaf) {
     // This is a workaround for the below:
     // TODO(fangism): remove this condition after fixing the issue for "branch".
     // "riscv_instr          branch;"
     // issue on github: https://github.com/chipsalliance/verible/issues/547
-    return verible::SymbolCastToLeaf(*identifier);
+    return &verible::SymbolCastToLeaf(*identifier);
   }
-  return *AutoUnwrapIdentifier(*identifier);
+  return AutoUnwrapIdentifier(*identifier);
 }
 
 const verible::SyntaxTreeNode*

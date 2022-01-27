@@ -1069,8 +1069,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
   // Declare one (of potentially multiple) instances in a single declaration
   // statement.
   void DeclareInstance(const SyntaxTreeNode& instance) {
-    const absl::string_view instance_name(
-        GetModuleInstanceNameTokenInfoFromGateInstance(instance).text());
+    const verible::TokenInfo* instance_name_token =
+        GetModuleInstanceNameTokenInfoFromGateInstance(instance);
+    if (!instance_name_token) return;
+    const absl::string_view instance_name(instance_name_token->text());
     const SymbolTableNode& new_instance(EmplaceTypedElementInCurrentScope(
         instance, instance_name, SymbolMetaType::kDataNetVariableInstance));
 
@@ -1117,12 +1119,13 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DeclareVariable(const SyntaxTreeNode& variable) {
-    const absl::string_view var_name(
-        GetUnqualifiedIdFromVariableDeclarationAssignment(variable)
-            .get()
-            .text());
-    EmplaceTypedElementInCurrentScope(variable, var_name,
-                                      SymbolMetaType::kDataNetVariableInstance);
+    const SyntaxTreeLeaf* unqualified_id =
+        GetUnqualifiedIdFromVariableDeclarationAssignment(variable);
+    if (unqualified_id) {
+      const absl::string_view var_name(unqualified_id->get().text());
+      EmplaceTypedElementInCurrentScope(
+          variable, var_name, SymbolMetaType::kDataNetVariableInstance);
+    }
     Descend(variable);
   }
 

@@ -56,7 +56,8 @@ const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const Symbol& symbol) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 3);
-  return AutoUnwrapIdentifier(*ABSL_DIE_IF_NULL(identifier_symbol));
+  if (!identifier_symbol) return nullptr;
+  return AutoUnwrapIdentifier(*identifier_symbol);
 }
 
 const SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(

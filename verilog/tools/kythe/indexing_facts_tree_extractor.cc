@@ -875,9 +875,11 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     IndexingFactNode module_instance_node(
         IndexingNodeData{IndexingFactType::kModuleInstance});
 
-    const TokenInfo& variable_name =
+    const TokenInfo* variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
-    module_instance_node.Value().AppendAnchor(Anchor(variable_name));
+    if (variable_name) {
+      module_instance_node.Value().AppendAnchor(Anchor(*variable_name));
+    }
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1292,8 +1294,13 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
   // that last node.
   MoveAndDeleteLastExtractedNode(member_node);
 
-  member_node.Value().AppendAnchor(Anchor(  // member name
-      GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node).get()));
+  {
+    const verible::SyntaxTreeLeaf* unqualified =
+        GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node);
+    // member name
+    if (unqualified)
+      member_node.Value().AppendAnchor(Anchor(unqualified->get()));
+  }
 
   facts_tree_context_.top().NewChild(std::move(member_node));
 }
@@ -1392,9 +1399,12 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
     const SyntaxTreeNode& register_variable) {
+  const TokenInfo* instance_name =
+      GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
+  if (!instance_name) return;
+
   IndexingFactNode variable_node(IndexingNodeData(
-      IndexingFactType::kVariableDefinition,
-      Anchor(GetInstanceNameTokenInfoFromRegisterVariable(register_variable))));
+      IndexingFactType::kVariableDefinition, Anchor(*instance_name)));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1418,11 +1428,12 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
 
 void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
     const SyntaxTreeNode& variable_declaration_assignment) {
-  IndexingFactNode variable_node(
-      IndexingNodeData(IndexingFactType::kVariableDefinition,
-                       Anchor(GetUnqualifiedIdFromVariableDeclarationAssignment(
-                                  variable_declaration_assignment)
-                                  .get())));
+  const SyntaxTreeLeaf* unqualified_id =
+      GetUnqualifiedIdFromVariableDeclarationAssignment(
+          variable_declaration_assignment);
+  if (!unqualified_id) return;
+  IndexingFactNode variable_node(IndexingNodeData(
+      IndexingFactType::kVariableDefinition, Anchor(unqualified_id->get())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,

@@ -622,7 +622,7 @@ TEST(GetFunctionHeaderTest, GetFunctionClassCallName) {
 
           std::vector<TreeSearchMatch> names;
           for (const auto& Call : calls) {
-            const auto& name =
+            const auto* name =
                 GetFunctionCallNameFromCallExtension(*Call.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
@@ -737,7 +737,7 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
 
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
-            const auto& paren_group = GetParenGroupFromCall(*decl.match);
+            const auto* paren_group = GetParenGroupFromCall(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
@@ -769,7 +769,7 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
 
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto& decl : instances) {
-            const auto& paren_group =
+            const auto* paren_group =
                 GetParenGroupFromCallExtension(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});

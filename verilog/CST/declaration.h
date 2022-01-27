@@ -126,18 +126,18 @@ const verible::SyntaxTreeNode* GetParenGroupFromModuleInstantiation(
 
 // For a given gate instance subtree returns the TokenInfo of the module name.
 // e.g. "bar b1();" returns TokenInfo for "b1".
-const verible::TokenInfo& GetModuleInstanceNameTokenInfoFromGateInstance(
+const verible::TokenInfo* GetModuleInstanceNameTokenInfoFromGateInstance(
     const verible::Symbol&);
 
 // For a given register variable subtree returns the TokenInfo of the instance
 // name. e.g. "int b1;" returns TokenInfo for "b1".
-const verible::TokenInfo& GetInstanceNameTokenInfoFromRegisterVariable(
+const verible::TokenInfo* GetInstanceNameTokenInfoFromRegisterVariable(
     const verible::Symbol&);
 
 // For a given node tagged with kVariableDeclarationAssign return the
 // unqualified id inside that node.
 // e.g from "int x" or "logic x" or "bit x" return the leaf spanning "x".
-const verible::SyntaxTreeLeaf&
+const verible::SyntaxTreeLeaf*
 GetUnqualifiedIdFromVariableDeclarationAssignment(
     const verible::Symbol& variable_declaration_assign);
 
