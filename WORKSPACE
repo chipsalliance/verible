@@ -119,25 +119,12 @@ http_archive(
     ],
 )
 
-# We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
-# part of the protobuf release yet
-# (https://github.com/protocolbuffers/protobuf/issues/5918).
-http_archive(
-    name = "net_zlib",
-    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
-)
-
 http_archive(
     name = "com_google_protobuf",
-    repo_mapping = {"@zlib": "@net_zlib"},
-    sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
-    strip_prefix = "protobuf-3.13.0",
+    sha256 = "6b6bf5cd8d0cca442745c4c3c9f527c83ad6ef35a405f64db5215889ac779b42",
+    strip_prefix = "protobuf-3.19.3",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.19.3.zip",
     ],
 )
 
