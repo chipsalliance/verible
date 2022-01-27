@@ -680,10 +680,11 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
     CreateTokenInfosExternalStringBuffer(ftokens_);
 
-    auto must_wrap_pre_format_tokens = verible::iterator_range(
+    using ItType = std::vector<PreFormatToken>::iterator;
+    auto must_wrap_pre_format_tokens = verible::iterator_range<ItType>(
         pre_format_tokens_.begin(),
         pre_format_tokens_.begin() + number_of_tokens_in_set);
-    auto joinable_pre_format_tokens = verible::iterator_range(
+    auto joinable_pre_format_tokens = verible::iterator_range<ItType>(
         pre_format_tokens_.begin() + number_of_tokens_in_set,
         pre_format_tokens_.end());
 
