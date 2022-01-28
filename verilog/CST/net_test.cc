@@ -44,7 +44,6 @@
 namespace verilog {
 namespace {
 
-using verible::SyntaxTreeSearchTestCase;
 using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
