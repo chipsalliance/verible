@@ -64,6 +64,12 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 # This option is only recognized by gcc
 if [[ ! "${CXX}" == clang* ]]; then
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
+  # Once we use gcc-11 this might be needed for protobuf
+  #BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-stringop-overflow"
+else
+  # -- only recognized by clang
+  # Don't rely on implicit template type deduction
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
 fi
 
 case "$MODE" in
