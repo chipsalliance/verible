@@ -745,6 +745,7 @@ cc_library(
     deps = [
         ":declaration",
         ":identifier",
+        ":type",
         ":verilog_matchers",  # fixdeps: keep
         "//common/analysis:syntax_tree_search",
         "//common/analysis/matcher",
