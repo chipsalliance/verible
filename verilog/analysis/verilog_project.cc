@@ -253,16 +253,6 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
       resolved_filename, absl::make_unique<InMemoryVerilogSourceFile>(
                              resolved_filename, content, /*corpus=*/""));
   CHECK(inserted.second);
-  const auto file_iter = inserted.first;
-
-  // Register the file's contents range in string_view_map_.
-  string_view_map_.must_emplace(content);
-
-  // Map the start of the file's contents to its corresponding owner
-  // VerilogSourceFile.
-  const auto map_inserted =
-      buffer_to_analyzer_map_.emplace(content.begin(), file_iter);
-  CHECK(map_inserted.second);
 }
 
 std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
