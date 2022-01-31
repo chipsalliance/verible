@@ -743,6 +743,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   if (tag == NodeEnum::kPortDeclaration) {
     const SyntaxTreeLeaf* leaf =
         GetIdentifierFromModulePortDeclaration(module_port_node);
+    if (!leaf) return;
 
     facts_tree_context_.top().NewChild(IndexingNodeData(
         IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
@@ -751,6 +752,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     // module m(a, b);
     const SyntaxTreeLeaf* leaf =
         GetIdentifierFromPortReference(module_port_node);
+    if (!leaf) return;
 
     if (has_propagated_type) {
       // Check if the last type was not a primitive type.
@@ -835,8 +837,10 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
       GetSymbolIdentifierFromIdentifierUnpackedDimensions(
           identifier_unpacked_dimension);
 
-  facts_tree_context_.top().NewChild(IndexingNodeData(
-      IndexingFactType::kVariableDefinition, Anchor(port_name_leaf->get())));
+  if (port_name_leaf) {
+    facts_tree_context_.top().NewChild(IndexingNodeData(
+        IndexingFactType::kVariableDefinition, Anchor(port_name_leaf->get())));
+  }
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramEnd(
@@ -1140,6 +1144,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       // port variable name.
       const SyntaxTreeLeaf* port_identifier =
           GetIdentifierFromTaskFunctionPortItem(*port.match);
+      if (!port_identifier) continue;
 
       // variable identifier node.
       IndexingFactNode variable_node(
@@ -1271,7 +1276,9 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
   {
     const SyntaxTreeLeaf* fun_call =
         GetFunctionCallNameFromCallExtension(call_extension_node);
-    if (fun_call) function_node.Value().AppendAnchor(Anchor(fun_call->get()));
+    if (fun_call) {
+      function_node.Value().AppendAnchor(Anchor(fun_call->get()));
+    }
   }
 
   {
@@ -1299,8 +1306,9 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
     const verible::SyntaxTreeLeaf* unqualified =
         GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node);
     // member name
-    if (unqualified)
+    if (unqualified) {
       member_node.Value().AppendAnchor(Anchor(unqualified->get()));
+    }
   }
 
   facts_tree_context_.top().NewChild(std::move(member_node));
@@ -1315,8 +1323,9 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
                                               &class_node);
     // Extract class name.
     const SyntaxTreeLeaf* class_name = GetClassName(class_declaration);
-    if (class_name)
+    if (class_name) {
       facts_tree_context_.top().Value().AppendAnchor(Anchor(class_name->get()));
+    }
 
     // Extract class name after endclass.
     const SyntaxTreeLeaf* class_end_name = GetClassEndLabel(class_declaration);
@@ -1746,6 +1755,7 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
   // Extract enum type name.
   const SyntaxTreeLeaf* enum_type_name =
       GetIdentifierFromTypeDeclaration(enum_type_declaration);
+  if (!enum_type_name) return;
   facts_tree_context_.top().NewChild(IndexingNodeData(
       IndexingFactType::kVariableDefinition, Anchor(enum_type_name->get())));
 
@@ -1831,6 +1841,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
   std::pair<const SyntaxTreeLeaf*, int> variable_name =
       GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
           data_type_implicit_id_dimensions);
+  if (!variable_name.first) return;
 
   IndexingFactNode variable_node(
       IndexingNodeData(IndexingFactType::kVariableDefinition,
