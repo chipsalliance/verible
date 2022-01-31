@@ -1553,7 +1553,28 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
 
   // Then fuse 'else' and 'begin' partitions together
   // or fuse the 'else' and 'if' (header) partitions together
-  auto& else_partition = partition.Children().front();
+  auto& children = partition.Children();
+  auto else_partition_iter = std::find_if(
+      children.begin(), children.end(), [](const TokenPartitionTree& n) {
+        const auto* origin = n.Value().Origin();
+        return origin &&
+               origin->Tag() == verible::LeafTag(verilog_tokentype::TK_else);
+      });
+  if (else_partition_iter == children.end()) return;
+
+  auto& else_partition = *else_partition_iter;
+  auto* next_leaf = else_partition.NextLeaf();
+  if (!next_leaf || PartitionIsForcedIntoNewLine(*next_leaf)) return;
+
+  const auto* next_origin = next_leaf->Value().Origin();
+  if (!next_origin ||
+      !(next_origin->Tag() == verible::NodeTag(NodeEnum::kBegin) ||
+        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_begin) ||
+        next_origin->Tag() == verible::NodeTag(NodeEnum::kIfHeader) ||
+        next_origin->Tag() == verible::NodeTag(NodeEnum::kGenerateIfHeader) ||
+        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_if)))
+    return;
+
   verible::MergeLeafIntoNextLeaf(&else_partition);
 }
 
