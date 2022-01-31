@@ -87,8 +87,8 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
     const verible::Symbol& symbol, const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (!NumberMatcher().Matches(symbol, &manager)) return;
-  const auto width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
-  const auto literal_node = manager.GetAs<SyntaxTreeNode>("literal");
+  const auto* width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
+  const auto* literal_node = manager.GetAs<SyntaxTreeNode>("literal");
   if (!width_leaf || !literal_node) return;
 
   const auto width_text = width_leaf->get().text();
@@ -96,8 +96,10 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
   if (!absl::SimpleAtoi(width_text, &width)) return;
 
   const auto& base_digit_part = literal_node->children();
-  auto base_leaf = down_cast<const SyntaxTreeLeaf*>(base_digit_part[0].get());
-  auto digits_leaf = down_cast<const SyntaxTreeLeaf*>(base_digit_part[1].get());
+  const auto* base_leaf =
+      down_cast<const SyntaxTreeLeaf*>(base_digit_part[0].get());
+  const auto* digits_leaf =
+      down_cast<const SyntaxTreeLeaf*>(base_digit_part[1].get());
 
   const auto base_text = base_leaf->get().text();
   const auto digits_text = digits_leaf->get().text();

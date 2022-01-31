@@ -99,8 +99,8 @@ void LintStatusFormatter::FormatLintRuleStatuses(
   std::set<LintViolationWithStatus> violations;
 
   // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
-  for (auto& status : statuses) {
-    for (auto& violation : status.violations) {
+  for (const auto& status : statuses) {
+    for (const auto& violation : status.violations) {
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }

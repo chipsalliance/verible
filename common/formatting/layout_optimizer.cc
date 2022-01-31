@@ -86,7 +86,7 @@ int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
   for (const auto& child : partition.Children()) {
     CHECK_EQ(child.Value().PartitionPolicy(), PartitionPolicyEnum::kInline);
     if (child.Value().TokensRange().begin() != tokens.begin()) {
-      auto& first_token = child.Value().TokensRange().front();
+      const auto& first_token = child.Value().TokensRange().front();
       // Substract spacing added in the loop above
       width -= first_token.before.spaces_required;
     }

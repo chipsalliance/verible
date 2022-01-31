@@ -68,10 +68,10 @@ const char* ProjectPolicy::MatchesAnyExclusions(
 }
 
 bool ProjectPolicy::IsValid() const {
-  for (const auto rule : disabled_rules) {
+  for (const auto& rule : disabled_rules) {
     if (!analysis::IsRegisteredLintRule(rule)) return false;
   }
-  for (const auto rule : enabled_rules) {
+  for (const auto& rule : enabled_rules) {
     if (!analysis::IsRegisteredLintRule(rule)) return false;
   }
   return true;
@@ -211,11 +211,11 @@ void LinterConfiguration::UseProjectPolicy(const ProjectPolicy& policy,
   if (const char* matched_path = policy.MatchesAnyPath(filename)) {
     VLOG(1) << "File \"" << filename << "\" matches path \"" << matched_path
             << "\" from project policy [" << policy.name << "], applying it.";
-    for (const auto rule : policy.disabled_rules) {
+    for (const auto& rule : policy.disabled_rules) {
       VLOG(1) << "  disabling rule: " << rule;
       TurnOff(rule);
     }
-    for (const auto rule : policy.enabled_rules) {
+    for (const auto& rule : policy.enabled_rules) {
       VLOG(1) << "  enabling rule: " << rule;
       TurnOn(rule);
     }

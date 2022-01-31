@@ -365,7 +365,7 @@ static absl::Status WaiveCommandHandler(
           try {
             waiver->WaiveWithRegex(rule, regex);
           } catch (const std::regex_error& e) {
-            auto* reason = e.what();
+            const char* reason = e.what();
 
             return WaiveCommandError(regex_token_pos, waive_file,
                                      "Invalid regex: ", reason);

@@ -84,8 +84,8 @@ std::set<LintViolationWithStatus> GetSortedViolations(
     const std::vector<LintRuleStatus>& statuses) {
   std::set<LintViolationWithStatus> violations;
 
-  for (auto& status : statuses) {
-    for (auto& violation : status.violations) {
+  for (const auto& status : statuses) {
+    for (const auto& violation : status.violations) {
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }

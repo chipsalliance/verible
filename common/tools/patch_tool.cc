@@ -36,7 +36,7 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError(
         "Missing patchfile argument.  Use '-' for stdin.");
   }
-  const auto patchfile = args[0];
+  const char* patchfile = args[0];
   std::string patch_contents;
   if (auto status = verible::file::GetContents(patchfile, &patch_contents);
       !status.ok()) {
@@ -64,7 +64,7 @@ static absl::Status ApplyPick(const SubcommandArgsRange& args,
   if (args.empty()) {
     return absl::InvalidArgumentError("Missing patchfile argument.");
   }
-  const auto patchfile = args[0];
+  const char* patchfile = args[0];
   std::string patch_contents;
   if (auto status = verible::file::GetContents(patchfile, &patch_contents);
       !status.ok()) {

@@ -35,7 +35,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError(
         "Missing file argument.  Use '-' for stdin.");
   }
-  const auto source_file = args[0];
+  const char* source_file = args[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {

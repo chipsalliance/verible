@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
 
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
-  for (const auto filename :
+  for (const char* filename :
        verible::make_range(args.begin() + 1, args.end())) {
     std::string content;
     if (!verible::file::GetContents(filename, &content).ok()) {

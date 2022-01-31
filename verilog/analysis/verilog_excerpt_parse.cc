@@ -134,8 +134,8 @@ std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogWithMode(
           {"parse-as-property-spec", &AnalyzeVerilogPropertySpec},
           {"parse-as-library-map", &AnalyzeVerilogLibraryMap},
       };
-  auto func_ptr = FindOrNull(*func_map, mode);
-  if (func_ptr == nullptr) return nullptr;
+  const auto* func_ptr = FindOrNull(*func_map, mode);
+  if (!func_ptr) return nullptr;
   return (*func_ptr)(text, filename);
 }
 

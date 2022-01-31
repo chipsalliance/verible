@@ -62,7 +62,7 @@ const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
 
 const SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
     const Symbol& symbol) {
-  if (auto dir_symbol =
+  if (const auto* dir_symbol =
           GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 0)) {
     return &SymbolCastToLeaf(*dir_symbol);
   }
