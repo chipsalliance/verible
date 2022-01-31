@@ -3,11 +3,18 @@
 # TODO(hzeller) fix and re-enable clang-analyzer checks.
 # TODO(hzeller) Looking over magic numbers might be good, but probably
 #               not worthwhile hard-failing
-# TODO(hzeller) Fix qualified auto readability suggestions and enable.
 # TODO(hzeller) Explore anofalloff suggestions.
+#
 # readability-make-member-function-const is great, but it also suggests that
 #    in cases where we return a non-const pointer. So good to check, not by
 #    default.
+#
+# readability-qualified-auto is useful in general, however it suggests
+#    to convert iterators (e.g. std::string_view::begin()) to the pointer it
+#    returns; however since the iterator is implementation defined, this is not
+#    a valid assertion. Running the check every now and then manually and
+#    fixing all the non-iterator cases is useful though. Off by default.
+##
 Checks: >
   clang-diagnostic-*,clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
@@ -16,32 +23,33 @@ Checks: >
   abseil-*,-abseil-no-namespace,
   readability-*,
   -readability-braces-around-statements,
-  -readability-named-parameter,
-  -readability-isolate-declaration,
-  -readability-redundant-access-specifiers,
-  -readability-implicit-bool-conversion,
-  -readability-magic-numbers,
   -readability-else-after-return,
-  -readability-qualified-auto,
-  -readability-use-anyofallof,
-  -readability-make-member-function-const,
   -readability-function-cognitive-complexity,
+  -readability-implicit-bool-conversion,
+  -readability-isolate-declaration,
+  -readability-magic-numbers,
+  -readability-make-member-function-const,
+  -readability-named-parameter,
+  -readability-qualified-auto,
+  -readability-redundant-access-specifiers,
+  -readability-use-anyofallof,
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,
   performance-*,
   bugprone-*,
-  -bugprone-narrowing-conversions,
   -bugprone-branch-clone,
-  -bugprone-reserved-identifier,
-  -bugprone-move-forwarding-reference,
+  -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
+  -bugprone-move-forwarding-reference,
+  -bugprone-narrowing-conversions,
+  -bugprone-reserved-identifier,
   modernize-use-override,
   misc-*,
-  -misc-non-private-member-variables-in-classes,
   -misc-no-recursion,
-  -misc-unused-parameters,
+  -misc-non-private-member-variables-in-classes,
   -misc-redundant-expression,
+  -misc-unused-parameters,
 
 WarningsAsErrors: ''
 HeaderFilterRegex: ''

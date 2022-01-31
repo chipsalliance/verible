@@ -509,7 +509,7 @@ static void DeterminePartitionExpansion(
         // end
         const auto& children_tmp = node->Children();
         auto look_for_arglist = [](const partition_node_type& child) {
-          auto& node_view_child = child.Value();
+          const auto& node_view_child = child.Value();
           const UnwrappedLine& uwline_child = node_view_child.Value();
           return (uwline_child.Origin() &&
                   uwline_child.Origin()->Kind() == verible::SymbolKind::kNode &&

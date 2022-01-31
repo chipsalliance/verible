@@ -68,7 +68,8 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
   if (AlwaysCombMatcher().Matches(symbol, &manager)) {
     for (const auto& match :
          SearchSyntaxTree(symbol, NodekNonblockingAssignmentStatement())) {
-      auto* node = dynamic_cast<const verible::SyntaxTreeNode*>(match.match);
+      const auto* node =
+          dynamic_cast<const verible::SyntaxTreeNode*>(match.match);
 
       if (node == nullptr) continue;
 

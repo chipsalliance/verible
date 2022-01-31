@@ -1179,7 +1179,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
 
       // Remaining tokens
       for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) {
-        auto& token = *it;
+        const auto& token = *it;
         const auto whitespace = token.OriginalLeadingSpaces();
         VLOG(5) << "token: \"" << EscapeString(whitespace)
                 << EscapeString(token.Text()) << '\"';

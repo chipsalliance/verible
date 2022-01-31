@@ -87,14 +87,14 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
           LintViolation(identifier_leaf->get(), kMessage, context));
   } else if (NetMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
-    for (auto& leaf : identifier_leaves) {
+    for (const auto* leaf : identifier_leaves) {
       const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name))
         violations_.insert(LintViolation(*leaf, kMessage, context));
     }
   } else if (DataMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
-    for (auto& leaf : identifier_leaves) {
+    for (const auto* leaf : identifier_leaves) {
       const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name))
         violations_.insert(LintViolation(*leaf, kMessage, context));

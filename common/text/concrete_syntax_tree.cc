@@ -67,7 +67,7 @@ const SymbolPtr& SyntaxTreeNode::operator[](const size_t i) const {
 // visits self, then forwards visitor to every child
 void SyntaxTreeNode::Accept(TreeVisitorRecursive* visitor) const {
   visitor->Visit(*this);
-  for (auto& child : children_) {
+  for (const auto& child : children_) {
     if (child != nullptr) child->Accept(visitor);
   }
 }

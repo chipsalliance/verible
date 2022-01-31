@@ -95,7 +95,8 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
   // Check for forbidden function names
   verible::matcher::BoundSymbolManager manager;
   if (FunctionMatcher().Matches(symbol, &manager)) {
-    if (auto function_id = manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
+    if (const auto* function_id =
+            manager.GetAs<verible::SyntaxTreeLeaf>("id")) {
       const auto& bfs = ForbiddenFunctionsSet();
       if (bfs.find(std::string(function_id->get().text())) != bfs.end()) {
         violations_.insert(LintViolation(function_id->get(),
@@ -107,8 +108,9 @@ void VoidCastRule::HandleSymbol(const verible::Symbol& symbol,
   // Check for forbidden calls to randomize
   manager.Clear();
   if (RandomizeMatcher().Matches(symbol, &manager)) {
-    if (auto randomize_node = manager.GetAs<verible::SyntaxTreeNode>("id")) {
-      auto leaf_ptr = verible::GetLeftmostLeaf(*randomize_node);
+    if (const auto* randomize_node =
+            manager.GetAs<verible::SyntaxTreeNode>("id")) {
+      const auto* leaf_ptr = verible::GetLeftmostLeaf(*randomize_node);
       const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
       violations_.insert(LintViolation(
           token, "randomize() is forbidden within void casts", context));

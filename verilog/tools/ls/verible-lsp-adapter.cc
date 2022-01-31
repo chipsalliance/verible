@@ -72,9 +72,9 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
                   verible::AnalysisPhase phase, absl::string_view token_text,
                   absl::string_view context_line, const std::string &msg) {
           // Note: msg is currently empty and not useful.
-          const auto message = (phase == verible::AnalysisPhase::kLexPhase)
-                                   ? "token error"
-                                   : "syntax error";
+          const char *message = (phase == verible::AnalysisPhase::kLexPhase)
+                                    ? "token error"
+                                    : "syntax error";
           result.emplace_back(verible::lsp::Diagnostic{
               .range{.start{.line = range.start.line,
                             .character = range.start.column},
