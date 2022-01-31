@@ -23,7 +23,6 @@ namespace verilog {
 namespace formatter {
 namespace {
 
-using ::verible::PreFormatToken;
 using FTT = FormatTokenType;
 
 // Test that GetFormatTokenType() correctly converts a TokenInfo enum to FTT

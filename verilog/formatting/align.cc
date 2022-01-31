@@ -60,7 +60,6 @@ using verible::SyntaxTreePath;
 using verible::TaggedTokenPartitionRange;
 using verible::TokenPartitionRange;
 using verible::TokenPartitionTree;
-using verible::TreeContextPathVisitor;
 using verible::TreePathFormatter;
 using verible::ValueSaver;
 
