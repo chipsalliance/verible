@@ -1,5 +1,4 @@
 centos:7
-centos:8
 ubuntu:bionic
 ubuntu:focal
 ubuntu:jammy
