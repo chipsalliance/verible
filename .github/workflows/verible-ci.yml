@@ -125,8 +125,8 @@ jobs:
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/home/runner/.cache/bazel"
-        key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_${{ matrix.mode }}_
+        key: bazelcache1_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache1_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
@@ -259,8 +259,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: "/private/var/tmp/_bazel_runner"
-        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos_
+        key: bazelcache_macos1_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_macos1_
 
     - name: Tests
       run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
@@ -286,8 +286,8 @@ jobs:
       if: false
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows2_
+        key: bazelcache_windows3_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows3_
 
     - name: Install dependencies
       run: choco install llvm
