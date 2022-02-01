@@ -64,6 +64,7 @@ cc_library(
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
+    visibility = ["//visibility:public"],
     deps = [
         ":lsp-parse-buffer",
         ":verible-lsp-adapter",
