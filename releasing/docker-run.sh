@@ -72,8 +72,7 @@ case "$TARGET_OS" in
   ;;
   centos)
     # Compiler
-    [ "$TARGET_VERSION" = 8 ] && _version="$TARGET_VERSION" || _version="common"
-    cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
+    cat ${TARGET_OS}/common/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
     # Bazel
     cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;

@@ -12,9 +12,10 @@ RedHat Enterprise Linux support).
 Currently supported Linux distributions are:
 
 - CentOS 7
-- CentOS 8
 - Ubuntu Xenial (16.04 LTS)
 - Ubuntu Bionic (18.04 LTS)
 - Ubuntu Eoan (19.10)
 - Ubuntu Focal (20.04 LTS)
 - Ubuntu Groovy (20.10)
+
+Note that CentOS 8 was EOL on December 2021 but CentOS 7 is still supported until 2024.
