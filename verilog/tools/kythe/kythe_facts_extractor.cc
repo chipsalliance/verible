@@ -943,6 +943,14 @@ void KytheFactsExtractor::ReferenceMacroCall(
 
 VName KytheFactsExtractor::DeclareFunctionOrTask(
     const IndexingFactNode& function_fact_node) {
+  // TODO(hzeller): null check added. Underlying issue
+  // needs more investigation; was encountered at
+  // https://chipsalliance.github.io/sv-tests-results/?v=veribleextractor+ivtest+regress-vlg_pr1628300_iv
+  if (function_fact_node.Value().Anchors().empty()) {
+    LOG(ERROR) << FilePath() << ": encountered empty function name";
+    return VName();
+  }
+
   const auto& function_name = function_fact_node.Value().Anchors()[0];
 
   const VName function_vname = {
@@ -1130,8 +1138,18 @@ void KytheFactsExtractor::ReferencePackageImport(
     const VName current_anchor = CreateAnchor(package_name_anchor);
     CreateEdge(current_anchor, kEdgeRefImports, *definition_vnames[0].first);
 
-    scope_resolver_->AddDefinitionToCurrentScope(*definition_vnames[0].first);
-    scope_resolver_->AppendScopeToCurrentScope(*definition_vnames[0].second);
+    // TODO(hzeller): null check added. Underlying issue of nullptr
+    // scope needs more investigation; was encountered at
+    // https://chipsalliance.github.io/sv-tests-results/?v=veribleextractor+hdlconv_std2017+hdlconvertor_std2017_p600
+    if (const VName* vname = definition_vnames[0].first; vname)
+      scope_resolver_->AddDefinitionToCurrentScope(*vname);
+    else
+      LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL vname";
+
+    if (const Scope* scope = definition_vnames[0].second; scope)
+      scope_resolver_->AppendScopeToCurrentScope(*scope);
+    else
+      LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL scope";
   }
 }
 
