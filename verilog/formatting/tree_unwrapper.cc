@@ -1553,7 +1553,28 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
 
   // Then fuse 'else' and 'begin' partitions together
   // or fuse the 'else' and 'if' (header) partitions together
-  auto& else_partition = partition.Children().front();
+  auto& children = partition.Children();
+  auto else_partition_iter = std::find_if(
+      children.begin(), children.end(), [](const TokenPartitionTree& n) {
+        const auto* origin = n.Value().Origin();
+        return origin &&
+               origin->Tag() == verible::LeafTag(verilog_tokentype::TK_else);
+      });
+  if (else_partition_iter == children.end()) return;
+
+  auto& else_partition = *else_partition_iter;
+  auto* next_leaf = else_partition.NextLeaf();
+  if (!next_leaf || PartitionIsForcedIntoNewLine(*next_leaf)) return;
+
+  const auto* next_origin = next_leaf->Value().Origin();
+  if (!next_origin ||
+      !(next_origin->Tag() == verible::NodeTag(NodeEnum::kBegin) ||
+        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_begin) ||
+        next_origin->Tag() == verible::NodeTag(NodeEnum::kIfHeader) ||
+        next_origin->Tag() == verible::NodeTag(NodeEnum::kGenerateIfHeader) ||
+        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_if)))
+    return;
+
   verible::MergeLeafIntoNextLeaf(&else_partition);
 }
 
@@ -1967,14 +1988,20 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       //     after better handling of function calls inside expressions
       //     e.g. kBinaryExpression, kUnaryPrefixExpression...
       if (partition.Children().size() > 1) {
-        auto& if_header_partition = partition.Children()[0];
-        const auto original_indentation =
-            if_header_partition.Value().IndentationSpaces();
-        // Adjust indentation recursively
-        verible::AdjustIndentationRelative(&partition, style.wrap_spaces);
-        // Restore original indentation in first partition
-        partition.Value().SetIndentationSpaces(original_indentation);
-        if_header_partition.Value().SetIndentationSpaces(original_indentation);
+        auto if_header_partition_iter = std::find_if(
+            partition.Children().begin(), partition.Children().end(),
+            [](const TokenPartitionTree& n) {
+              const auto* origin = n.Value().Origin();
+              return origin && origin->Tag() ==
+                                   verible::LeafTag(verilog_tokentype::TK_if);
+            });
+        if (if_header_partition_iter == partition.Children().end()) break;
+
+        // Adjust indentation of all partitions following if header recursively
+        for (auto& child : make_range(if_header_partition_iter + 1,
+                                      partition.Children().end())) {
+          verible::AdjustIndentationRelative(&child, style.wrap_spaces);
+        }
       }
       break;
     }
