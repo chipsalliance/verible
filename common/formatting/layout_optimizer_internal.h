@@ -649,17 +649,10 @@ class LayoutFunctionFactory {
       absl::FixedArray<LayoutFunction> results_i(size - i);
       LayoutFunction incremental = lfs[i];
       for (int j = i; j < size - 1; ++j) {
-        auto result_j = Stack({
+        results_i[j - i] = Stack({
             incremental,
             results[j + 1],
         });
-        // Penalty used to favor layouts with elements packed into earlier
-        // lines.
-        static const float kEarlierLinesFavoringPenalty = 1e-3;
-        for (auto& segment : result_j)
-          segment.intercept += style_.line_break_penalty +
-                               kEarlierLinesFavoringPenalty * (lfs.size() - j);
-        results_i[j - i] = std::move(result_j);
 
         const auto& next_element = lfs[j + 1];
 
@@ -667,12 +660,13 @@ class LayoutFunctionFactory {
         if (next_element.MustWrap())
           incremental = Stack(layout_functions);
         else
-          incremental = Choice(
-              {Juxtaposition(layout_functions), Stack(layout_functions)});
+          incremental = Juxtaposition(layout_functions);
       }
       results_i.back() = std::move(incremental);
 
-      results[i] = Choice(results_i.begin(), results_i.end());
+      // Using reverse range to favor layouts with elements packed in earlier
+      // lines.
+      results[i] = Choice(results_i.rbegin(), results_i.rend());
     }
     return results[0];
   }
