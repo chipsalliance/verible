@@ -58,7 +58,8 @@ export ASAN_OPTIONS="exitcode=140"
 readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
                                lint/verible-verilog-lint \
                                formatter/verible-verilog-format \
-                               project/verible-verilog-project"
+                               project/verible-verilog-project \
+                               kythe/verible-verilog-kythe-extractor"
 
 # A few projects that can be fetched from git and represent a good
 # cross-section of different styles.
@@ -145,8 +146,15 @@ function run_smoke_test() {
     local short_tool_name=$(dirname ${tool})
 
     while read single_file; do
+      # TODO(hzeller) the project tool and kythe extractor are meant to run
+      # on a bunch of files not individual files. Create a complete file-list
       if [[ $tool == *-project ]]; then
         EXTRA_PARAM="symbol-table-defs --file_list_root=/ --file_list_path"
+        # a <(echo $single_file) does not work, so use actual file.
+        echo ${single_file} > ${PROJECT_FILE_LIST}
+        file_param="${PROJECT_FILE_LIST}"
+       elif [[ $tool == *-extractor ]]; then
+        EXTRA_PARAM="--file_list_root=/ --file_list_path"
         # a <(echo $single_file) does not work, so use actual file.
         echo ${single_file} > ${PROJECT_FILE_LIST}
         file_param="${PROJECT_FILE_LIST}"
