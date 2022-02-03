@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 #define VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -94,10 +95,9 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
 
   void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
 
-  static void ReshapeTokenPartitions(
-      const verible::SyntaxTreeNode& node,
-      const verible::BasicFormatStyle& style,
-      verible::TokenPartitionTree* recent_partition);
+  void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node,
+                              const verible::BasicFormatStyle& style,
+                              verible::TokenPartitionTree* recent_partition);
 
   // Visits a node which requires a new UnwrappedLine, followed by
   // traversing all children
@@ -125,6 +125,10 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
 
   // For print debugging.
   verible::TokenWithContext VerboseToken(const verible::TokenInfo&) const;
+
+  // For print debugging.
+  verible::TokenPartitionTreePrinter VerilogPartitionPrinter(
+      const verible::TokenPartitionTree& partition) const;
 
   // Data members:
 
