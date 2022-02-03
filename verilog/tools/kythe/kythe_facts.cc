@@ -27,11 +27,6 @@
 namespace verilog {
 namespace kythe {
 
-bool Signature::operator==(const Signature& other) const {
-  return names_.size() == other.names_.size() &&
-         std::equal(names_.begin(), names_.end(), other.names_.begin());
-}
-
 bool Signature::operator<(const Signature& other) const {
   return std::lexicographical_compare(names_.begin(), names_.end(),
                                       other.names_.begin(), other.names_.end());
