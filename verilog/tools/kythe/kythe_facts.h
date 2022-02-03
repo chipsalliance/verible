@@ -38,8 +38,12 @@ class Signature {
     names_.push_back(std::string(name));
   }
 
-  bool operator==(const Signature& other) const;
+  bool operator==(const Signature& other) const {
+    return names_ == other.names_;
+  }
   bool operator!=(const Signature& other) const { return !(*this == other); }
+
+  // TODO(hzeller): remove other uses of std::set, then operator< can go
   bool operator<(const Signature& other) const;
 
   // Returns the signature concatenated as a string.
@@ -67,6 +71,10 @@ class Signature {
   // for "x" ==> ["m", "x"]
   std::vector<std::string> names_;
 };
+template <typename H>
+H AbslHashValue(H state, const Signature& v) {
+  return H::combine(std::move(state), v.Names());
+}
 
 // Node vector name for kythe facts.
 struct VName {

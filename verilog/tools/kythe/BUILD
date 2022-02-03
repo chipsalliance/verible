@@ -50,6 +50,7 @@ cc_library(
         "//common/util:auto_pop_stack",
         "//common/util:iterator_range",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 

@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "common/util/auto_pop_stack.h"
 #include "common/util/iterator_range.h"
@@ -245,7 +246,7 @@ class ScopeResolver {
   //   "pkg1": ["my_fun", "my_class"],
   //   "pkg2": ["my_fun", "my_class"]
   // }
-  std::map<Signature, Scope> scopes_;
+  absl::flat_hash_map<Signature, Scope> scopes_;
 
   // Pointer to the previous file's discovered scopes (if a previous file
   // exists). This is used for definition finding in cross-file referencing.
