@@ -85,7 +85,7 @@ static void SendDiagnostics(const std::string &uri,
 }
 
 int main(int argc, char *argv[]) {
-  const auto file_args = verible::InitCommandLine(argv[0], &argc, &argv);
+  verible::InitCommandLine(argv[0], &argc, &argv);
 
 #ifdef _WIN32
   _setmode(_fileno(stdin), _O_BINARY);
