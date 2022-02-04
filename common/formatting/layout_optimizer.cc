@@ -413,7 +413,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
               return (a->CostAt(current_column) < b->CostAt(current_column));
             // Sort by gradient when cost is the same. Favor earlier
             // element when both gradients are equal.
-            return (a->gradient <= b->gradient);
+            return (a->gradient < b->gradient);
           });
 
       if (min_cost_segment != last_min_cost_segment) {
