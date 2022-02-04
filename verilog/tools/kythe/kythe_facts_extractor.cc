@@ -1141,15 +1141,17 @@ void KytheFactsExtractor::ReferencePackageImport(
     // TODO(hzeller): null check added. Underlying issue of nullptr
     // scope needs more investigation; was encountered at
     // https://chipsalliance.github.io/sv-tests-results/?v=veribleextractor+hdlconv_std2017+hdlconvertor_std2017_p600
-    if (const VName* vname = definition_vnames[0].first; vname)
+    if (const VName* vname = definition_vnames[0].first; vname) {
       scope_resolver_->AddDefinitionToCurrentScope(*vname);
-    else
+    } else {
       LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL vname";
+    }
 
-    if (const Scope* scope = definition_vnames[0].second; scope)
+    if (const Scope* scope = definition_vnames[0].second; scope) {
       scope_resolver_->AppendScopeToCurrentScope(*scope);
-    else
+    } else {
       LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL scope";
+    }
   }
 }
 
