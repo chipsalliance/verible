@@ -27,6 +27,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/line_wrap_searcher.h"
+#include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/value_saver.h"
@@ -36,13 +37,15 @@ namespace verible {
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
                                 TokenPartitionTree* node) {
   CHECK_NOTNULL(node);
-  VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
+  VLOG(4) << __FUNCTION__ << ", before:\n"
+          << verible::TokenPartitionTreePrinter(*node);
 
   const auto optimizer = TokenPartitionsLayoutOptimizer(style);
   const auto indentation = node->Value().IndentationSpaces();
   optimizer.Optimize(indentation, node);
 
-  VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
+  VLOG(4) << __FUNCTION__ << ", after:\n"
+          << verible::TokenPartitionTreePrinter(*node);
 }
 
 namespace {
@@ -469,9 +472,31 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     const TokenPartitionTree& node) const {
   if (node.is_leaf()) return factory_.Line(node.Value());
 
-  const auto calculate_optimal_layout_func =
-      std::bind(&TokenPartitionsLayoutOptimizer::CalculateOptimalLayout, this,
-                std::placeholders::_1);
+  // Traverse and calculate children layouts
+
+  absl::FixedArray<LayoutFunction> layouts(node.Children().size());
+
+  switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kAlreadyFormatted:
+    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
+    case PartitionPolicyEnum::kFitOnLineElseExpand:
+    case PartitionPolicyEnum::kAppendFittingSubPartitions:
+    case PartitionPolicyEnum::kAlwaysExpand:
+    case PartitionPolicyEnum::kTabularAlignment: {
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), [=](const TokenPartitionTree& n) {
+                       return this->CalculateOptimalLayout(n);
+                     });
+      break;
+    }
+
+    case PartitionPolicyEnum::kUninitialized:
+    case PartitionPolicyEnum::kInline:
+      // Shouldn't happen - see the switch below.
+      break;
+  }
+
+  // Calculate and return current layout
 
   switch (node.Value().PartitionPolicy()) {
     case PartitionPolicyEnum::kInline: {
@@ -498,30 +523,22 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
              "Partition node:\n"
           << node << "\n\n*** Please file a bug. ***";
 
-      absl::FixedArray<LayoutFunction> slice_lfs(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     slice_lfs.begin(), calculate_optimal_layout_func);
-
-      slice_lfs.front().SetMustWrap(true);
+      layouts.front().SetMustWrap(true);
 
       // Preserve spacing of the first sublayout. This has to be done because
       // the first layout in a line uses IndentationSpaces instead of
       // SpacesBefore.
       const auto indent = node.Children().front().Value().IndentationSpaces();
-      slice_lfs.front() = factory_.Indent(slice_lfs.front(), indent);
+      layouts.front() = factory_.Indent(layouts.front(), indent);
 
-      return factory_.Juxtaposition(slice_lfs.begin(), slice_lfs.end());
+      return factory_.Juxtaposition(layouts.begin(), layouts.end());
     }
 
     case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
       // Support only function/macro/system calls for now
       CHECK_EQ(node.Children().size(), 2);
-
-      const auto& function_header = node.Children()[0];
-      const auto& function_args = node.Children()[1];
-
-      auto header = CalculateOptimalLayout(function_header);
-      auto args = CalculateOptimalLayout(function_args);
+      auto& header = layouts[0];
+      auto& args = layouts[1];
 
       auto stack_layout = factory_.Stack({
           header,
@@ -541,28 +558,15 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     }
 
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
-    case PartitionPolicyEnum::kFitOnLineElseExpand: {
-      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), calculate_optimal_layout_func);
+    case PartitionPolicyEnum::kFitOnLineElseExpand:
       return factory_.Wrap(layouts.begin(), layouts.end());
-    }
 
-    default:
-      // Stack layout is probably syntax-safe in all situations. Try it without
-      // aborting.
-      LOG(ERROR) << "Unsupported partition policy: "
-                 << node.Value().PartitionPolicy()
-                 << ". Defaulting to stack layout. Partition node:\n"
-                 << node << "\n\n*** Please file a bug. ***";
-      [[fallthrough]];
     case PartitionPolicyEnum::kAlwaysExpand:
-    case PartitionPolicyEnum::kTabularAlignment: {
-      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), calculate_optimal_layout_func);
+    case PartitionPolicyEnum::kTabularAlignment:
       return factory_.Stack(layouts.begin(), layouts.end());
-    }
+
+    case PartitionPolicyEnum::kUninitialized:
+      break;
 
       // TODO(mglb): Think about introducing PartitionPolicies that
       // correspond directly to combinators in LayoutFunctionFactory.
@@ -570,6 +574,14 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       // directly in TreeUnwrapper. It would also allow for proper
       // handling of other policies (e.g. kTabularAlignment) in subtrees.
   }
+
+  // Stack layout is probably syntax-safe in all situations. Try it without
+  // aborting.
+  LOG(ERROR) << "Unsupported partition policy: "
+             << node.Value().PartitionPolicy()
+             << ". Defaulting to stack layout. Partition node:\n"
+             << node << "\n\n*** Please file a bug. ***";
+  return factory_.Stack(layouts.begin(), layouts.end());
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
