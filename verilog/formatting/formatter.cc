@@ -533,6 +533,16 @@ static void DeterminePartitionExpansion(
         VLOG(3) << "Does not fit, expanding.";
         node_view.Expand();
       }
+      break;
+    }
+
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
+    case PartitionPolicyEnum::kJuxtaposition:
+    case PartitionPolicyEnum::kStack:
+    case PartitionPolicyEnum::kWrap: {
+      // The policies are handled (and replaced) in Layout Optimizer.
+      LOG(FATAL) << "Unreachable. " << partition_policy;
+      break;
     }
   }
 }
@@ -841,6 +851,10 @@ Status Formatter::Format(const ExecutionControl& control) {
           // Reshape partition tree with kAppendFittingSubPartitions policy
           verible::ReshapeFittingSubpartitions(style_, &node);
           break;
+        case PartitionPolicyEnum::kJuxtaposition:
+        case PartitionPolicyEnum::kStack:
+        case PartitionPolicyEnum::kWrap:
+        case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
         case PartitionPolicyEnum::kOptimalFunctionCallLayout:
           verible::OptimizeTokenPartitionTree(style_, &node);
           break;

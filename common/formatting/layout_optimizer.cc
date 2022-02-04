@@ -475,10 +475,13 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
   absl::FixedArray<LayoutFunction> layouts(node.Children().size());
 
   switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kJuxtaposition:
     case PartitionPolicyEnum::kAlreadyFormatted:
+    case PartitionPolicyEnum::kWrap:
     case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kFitOnLineElseExpand:
-    case PartitionPolicyEnum::kAppendFittingSubPartitions: {
+    case PartitionPolicyEnum::kAppendFittingSubPartitions:
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
       std::transform(node.Children().begin(), node.Children().end(),
                      layouts.begin(), [=](const TokenPartitionTree& n) {
                        return this->CalculateOptimalLayout(n);
@@ -486,6 +489,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       break;
     }
 
+    case PartitionPolicyEnum::kStack:
     case PartitionPolicyEnum::kAlwaysExpand:
     case PartitionPolicyEnum::kTabularAlignment: {
       int indentation = node.Value().IndentationSpaces();
@@ -522,6 +526,35 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
   // Calculate and return current layout
 
   switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kJuxtaposition:
+      return factory_.Juxtaposition(layouts.begin(), layouts.end());
+    case PartitionPolicyEnum::kStack:
+      return factory_.Stack(layouts.begin(), layouts.end());
+    case PartitionPolicyEnum::kWrap:
+      return factory_.Wrap(layouts.begin(), layouts.end());
+
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
+      LayoutFunction juxtaposition;
+      const bool juxtaposition_allowed =
+          !std::any_of(layouts.begin() + 1, layouts.end(),
+                       [](const LayoutFunction& lf) { return lf.MustWrap(); });
+      if (juxtaposition_allowed) {
+        juxtaposition = factory_.Juxtaposition(layouts.begin(), layouts.end());
+      }
+
+      int indentation = node.Value().IndentationSpaces();
+      for (int i = 0; i < static_cast<int>(layouts.size()); ++i) {
+        int relative_indentation =
+            node.Children()[i].Value().IndentationSpaces() - indentation;
+        layouts[i] = factory_.Indent(layouts[i], relative_indentation);
+      }
+      auto stack = factory_.Stack(layouts.begin(), layouts.end());
+
+      if (juxtaposition_allowed)
+        return factory_.Choice({std::move(juxtaposition), std::move(stack)});
+      return stack;
+    }
+
     case PartitionPolicyEnum::kInline: {
       // Shouldn't happen - the partition with this policy should always
       // be a leaf. Anyway, try to handle it without aborting.
@@ -590,12 +623,6 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
 
     case PartitionPolicyEnum::kUninitialized:
       break;
-
-      // TODO(mglb): Think about introducing PartitionPolicies that
-      // correspond directly to combinators in LayoutFunctionFactory.
-      // kOptimalFunctionCallLayout strategy could then be implemented
-      // directly in TreeUnwrapper. It would also allow for proper
-      // handling of other policies (e.g. kTabularAlignment) in subtrees.
   }
 
   // Stack layout is probably syntax-safe in all situations. Try it without

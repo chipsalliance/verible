@@ -97,6 +97,14 @@ enum class PartitionPolicyEnum {
   // Does optimizations on partition tree and its subpartitions.
   // Currently it used for reshaping function calls partitions.
   kOptimalFunctionCallLayout,
+
+  // Layout Optimizer policies. See its implementation (layout_optimizer.cc)
+  // WARNING: when one of the following policies is assigned to a partition,
+  // it's whole subtree is handled by Layout Optimizer.
+  kJuxtaposition,
+  kStack,
+  kWrap,
+  kJuxtapositionOrIndentedStack,
 };
 
 std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
