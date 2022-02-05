@@ -480,12 +480,37 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kAlreadyFormatted:
     case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kFitOnLineElseExpand:
-    case PartitionPolicyEnum::kAppendFittingSubPartitions:
-    case PartitionPolicyEnum::kAlwaysExpand:
-    case PartitionPolicyEnum::kTabularAlignment: {
+    case PartitionPolicyEnum::kAppendFittingSubPartitions: {
       std::transform(node.Children().begin(), node.Children().end(),
                      layouts.begin(), [=](const TokenPartitionTree& n) {
                        return this->CalculateOptimalLayout(n);
+                     });
+      break;
+    }
+
+    case PartitionPolicyEnum::kAlwaysExpand:
+    case PartitionPolicyEnum::kTabularAlignment: {
+      int indentation = node.Value().IndentationSpaces();
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), [=](const TokenPartitionTree& n) {
+                       int relative_indentation =
+                           n.Value().IndentationSpaces() - indentation;
+                       if (relative_indentation < 0) {
+                         VLOG(0)
+                             << "(Child indentation) < (parent indentation). "
+                                "Assuming 0. Parent node:\n"
+                             << node;
+                       }
+
+                       LayoutFunction lf;
+
+                       if (relative_indentation > 0)
+                         lf = factory_.Indent(this->CalculateOptimalLayout(n),
+                                              relative_indentation);
+                       else
+                         lf = this->CalculateOptimalLayout(n);
+
+                       return lf;
                      });
       break;
     }
