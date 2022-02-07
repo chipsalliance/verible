@@ -484,7 +484,18 @@ void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
 
 LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     const TokenPartitionTree& node) const {
-  if (node.is_leaf()) return factory_.Line(node.Value());
+  if (node.is_leaf()) {
+    // Wrapping complexity is n*(n+1)/2.
+    constexpr int kWrapTokensLimit = 25;
+
+    if (node.Value().PartitionPolicy() == PartitionPolicyEnum::kWrap &&
+        node.Value().TokensRange().size() > 1 &&
+        node.Value().TokensRange().size() < kWrapTokensLimit) {
+      return factory_.WrappedLine(node.Value());
+    } else {
+      return factory_.Line(node.Value());
+    }
+  }
 
   // Traverse and calculate children layouts
 
