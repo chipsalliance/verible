@@ -225,9 +225,7 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
     const float new_intercept =
         segment->CostAt(column) -
         style_.over_column_limit_penalty * std::max(columns_over_limit, 0);
-    const int new_gradient =
-        segment->gradient -
-        style_.over_column_limit_penalty * (columns_over_limit >= 0);
+    const int new_gradient = segment->gradient;
 
     auto new_layout = segment->layout;
     new_layout.Value().SetIndentationSpaces(
