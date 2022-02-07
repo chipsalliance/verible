@@ -21,36 +21,27 @@
 namespace verilog {
 namespace kythe {
 
-bool ScopeMemberItem::operator<(const ScopeMemberItem& other) const {
-  return this->vname < other.vname;
-}
-
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  members_.insert(member_item);
+  members_.insert({member_item.vname.signature.Names().back(), member_item});
 }
 
 void Scope::AppendScope(const Scope& scope) {
-  for (const ScopeMemberItem& item : scope.Members()) {
-    this->AddMemberItem(item);
+  for (const auto& item : scope.Members()) {
+    members_.insert(item);
   }
 }
 
 const VName* Scope::SearchForDefinition(absl::string_view name) const {
-  for (const ScopeMemberItem& member_item :
-       verible::make_range(members_.rbegin(), members_.rend())) {
-    if (member_item.vname.signature.IsNameEqual(name)) {
-      return &member_item.vname;
-    }
-  }
-  return nullptr;
+  const auto& found = members_.find(name);
+  return found == members_.end() ? nullptr : &found->second.vname;
 }
 
 void Scope::RemoveMember(const ScopeMemberItem& member) {
-  members_.erase(member);
+  members_.erase(member.vname.signature.Names().back());
 }
 
 const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
-  for (const auto& scope : verible::make_range(rbegin(), rend())) {
+  for (const Scope* scope : verible::make_range(rbegin(), rend())) {
     const VName* result = scope->SearchForDefinition(name);
     if (result != nullptr) {
       return result;

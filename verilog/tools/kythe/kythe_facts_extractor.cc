@@ -1197,7 +1197,7 @@ void KytheFactsExtractor::ReferenceIncludeFile(
 
   // Create child of edge between the parent and the member of the included
   // file.
-  for (const ScopeMemberItem& member : included_file_scope->Members()) {
+  for (const auto& [_, member] : included_file_scope->Members()) {
     CreateEdge(member.vname, kEdgeChildOf, vnames_context_.top());
   }
 

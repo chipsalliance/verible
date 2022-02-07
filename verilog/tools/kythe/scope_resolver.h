@@ -33,8 +33,6 @@ namespace kythe {
 struct ScopeMemberItem {
   ScopeMemberItem(const VName& vname) : vname(vname) {}
 
-  bool operator<(const ScopeMemberItem& other) const;
-
   // VName of this member.
   VName vname;
 };
@@ -56,7 +54,8 @@ class Scope {
   // Appends the member of the given scope to the current scope.
   void AppendScope(const Scope& scope);
 
-  const std::set<ScopeMemberItem>& Members() const { return members_; }
+  using MemberMap = absl::node_hash_map<std::string, ScopeMemberItem>;
+  const MemberMap& Members() const { return members_; }
   const Signature& GetSignature() const { return signature_; }
 
   // Searches for the given reference_name in the current scope and returns its
@@ -71,7 +70,7 @@ class Scope {
   Signature signature_;
 
   // list of the members inside this scope.
-  std::set<ScopeMemberItem> members_;
+  MemberMap members_;
 };
 
 // Container with a stack of Scopes to hold the accessible scopes during

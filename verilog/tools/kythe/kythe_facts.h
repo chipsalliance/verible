@@ -52,10 +52,6 @@ class Signature {
   // Returns the signature concatenated as a string in base 64.
   std::string ToBase64() const;
 
-  // Checks whether this signature represents the same given variable in its
-  // scope.
-  bool IsNameEqual(absl::string_view) const;
-
   const std::vector<std::string>& Names() const { return names_; }
 
  private:
