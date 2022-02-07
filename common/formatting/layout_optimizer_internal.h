@@ -134,7 +134,16 @@ class LayoutItem {
     for (const auto& token : tokens_) {
       // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
-      len += token.Length();
+      if (const auto line_break_pos = token.Text().find('\n');
+          line_break_pos != std::string_view::npos) {
+        // Multiline tokens are not really supported.
+        // Use number of characters up to the first line break.
+        len += line_break_pos;
+        DVLOG(5) << __FUNCTION__ << ": WARNING: Token contains '\\n':\n"
+                 << *token.token;
+      } else {
+        len += token.Length();
+      }
     }
     len -= tokens_.front().before.spaces_required;
     return len;
