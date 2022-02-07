@@ -516,8 +516,11 @@ class LayoutFunctionFactory {
   explicit LayoutFunctionFactory(const BasicFormatStyle& style)
       : style_(style) {}
 
-  // Creates CostFunction for a single line from UnwrappedLine 'uwline'.
+  // Creates LayoutFunction for a single line from UnwrappedLine 'uwline'.
   LayoutFunction Line(const UnwrappedLine& uwline) const;
+
+  // Creates LayoutFunction from a single line with tokens wrapped using Wrap().
+  LayoutFunction WrappedLine(const UnwrappedLine& uwline) const;
 
   // Combines two or more layouts vertically.
   // All combined layouts start at the same column. The first line of layout

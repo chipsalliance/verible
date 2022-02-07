@@ -188,6 +188,21 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
   return it - 1;
 }
 
+LayoutFunction LayoutFunctionFactory::WrappedLine(
+    const UnwrappedLine& uwline) const {
+  const auto tokens = uwline.TokensRange();
+  auto token_lfs = absl::FixedArray<LayoutFunction>(tokens.size());
+
+  auto lf = token_lfs.begin();
+  for (auto t = tokens.begin(); t != tokens.end(); ++t) {
+    auto token_line = UnwrappedLine(0, t);
+    token_line.SpanNextToken();
+    *lf = Line(token_line);
+    ++lf;
+  }
+  return Wrap(token_lfs.begin(), token_lfs.end(), true, style_.wrap_spaces);
+}
+
 LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
   auto layout = LayoutTree(LayoutItem(uwline));
   const auto span = layout.Value().Length();
