@@ -50,6 +50,7 @@ cc_library(
     deps = [
         "@com_google_absl//absl/strings",
         "@jsonhpp",
+        "//common/util:logging",
     ],
 )
 

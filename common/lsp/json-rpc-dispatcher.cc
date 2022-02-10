@@ -14,6 +14,8 @@
 
 #include "common/lsp/json-rpc-dispatcher.h"
 
+#include "common/util/logging.h"
+
 namespace verible {
 namespace lsp {
 void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
@@ -37,6 +39,8 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
 
   // Direct dispatch, later maybe send to an executor that returns futures ?
   const bool is_notification = (request.find("id") == request.end());
+  VLOG(1) << "Got " << (is_notification ? "notification" : "method call")
+          << " '" << method << "'";
   bool handled = false;
   if (is_notification) {
     handled = CallNotification(request, method);
@@ -50,13 +54,17 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
 bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
                                          const std::string &method) {
   const auto &found = notifications_.find(method);
-  if (found == notifications_.end()) return false;
+  if (found == notifications_.end()) {
+    LOG(ERROR) << "Unhandled notification '" << method << "'";
+    return false;
+  }
   try {
     found->second(req["params"]);
     return true;
   } catch (const std::exception &e) {
     ++exception_count_;
     ++statistic_counters_[method + " : " + e.what()];
+    LOG(ERROR) << "Notification error for '" << method << "' :" << e.what();
   }
   return false;
 }
@@ -67,6 +75,7 @@ bool JsonRpcDispatcher::CallRequestHandler(const nlohmann::json &req,
   if (found == handlers_.end()) {
     SendReply(CreateError(req, kMethodNotFound,
                           "method '" + method + "' not found."));
+    LOG(ERROR) << "Unhandled method '" << method << "'";
     return false;
   }
 
@@ -77,6 +86,7 @@ bool JsonRpcDispatcher::CallRequestHandler(const nlohmann::json &req,
     ++exception_count_;
     ++statistic_counters_[method + " : " + e.what()];
     SendReply(CreateError(req, kInternalError, e.what()));
+    LOG(ERROR) << "Method error for '" << method << "' :" << e.what();
   }
   return false;
 }
