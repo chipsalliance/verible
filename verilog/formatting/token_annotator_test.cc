@@ -4701,7 +4701,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
                 left.format_token_enum != FormatTokenType::comment_block &&
                 right.format_token_enum != FormatTokenType::comment_block)
         << "This test does not support cases examining intertoken text. "
-           "Move the test case to AnnotateBreakAroundComments instead.";
+           "Move the test case to OriginalSpacingSensitiveTests instead.";
 
     VLOG(1) << "left context: " << test_case.left_context;
     VLOG(1) << "right context: " << test_case.right_context;
