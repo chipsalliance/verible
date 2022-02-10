@@ -8334,8 +8334,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  , second\n"
      "} e;\n",
      "typedef enum {\n"
-     "  first  /* c1 */,\n"
-     "  second\n"
+     "    first   /* c1 */\n"
+     "  , second\n"
      "} e;\n"},
     {"typedef enum {\n"
      "  first\n"
@@ -8343,8 +8343,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  , second\n"
      "} e;\n",
      "typedef enum {\n"
-     "            first\n"
-     "  /* c1 */, second\n"
+     "    first\n"
+     "  /* c1 */\n"
+     "  , second\n"
      "} e;\n"},
     {"typedef enum {\n"
      "  first /* c1 */\n"
@@ -8365,7 +8366,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "} e;\n",
      "typedef enum {\n"
      "  first\n"
-     "  /* c1 */,\n"
+     "  /* c1 */\n"
+     "  ,\n"
      "  /* c2 */\n"
      "  second\n"
      "} e;\n"},
@@ -8582,8 +8584,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar foobar (\n"
-     "      .first (1)  /* c1 */,\n"
-     "      .second(2)             /* c2 */\n"
+     "        .first (1)  /* c1 */\n"
+     "      , .second(2)  /* c2 */\n"
      "  );\n"
      "endmodule\n"},
     {"module foo;\n"
@@ -8606,8 +8608,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar foobar (\n"
-     "      .first (1)  /* c1 */,\n"
-     "      .second(2)             /* c2 */\n"
+     "        .first (1)  /* c1 */\n"
+     "      , .second(2)  /* c2 */\n"
      "  );\n"
      "endmodule\n"},
     {"module foo;\n"
@@ -8633,9 +8635,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar foobar (\n"
-     "      .first (1)\n"
-     "      /* c1 */,\n"
-     "      .second(2)\n"
+     "        .first (1)\n"
+     "      /* c1 */\n"
+     "      , .second(2)\n"
      "      /* c2 */\n"
      "  );\n"
      "endmodule\n"},
@@ -8649,8 +8651,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar foobar (\n"
-     "                .first (1)\n"
-     "      /* c1 */, .second(2)\n"
+     "        .first (1)\n"
+     "      /* c1 */\n"
+     "      , .second(2)\n"
      "      /* c2 */\n"
      "  );\n"
      "endmodule\n"},
@@ -8834,8 +8837,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar #(\n"
-     "      .first (1)  /* c1 */,\n"
-     "      .second(2)             /* c2 */\n"
+     "        .first (1)  /* c1 */\n"
+     "      , .second(2)  /* c2 */\n"
      "  ) baz ();\n"
      "endmodule\n"},
     {"module foo;\n"
@@ -8858,8 +8861,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar #(\n"
-     "      .first (1)  /* c1 */,\n"
-     "      .second(2)             /* c2 */\n"
+     "        .first (1)  /* c1 */\n"
+     "      , .second(2)  /* c2 */\n"
      "  ) baz ();\n"
      "endmodule\n"},
     {"module foo;\n"
@@ -8885,9 +8888,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar #(\n"
-     "      .first (1)\n"
-     "      /* c1 */,\n"
-     "      .second(2)\n"
+     "        .first (1)\n"
+     "      /* c1 */\n"
+     "      , .second(2)\n"
      "      /* c2 */\n"
      "  ) baz ();\n"
      "endmodule\n"},
@@ -8901,8 +8904,9 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n",
      "module foo;\n"
      "  bar #(\n"
-     "                .first (1)\n"
-     "      /* c1 */, .second(2)\n"
+     "        .first (1)\n"
+     "      /* c1 */\n"
+     "      , .second(2)\n"
      "      /* c2 */\n"
      "  ) baz ();\n"
      "endmodule\n"},

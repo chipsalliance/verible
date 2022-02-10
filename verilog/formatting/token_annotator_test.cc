@@ -2222,22 +2222,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
-          {TK_COMMENT_BLOCK, "/*comment*/"},
-          {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::Undecided},
-      },
-      {
-          DefaultStyle,
-          {TK_COMMENT_BLOCK, "/*comment*/"},
-          {verilog_tokentype::MacroIdentifier, "`uvm_foo_id"},
-          {},  // any context
-          {},  // any context
-          {1, SpacingOptions::Undecided},
-      },
-      {
-          DefaultStyle,
           {PP_else, "`else"},
           {verilog_tokentype::MacroCallId, "`uvm_foo_macro"},
           {},  // any context
@@ -4598,14 +4582,6 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
       {
           DefaultStyle,
-          {verilog_tokentype::TK_COMMENT_BLOCK, "/*comment*/"},
-          {verilog_tokentype::TK_LINE_CONT, "\\"},
-          {/* any context */},
-          {/* any context */},
-          {0, SpacingOptions::MustAppend},
-      },
-      {
-          DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "id"},
           {verilog_tokentype::TK_LINE_CONT, "\\"},
           {/* any context */},
@@ -4721,7 +4697,9 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
     right.format_token_enum =
         GetFormatTokenType(verilog_tokentype(right.TokenEnum()));
 
-    ASSERT_NE(right.format_token_enum, FormatTokenType::eol_comment)
+    ASSERT_TRUE(right.format_token_enum != FormatTokenType::eol_comment &&
+                left.format_token_enum != FormatTokenType::comment_block &&
+                right.format_token_enum != FormatTokenType::comment_block)
         << "This test does not support cases examining intertoken text. "
            "Move the test case to AnnotateBreakAroundComments instead.";
 
@@ -4774,6 +4752,39 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
        {/* unspecified context */},
        {/* unspecified context */},
        {1, SpacingOptions::Undecided}},
+      {
+          DefaultStyle,
+          TK_COMMENT_BLOCK,
+          "/*comment*/",
+          "",
+          verilog_tokentype::MacroCallId,
+          "`uvm_foo_macro",
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          TK_COMMENT_BLOCK,
+          "/*comment*/",
+          "",
+          verilog_tokentype::MacroIdentifier,
+          "`uvm_foo_id",
+          {},  // any context
+          {},  // any context
+          {1, SpacingOptions::Undecided},
+      },
+      {
+          DefaultStyle,
+          verilog_tokentype::TK_COMMENT_BLOCK,
+          "/*comment*/",
+          "",
+          verilog_tokentype::TK_LINE_CONT,
+          "\\",
+          {/* any context */},
+          {/* any context */},
+          {0, SpacingOptions::MustAppend},
+      },
       {// //comment1
        // //comment2
        DefaultStyle,
@@ -4834,7 +4845,7 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
        "// comment 2",
        {/* unspecified context */},
        {/* unspecified context */},
-       {2, SpacingOptions::Undecided}},
+       {2, SpacingOptions::MustWrap}},
       {// /* comment 1 */  // comment 2
        DefaultStyle,
        verilog_tokentype::TK_COMMENT_BLOCK,
@@ -5027,7 +5038,7 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           "/*comment*/",
           {/* unspecified context */},
           {/* unspecified context */},
-          {2, SpacingOptions::Undecided},
+          {2, SpacingOptions::MustWrap},
       },
       {
           DefaultStyle,
