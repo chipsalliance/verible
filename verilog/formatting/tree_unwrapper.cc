@@ -385,6 +385,37 @@ verible::TokenWithContext TreeUnwrapper::VerboseToken(
   return TokenWithContext{token, token_context_};
 }
 
+static void VerilogOriginPrinter(
+    std::ostream& stream, const verible::TokenInfo::Context& token_context,
+    const verible::Symbol* symbol) {
+  CHECK_NOTNULL(symbol);
+
+  if (symbol->Kind() == verible::SymbolKind::kNode) {
+    stream << NodeEnum(symbol->Tag().tag);
+  } else {
+    stream << "#" << verilog_symbol_name(verilog_tokentype(symbol->Tag().tag));
+  }
+
+  const auto* left = verible::GetLeftmostLeaf(*symbol);
+  const auto* right = verible::GetRightmostLeaf(*symbol);
+  if (left && right) {
+    const int start = left->get().left(token_context.base);
+    const int end = right->get().right(token_context.base);
+    stream << "@" << start << "-" << end;
+  }
+  stream << " ";
+  verible::UnwrappedLine::DefaultOriginPrinter(stream, symbol);
+}
+
+verible::TokenPartitionTreePrinter TreeUnwrapper::VerilogPartitionPrinter(
+    const verible::TokenPartitionTree& partition) const {
+  return verible::TokenPartitionTreePrinter(
+      partition, false,
+      [this](std::ostream& stream, const verible::Symbol* symbol) {
+        VerilogOriginPrinter(stream, this->token_context_, symbol);
+      });
+}
+
 void TreeUnwrapper::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
   VLOG(4) << __FUNCTION__ << " to " << VerboseToken(leaf_token);
   // "Catch up" NextUnfilteredToken() to the current leaf.
@@ -1731,7 +1762,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
   auto& partition = *recent_partition;
-  VLOG(4) << "before reshaping " << tag << ":\n" << partition;
+  VLOG(4) << "before reshaping " << tag << ":\n"
+          << VerilogPartitionPrinter(partition);
 
   // Few node types that need to skip hoisting at the end of this function set
   // this flag to true.
@@ -2322,7 +2354,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     HoistOnlyChildPartition(&partition);
   }
 
-  VLOG(4) << "after reshaping " << tag << ":\n" << partition;
+  VLOG(4) << "after reshaping " << tag << ":\n"
+          << VerilogPartitionPrinter(partition);
   VLOG(3) << "end of " << __FUNCTION__ << " node: " << tag;
 }
 
@@ -2355,7 +2388,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
   auto& partition = *ABSL_DIE_IF_NULL(CurrentTokenPartition());
   VLOG(4) << "before adding token " << VerboseToken(leaf.get()) << ":\n"
-          << partition;
+          << VerilogPartitionPrinter(partition);
 
   // Advances NextUnfilteredToken(), and extends CurrentUnwrappedLine().
   // Should be equivalent to AdvanceNextUnfilteredToken().
@@ -2375,7 +2408,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   LookAheadBeyondCurrentLeaf();
 
   VLOG(4) << "before reshaping " << VerboseToken(leaf.get()) << ":\n"
-          << partition;
+          << VerilogPartitionPrinter(partition);
 
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
@@ -2407,6 +2440,8 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
       break;
   }
 
+  VLOG(4) << "after reshaping " << VerboseToken(leaf.get()) << ":\n"
+          << VerilogPartitionPrinter(partition);
   VLOG(3) << "end of " << __FUNCTION__ << " leaf: " << VerboseToken(leaf.get());
 }
 
