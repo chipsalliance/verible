@@ -16,6 +16,7 @@
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
 #include "absl/status/status.h"
+#include "common/util/logging.h"
 
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
@@ -26,7 +27,7 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
   if (auto from_flags = LinterConfigurationFromFlags(); from_flags.ok()) {
     config = *from_flags;
   } else {
-    std::cerr << from_flags.status().message() << std::endl;
+    LOG(ERROR) << from_flags.status().message() << std::endl;
   }
 
   return VerilogLintTextStructure(filename, config, text_structure);
@@ -37,7 +38,7 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
     : version_(version),
       uri_(uri),
       parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, uri)) {
-  std::cerr << "Analyzed " << uri << " lex:" << parser_->LexStatus()
+  LOG(INFO) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
             << "; parser:" << parser_->ParseStatus() << std::endl;
   // TODO(hzeller): we should use a filename not URI; strip prefix.
   if (auto lint_result = RunLinter(uri, *parser_); lint_result.ok()) {
