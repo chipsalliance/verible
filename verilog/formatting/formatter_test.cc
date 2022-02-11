@@ -9788,6 +9788,5400 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule\n"},
 
     // -----------------------------------------------------------------
+    // Comments around and inside macro calls.
+
+    // between identifier and '(', no args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ /* c2 */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ /* c2 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ // c2\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  // c2\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ // c2\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  // c2\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c1\n"
+     "// c2\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "/* c2 */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */ ();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "/* c2 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "// c2\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    // c2\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "// c2\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    ();\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "// c2\n"
+     "// c3\n"
+     "();\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    ();\n"},
+
+    // between identifier and '(', with arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ /* c2 */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ /* c2 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */ // c2\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  // c2\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ // c2\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  // c2\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c1\n"
+     "// c2\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "/* c2 */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */ (arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "/* c2 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "// c2\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    // c2\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "// c2\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    (arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz // c1\n"
+     "// c2\n"
+     "// c3\n"
+     "(arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    (arg);\n"},
+
+    // after '(', no args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    // c1\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c1\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     ");\n"},
+
+    // after '(', with arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ /* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ /* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */ // c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */  // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ /* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */  /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ /* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */  /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "// c\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    // c\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */ // c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */  // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "// c1\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "/* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ // c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ // c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c1\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    arg);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    arg);\n"},
+
+    // after single arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg\n"
+     "           // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  // c1\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg\n"
+     "           // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  // c1\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     ");\n"},
+
+    // before colon
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */ /* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */  /* c2 */,\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */ /* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */  /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1// c\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  // c\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */ // c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */  // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c1 */ /* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c1 */  /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c1 */ /* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c1 */  /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "// c\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           // c\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c1 */ // c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c1 */  // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "// c1\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1\n"
+     "           // c1\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */\n"
+     "/* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */\n"
+     "           /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1// c1\n"
+     "/* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  // c1\n"
+     "           /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1// c1\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  // c1\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1// c1\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  // c1\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */ /* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */  /* c2 */,\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */ /* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */  /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1// c\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  // c\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */ // c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */  // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c1 */ /* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c1 */  /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c1 */ /* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c1 */  /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "// c\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           // c\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c1 */ // c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c1 */  // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "// c1\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1\n"
+     "           // c1\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */\n"
+     "/* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */\n"
+     "           /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1// c1\n"
+     "/* c2 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  // c1\n"
+     "           /* c2 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */, arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */, arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1// c1\n"
+     "/* c2 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  // c1\n"
+     "           /* c2 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1// c1\n"
+     "// c2\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  // c1\n"
+     "           // c2\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     "           , arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ", arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     "           , arg2);\n"},
+
+    // after colon
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */ /* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */ /* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,// c\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  // c\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */ // c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */  // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c1 */ /* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c1 */  /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c1 */ /* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "// c\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           // c\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c1 */ // c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c1 */  // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "// c1\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,\n"
+     "           // c1\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */\n"
+     "/* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */\n"
+     "           /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,// c1\n"
+     "/* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  // c1\n"
+     "           /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,// c1\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  // c1\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,// c1\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  // c1\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1,  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */ /* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */ /* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,// c\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  // c\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */ // c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */  // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c1 */ /* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c1 */  /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c1 */ /* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c1 */  /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "// c\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           // c\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c1 */ // c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c1 */  // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "// c1\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           // c1\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */\n"
+     "/* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */\n"
+     "           /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,// c1\n"
+     "/* c2 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  // c1\n"
+     "           /* c2 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */ arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,// c1\n"
+     "/* c2 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  // c1\n"
+     "           /* c2 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,// c1\n"
+     "// c2\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  // c1\n"
+     "           // c2\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     "           arg2);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg2);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1,  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     "           arg2);\n"},
+
+    // after last arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2\n"
+     "           ,  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2\n"
+     "           ,  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,\n"
+     "           // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  // c1\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg1, arg2,  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2\n"
+     "           ,  /* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2\n"
+     "           ,  /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c1 */ /* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c1 */  /* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           /* c */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c1 */ /* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           /* c1 */  /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "// c\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           // c\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c1 */ // c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           /* c1 */  // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,\n"
+     "           // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,// c1\n"
+     "/* c2 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  // c1\n"
+     "/* c2 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */);\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     "/* c3 */);\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,// c1\n"
+     "/* c2 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  // c1\n"
+     "           /* c2 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,// c1\n"
+     "// c2\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  // c1\n"
+     "           // c2\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  /* c1 */\n"
+     "           /* c2 */\n"
+     "           /* c3 */\n"
+     ");\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ");\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg1, arg2,  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     ");\n"},
+
+    // after ')', no args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  // c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "// c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()// c1\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  // c1\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()// c1\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  // c1\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  // c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz()  // c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  // c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "// c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()// c1\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  // c1\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()// c1\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  // c1\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  // c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ()  // c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n"},
+
+    // after ')', with arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)// c1\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c1\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)// c1\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c1\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg)  // c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  // c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */ /* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */  /* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "// c\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "// c\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */ // c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */  // c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)// c1\n"
+     "/* c2 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  // c1\n"
+     "/* c2 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)// c1\n"
+     "/* c2 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  // c1\n"
+     "/* c2 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)// c1\n"
+     "// c2\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  // c1\n"
+     "// c2\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg)  // c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";\n"},
+
+    // after ';', no args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();// c1 c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  // c1 c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  // c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz();  // c1\n"
+     "// c2\n"
+     "// c3\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  // c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ();  // c1\n"
+     "// c2\n"
+     "// c3\n"},
+
+    // after ';', with arg
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);// c1 c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  // c1 c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  // c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz(arg);  // c1\n"
+     "// c2\n"
+     "// c3\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  // c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(arg);  // c1\n"
+     "// c2\n"
+     "// c3\n"},
+
+    // everywhere, no args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c */(/* c */)/* c */;/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */\n"
+     "    (  /* c */)  /* c */;  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ /* c2 */(/* c1 */ /* c2 */)/* c1 */ /* c2 */;/* c1 */ "
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */\n"
+     "    (  /* c1 */  /* c2 */)  /* c1 */  /* c2 */;  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c */\n"
+     "(/* c */\n"
+     ")/* c */\n"
+     ";/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */\n"
+     "    (  /* c */\n"
+     "    )  /* c */\n"
+     ";  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ /* c2 */\n"
+     "(/* c1 */ /* c2 */\n"
+     ")/* c1 */ /* c2 */\n"
+     ";/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */\n"
+     "    (  /* c1 */  /* c2 */\n"
+     "    )  /* c1 */  /* c2 */\n"
+     ";  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c\n"
+     "(// c\n"
+     ")// c\n"
+     ";// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c\n"
+     "    (  // c\n"
+     "    )  // c\n"
+     ";  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ // c2\n"
+     "(/* c1 */ // c2\n"
+     ")/* c1 */ // c2\n"
+     ";/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  // c2\n"
+     "    (  /* c1 */  // c2\n"
+     "    )  /* c1 */  // c2\n"
+     ";  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */(\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */ (\n"
+     "    /* c */)\n"
+     "/* c */;\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */(\n"
+     "/* c1 */ /* c2 */)\n"
+     "/* c1 */ /* c2 */;\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */ (\n"
+     "    /* c1 */  /* c2 */)\n"
+     "/* c1 */  /* c2 */;\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */\n"
+     "(\n"
+     "/* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */\n"
+     "    (\n"
+     "        /* c */\n"
+     "    )\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */\n"
+     "(\n"
+     "/* c1 */ /* c2 */\n"
+     ")\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */\n"
+     "    (\n"
+     "        /* c1 */  /* c2 */\n"
+     "    )\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c\n"
+     "(\n"
+     "// c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c\n"
+     "    (\n"
+     "        // c\n"
+     "    )\n"
+     "// c\n"
+     ";\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ // c2\n"
+     "(\n"
+     "/* c1 */ // c2\n"
+     ")\n"
+     "/* c1 */ // c2\n"
+     ";\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  // c2\n"
+     "    (\n"
+     "        /* c1 */  // c2\n"
+     "    )\n"
+     "/* c1 */  // c2\n"
+     ";\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    (\n"
+     "        /* c1 */\n"
+     "        /* c2 */\n"
+     "    )\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c1\n"
+     "// c2\n"
+     "(\n"
+     "// c1\n"
+     "// c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    (\n"
+     "        // c1\n"
+     "        // c2\n"
+     "    )\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */(/* c1 */\n"
+     "/* c2 */)/* c1 */\n"
+     "/* c2 */;/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */ (  /* c1 */\n"
+     "    /* c2 */)  /* c1 */\n"
+     "/* c2 */;  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "/* c2 */(// c1\n"
+     "/* c2 */)// c1\n"
+     "/* c2 */;// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */ (  // c1\n"
+     "    /* c2 */)  // c1\n"
+     "/* c2 */;  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ (  /* c1 */\n"
+     "        /* c2 */\n"
+     "    /* c3 */)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "(/* c1 */\n"
+     "/* c2 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    (  /* c1 */\n"
+     "        /* c2 */\n"
+     "    )  /* c1 */\n"
+     "/* c2 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "/* c2 */\n"
+     "(// c1\n"
+     "/* c2 */\n"
+     ")// c1\n"
+     "/* c2 */\n"
+     ";// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */\n"
+     "    (  // c1\n"
+     "        /* c2 */\n"
+     "    )  // c1\n"
+     "/* c2 */\n"
+     ";  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "// c2\n"
+     "(/* c1 */\n"
+     "// c2\n"
+     ")/* c1 */\n"
+     "// c2\n"
+     ";/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    // c2\n"
+     "    (  /* c1 */\n"
+     "        // c2\n"
+     "    )  /* c1 */\n"
+     "// c2\n"
+     ";  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "// c2\n"
+     "(// c1\n"
+     "// c2\n"
+     ")// c1\n"
+     "// c2\n"
+     ";// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    (  // c1\n"
+     "       // c2\n"
+     "    )  // c1\n"
+     "       // c2\n"
+     ";  // c1\n"
+     "   // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    (  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */\n"
+     "    )  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ")// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    (  // c1\n"
+     "       // c2\n"
+     "       // c3\n"
+     "    )  // c1\n"
+     "       // c2\n"
+     "       // c3\n"
+     ";  // c1\n"
+     "   // c2\n"
+     "   // c3\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */)/* c */;/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */)  /* c */;  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */)/* c1 */ /* c2 */;/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */)  /* c1 */  /* c2 */;  /* c1 */  /* c2 "
+     "*/\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */\n"
+     ")/* c */\n"
+     ";/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */\n"
+     ")  /* c */\n"
+     ";  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */\n"
+     ")/* c1 */ /* c2 */\n"
+     ";/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */\n"
+     ")  /* c1 */  /* c2 */\n"
+     ";  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c\n"
+     ")// c\n"
+     ";// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c\n"
+     ")  // c\n"
+     ";  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ // c2\n"
+     ")/* c1 */ // c2\n"
+     ";/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  // c2\n"
+     ")  /* c1 */  // c2\n"
+     ";  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */)\n"
+     "/* c1 */ /* c2 */;\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */  /* c2 */)\n"
+     "/* c1 */  /* c2 */;\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */\n"
+     ")\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */\n"
+     ")\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ // c2\n"
+     ")\n"
+     "/* c1 */ // c2\n"
+     ";\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  // c2\n"
+     ")\n"
+     "/* c1 */  // c2\n"
+     ";\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c1\n"
+     "// c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c1\n"
+     "    // c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */)/* c1 */\n"
+     "/* c2 */;/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "/* c2 */)  /* c1 */\n"
+     "/* c2 */;  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */)// c1\n"
+     "/* c2 */;// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "/* c2 */)  // c1\n"
+     "/* c2 */;  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "/* c3 */)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     ")  /* c1 */\n"
+     "/* c2 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */\n"
+     ")// c1\n"
+     "/* c2 */\n"
+     ";// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */\n"
+     ")  // c1\n"
+     "/* c2 */\n"
+     ";  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "// c2\n"
+     ")/* c1 */\n"
+     "// c2\n"
+     ";/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    // c2\n"
+     ")  /* c1 */\n"
+     "// c2\n"
+     ";  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     ")// c1\n"
+     "// c2\n"
+     ";// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     ")  // c1\n"
+     "   // c2\n"
+     ";  // c1\n"
+     "   // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     ")  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ")// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     ")  // c1\n"
+     "   // c2\n"
+     "   // c3\n"
+     ";  // c1\n"
+     "   // c2\n"
+     "   // c3\n"},
+
+    // everywhere, with args
+
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c */(/* c */arg1/* c */,/* c */arg2/* c */)/* c */;/* c "
+     "*/\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */ (  /* c */\n"
+     "    arg1  /* c */,  /* c */\n"
+     "    arg2  /* c */)  /* c */;  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ /* c2 */(/* c1 */ /* c2 */arg1/* c1 */ /* c2 */,/* c1 "
+     "*/ /* c2 */arg2/* c1 */ /* c2 */)/* c1 */ /* c2 */;/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */ (  /* c1 */  /* c2 */\n"
+     "    arg1  /* c1 */  /* c2 */,  /* c1 */  /* c2 */\n"
+     "    arg2  /* c1 */  /* c2 */)  /* c1 */  /* c2 */;  /* c1 */  /* c2 "
+     "*/\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c */\n"
+     "(/* c */\n"
+     "arg1/* c */\n"
+     ",/* c */\n"
+     "arg2/* c */\n"
+     ")/* c */\n"
+     ";/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c */\n"
+     "    (  /* c */\n"
+     "        arg1  /* c */\n"
+     "        ,  /* c */\n"
+     "        arg2  /* c */\n"
+     "    )  /* c */\n"
+     ";  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ /* c2 */\n"
+     "(/* c1 */ /* c2 */\n"
+     "arg1/* c1 */ /* c2 */\n"
+     ",/* c1 */ /* c2 */\n"
+     "arg2/* c1 */ /* c2 */\n"
+     ")/* c1 */ /* c2 */\n"
+     ";/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  /* c2 */\n"
+     "    (  /* c1 */  /* c2 */\n"
+     "        arg1  /* c1 */  /* c2 */\n"
+     "        ,  /* c1 */  /* c2 */\n"
+     "        arg2  /* c1 */  /* c2 */\n"
+     "    )  /* c1 */  /* c2 */\n"
+     ";  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c\n"
+     "(// c\n"
+     "arg1// c\n"
+     ",// c\n"
+     "arg2// c\n"
+     ")// c\n"
+     ";// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c\n"
+     "    (  // c\n"
+     "        arg1  // c\n"
+     "        ,  // c\n"
+     "        arg2  // c\n"
+     "    )  // c\n"
+     ";  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */ // c2\n"
+     "(/* c1 */ // c2\n"
+     "arg1/* c1 */ // c2\n"
+     ",/* c1 */ // c2\n"
+     "arg2/* c1 */ // c2\n"
+     ")/* c1 */ // c2\n"
+     ";/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */  // c2\n"
+     "    (  /* c1 */  // c2\n"
+     "        arg1  /* c1 */  // c2\n"
+     "        ,  /* c1 */  // c2\n"
+     "        arg2  /* c1 */  // c2\n"
+     "    )  /* c1 */  // c2\n"
+     ";  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */(\n"
+     "/* c */arg1\n"
+     "/* c */,\n"
+     "/* c */arg2\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */ (\n"
+     "        /* c */ arg1\n"
+     "        /* c */,\n"
+     "        /* c */ arg2\n"
+     "    /* c */)\n"
+     "/* c */;\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */(\n"
+     "/* c1 */ /* c2 */arg1\n"
+     "/* c1 */ /* c2 */,\n"
+     "/* c1 */ /* c2 */arg2\n"
+     "/* c1 */ /* c2 */)\n"
+     "/* c1 */ /* c2 */;\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */ (\n"
+     "        /* c1 */  /* c2 */ arg1\n"
+     "        /* c1 */  /* c2 */,\n"
+     "        /* c1 */  /* c2 */ arg2\n"
+     "    /* c1 */  /* c2 */)\n"
+     "/* c1 */  /* c2 */;\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c */\n"
+     "(\n"
+     "/* c */\n"
+     "arg1\n"
+     "/* c */\n"
+     ",\n"
+     "/* c */\n"
+     "arg2\n"
+     "/* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c */\n"
+     "    (\n"
+     "        /* c */\n"
+     "        arg1\n"
+     "        /* c */\n"
+     "        ,\n"
+     "        /* c */\n"
+     "        arg2\n"
+     "        /* c */\n"
+     "    )\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ /* c2 */\n"
+     "(\n"
+     "/* c1 */ /* c2 */\n"
+     "arg1\n"
+     "/* c1 */ /* c2 */\n"
+     ",\n"
+     "/* c1 */ /* c2 */\n"
+     "arg2\n"
+     "/* c1 */ /* c2 */\n"
+     ")\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  /* c2 */\n"
+     "    (\n"
+     "        /* c1 */  /* c2 */\n"
+     "        arg1\n"
+     "        /* c1 */  /* c2 */\n"
+     "        ,\n"
+     "        /* c1 */  /* c2 */\n"
+     "        arg2\n"
+     "        /* c1 */  /* c2 */\n"
+     "    )\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c\n"
+     "(\n"
+     "// c\n"
+     "arg1\n"
+     "// c\n"
+     ",\n"
+     "// c\n"
+     "arg2\n"
+     "// c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c\n"
+     "    (\n"
+     "        // c\n"
+     "        arg1\n"
+     "        // c\n"
+     "        ,\n"
+     "        // c\n"
+     "        arg2\n"
+     "        // c\n"
+     "    )\n"
+     "// c\n"
+     ";\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */ // c2\n"
+     "(\n"
+     "/* c1 */ // c2\n"
+     "arg1\n"
+     "/* c1 */ // c2\n"
+     ",\n"
+     "/* c1 */ // c2\n"
+     "arg2\n"
+     "/* c1 */ // c2\n"
+     ")\n"
+     "/* c1 */ // c2\n"
+     ";\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */  // c2\n"
+     "    (\n"
+     "        /* c1 */  // c2\n"
+     "        arg1\n"
+     "        /* c1 */  // c2\n"
+     "        ,\n"
+     "        /* c1 */  // c2\n"
+     "        arg2\n"
+     "        /* c1 */  // c2\n"
+     "    )\n"
+     "/* c1 */  // c2\n"
+     ";\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg1\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ",\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg2\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    (\n"
+     "        /* c1 */\n"
+     "        /* c2 */\n"
+     "        arg1\n"
+     "        /* c1 */\n"
+     "        /* c2 */\n"
+     "        ,\n"
+     "        /* c1 */\n"
+     "        /* c2 */\n"
+     "        arg2\n"
+     "        /* c1 */\n"
+     "        /* c2 */\n"
+     "    )\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "// c1\n"
+     "// c2\n"
+     "(\n"
+     "// c1\n"
+     "// c2\n"
+     "arg1\n"
+     "// c1\n"
+     "// c2\n"
+     ",\n"
+     "// c1\n"
+     "// c2\n"
+     "arg2\n"
+     "// c1\n"
+     "// c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    (\n"
+     "        // c1\n"
+     "        // c2\n"
+     "        arg1\n"
+     "        // c1\n"
+     "        // c2\n"
+     "        ,\n"
+     "        // c1\n"
+     "        // c2\n"
+     "        arg2\n"
+     "        // c1\n"
+     "        // c2\n"
+     "    )\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */(/* c1 */\n"
+     "/* c2 */arg1/* c1 */\n"
+     "/* c2 */,/* c1 */\n"
+     "/* c2 */arg2/* c1 */\n"
+     "/* c2 */)/* c1 */\n"
+     "/* c2 */;/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */ (  /* c1 */\n"
+     "        /* c2 */ arg1  /* c1 */\n"
+     "        /* c2 */,  /* c1 */\n"
+     "        /* c2 */ arg2  /* c1 */\n"
+     "    /* c2 */)  /* c1 */\n"
+     "/* c2 */;  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "/* c2 */(// c1\n"
+     "/* c2 */arg1// c1\n"
+     "/* c2 */,// c1\n"
+     "/* c2 */arg2// c1\n"
+     "/* c2 */)// c1\n"
+     "/* c2 */;// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */ (  // c1\n"
+     "        /* c2 */ arg1  // c1\n"
+     "        /* c2 */,  // c1\n"
+     "        /* c2 */ arg2  // c1\n"
+     "    /* c2 */)  // c1\n"
+     "/* c2 */;  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg2/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ (  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */ arg1  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */,  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */ arg2  /* c1 */\n"
+     "        /* c2 */\n"
+     "    /* c3 */)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "(/* c1 */\n"
+     "/* c2 */\n"
+     "arg1/* c1 */\n"
+     "/* c2 */\n"
+     ",/* c1 */\n"
+     "/* c2 */\n"
+     "arg2/* c1 */\n"
+     "/* c2 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    (  /* c1 */\n"
+     "        /* c2 */\n"
+     "        arg1  /* c1 */\n"
+     "        /* c2 */\n"
+     "        ,  /* c1 */\n"
+     "        /* c2 */\n"
+     "        arg2  /* c1 */\n"
+     "        /* c2 */\n"
+     "    )  /* c1 */\n"
+     "/* c2 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "/* c2 */\n"
+     "(// c1\n"
+     "/* c2 */\n"
+     "arg1// c1\n"
+     "/* c2 */\n"
+     ",// c1\n"
+     "/* c2 */\n"
+     "arg2// c1\n"
+     "/* c2 */\n"
+     ")// c1\n"
+     "/* c2 */\n"
+     ";// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    /* c2 */\n"
+     "    (  // c1\n"
+     "        /* c2 */\n"
+     "        arg1  // c1\n"
+     "        /* c2 */\n"
+     "        ,  // c1\n"
+     "        /* c2 */\n"
+     "        arg2  // c1\n"
+     "        /* c2 */\n"
+     "    )  // c1\n"
+     "/* c2 */\n"
+     ";  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "// c2\n"
+     "(/* c1 */\n"
+     "// c2\n"
+     "arg1/* c1 */\n"
+     "// c2\n"
+     ",/* c1 */\n"
+     "// c2\n"
+     "arg2/* c1 */\n"
+     "// c2\n"
+     ")/* c1 */\n"
+     "// c2\n"
+     ";/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    // c2\n"
+     "    (  /* c1 */\n"
+     "        // c2\n"
+     "        arg1  /* c1 */\n"
+     "        // c2\n"
+     "        ,  /* c1 */\n"
+     "        // c2\n"
+     "        arg2  /* c1 */\n"
+     "        // c2\n"
+     "    )  /* c1 */\n"
+     "// c2\n"
+     ";  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "// c2\n"
+     "(// c1\n"
+     "// c2\n"
+     "arg1// c1\n"
+     "// c2\n"
+     ",// c1\n"
+     "// c2\n"
+     "arg2// c1\n"
+     "// c2\n"
+     ")// c1\n"
+     "// c2\n"
+     ";// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    (  // c1\n"
+     "       // c2\n"
+     "        arg1  // c1\n"
+     "        // c2\n"
+     "        ,  // c1\n"
+     "           // c2\n"
+     "        arg2  // c1\n"
+     "        // c2\n"
+     "    )  // c1\n"
+     "       // c2\n"
+     ";  // c1\n"
+     "   // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ",/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg2/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    (  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */\n"
+     "        arg1  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */\n"
+     "        ,  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */\n"
+     "        arg2  /* c1 */\n"
+     "        /* c2 */\n"
+     "        /* c3 */\n"
+     "    )  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg1// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ",// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg2// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ")// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "$foobarbaz  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    (  // c1\n"
+     "       // c2\n"
+     "       // c3\n"
+     "        arg1  // c1\n"
+     "        // c2\n"
+     "        // c3\n"
+     "        ,  // c1\n"
+     "           // c2\n"
+     "           // c3\n"
+     "        arg2  // c1\n"
+     "        // c2\n"
+     "        // c3\n"
+     "    )  // c1\n"
+     "       // c2\n"
+     "       // c3\n"
+     ";  // c1\n"
+     "   // c2\n"
+     "   // c3\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */arg1/* c */,/* c */arg2/* c */)/* c */;/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */\n"
+     "    arg1  /* c */,  /* c */\n"
+     "    arg2  /* c */)  /* c */;  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */arg1/* c1 */ /* c2 */,/* c1 */ /* c2 "
+     "*/arg2/* c1 */ /* c2 */)/* c1 */ /* c2 */;/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */\n"
+     "    arg1  /* c1 */  /* c2 */,  /* c1 */  /* c2 */\n"
+     "    arg2  /* c1 */  /* c2 */)  /* c1 */  /* c2 */;  /* c1 */  /* c2 "
+     "*/\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c */\n"
+     "arg1/* c */\n"
+     ",/* c */\n"
+     "arg2/* c */\n"
+     ")/* c */\n"
+     ";/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c */\n"
+     "    arg1  /* c */\n"
+     "    ,  /* c */\n"
+     "    arg2  /* c */\n"
+     ")  /* c */\n"
+     ";  /* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ /* c2 */\n"
+     "arg1/* c1 */ /* c2 */\n"
+     ",/* c1 */ /* c2 */\n"
+     "arg2/* c1 */ /* c2 */\n"
+     ")/* c1 */ /* c2 */\n"
+     ";/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  /* c2 */\n"
+     "    arg1  /* c1 */  /* c2 */\n"
+     "    ,  /* c1 */  /* c2 */\n"
+     "    arg2  /* c1 */  /* c2 */\n"
+     ")  /* c1 */  /* c2 */\n"
+     ";  /* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c\n"
+     "arg1// c\n"
+     ",// c\n"
+     "arg2// c\n"
+     ")// c\n"
+     ";// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c\n"
+     "    arg1  // c\n"
+     "    ,  // c\n"
+     "    arg2  // c\n"
+     ")  // c\n"
+     ";  // c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */ // c2\n"
+     "arg1/* c1 */ // c2\n"
+     ",/* c1 */ // c2\n"
+     "arg2/* c1 */ // c2\n"
+     ")/* c1 */ // c2\n"
+     ";/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */  // c2\n"
+     "    arg1  /* c1 */  // c2\n"
+     "    ,  /* c1 */  // c2\n"
+     "    arg2  /* c1 */  // c2\n"
+     ")  /* c1 */  // c2\n"
+     ";  /* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */arg1\n"
+     "/* c */,\n"
+     "/* c */arg2\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */ arg1\n"
+     "    /* c */,\n"
+     "    /* c */ arg2\n"
+     "/* c */)\n"
+     "/* c */;\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */arg1\n"
+     "/* c1 */ /* c2 */,\n"
+     "/* c1 */ /* c2 */arg2\n"
+     "/* c1 */ /* c2 */)\n"
+     "/* c1 */ /* c2 */;\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */ arg1\n"
+     "    /* c1 */  /* c2 */,\n"
+     "    /* c1 */  /* c2 */ arg2\n"
+     "/* c1 */  /* c2 */)\n"
+     "/* c1 */  /* c2 */;\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c */\n"
+     "arg1\n"
+     "/* c */\n"
+     ",\n"
+     "/* c */\n"
+     "arg2\n"
+     "/* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c */\n"
+     "    arg1\n"
+     "    /* c */\n"
+     "    ,\n"
+     "    /* c */\n"
+     "    arg2\n"
+     "    /* c */\n"
+     ")\n"
+     "/* c */\n"
+     ";\n"
+     "/* c */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ /* c2 */\n"
+     "arg1\n"
+     "/* c1 */ /* c2 */\n"
+     ",\n"
+     "/* c1 */ /* c2 */\n"
+     "arg2\n"
+     "/* c1 */ /* c2 */\n"
+     ")\n"
+     "/* c1 */ /* c2 */\n"
+     ";\n"
+     "/* c1 */ /* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  /* c2 */\n"
+     "    arg1\n"
+     "    /* c1 */  /* c2 */\n"
+     "    ,\n"
+     "    /* c1 */  /* c2 */\n"
+     "    arg2\n"
+     "    /* c1 */  /* c2 */\n"
+     ")\n"
+     "/* c1 */  /* c2 */\n"
+     ";\n"
+     "/* c1 */  /* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c\n"
+     "arg1\n"
+     "// c\n"
+     ",\n"
+     "// c\n"
+     "arg2\n"
+     "// c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c\n"
+     "    arg1\n"
+     "    // c\n"
+     "    ,\n"
+     "    // c\n"
+     "    arg2\n"
+     "    // c\n"
+     ")\n"
+     "// c\n"
+     ";\n"
+     "// c\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */ // c2\n"
+     "arg1\n"
+     "/* c1 */ // c2\n"
+     ",\n"
+     "/* c1 */ // c2\n"
+     "arg2\n"
+     "/* c1 */ // c2\n"
+     ")\n"
+     "/* c1 */ // c2\n"
+     ";\n"
+     "/* c1 */ // c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */  // c2\n"
+     "    arg1\n"
+     "    /* c1 */  // c2\n"
+     "    ,\n"
+     "    /* c1 */  // c2\n"
+     "    arg2\n"
+     "    /* c1 */  // c2\n"
+     ")\n"
+     "/* c1 */  // c2\n"
+     ";\n"
+     "/* c1 */  // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg1\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ",\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     "arg2\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg1\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    ,\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg2\n"
+     "    /* c1 */\n"
+     "    /* c2 */\n"
+     ")\n"
+     "/* c1 */\n"
+     "/* c2 */\n"
+     ";\n"
+     "/* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "// c1\n"
+     "// c2\n"
+     "arg1\n"
+     "// c1\n"
+     "// c2\n"
+     ",\n"
+     "// c1\n"
+     "// c2\n"
+     "arg2\n"
+     "// c1\n"
+     "// c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    arg1\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    ,\n"
+     "    // c1\n"
+     "    // c2\n"
+     "    arg2\n"
+     "    // c1\n"
+     "    // c2\n"
+     ")\n"
+     "// c1\n"
+     "// c2\n"
+     ";\n"
+     "// c1\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */arg1/* c1 */\n"
+     "/* c2 */,/* c1 */\n"
+     "/* c2 */arg2/* c1 */\n"
+     "/* c2 */)/* c1 */\n"
+     "/* c2 */;/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */ arg1  /* c1 */\n"
+     "    /* c2 */,  /* c1 */\n"
+     "    /* c2 */ arg2  /* c1 */\n"
+     "/* c2 */)  /* c1 */\n"
+     "/* c2 */;  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */arg1// c1\n"
+     "/* c2 */,// c1\n"
+     "/* c2 */arg2// c1\n"
+     "/* c2 */)// c1\n"
+     "/* c2 */;// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */ arg1  // c1\n"
+     "    /* c2 */,  // c1\n"
+     "    /* c2 */ arg2  // c1\n"
+     "/* c2 */)  // c1\n"
+     "/* c2 */;  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */,/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */arg2/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */)/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ arg1  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */,  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */ arg2  /* c1 */\n"
+     "    /* c2 */\n"
+     "/* c3 */)  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */;  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "arg1/* c1 */\n"
+     "/* c2 */\n"
+     ",/* c1 */\n"
+     "/* c2 */\n"
+     "arg2/* c1 */\n"
+     "/* c2 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg1  /* c1 */\n"
+     "    /* c2 */\n"
+     "    ,  /* c1 */\n"
+     "    /* c2 */\n"
+     "    arg2  /* c1 */\n"
+     "    /* c2 */\n"
+     ")  /* c1 */\n"
+     "/* c2 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "/* c2 */\n"
+     "arg1// c1\n"
+     "/* c2 */\n"
+     ",// c1\n"
+     "/* c2 */\n"
+     "arg2// c1\n"
+     "/* c2 */\n"
+     ")// c1\n"
+     "/* c2 */\n"
+     ";// c1\n"
+     "/* c2 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    /* c2 */\n"
+     "    arg1  // c1\n"
+     "    /* c2 */\n"
+     "    ,  // c1\n"
+     "    /* c2 */\n"
+     "    arg2  // c1\n"
+     "    /* c2 */\n"
+     ")  // c1\n"
+     "/* c2 */\n"
+     ";  // c1\n"
+     "/* c2 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "// c2\n"
+     "arg1/* c1 */\n"
+     "// c2\n"
+     ",/* c1 */\n"
+     "// c2\n"
+     "arg2/* c1 */\n"
+     "// c2\n"
+     ")/* c1 */\n"
+     "// c2\n"
+     ";/* c1 */\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    // c2\n"
+     "    arg1  /* c1 */\n"
+     "    // c2\n"
+     "    ,  /* c1 */\n"
+     "    // c2\n"
+     "    arg2  /* c1 */\n"
+     "    // c2\n"
+     ")  /* c1 */\n"
+     "// c2\n"
+     ";  /* c1 */\n"
+     "// c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "arg1// c1\n"
+     "// c2\n"
+     ",// c1\n"
+     "// c2\n"
+     "arg2// c1\n"
+     "// c2\n"
+     ")// c1\n"
+     "// c2\n"
+     ";// c1\n"
+     "// c2\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    arg1  // c1\n"
+     "    // c2\n"
+     "    ,  // c1\n"
+     "       // c2\n"
+     "    arg2  // c1\n"
+     "    // c2\n"
+     ")  // c1\n"
+     "   // c2\n"
+     ";  // c1\n"
+     "   // c2\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg1/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ",/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     "arg2/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ")/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";/* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    arg1  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    ,  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     "    arg2  /* c1 */\n"
+     "    /* c2 */\n"
+     "    /* c3 */\n"
+     ")  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"
+     ";  /* c1 */\n"
+     "/* c2 */\n"
+     "/* c3 */\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg1// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ",// c1\n"
+     "// c2\n"
+     "// c3\n"
+     "arg2// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ")// c1\n"
+     "// c2\n"
+     "// c3\n"
+     ";// c1\n"
+     "// c2\n"
+     "// c3\n",
+     "// verilog_syntax: parse-as-module-body\n"
+     "`FOOBARBAZ(  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    arg1  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     "    ,  // c1\n"
+     "       // c2\n"
+     "       // c3\n"
+     "    arg2  // c1\n"
+     "    // c2\n"
+     "    // c3\n"
+     ")  // c1\n"
+     "   // c2\n"
+     "   // c3\n"
+     ";  // c1\n"
+     "   // c2\n"
+     "   // c3\n"},
+
+    // -----------------------------------------------------------------
+
 };
 
 // Tests that formatter produces expected results, end-to-end.
