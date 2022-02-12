@@ -19,7 +19,12 @@ progress
   - [x] Provide formatting.
   - [x] Highlight all the symbols that are the same as current under cursor.
     - [ ] Take scope and type into account to only highlight _same_ symbols.
+  - [ ] Provide useful information on hover
+        ([#1187](https://github.com/chipsalliance/verible/issues/1187))
   - [ ] Find definition of symbol even if in another file.
+        ([#1189](https://github.com/chipsalliance/verible/issues/1189))
+  - [ ] Provide Document Links (e.g. opening include files)
+        ([#1190](https://github.com/chipsalliance/verible/issues/1190))
   - [ ] Rename refactor a symbol
 
 ## Hooking up to editor
