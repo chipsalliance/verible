@@ -1582,6 +1582,33 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
+  {
+    const auto lf = factory_.Wrap(
+        {
+            factory_.Line(lines_.OneOver40Limit()),
+            factory_.Line(lines_.Short()),
+            factory_.Line(lines_.Indented()),
+        },
+        false, 7);
+    const auto expected_layout_vv =
+        LT(LI(LayoutType::kStack, 0, true),         //
+           LI(lines_.OneOver40Limit()),             //
+           LT(LI(LayoutType::kStack, 0, false, 7),  //
+              LI(lines_.Short(), 0),                //
+              LI(lines_.Indented(), 0)));
+    const auto expected_layout_vh =
+        LT(LI(LayoutType::kStack, 0, true),             //
+           LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+              LI(lines_.OneOver40Limit(), 0),           //
+              LI(lines_.Short(), 0)),
+           LI(lines_.Indented(), 7));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_vv, 43, 404.0F, 200},
+        {14, expected_layout_vv, 43, 3204.0F, 300},
+        {33, expected_layout_vh, 43, 8902.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
 }
 
 TEST_F(LayoutFunctionFactoryTest, Indent) {
