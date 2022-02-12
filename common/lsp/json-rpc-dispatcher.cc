@@ -40,7 +40,7 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
   // Direct dispatch, later maybe send to an executor that returns futures ?
   const bool is_notification = (request.find("id") == request.end());
   VLOG(1) << "Got " << (is_notification ? "notification" : "method call")
-          << " '" << method << "'";
+          << " '" << method << "'; req-size: " << data.size();
   bool handled = false;
   if (is_notification) {
     handled = CallNotification(request, method);

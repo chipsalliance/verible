@@ -18,6 +18,7 @@ cc_library(
     hdrs = ["lsp-parse-buffer.h"],
     deps = [
         "//common/lsp:lsp-text-buffer",
+        "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_linter",
         "@com_google_absl//absl/status",

@@ -102,10 +102,7 @@ int main(int argc, char *argv[]) {
     std::cout << reply << std::flush;
   };
 
-  // We want the buffer size to be the largest message we could
-  // receive. It typically would be in the order of largest file to
-  // be opened (as it is sent verbatim in didOpen).
-  // Should be chosen accordingly.
+  // Stream splitter splits the input stream into messages (header/body).
   MessageStreamSplitter stream_splitter;
   JsonRpcDispatcher dispatcher(write_fun);
 
