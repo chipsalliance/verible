@@ -368,8 +368,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "     dd)\n"},
     {// macro call with argument including EOL comment on own line
      "`FOOOO(aa, bb,\n//cc\ndd)\n",
-     "`FOOOO(aa, bb,  //cc\n"
-     // TODO(b/152324712): //cc comment should start its own line
+     "`FOOOO(aa, bb,\n"
+     "       //cc\n"
      "       dd)\n"},
     {"  // leading comment\n"
      "  `define   FOO    \\\n"  // multiline macro definition
@@ -389,15 +389,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {// long macro call breaking
      " `ASSERT_INIT(S, (D == 4 && K inside {0, 1}) ||"
      " (D == 3 && K== 4))\n",
-     "`ASSERT_INIT(S,\n"
-     "             (D == 4 && K inside {0, 1})\n"
-     "                 || (D == 3 && K == 4))\n"},
+     "`ASSERT_INIT(\n"
+     "    S, (D == 4 && K inside {0, 1}) ||\n"
+     "           (D == 3 && K == 4))\n"},
     {// long macro call breaking
      " `AINIT(S, (D == 4 && K inside {0, 1}) ||"
      " (D == 3 && K== 4))\n",
-     "`AINIT(S,\n"
-     "       (D == 4 && K inside {0, 1}) ||\n"
-     "           (D == 3 && K == 4))\n"},
+     "`AINIT(S, (D == 4 && K inside {0, 1}) ||\n"
+     "              (D == 3 && K == 4))\n"},
     {// long macro call breaking
      " `ASSERT_INIT(S, D == 4 && K inside {0, 1})\n",
      "`ASSERT_INIT(S,\n"
@@ -5499,8 +5498,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "      int count;\n"
         "      if (cfg.enable) begin\n"
         "        count = 1;\n"
-        "      end,\n"
-        "      utils_pkg::decrement())\n"
+        "      end, utils_pkg::decrement())\n"
         "endclass\n",
     },
 

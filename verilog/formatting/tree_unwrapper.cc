@@ -15,10 +15,15 @@
 #include "verilog/formatting/tree_unwrapper.h"
 
 #include <algorithm>
+#include <initializer_list>
 #include <iterator>
+#include <ostream>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/container/inlined_vector.h"
 #include "absl/strings/match.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
@@ -39,6 +44,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/value_saver.h"
+#include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"
 #include "verilog/CST/macro.h"
@@ -52,8 +58,13 @@
 namespace verilog {
 namespace formatter {
 
+using ::verible::iterator_range;
+using ::verible::LeafTag;
+using ::verible::NodeTag;
 using ::verible::PartitionPolicyEnum;
 using ::verible::PreFormatToken;
+using ::verible::SpacingOptions;
+using ::verible::SymbolTag;
 using ::verible::SyntaxTreeNode;
 using ::verible::TokenInfo;
 using ::verible::TokenPartitionTree;
@@ -572,12 +583,15 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kStructUnionMemberList:
       LookAheadBeyondCurrentNode();
       break;
-    default: {
-      if (Context().DirectParentIs(NodeEnum::kMacroArgList)) {
-        StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
-      }
+    case NodeEnum::kArgumentList:
+    case NodeEnum::kMacroArgList:
+      // Put each argument, separator, and comment in a new unwrapped line
+      StartNewUnwrappedLine(PartitionPolicyEnum::kFitOnLineElseExpand, &node);
+      // Catch comments after last argument
+      LookAheadBeyondCurrentNode();
       break;
-    }
+    default:
+      break;
   }
   VLOG(4) << "end of " << __FUNCTION__ << " node type: " << tag;
 }
@@ -660,6 +674,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     const SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
+  VLOG(4) << "Context hints: " << ContextHints();
+  if (!Context().empty()) {
+    DVLOG(4) << "Context: "
+             << absl::StrJoin(Context().begin(), Context().end(), " / ",
+                              [](std::string* out, const SyntaxTreeNode* n) {
+                                const auto tag =
+                                    static_cast<NodeEnum>(n->Tag().tag);
+                                absl::StrAppend(out, NodeEnumToString(tag));
+                              });
+  }
 
   // Tips:
   // In addition to the handling based on the node enum,
@@ -715,7 +739,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
           VisitIndentedSection(node, style_.indentation_spaces,
                                PartitionPolicyEnum::kFitOnLineElseExpand);
         }
-
+      } else if (HasContextHint(ContextHint::kInsideStandaloneMacroCall) &&
+                 Context().DirectParentsAre(
+                     {NodeEnum::kParenGroup, NodeEnum::kSystemTFCall})) {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kWrap);
       } else if (Context().DirectParentsAre(
                      {NodeEnum::kParenGroup,
                       NodeEnum::kRandomizeFunctionCall}) ||
@@ -989,31 +1017,31 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kSystemTFCall: {
-      // TODO(ldk): Targeting into one-level nested call,
-      //     need to expand it into more general solution
-      if (Context().DirectParentsAre(
-              {NodeEnum::kExpression, NodeEnum::kMacroArgList,
-               NodeEnum::kParenGroup, NodeEnum::kMacroCall,
-               NodeEnum::kModuleItemList})) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
-      } else if (Context().DirectParentsAre(
-                     {NodeEnum::kExpression, NodeEnum::kMacroArgList,
-                      NodeEnum::kParenGroup, NodeEnum::kMacroCall,
-                      NodeEnum::kStatementList, NodeEnum::kTaskDeclaration})) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
-      } else if (Context().DirectParentsAre(
-                     {NodeEnum::kExpression, NodeEnum::kMacroArgList,
-                      NodeEnum::kParenGroup, NodeEnum::kMacroCall,
-                      NodeEnum::kBlockItemStatementList, NodeEnum::kSeqBlock,
-                      NodeEnum::kIfBody, NodeEnum::kIfClause})) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kOptimalFunctionCallLayout);
-        // TODO(fangism): Create own section only for standalone calls
-      } else if (Context().DirectParentIs(NodeEnum::kStatement)) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      const auto is_nested_call = [&] {
+        return Context().DirectParentsAre(
+                   {NodeEnum::kExpression, NodeEnum::kArgumentList}) ||
+               Context().DirectParentsAre(
+                   {NodeEnum::kExpression, NodeEnum::kMacroArgList});
+      };
+
+      const auto is_standalone_call = [&] {
+        return Context().DirectParentsAre(
+                   {NodeEnum::kStatement, NodeEnum::kStatementList}) ||
+               Context().DirectParentsAre(
+                   {NodeEnum::kStatement, NodeEnum::kBlockItemStatementList}) ||
+               Context().DirectParentIs(NodeEnum::kModuleItemList);
+      };
+
+      // TODO(mglb): Format non-standalone calls with layout optimizer.
+      // This requires using layout optimizer for structures wrapping the
+      // calls.
+
+      if (is_nested_call() &&
+          HasContextHint(ContextHint::kInsideStandaloneMacroCall)) {
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kStack);
+      } else if (is_standalone_call()) {
+        PushContextHint(ContextHint::kInsideStandaloneMacroCall);
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kStack);
       } else {
         TraverseChildren(node);
       }
@@ -1026,23 +1054,90 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       const int indent = ShouldIndentRelativeToDirectParent(Context())
                              ? style_.indentation_spaces
                              : 0;
-      // Apply optimal formatting just for standalone macro calls (for now)
-      const auto policy =
-          Context().DirectParentIs(NodeEnum::kModuleItemList) ||
-                  Context().DirectParentsAre(
-                      {NodeEnum::kStatementList, NodeEnum::kTaskDeclaration}) ||
-                  Context().DirectParentsAre(
-                      {NodeEnum::kBlockItemStatementList, NodeEnum::kSeqBlock,
-                       NodeEnum::kIfBody, NodeEnum::kIfClause})
-              ? PartitionPolicyEnum::kOptimalFunctionCallLayout
-              : PartitionPolicyEnum::kAppendFittingSubPartitions;
-      VisitIndentedSection(node, indent, policy);
+
+      const auto is_nested_call = [&] {
+        return Context().DirectParentsAre(
+                   {NodeEnum::kExpression, NodeEnum::kArgumentList}) ||
+               Context().DirectParentsAre(
+                   {NodeEnum::kExpression, NodeEnum::kMacroArgList});
+      };
+      const auto is_standalone_call = [&] {
+        return ((Context().DirectParentIs(NodeEnum::kModuleItemList) ||
+                 Context().DirectParentIs(NodeEnum::kClassItems) ||
+                 Context().DirectParentIs(NodeEnum::kDescriptionList) ||
+                 Context().DirectParentsAre({
+                     NodeEnum::kStatementList,
+                     NodeEnum::kTaskDeclaration,
+                 }) ||
+                 Context().DirectParentsAre({
+                     NodeEnum::kLocalRoot,
+                     NodeEnum::kReference,
+                     NodeEnum::kReferenceCallBase,
+                 }) ||
+                 Context().DirectParentsAre({
+                     NodeEnum::kBlockItemStatementList,
+                     NodeEnum::kSeqBlock,
+                     NodeEnum::kIfBody,
+                     NodeEnum::kIfClause,
+                 })) &&
+                !(Context().IsInside(NodeEnum::kNetVariableAssignment)  //
+                  ));
+      };
+
+      // TODO(mglb): Format non-standalone calls with layout optimizer.
+      // This would require using layout optimizer for structures wrapping the
+      // calls.
+
+      if (is_nested_call() &&
+          HasContextHint(ContextHint::kInsideStandaloneMacroCall)) {
+        VLOG(4) << "kMacroCall: nested";
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kStack);
+      } else if (is_standalone_call()) {
+        VLOG(4) << "kMacroCall: standalone";
+        PushContextHint(ContextHint::kInsideStandaloneMacroCall);
+        VisitIndentedSection(node, indent, PartitionPolicyEnum::kStack);
+      } else {
+        VisitIndentedSection(node, indent,
+                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      }
+
       break;
     }
 
-      // The following constructs wish to use the partition policy of appending
-      // trailing subpartitions greedily as long as they fit, wrapping as
-      // needed.
+    case NodeEnum::kParenGroup: {
+      const bool is_directly_inside_macro_call = Context().DirectParentIsOneOf({
+          NodeEnum::kMacroCall,
+          NodeEnum::kSystemTFCall,
+      });
+
+      if (HasContextHint(ContextHint::kInsideStandaloneMacroCall) &&
+          is_directly_inside_macro_call) {
+        const bool is_nested_call = Context().IsInsideFirst(
+            {
+                NodeEnum::kArgumentList,
+                NodeEnum::kMacroArgList,
+                NodeEnum::kParenGroup,
+            },
+            {
+                NodeEnum::kStatementList,
+                NodeEnum::kStatement,
+            });
+
+        if (is_nested_call) {
+          VisitIndentedSection(node, 0, PartitionPolicyEnum::kWrap);
+        } else {
+          VisitIndentedSection(node, style_.wrap_spaces,
+                               PartitionPolicyEnum::kWrap);
+        }
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
+
+    // The following constructs wish to use the partition policy of appending
+    // trailing subpartitions greedily as long as they fit, wrapping as
+    // needed.
     case NodeEnum::kPreprocessorDefine:
     case NodeEnum::kClassConstructorPrototype:
     case NodeEnum::kTaskHeader:
@@ -1110,9 +1205,25 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
-      // Add a level of grouping that is treated as wrapping.
+
+    case NodeEnum::kMacroArgList: {
+      if (node.children().front() == nullptr ||
+          node.children().front()->Tag().tag == verible::kUntagged) {
+        // Empty arguments list.
+        TraverseChildren(node);
+        break;
+      }
+      if (HasContextHint(ContextHint::kInsideStandaloneMacroCall) &&
+          Context().DirectParentsAre(
+              {NodeEnum::kParenGroup, NodeEnum::kMacroCall})) {
+        VisitIndentedSection(node, style_.wrap_spaces,
+                             PartitionPolicyEnum::kWrap);
+        break;
+      }
+    }
+      [[fallthrough]];
+    // Add a level of grouping that is treated as wrapping.
     case NodeEnum::kMacroFormalParameterList:
-    case NodeEnum::kMacroArgList:
     case NodeEnum::kForSpec:
     case NodeEnum::kModportSimplePortsDeclaration:
     case NodeEnum::kModportTFPortsDeclaration:
@@ -1361,12 +1472,22 @@ static bool PartitionStartsWithCloseBrace(const TokenPartitionTree& partition) {
   return token_enum == '}';
 }
 
-// Returns true if the first token of the partition is forced to wrap
+// Returns true if the partition is forced to start in a new line.
 static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
+  const auto policy = partition.Value().PartitionPolicy();
+  if (policy == PartitionPolicyEnum::kAlreadyFormatted) return true;
+  if (policy == PartitionPolicyEnum::kInline) return false;
+  if (!partition.is_leaf()) {
+    auto* first_leaf = partition.LeftmostDescendant();
+    const auto leaf_policy = first_leaf->Value().PartitionPolicy();
+    if (leaf_policy == PartitionPolicyEnum::kAlreadyFormatted ||
+        leaf_policy == PartitionPolicyEnum::kInline)
+      return true;
+  }
+
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
-  const auto break_decision = ftokens.front().before.break_decision;
-  return break_decision == verible::SpacingOptions::MustWrap;
+  return ftokens.front().before.break_decision == SpacingOptions::MustWrap;
 }
 
 // Joins partition containing only a ',' (and optionally comments) with
@@ -1637,6 +1758,9 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
 }
 
 static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
+  // kWrap uses relative child indentation as a hanging
+  if (partition->Value().PartitionPolicy() == PartitionPolicyEnum::kWrap) {
+  }
   const auto* origin = partition->Value().Origin();
   if (partition->HoistOnlyChild()) {
     VLOG(4) << "reshape: hoisted, using child partition policy, parent origin";
@@ -1704,6 +1828,520 @@ static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
   MergeEndElseWithoutLabel(conditional, partition_ptr);
   FlattenElseIfElse(*else_clause, partition_ptr);
 }
+
+static bool TokenIsComment(const PreFormatToken& t) {
+  return IsComment(verilog_tokentype(t.TokenEnum()));
+}
+
+static void SetCommentLinePartitionAsAlreadyFormatted(
+    TokenPartitionTree* partition) {
+  for (auto& child : partition->Children()) {
+    if (!child.is_leaf()) continue;
+    const auto tokens = child.Value().TokensRange();
+    if (std::all_of(tokens.begin(), tokens.end(), TokenIsComment)) {
+      child.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlreadyFormatted);
+    }
+  }
+}
+
+using TokenPartitionPredicate = std::function<bool(const TokenPartitionTree&)>;
+
+// TokenPartitionPredicate returning true for partitions whose Origin's tag is
+// equal to any tag from `tags` list.
+struct OriginTagIs {
+  OriginTagIs(std::initializer_list<SymbolTag> tags) : tags(tags) {}
+
+  std::initializer_list<SymbolTag> tags;
+
+  bool operator()(const TokenPartitionTree& partition) const {
+    if (!partition.Value().Origin()) return false;
+    for (const auto& tag : tags) {
+      if (partition.Value().Origin()->Tag() == tag) return true;
+    }
+    return false;
+  }
+};
+
+// TokenPartitionPredicate returning true for partitions containing token with a
+// type equal to any value from `token_types` list.
+struct ContainsToken {
+  ContainsToken(std::initializer_list<int> token_types)
+      : token_types(token_types) {}
+
+  std::initializer_list<int> token_types;
+
+  bool operator()(const TokenPartitionTree& partition) const {
+    for (const auto& token : partition.Value().TokensRange()) {
+      for (const auto token_type : token_types) {
+        if (token.TokenEnum() == token_type) return true;
+      }
+    }
+    return false;
+  }
+};
+
+// Finds direct child of the `parent` node satisfying the `predicate`. Returns
+// nullptr when child has not been found.
+static const TokenPartitionTree* FindDirectChild(
+    const TokenPartitionTree* parent, TokenPartitionPredicate predicate) {
+  if (!parent) return nullptr;
+  auto iter = std::find_if(parent->Children().begin(), parent->Children().end(),
+                           std::move(predicate));
+  if (iter == parent->Children().end()) return nullptr;
+  return &(*iter);
+}
+
+// Finds direct child of the `parent` node satisfying the `predicate`. Returns
+// nullptr when child has not been found.
+static TokenPartitionTree* FindDirectChild(TokenPartitionTree* parent,
+                                           TokenPartitionPredicate predicate) {
+  const TokenPartitionTree* const_parent = parent;
+  return const_cast<TokenPartitionTree*>(
+      FindDirectChild(const_parent, std::move(predicate)));
+}
+
+static bool LineBreaksInsidePartitionBeforeChild(
+    const TokenPartitionTree& parent, const TokenPartitionTree& child) {
+  for (auto& node : parent.Children()) {
+    if (PartitionIsForcedIntoNewLine(node)) return true;
+    if (&node == &child) break;
+  }
+  return false;
+}
+
+class MacroCallReshaper {
+ public:
+  explicit MacroCallReshaper(const FormatStyle& style,
+                             TokenPartitionTree* main_node)
+      : style_(style),
+        main_node_(main_node),
+        is_nested_(IsNested(*main_node)) {}
+
+  void Reshape() {
+    const auto* const main_node_origin = main_node_->Value().Origin();
+
+    if (!FindInitialPartitions()) {
+      // Something went wrong, leave partitions intact. Log message has been
+      // printed.
+      return;
+    }
+
+    if (semicolon_) {
+      if (semicolon_ == paren_group_->NextSibling()) {
+        if (!PartitionIsForcedIntoNewLine(*semicolon_)) {
+          // Merge with ')'
+          verible::MergeLeafIntoPreviousLeaf(semicolon_);
+          semicolon_ = nullptr;
+        }
+      }
+    }
+
+    if (ReshapeEmptyParenGroup()) {
+      auto* identifier_with_paren_group = main_node_;
+      if (!paren_group_->IsLastChild()) {
+        // There is a semicolon preceded by comment line(s).
+        identifier_with_paren_group =
+            verible::GroupLeafWithPreviousLeaf(paren_group_);
+        identifier_with_paren_group->Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kJuxtapositionOrIndentedStack);
+        main_node_->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
+      }
+
+      if (main_node_origin &&
+          main_node_origin->Tag() == NodeTag(NodeEnum::kMacroCall)) {
+        // '(' must follow macro identifier in the same line
+        CHECK(!PartitionIsForcedIntoNewLine(*paren_group_));
+        identifier_with_paren_group->Children().clear();
+        identifier_with_paren_group->Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kAlreadyFormatted);
+      }
+
+      return;
+    }
+
+    if ((!argument_list_ || argument_list_->is_leaf()) &&
+        (r_paren_->BirthRank() - l_paren_->BirthRank() > 1)) {
+      // Group partitions between parentheses (comments and stuff)
+      CreateArgumentList();
+    }
+
+    if (argument_list_ &&
+        (is_nested_ || !PartitionIsForcedIntoNewLine(*r_paren_))) {
+      // Format like a part of argument list.
+      MoveRightParenToArgumentList();
+    }
+
+    if (argument_list_ && style_.try_wrap_long_lines) {
+      for (auto& arg : argument_list_->Children()) {
+        const auto tokens = arg.Value().TokensRange();
+        // Hack: in order to avoid wrapping just before comment, do not enable
+        // wrapping on partitions containing comments.
+        if (arg.is_leaf() &&
+            arg.Value().PartitionPolicy() !=
+                PartitionPolicyEnum::kAlreadyFormatted &&
+            std::none_of(tokens.begin(), tokens.end(),
+                         [](const PreFormatToken& t) {
+                           return IsComment(verilog_tokentype(t.TokenEnum()));
+                         }))
+          arg.Value().SetPartitionPolicy(PartitionPolicyEnum::kWrap);
+      }
+    }
+
+    if (main_node_origin &&
+        main_node_origin->Tag() == NodeTag(NodeEnum::kMacroCall)) {
+      // '(' must follow macro identifier in the same line
+      MergeIdentifierAndLeftParen();
+    } else if (!LineBreaksInsidePartitionBeforeChild(*paren_group_,
+                                                     *l_paren_)) {
+      GroupIdentifierCommentsAndLeftParen();
+    } else if (l_paren_ != &paren_group_->Children().front()) {
+      GroupCommentsAndLeftParen();
+    }
+
+    if (argument_list_) {
+      HoistOnlyChildPartition(argument_list_);
+      if (paren_group_->Children().size() == 3) {
+        // Children: '(', argument_list, ')'
+        GroupLeftParenAndArgumentList();
+      }
+
+      if (!PartitionIsForcedIntoNewLine(paren_group_->Children().back())) {
+        paren_group_->Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kJuxtapositionOrIndentedStack);
+      } else {
+        paren_group_->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
+      }
+    }
+  }
+
+ private:
+  static bool IsLeftParenPartition(const TokenPartitionTree& node) {
+    const auto tokens = node.Value().TokensRange();
+    bool found = false;
+    auto token = tokens.begin();
+    for (; token != tokens.end(); ++token) {
+      if (token->TokenEnum() == '(') {
+        found = true;
+        ++token;
+        break;
+      }
+      if (token->TokenEnum() == verilog_tokentype::TK_COMMENT_BLOCK) continue;
+      return false;
+    }
+    for (; token != tokens.end(); ++token) {
+      if (IsComment(verilog_tokentype(token->TokenEnum()))) continue;
+      if (found && token->TokenEnum() == ')') continue;
+      return false;
+    }
+    return found;
+  }
+
+  bool FindInitialPartitions() {
+    // Note: identifier can contain tokens for macro name + EOL comment
+    identifier_ = FindDirectChild(
+        main_node_, ContainsToken{verilog_tokentype::SystemTFIdentifier,
+                                  verilog_tokentype::MacroCallId});
+    if (!identifier_) {
+      LogBug(LOG(ERROR), "identifier not found.");
+      return false;
+    }
+
+    paren_group_ = FindDirectChild(main_node_,
+                                   OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
+    if (!paren_group_) {
+      LogBug(LOG(ERROR), "paren_group not found.");
+      return false;
+    }
+
+    // Make sure there's nothing between identifier and paren group partitions.
+    // Optional comment partitions are expected to be inside paren group.
+    if (identifier_->NextSibling() != paren_group_) {
+      LogBug(LOG(ERROR),
+             "Unexpected partitions between identifier and paren_group.");
+      return false;
+    }
+
+    if (!paren_group_->IsLastChild()) {
+      semicolon_ = &main_node_->Children().back();
+      if (!ContainsToken{';'}(*semicolon_)) {
+        LogBug(LOG(ERROR), "Unexpected partition(s) after the call.");
+        LOG(ERROR) << "\n" << *main_node_;
+        return false;
+      }
+    }
+
+    argument_list_ = FindDirectChild(
+        paren_group_, OriginTagIs{NodeTag(NodeEnum::kArgumentList),
+                                  NodeTag(NodeEnum::kMacroArgList)});
+
+    if (paren_group_->is_leaf()) {
+      l_paren_ = paren_group_;
+      r_paren_ = paren_group_;
+    } else {
+      l_paren_ = FindDirectChild(paren_group_, IsLeftParenPartition);
+      if (!l_paren_) {
+        LogBug(LOG(ERROR), "'(' not found.");
+        return false;
+      }
+      r_paren_ = &paren_group_->Children().back();
+      if (!ContainsToken{
+              ')', verilog_tokentype::MacroCallCloseToEndLine}(*r_paren_)) {
+        LogBug(LOG(ERROR), "')' not found.");
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool ReshapeEmptyParenGroup() {
+    if (paren_group_->Children().size() == 2 && l_paren_ != r_paren_ &&
+        l_paren_->Value().TokensRange().end() ==
+            r_paren_->Value().TokensRange().begin() &&
+        !PartitionIsForcedIntoNewLine(*r_paren_)) {
+      VLOG(6) << "Flatten paren group.";
+      paren_group_->Children().clear();
+    }
+    if (paren_group_->is_leaf()) {
+      if (!PartitionIsForcedIntoNewLine(*paren_group_)) {
+        main_node_->Value().SetPartitionPolicy(
+            PartitionPolicyEnum::kJuxtapositionOrIndentedStack);
+      }
+      VLOG(6) << "Empty paren group.";
+      return true;
+    }
+
+    return false;
+  }
+
+  void CreateArgumentList() {
+    const int arguments_indentation =
+        paren_group_->Value().IndentationSpaces() + style_.wrap_spaces;
+    auto group = TokenPartitionTree(verible::UnwrappedLine(
+        arguments_indentation, l_paren_->Value().TokensRange().end(),
+        PartitionPolicyEnum::kWrap));
+    group.Value().SpanUpToToken(r_paren_->Value().TokensRange().begin());
+
+    auto nodes_to_group = verible::make_range(
+        paren_group_->Children().begin() + l_paren_->BirthRank() + 1,
+        paren_group_->Children().begin() + r_paren_->BirthRank());
+    // Move partitions into the group.
+    for (auto& node : nodes_to_group) {
+      auto* child = group.NewChild(std::move(node));
+      verible::AdjustIndentationAbsolute(child, arguments_indentation);
+    }
+    // Remove leftover entries of all grouped partitions except the first.
+    paren_group_->Children().erase(nodes_to_group.begin() + 1,
+                                   nodes_to_group.end());
+
+    // Move the group into first grouped partition's place.
+    *nodes_to_group.begin() = std::move(group);
+
+    argument_list_ = &*nodes_to_group.begin();
+    r_paren_ = argument_list_->NextSibling();
+  }
+
+  void MoveRightParenToArgumentList() {
+    {
+      r_paren_->Value().SetIndentationSpaces(
+          argument_list_->Value().IndentationSpaces());
+      const auto r_paren_iter =
+          paren_group_->Children().begin() + r_paren_->BirthRank();
+      argument_list_->Value().SpanUpToToken(
+          r_paren_->Value().TokensRange().end());
+      r_paren_ = argument_list_->NewChild(std::move(*r_paren_));
+      paren_group_->Children().erase(r_paren_iter);
+    }
+    if (!PartitionIsForcedIntoNewLine(*r_paren_)) {
+      // We want to avoid wrapping just before `)`. It would be best to use
+      // token's break_penalty in Layout Optimizer, but that's a task for
+      // future.
+      // So far, use hacky heuristic: merge short partitions (things
+      // like `);`) and group longer ones (anything with comments).
+      const auto r_paren_tokens = r_paren_->Value().TokensRange();
+      if (r_paren_->is_leaf() &&
+          std::none_of(r_paren_tokens.begin(), r_paren_tokens.end(),
+                       [](const PreFormatToken& t) {
+                         return IsComment(verilog_tokentype(t.TokenEnum()));
+                       })) {
+        // Merge
+        verible::MergeLeafIntoPreviousLeaf(r_paren_);
+        r_paren_ = &argument_list_->Children().back();
+      } else {
+        // Group
+        auto& last_argument = *r_paren_->PreviousSibling();
+        auto group = TokenPartitionTree(
+            verible::UnwrappedLine(last_argument.Value().IndentationSpaces(),
+                                   last_argument.Value().TokensRange().begin(),
+                                   PartitionPolicyEnum::kJuxtaposition));
+        group.Value().SpanUpToToken(r_paren_->Value().TokensRange().end());
+        group.NewChild(std::move(last_argument));
+        group.NewChild(std::move(*r_paren_));
+        argument_list_->Children().erase(argument_list_->Children().end() - 1);
+        argument_list_->Children().back() = std::move(group);
+        r_paren_ = &argument_list_->Children().back();
+      }
+    }
+  }
+
+  void GroupIdentifierCommentsAndLeftParen() {
+    const bool r_paren_is_in_arg_list = (r_paren_->Parent() == argument_list_);
+    auto group = TokenPartitionTree(
+        verible::UnwrappedLine(main_node_->Value().IndentationSpaces(),
+                               identifier_->Value().TokensRange().begin(),
+                               PartitionPolicyEnum::kJuxtaposition));
+    group.Value().SpanUpToToken(l_paren_->Value().TokensRange().end());
+
+    verible::AdjustIndentationAbsolute(paren_group_,
+                                       main_node_->Value().IndentationSpaces());
+
+    paren_group_->Value().SpanBackToToken(group.Value().TokensRange().begin());
+
+    const auto old_identifier_iter =
+        identifier_->Parent()->Children().begin() + identifier_->BirthRank();
+    auto nodes_to_group = verible::iterator_range(
+        paren_group_->Children().begin(),
+        paren_group_->Children().begin() + l_paren_->BirthRank() + 1);
+    // Move partitions into the group.
+    group.NewChild(std::move(*identifier_));
+    for (auto& node : nodes_to_group) {
+      group.NewChild(std::move(node));
+    }
+    // Remove leftover entries of all grouped partitions except:
+    // * First paren_group's child: will be reused as a group node.
+    // * The identifier: removing it will invalidate iterators; done later.
+    paren_group_->Children().erase(nodes_to_group.begin() + 1,
+                                   nodes_to_group.end());
+
+    // Move the group into first grouped partition's place.
+    *nodes_to_group.begin() = std::move(group);
+
+    // Remove identifier
+    main_node_->Children().erase(old_identifier_iter);
+
+    HoistOnlyChildPartition(main_node_);
+
+    paren_group_ = main_node_;
+    identifier_ = nullptr;
+    l_paren_ = &paren_group_->Children().front();
+    if (argument_list_) {
+      argument_list_ = l_paren_->NextSibling();
+      r_paren_ = r_paren_is_in_arg_list ? &argument_list_->Children().back()
+                                        : argument_list_->NextSibling();
+    } else {
+      r_paren_ = &paren_group_->Children().back();
+    }
+  }
+
+  void MergeIdentifierAndLeftParen() {
+    const bool r_paren_is_in_arg_list = (r_paren_->Parent() == argument_list_);
+    CHECK_EQ(identifier_->NextLeaf(), l_paren_);
+    CHECK(!PartitionIsForcedIntoNewLine(*l_paren_));
+    verible::AdjustIndentationAbsolute(paren_group_,
+                                       main_node_->Value().IndentationSpaces());
+    verible::MergeLeafIntoNextLeaf(identifier_);
+    HoistOnlyChildPartition(main_node_);
+
+    paren_group_ = main_node_;
+    identifier_ = nullptr;
+    l_paren_ = &paren_group_->Children().front();
+    if (argument_list_) {
+      argument_list_ = l_paren_->NextSibling();
+      r_paren_ = r_paren_is_in_arg_list ? &argument_list_->Children().back()
+                                        : argument_list_->NextSibling();
+    } else {
+      r_paren_ = &paren_group_->Children().back();
+    }
+  }
+
+  void GroupCommentsAndLeftParen() {
+    // Group comments + '('
+    auto group = TokenPartitionTree(
+        verible::UnwrappedLine(paren_group_->Value().IndentationSpaces(),
+                               paren_group_->Value().TokensRange().begin(),
+                               PartitionPolicyEnum::kWrap));
+    group.Value().SpanUpToToken(l_paren_->Value().TokensRange().end());
+
+    auto nodes_to_group = verible::iterator_range(
+        paren_group_->Children().begin(),
+        paren_group_->Children().begin() + l_paren_->BirthRank() + 1);
+    // Move partitions into the group.
+    for (auto& node : nodes_to_group) {
+      group.NewChild(std::move(node));
+    }
+    // Remove leftover entries of all grouped partitions except:
+    // * First paren_group's child: will be reused as a group node.
+    paren_group_->Children().erase(nodes_to_group.begin() + 1,
+                                   nodes_to_group.end());
+
+    // Move the group into first grouped partition's place.
+    *nodes_to_group.begin() = std::move(group);
+
+    l_paren_ = &(*nodes_to_group.begin());
+
+    if (argument_list_) {
+      argument_list_ = l_paren_->NextSibling();
+      r_paren_ = is_nested_ ? &argument_list_->Children().back()
+                            : argument_list_->NextSibling();
+    } else {
+      r_paren_ = &paren_group_->Children().back();
+    }
+  }
+
+  void GroupLeftParenAndArgumentList() {
+    auto old_argument_list_iter =
+        paren_group_->Children().begin() + argument_list_->BirthRank();
+
+    const auto group_policy =
+        PartitionIsForcedIntoNewLine(*argument_list_)
+            ? PartitionPolicyEnum::kStack
+            : PartitionPolicyEnum::kJuxtapositionOrIndentedStack;
+
+    auto group = TokenPartitionTree(verible::UnwrappedLine(
+        l_paren_->Value().IndentationSpaces(),
+        l_paren_->Value().TokensRange().begin(), group_policy));
+    group.Value().SpanUpToToken(argument_list_->Value().TokensRange().end());
+    group.AdoptSubtree(std::move(*l_paren_), std::move(*argument_list_));
+
+    *l_paren_ = std::move(group);
+    paren_group_->Children().erase(old_argument_list_iter);
+
+    l_paren_ = nullptr;
+    argument_list_ = nullptr;
+  }
+
+  // Report a bug/untested situation, but don't abort.
+  static void LogBug(std::ostream& stream,
+                     absl::string_view reason = absl::string_view{}) {
+    if (reason.empty())
+      stream << "Formatting of macro call failed.";
+    else
+      stream << "Formatting of macro call failed: " << reason;
+    stream << "\n*** Please file a bug. ***";
+  }
+
+  const FormatStyle& style_;
+  TokenPartitionTree* const main_node_;
+
+  // Subnodes of main_node_. Initialized by FindInitialPartitions().
+  // Tree modifications invalidate pointers, so keeping pointers here instead
+  // of passing them to each method allows for more readable code.
+  TokenPartitionTree* identifier_ = nullptr;
+  TokenPartitionTree* paren_group_ = nullptr;
+  TokenPartitionTree* argument_list_ = nullptr;
+  TokenPartitionTree* l_paren_ = nullptr;
+  TokenPartitionTree* r_paren_ = nullptr;
+  TokenPartitionTree* semicolon_ = nullptr;
+
+  static bool IsNested(const TokenPartitionTree& macro_call_node) {
+    auto* paren_group = FindDirectChild(
+        &macro_call_node, OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
+    if (!paren_group) return false;
+    return paren_group->Value().IndentationSpaces() ==
+           macro_call_node.Value().IndentationSpaces();
+  }
+
+  const bool is_nested_;
+};
 
 static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
                                            int indentation_spaces) {
@@ -2022,6 +2660,37 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
+    case NodeEnum::kMacroCall: {
+      const auto policy = partition.Value().PartitionPolicy();
+      if (policy == PartitionPolicyEnum::kStack) {
+        MacroCallReshaper(style, &partition).Reshape();
+        break;
+      }
+      // If there are no call args, join the '(' and ')' together.
+      if (MacroCallArgsIsEmpty(*GetMacroCallArgs(node))) {
+        // FIXME (mglb): Do more checks: EOL comments can be inside.
+        partition.FlattenOnce();
+        VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
+      } else {
+        // Merge closing parenthesis into last argument partition
+        // Test for ')' and MacroCallCloseToEndLine because macros
+        // use its own token 'MacroCallCloseToEndLine'
+        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionIsCloseParenSemi(last)) {
+          auto& token = last.Value().TokensRange().front();
+          if (token.before.break_decision ==
+              verible::SpacingOptions::MustWrap) {
+            auto* group = verible::GroupLeafWithPreviousLeaf(&last);
+            group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
+          } else {
+            verible::MergeLeafIntoPreviousLeaf(&last);
+          }
+        }
+      }
+      break;
+    }
+
     case NodeEnum::kRandomizeFunctionCall:
     case NodeEnum::kSystemTFCall: {
       // Function/system calls don't always have it's own section.
@@ -2029,14 +2698,39 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // We're checking for partition policy because those two policies
       // force own partition section.
       const auto policy = partition.Value().PartitionPolicy();
-      if (policy == PartitionPolicyEnum::kAppendFittingSubPartitions ||
-          policy == PartitionPolicyEnum::kOptimalFunctionCallLayout) {
+      if (policy == PartitionPolicyEnum::kAppendFittingSubPartitions) {
         auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
-          verible::MergeLeafIntoPreviousLeaf(&last);
+          auto& token = last.Value().TokensRange().front();
+          if (token.before.break_decision ==
+              verible::SpacingOptions::MustWrap) {
+            auto* group = verible::GroupLeafWithPreviousLeaf(&last);
+            group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
+          } else {
+            verible::MergeLeafIntoPreviousLeaf(&last);
+          }
         }
+      } else if (policy == PartitionPolicyEnum::kStack) {
+        MacroCallReshaper(style, &partition).Reshape();
       }
+      break;
+    }
+
+    case NodeEnum::kArgumentList: {
+      SetCommentLinePartitionAsAlreadyFormatted(&partition);
+      AttachSeparatorsToListElementPartitions(&partition);
+      break;
+    }
+
+    case NodeEnum::kMacroArgList: {
+      SetCommentLinePartitionAsAlreadyFormatted(&partition);
+      AttachSeparatorsToListElementPartitions(&partition);
+      break;
+    }
+
+    case NodeEnum::kParenGroup: {
+      SetCommentLinePartitionAsAlreadyFormatted(&partition);
       break;
     }
 
@@ -2114,24 +2808,6 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
-    case NodeEnum::kMacroCall: {
-      // If there are no call args, join the '(' and ')' together.
-      if (MacroCallArgsIsEmpty(*GetMacroCallArgs(node))) {
-        // FIXME HERE: flattening wrong place!  Should merge instead.
-        partition.FlattenOnce();
-        VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
-      } else {
-        // Merge closing parenthesis into last argument partition
-        // Test for ')' and MacroCallCloseToEndLine because macros
-        // use its own token 'MacroCallCloseToEndLine'
-        auto& last = *ABSL_DIE_IF_NULL(partition.RightmostDescendant());
-        if (PartitionStartsWithCloseParen(last) ||
-            PartitionIsCloseParenSemi(last)) {
-          verible::MergeLeafIntoPreviousLeaf(&last);
-        }
-      }
-      break;
-    }
     case NodeEnum::kConstraintDeclaration: {
       // TODO(fangism): kConstraintSet should be handled similarly with {}
       if (partition.Children().size() == 2) {
@@ -2331,7 +3007,6 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kDistributionItemList:
     case NodeEnum::kEnumNameList:
     case NodeEnum::kFormalParameterList:
-    case NodeEnum::kMacroArgList:
     case NodeEnum::kOpenRangeList:
     case NodeEnum::kPortActualList:
     case NodeEnum::kPortDeclarationList:
