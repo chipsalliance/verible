@@ -722,7 +722,7 @@ class LayoutFunctionFactory {
 class TokenPartitionsLayoutOptimizer {
  public:
   explicit TokenPartitionsLayoutOptimizer(const BasicFormatStyle& style)
-      : style_(style), factory_(style) {}
+      : factory_(style) {}
 
   TokenPartitionsLayoutOptimizer(const TokenPartitionsLayoutOptimizer&) =
       delete;
@@ -737,7 +737,6 @@ class TokenPartitionsLayoutOptimizer {
   LayoutFunction CalculateOptimalLayout(const TokenPartitionTree& node) const;
 
  private:
-  const BasicFormatStyle& style_;
   const LayoutFunctionFactory factory_;
 };
 

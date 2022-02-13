@@ -2331,42 +2331,6 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
-TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
-  using TPT = TokenPartitionTreeBuilder;
-
-  auto tree_under_test =
-      TPT(PartitionPolicyEnum::kOptimalFunctionCallLayout,
-          {
-              TPT({0, 1}, PartitionPolicyEnum::kFitOnLineElseExpand),
-              TPT(PartitionPolicyEnum::kFitOnLineElseExpand,
-                  {
-                      TPT({1, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({2, 3}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({3, 4}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({4, 5}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({5, 6}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({6, 7}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                  }),
-          })
-          .build(pre_format_tokens_);
-
-  const auto tree_expected =
-      TPT(PartitionPolicyEnum::kAlwaysExpand,
-          {
-              TPT(0, {0, 1}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {1, 3}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {3, 5}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {5, 7}, PartitionPolicyEnum::kAlreadyFormatted),
-          })
-          .build(pre_format_tokens_);
-
-  static const BasicFormatStyle style = CreateStyle();
-  OptimizeTokenPartitionTree(style, &tree_under_test);
-
-  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree_under_test,
-                      tree_expected);
-}
-
 TEST_F(OptimizeTokenPartitionTreeTest, AppendToLineWithInlinePartitions) {
   using TPT = TokenPartitionTreeBuilder;
   using PP = PartitionPolicyEnum;

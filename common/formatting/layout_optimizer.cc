@@ -505,7 +505,6 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kJuxtaposition:
     case PartitionPolicyEnum::kAlreadyFormatted:
     case PartitionPolicyEnum::kWrap:
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kFitOnLineElseExpand:
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
@@ -635,29 +634,6 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       layouts.front() = factory_.Indent(layouts.front(), indent);
 
       return factory_.Juxtaposition(layouts.begin(), layouts.end());
-    }
-
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
-      // Support only function/macro/system calls for now
-      CHECK_EQ(node.Children().size(), 2);
-      auto& header = layouts[0];
-      auto& args = layouts[1];
-
-      auto stack_layout = factory_.Stack({
-          header,
-          factory_.Indent(args, style_.wrap_spaces),
-      });
-      if (args.MustWrap()) {
-        return stack_layout;
-      }
-      auto juxtaposed_layout = factory_.Juxtaposition({
-          header,
-          args,
-      });
-      return factory_.Choice({
-          std::move(juxtaposed_layout),
-          std::move(stack_layout),
-      });
     }
 
     case PartitionPolicyEnum::kAppendFittingSubPartitions:

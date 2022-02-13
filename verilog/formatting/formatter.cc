@@ -438,7 +438,6 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -855,7 +854,6 @@ Status Formatter::Format(const ExecutionControl& control) {
         case PartitionPolicyEnum::kStack:
         case PartitionPolicyEnum::kWrap:
         case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
-        case PartitionPolicyEnum::kOptimalFunctionCallLayout:
           verible::OptimizeTokenPartitionTree(style_, &node);
           break;
         case PartitionPolicyEnum::kTabularAlignment:
