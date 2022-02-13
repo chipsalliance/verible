@@ -96,7 +96,7 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
 
   void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node,
-                              const verible::BasicFormatStyle& style,
+                              const FormatStyle& style,
                               verible::TokenPartitionTree* recent_partition);
 
   // Visits a node which requires a new UnwrappedLine, followed by

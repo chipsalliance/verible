@@ -1757,7 +1757,7 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
 // This phase is strictly concerned with reshaping token partitions,
 // and occurs on the return path of partition tree construction.
 void TreeUnwrapper::ReshapeTokenPartitions(
-    const SyntaxTreeNode& node, const verible::BasicFormatStyle& style,
+    const SyntaxTreeNode& node, const FormatStyle& style,
     TokenPartitionTree* recent_partition) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
