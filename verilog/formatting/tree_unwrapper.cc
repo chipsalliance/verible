@@ -608,10 +608,32 @@ void TreeUnwrapper::CollectTrailingFilteredTokens() {
   VLOG(4) << "end of " << __FUNCTION__;
 }
 
+enum class ContextHint {
+  kInsideStandaloneMacroCall,
+};
+
+static const verible::EnumNameMap<ContextHint>& ContextHintStrings() {
+  static const verible::EnumNameMap<ContextHint> kContextHintStringMap({
+      {"kInsideStandaloneMacroCall", ContextHint::kInsideStandaloneMacroCall},
+  });
+  return kContextHintStringMap;
+}
+
+std::ostream& operator<<(std::ostream& stream, ContextHint p) {
+  return ContextHintStrings().Unparse(p, stream);
+}
+
+std::ostream& operator<<(std::ostream& stream,
+                         const std::vector<ContextHint>& f) {
+  return stream << verible::SequenceFormatter(f);
+}
+
 // Visitor to determine which node enum function to call
 void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
+
+  const auto context_hints_size = context_hints_.size();
 
   // This phase is only concerned with creating token partitions (during tree
   // recursive descent) and setting correct indentation values.  It is ok to
@@ -626,6 +648,11 @@ void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
   if (partition != nullptr) {
     ReshapeTokenPartitions(node, style_, partition);
   }
+
+  CHECK_GE(context_hints_.size(), context_hints_size);
+  // Remove hints from traversed context
+  context_hints_.erase(context_hints_.begin() + context_hints_size,
+                       context_hints_.end());
 }
 
 // CST-descending phase that creates partitions with correct indentation.
