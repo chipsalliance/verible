@@ -97,17 +97,13 @@ declare -A KnownIssue
 
 #--- Opentitan
 KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_model_dpi_pkg.sv]=1006
-KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/dv/sv/cip_lib/seq_lib/cip_base_vseq.sv]=1130
 # There is also bug 1008 which only shows up if compiled with asan
 
 #--- ivtest
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/stask_sens_null_arg.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_macro.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_port_default14.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr1763333.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/br_gh72a.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/blankport.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/br_gh72b_fail.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/param_times.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value1.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value3.v]=1010
