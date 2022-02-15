@@ -93,6 +93,7 @@ cc_library(
         "//common/util:logging",
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],

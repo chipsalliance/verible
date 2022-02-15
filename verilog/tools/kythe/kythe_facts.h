@@ -98,6 +98,10 @@ struct VName {
   // The language this VName belongs to.
   absl::string_view language = kDefaultKytheLanguage;
 };
+template <typename H>
+H AbslHashValue(H state, const VName& v) {
+  return H::combine(std::move(state), v.path, v.signature);
+}
 
 std::ostream& operator<<(std::ostream&, const VName&);
 
@@ -125,6 +129,10 @@ struct Fact {
   // The given value to this fact.
   const std::string fact_value;
 };
+template <typename H>
+H AbslHashValue(H state, const Fact& v) {
+  return H::combine(std::move(state), v.node_vname, v.fact_name, v.fact_value);
+}
 
 std::ostream& operator<<(std::ostream&, const Fact&);
 
@@ -152,6 +160,10 @@ struct Edge {
   // The VName of the target node of this edge.
   const VName target_node;
 };
+template <typename H>
+H AbslHashValue(H state, const Edge& v) {
+  return H::combine(std::move(state), v.source_node, v.target_node);
+}
 
 std::ostream& operator<<(std::ostream&, const Edge&);
 

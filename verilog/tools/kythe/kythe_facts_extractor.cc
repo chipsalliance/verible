@@ -75,10 +75,10 @@ std::vector<absl::string_view> ConcatenateReferences(
 // Extracted Kythe indexing facts and edges.
 struct KytheIndexingData {
   // Extracted Kythe indexing facts.
-  std::set<Fact> facts;
+  absl::flat_hash_set<Fact> facts;
 
   // Extracted Kythe edges.
-  std::set<Edge> edges;
+  absl::flat_hash_set<Edge> edges;
 };
 
 // KytheFactsExtractor processes indexing facts for a single file.
