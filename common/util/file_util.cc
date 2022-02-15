@@ -144,11 +144,18 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
     absl::Status usable_file = FileExists(filename_str);
     if (!usable_file.ok()) return usable_file;  // Bail
     fs.open(filename_str.c_str());
+    std::error_code err;
+    const size_t prealloc = fs::file_size(filename_str, err);
+    if (err.value() == 0) content->reserve(prealloc);
     stream = &fs;
   }
   if (!stream->good()) return CreateErrorStatusFromErrno("can't read");
-  content->assign((std::istreambuf_iterator<char>(*stream)),
-                  std::istreambuf_iterator<char>());
+  char buffer[4096];
+  while (stream->good() && !stream->eof()) {
+    stream->read(buffer, sizeof(buffer));
+    content->append(buffer, stream->gcount());
+  }
+
   // Allow stdin to be reopened for more input.
   if (use_stdin && std::cin.eof()) std::cin.clear();
   return absl::OkStatus();
