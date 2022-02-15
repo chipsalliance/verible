@@ -188,7 +188,7 @@ struct TreeUnwrapperTestData {
 // Iterates through UnwrappedLines and expected lines and verifies that they
 // are equal
 bool VerifyUnwrappedLines(std::ostream* stream,
-                          const verible::VectorTree<UnwrappedLine>& uwlines,
+                          const verible::TokenPartitionTree& uwlines,
                           const TreeUnwrapperTestData& test_case) {
   std::ostringstream first_diff_stream;
   const auto diff = verible::DeepEqual(
