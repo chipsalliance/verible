@@ -56,11 +56,11 @@ enum class PartitionPolicyEnum {
   // do NOT bother to call SearchLineWraps or perform any other wrapping
   // optimization. Partitions with this policy can contain kInline
   // subpartitions.
-  // Reserved for policy-specific formatters, like Layout Optimizer and Tabular
+  // Reserved for policy-specific formatters, like LayoutOptimizer and Tabular
   // Aligner.
   //
   // Currently lines with this policy are generated in Tabular Aligner and
-  // Layout Optimizer. They are supported as an input in Layout Optimizer.
+  // LayoutOptimizer. They are supported as an input in LayoutOptimizer.
   kAlreadyFormatted,
 
   // Represents slice of kAlreadyFormatted line.
@@ -72,7 +72,7 @@ enum class PartitionPolicyEnum {
   //
   // The policy is intended to add non-permanent spacing between tokens in
   // situations where multiple token partition trees with different token
-  // spacings can coexist (e.g. in multiple layouts passed to Layout Optimizer).
+  // spacings can coexist (e.g. in multiple layouts passed to LayoutOptimizer).
   //
   // Invariants:
   // * Can exist only inside kAlreadyFormatted partition node.
@@ -85,7 +85,7 @@ enum class PartitionPolicyEnum {
   // tokens.
   //
   // Currently partitions with this policy are generated in Tabular Aligner and
-  // Layout Optimizer. They are supported as an input in Layout Optimizer.
+  // LayoutOptimizer. They are supported as an input in LayoutOptimizer.
   kInline,
 
   // Treats subpartitions as units, and appends them to the same line as
@@ -94,9 +94,9 @@ enum class PartitionPolicyEnum {
   // FormatStyle.wrap_spaces when wrapping.
   kAppendFittingSubPartitions,
 
-  // Layout Optimizer policies. See its implementation (layout_optimizer.cc)
+  // LayoutOptimizer policies. See its implementation (layout_optimizer.cc)
   // WARNING: when one of the following policies is assigned to a partition,
-  // it's whole subtree is handled by Layout Optimizer.
+  // its whole subtree is handled by LayoutOptimizer.
   kJuxtaposition,
   kStack,
   kWrap,

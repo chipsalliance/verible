@@ -36,7 +36,7 @@
 
 namespace verible {
 
-// Handles formatting of `node` using Layout Optimizer.
+// Handles formatting of `node` using LayoutOptimizer.
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
                                 TokenPartitionTree* node);
 
