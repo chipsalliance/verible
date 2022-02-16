@@ -589,7 +589,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       }
 
       const int indentation = node.Value().IndentationSpaces();
-      for (int i = 0; i < static_cast<int>(layouts.size()); ++i) {
+      for (size_t i = 0; i < layouts.size(); ++i) {
         const int relative_indentation =
             node.Children()[i].Value().IndentationSpaces() - indentation;
         layouts[i] = factory_.Indent(layouts[i], relative_indentation);
