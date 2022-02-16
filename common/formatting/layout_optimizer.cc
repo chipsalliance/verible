@@ -518,10 +518,10 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kStack:
     case PartitionPolicyEnum::kAlwaysExpand:
     case PartitionPolicyEnum::kTabularAlignment: {
-      int indentation = node.Value().IndentationSpaces();
+      const int indentation = node.Value().IndentationSpaces();
       std::transform(node.Children().begin(), node.Children().end(),
                      layouts.begin(), [=](const TokenPartitionTree& n) {
-                       int relative_indentation =
+                       const int relative_indentation =
                            n.Value().IndentationSpaces() - indentation;
                        if (relative_indentation < 0) {
                          VLOG(0)
@@ -588,9 +588,9 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
         juxtaposition = factory_.Juxtaposition(layouts.begin(), layouts.end());
       }
 
-      int indentation = node.Value().IndentationSpaces();
+      const int indentation = node.Value().IndentationSpaces();
       for (int i = 0; i < static_cast<int>(layouts.size()); ++i) {
-        int relative_indentation =
+        const int relative_indentation =
             node.Children()[i].Value().IndentationSpaces() - indentation;
         layouts[i] = factory_.Indent(layouts[i], relative_indentation);
       }
