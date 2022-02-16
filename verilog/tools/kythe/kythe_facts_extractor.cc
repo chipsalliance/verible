@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"

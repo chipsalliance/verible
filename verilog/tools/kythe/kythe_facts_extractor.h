@@ -18,7 +18,6 @@
 #include <iosfwd>
 #include <set>
 
-#include "absl/container/flat_hash_set.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/kythe_facts.h"

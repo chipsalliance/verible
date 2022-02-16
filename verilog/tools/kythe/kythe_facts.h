@@ -100,7 +100,7 @@ struct VName {
 };
 template <typename H>
 H AbslHashValue(H state, const VName& v) {
-  return H::combine(std::move(state), v.path, v.signature);
+  return H::combine(std::move(state), v.path, v.root, v.signature, v.corpus);
 }
 
 std::ostream& operator<<(std::ostream&, const VName&);
@@ -162,7 +162,8 @@ struct Edge {
 };
 template <typename H>
 H AbslHashValue(H state, const Edge& v) {
-  return H::combine(std::move(state), v.source_node, v.target_node);
+  return H::combine(std::move(state), v.source_node, v.target_node,
+                    v.edge_name);
 }
 
 std::ostream& operator<<(std::ostream&, const Edge&);

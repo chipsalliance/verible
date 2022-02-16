@@ -50,9 +50,8 @@ std::string Signature::ToBase64() const {
 }
 
 bool VName::operator==(const VName& other) const {
-  return std::tie(signature, path, language, root, corpus) ==
-         std::tie(other.signature, other.path, other.language, other.root,
-                  other.corpus);
+  return path == other.path && root == other.root && corpus == other.corpus &&
+         signature == other.signature && language == other.language;
 }
 
 bool VName::operator<(const VName& other) const {
@@ -82,8 +81,8 @@ std::ostream& operator<<(std::ostream& stream, const VName& vname) {
 }
 
 bool Fact::operator==(const Fact& other) const {
-  return std::tie(node_vname, fact_name, fact_value) ==
-         std::tie(other.node_vname, other.fact_name, other.fact_value);
+  return fact_value == other.fact_value && fact_name == other.fact_name &&
+         node_vname == other.node_vname;
 }
 
 bool Fact::operator<(const Fact& other) const {
@@ -116,8 +115,8 @@ std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
 }
 
 bool Edge::operator==(const Edge& other) const {
-  return std::tie(source_node, edge_name, target_node) ==
-         std::tie(other.source_node, other.edge_name, other.target_node);
+  return edge_name == other.edge_name && source_node == other.source_node &&
+         target_node == other.target_node;
 }
 
 bool Edge::operator<(const Edge& other) const {
