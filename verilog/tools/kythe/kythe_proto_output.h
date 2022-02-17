@@ -15,16 +15,24 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_PROTO_OUTPUT_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_PROTO_OUTPUT_H_
 
+#include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "verilog/tools/kythe/kythe_facts.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
 namespace verilog {
 namespace kythe {
 
-class KytheProtoOutput : public KytheOutput {
+class KytheProtoOutput final : public KytheOutput {
  public:
-  // Output all Kythe facts from the indexing data in proto format.
-  void Emit(const KytheIndexingData& indexing_data);
+  KytheProtoOutput(int output_fd);
+  ~KytheProtoOutput() final;
+
+  // Output Kythe facts from the indexing data in proto format.
+  void Emit(const Fact& fact) final;
+  void Emit(const Edge& edge) final;
+
+ private:
+  ::google::protobuf::io::FileOutputStream out_;
 };
 
 }  // namespace kythe

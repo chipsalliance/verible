@@ -32,6 +32,13 @@
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 #include "verilog/tools/kythe/kythe_proto_output.h"
 
+#ifndef _WIN32
+#include <unistd.h>  // for STDOUT_FILENO
+#else
+#include <stdio.h>
+#define STDOUT_FILENO _fileno(stdout)
+#endif
+
 // for --print_kythe_facts flag
 enum class PrintMode {
   kJSON,
@@ -100,9 +107,9 @@ namespace kythe {
 
 // Prints Kythe facts in proto format to stdout.
 static void PrintKytheFactsProtoEntries(
-    const IndexingFactNode& file_list_facts_tree,
-    const VerilogProject& project) {
-  KytheProtoOutput proto_output;
+    const IndexingFactNode& file_list_facts_tree, const VerilogProject& project,
+    int fd) {
+  KytheProtoOutput proto_output(fd);
   StreamKytheFactsEntries(&proto_output, file_list_facts_tree, project);
 }
 
@@ -132,7 +139,8 @@ static std::vector<absl::Status> ExtractTranslationUnits(
       break;
     }
     case PrintMode::kProto: {
-      PrintKytheFactsProtoEntries(file_list_facts_tree, *project);
+      PrintKytheFactsProtoEntries(file_list_facts_tree, *project,
+                                  STDOUT_FILENO);
       break;
     }
   }

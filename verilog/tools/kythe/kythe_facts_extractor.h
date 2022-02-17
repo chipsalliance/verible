@@ -57,13 +57,13 @@ class KytheFactsPrinter {
 
 std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
 
-// Extracted Kythe indexing facts and edges.
-struct KytheIndexingData {
-  // Extracted Kythe indexing facts.
-  std::set<Fact> facts;
-
-  // Extracted Kythe edges.
-  std::set<Edge> edges;
+// Output sink interface for producing the Kythe output.
+class KytheOutput {
+ public:
+  // Output all Kythe facts from the indexing data.
+  virtual void Emit(const Fact& fact) = 0;
+  virtual void Emit(const Edge& edge) = 0;
+  virtual ~KytheOutput() {}
 };
 
 // Extract facts across an entire project.
@@ -72,18 +72,6 @@ struct KytheIndexingData {
 // Currently, the file_list must be dependency-ordered for best results, that
 // is, definitions of symbols should be encountered earlier in the file list
 // than references to those symbols.
-KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
-                                    const VerilogProject& project);
-
-// Interface for producing the Kythe output.
-class KytheOutput {
- public:
-  // Output all Kythe facts from the indexing data.
-  virtual void Emit(const KytheIndexingData& indexing_data) = 0;
-  virtual ~KytheOutput() {}
-};
-
-// Populate the Kythe output stream with Kythe facts.
 void StreamKytheFactsEntries(KytheOutput* kythe_output,
                              const IndexingFactNode& file_list_facts_tree,
                              const VerilogProject& project);
