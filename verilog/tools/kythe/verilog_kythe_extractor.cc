@@ -44,6 +44,7 @@ enum class PrintMode {
   kJSON,
   kJSONDebug,
   kProto,
+  kNone,
 };
 
 static const verible::EnumNameMap<PrintMode>& PrintModeStringMap() {
@@ -51,6 +52,7 @@ static const verible::EnumNameMap<PrintMode>& PrintModeStringMap() {
       {"json", PrintMode::kJSON},
       {"json_debug", PrintMode::kJSONDebug},
       {"proto", PrintMode::kProto},
+      {"none", PrintMode::kNone},
   });
   return kPrintModeStringMap;
 }
@@ -81,6 +83,7 @@ ABSL_FLAG(PrintMode, print_kythe_facts, PrintMode::kJSON,
           "  json_debug: Outputs Kythe facts in JSON format (without encoding, "
           "all in one JSON object)\n"
           "  proto: Outputs Kythe facts in proto format\n"
+          "  none: Just collect facts, don't output them (for debugging)\n"
           "Default: json\n");
 
 ABSL_FLAG(
@@ -113,6 +116,18 @@ static void PrintKytheFactsProtoEntries(
   StreamKytheFactsEntries(&proto_output, file_list_facts_tree, project);
 }
 
+// Just collect the facts, but don't print anything. Mostly useful for
+// debugging error checking or performance.
+static void KytheFactsNullPrinter(const IndexingFactNode& file_list_facts_tree,
+                                  const VerilogProject& project) {
+  class NullPrinter final : public KytheOutput {
+   public:
+    void Emit(const Fact& fact) final {}
+    void Emit(const Edge& edge) final {}
+  } printer;
+  StreamKytheFactsEntries(&printer, file_list_facts_tree, project);
+}
+
 static std::vector<absl::Status> ExtractTranslationUnits(
     absl::string_view file_list_path, VerilogProject* project,
     const std::vector<std::string>& file_names) {
@@ -127,22 +142,22 @@ static std::vector<absl::Status> ExtractTranslationUnits(
 
   // check how to output kythe facts.
   switch (absl::GetFlag(FLAGS_print_kythe_facts)) {
-    case PrintMode::kJSON: {
+    case PrintMode::kJSON:
       std::cout << KytheFactsPrinter(file_list_facts_tree, *project)
                 << std::endl;
       break;
-    }
-    case PrintMode::kJSONDebug: {
+    case PrintMode::kJSONDebug:
       std::cout << KytheFactsPrinter(file_list_facts_tree, *project,
                                      /*debug=*/true)
                 << std::endl;
       break;
-    }
-    case PrintMode::kProto: {
+    case PrintMode::kProto:
       PrintKytheFactsProtoEntries(file_list_facts_tree, *project,
                                   STDOUT_FILENO);
       break;
-    }
+    case PrintMode::kNone:
+      KytheFactsNullPrinter(file_list_facts_tree, *project);
+      break;
   }
 
   return project->GetErrorStatuses();
