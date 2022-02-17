@@ -1290,13 +1290,13 @@ Signature KytheFactsExtractor::CreateScopeRelativeSignature(
 void KytheFactsExtractor::CreateFact(const VName& vname,
                                      absl::string_view fact_name,
                                      absl::string_view fact_value) {
-  kythe_data_.facts.insert(Fact(vname, fact_name, fact_value));
+  kythe_data_.facts.emplace(vname, fact_name, fact_value);
 }
 
 void KytheFactsExtractor::CreateEdge(const VName& source_node,
                                      absl::string_view edge_name,
                                      const VName& target_node) {
-  kythe_data_.edges.insert(Edge(source_node, edge_name, target_node));
+  kythe_data_.edges.emplace(source_node, edge_name, target_node);
 }
 
 std::ostream& KytheFactsPrinter::PrintJsonStream(std::ostream& stream) const {
