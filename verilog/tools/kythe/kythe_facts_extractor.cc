@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/container/btree_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
@@ -75,10 +76,10 @@ std::vector<absl::string_view> ConcatenateReferences(
 // Extracted Kythe indexing facts and edges.
 struct KytheIndexingData {
   // Extracted Kythe indexing facts.
-  std::set<Fact> facts;
+  absl::flat_hash_set<Fact> facts;
 
   // Extracted Kythe edges.
-  std::set<Edge> edges;
+  absl::flat_hash_set<Edge> edges;
 };
 
 // KytheFactsExtractor processes indexing facts for a single file.
