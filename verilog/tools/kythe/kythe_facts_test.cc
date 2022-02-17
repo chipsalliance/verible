@@ -29,15 +29,12 @@ TEST(SignatureTest, EmptyToString) {
   const Signature s;
   EXPECT_EQ(s.ToString(), "");
   EXPECT_THAT(s.Names(), ElementsAre(""));
-  EXPECT_TRUE(s.IsNameEqual(""));
 }
 
 TEST(SignatureTest, ToString) {
   const Signature s("foobar");
   EXPECT_EQ(s.ToString(), "foobar#");
   EXPECT_THAT(s.Names(), ElementsAre("foobar"));
-  EXPECT_TRUE(s.IsNameEqual("foobar"));
-  EXPECT_FALSE(s.IsNameEqual("barfoo"));
 }
 
 TEST(SignatureTest, WithParentToString) {
@@ -45,9 +42,6 @@ TEST(SignatureTest, WithParentToString) {
   const Signature s2(s1, "baz");
   EXPECT_EQ(s2.ToString(), "foobar#baz#");
   EXPECT_THAT(s2.Names(), ElementsAre("foobar", "baz"));
-  EXPECT_TRUE(s2.IsNameEqual("baz"));
-  EXPECT_FALSE(s2.IsNameEqual("bar"));
-  EXPECT_FALSE(s2.IsNameEqual("foobar"));
 }
 
 TEST(SignatureTest, Equality) {

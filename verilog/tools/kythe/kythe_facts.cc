@@ -32,10 +32,6 @@ bool Signature::operator<(const Signature& other) const {
                                       other.names_.begin(), other.names_.end());
 }
 
-bool Signature::IsNameEqual(absl::string_view name) const {
-  return names_.back() == name;
-}
-
 std::string Signature::ToString() const {
   std::string signature;
   for (absl::string_view name : names_) {
