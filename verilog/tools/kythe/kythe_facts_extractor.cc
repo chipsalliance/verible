@@ -72,12 +72,14 @@ std::vector<absl::string_view> ConcatenateReferences(
 
 }  // namespace
 
-void StreamKytheFactsEntries(KytheOutput* kythe_output,
-                             const IndexingFactNode& file_list_facts_tree,
-                             const VerilogProject& project) {
-  const auto indexing_data = ExtractKytheFacts(file_list_facts_tree, project);
-  kythe_output->Emit(indexing_data);
-}
+// Extracted Kythe indexing facts and edges.
+struct KytheIndexingData {
+  // Extracted Kythe indexing facts.
+  std::set<Fact> facts;
+
+  // Extracted Kythe edges.
+  std::set<Edge> edges;
+};
 
 // KytheFactsExtractor processes indexing facts for a single file.
 // Responsible for traversing IndexingFactsTree and processing its different
@@ -278,8 +280,9 @@ class KytheFactsExtractor {
   KytheIndexingData kythe_data_;
 };
 
-KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
-                                    const VerilogProject& project) {
+void StreamKytheFactsEntries(KytheOutput* kythe_output,
+                             const IndexingFactNode& file_list,
+                             const VerilogProject& project) {
   VLOG(1) << __FUNCTION__;
   // Create a new ScopeResolver and give the ownership to the scope_resolvers
   // vector so that it can outlive KytheFactsExtractor.
@@ -307,7 +310,6 @@ KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
   }
 
   // Process each file in the original listed order.
-  KytheIndexingData aggregated_indexing_facts;
   for (const IndexingFactNode& root : file_list.Children()) {
     // 'root' corresponds to the fact tree for a particular file.
     // 'file_path' is path-resolved.
@@ -330,14 +332,11 @@ KytheIndexingData ExtractKytheFacts(const IndexingFactNode& file_list,
 
     // Collect facts and edges.
     const auto indexing_data = kythe_extractor.ExtractFile(root);
-    aggregated_indexing_facts.facts.insert(indexing_data.facts.begin(),
-                                           indexing_data.facts.end());
-    aggregated_indexing_facts.edges.insert(indexing_data.edges.begin(),
-                                           indexing_data.edges.end());
+    for (const Fact& fact : indexing_data.facts) kythe_output->Emit(fact);
+    for (const Edge& edge : indexing_data.edges) kythe_output->Emit(edge);
   }
 
   VLOG(1) << "end of " << __FUNCTION__;
-  return aggregated_indexing_facts;
 }
 
 absl::string_view KytheFactsExtractor::SourceText() const {
@@ -351,8 +350,11 @@ KytheIndexingData KytheFactsExtractor::ExtractFile(
   // Fixed-point analysis: Repeat fact extraction until no new facts are found.
   // This approach handles cases where symbols can be defined later in the file
   // than their uses, e.g. class member declarations and references.
-  // TODO(fangism): do this in two phases: 1) collect definition points, 2)
-  // collect references.
+  // TODO(fangism): do this in two phases: 1) collect definition points,
+  //   2) collect references.
+  // TODO(hzeller): Store less in the first phase, then start streaming out
+  //   right away without first storing in set; no need to keep all the
+  //   facts and edges in memory.
   std::size_t number_of_extracted_facts = 0;
   do {
     number_of_extracted_facts = kythe_data_.facts.size();
@@ -1298,40 +1300,48 @@ void KytheFactsExtractor::CreateEdge(const VName& source_node,
 
 std::ostream& KytheFactsPrinter::PrintJsonStream(std::ostream& stream) const {
   // TODO(fangism): Print function should not be doing extraction work.
-  const auto indexing_data =
-      ExtractKytheFacts(file_list_facts_tree_, *project_);
+  class Printer final : public KytheOutput {
+   public:
+    explicit Printer(std::ostream& stream) : stream_(stream) {}
+    void Emit(const Fact& fact) final {
+      fact.FormatJSON(stream_, /*debug=*/false) << std::endl;
+    }
+    void Emit(const Edge& edge) final {
+      edge.FormatJSON(stream_, /*debug=*/false) << std::endl;
+    }
 
-  for (const Fact& fact : indexing_data.facts) {
-    fact.FormatJSON(stream, /*debug=*/false) << std::endl;
-  }
-  for (const Edge& edge : indexing_data.edges) {
-    edge.FormatJSON(stream, /*debug=*/false) << std::endl;
-  }
+   private:
+    std::ostream& stream_;
+  } printer(stream);
+
+  StreamKytheFactsEntries(&printer, file_list_facts_tree_, *project_);
 
   return stream;
 }
 
 std::ostream& KytheFactsPrinter::PrintJson(std::ostream& stream) const {
   // TODO(fangism): Print function should not be doing extraction work.
-  const auto indexing_data =
-      ExtractKytheFacts(file_list_facts_tree_, *project_);
+  class Printer final : public KytheOutput {
+   public:
+    explicit Printer(std::ostream& stream) : stream_(stream) {}
+    void Emit(const Fact& fact) final {
+      if (add_comma_) stream_ << "," << std::endl;
+      fact.FormatJSON(stream_, /*debug=*/true) << std::endl;
+      add_comma_ = true;
+    }
+    void Emit(const Edge& edge) final {
+      if (add_comma_) stream_ << "," << std::endl;
+      edge.FormatJSON(stream_, /*debug=*/true) << std::endl;
+      add_comma_ = true;
+    }
+
+   private:
+    std::ostream& stream_;
+    bool add_comma_ = false;
+  } printer(stream);
 
   stream << "[";
-  bool should_separate_entries = false;
-  for (const Fact& fact : indexing_data.facts) {
-    if (should_separate_entries) {
-      stream << "," << std::endl;
-    }
-    fact.FormatJSON(stream, /*debug=*/true);
-    should_separate_entries = true;
-  }
-  for (const Edge& edge : indexing_data.edges) {
-    if (should_separate_entries) {
-      stream << "," << std::endl;
-    }
-    edge.FormatJSON(stream, /*debug=*/true);
-    should_separate_entries = true;
-  }
+  StreamKytheFactsEntries(&printer, file_list_facts_tree_, *project_);
   stream << "]" << std::endl;
 
   return stream;

@@ -14,13 +14,6 @@
 
 #include "verilog/tools/kythe/kythe_proto_output.h"
 
-#ifndef _WIN32
-#include <unistd.h>  // for STDOUT_FILENO
-#else
-#include <stdio.h>
-#define STDOUT_FILENO _fileno(stdout)
-#endif
-
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "third_party/proto/kythe/storage.pb.h"
@@ -74,16 +67,14 @@ void OutputProto(const Entry& entry, FileOutputStream* stream) {
 
 }  // namespace
 
-void KytheProtoOutput::Emit(const KytheIndexingData& indexing_data) {
-  FileOutputStream file_output(STDOUT_FILENO);
-  file_output.SetCloseOnDelete(true);
+KytheProtoOutput::KytheProtoOutput(int fd) : out_(fd) {}
+KytheProtoOutput::~KytheProtoOutput() { out_.Close(); }
 
-  for (const Fact& fact : indexing_data.facts) {
-    OutputProto(ConvertFactToEntry(fact), &file_output);
-  }
-  for (const Edge& edge : indexing_data.edges) {
-    OutputProto(ConvertEdgeToEntry(edge), &file_output);
-  }
+void KytheProtoOutput::Emit(const Fact& fact) {
+  OutputProto(ConvertFactToEntry(fact), &out_);
+}
+void KytheProtoOutput::Emit(const Edge& edge) {
+  OutputProto(ConvertEdgeToEntry(edge), &out_);
 }
 
 }  // namespace kythe
