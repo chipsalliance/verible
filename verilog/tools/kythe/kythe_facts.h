@@ -30,12 +30,11 @@ inline constexpr absl::string_view kEmptyKytheLanguage = "";
 // Unique identifier for Kythe facts.
 class Signature {
  public:
-  explicit Signature(absl::string_view name = "")
-      : names_({std::string(name)}) {}
+  explicit Signature(absl::string_view name = "") : names_({name}) {}
 
   Signature(const Signature& parent, absl::string_view name)
       : names_(parent.Names()) {
-    names_.push_back(std::string(name));
+    names_.push_back(name);
   }
 
   bool operator==(const Signature& other) const {
@@ -52,7 +51,7 @@ class Signature {
   // Returns the signature concatenated as a string in base 64.
   std::string ToBase64() const;
 
-  const std::vector<std::string>& Names() const { return names_; }
+  const std::vector<absl::string_view>& Names() const { return names_; }
 
  private:
   // List that uniquely determines this signature and differentiates it from any
@@ -65,7 +64,7 @@ class Signature {
   //
   // for "m" ==> ["m"]
   // for "x" ==> ["m", "x"]
-  std::vector<std::string> names_;
+  std::vector<absl::string_view> names_;
 };
 template <typename H>
 H AbslHashValue(H state, const Signature& v) {

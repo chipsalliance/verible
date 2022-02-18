@@ -49,8 +49,8 @@ cc_library(
         ":kythe_facts",
         "//common/util:auto_pop_stack",
         "//common/util:iterator_range",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -94,6 +94,7 @@ cc_library(
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
