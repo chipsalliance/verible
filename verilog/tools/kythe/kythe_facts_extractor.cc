@@ -24,6 +24,7 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/container/node_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
@@ -279,6 +280,13 @@ class KytheFactsExtractor {
 
   // Contains resulting kythe facts and edges to output.
   KytheIndexingData kythe_data_;
+
+  // Location signature backing store.
+  // Inside signatures, we record locations as string_views,
+  // this is the backing store for assembled strings as
+  // location markers such as "@123:456"
+  // Needs to be a node_hash_set to provide value stability.
+  absl::node_hash_set<std::string> signature_locations_;
 };
 
 void StreamKytheFactsEntries(KytheOutput* kythe_output,
@@ -1266,10 +1274,11 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const int start_location =
       std::distance(source_text.begin(), anchor.Text().begin());
   const int end_location = start_location + anchor.Text().length();
+  const auto [location_str, _] = signature_locations_.emplace(
+      absl::StrCat("@", start_location, ":", end_location));
   const VName anchor_vname = {.path = FilePath(),
                               .root = "",
-                              .signature = Signature(absl::StrCat(
-                                  "@", start_location, ":", end_location)),
+                              .signature = Signature(*location_str),
                               .corpus = Corpus()};
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);

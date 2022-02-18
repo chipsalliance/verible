@@ -54,7 +54,7 @@ class Scope {
   // Appends the member of the given scope to the current scope.
   void AppendScope(const Scope& scope);
 
-  using MemberMap = absl::node_hash_map<std::string, ScopeMemberItem>;
+  using MemberMap = absl::node_hash_map<absl::string_view, ScopeMemberItem>;
   const MemberMap& Members() const { return members_; }
   const Signature& GetSignature() const { return signature_; }
 
