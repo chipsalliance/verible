@@ -181,6 +181,7 @@ class ScopeResolver {
   ScopeResolver(const ScopeResolver&) = delete;
   ScopeResolver(ScopeResolver&&) = delete;
   ScopeResolver& operator=(const ScopeResolver&) = delete;
+  ScopeResolver& operator=(ScopeResolver&&) = delete;
 
   // Searches for the definitions of the given references' names.
   std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
