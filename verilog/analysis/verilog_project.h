@@ -72,6 +72,9 @@ class VerilogSourceFile {
   // Returns the first non-Ok status if there is one, else OkStatus().
   absl::Status Status() const { return status_; }
 
+  // Return human readable error messages if available.
+  std::vector<std::string> ErrorMessages() const;
+
   // Returns the name used to reference the file.
   absl::string_view ReferencedPath() const { return referenced_path_; }
 

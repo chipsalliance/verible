@@ -73,6 +73,13 @@ const verible::TextStructureView* VerilogSourceFile::GetTextStructure() const {
   return &analyzed_structure_->Data();
 }
 
+std::vector<std::string> VerilogSourceFile::ErrorMessages() const {
+  std::vector<std::string> result;
+  if (!analyzed_structure_) return result;
+  result = analyzed_structure_->LinterTokenErrorMessages(false);
+  return result;
+}
+
 std::ostream& operator<<(std::ostream& stream,
                          const VerilogSourceFile& source) {
   stream << "referenced path: " << source.ReferencedPath() << std::endl;
@@ -260,7 +267,14 @@ std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
   for (const auto& file : files_) {
     const auto status = file.second->Status();
     if (!status.ok()) {
-      statuses.push_back(status);
+      // If we have details, encode these as status, otherwise use the generic.
+      const auto& message_details = file.second->ErrorMessages();
+      if (message_details.empty()) {
+        statuses.push_back(status);
+      }
+      for (const std::string& err : message_details) {
+        statuses.push_back(absl::InvalidArgumentError(err));
+      }
     }
   }
   return statuses;
