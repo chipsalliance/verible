@@ -36,7 +36,6 @@ VERILOG_REGISTER_LINT_RULE(BannedDeclaredNamePatternsRule);
 
 using verible::LintRuleStatus;
 using verible::LintViolation;
-using verible::SyntaxTreeContext;
 
 static const char kMessage[] = "Check banned declared name patterns";
 

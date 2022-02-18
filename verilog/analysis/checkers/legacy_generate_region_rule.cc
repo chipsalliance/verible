@@ -36,7 +36,6 @@ VERILOG_REGISTER_LINT_RULE(LegacyGenerateRegionRule);
 using verible::FindFirstSubtree;
 using verible::LintRuleStatus;
 using verible::LintViolation;
-using verible::SyntaxTreeContext;
 using verible::matcher::EqualTagPredicate;
 
 static const char kMessage[] = "Do not use generate regions.";

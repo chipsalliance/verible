@@ -34,7 +34,6 @@ namespace analysis {
 
 using verible::LintRuleStatus;
 using verible::LintViolation;
-using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
 // Register CaseMissingDefaultRule
