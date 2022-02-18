@@ -30,13 +30,8 @@ namespace verilog {
 namespace kythe {
 
 // Used to wrap whatever needs to be recorded in a scope item.
-// TODO(hzeller): should be plain VName, no need to copy for one member.
-struct ScopeMemberItem {
-  /*implicit*/ ScopeMemberItem(const VName& vname) : vname(vname) {}  // NOLINT
-
-  // VName of this member.
-  VName vname;
-};
+// Right now, this is just a VName, if it will be more, make this a struct.
+using ScopeMemberItem = VName;
 
 // Represents some scope in SystemVerilog code like class or module.
 class Scope {
