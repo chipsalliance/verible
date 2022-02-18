@@ -42,7 +42,8 @@ class KytheFactsPrinter {
   // Print Kythe facts as a single, well formatted & human readable JSON.
   std::ostream& PrintJson(std::ostream&) const;
 
-  friend std::ostream& operator<<(std::ostream& os, const KytheFactsPrinter& p);
+  friend std::ostream& operator<<(std::ostream& stream,
+                                  const KytheFactsPrinter& kythe_facts_printer);
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
