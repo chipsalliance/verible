@@ -68,13 +68,19 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
   for (const auto &rejected_token : rejected_tokens) {
     current->parser().ExtractLinterTokenErrorDetail(
         rejected_token,
-        [&result](const std::string &filename, verible::LineColumnRange range,
-                  verible::AnalysisPhase phase, absl::string_view token_text,
-                  absl::string_view context_line, const std::string &msg) {
+        [&result, &rejected_token](
+            const std::string &filename, verible::LineColumnRange range,
+            verible::AnalysisPhase phase, absl::string_view token_text,
+            absl::string_view context_line, const std::string &msg) {
           // Note: msg is currently empty and not useful.
-          const char *message = (phase == verible::AnalysisPhase::kLexPhase)
-                                    ? "token error"
-                                    : "syntax error";
+          std::string message(phase == verible::AnalysisPhase::kLexPhase
+                                  ? "token error"
+                                  : "syntax error");
+          if (rejected_token.token_info.isEOF()) {
+            absl::StrAppend(&message, " (unexpected EOF)");
+          } else {
+            absl::StrAppend(&message, ", rejected \"", token_text, "\"");
+          }
           result.emplace_back(verible::lsp::Diagnostic{
               .range{.start{.line = range.start.line,
                             .character = range.start.column},
