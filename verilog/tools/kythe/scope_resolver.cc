@@ -22,7 +22,7 @@ namespace verilog {
 namespace kythe {
 
 void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  members_.insert({member_item.vname.signature.Names().back(), member_item});
+  members_.insert({member_item.signature.Names().back(), member_item});
 }
 
 void Scope::AppendScope(const Scope& scope) {
@@ -33,11 +33,11 @@ void Scope::AppendScope(const Scope& scope) {
 
 const VName* Scope::SearchForDefinition(absl::string_view name) const {
   const auto& found = members_.find(name);
-  return found == members_.end() ? nullptr : &found->second.vname;
+  return found == members_.end() ? nullptr : &found->second;
 }
 
 void Scope::RemoveMember(const ScopeMemberItem& member) {
-  members_.erase(member.vname.signature.Names().back());
+  members_.erase(member.signature.Names().back());
 }
 
 const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
