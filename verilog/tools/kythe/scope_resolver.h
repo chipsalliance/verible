@@ -30,8 +30,9 @@ namespace verilog {
 namespace kythe {
 
 // Used to wrap whatever needs to be recorded in a scope item.
+// TODO(hzeller): should be plain VName, no need to copy for one member.
 struct ScopeMemberItem {
-  ScopeMemberItem(const VName& vname) : vname(vname) {}
+  /*implicit*/ ScopeMemberItem(const VName& vname) : vname(vname) {}  // NOLINT
 
   // VName of this member.
   VName vname;
@@ -180,10 +181,10 @@ class ScopeResolver {
   ScopeResolver(const ScopeResolver&) = delete;
   ScopeResolver(ScopeResolver&&) = delete;
   ScopeResolver& operator=(const ScopeResolver&) = delete;
-  ScopeResolver& operator=(ScopeResolver&) = delete;
+  ScopeResolver& operator=(ScopeResolver&&) = delete;
 
   // Searches for the definitions of the given references' names.
-  const std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
+  std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
       const std::vector<absl::string_view>& names) const;
 
   // Searches for definition of the given reference's name in the current

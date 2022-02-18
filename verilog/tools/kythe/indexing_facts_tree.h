@@ -120,7 +120,8 @@ std::ostream& operator<<(std::ostream&, const Anchor&);
 class IndexingNodeData {
  public:
   template <typename... Args>
-  IndexingNodeData(IndexingFactType language_feature, Args&&... args)
+  /* implicit */ IndexingNodeData(IndexingFactType language_feature,  // NOLINT
+                                  Args&&... args)
       : indexing_fact_type_(language_feature) {
     AppendAnchor(std::forward<Args>(args)...);
   }

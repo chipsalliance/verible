@@ -92,7 +92,7 @@ const VName* ScopeResolver::SearchForDefinitionInCurrentScope(
   return scope_context_.top().SearchForDefinition(name);
 }
 
-const std::vector<std::pair<const VName*, const Scope*>>
+std::vector<std::pair<const VName*, const Scope*>>
 ScopeResolver::SearchForDefinitions(
     const std::vector<absl::string_view>& names) const {
   std::vector<std::pair<const VName*, const Scope*>> definitions;

@@ -24,7 +24,7 @@ namespace kythe {
 
 class KytheProtoOutput final : public KytheOutput {
  public:
-  KytheProtoOutput(int output_fd);
+  explicit KytheProtoOutput(int output_fd);
   ~KytheProtoOutput() final;
 
   // Output Kythe facts from the indexing data in proto format.

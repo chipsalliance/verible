@@ -711,7 +711,7 @@ VName KytheFactsExtractor::DeclareModule(
     const IndexingFactNode& module_fact_node) {
   const auto& anchors = module_fact_node.Value().Anchors();
   const Anchor& module_name = anchors[0];
-  const VName module_vname = {
+  VName module_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(module_name.Text()),
@@ -737,7 +737,7 @@ VName KytheFactsExtractor::DeclareProgram(
   const auto& anchors = program_fact_node.Value().Anchors();
   const Anchor& program_name = anchors[0];
 
-  const VName program_vname = {
+  VName program_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(program_name.Text()),
@@ -762,7 +762,7 @@ VName KytheFactsExtractor::DeclareInterface(
   const auto& anchors = interface_fact_node.Value().Anchors();
   const Anchor& interface_name = anchors[0];
 
-  const VName interface_vname = {
+  VName interface_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(interface_name.Text()),
@@ -795,11 +795,10 @@ void KytheFactsExtractor::ReferenceDataType(
 VName KytheFactsExtractor::DeclareTypedef(
     const IndexingFactNode& type_declaration) {
   const auto& anchor = type_declaration.Value().Anchors()[0];
-  const VName type_vname = {
-      .path = FilePath(),
-      .root = "",
-      .signature = CreateScopeRelativeSignature(anchor.Text()),
-      .corpus = Corpus()};
+  VName type_vname = {.path = FilePath(),
+                      .root = "",
+                      .signature = CreateScopeRelativeSignature(anchor.Text()),
+                      .corpus = Corpus()};
   const VName type_vname_anchor = CreateAnchor(anchor);
 
   CreateFact(type_vname, kFactNodeKind, kNodeTAlias);
@@ -869,7 +868,7 @@ VName KytheFactsExtractor::DeclareVariable(
   const auto& anchors = variable_definition_node.Value().Anchors();
   CHECK(!anchors.empty());
   const Anchor& anchor = anchors[0];
-  const VName variable_vname = {
+  VName variable_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(anchor.Text()),
@@ -899,7 +898,7 @@ VName KytheFactsExtractor::DeclarePackage(
   const auto& anchors = package_declaration_node.Value().Anchors();
   const Anchor& package_name = anchors[0];
 
-  const VName package_vname = {
+  VName package_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(package_name.Text()),
@@ -924,10 +923,10 @@ VName KytheFactsExtractor::DeclareMacroDefinition(
 
   // The signature is relative to the global scope so no relative signature
   // created here.
-  const VName macro_vname = {.path = FilePath(),
-                             .root = "",
-                             .signature = Signature(macro_name.Text()),
-                             .corpus = Corpus()};
+  VName macro_vname = {.path = FilePath(),
+                       .root = "",
+                       .signature = Signature(macro_name.Text()),
+                       .corpus = Corpus()};
   const VName module_name_anchor = CreateAnchor(macro_name);
 
   CreateFact(macro_vname, kFactNodeKind, kNodeMacro);
@@ -964,7 +963,7 @@ VName KytheFactsExtractor::DeclareFunctionOrTask(
 
   const auto& function_name = function_fact_node.Value().Anchors()[0];
 
-  const VName function_vname = {
+  VName function_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(function_name.Text()),
@@ -1041,7 +1040,7 @@ VName KytheFactsExtractor::DeclareClass(
   const auto& anchors = class_fact_node.Value().Anchors();
   const Anchor& class_name = anchors[0];
 
-  const VName class_vname = {
+  VName class_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(class_name.Text()),
@@ -1228,7 +1227,7 @@ VName KytheFactsExtractor::DeclareAnonymousScope(
 
 VName KytheFactsExtractor::DeclareConstant(const IndexingFactNode& constant) {
   const auto& anchor = constant.Value().Anchors()[0];
-  const VName constant_vname = {
+  VName constant_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(anchor.Text()),
@@ -1246,7 +1245,7 @@ VName KytheFactsExtractor::DeclareStructOrUnion(
   const auto& anchors = struct_node.Value().Anchors();
   const Anchor& struct_name = anchors[0];
 
-  const VName struct_vname = {
+  VName struct_vname = {
       .path = FilePath(),
       .root = "",
       .signature = CreateScopeRelativeSignature(struct_name.Text()),
@@ -1276,10 +1275,10 @@ VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const int end_location = start_location + anchor.Text().length();
   const auto [location_str, _] = signature_locations_.emplace(
       absl::StrCat("@", start_location, ":", end_location));
-  const VName anchor_vname = {.path = FilePath(),
-                              .root = "",
-                              .signature = Signature(*location_str),
-                              .corpus = Corpus()};
+  VName anchor_vname = {.path = FilePath(),
+                        .root = "",
+                        .signature = Signature(*location_str),
+                        .corpus = Corpus()};
 
   CreateFact(anchor_vname, kFactNodeKind, kNodeAnchor);
   // This is one of the only locations that passes a std::string&& to
