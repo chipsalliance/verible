@@ -27,11 +27,6 @@
 namespace verilog {
 namespace kythe {
 
-bool Signature::operator<(const Signature& other) const {
-  return std::lexicographical_compare(names_.begin(), names_.end(),
-                                      other.names_.begin(), other.names_.end());
-}
-
 std::string Signature::ToString() const {
   std::string signature;
   for (absl::string_view name : names_) {
@@ -48,12 +43,6 @@ std::string Signature::ToBase64() const {
 bool VName::operator==(const VName& other) const {
   return path == other.path && root == other.root && corpus == other.corpus &&
          signature == other.signature && language == other.language;
-}
-
-bool VName::operator<(const VName& other) const {
-  return std::tie(signature, path, language, root, corpus) <
-         std::tie(other.signature, other.path, other.language, other.root,
-                  other.corpus);
 }
 
 std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
@@ -79,11 +68,6 @@ std::ostream& operator<<(std::ostream& stream, const VName& vname) {
 bool Fact::operator==(const Fact& other) const {
   return fact_value == other.fact_value && fact_name == other.fact_name &&
          node_vname == other.node_vname;
-}
-
-bool Fact::operator<(const Fact& other) const {
-  return std::tie(node_vname, fact_name, fact_value) <
-         std::tie(other.node_vname, other.fact_name, other.fact_value);
 }
 
 std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
@@ -113,11 +97,6 @@ std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
 bool Edge::operator==(const Edge& other) const {
   return edge_name == other.edge_name && source_node == other.source_node &&
          target_node == other.target_node;
-}
-
-bool Edge::operator<(const Edge& other) const {
-  return std::tie(source_node, edge_name, target_node) <
-         std::tie(other.source_node, other.edge_name, other.target_node);
 }
 
 std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,

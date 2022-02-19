@@ -60,13 +60,6 @@ TEST(SignatureTest, Equality) {
   }
 }
 
-TEST(SignatureTest, LessThen) {
-  const Signature s1("aaa");
-  const Signature s2("bbb");
-  EXPECT_LT(s1, s2);
-  EXPECT_FALSE(s2 < s1);
-}
-
 TEST(VNameTest, DefaultCtor) {
   const VName vname;
   std::ostringstream stream;
@@ -103,8 +96,6 @@ TEST(VNameTest, FilledCtor) {
     const VName vname2;
     EXPECT_FALSE(vname == vname2);
     EXPECT_FALSE(vname2 == vname);
-    EXPECT_LT(vname2, vname);
-    EXPECT_FALSE(vname < vname2);
   }
 }
 
@@ -136,7 +127,6 @@ TEST(FactTest, Equality) {
   EXPECT_EQ(fact2, fact2);
   EXPECT_NE(fact1, fact2);
   EXPECT_NE(fact2, fact1);
-  EXPECT_LT(fact1, fact2);
 }
 
 TEST(EdgeTest, FormatJSON) {
@@ -175,8 +165,6 @@ TEST(EdgeTest, Equality) {
   EXPECT_EQ(edge2, edge2);
   EXPECT_NE(edge1, edge2);
   EXPECT_NE(edge2, edge1);
-  EXPECT_LT(edge1, edge2);
-  EXPECT_FALSE(edge2 < edge1);
 }
 
 }  // namespace
