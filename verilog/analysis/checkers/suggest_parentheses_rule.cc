@@ -27,7 +27,6 @@ VERILOG_REGISTER_LINT_RULE(SuggestParenthesesRule);
 using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
-using verible::SyntaxTreeContext;
 
 static const char kMessage[] =
     "Parenthesize condition expressions that appear in the true-clause of "
