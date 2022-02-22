@@ -156,16 +156,16 @@ class SyntaxTreeNode : public Symbol {
     switch (enums.size()) {
       case 4:
         if (*it++ == EnumType(tag_)) return true;
-        [[fallthrough]];
+        ABSL_FALLTHROUGH_INTENDED;
       case 3:
         if (*it++ == EnumType(tag_)) return true;
-        [[fallthrough]];
+        ABSL_FALLTHROUGH_INTENDED;
       case 2:
         if (*it++ == EnumType(tag_)) return true;
-        [[fallthrough]];
+        ABSL_FALLTHROUGH_INTENDED;
       case 1:
         if (*it++ == EnumType(tag_)) return true;
-        [[fallthrough]];
+        ABSL_FALLTHROUGH_INTENDED;
       case 0:
         return false;
       default:
