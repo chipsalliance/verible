@@ -42,9 +42,6 @@ class Signature {
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
 
-  // TODO(hzeller): remove other uses of std::set, then operator< can go
-  bool operator<(const Signature& other) const;
-
   // Returns the signature concatenated as a string.
   std::string ToString() const;
 
@@ -74,7 +71,6 @@ H AbslHashValue(H state, const Signature& v) {
 // Node vector name for kythe facts.
 struct VName {
   bool operator==(const VName& other) const;
-  bool operator<(const VName& other) const;
 
   std::ostream& FormatJSON(std::ostream&, bool debug,
                            int indentation = 0) const;
@@ -110,7 +106,6 @@ struct Fact {
 
   bool operator==(const Fact& other) const;
   bool operator!=(const Fact& other) const { return !(*this == other); }
-  bool operator<(const Fact& other) const;
 
   std::ostream& FormatJSON(std::ostream&, bool debug,
                            int indentation = 0) const;
@@ -140,7 +135,6 @@ struct Edge {
 
   bool operator==(const Edge& other) const;
   bool operator!=(const Edge& other) const { return !(*this == other); }
-  bool operator<(const Edge& other) const;
 
   std::ostream& FormatJSON(std::ostream&, bool debug,
                            int indentation = 0) const;
