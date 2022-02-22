@@ -149,12 +149,29 @@ class SyntaxTreeNode : public Symbol {
     return tag_ == static_cast<int>(e);
   }
 
-  // TODO(fangism): when performance is needed, use a flat_set.
   template <typename EnumType>
   bool MatchesTagAnyOf(std::initializer_list<EnumType> enums) const {
-    // Linear search.
-    auto iter = std::find(enums.begin(), enums.end(), EnumType(tag_));
-    return iter != enums.end();
+    auto it = enums.begin();
+    // Unroll OR expression. Right now, we never have more than 4.
+    switch (enums.size()) {
+      case 4:
+        if (*it++ == EnumType(tag_)) return true;
+        [[fallthrough]];
+      case 3:
+        if (*it++ == EnumType(tag_)) return true;
+        [[fallthrough]];
+      case 2:
+        if (*it++ == EnumType(tag_)) return true;
+        [[fallthrough]];
+      case 1:
+        if (*it++ == EnumType(tag_)) return true;
+        [[fallthrough]];
+      case 0:
+        return false;
+      default:
+        // TODO(hzeller): with constexpr magic, can we static_assert() this ?
+        LOG(FATAL) << "need more choice " << enums.size();
+    }
   }
 
  private:
