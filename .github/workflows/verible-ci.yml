@@ -282,8 +282,6 @@ jobs:
 
     - name: Mount bazel cache
       uses: actions/cache@v2
-      # Currently, this is using >3GiB, bringing us well beyond 5GiB per repo
-      if: false
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
         key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
