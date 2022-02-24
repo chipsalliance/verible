@@ -30,6 +30,11 @@ namespace {
 TEST(PartitionPolicyTest, Printing) {
   {
     std::ostringstream stream;
+    stream << PartitionPolicyEnum::kUninitialized;
+    EXPECT_EQ(stream.str(), "uninitialized");
+  }
+  {
+    std::ostringstream stream;
     stream << PartitionPolicyEnum::kAlwaysExpand;
     EXPECT_EQ(stream.str(), "always-expand");
   }
@@ -40,6 +45,11 @@ TEST(PartitionPolicyTest, Printing) {
   }
   {
     std::ostringstream stream;
+    stream << PartitionPolicyEnum::kTabularAlignment;
+    EXPECT_EQ(stream.str(), "tabular-alignment");
+  }
+  {
+    std::ostringstream stream;
     stream << PartitionPolicyEnum::kAlreadyFormatted;
     EXPECT_EQ(stream.str(), "already-formatted");
   }
@@ -47,6 +57,31 @@ TEST(PartitionPolicyTest, Printing) {
     std::ostringstream stream;
     stream << PartitionPolicyEnum::kInline;
     EXPECT_EQ(stream.str(), "inline");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kAppendFittingSubPartitions;
+    EXPECT_EQ(stream.str(), "append-fitting-sub-partitions");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kJuxtaposition;
+    EXPECT_EQ(stream.str(), "juxtaposition");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kStack;
+    EXPECT_EQ(stream.str(), "stack");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kWrap;
+    EXPECT_EQ(stream.str(), "wrap");
+  }
+  {
+    std::ostringstream stream;
+    stream << PartitionPolicyEnum::kJuxtapositionOrIndentedStack;
+    EXPECT_EQ(stream.str(), "juxtaposition-or-indented-stack");
   }
 }
 

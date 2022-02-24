@@ -438,7 +438,6 @@ static void DeterminePartitionExpansion(
       LOG(FATAL) << "Got an uninitialized partition policy at: " << uwline;
       break;
     }
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
     case PartitionPolicyEnum::kAlwaysExpand: {
       if (children.size() > 1) {
         node_view.Expand();
@@ -533,6 +532,16 @@ static void DeterminePartitionExpansion(
         VLOG(3) << "Does not fit, expanding.";
         node_view.Expand();
       }
+      break;
+    }
+
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
+    case PartitionPolicyEnum::kJuxtaposition:
+    case PartitionPolicyEnum::kStack:
+    case PartitionPolicyEnum::kWrap: {
+      // The policies are handled (and replaced) in Layout Optimizer.
+      LOG(FATAL) << "Unreachable. " << partition_policy;
+      break;
     }
   }
 }
@@ -841,7 +850,10 @@ Status Formatter::Format(const ExecutionControl& control) {
           // Reshape partition tree with kAppendFittingSubPartitions policy
           verible::ReshapeFittingSubpartitions(style_, &node);
           break;
-        case PartitionPolicyEnum::kOptimalFunctionCallLayout:
+        case PartitionPolicyEnum::kJuxtaposition:
+        case PartitionPolicyEnum::kStack:
+        case PartitionPolicyEnum::kWrap:
+        case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
           verible::OptimizeTokenPartitionTree(style_, &node);
           break;
         case PartitionPolicyEnum::kTabularAlignment:

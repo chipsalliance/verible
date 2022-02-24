@@ -27,22 +27,26 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/line_wrap_searcher.h"
+#include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/value_saver.h"
+#include "glog/vlog_is_on.h"
 
 namespace verible {
 
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
                                 TokenPartitionTree* node) {
   CHECK_NOTNULL(node);
-  VLOG(4) << __FUNCTION__ << ", before:\n" << *node;
+  VLOG(4) << __FUNCTION__ << ", before:\n"
+          << verible::TokenPartitionTreePrinter(*node);
 
   const auto optimizer = TokenPartitionsLayoutOptimizer(style);
   const auto indentation = node->Value().IndentationSpaces();
   optimizer.Optimize(indentation, node);
 
-  VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
+  VLOG(4) << __FUNCTION__ << ", after:\n"
+          << verible::TokenPartitionTreePrinter(*node);
 }
 
 namespace {
@@ -60,6 +64,8 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
     const auto& first_subitem = source.Children().front().Value();
     CHECK(src_item.MustWrap() == first_subitem.MustWrap());
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
+    destination->Children().reserve(destination->Children().size() +
+                                    source.Children().size());
     for (const auto& sublayout : source.Children())
       destination->AdoptSubtree(sublayout);
   } else {
@@ -182,6 +188,21 @@ LayoutFunction::const_iterator LayoutFunction::AtOrToTheLeftOf(
   return it - 1;
 }
 
+LayoutFunction LayoutFunctionFactory::WrappedLine(
+    const UnwrappedLine& uwline) const {
+  const auto tokens = uwline.TokensRange();
+  auto token_lfs = absl::FixedArray<LayoutFunction>(tokens.size());
+
+  auto lf = token_lfs.begin();
+  for (auto t = tokens.begin(); t != tokens.end(); ++t) {
+    auto token_line = UnwrappedLine(0, t);
+    token_line.SpanNextToken();
+    *lf = Line(token_line);
+    ++lf;
+  }
+  return Wrap(token_lfs.begin(), token_lfs.end(), true, style_.wrap_spaces);
+}
+
 LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
   auto layout = LayoutTree(LayoutItem(uwline));
   const auto span = layout.Value().Length();
@@ -220,9 +241,7 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
     const float new_intercept =
         segment->CostAt(column) -
         style_.over_column_limit_penalty * std::max(columns_over_limit, 0);
-    const int new_gradient =
-        segment->gradient -
-        style_.over_column_limit_penalty * (columns_over_limit >= 0);
+    const int new_gradient = segment->gradient;
 
     auto new_layout = segment->layout;
     new_layout.Value().SetIndentationSpaces(
@@ -465,13 +484,123 @@ void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
 
 LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     const TokenPartitionTree& node) const {
-  if (node.is_leaf()) return factory_.Line(node.Value());
+  if (node.is_leaf()) {
+    // Wrapping complexity is n*(n+1)/2.
+    constexpr int kWrapTokensLimit = 25;
 
-  const auto calculate_optimal_layout_func =
-      std::bind(&TokenPartitionsLayoutOptimizer::CalculateOptimalLayout, this,
-                std::placeholders::_1);
+    if (node.Value().PartitionPolicy() == PartitionPolicyEnum::kWrap &&
+        node.Value().TokensRange().size() > 1 &&
+        node.Value().TokensRange().size() < kWrapTokensLimit) {
+      return factory_.WrappedLine(node.Value());
+    } else {
+      return factory_.Line(node.Value());
+    }
+  }
+
+  // Traverse and calculate children layouts
+
+  absl::FixedArray<LayoutFunction> layouts(node.Children().size());
 
   switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kJuxtaposition:
+    case PartitionPolicyEnum::kAlreadyFormatted:
+    case PartitionPolicyEnum::kWrap:
+    case PartitionPolicyEnum::kFitOnLineElseExpand:
+    case PartitionPolicyEnum::kAppendFittingSubPartitions:
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), [=](const TokenPartitionTree& n) {
+                       return this->CalculateOptimalLayout(n);
+                     });
+      break;
+    }
+
+    case PartitionPolicyEnum::kStack:
+    case PartitionPolicyEnum::kAlwaysExpand:
+    case PartitionPolicyEnum::kTabularAlignment: {
+      const int indentation = node.Value().IndentationSpaces();
+      std::transform(node.Children().begin(), node.Children().end(),
+                     layouts.begin(), [=](const TokenPartitionTree& n) {
+                       const int relative_indentation =
+                           n.Value().IndentationSpaces() - indentation;
+                       if (relative_indentation < 0) {
+                         VLOG(0)
+                             << "(Child indentation) < (parent indentation). "
+                                "Assuming 0. Parent node:\n"
+                             << node;
+                       }
+
+                       LayoutFunction lf;
+
+                       if (relative_indentation > 0)
+                         lf = factory_.Indent(this->CalculateOptimalLayout(n),
+                                              relative_indentation);
+                       else
+                         lf = this->CalculateOptimalLayout(n);
+
+                       return lf;
+                     });
+      break;
+    }
+
+    case PartitionPolicyEnum::kUninitialized:
+    case PartitionPolicyEnum::kInline:
+      // Shouldn't happen - see the switch below.
+      break;
+  }
+
+  // Calculate and return current layout
+
+  switch (node.Value().PartitionPolicy()) {
+    case PartitionPolicyEnum::kJuxtaposition:
+      return factory_.Juxtaposition(layouts.begin(), layouts.end());
+    case PartitionPolicyEnum::kStack:
+      return factory_.Stack(layouts.begin(), layouts.end());
+    case PartitionPolicyEnum::kWrap: {
+      if (VLOG_IS_ON(0) && node.Children().size() > 2) {
+        const int indentation = node.Children()[1].Value().IndentationSpaces();
+        for (const auto& child : iterator_range(node.Children().begin() + 2,
+                                                node.Children().end())) {
+          if (child.Value().IndentationSpaces() != indentation) {
+            VLOG(0) << "Indentations of subpartitions from the second to the "
+                       "last are not equal. Using indentation of the second "
+                       "subpartition as a hanging indentation. Parent node:\n"
+                    << node;
+          }
+        }
+      }
+      const int hanging_indentation =
+          (node.Children().size() > 1)
+              ? (node.Children()[1].Value().IndentationSpaces() -
+                 node.Value().IndentationSpaces())
+              : 0;
+
+      return factory_.Wrap(layouts.begin(), layouts.end(), false,
+                           hanging_indentation);
+    }
+
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
+      LayoutFunction juxtaposition;
+      const bool juxtaposition_allowed =
+          !std::any_of(layouts.begin() + 1, layouts.end(),
+                       [](const LayoutFunction& lf) { return lf.MustWrap(); });
+      if (juxtaposition_allowed) {
+        juxtaposition = factory_.Juxtaposition(layouts.begin(), layouts.end());
+      }
+
+      const int indentation = node.Value().IndentationSpaces();
+      for (size_t i = 0; i < layouts.size(); ++i) {
+        const int relative_indentation =
+            node.Children()[i].Value().IndentationSpaces() - indentation;
+        layouts[i] = factory_.Indent(layouts[i], relative_indentation);
+      }
+      auto stack = factory_.Stack(layouts.begin(), layouts.end());
+
+      if (juxtaposition_allowed)
+        return factory_.Choice({std::move(juxtaposition), std::move(stack)});
+      return stack;
+    }
+
     case PartitionPolicyEnum::kInline: {
       // Shouldn't happen - the partition with this policy should always
       // be a leaf. Anyway, try to handle it without aborting.
@@ -496,78 +625,36 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
              "Partition node:\n"
           << node << "\n\n*** Please file a bug. ***";
 
-      absl::FixedArray<LayoutFunction> slice_lfs(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     slice_lfs.begin(), calculate_optimal_layout_func);
-
-      slice_lfs.front().SetMustWrap(true);
+      layouts.front().SetMustWrap(true);
 
       // Preserve spacing of the first sublayout. This has to be done because
       // the first layout in a line uses IndentationSpaces instead of
       // SpacesBefore.
       const auto indent = node.Children().front().Value().IndentationSpaces();
-      slice_lfs.front() = factory_.Indent(slice_lfs.front(), indent);
+      layouts.front() = factory_.Indent(layouts.front(), indent);
 
-      return factory_.Juxtaposition(slice_lfs.begin(), slice_lfs.end());
-    }
-
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout: {
-      // Support only function/macro/system calls for now
-      CHECK_EQ(node.Children().size(), 2);
-
-      const auto& function_header = node.Children()[0];
-      const auto& function_args = node.Children()[1];
-
-      auto header = CalculateOptimalLayout(function_header);
-      auto args = CalculateOptimalLayout(function_args);
-
-      auto stack_layout = factory_.Stack({
-          header,
-          factory_.Indent(args, style_.wrap_spaces),
-      });
-      if (args.MustWrap()) {
-        return stack_layout;
-      }
-      auto juxtaposed_layout = factory_.Juxtaposition({
-          header,
-          args,
-      });
-      return factory_.Choice({
-          std::move(juxtaposed_layout),
-          std::move(stack_layout),
-      });
+      return factory_.Juxtaposition(layouts.begin(), layouts.end());
     }
 
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
-    case PartitionPolicyEnum::kFitOnLineElseExpand: {
-      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), calculate_optimal_layout_func);
+    case PartitionPolicyEnum::kFitOnLineElseExpand:
       return factory_.Wrap(layouts.begin(), layouts.end());
-    }
 
-    default:
-      // Stack layout is probably syntax-safe in all situations. Try it without
-      // aborting.
-      LOG(ERROR) << "Unsupported partition policy: "
-                 << node.Value().PartitionPolicy()
-                 << ". Defaulting to stack layout. Partition node:\n"
-                 << node << "\n\n*** Please file a bug. ***";
-      [[fallthrough]];
     case PartitionPolicyEnum::kAlwaysExpand:
-    case PartitionPolicyEnum::kTabularAlignment: {
-      absl::FixedArray<LayoutFunction> layouts(node.Children().size());
-      std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), calculate_optimal_layout_func);
+    case PartitionPolicyEnum::kTabularAlignment:
       return factory_.Stack(layouts.begin(), layouts.end());
-    }
 
-      // TODO(mglb): Think about introducing PartitionPolicies that
-      // correspond directly to combinators in LayoutFunctionFactory.
-      // kOptimalFunctionCallLayout strategy could then be implemented
-      // directly in TreeUnwrapper. It would also allow for proper
-      // handling of other policies (e.g. kTabularAlignment) in subtrees.
+    case PartitionPolicyEnum::kUninitialized:
+      break;
   }
+
+  // Stack layout is probably syntax-safe in all situations. Try it without
+  // aborting.
+  LOG(ERROR) << "Unsupported partition policy: "
+             << node.Value().PartitionPolicy()
+             << ". Defaulting to stack layout. Partition node:\n"
+             << node << "\n\n*** Please file a bug. ***";
+  return factory_.Stack(layouts.begin(), layouts.end());
 }
 
 void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {

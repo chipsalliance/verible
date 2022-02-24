@@ -1582,6 +1582,33 @@ TEST_F(LayoutFunctionFactoryTest, Wrap) {
     };
     ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
   }
+  {
+    const auto lf = factory_.Wrap(
+        {
+            factory_.Line(lines_.OneOver40Limit()),
+            factory_.Line(lines_.Short()),
+            factory_.Line(lines_.Indented()),
+        },
+        false, 7);
+    const auto expected_layout_vv =
+        LT(LI(LayoutType::kStack, 0, true),         //
+           LI(lines_.OneOver40Limit()),             //
+           LT(LI(LayoutType::kStack, 0, false, 7),  //
+              LI(lines_.Short(), 0),                //
+              LI(lines_.Indented(), 0)));
+    const auto expected_layout_vh =
+        LT(LI(LayoutType::kStack, 0, true),             //
+           LT(LI(LayoutType::kJuxtaposition, 0, true),  //
+              LI(lines_.OneOver40Limit(), 0),           //
+              LI(lines_.Short(), 0)),
+           LI(lines_.Indented(), 7));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout_vv, 43, 404.0F, 200},
+        {14, expected_layout_vv, 43, 3204.0F, 300},
+        {33, expected_layout_vh, 43, 8902.0F, 200},
+    };
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
 }
 
 TEST_F(LayoutFunctionFactoryTest, Indent) {
@@ -2304,42 +2331,6 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
-TEST_F(OptimizeTokenPartitionTreeTest, OneLevelFunctionCall) {
-  using TPT = TokenPartitionTreeBuilder;
-
-  auto tree_under_test =
-      TPT(PartitionPolicyEnum::kOptimalFunctionCallLayout,
-          {
-              TPT({0, 1}, PartitionPolicyEnum::kFitOnLineElseExpand),
-              TPT(PartitionPolicyEnum::kFitOnLineElseExpand,
-                  {
-                      TPT({1, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({2, 3}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({3, 4}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({4, 5}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({5, 6}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                      TPT({6, 7}, PartitionPolicyEnum::kFitOnLineElseExpand),
-                  }),
-          })
-          .build(pre_format_tokens_);
-
-  const auto tree_expected =
-      TPT(PartitionPolicyEnum::kAlwaysExpand,
-          {
-              TPT(0, {0, 1}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {1, 3}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {3, 5}, PartitionPolicyEnum::kAlreadyFormatted),
-              TPT(4, {5, 7}, PartitionPolicyEnum::kAlreadyFormatted),
-          })
-          .build(pre_format_tokens_);
-
-  static const BasicFormatStyle style = CreateStyle();
-  OptimizeTokenPartitionTree(style, &tree_under_test);
-
-  EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, tree_under_test,
-                      tree_expected);
-}
-
 TEST_F(OptimizeTokenPartitionTreeTest, AppendToLineWithInlinePartitions) {
   using TPT = TokenPartitionTreeBuilder;
   using PP = PartitionPolicyEnum;
@@ -2436,11 +2427,56 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
   const auto optimizer = TokenPartitionsLayoutOptimizer(style_);
 
   {
+    const auto tree = TPT(4, PP::kAlwaysExpand,
+                          {
+                              TPT(4, {0, 1}),
+                              TPT(4, {1, 2}),
+                              TPT(4, {2, 3}),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
+                                    LT(LI(tree.Children()[0].Value())),  //
+                                    LT(LI(tree.Children()[1].Value())),  //
+                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 5, 4.0F, 0},
+        {35, expected_layout, 5, 4.0F, 100},
+        {37, expected_layout, 5, 204.0F, 300},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
     const auto tree = TPT(PP::kAlwaysExpand,
                           {
                               TPT(1, {0, 1}),
                               TPT(2, {1, 2}),
                               TPT(3, {2, 3}),
+                          })
+                          .build(pre_format_tokens_);
+
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),        //
+                                    LT(LI(tree.Children()[0].Value(), 1)),  //
+                                    LT(LI(tree.Children()[1].Value(), 2)),  //
+                                    LT(LI(tree.Children()[2].Value(), 3)));
+    const auto expected_lf = LayoutFunction{
+        {0, expected_layout, 8, 4.0F, 0},
+        {32, expected_layout, 8, 4.0F, 100},
+        {35, expected_layout, 8, 304.0F, 200},
+        {36, expected_layout, 8, 504.0F, 300},
+    };
+
+    const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);
+    ExpectLayoutFunctionsEqual(lf, expected_lf, __LINE__);
+  }
+  {
+    const auto tree = TPT(2, PP::kTabularAlignment,
+                          {
+                              TPT(2, {0, 1}, PP::kAlreadyFormatted),
+                              TPT(2, {1, 2}, PP::kAlreadyFormatted),
+                              TPT(2, {2, 3}, PP::kAlreadyFormatted),
                           })
                           .build(pre_format_tokens_);
 
@@ -2466,14 +2502,15 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
-                                    LT(LI(tree.Children()[0].Value())),  //
-                                    LT(LI(tree.Children()[1].Value())),  //
-                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),        //
+                                    LT(LI(tree.Children()[0].Value(), 1)),  //
+                                    LT(LI(tree.Children()[1].Value(), 2)),  //
+                                    LT(LI(tree.Children()[2].Value(), 3)));
     const auto expected_lf = LayoutFunction{
-        {0, expected_layout, 5, 4.0F, 0},
-        {35, expected_layout, 5, 4.0F, 100},
-        {37, expected_layout, 5, 204.0F, 300},
+        {0, expected_layout, 8, 4.0F, 0},
+        {32, expected_layout, 8, 4.0F, 100},
+        {35, expected_layout, 8, 304.0F, 200},
+        {36, expected_layout, 8, 504.0F, 300},
     };
 
     const LayoutFunction lf = optimizer.CalculateOptimalLayout(tree);

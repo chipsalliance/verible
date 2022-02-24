@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 #define VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -47,6 +48,8 @@ struct UnwrapperData {
 
   explicit UnwrapperData(const verible::TokenSequence&);
 };
+
+enum class ContextHint;
 
 // Derived TreeUnwrapper for Verilog Formatting.
 // Contains all visitors and logic necessary for creating UnwrappedLines for
@@ -96,7 +99,7 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
 
   void ReshapeTokenPartitions(const verible::SyntaxTreeNode& node,
-                              const verible::BasicFormatStyle& style,
+                              const FormatStyle& style,
                               verible::TokenPartitionTree* recent_partition);
 
   // Visits a node which requires a new UnwrappedLine, followed by
@@ -139,6 +142,16 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
   // This determines placement of comments on unwrapped lines.
   // (Private-implementation idiom)
   std::unique_ptr<TokenScanner> inter_leaf_scanner_;
+
+  void PushContextHint(ContextHint hint) { context_hints_.push_back(hint); }
+  bool HasContextHint(ContextHint hint) const {
+    return std::find(context_hints_.rbegin(), context_hints_.rend(), hint) !=
+           context_hints_.rend();
+  }
+  const std::vector<ContextHint>& ContextHints() const {
+    return context_hints_;
+  }
+  std::vector<ContextHint> context_hints_;
 
   // For debug printing.
   verible::TokenInfo::Context token_context_;

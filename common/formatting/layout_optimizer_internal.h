@@ -134,7 +134,16 @@ class LayoutItem {
     for (const auto& token : tokens_) {
       // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
-      len += token.Length();
+      if (const auto line_break_pos = token.Text().find('\n');
+          line_break_pos != std::string_view::npos) {
+        // Multiline tokens are not really supported.
+        // Use number of characters up to the first line break.
+        len += line_break_pos;
+        DVLOG(5) << __FUNCTION__ << ": WARNING: Token contains '\\n':\n"
+                 << *token.token;
+      } else {
+        len += token.Length();
+      }
     }
     len -= tokens_.front().before.spaces_required;
     return len;
@@ -507,8 +516,11 @@ class LayoutFunctionFactory {
   explicit LayoutFunctionFactory(const BasicFormatStyle& style)
       : style_(style) {}
 
-  // Creates CostFunction for a single line from UnwrappedLine 'uwline'.
+  // Creates LayoutFunction for a single line from UnwrappedLine 'uwline'.
   LayoutFunction Line(const UnwrappedLine& uwline) const;
+
+  // Creates LayoutFunction from a single line with tokens wrapped using Wrap().
+  LayoutFunction WrappedLine(const UnwrappedLine& uwline) const;
 
   // Combines two or more layouts vertically.
   // All combined layouts start at the same column. The first line of layout
@@ -625,15 +637,20 @@ class LayoutFunctionFactory {
 
   // Joins layouts horizontally and wraps them into multiple lines to stay under
   // column limit. Kind of like a words in a paragraph.
-  LayoutFunction Wrap(std::initializer_list<LayoutFunction> lfs) const {
-    return Wrap(lfs.begin(), lfs.end());
+  LayoutFunction Wrap(std::initializer_list<LayoutFunction> lfs,
+                      bool use_tokens_break_penalty = false,
+                      int hanging_indentation = 0) const {
+    return Wrap(lfs.begin(), lfs.end(), use_tokens_break_penalty,
+                hanging_indentation);
   }
 
   // See Wrap(std::initializer_list<LayoutFunction> lfs).
   //
   // Iterator: iterator type that dereferences to LayoutFunction.
   template <class Iterator>
-  LayoutFunction Wrap(const Iterator begin, const Iterator end) const {
+  LayoutFunction Wrap(const Iterator begin, const Iterator end,
+                      bool use_tokens_break_penalty = false,
+                      int hanging_indentation = 0) const {
     static_assert(IsIteratorDereferencingTo<Iterator, LayoutFunction>,
                   "Iterator's value type must be LayoutFunction.");
 
@@ -644,23 +661,41 @@ class LayoutFunctionFactory {
 
     absl::FixedArray<LayoutFunction> results(lfs.size());
 
-    int size = lfs.size();
+    const int size = lfs.size();
     for (int i = size - 1; i >= 0; --i) {
       absl::FixedArray<LayoutFunction> results_i(size - i);
       LayoutFunction incremental = lfs[i];
       for (int j = i; j < size - 1; ++j) {
         results_i[j - i] = Stack({
             incremental,
-            results[j + 1],
+            (i == 0) ? Indent(results[j + 1], hanging_indentation)
+                     : results[j + 1],
         });
 
         const auto& next_element = lfs[j + 1];
+        if (use_tokens_break_penalty) {
+          // Deprioritize token-level wrapping
+          // TODO(mglb): Find a better way to do this. This ratio has been
+          // chosen using only a few test cases.
+          const int wrapping_penalty = style_.over_column_limit_penalty;
+          const auto& second_layout = results[j + 1].front().layout;
+          const auto& first_line = second_layout.LeftmostDescendant()->Value();
+          const auto& first_token = first_line.TokensRange().front();
+          const int token_break_penalty = first_token.before.break_penalty;
 
-        const auto layout_functions = {std::move(incremental), next_element};
+          for (auto& segment : results_i[j - i])
+            segment.intercept += wrapping_penalty + token_break_penalty;
+        }
+
         if (next_element.MustWrap())
-          incremental = Stack(layout_functions);
+          incremental = Stack({
+              std::move(incremental),
+              Indent(next_element, hanging_indentation),
+          });
         else
-          incremental = Juxtaposition(layout_functions);
+          // TODO(mglb): use Stack for invervals where lfs[j] is multiline (i.e.
+          // has any stack sublayouts)
+          incremental = Juxtaposition({std::move(incremental), next_element});
       }
       results_i.back() = std::move(incremental);
 
@@ -687,7 +722,7 @@ class LayoutFunctionFactory {
 class TokenPartitionsLayoutOptimizer {
  public:
   explicit TokenPartitionsLayoutOptimizer(const BasicFormatStyle& style)
-      : style_(style), factory_(style) {}
+      : factory_(style) {}
 
   TokenPartitionsLayoutOptimizer(const TokenPartitionsLayoutOptimizer&) =
       delete;
@@ -702,7 +737,6 @@ class TokenPartitionsLayoutOptimizer {
   LayoutFunction CalculateOptimalLayout(const TokenPartitionTree& node) const;
 
  private:
-  const BasicFormatStyle& style_;
   const LayoutFunctionFactory factory_;
 };
 

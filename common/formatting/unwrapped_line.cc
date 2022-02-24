@@ -48,8 +48,14 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
       return stream << "inline";
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
       return stream << "append-fitting-sub-partitions";
-    case PartitionPolicyEnum::kOptimalFunctionCallLayout:
-      return stream << "optimal-function-call-layout";
+    case PartitionPolicyEnum::kJuxtaposition:
+      return stream << "juxtaposition";
+    case PartitionPolicyEnum::kStack:
+      return stream << "stack";
+    case PartitionPolicyEnum::kWrap:
+      return stream << "wrap";
+    case PartitionPolicyEnum::kJuxtapositionOrIndentedStack:
+      return stream << "juxtaposition-or-indented-stack";
   }
   LOG(FATAL) << "Unknown partition policy " << int(p);
 }

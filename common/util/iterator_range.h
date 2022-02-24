@@ -38,6 +38,9 @@ class iterator_range {
   iterator_range(iterator b, iterator e)
       : begin_(std::move(b)), end_(std::move(e)) {}
 
+  explicit iterator_range(std::pair<Iter, Iter> p)
+      : begin_(std::move(p.first)), end_(std::move(p.second)) {}
+
   iterator_range(const iterator_range&) = default;
   iterator_range(iterator_range&&) noexcept = default;
   iterator_range& operator=(const iterator_range&) = default;
@@ -51,14 +54,22 @@ class iterator_range {
   iterator end_;
 };
 
+template <typename Iter>
+iterator_range(Iter, Iter) -> iterator_range<Iter>;
+
+template <typename Iter>
+iterator_range(std::pair<Iter, Iter>) -> iterator_range<Iter>;
+
 // Helper function returning an iterator_range using template argument
 // deduction.
+// OBSOLETE: Use iterator_range constructor directly.
 template <typename Iter>
 iterator_range<Iter> make_range(Iter begin, Iter end) {
   return iterator_range<Iter>(std::move(begin), std::move(end));
 }
 
 // Overload to operator on a std::pair of iterators.
+// OBSOLETE: Use iterator_range constructor directly.
 template <typename Iter>
 iterator_range<Iter> make_range(std::pair<Iter, Iter> p) {
   return iterator_range<Iter>(std::move(p.first), std::move(p.second));

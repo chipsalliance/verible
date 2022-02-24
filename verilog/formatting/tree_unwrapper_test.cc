@@ -1760,8 +1760,9 @@ const TreeUnwrapperTestData kUnwrapModuleTestCases[] = {
         ModuleDeclaration(
             0, L(0, {"module", "block_generate", ";"}),
             ModuleItemList(1,
-                           N(1,  //
-                             L(1, {"`ASSERT", "("}), L(3, {"blah", ")"})),
+                           N(1,                       //
+                             L(1, {"`ASSERT", "("}),  //
+                             L(3, {"blah", ")"})),
                            N(1,  //
                              L(1, {"generate"}), L(1, {"endgenerate"}))),
             L(0, {"endmodule"})),
@@ -3350,7 +3351,7 @@ const TreeUnwrapperTestData kClassTestCases[] = {
                 TaskDeclaration(
                     1, TaskHeader(1, {"task", "print", "(", ")", ";"}),
                     StatementList(2, L(2, {"begin"}),
-                                  N(3, L(3, {"$write", "("}),
+                                  N(3, N(3, L(3, {"$write"}), L(3, {"("})),
                                     L(5, {"\"Hello, world!\"", ")", ";"})),
                                   L(2, {"end"})),
                     L(1, {"endtask"}))),
@@ -3426,10 +3427,10 @@ const TreeUnwrapperTestData kClassTestCases[] = {
             0, L(0, {"class", "macro_unwrapping", ";"}),
             N(1, L(1, {"`MACRO_CALL", "("}),
               N(3, L(3, {"// verilog_syntax: parse-as-statements"}),
-                L(3, {"int", "count", ";"}),
-                FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
-                            L(4, {"count", "=", "1", ";"}),
-                            L(3, {"end", ")"})))),
+                N(3, L(3, {"int", "count", ";"}),
+                  FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
+                              L(4, {"count", "=", "1", ";"}),
+                              L(3, {"end", ")"}))))),
             L(0, {"endclass"})),
     },
     {
@@ -3447,11 +3448,11 @@ const TreeUnwrapperTestData kClassTestCases[] = {
             0, L(0, {"class", "macro_unwrapping_with_comment", ";"}),
             N(1, L(1, {"`MACRO_CALL", "("}),
               N(3, L(3, {"// verilog_syntax: parse-as-statements"}),
-                L(3, {"int", "count", ";"}),
-                FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
-                            N(4, L(4, {"// parsed comment"}),
-                              L(4, {"count", "=", "1", ";"})),
-                            L(3, {"end", ")"})))),
+                N(3, L(3, {"int", "count", ";"}),
+                  FlowControl(3, L(3, {"if", "(", "cfg", ")", "begin"}),
+                              N(4, L(4, {"// parsed comment"}),
+                                L(4, {"count", "=", "1", ";"})),
+                              L(3, {"end", ")"}))))),
             L(0, {"endclass"})),
     },
 
@@ -5201,9 +5202,10 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "task foo;"
         "$makeitso(x);"
         "endtask",
-        TaskDeclaration(0, TaskHeader(0, {"task", "foo", ";"}),
-                        N(1, L(1, {"$makeitso", "("}), L(3, {"x", ")", ";"})),
-                        L(0, {"endtask"})),
+        TaskDeclaration(
+            0, TaskHeader(0, {"task", "foo", ";"}),
+            N(1, N(1, L(1, {"$makeitso"}), L(1, {"("})), L(3, {"x", ")", ";"})),
+            L(0, {"endtask"})),
     },
 
     {
@@ -5456,12 +5458,12 @@ const TreeUnwrapperTestData kUnwrapTaskTestCases[] = {
         "$makeitso(x);"
         "end "
         "endtask",
-        TaskDeclaration(
-            0, TaskHeader(0, {"task", "foo", ";"}),
-            FlowControl(1, L(1, {"while", "(", "1", ")", "begin"}),
-                        N(2, L(2, {"$makeitso", "("}), L(4, {"x", ")", ";"})),
-                        L(1, {"end"})),
-            L(0, {"endtask"})),
+        TaskDeclaration(0, TaskHeader(0, {"task", "foo", ";"}),
+                        FlowControl(1, L(1, {"while", "(", "1", ")", "begin"}),
+                                    N(2, N(2, L(2, {"$makeitso"}), L(2, {"("})),
+                                      L(4, {"x", ")", ";"})),
+                                    L(1, {"end"})),
+                        L(0, {"endtask"})),
     },
 
     {

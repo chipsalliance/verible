@@ -795,6 +795,23 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     }
   }
 
+  if (left.format_token_enum == FTT::comment_block ||
+      right.format_token_enum == FTT::comment_block) {
+    auto preceding_whitespace = verible::make_string_view_range(
+        left.token->text().end(), right.token->text().begin());
+
+    auto pos = preceding_whitespace.find_first_of('\n', 0);
+    if (pos != absl::string_view::npos) {
+      // TODO(mglb): Preserve would be more suitable, but it doesn't work
+      // correctly yet.
+      // Add support for "Preserve" in Layout Optimizer.
+      // Correctly split partitions before tokens with "Preserve" decision in
+      // Tree Unwrapper.
+      return {SpacingOptions::MustWrap,
+              "Force-preserve line break around block comment"};
+    }
+  }
+
   // TODO(fangism): check for all token types in verilog.lex that
   // scan to an end-of-line, even if it returns the newline to scanning with
   // yyless().
