@@ -1,4 +1,5 @@
 #!/bin/bash
+# -*- mode: sh; sh-basic-offset: 2; indent-tabs-mode: nil; -*-
 # Copyright 2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -133,6 +134,7 @@ function run_smoke_test() {
   local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
+  local GIT_URL=$3
   local result=0
 
   echo "::group::== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with $(wc -l < ${FILELIST}) files =="
@@ -184,6 +186,7 @@ function run_smoke_test() {
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
+          echo "Input File URL: ${GIT_URL}/blob/master/$(echo $single_file | cut -d/ -f6-)"
           head -15 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
@@ -209,7 +212,7 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   FILELIST=${PROJECT_DIR}/verible.filelist
   find ${PROJECT_DIR} -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
 
-  run_smoke_test ${PROJECT_NAME} ${FILELIST}
+  run_smoke_test ${PROJECT_NAME} ${FILELIST} ${git_project}
   status_sum=$((${status_sum} + $?))
   echo
 done
