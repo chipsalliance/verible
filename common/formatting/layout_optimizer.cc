@@ -64,8 +64,8 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
     const auto& first_subitem = source.Children().front().Value();
     CHECK(src_item.MustWrap() == first_subitem.MustWrap());
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
-    destination->Children().reserve(destination->Children().size() +
-                                    source.Children().size());
+    destination->SetExpectedChildrenUpperBound(destination->Children().size() +
+                                               source.Children().size());
     for (const auto& sublayout : source.Children())
       destination->AdoptSubtree(sublayout);
   } else {

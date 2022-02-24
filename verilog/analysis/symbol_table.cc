@@ -426,7 +426,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       const size_t num_params = FindAllNamedParams(node).size();
       // +1 to accommodate the slot needed for a nested type reference
       // e.g. for "B" in "A#(.X(), .Y(), ...)::B"
-      reference_branch_point_->Children().reserve(num_params + 1);
+      reference_branch_point_->SetExpectedChildrenUpperBound(num_params + 1);
     }
     Descend(node);
   }
@@ -437,7 +437,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // FindAll* will also catch actual port connections inside preprocessing
       // conditionals.
       const size_t num_ports = FindAllActualNamedPort(node).size();
-      reference_branch_point_->Children().reserve(num_ports);
+      reference_branch_point_->SetExpectedChildrenUpperBound(num_ports);
     }
     Descend(node);
   }

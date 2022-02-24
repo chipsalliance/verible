@@ -364,7 +364,7 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
   VerilogExtractionState project_extraction_state{project};
 
   // pre-allocate file nodes with the number of translation units
-  file_list_facts_tree.Children().reserve(translation_units.size());
+  file_list_facts_tree.SetExpectedChildrenUpperBound(translation_units.size());
   for (auto* translation_unit : translation_units) {
     if (translation_unit == nullptr) continue;
     const auto parse_status = translation_unit->Parse();
