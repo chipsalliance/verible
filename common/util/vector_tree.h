@@ -758,8 +758,8 @@ class VectorTree : private _VectorTreeImpl {
     adopted_grandchildren.swap(Children()[i].Children());
     {
       // Remove i'th child.
-      const auto insert_iter = children_.begin() + i;
-      children_.erase(insert_iter);
+      const auto remove_iter = children_.begin() + i;
+      const auto insert_iter = children_.erase(remove_iter);
       // Allocate room for new children.
       this_type dummy_node;
       children_.insert(insert_iter, adopted_grandchildren.size(), dummy_node);
