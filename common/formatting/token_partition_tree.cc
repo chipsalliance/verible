@@ -606,7 +606,7 @@ class TokenPartitionTreeWrapper {
   std::unique_ptr<UnwrappedLine> unwrapped_line_;
 };
 
-using partition_iterator = std::vector<TokenPartitionTree>::const_iterator;
+using partition_iterator = TokenPartitionTree::subnodes_type::const_iterator;
 using partition_range = verible::container_iterator_range<partition_iterator>;
 
 struct AppendFittingSubpartitionsResult {

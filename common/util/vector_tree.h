@@ -232,13 +232,11 @@ class _VectorTreeImpl {
 template <typename T>
 class VectorTree : private _VectorTreeImpl {
   typedef VectorTree<T> this_type;
-
-  // Self-recursive type that represents children in an expanded view.
-  typedef std::vector<this_type> subnodes_type;
-
   typedef _VectorTreeImpl impl_type;
 
  public:
+  // Self-recursive type that represents children in an expanded view.
+  typedef std::vector<this_type> subnodes_type;
   typedef T value_type;
 
   VectorTree() = default;
@@ -316,6 +314,9 @@ class VectorTree : private _VectorTreeImpl {
     return *this;
   }
 
+  // Hint the implementation how many children are to be expected.
+  void SetExpectedChildrenUpperBound(size_t s) { children_.reserve(s); }
+
   // Builders
 
   // Appends a new child node to the tree at this level.
@@ -359,7 +360,7 @@ class VectorTree : private _VectorTreeImpl {
   // There need not be any relationship between this node and the other.
   void AdoptSubtreesFrom(this_type* other) {
     auto& src_children = other->Children();
-    children_.reserve(children_.size() + src_children.size());
+    SetExpectedChildrenUpperBound(children_.size() + src_children.size());
     AdoptSubtreesFromUnreserved(&src_children);
   }
 
@@ -636,8 +637,7 @@ class VectorTree : private _VectorTreeImpl {
   VectorTree<S> Transform(
       const std::function<S(const this_type& node)>& f) const {
     VectorTree<S> return_tree(f(*this));  // sets Value()
-    auto& return_children = return_tree.Children();
-    return_children.reserve(Children().size());
+    return_tree.SetExpectedChildrenUpperBound(Children().size());
     // Construct children subtree.
     for (const auto& child : Children()) {
       return_tree.AdoptSubtree(child.template Transform<S>(f));
@@ -699,7 +699,7 @@ class VectorTree : private _VectorTreeImpl {
       for (const auto& child : temp) {
         num_grandchildren += child.Children().size();
       }
-      children_.reserve(num_grandchildren);
+      SetExpectedChildrenUpperBound(num_grandchildren);
     }
 
     // Concatenate all grandchildren.
@@ -733,7 +733,7 @@ class VectorTree : private _VectorTreeImpl {
         if (new_offsets != nullptr) new_offsets->push_back(num_grandchildren);
         num_grandchildren += std::max(child.Children().size(), size_t(1));
       }
-      children_.reserve(num_grandchildren);
+      SetExpectedChildrenUpperBound(num_grandchildren);
     }
 
     // Concatenate children-without-grandchildren and grandchildren.

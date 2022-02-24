@@ -1489,7 +1489,7 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
  protected:
   void RunTestCase(TokenPartitionTree actual,
                    const TokenPartitionTree expected) {
-    std::vector<TokenPartitionTree> nodes;
+    TokenPartitionTree::subnodes_type nodes;
     nodes.push_back(std::move(actual));
     FormatUsingOriginalSpacing(TokenPartitionRange(nodes.begin(), nodes.end()));
     EXPECT_PRED_FORMAT2(TokenPartitionTreesEqualPredFormat, nodes[0], expected);

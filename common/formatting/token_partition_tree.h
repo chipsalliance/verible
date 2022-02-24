@@ -38,7 +38,7 @@ namespace verible {
 // TODO(fangism): Promote this to a class that privately inherits the base.
 // Methods on this class will preserve invariants.
 using TokenPartitionTree = VectorTree<UnwrappedLine>;
-using TokenPartitionIterator = std::vector<TokenPartitionTree>::iterator;
+using TokenPartitionIterator = TokenPartitionTree::subnodes_type::iterator;
 using TokenPartitionRange = container_iterator_range<TokenPartitionIterator>;
 
 // Analyses (non-modifying):
