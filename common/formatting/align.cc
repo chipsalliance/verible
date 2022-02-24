@@ -357,20 +357,6 @@ struct AggregateColumnData {
   }
 };
 
-// Creates 'dst_tree' tree with the same structure as 'src_tree'. Value of each
-// created node is obtained by calling 'converter' function with corresponding
-// node from 'src_tree'.
-template <typename SrcValueType, typename DstValueType>
-static void CopyTreeStructure(
-    const VectorTree<SrcValueType>& src_tree,
-    VectorTree<DstValueType>* dst_tree,
-    const std::function<DstValueType(const SrcValueType&)>& converter) {
-  for (const auto& src_child : src_tree.Children()) {
-    auto* dst_child = dst_tree->NewChild(converter(src_child.Value()));
-    CopyTreeStructure(src_child, dst_child, converter);
-  }
-}
-
 class ColumnSchemaAggregator {
  public:
   void Collect(const ColumnPositionTree& columns) {
@@ -412,11 +398,10 @@ class ColumnSchemaAggregator {
   const VectorTree<AggregateColumnData>& Columns() const { return columns_; }
 
   VectorTree<AlignmentColumnProperties> ColumnProperties() const {
-    VectorTree<AlignmentColumnProperties> properties;
-    CopyTreeStructure<AggregateColumnData, AlignmentColumnProperties>(
-        columns_, &properties,
-        [](const AggregateColumnData& data) { return data.properties; });
-    return properties;
+    return columns_.Transform<AlignmentColumnProperties>(
+        [](const VectorTree<AggregateColumnData>& data_node) {
+          return data_node.Value().properties;
+        });
   }
 
  private:
@@ -613,10 +598,9 @@ static AlignedFormattingColumnSchema ComputeColumnWidths(
     const VectorTree<AlignmentColumnProperties>& column_properties) {
   VLOG(2) << __FUNCTION__;
 
-  AlignedFormattingColumnSchema column_configs;
-  CopyTreeStructure<AlignmentCell, AlignedColumnConfiguration>(
-      matrix.front(), &column_configs,
-      [](const AlignmentCell&) { return AlignedColumnConfiguration{}; });
+  AlignedFormattingColumnSchema column_configs =
+      matrix.front().Transform<AlignedColumnConfiguration>(
+          [](const AlignmentRow&) { return AlignedColumnConfiguration{}; });
 
   // Check which cell before delimiter is the longest
   // If this cell is in the last row, the sizes of column with delimiter
@@ -927,9 +911,11 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
               << StringSpanOfTokenRange(
                      FormatTokenRange(row_data_iter->ftoken_range.begin(),
                                       row_data_iter->ftoken_range.end()));
-      CopyTreeStructure<AggregateColumnData, AlignmentCell>(
-          column_schema.Columns(), &row,
-          [](const AggregateColumnData&) { return AlignmentCell{}; });
+
+      row = column_schema.Columns().Transform<AlignmentCell>(
+          [](const VectorTree<AggregateColumnData>&) {
+            return AlignmentCell{};
+          });
 
       FillAlignmentRow(*row_data_iter, column_schema.SyntaxToColumnsMap(),
                        &row);
