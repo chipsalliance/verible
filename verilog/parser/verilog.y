@@ -800,6 +800,7 @@ KeywordIdentifier
  * For now, allow these to be used as identifiers until we actually find
  * examples that use the dialects, and will require additional context.
  */
+  // If these change: modify verilog_token_classifications.cc:IsIdentifierLike()
   /* Verilog-AMS: */
   : TK_branch
     { $$ = move($1); }

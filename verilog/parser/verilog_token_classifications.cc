@@ -161,6 +161,29 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::TK_Sskew:
     case verilog_tokentype::TK_Stimeskew:
     case verilog_tokentype::TK_Swidth:
+
+      // These are from KeywordIdentifier (verilog.y)
+      // TODO(hzeller): there needs to be an automatic classification.
+    case verilog_tokentype::TK_branch:
+    case verilog_tokentype::TK_access:
+    case verilog_tokentype::TK_exclude:
+    case verilog_tokentype::TK_flow:
+    case verilog_tokentype::TK_from:
+    case verilog_tokentype::TK_ground:
+    case verilog_tokentype::TK_connect:
+    case verilog_tokentype::TK_ddx:
+    case verilog_tokentype::TK_ddt:
+    case verilog_tokentype::TK_idt:
+    case verilog_tokentype::TK_idtmod:
+    case verilog_tokentype::TK_split:
+    case verilog_tokentype::TK_merged:
+    case verilog_tokentype::TK_timer:
+    case verilog_tokentype::TK_above:
+    case verilog_tokentype::TK_discrete:
+    case verilog_tokentype::TK_initial_step:
+    case verilog_tokentype::TK_final_step:
+    case verilog_tokentype::TK_sample:
+    case verilog_tokentype::TK_bool:
       return true;
     default:
       break;

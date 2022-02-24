@@ -118,10 +118,10 @@ KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
-KnownProjectToolIssue[project:basejump_stl]="#917 #1002 #1003"
-KnownProjectToolIssue[project:ibex]="#917 #1002 #1003"
-KnownProjectToolIssue[project:uvm]="#917 #1002 #1003"
-KnownProjectToolIssue[project:opentitan]="#917 #1002 #1003"
+KnownProjectToolIssue[project:basejump_stl]="#1002 #1003"
+KnownProjectToolIssue[project:ibex]="#1002 #1003"
+KnownProjectToolIssue[project:uvm]="#1002 #1003"
+KnownProjectToolIssue[project:opentitan]="#1002 #1003"
 
 # Run smoke test on provided files for project.
 # Returns 0 if all tools finished without crashing.
@@ -184,7 +184,7 @@ function run_smoke_test() {
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
-          head -10 ${TOOL_OUT}   # Might be useful in this case
+          head -15 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
       fi
