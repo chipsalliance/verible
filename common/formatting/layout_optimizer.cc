@@ -558,10 +558,10 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       return factory_.Stack(layouts.begin(), layouts.end());
     case PartitionPolicyEnum::kWrap: {
       if (VLOG_IS_ON(0) && node.Children().size() > 2) {
-        int second_indentation = node.Children()[1].Value().IndentationSpaces();
+        const int indentation = node.Children()[1].Value().IndentationSpaces();
         for (const auto& child : iterator_range(node.Children().begin() + 2,
                                                 node.Children().end())) {
-          if (child.Value().IndentationSpaces() != second_indentation) {
+          if (child.Value().IndentationSpaces() != indentation) {
             VLOG(0) << "Indentations of subpartitions from the second to the "
                        "last are not equal. Using indentation of the second "
                        "subpartition as a hanging indentation. Parent node:\n"
@@ -569,7 +569,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
           }
         }
       }
-      int hanging_indentation =
+      const int hanging_indentation =
           (node.Children().size() > 1)
               ? (node.Children()[1].Value().IndentationSpaces() -
                  node.Value().IndentationSpaces())
