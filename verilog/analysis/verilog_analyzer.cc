@@ -271,9 +271,9 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
  public:
   explicit MacroCallArgExpander(absl::string_view text) : full_text_(text) {}
 
-  void Visit(const SyntaxTreeNode&, SymbolPtr*) override {}
+  void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
 
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) override {
+  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) final {
     const TokenInfo& token(leaf.get());
     if (token.token_enum() == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;

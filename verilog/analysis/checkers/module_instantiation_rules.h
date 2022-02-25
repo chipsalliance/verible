@@ -36,8 +36,8 @@ class ModuleParameterRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
-  verible::LintRuleStatus Report() const override;
+                    const verible::SyntaxTreeContext& context) final;
+  verible::LintRuleStatus Report() const final;
 
  private:
   std::set<verible::LintViolation> violations_;
@@ -51,8 +51,8 @@ class ModulePortRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
-  verible::LintRuleStatus Report() const override;
+                    const verible::SyntaxTreeContext& context) final;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // Returns false if a port list node is in violation of this rule and

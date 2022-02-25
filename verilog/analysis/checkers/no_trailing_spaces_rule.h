@@ -37,9 +37,9 @@ class NoTrailingSpacesRule : public verible::LineLintRule {
 
   NoTrailingSpacesRule() {}
 
-  void HandleLine(absl::string_view line) override;
+  void HandleLine(absl::string_view line) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // Collection of found violations.

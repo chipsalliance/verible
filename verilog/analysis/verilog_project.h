@@ -165,7 +165,7 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
         contents_for_open_(contents) {}
 
   // Load text into analyzer structure without actually opening a file.
-  absl::Status Open() override;
+  absl::Status Open() final;
 
  private:
   const absl::string_view contents_for_open_;
@@ -187,13 +187,13 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
         text_structure_(text_structure) {}
 
   // Do nothing (file contents already loaded)
-  absl::Status Open() override;
+  absl::Status Open() final;
 
   // Do nothing (contents already parsed)
-  absl::Status Parse() override;
+  absl::Status Parse() final;
 
   // Return TextStructureView provided previously in constructor
-  const verible::TextStructureView* GetTextStructure() const override;
+  const verible::TextStructureView* GetTextStructure() const final;
 
  private:
   const verible::TextStructureView* text_structure_;

@@ -35,7 +35,7 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
       : verible::FileAnalyzer(text, name), max_used_stack_size_(0) {}
 
   // Lex-es the input text into tokens.
-  absl::Status Tokenize() override;
+  absl::Status Tokenize() final;
 
   // Create token stream view without comments and whitespace.
   // The retained tokens will become leaves of a concrete syntax tree.

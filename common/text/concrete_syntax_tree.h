@@ -122,7 +122,7 @@ class SyntaxTreeNode : public Symbol {
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.
   bool equals(const Symbol* symbol,
-              const TokenComparator& compare_tokens) const override;
+              const TokenComparator& compare_tokens) const final;
 
   // Compares this node to another node.
   // Checks for recursive equality among all children of both nodes.
@@ -131,16 +131,16 @@ class SyntaxTreeNode : public Symbol {
 
   // Uses passed TreeVisitorRecursive to visit all children recursively,
   // then visit itself.
-  void Accept(TreeVisitorRecursive* visitor) const override;
+  void Accept(TreeVisitorRecursive* visitor) const final;
   void Accept(MutableTreeVisitorRecursive* visitor,
-              SymbolPtr* this_owned) override;
+              SymbolPtr* this_owned) final;
 
   // Accepting a symbol visitor does not recursively visit children.
-  void Accept(SymbolVisitor* visitor) const override;
+  void Accept(SymbolVisitor* visitor) const final;
 
   // Method override that returns the Kind of Symbol
-  SymbolKind Kind() const override { return SymbolKind::kNode; }
-  SymbolTag Tag() const override { return NodeTag(tag_); }
+  SymbolKind Kind() const final { return SymbolKind::kNode; }
+  SymbolTag Tag() const final { return NodeTag(tag_); }
 
   // MatchesTag returns true if the tag value matches the argument.
   // This is designed to work with any enumeration type.

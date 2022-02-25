@@ -47,8 +47,8 @@ class SyntaxTreeSearcher : public TreeContextVisitor {
 
  private:
   void CheckSymbol(const Symbol&);
-  void Visit(const SyntaxTreeLeaf& leaf) override;
-  void Visit(const SyntaxTreeNode& node) override;
+  void Visit(const SyntaxTreeLeaf& leaf) final;
+  void Visit(const SyntaxTreeNode& node) final;
 
   // Main matcher that finds a particular type of tree node.
   const verible::matcher::Matcher matcher_;

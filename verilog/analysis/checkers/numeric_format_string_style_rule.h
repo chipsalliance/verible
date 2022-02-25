@@ -36,9 +36,9 @@ class NumericFormatStringStyleRule : public verible::TokenStreamLintRule {
 
   NumericFormatStringStyleRule() {}
 
-  void HandleToken(const verible::TokenInfo& token) override;
+  void HandleToken(const verible::TokenInfo& token) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   void CheckAndReportViolation(const verible::TokenInfo& token, size_t position,

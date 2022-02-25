@@ -35,9 +35,9 @@ class LegacyGenerateRegionRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) override;
+                  const verible::SyntaxTreeContext& context) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   std::set<verible::LintViolation> violations_;

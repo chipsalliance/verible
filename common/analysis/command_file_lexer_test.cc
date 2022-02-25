@@ -40,7 +40,7 @@ class FilteredCommandFileLexer : public CommandFileLexer {
     }
   }
 
-  const verible::TokenInfo& DoNextToken() override {
+  const verible::TokenInfo& DoNextToken() final {
     do {
       CommandFileLexer::DoNextToken();
     } while (!KeepSyntaxTreeTokens(GetLastToken()));

@@ -31,10 +31,10 @@ class VerilogPrettyPrinter : public verible::PrettyPrinter {
   explicit VerilogPrettyPrinter(std::ostream* output_stream,
                                 absl::string_view base);
 
-  void Visit(const verible::SyntaxTreeLeaf&) override;
-  void Visit(const verible::SyntaxTreeNode&) override;
+  void Visit(const verible::SyntaxTreeLeaf&) final;
+  void Visit(const verible::SyntaxTreeNode&) final;
 
-  // void Visit(verible::SyntaxTreeNode*) override;
+  // void Visit(verible::SyntaxTreeNode*) final;
 };
 
 // Prints tree contained at root to stream

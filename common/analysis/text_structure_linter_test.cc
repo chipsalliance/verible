@@ -38,7 +38,7 @@ class RequireHelloRule : public TextStructureLintRule {
   RequireHelloRule() {}
 
   void Lint(const TextStructureView& text_structure,
-            absl::string_view filename) override {
+            absl::string_view filename) final {
     const auto& lines = text_structure.Lines();
     const absl::string_view contents = text_structure.Contents();
     if (!lines.empty() && !absl::StartsWith(contents, "Hello")) {
@@ -47,7 +47,7 @@ class RequireHelloRule : public TextStructureLintRule {
     }
   }
 
-  LintRuleStatus Report() const override { return LintRuleStatus(violations_); }
+  LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
   std::set<LintViolation> violations_;

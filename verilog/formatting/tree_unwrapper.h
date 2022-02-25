@@ -54,13 +54,13 @@ enum class ContextHint;
 // Derived TreeUnwrapper for Verilog Formatting.
 // Contains all visitors and logic necessary for creating UnwrappedLines for
 // Verilog and SystemVerilog code.
-class TreeUnwrapper : public verible::TreeUnwrapper {
+class TreeUnwrapper final : public verible::TreeUnwrapper {
  public:
   explicit TreeUnwrapper(const verible::TextStructureView& view,
                          const FormatStyle& style,
                          const preformatted_tokens_type&);
 
-  ~TreeUnwrapper() override;
+  ~TreeUnwrapper() final;
 
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
@@ -85,16 +85,16 @@ class TreeUnwrapper : public verible::TreeUnwrapper {
 
   void LookAheadBeyondCurrentLeaf();
   void LookAheadBeyondCurrentNode();
-  void InterChildNodeHook(const verible::SyntaxTreeNode&) override;
+  void InterChildNodeHook(const verible::SyntaxTreeNode&) final;
 
-  void CollectLeadingFilteredTokens() override;
+  void CollectLeadingFilteredTokens() final;
 
   // Collects filtered tokens into the UnwrappedLines from
   // next_unfiltered_token_ until EOF.
-  void CollectTrailingFilteredTokens() override;
+  void CollectTrailingFilteredTokens() final;
 
-  void Visit(const verible::SyntaxTreeLeaf& leaf) override;
-  void Visit(const verible::SyntaxTreeNode& node) override;
+  void Visit(const verible::SyntaxTreeLeaf& leaf) final;
+  void Visit(const verible::SyntaxTreeNode& node) final;
 
   void SetIndentationsAndCreatePartitions(const verible::SyntaxTreeNode& node);
 
