@@ -83,7 +83,7 @@ void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
 void VerifyFullTreeFormatTokenRanges(const TokenPartitionTree& tree,
                                      format_token_iterator base) {
   VLOG(4) << __FUNCTION__ << '\n' << TokenPartitionTreePrinter{tree};
-  tree.ApplyPreOrder([=](const TokenPartitionTree& node) {
+  ApplyPreOrder(tree, [=](const TokenPartitionTree& node) {
     VerifyTreeNodeFormatTokenRanges(node, base);
   });
 }
@@ -99,11 +99,12 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
   // Sort UnwrappedLines from leaf partitions by size.
   using partition_set_type = verible::TopN<const UnwrappedLine*, SizeCompare>;
   partition_set_type partitions(num_partitions);
-  token_partitions.ApplyPreOrder([&partitions](const TokenPartitionTree& node) {
-    if (node.is_leaf()) {  // only look at leaf partitions
-      partitions.push(&node.Value());
-    }
-  });
+  ApplyPreOrder(token_partitions,
+                [&partitions](const TokenPartitionTree& node) {
+                  if (is_leaf(node)) {  // only look at leaf partitions
+                    partitions.push(&node.Value());
+                  }
+                });
   return partitions.Take();
 }
 
@@ -261,7 +262,7 @@ bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
 }
 
 void AdjustIndentationRelative(TokenPartitionTree* tree, int amount) {
-  ABSL_DIE_IF_NULL(tree)->ApplyPreOrder([&](UnwrappedLine& line) {
+  ApplyPreOrder(*ABSL_DIE_IF_NULL(tree), [&](UnwrappedLine& line) {
     const int new_indent = std::max<int>(line.IndentationSpaces() + amount, 0);
     line.SetIndentationSpaces(new_indent);
   });
@@ -309,7 +310,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
   CHECK_EQ(uwline.PartitionPolicy(), PartitionPolicyEnum::kAlreadyFormatted)
       << *already_formatted_partition_node;
   if (uwline.IsEmpty()) {
-    CHECK(already_formatted_partition_node->is_leaf());
+    CHECK(is_leaf(*already_formatted_partition_node));
     return;
   }
 
@@ -358,11 +359,11 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
   // Merge of a non-leaf partition and a leaf partition produces a non-leaf
   // partition with token range wider than concatenated token ranges of its
   // children.
-  CHECK(current.is_leaf() == next.is_leaf()) << "left:\n"
-                                             << current << "\nright:" << next;
+  CHECK(is_leaf(current) == is_leaf(next)) << "left:\n"
+                                           << current << "\nright:" << next;
   // Effectively concatenate unwrapped line ranges of sibling subpartitions.
-  tree->MergeConsecutiveSiblings(
-      pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
+  MergeConsecutiveSiblings(
+      *tree, pos, [](UnwrappedLine* left, const UnwrappedLine& right) {
         // Verify token range continuity.
         CHECK(left->TokensRange().end() == right.TokensRange().begin());
         left->SpanUpToToken(right.TokensRange().end());
@@ -392,14 +393,15 @@ static void UpdateTokenRangeUpperBound(TokenPartitionTree* leaf,
 }
 
 TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
+  CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* previous_leaf = ABSL_DIE_IF_NULL(leaf)->PreviousLeaf();
+  auto* previous_leaf = PreviousLeaf(*leaf);
   if (previous_leaf == nullptr) return nullptr;
   VLOG(4) << "previous leaf:\n" << *previous_leaf;
 
   // If there is no common ancestor, do nothing and return.
   auto& common_ancestor =
-      *ABSL_DIE_IF_NULL(leaf->NearestCommonAncestor(previous_leaf));
+      *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *previous_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
   // Verify continuity of token ranges between adjacent leaves.
@@ -427,28 +429,29 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
     // Remove the obsolete partition, leaf.
     // Caution: Existing references to the obsolete partition (and beyond)
     // will be invalidated!
-    leaf->RemoveSelfFromParent();
+    RemoveSelfFromParent(*leaf);
     VLOG(4) << "common ancestor (after merging leaf):\n" << common_ancestor;
   }
 
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      common_ancestor.LeftmostDescendant()->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
 
   return previous_leaf;
 }
 
 // Note: this destroys leaf
 TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
+  CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* target_leaf = ABSL_DIE_IF_NULL(leaf)->PreviousLeaf();
+  auto* target_leaf = PreviousLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
   auto& common_ancestor =
-      *ABSL_DIE_IF_NULL(leaf->NearestCommonAncestor(target_leaf));
+      *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *target_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
   // Verify continuity of token ranges between adjacent leaves.
@@ -472,28 +475,29 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
     // Remove the obsolete partition, leaf.
     // Caution: Existing references to the obsolete partition (and beyond)
     // will be invalidated!
-    leaf->RemoveSelfFromParent();
+    RemoveSelfFromParent(*leaf);
     VLOG(4) << "common ancestor (after merging leaf):\n" << common_ancestor;
   }
 
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      common_ancestor.LeftmostDescendant()->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
 
   return leaf_parent;
 }
 
 // Note: this destroys leaf
 TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
+  CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
-  auto* target_leaf = ABSL_DIE_IF_NULL(leaf)->NextLeaf();
+  auto* target_leaf = NextLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
   auto& common_ancestor =
-      *ABSL_DIE_IF_NULL(leaf->NearestCommonAncestor(target_leaf));
+      *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *target_leaf));
   VLOG(4) << "common ancestor:\n" << common_ancestor;
 
   // Verify continuity of token ranges between adjacent leaves.
@@ -517,14 +521,14 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
     // Remove the obsolete partition, leaf.
     // Caution: Existing references to the obsolete partition (and beyond)
     // will be invalidated!
-    leaf->RemoveSelfFromParent();
+    RemoveSelfFromParent(*leaf);
     VLOG(4) << "common ancestor (after destroying leaf):\n" << common_ancestor;
   }
 
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      common_ancestor.LeftmostDescendant()->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
 
   return leaf_parent;
 }
@@ -872,7 +876,7 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
   node->Children().clear();
 
   // Move back from temporary tree
-  node->AdoptSubtreesFrom(&temporary_tree);
+  AdoptSubtreesFrom(*node, &temporary_tree);
   VLOG(4) << __FUNCTION__ << ", after:\n" << *node;
 }
 

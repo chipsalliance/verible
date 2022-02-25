@@ -853,7 +853,7 @@ void KytheFactsExtractor::ReferenceModuleNamedPort(
   const VName port_vname_anchor = CreateAnchor(port_name);
   CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vnames.back().first);
 
-  if (named_port_node.is_leaf()) {
+  if (is_leaf(named_port_node)) {
     const std::vector<std::pair<const VName*, const Scope*>> definition_vnames =
         scope_resolver_->SearchForDefinitions({port_name.Text()});
 

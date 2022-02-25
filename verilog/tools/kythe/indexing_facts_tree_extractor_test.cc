@@ -99,7 +99,7 @@ struct TestFileEntry {
     const std::ptrdiff_t delta =
         std::distance(origin_text.begin(), SourceText().begin());
     // mutate in-place, pre vs. post order doesn't matter here
-    original_tree.ApplyPreOrder([delta](T::value_type& data) {
+    ApplyPreOrder(original_tree, [delta](T::value_type& data) {
       data.RebaseStringViewsForTesting(delta);
     });
     VLOG(3) << "end of " << __FUNCTION__;

@@ -307,7 +307,7 @@ TEST(VectorTreeIteratorTest, SubtreeTraversal) {
     if (subtree_path.empty()) continue;
 
     const auto& subtree =
-        data.tree.DescendPath(subtree_path.begin(), subtree_path.end());
+        DescendPath(data.tree, subtree_path.begin(), subtree_path.end());
 
     std::ostringstream trace_msg;
     trace_msg << "Input tree:\n"
@@ -342,7 +342,7 @@ TEST(VectorTreeIteratorTest, IteratorSubtreeTraversal) {
     if (subtree_path.empty()) continue;
 
     const auto& subtree =
-        data.tree.DescendPath(subtree_path.begin(), subtree_path.end());
+        DescendPath(data.tree, subtree_path.begin(), subtree_path.end());
 
     std::ostringstream trace_msg;
     trace_msg << "Input tree:\n"

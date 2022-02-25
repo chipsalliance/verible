@@ -57,7 +57,7 @@ VectorTreeTestType MakeExampleFamilyTree();
 template <class T>
 std::vector<size_t> MakePath(const VectorTree<T>& node) {
   std::vector<size_t> path;
-  node.Path(path);
+  verible::Path(node, path);
   return path;
 }
 

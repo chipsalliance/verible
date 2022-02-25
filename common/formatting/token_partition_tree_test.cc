@@ -462,7 +462,7 @@ TEST_F(GroupLeafWithPreviousLeafTest, OneChild) {
   tree_type tree{
       all, tree_type{all},  // subtree spans same range
   };
-  ASSERT_FALSE(tree.is_leaf());
+  ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
   auto* group = GroupLeafWithPreviousLeaf(&tree.Children().front());
@@ -724,7 +724,7 @@ TEST_F(MergeLeafIntoPreviousLeafTest, OneChild) {
   tree_type tree{
       all, tree_type{all},  // subtree spans same range
   };
-  ASSERT_FALSE(tree.is_leaf());
+  ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
   auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children().front());
@@ -915,7 +915,7 @@ TEST_F(MergeLeafIntoNextLeafTest, OneChild) {
   tree_type tree{
       all, tree_type{all},  // subtree spans same range
   };
-  ASSERT_FALSE(tree.is_leaf());
+  ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
   auto* parent = MergeLeafIntoNextLeaf(&tree.Children().front());
@@ -1991,7 +1991,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
       },
   };
 
-  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });
@@ -2127,7 +2127,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartition) {
       },
   };
 
-  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(3 + style.indentation_spaces);
   });
@@ -2269,7 +2269,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
   verible::BasicFormatStyle style;  // default
   style.column_limit = 14 + 7;
 
-  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(7 + style.indentation_spaces);
   });
@@ -2762,7 +2762,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
   verible::BasicFormatStyle style;
   style.column_limit = 20;
 
-  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });
@@ -2842,7 +2842,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
   verible::BasicFormatStyle style;
   style.column_limit = 40;
 
-  tree.Children()[1].ApplyPreOrder([&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });

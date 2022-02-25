@@ -235,6 +235,7 @@ cc_library(
         ":iterator_range",
         ":logging",
         ":spacer",
+        ":type_traits",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -105,11 +105,12 @@ std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()
   // If a node of the ExpandedTree<UnwrappedLine> has children,
   // visit only the node's children.
   std::vector<UnwrappedLine> result;
-  unwrapped_lines_.ApplyPostOrder([&result](const TokenPartitionTree& node) {
-    if (node.is_leaf()) {
-      result.push_back(node.Value());
-    }
-  });
+  verible::ApplyPostOrder(unwrapped_lines_,
+                          [&result](const TokenPartitionTree& node) {
+                            if (is_leaf(node)) {
+                              result.push_back(node.Value());
+                            }
+                          });
 
   // Filter out trailing blank UnwrappedLines.
   while (!result.empty() && result.back().IsEmpty()) {
@@ -191,7 +192,7 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     // for the sake of being able to correctly indent comments inside blocks.
     // If so, delete those so that token partition range invariants are
     // maintained through re-use of an existing node.
-    if (!active_unwrapped_lines_->is_leaf()) {
+    if (!is_leaf(*active_unwrapped_lines_)) {
       VLOG(4) << "removed pre-existing child partitions.";
       active_unwrapped_lines_->Children().clear();
     }
@@ -215,12 +216,12 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
 
 void TreeUnwrapper::MergeLastTwoPartitions() {
   auto* parent =
-      MergeLeafIntoPreviousLeaf(unwrapped_lines_.RightmostDescendant());
+      MergeLeafIntoPreviousLeaf(RightmostDescendant(unwrapped_lines_));
   if (parent != nullptr) {
     // Pre-existing partition no longer exists, update active_unwrapped_lines_
     // to point to a new empty partition at the current indentation level.
     const auto current_token_iter =
-        unwrapped_lines_.RightmostDescendant()->Value().TokensRange().end();
+        RightmostDescendant(unwrapped_lines_)->Value().TokensRange().end();
     active_unwrapped_lines_ = parent->NewChild(UnwrappedLine(
         current_indentation_spaces_, current_token_iter
         // TODO(fangism): partitioning policy?

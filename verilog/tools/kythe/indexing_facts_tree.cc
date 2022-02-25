@@ -114,8 +114,8 @@ std::ostream& operator<<(std::ostream& stream,
 
 std::ostream& operator<<(std::ostream& stream,
                          const PrintableIndexingFactNode& printable_node) {
-  return printable_node.data.PrintTree(
-      &stream,
+  return PrintTree(
+      printable_node.data, &stream,
       [&printable_node](std::ostream& s,
                         const IndexingNodeData& d) -> std::ostream& {
         return s << PrintableIndexingNodeData(d, printable_node.base);

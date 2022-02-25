@@ -364,7 +364,7 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
   VerilogExtractionState project_extraction_state{project};
 
   // pre-allocate file nodes with the number of translation units
-  file_list_facts_tree.SetExpectedChildrenUpperBound(translation_units.size());
+  file_list_facts_tree.Children().reserve(translation_units.size());
   for (auto* translation_unit : translation_units) {
     if (translation_unit == nullptr) continue;
     const auto parse_status = translation_unit->Parse();
@@ -757,7 +757,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
     if (has_propagated_type) {
       // Check if the last type was not a primitive type.
       // e.g module (interface_type x, y).
-      if (facts_tree_context_.top().is_leaf() ||
+      if (is_leaf(facts_tree_context_.top()) ||
           facts_tree_context_.top()
                   .Children()
                   .back()
@@ -1808,15 +1808,16 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
     // This can be kRegisterVariable or kVariableDeclarationAssign.
     variable.match->Accept(this);
 
+    CHECK(!facts_tree_context_.top().Children().empty());
     IndexingFactNode& recent(facts_tree_context_.top().Children().back());
     // Append the struct members to be a children of this variable.
-    CHECK(!facts_tree_context_.top().Children().empty());
 
     // TODO(fangism): move instead of copying chidren
     // However, std::move-ing each child in the loop crashes,
     // and so does recent.AdoptSubtreesFrom(&struct_node).
+    recent.Children().reserve(struct_node.Children().size());
     for (const auto& child : struct_node.Children()) {
-      recent.NewChild(child);  // copy
+      recent.Children().push_back(child);  // copy
     }
   }
   VLOG(2) << "end of " << __FUNCTION__;
@@ -1937,7 +1938,7 @@ void IndexingFactsTreeExtractor::ExtractAnonymousScope(
 void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(
     IndexingFactNode& new_node) {
   // Terminate if there is no parent or the parent has no children.
-  if (facts_tree_context_.empty() || facts_tree_context_.top().is_leaf()) {
+  if (facts_tree_context_.empty() || is_leaf(facts_tree_context_.top())) {
     return;
   }
 
@@ -1948,7 +1949,7 @@ void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(
   new_node.Value().SwapAnchors(&previous_node.Value());
 
   // Move the children of the previous node to this node.
-  new_node.AdoptSubtreesFrom(&previous_node);
+  AdoptSubtreesFrom(new_node, &previous_node);
 
   // Remove the last extracted node.
   facts_tree_context_.top().Children().pop_back();

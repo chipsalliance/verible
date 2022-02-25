@@ -59,17 +59,17 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
   CHECK_NOTNULL(destination);
   const auto& src_item = source.Value();
   const auto& dst_item = destination->Value();
-  if (!source.is_leaf() && src_item.Type() == dst_item.Type() &&
+  if (!verible::is_leaf(source) && src_item.Type() == dst_item.Type() &&
       src_item.IndentationSpaces() == 0) {
     const auto& first_subitem = source.Children().front().Value();
     CHECK(src_item.MustWrap() == first_subitem.MustWrap());
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
-    destination->SetExpectedChildrenUpperBound(destination->Children().size() +
-                                               source.Children().size());
+    destination->Children().reserve(destination->Children().size() +
+                                    source.Children().size());
     for (const auto& sublayout : source.Children())
-      destination->AdoptSubtree(sublayout);
+      AdoptSubtree(*destination, sublayout);
   } else {
-    destination->AdoptSubtree(source);
+    AdoptSubtree(*destination, source);
   }
 }
 
@@ -138,7 +138,7 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "[" << std::setw(3) << std::setfill(' ') << segment.column << "] ("
          << std::fixed << std::setprecision(3) << segment.intercept << " + "
          << segment.gradient << "*x), span: " << segment.span << ", layout:\n";
-  segment.layout.PrintTree(&stream, 6);
+  PrintTree(segment.layout, &stream, 6);
   return stream;
 }
 
@@ -153,7 +153,7 @@ std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf) {
            << std::setfill(' ') << segment.gradient
            << "*x), span: " << std::setw(3) << std::setfill(' ') << segment.span
            << ", layout:\n";
-    segment.layout.PrintTree(&stream, 8);
+    PrintTree(segment.layout, &stream, 8);
     stream << "\n";
   }
   stream << "}";
@@ -484,7 +484,7 @@ void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
 
 LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     const TokenPartitionTree& node) const {
-  if (node.is_leaf()) {
+  if (is_leaf(node)) {
     // Wrapping complexity is n*(n+1)/2.
     constexpr int kWrapTokensLimit = 25;
 
@@ -767,7 +767,7 @@ void TreeReconstructor::ReplaceTokenPartitionTreeNode(
                                   PartitionPolicyEnum::kAlwaysExpand);
     node->Value().SpanUpToToken(last_line.TokensRange().end());
     node->Children().clear();
-    node->AdoptSubtreesFrom(&tree_);
+    AdoptSubtreesFrom(*node, &tree_);
   }
 }
 

@@ -38,7 +38,7 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
     const std::vector<verible::PreFormatToken>& tokens) const {
   TokenPartitionTree node;
 
-  node.SetExpectedChildrenUpperBound(children_.size());
+  node.Children().reserve(children_.size());
   for (const auto& child : children_) {
     node.NewChild(child.build(tokens));
   }
