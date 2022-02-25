@@ -37,8 +37,8 @@ class UnpackedDimensionsRule : public verible::SyntaxTreeLintRule {
   static const LintRuleDescriptor& GetDescriptor();
 
   void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
-  verible::LintRuleStatus Report() const override;
+                    const verible::SyntaxTreeContext& context) final;
+  verible::LintRuleStatus Report() const final;
 
  private:
   std::set<verible::LintViolation> violations_;

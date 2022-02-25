@@ -35,9 +35,9 @@ class MacroStringConcatenationRule : public verible::TokenStreamLintRule {
 
   MacroStringConcatenationRule() : state_(State::kNormal) {}
 
-  void HandleToken(const verible::TokenInfo& token) override;
+  void HandleToken(const verible::TokenInfo& token) final;
 
-  verible::LintRuleStatus Report() const override;
+  verible::LintRuleStatus Report() const final;
 
  private:
   // States of the internal token-based analysis.

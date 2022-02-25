@@ -74,7 +74,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Returns the token associated with the last UpdateLocation() call.
-  const TokenInfo& GetLastToken() const override { return last_token_; }
+  const TokenInfo& GetLastToken() const final { return last_token_; }
 
   // Returns next token and updates its location.
   const TokenInfo& DoNextToken() override {
@@ -129,7 +129,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to handle unrecognized chars.
-  void LexerOutput(const char* buf, int size) override {
+  void LexerOutput(const char* buf, int size) final {
     VLOG(1) << "LexerOutput: rejected text: \"" << std::string(buf, size)
             << '\"';
 
@@ -143,7 +143,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to do proper error handling.
-  void LexerError(const char* msg) override {
+  void LexerError(const char* msg) final {
     std::cerr << "Fatal LexerError: " << msg;
     abort();
   }

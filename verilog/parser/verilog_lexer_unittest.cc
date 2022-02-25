@@ -36,7 +36,7 @@ class FilteredVerilogLexer : public VerilogLexer {
  public:
   explicit FilteredVerilogLexer(absl::string_view code) : VerilogLexer(code) {}
 
-  const TokenInfo& DoNextToken() override {
+  const TokenInfo& DoNextToken() final {
     do {
       VerilogLexer::DoNextToken();
     } while (!VerilogLexer::KeepSyntaxTreeTokens(GetLastToken()));

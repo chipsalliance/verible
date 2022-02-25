@@ -137,7 +137,7 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
   explicit FirstSubtreeFinderMutable(const TreePredicate& predicate)
       : predicate_(predicate) {}
 
-  void Visit(const SyntaxTreeNode& node, SymbolPtr* symbol_ptr) override {
+  void Visit(const SyntaxTreeNode& node, SymbolPtr* symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &node);  // symbol_ptr owns node.
     if (result_ == nullptr) {
       // If this node matches, return it, and skip evaluating children.
@@ -158,7 +158,7 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
     }
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* symbol_ptr) override {
+  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &leaf);  // symbol_ptr owns leaf.
     // If already have a result, stop checking and return right away.
     if (result_ == nullptr) {
@@ -186,7 +186,7 @@ class FirstSubtreeFinder : public TreeVisitorRecursive {
   explicit FirstSubtreeFinder(const TreePredicate& predicate)
       : predicate_(predicate) {}
 
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     if (result_ == nullptr) {
       // If this node matches, return it, and skip evaluating children.
       if (predicate_(node)) {
@@ -203,7 +203,7 @@ class FirstSubtreeFinder : public TreeVisitorRecursive {
     }
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) override {
+  void Visit(const SyntaxTreeLeaf& leaf) final {
     // If already have a result, stop checking and return right away.
     if (result_ == nullptr) {
       if (predicate_(leaf)) {
@@ -356,10 +356,10 @@ class LeafMutatorVisitor : public MutableTreeVisitorRecursive {
   explicit LeafMutatorVisitor(const LeafMutator* mutator)
       : leaf_mutator_(*mutator) {}
 
-  void Visit(const SyntaxTreeNode&, SymbolPtr*) override {}
+  void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
 
   // Transforms a single leaf.
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) override {
+  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) final {
     CHECK_EQ(leaf_owner->get(), &leaf);
     auto* const mutable_leaf = down_cast<SyntaxTreeLeaf*>(leaf_owner->get());
     leaf_mutator_(ABSL_DIE_IF_NULL(mutable_leaf)->get_mutable());

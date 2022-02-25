@@ -36,13 +36,13 @@ class MockLexer : public Lexer {
  public:
   MockLexer() : token_(13, "foo") {}
 
-  const TokenInfo& GetLastToken() const override { return token_; }
+  const TokenInfo& GetLastToken() const final { return token_; }
 
-  const TokenInfo& DoNextToken() override { return token_; }
+  const TokenInfo& DoNextToken() final { return token_; }
 
-  void Restart(absl::string_view) override {}
+  void Restart(absl::string_view) final {}
 
-  bool TokenIsError(const TokenInfo&) const override { return false; }
+  bool TokenIsError(const TokenInfo&) const final { return false; }
 
  private:
   TokenInfo token_;

@@ -45,7 +45,7 @@ class SyntaxTreeLeaf : public Symbol {
 
   // Compares this to an arbitrary symbol using compare_tokens
   bool equals(const Symbol* symbol,
-              const TokenComparator& compare_tokens) const override;
+              const TokenComparator& compare_tokens) const final;
 
   // Compares this to another leaf using compare_tokens
   bool equals(const SyntaxTreeLeaf* leaf,
@@ -53,14 +53,14 @@ class SyntaxTreeLeaf : public Symbol {
 
   // The Accept() methods have the visitor visit this leaf and perform no
   // other actions.
-  void Accept(TreeVisitorRecursive* visitor) const override;
-  void Accept(SymbolVisitor* visitor) const override;
+  void Accept(TreeVisitorRecursive* visitor) const final;
+  void Accept(SymbolVisitor* visitor) const final;
   void Accept(MutableTreeVisitorRecursive* visitor,
-              SymbolPtr* this_owned) override;
+              SymbolPtr* this_owned) final;
 
   // Method override that returns the Kind of SyntaxTreeLeaf
-  SymbolKind Kind() const override { return SymbolKind::kLeaf; }
-  SymbolTag Tag() const override { return LeafTag(get().token_enum()); }
+  SymbolKind Kind() const final { return SymbolKind::kLeaf; }
+  SymbolTag Tag() const final { return LeafTag(get().token_enum()); }
 
  private:
   TokenInfo token_;

@@ -66,23 +66,23 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
         TreeUnwrapper(view, TreeUnwrapperData::preformatted_tokens_) {}
 
   // There are no filtered-out tokens in this fake.
-  void CollectLeadingFilteredTokens() override {}
-  void CollectTrailingFilteredTokens() override {}
+  void CollectLeadingFilteredTokens() final {}
+  void CollectTrailingFilteredTokens() final {}
 
   // Leaf visit that adds a PreFormatToken from the leaf's TokenInfo
   // to the current_unwrapped_line_
-  void Visit(const verible::SyntaxTreeLeaf& leaf) override {
+  void Visit(const verible::SyntaxTreeLeaf& leaf) final {
     CatchUpFilteredTokens();
     AddTokenToCurrentUnwrappedLine();
   }
 
   // Node visit that always starts a new unwrapped line
-  void Visit(const SyntaxTreeNode& node) override {
+  void Visit(const SyntaxTreeNode& node) final {
     StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &node);
     TraverseChildren(node);
   }
 
-  void InterChildNodeHook(const SyntaxTreeNode& node) override {}
+  void InterChildNodeHook(const SyntaxTreeNode& node) final {}
 
   using TreeUnwrapper::StartNewUnwrappedLine;
 

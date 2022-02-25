@@ -33,8 +33,8 @@ class VerilogTreeToJsonConverter : public verible::SymbolVisitor {
  public:
   explicit VerilogTreeToJsonConverter(absl::string_view base);
 
-  void Visit(const verible::SyntaxTreeLeaf&) override;
-  void Visit(const verible::SyntaxTreeNode&) override;
+  void Visit(const verible::SyntaxTreeLeaf&) final;
+  void Visit(const verible::SyntaxTreeNode&) final;
 
   json TakeJsonValue() { return std::move(json_); }
 
