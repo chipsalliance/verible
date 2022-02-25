@@ -135,6 +135,11 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
   return MakeTaggedNode(N::kUnpackedDimensions, arg);
 }
 
+static SymbolPtr &RetagTokenAs(SymbolPtr& arg, verilog_tokentype new_type) {
+  auto& leaf = down_cast<verible::SyntaxTreeLeaf&>(*arg);
+  leaf.get_mutable()->set_token_enum(new_type);
+  return arg;
+}
 %}
 
 %debug
@@ -799,56 +804,56 @@ KeywordIdentifier
 /* The following are keywords in certain dialects of Verilog.
  * For now, allow these to be used as identifiers until we actually find
  * examples that use the dialects, and will require additional context.
+ * So for now, they are just treated as SymbolIdentifier
  */
-  // If these change: modify verilog_token_classifications.cc:IsIdentifierLike()
   /* Verilog-AMS: */
   : TK_branch
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_access
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_exclude
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_flow
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_from
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_ground
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_connect
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* Verilog-A derivative operators */
   | TK_ddx
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_ddt
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_idt
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_idtmod
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* Verilog-AMS connect keywords: */
   | TK_split
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_merged
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* Verilog-AMS event statements: */
   | TK_timer
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* | TK_cross is used in SystemVerilog covergroups */
   | TK_above
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_discrete
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_initial_step
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   | TK_final_step
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   /* TODO(fangism): 'bool' is not a SystemVerilog keyword, but we may
    *   still want to discourage it (style-guide).  */
   | TK_bool
-    { $$ = move($1); }
+    { $$ = move(RetagTokenAs($1, SymbolIdentifier)); }
   ;
 
 /* TODO(fangism): phase this out:
