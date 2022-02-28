@@ -1,4 +1,5 @@
 #!/bin/bash
+# -*- mode: sh; sh-basic-offset: 2; indent-tabs-mode: nil; -*-
 # Copyright 2021 The Verible Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -118,10 +119,10 @@ KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
-KnownProjectToolIssue[project:basejump_stl]="#917 #1002 #1003"
-KnownProjectToolIssue[project:ibex]="#917 #1002 #1003"
-KnownProjectToolIssue[project:uvm]="#917 #1002 #1003"
-KnownProjectToolIssue[project:opentitan]="#917 #1002 #1003"
+KnownProjectToolIssue[project:basejump_stl]="#1002 #1003"
+KnownProjectToolIssue[project:ibex]="#1002 #1003"
+KnownProjectToolIssue[project:uvm]="#1002 #1003"
+KnownProjectToolIssue[project:opentitan]="#1002 #1003"
 
 # Run smoke test on provided files for project.
 # Returns 0 if all tools finished without crashing.
@@ -133,6 +134,7 @@ function run_smoke_test() {
   local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
+  local GIT_URL=$3
   local NUM_FILES=$(wc -l < ${FILELIST})
   local result=0
 
@@ -196,7 +198,8 @@ function run_smoke_test() {
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
-          head -10 ${TOOL_OUT}   # Might be useful in this case
+          echo "Input File URL: ${GIT_URL}/blob/master/$(echo $single_file | cut -d/ -f6-)"
+          head -15 ${TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
       fi
@@ -222,7 +225,7 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   FILELIST=${PROJECT_DIR}/verible.filelist
   find ${PROJECT_DIR} -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
 
-  run_smoke_test ${PROJECT_NAME} ${FILELIST}
+  run_smoke_test ${PROJECT_NAME} ${FILELIST} ${git_project}
   status_sum=$((${status_sum} + $?))
   echo
 done

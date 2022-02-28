@@ -1469,6 +1469,23 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   }
 }
 
+TEST(BuildSymbolTableTest, KeywordAsIdentifierRegressionIssue917) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module foo;\n"
+                            " timer #(.N(1)) t;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(foo_node, root_symbol, "foo");
+  MUST_ASSIGN_LOOKUP_SYMBOL(timer_instance_node, foo_node, "t");
+}
+
 TEST(BuildSymbolTableTest, ModuleInstanceNamedPortIsParameter) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m #(\n"

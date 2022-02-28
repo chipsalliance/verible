@@ -350,7 +350,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_Swidth "$width"
 /* Icarus specific tokens. */
 %token TKK_attribute "$attribute"
-%token TK_bool "bool"
 /* The new tokens from 1364-2001. */
 %token TK_automatic "automatic"
 %token TK_endgenerate "endgenerate"
@@ -518,8 +517,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_interconnect "interconnect"
 %token TK_nettype "nettype"
 %token TK_soft "soft"
-/* The new tokens for Verilog-AMS 2.3. */
-%token TK_above "above"
 %token TK_abs "abs"
 %token TK_absdelay "absdelay"
 %token TK_abstol "abstol"
@@ -535,7 +532,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_atan "atan"
 %token TK_atan2 "atan2"
 %token TK_atanh "atanh"
-%token TK_branch "branch"
 %token TK_ceil "ceil"
 %token TK_connect "connect"
 %token TK_connectmodule "connectmodule"
@@ -543,9 +539,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_continuous "continuous"
 %token TK_cos "cos"
 %token TK_cosh "cosh"
-%token TK_ddt "ddt"
 %token TK_ddt_nature "ddt_nature"
-%token TK_ddx "ddx"
 %token TK_discipline "discipline"
 %token TK_discrete "discrete"
 %token TK_domain "domain"
@@ -556,19 +550,14 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_endparamset "endparamset"
 %token TK_exclude "exclude"
 %token TK_exp "exp"
-%token TK_final_step "final_step"
 %token TK_flicker_noise "flicker_noise"
 %token TK_floor "floor"
 %token TK_flow "flow"
 %token TK_from "from"
-%token TK_ground "ground"
 %token TK_hypot "hypot"
-%token TK_idt "idt"
-%token TK_idtmod "idtmod"
 %token TK_idt_nature "idt_nature"
 %token TK_inf "inf"
 %token TK_infinite "infinite"  /* `default_decay_time argument */
-%token TK_initial_step "initial_step"
 %token TK_laplace_nd "laplace_nd"
 %token TK_laplace_np "laplace_np"
 %token TK_laplace_zd "laplace_zd"
@@ -578,7 +567,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_ln "ln"
 %token TK_log "log"
 %token TK_max "max"
-%token TK_merged "merged"
 %token TK_min "min"
 %token TK_nature "nature"
 %token TK_net_resolution "net_resolution"
@@ -590,11 +578,9 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_sin "sin"
 %token TK_sinh "sinh"
 %token TK_slew "slew"
-%token TK_split "split"
 %token TK_sqrt "sqrt"
 %token TK_tan "tan"
 %token TK_tanh "tanh"
-%token TK_timer "timer"
 %token TK_transition "transition"
 %token TK_units "units"
 %token TK_white_noise "white_noise"
@@ -797,13 +783,13 @@ GenericIdentifier
 
 KeywordIdentifier
 /* The following are keywords in certain dialects of Verilog.
- * For now, allow these to be used as identifiers until we actually find
- * examples that use the dialects, and will require additional context.
+ * These are used in some contexts, but in others we just regard them as
+ * regular identifiers.
+ * TODO(hzeller): Often, SymbolIdentifier is still used in the grammar, though
+ * we should use GenericIdentifier or SymbolIdentifier|KeywordIdentifier.
  */
   /* Verilog-AMS: */
-  : TK_branch
-    { $$ = move($1); }
-  | TK_access
+  : TK_access
     { $$ = move($1); }
   | TK_exclude
     { $$ = move($1); }
@@ -811,42 +797,10 @@ KeywordIdentifier
     { $$ = move($1); }
   | TK_from
     { $$ = move($1); }
-  | TK_ground
-    { $$ = move($1); }
-  | TK_connect
-    { $$ = move($1); }
-  /* Verilog-A derivative operators */
-  | TK_ddx
-    { $$ = move($1); }
-  | TK_ddt
-    { $$ = move($1); }
-  | TK_idt
-    { $$ = move($1); }
-  | TK_idtmod
-    { $$ = move($1); }
   /* Verilog-AMS connect keywords: */
-  | TK_split
-    { $$ = move($1); }
-  | TK_merged
-    { $$ = move($1); }
-  /* Verilog-AMS event statements: */
-  | TK_timer
-    { $$ = move($1); }
-  /* | TK_cross is used in SystemVerilog covergroups */
-  | TK_above
-    { $$ = move($1); }
   | TK_discrete
     { $$ = move($1); }
-  | TK_initial_step
-    { $$ = move($1); }
-  | TK_final_step
-    { $$ = move($1); }
-  /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
-    { $$ = move($1); }
-  /* TODO(fangism): 'bool' is not a SystemVerilog keyword, but we may
-   *   still want to discourage it (style-guide).  */
-  | TK_bool
     { $$ = move($1); }
   ;
 

@@ -48,6 +48,7 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_parser.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -724,16 +725,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const auto tag = leaf.Tag().tag;
     VLOG(1) << __FUNCTION__ << " [leaf]: " << VerboseToken(leaf.get());
     switch (tag) {
-      case verilog_tokentype::SymbolIdentifier:
-        HandleIdentifier(leaf);
-        break;
-
       case verilog_tokentype::TK_SCOPE_RES:  // "::"
       case '.':
         last_hierarchy_operator_ = &leaf.get();
         break;
 
       default:
+        if (verilog::IsIdentifierLike(static_cast<verilog_tokentype>(tag))) {
+          HandleIdentifier(leaf);
+        }
         break;
     }
     VLOG(1) << "end " << __FUNCTION__ << " [leaf]:" << VerboseToken(leaf.get());
