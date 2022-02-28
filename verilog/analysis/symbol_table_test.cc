@@ -1469,7 +1469,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceNamedParameterAssignment) {
   }
 }
 
-TEST(BuildSymbolTableTest, KeywordAsIdentifierRegressionIssue917) {
+TEST(BuildSymbolTableTest, TimerAsModuleNameRegressionIssue917) {
   TestVerilogSourceFile src("foobar.sv",
                             "module foo;\n"
                             " timer #(.N(1)) t;\n"
