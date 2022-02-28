@@ -785,8 +785,8 @@ KeywordIdentifier
 /* The following are keywords in certain dialects of Verilog.
  * These are used in some contexts, but in others we just regard them as
  * regular identifiers.
- * TODO(hzeller): Often, SymbolIdentifier is still used in the grammar, though
- * we should use GenericIdentifier or SymbolIdentifier|KeywordIdentifier.
+ * TODO(hzeller): Often, SymbolIdentifier is used in direct token
+ * comparisons in the code. They should match GenericIdentifier instead.
  */
   /* Verilog-AMS: */
   : TK_access
