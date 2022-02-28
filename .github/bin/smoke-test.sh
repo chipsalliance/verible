@@ -133,13 +133,15 @@ function run_smoke_test() {
   local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
+  local NUM_FILES=$(wc -l < ${FILELIST})
   local result=0
 
-  echo "::group::== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with $(wc -l < ${FILELIST}) files =="
+  echo "::group::== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with ${NUM_FILES} files =="
 
   for tool in $VERIBLE_TOOLS_TO_RUN ; do
     printf "%-20s %-32s\n" ${PROJECT_NAME} ${tool}
     local short_tool_name=$(dirname ${tool})
+    local non_zero_exit_code=0
 
     while read single_file; do
       # TODO(hzeller) the project tool and kythe extractor are meant to run
@@ -154,13 +156,23 @@ function run_smoke_test() {
         # a <(echo $single_file) does not work, so use actual file.
         echo ${single_file} > ${PROJECT_FILE_LIST}
         file_param="${PROJECT_FILE_LIST}"
-      else
+       elif [[ $tool == *-lint ]]; then
+        EXTRA_PARAM="--lint_fatal=false"
+	file_param=${single_file}
+       else
         EXTRA_PARAM=""
         file_param=${single_file}
       fi
 
       ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
       local EXIT_CODE=$?
+
+      # Even though we don't fail globally, let's at least count how many times
+      # our tools exit with non-zero. Long term, we'd like to have them succeed
+      # on all files
+      if [ $EXIT_CODE -ne 0 ]; then
+        non_zero_exit_code=$[non_zero_exit_code + 1]
+      fi
 
       # A regular error exit code we accept as normal operation of the tool if
       # it encountered a syntax error. Here, we are only interested in not
@@ -189,6 +201,7 @@ function run_smoke_test() {
         fi
       fi
     done < ${FILELIST}
+    echo "  -> Non zero exit code ${non_zero_exit_code}/${NUM_FILES}"
   done  # for tool
 
   rm -f ${PROJECT_FILE_LIST} ${TOOL_OUT}
