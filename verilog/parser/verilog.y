@@ -797,9 +797,9 @@ KeywordIdentifier
     { $$ = move($1); }
   | TK_from
     { $$ = move($1); }
-  /* Verilog-AMS connect keywords: */
   | TK_discrete
     { $$ = move($1); }
+  /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
     { $$ = move($1); }
   ;

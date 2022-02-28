@@ -510,6 +510,7 @@ xor { UpdateLocation(); return TK_xor; }
 \$width { UpdateLocation(); return TK_Swidth; }
 \$attribute { UpdateLocation(); return TKK_attribute; }
 
+bool { UpdateLocation(); return SymbolIdentifier; }  /* Icarus-specific; currently not used */
 automatic { UpdateLocation(); return TK_automatic; }
 endgenerate { UpdateLocation(); return TK_endgenerate; }
 generate { UpdateLocation(); return TK_generate; }
@@ -702,6 +703,7 @@ implements { UpdateLocation(); return TK_implements; }
 interconnect { UpdateLocation(); return TK_interconnect; }
 nettype { UpdateLocation(); return TK_nettype; }
 soft { UpdateLocation(); return TK_soft; }
+above { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 abs { UpdateLocation(); return TK_abs; }
 absdelay { UpdateLocation(); return TK_absdelay; }
 abstol { UpdateLocation(); return TK_abstol; }  /* Verilog-AMS */
@@ -717,13 +719,17 @@ asinh { UpdateLocation(); return TK_asinh; }
 atan { UpdateLocation(); return TK_atan; }
 atan2 { UpdateLocation(); return TK_atan2; }
 atanh { UpdateLocation(); return TK_atanh; }
+branch { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 ceil { UpdateLocation(); return TK_ceil; }
+connect { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 connectmodule { UpdateLocation(); return TK_connectmodule; }
 connectrules { UpdateLocation(); return TK_connectrules; }
 continuous { UpdateLocation(); return TK_continuous; }
 cos { UpdateLocation(); return TK_cos; }
 cosh { UpdateLocation(); return TK_cosh; }
+ddt { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 ddt_nature { UpdateLocation(); return TK_ddt_nature; }  /* Verilog-AMS */
+ddx { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 discipline {  /* Verilog-AMS */
   UpdateLocation();
   yy_push_state(DISCIPLINE);
@@ -743,14 +749,19 @@ endnature { UpdateLocation(); return TK_endnature; }  /* Verilog-AMS */
 endparamset { UpdateLocation(); return TK_endparamset; }
 exclude { UpdateLocation(); return TK_exclude; }  /* Verilog-AMS */
 exp { UpdateLocation(); return TK_exp; }
+final_step { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 flicker_noise { UpdateLocation(); return TK_flicker_noise; }
 floor { UpdateLocation(); return TK_floor; }
 flow { UpdateLocation(); return TK_flow; }  /* Verilog-AMS */
 from { UpdateLocation(); return TK_from; }  /* Verilog-AMS */
+ground { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 hypot { UpdateLocation(); return TK_hypot; }
+idt { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
+idtmod { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 idt_nature { UpdateLocation(); return TK_idt_nature; }  /* Verilog-AMS */
 inf { UpdateLocation(); return TK_inf; }
 infinite { UpdateLocation(); return TK_infinite; }  /* `default_decay_time */
+initial_step { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 laplace_nd { UpdateLocation(); return TK_laplace_nd; }
 laplace_np { UpdateLocation(); return TK_laplace_np; }
 laplace_zd { UpdateLocation(); return TK_laplace_zd; }
@@ -760,6 +771,7 @@ limexp { UpdateLocation(); return TK_limexp; }
 ln { UpdateLocation(); return TK_ln; }
 log { UpdateLocation(); return TK_log; }
 <AFTER_DOT>max { UpdateLocation(); yy_pop_state(); return TK_max; }
+merged { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 <AFTER_DOT>min { UpdateLocation(); yy_pop_state(); return TK_min; }
 nature { UpdateLocation(); return TK_nature; }  /* Verilog-AMS */
 net_resolution { UpdateLocation(); return TK_net_resolution; }
@@ -771,9 +783,11 @@ resolveto { UpdateLocation(); return TK_resolveto; }
 sin { UpdateLocation(); return TK_sin; }
 sinh { UpdateLocation(); return TK_sinh; }
 slew { UpdateLocation(); return TK_slew; }   /* Verilog-AMS */
+split { UpdateLocation(); return SymbolIdentifier; } /* Verilog-AMS; currently not used */
 sqrt { UpdateLocation(); return TK_sqrt; }
 tan { UpdateLocation(); return TK_tan; }
 tanh { UpdateLocation(); return TK_tanh; }
+timer { UpdateLocation(); return SymbolIdentifier; }  /* Verilog-AMS; currently not used */
 transition { UpdateLocation(); return TK_transition; }
 units { UpdateLocation(); return TK_units; }  /* Verilog-AMS */
 white_noise { UpdateLocation(); return TK_white_noise; }
