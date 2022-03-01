@@ -734,6 +734,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
         break;
 
       default:
+        // TODO(hzeller): use verilog::IsIdentifierLike() ?
+        // Using that would result in some mis-classifications.
         break;
     }
     VLOG(1) << "end " << __FUNCTION__ << " [leaf]:" << VerboseToken(leaf.get());

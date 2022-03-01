@@ -161,6 +161,13 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::TK_Sskew:
     case verilog_tokentype::TK_Stimeskew:
     case verilog_tokentype::TK_Swidth:
+      // KeywordIdentifier tokens
+    case verilog_tokentype::TK_access:
+    case verilog_tokentype::TK_exclude:
+    case verilog_tokentype::TK_flow:
+    case verilog_tokentype::TK_from:
+    case verilog_tokentype::TK_discrete:
+    case verilog_tokentype::TK_sample:
       return true;
     default:
       break;
