@@ -17,6 +17,7 @@
 #include <sstream>
 
 #include "common/strings/obfuscator.h"
+#include "common/strings/random.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -27,7 +28,7 @@ using verible::IdentifierObfuscator;
 
 // To make these tests deterministic, obfuscation maps are pre-populated.
 TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
-  IdentifierObfuscator ob;
+  IdentifierObfuscator ob(verible::RandomEqualLengthIdentifier);
   const std::pair<std::string, std::string> subs[] = {
       {"aaa", "AAA"},
       {"bbb", "BBB"},
@@ -106,7 +107,7 @@ TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
       "`FOO(`)\n",
   };
   for (const auto& test : kTestCases) {
-    IdentifierObfuscator ob;
+    IdentifierObfuscator ob(verible::RandomEqualLengthIdentifier);
     std::ostringstream output;
     const auto status = ObfuscateVerilogCode(test, &output, &ob);
     EXPECT_FALSE(status.ok());

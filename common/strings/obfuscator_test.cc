@@ -16,6 +16,7 @@
 
 #include "common/util/bijective_map.h"
 #include "common/util/logging.h"
+#include "common/strings/random.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -159,7 +160,7 @@ TEST(ObfuscatorTest, LoadMap) {
 }
 
 TEST(IdentifierObfuscatorTest, Transform) {
-  IdentifierObfuscator ob;
+  IdentifierObfuscator ob(RandomEqualLengthIdentifier);
   const auto& tran = ob.GetTranslator();
   // repeat same string
   for (int i = 0; i < 2; ++i) {
@@ -183,12 +184,12 @@ TEST(IdentifierObfuscatorTest, Transform) {
 }
 
 TEST(IdentifierObfuscatorTest, EncodeInvalid) {
-  IdentifierObfuscator ob;
+  IdentifierObfuscator ob(RandomEqualLengthIdentifier);
   EXPECT_DEATH(ob.encode("cat", "sheep"), "");  // mismatch length
 }
 
 TEST(IdentifierObfuscatorTest, EncodeValidTransform) {
-  IdentifierObfuscator ob;
+  IdentifierObfuscator ob(RandomEqualLengthIdentifier);
   ob.encode("cat", "cow");
   const auto& tran = ob.GetTranslator();
   // repeat same string

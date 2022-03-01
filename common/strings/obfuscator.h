@@ -21,7 +21,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
-#include "common/strings/random.h"
 #include "common/util/bijective_map.h"
 
 namespace verible {
@@ -90,7 +89,9 @@ class IdentifierObfuscator : public Obfuscator {
   typedef Obfuscator parent_type;
 
  public:
-  IdentifierObfuscator() : Obfuscator(RandomEqualLengthIdentifier) {}
+  // Tip for users of this: use something like RandomEqualLengthIdentifier,
+  // but also make sure to not accidentally generate any of your keywords.
+  IdentifierObfuscator(const generator_type& g) : Obfuscator(g) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
   bool encode(absl::string_view key, absl::string_view value);

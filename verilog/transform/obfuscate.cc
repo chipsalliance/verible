@@ -21,6 +21,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/obfuscator.h"
+#include "common/strings/random.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_equivalence.h"
@@ -99,7 +100,7 @@ static absl::Status VerifyDecoding(absl::string_view original,
   // Skip if original transformation was already decoding.
   if (subst.is_decoding()) return absl::OkStatus();
 
-  IdentifierObfuscator reverse_subst;
+  IdentifierObfuscator reverse_subst(verible::RandomEqualLengthIdentifier);
   reverse_subst.set_decode_mode(true);
 
   // Copy over mappings.  Verify map reconstruction.
