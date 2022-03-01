@@ -322,34 +322,6 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
 
-TEST(FactsTreeExtractor, NoIdentifierInsideNet) {
-  constexpr int kTag = 1;  // value doesn't matter
-  const verible::SyntaxTreeSearchTestCase kTestCase = {
-      "module ",
-      {kTag, "foo"},
-      ";\n tri sin;\n endmodule",
-  };
-
-  SimpleTestProject project(kTestCase.code);
-
-  const IndexingFactNode expected(  //
-      T(project.ExpectedFileListData(),
-        project.XUnit().RebaseFileTree(  //
-            T(project.XUnit().ExpectedFileData(),
-              // refers to module foo.
-              T(D{
-                  IndexingFactType::kModule,
-                  Anchor(kTestCase.expected_tokens[1]),
-              })))));
-
-  const auto facts_tree = project.Extract();
-
-  const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
-  EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
-  EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
-}
-
 TEST(FactsTreeExtractor, PropagatedUserDefinedTypeInModulePort) {
   constexpr int kTag = 1;  // value doesn't matter
   const verible::SyntaxTreeSearchTestCase kTestCase = {{
@@ -4994,79 +4966,6 @@ TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
                 Anchor(kTestCase.expected_tokens[5]),
                 Anchor(kTestCase.expected_tokens[7]),
             }))));
-
-  const auto facts_tree = project.Extract();
-
-  const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
-  EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
-  EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
-}
-
-TEST(FactsTreeExtractor, BuiltInFunction) {
-  constexpr int kTag = 1;  // value doesn't matter
-  const verible::SyntaxTreeSearchTestCase kTestCase = {
-      {"localparam ",
-       {kTag, "x"},
-       " = sin(1);\ntask ",
-       {kTag, "t1"},
-       "();\n",
-       {kTag, "b1"},
-       "(sin());\nendtask\ntask ",
-       {kTag, "t"},
-       "(input ",
-       {kTag, "foo"},
-       " ",
-       {kTag, "bar"},
-       "[$]);\n",
-       {kTag, "bar"},
-       ".sort();\nendtask"},
-  };
-
-  SimpleTestProject project(kTestCase.code);
-
-  const IndexingFactNode expected(  //
-      project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to param x.
-            T(D{
-                IndexingFactType::kParamDeclaration,
-                Anchor(kTestCase.expected_tokens[1]),
-            }),
-            // refers to t1.
-            T(
-                D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[3]),
-                },
-                // refers to b1.
-                T(D{
-                    IndexingFactType::kFunctionCall,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })),
-            // refers to t.
-            T(
-                D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[7]),
-                },
-                // refers to foo.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    },
-                    // refers to bar.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    })),
-                // refers to bar.sort().
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[13]),
-                })))));
 
   const auto facts_tree = project.Extract();
 

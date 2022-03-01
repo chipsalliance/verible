@@ -517,28 +517,17 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_interconnect "interconnect"
 %token TK_nettype "nettype"
 %token TK_soft "soft"
-%token TK_abs "abs"
 %token TK_absdelay "absdelay"
 %token TK_abstol "abstol"
 %token TK_access "access"
-%token TK_acos "acos"
-%token TK_acosh "acosh"
 %token TK_ac_stim "ac_stim"
 %token TK_aliasparam "aliasparam"
 %token TK_analog "analog"
 %token TK_analysis "analysis"
-%token TK_asin "asin"
-%token TK_asinh "asinh"
-%token TK_atan "atan"
-%token TK_atan2 "atan2"
-%token TK_atanh "atanh"
-%token TK_ceil "ceil"
 %token TK_connect "connect"
 %token TK_connectmodule "connectmodule"
 %token TK_connectrules "connectrules"
 %token TK_continuous "continuous"
-%token TK_cos "cos"
-%token TK_cosh "cosh"
 %token TK_ddt_nature "ddt_nature"
 %token TK_discipline "discipline"
 %token TK_discrete "discrete"
@@ -549,12 +538,9 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_endnature "endnature"
 %token TK_endparamset "endparamset"
 %token TK_exclude "exclude"
-%token TK_exp "exp"
 %token TK_flicker_noise "flicker_noise"
-%token TK_floor "floor"
 %token TK_flow "flow"
 %token TK_from "from"
-%token TK_hypot "hypot"
 %token TK_idt_nature "idt_nature"
 %token TK_inf "inf"
 %token TK_infinite "infinite"  /* `default_decay_time argument */
@@ -564,8 +550,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_laplace_zp "laplace_zp"
 %token TK_last_crossing "last_crossing"
 %token TK_limexp "limexp"
-%token TK_ln "ln"
-%token TK_log "log"
 %token TK_max "max"
 %token TK_min "min"
 %token TK_nature "nature"
@@ -575,11 +559,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_potential "potential"
 %token TK_pow "pow"
 %token TK_resolveto "resolveto"
-%token TK_sin "sin"
-%token TK_sinh "sinh"
-%token TK_sqrt "sqrt"
-%token TK_tan "tan"
-%token TK_tanh "tanh"
 %token TK_transition "transition"
 %token TK_units "units"
 %token TK_white_noise "white_noise"
@@ -772,11 +751,6 @@ GenericIdentifier
   | MacroIdentifier
     { $$ = move($1); }
   | KeywordIdentifier
-    { $$ = move($1); }
-  /* Treat built-in function identifiers as plain identifiers. */
-  | unary_builtin_function
-    { $$ = move($1); }
-  | binary_builtin_function
     { $$ = move($1); }
   ;
 
@@ -4782,59 +4756,6 @@ with_constraint_block_opt
 with_constraint_block
   : TK_with identifier_list_in_parens_opt constraint_block
     { $$ = MakeTaggedNode(N::kWithConstraints, $1, $2, $3); }
-  ;
-
-unary_builtin_function
-  : TK_acos
-    { $$ = move($1); }
-  | TK_acosh
-    { $$ = move($1); }
-  | TK_asin
-    { $$ = move($1); }
-  | TK_asinh
-    { $$ = move($1); }
-  | TK_atan
-    { $$ = move($1); }
-  | TK_atanh
-    { $$ = move($1); }
-  | TK_ceil
-    { $$ = move($1); }
-  | TK_cos
-    { $$ = move($1); }
-  | TK_cosh
-    { $$ = move($1); }
-  | TK_exp
-    { $$ = move($1); }
-  | TK_floor
-    { $$ = move($1); }
-  | TK_ln
-    { $$ = move($1); }
-  | TK_log
-    { $$ = move($1); }
-  | TK_sin
-    { $$ = move($1); }
-  | TK_sinh
-    { $$ = move($1); }
-  | TK_sqrt
-    { $$ = move($1); }
-  | TK_tan
-    { $$ = move($1); }
-  | TK_tanh
-    { $$ = move($1); }
-  | TK_abs
-    { $$ = move($1); }
-  ;
-binary_builtin_function
-  : TK_atan2
-    { $$ = move($1); }
-  | TK_hypot
-    { $$ = move($1); }
-  | TK_pow
-    { $$ = move($1); }
-  /* In SystemVerilog these are built-in array-locator methods.
-  | TK_max
-  | TK_min
-  */
   ;
 
 /**
