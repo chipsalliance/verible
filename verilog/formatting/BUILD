@@ -64,6 +64,7 @@ cc_library(
         "//common/util:enum_flags",
         "//common/util:logging",
         "//common/util:value_saver",
+        "//common/util:vector_tree_iterators",
         "//verilog/CST:declaration",
         "//verilog/CST:functions",
         "//verilog/CST:macro",
@@ -73,6 +74,7 @@ cc_library(
         "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/strings",
     ],
 )
