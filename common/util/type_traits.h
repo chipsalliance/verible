@@ -45,6 +45,31 @@ using match_const =
     typename std::conditional<std::is_const<Other>::value, std::add_const<T>,
                               std::remove_const<T>>::type;
 
+// Detection idiom from
+// C++ Extensions for Library Fundamentals, Version 2 (ISO/IEC TS 19568:2017)
+// https://en.cppreference.com/w/cpp/experimental/is_detected
+
+// Only utilities that have been needed so far are implemented.
+
+namespace type_traits_internal {
+template <class Default, class AlwaysVoid, template <class...> class Op,
+          class... Args>
+struct detected_impl {
+  using type = Default;
+};
+template <class Default, template <class...> class Op, class... Args>
+struct detected_impl<Default, std::void_t<Op<Args...>>, Op, Args...> {
+  using type = Op<Args...>;
+};
+
+}  // namespace type_traits_internal
+
+// Alias to `Op<Args...>` if that type is valid; otherwise alias to `Default`.
+template <class Default, template <class...> class Op, class... Args>
+using detected_or_t =
+    typename type_traits_internal::detected_impl<Default, void, Op,
+                                                 Args...>::type;
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_
