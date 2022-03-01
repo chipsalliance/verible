@@ -802,6 +802,8 @@ KeywordIdentifier
   /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
     { $$ = move($1); }
+  | TK_infinite
+    { $$ = move($1); }
   ;
 
 /* TODO(fangism): phase this out:
