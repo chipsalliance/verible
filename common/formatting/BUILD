@@ -130,6 +130,7 @@ cc_library(
         ":unwrapped_line",
         "//common/util:container_iterator_range",
         "//common/util:value_saver",
+        "//common/util:logging",
         "//common/util:vector_tree",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",

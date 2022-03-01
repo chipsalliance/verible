@@ -30,8 +30,8 @@
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/logging.h"
 #include "common/util/value_saver.h"
-#include "glog/vlog_is_on.h"
 
 namespace verible {
 
