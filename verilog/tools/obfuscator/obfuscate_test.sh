@@ -219,6 +219,28 @@ status="$?"
 
 diff --strip-trailing-cr -u "${MY_OUTPUT_FILE2}" "${MY_INPUT_FILE}" || exit 1
 
+##############################################################################
+echo "Test built-in functions untouched"
+cat >"${MY_INPUT_FILE}" <<EOF
+parameter a = sin(1); parameter b = ceil(2.5);
+EOF
+
+${obfuscator} < "${MY_INPUT_FILE}" > "${MY_OUTPUT_FILE}"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+cat "${MY_OUTPUT_FILE}"
+
+grep "sin(.*ceil(" "${MY_OUTPUT_FILE}"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "output does not contain preserved built-in function names"
+  exit 1
+}
+
 ###############################################################################
 echo "Test obfuscate --preserve_interface mode"
 
