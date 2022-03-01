@@ -782,7 +782,7 @@ pow { UpdateLocation(); return TK_pow; }
 resolveto { UpdateLocation(); return TK_resolveto; }
 sin { UpdateLocation(); return TK_sin; }
 sinh { UpdateLocation(); return TK_sinh; }
-slew { UpdateLocation(); return TK_slew; }   /* Verilog-AMS */
+slew { UpdateLocation(); return SymbolIdentifier; }   /* Verilog-AMS; currently not used */
 split { UpdateLocation(); return SymbolIdentifier; } /* Verilog-AMS; currently not used */
 sqrt { UpdateLocation(); return TK_sqrt; }
 tan { UpdateLocation(); return TK_tan; }

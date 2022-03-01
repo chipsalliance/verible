@@ -1198,7 +1198,6 @@ static std::initializer_list<LexerTestData> kKeywordTests = {
     {{TK_resolveto, "resolveto"}},
     {{TK_sin, "sin"}},
     {{TK_sinh, "sinh"}},
-    {{TK_slew, "slew"}},
     {{TK_sqrt, "sqrt"}},
     {{TK_tan, "tan"}},
     {{TK_tanh, "tanh"}},
