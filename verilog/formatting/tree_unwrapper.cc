@@ -2036,35 +2036,42 @@ class MacroCallReshaper {
     return found;
   }
 
+  // Report a bug/untested situation, but don't abort.
+  // As macro to be agnostic to logging implementation changes
+  // (hopefully ABSL will provide logging soon, to reduce glog dependency)
+#define LOG_BUG(log_sink, reason)                             \
+  log_sink << "formatting of macro call failed: " << (reason) \
+           << "\n*** Please file a bug. ***";
+
   bool FindInitialPartitions() {
     // Note: identifier can contain tokens for macro name + EOL comment
     identifier_ = FindDirectChild(
         main_node_, ContainsToken{verilog_tokentype::SystemTFIdentifier,
                                   verilog_tokentype::MacroCallId});
     if (!identifier_) {
-      LogBug(LOG(ERROR), "identifier not found.");
+      LOG_BUG(LOG(ERROR), "identifier not found.");
       return false;
     }
 
     paren_group_ = FindDirectChild(main_node_,
                                    OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
     if (!paren_group_) {
-      LogBug(LOG(ERROR), "paren_group not found.");
+      LOG_BUG(LOG(ERROR), "paren_group not found.");
       return false;
     }
 
     // Make sure there's nothing between identifier and paren group partitions.
     // Optional comment partitions are expected to be inside paren group.
     if (identifier_->NextSibling() != paren_group_) {
-      LogBug(LOG(ERROR),
-             "Unexpected partitions between identifier and paren_group.");
+      LOG_BUG(LOG(ERROR),
+              "Unexpected partitions between identifier and paren_group.");
       return false;
     }
 
     if (!paren_group_->IsLastChild()) {
       semicolon_ = &main_node_->Children().back();
       if (!ContainsToken{';'}(*semicolon_)) {
-        LogBug(LOG(ERROR), "Unexpected partition(s) after the call.");
+        LOG_BUG(LOG(ERROR), "Unexpected partition(s) after the call.");
         LOG(ERROR) << "\n" << *main_node_;
         return false;
       }
@@ -2080,18 +2087,20 @@ class MacroCallReshaper {
     } else {
       l_paren_ = FindDirectChild(paren_group_, IsLeftParenPartition);
       if (!l_paren_) {
-        LogBug(LOG(ERROR), "'(' not found.");
+        LOG_BUG(LOG(ERROR), "'(' not found.");
         return false;
       }
       r_paren_ = &paren_group_->Children().back();
       if (!ContainsToken{
               ')', verilog_tokentype::MacroCallCloseToEndLine}(*r_paren_)) {
-        LogBug(LOG(ERROR), "')' not found.");
+        LOG_BUG(LOG(ERROR), "')' not found.");
         return false;
       }
     }
     return true;
   }
+
+#undef LOG_BUG
 
   bool ReshapeEmptyParenGroup() {
     if (paren_group_->Children().size() == 2 && l_paren_ != r_paren_ &&
@@ -2307,16 +2316,6 @@ class MacroCallReshaper {
 
     l_paren_ = nullptr;
     argument_list_ = nullptr;
-  }
-
-  // Report a bug/untested situation, but don't abort.
-  static void LogBug(std::ostream& stream,
-                     absl::string_view reason = absl::string_view{}) {
-    if (reason.empty())
-      stream << "Formatting of macro call failed.";
-    else
-      stream << "Formatting of macro call failed: " << reason;
-    stream << "\n*** Please file a bug. ***";
   }
 
   const FormatStyle& style_;
