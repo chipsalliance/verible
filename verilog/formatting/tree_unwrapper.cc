@@ -59,7 +59,6 @@ namespace verilog {
 namespace formatter {
 
 using ::verible::iterator_range;
-using ::verible::LeafTag;
 using ::verible::NodeTag;
 using ::verible::PartitionPolicyEnum;
 using ::verible::PreFormatToken;
@@ -670,6 +669,8 @@ void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
 }
 
 // CST-descending phase that creates partitions with correct indentation.
+// TODO(mglb): This function is > 600 lines and should probably be split
+//             up into multiple.
 void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     const SyntaxTreeNode& node) {
   const auto tag = static_cast<NodeEnum>(node.Tag().tag);
@@ -1759,8 +1760,9 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
 
 static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
   // kWrap uses relative child indentation as a hanging
-  if (partition->Value().PartitionPolicy() == PartitionPolicyEnum::kWrap) {
-  }
+  // if (partition->Value().PartitionPolicy() == PartitionPolicyEnum::kWrap) {
+  // TODO(mglb): implement or remove.
+  // }
   const auto* origin = partition->Value().Origin();
   if (partition->HoistOnlyChild()) {
     VLOG(4) << "reshape: hoisted, using child partition policy, parent origin";
