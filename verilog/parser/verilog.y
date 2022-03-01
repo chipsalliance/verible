@@ -577,7 +577,6 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_resolveto "resolveto"
 %token TK_sin "sin"
 %token TK_sinh "sinh"
-%token TK_slew "slew"
 %token TK_sqrt "sqrt"
 %token TK_tan "tan"
 %token TK_tanh "tanh"

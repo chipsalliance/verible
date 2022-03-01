@@ -387,7 +387,6 @@ static const absl::node_hash_map<verilog_tokentype, FTT>& FormatTokenTypeMap() {
       {verilog_tokentype::TK_resolveto, FTT::keyword},
       {verilog_tokentype::TK_sin, FTT::keyword},
       {verilog_tokentype::TK_sinh, FTT::keyword},
-      {verilog_tokentype::TK_slew, FTT::keyword},
       {verilog_tokentype::TK_sqrt, FTT::keyword},
       {verilog_tokentype::TK_tan, FTT::keyword},
       {verilog_tokentype::TK_tanh, FTT::keyword},

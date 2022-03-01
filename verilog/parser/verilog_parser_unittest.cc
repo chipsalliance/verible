@@ -1800,6 +1800,7 @@ static const ParserTestCaseArray kModuleTests = {
     "module m; wire p_pkg::foo_t [2:0] foo [0:1]; endmodule\n",
     "module m(wire p_pkg::foo_t [2:0] foo [0:2]); endmodule\n",
     "module m; wire infinite; endmodule\n",  // infinite also a keyword
+    "module m; wire slew; endmodule\n",      // Regression #753
     "interface _if; wire p_pkg::foo_t foo; endinterface\n",
     "interface _if; wire p_pkg::foo_t [1:0] foo [0:1]; endinterface\n",
     // system task calls
