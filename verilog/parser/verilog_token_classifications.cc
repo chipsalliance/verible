@@ -169,6 +169,7 @@ bool IsIdentifierLike(verilog_tokentype token_type) {
     case verilog_tokentype::TK_discrete:
     case verilog_tokentype::TK_sample:
     case verilog_tokentype::TK_infinite:
+    case verilog_tokentype::TK_continuous:
       return true;
     default:
       break;

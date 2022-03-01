@@ -803,6 +803,8 @@ KeywordIdentifier
     { $$ = move($1); }
   | TK_infinite
     { $$ = move($1); }
+  | TK_continuous
+    { $$ = move($1); }
   ;
 
 /* TODO(fangism): phase this out:
