@@ -24,6 +24,7 @@
 // Quiet fatal logging does not exist in glog; work around here
 #define COMPACT_GOOGLE_LOG_QFATAL COMPACT_GOOGLE_LOG_FATAL
 #include "glog/logging.h"
+#include "glog/vlog_is_on.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
