@@ -70,6 +70,7 @@ else
   # -- only recognized by clang
   # Don't rely on implicit template type deduction
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
 fi
 
 case "$MODE" in

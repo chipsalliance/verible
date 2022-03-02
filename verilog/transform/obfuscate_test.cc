@@ -26,7 +26,7 @@ namespace {
 using verible::IdentifierObfuscator;
 
 static std::string ExpectNeverToBeCalled(absl::string_view) {
-  EXPECT_FALSE("This identifier generator should've never been called");
+  EXPECT_TRUE(false) << "This identifier generator should've never been called";
   return "";
 }
 

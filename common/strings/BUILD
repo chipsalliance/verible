@@ -94,7 +94,6 @@ cc_library(
     hdrs = ["obfuscator.h"],
     deps = [
         ":compare",
-        ":random",
         "//common/util:bijective_map",
         "//common/util:logging",
         "@com_google_absl//absl/status",
@@ -107,6 +106,7 @@ cc_test(
     srcs = ["obfuscator_test.cc"],
     deps = [
         ":obfuscator",
+        ":random",
         "//common/util:bijective_map",
         "//common/util:logging",
         "@com_google_googletest//:gtest_main",
