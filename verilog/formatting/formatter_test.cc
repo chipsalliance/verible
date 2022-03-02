@@ -15181,7 +15181,6 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "   // c3\n"},
 
     // -----------------------------------------------------------------
-
 };
 
 // Tests that formatter produces expected results, end-to-end.
