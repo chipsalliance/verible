@@ -149,15 +149,6 @@ TEST(GetIdentifiersFromNetDeclarationTest, EmptySource) {
   EXPECT_TRUE(net_declarations.empty());
 }
 
-TEST(GetIdentifiersFromNetDeclarationTest, NoNetIdentifier) {
-  VerilogAnalyzer analyzer("module foo; tri sin; endmodule", "");
-  ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
-  const auto net_declarations =
-      GetIdentifiersFromNetDeclaration(*ABSL_DIE_IF_NULL(root));
-  EXPECT_TRUE(net_declarations.empty());
-}
-
 TEST(GetIdentifiersFromNetDeclarationTest, NoNet) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   ASSERT_OK(analyzer.Analyze());

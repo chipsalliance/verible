@@ -23,6 +23,8 @@ Usage: `verible-verilog-obfuscate [options] < original > output`
     --load_map (If provided, pre-load an existing translation dictionary
       (written by --save_map). This is useful for applying pre-existing
       transforms.); default: "";
+    --preserve_builtin_functions (If true, preserve built-in function names such
+      as sin(), ceil()..); default: true;
     --preserve_interface (If true, module name, port names and parameter names
       will be preserved. The translation map saved with --save_map will have
       identity mappings for these identifiers. When used with --load_map, the

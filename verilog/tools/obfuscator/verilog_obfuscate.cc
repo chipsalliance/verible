@@ -58,6 +58,15 @@ ABSL_FLAG(                            //
     "The translation map saved with --save_map will have identity mappings for "
     "these identifiers.  When used with --load_map, the mapping explicitly "
     "specified in the map file will have higher priority than this option.");
+ABSL_FLAG(                                   //
+    bool, preserve_builtin_functions, true,  //
+    "If true, preserve built-in function names such as sin(), ceil()..");
+
+static constexpr absl::string_view kBuiltinFunctions[] = {
+    "abs",  "acos", "acosh", "asin", "asinh", "atan",  "atan2", "atanh",
+    "ceil", "cos",  "cosh",  "exp",  "floor", "hypot", "ln",    "log",
+    "pow",  "sin",  "sinh",  "sqrt", "tan",   "tanh",
+};
 
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
@@ -117,6 +126,12 @@ Output is written to stdout.
     }
     for (auto const& preserved_name : preserved)
       subst.encode(preserved_name, preserved_name);
+  }
+
+  if (absl::GetFlag(FLAGS_preserve_builtin_functions)) {
+    for (const absl::string_view f : kBuiltinFunctions) {
+      subst.encode(f, f);
+    }
   }
 
   // Encode/obfuscate.  Also verifies decode-ability.
