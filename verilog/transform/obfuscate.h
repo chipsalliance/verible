@@ -23,6 +23,10 @@
 
 namespace verilog {
 
+// Returns an identifier ([alpha][alnum]*) of equal length to input, and
+// makes sure that it is a valid symbol identifier, not another Verilog keyword.
+std::string RandomEqualLengthSymbolIdentifier(absl::string_view in);
+
 // Obfuscates Verilog code.  Identifiers are randomized as equal length
 // replacements, and transformations are recorded (in subst) and re-applied
 // to the same strings seen.  Input code only needs to be lexically valid,

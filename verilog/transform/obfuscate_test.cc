@@ -25,9 +25,14 @@ namespace {
 
 using verible::IdentifierObfuscator;
 
+static std::string ExpectNeverToBeCalled(absl::string_view) {
+  EXPECT_FALSE("This identifier generator should've never been called");
+  return "";
+}
+
 // To make these tests deterministic, obfuscation maps are pre-populated.
 TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
-  IdentifierObfuscator ob;
+  IdentifierObfuscator ob(ExpectNeverToBeCalled);
   const std::pair<std::string, std::string> subs[] = {
       {"aaa", "AAA"},
       {"bbb", "BBB"},
@@ -106,7 +111,7 @@ TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
       "`FOO(`)\n",
   };
   for (const auto& test : kTestCases) {
-    IdentifierObfuscator ob;
+    IdentifierObfuscator ob(RandomEqualLengthSymbolIdentifier);
     std::ostringstream output;
     const auto status = ObfuscateVerilogCode(test, &output, &ob);
     EXPECT_FALSE(status.ok());
