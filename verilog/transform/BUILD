@@ -17,6 +17,7 @@ cc_library(
     hdrs = ["obfuscate.h"],
     deps = [
         "//common/strings:obfuscator",
+        "//common/strings:random",
         "//common/text:token_info",
         "//common/util:logging",
         "//verilog/analysis:verilog_equivalence",
