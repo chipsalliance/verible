@@ -69,7 +69,8 @@ Output is written to stdout.
 )");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
 
-  IdentifierObfuscator subst;  // initially empty identifier map
+  // initially empty identifier map
+  IdentifierObfuscator subst(verilog::RandomEqualLengthSymbolIdentifier);
 
   // Set mode to encode or decode.
   const bool decode = absl::GetFlag(FLAGS_decode);

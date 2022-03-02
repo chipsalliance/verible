@@ -91,7 +91,7 @@ class IdentifierObfuscator : public Obfuscator {
  public:
   // Tip for users of this: use something like RandomEqualLengthIdentifier,
   // but also make sure to not accidentally generate any of your keywords.
-  IdentifierObfuscator(const generator_type& g) : Obfuscator(g) {}
+  explicit IdentifierObfuscator(const generator_type& g) : Obfuscator(g) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
   bool encode(absl::string_view key, absl::string_view value);

@@ -32,6 +32,17 @@ namespace verilog {
 
 using verible::IdentifierObfuscator;
 
+std::string RandomEqualLengthSymbolIdentifier(absl::string_view in) {
+  verilog::VerilogLexer lexer("");  // Oracle to check identifier-ness.
+  // In rare case we accidentally generate a keyword, try again.
+  for (;;) {
+    std::string candidate = verible::RandomEqualLengthIdentifier(in);
+    lexer.Restart(candidate);
+    if (lexer.DoNextToken().token_enum() == verilog_tokentype::SymbolIdentifier)
+      return candidate;
+  }
+}
+
 // TODO(fangism): single-char identifiers don't need to be obfuscated.
 // or use a shuffle/permutation to guarantee collision-free reversibility.
 
@@ -100,7 +111,7 @@ static absl::Status VerifyDecoding(absl::string_view original,
   // Skip if original transformation was already decoding.
   if (subst.is_decoding()) return absl::OkStatus();
 
-  IdentifierObfuscator reverse_subst(verible::RandomEqualLengthIdentifier);
+  IdentifierObfuscator reverse_subst(RandomEqualLengthSymbolIdentifier);
   reverse_subst.set_decode_mode(true);
 
   // Copy over mappings.  Verify map reconstruction.
