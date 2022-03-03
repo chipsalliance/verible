@@ -20,10 +20,12 @@
 #include <functional>
 #include <iosfwd>  // IWYU pragma: keep
 #include <iterator>
+#include <numeric>
 #include <set>
 #include <utility>
 #include <vector>
 
+#include "common/util/container_proxy.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
@@ -198,6 +200,172 @@ class _VectorTreeImpl {
   }
 };
 
+namespace vector_tree_internal {
+
+// A wrapper of a sequence container for storing VectorTree nodes that sets
+// correct parent pointer in each inserted node. The reference to the "correct"
+// parent is passed to a constructor.
+//
+// The sole purpose of this class is to function as a children list in
+// VectorTree, both as a storage and as a public interface for tree manipulation
+// (through reference).
+//
+// This class handles parent pointer assignment for all cases where the children
+// list itself is modified. However, it does not clear or otherwise change
+// parent pointer in removed nodes.
+template <class Container>
+class VectorTreeChildrenList
+    : ContainerProxyBase<VectorTreeChildrenList<Container>, Container> {
+  using Base = ContainerProxyBase<VectorTreeChildrenList<Container>, Container>;
+  friend Base;
+
+  using ThisType = VectorTreeChildrenList<Container>;
+
+  using VectorTreeType = typename Container::value_type;
+  friend VectorTreeType;
+
+ public:
+  using typename Base::container_type;
+
+  // Sequence Container interface
+
+  using typename Base::value_type;
+
+  using typename Base::const_reference;
+  using typename Base::reference;
+
+  using typename Base::const_iterator;
+  using typename Base::iterator;
+
+  using typename Base::difference_type;
+  using typename Base::size_type;
+
+  using typename Base::const_reverse_iterator;
+  using typename Base::reverse_iterator;
+
+  using Base::begin;
+  using Base::cbegin;
+  using Base::cend;
+  using Base::end;
+
+  using Base::crbegin;
+  using Base::crend;
+  using Base::rbegin;
+  using Base::rend;
+
+  using Base::back;
+  using Base::front;
+  using Base::operator[];
+  using Base::at;
+
+  using Base::empty;
+  using Base::max_size;
+  using Base::size;
+
+  using Base::emplace_back;
+  using Base::push_back;
+
+  using Base::emplace_front;
+  using Base::push_front;
+
+  using Base::emplace;
+  using Base::insert;
+
+  using Base::clear;
+  using Base::erase;
+  using Base::pop_back;
+  using Base::pop_front;
+
+  using Base::assign;
+  using Base::operator=;
+  using Base::swap;
+
+  using Base::capacity;
+  using Base::reserve;
+  using Base::resize;
+
+ protected:
+  // ContainerProxy interface
+
+  container_type& underlying_container() { return container_; }
+  const container_type& underlying_container() const { return container_; }
+
+  void ElementsInserted(iterator first, iterator last) {
+    for (auto& child : iterator_range(first, last)) {
+      child.parent_ = &node_;
+    }
+  }
+
+  // Unused:
+  // void ElementsBeingRemoved(iterator first, iterator last)
+
+  // Unused:
+  // void ElementsBeingReplaced()
+
+  void ElementsWereReplaced() {
+    for (auto& child : container_) {
+      child.parent_ = &node_;
+    }
+  }
+
+ private:
+  // Hide constructors and assignments from the world. This object is created
+  // and assigned-to only in VectorTree.
+
+  explicit VectorTreeChildrenList(VectorTreeType& node) : node_(node) {}
+
+  // Construction requires parent node reference.
+  VectorTreeChildrenList(const VectorTreeChildrenList&) = delete;
+
+  VectorTreeChildrenList(VectorTreeType& node,
+                         const VectorTreeChildrenList& other)
+      : node_(node), container_(other.container_) {
+    for (auto& child : container_) {
+      child.parent_ = &node;
+    }
+  }
+
+  VectorTreeChildrenList& operator=(const VectorTreeChildrenList& other) {
+    container_ = other.container_;
+    for (auto& child : container_) {
+      child.parent_ = &node_;
+    }
+    return *this;
+  }
+
+  // Construction requires parent node reference.
+  VectorTreeChildrenList(VectorTreeChildrenList&&) = delete;
+
+  VectorTreeChildrenList(VectorTreeType& node,
+                         VectorTreeChildrenList&& other) noexcept
+      : node_(node), container_(std::move(other.container_)) {
+    // Note: `other` is not notified about the change because it ends up in
+    // undefined state as a result of the move.
+    for (auto& child : container_) {
+      child.parent_ = &node;
+    }
+  }
+
+  VectorTreeChildrenList& operator=(VectorTreeChildrenList&& other) noexcept {
+    // Note: `other` is not notified about the change because it ends up in
+    // undefined state as a result of the move.
+    container_ = std::move(other.container_);
+    for (auto& child : container_) {
+      child.parent_ = &node_;
+    }
+    return *this;
+  }
+
+  // Reference to a VectorTree node in which this object represents a list of
+  // children.
+  VectorTreeType& node_;
+
+  // Actual data container where the nodes are stored.
+  Container container_;
+};
+
+}  // namespace vector_tree_internal
+
 // VectorTree is a hierarchical representation of information.
 // While it may be useful to maintain some invariant relationship between
 // parents and children nodes, it is not required for this class.
@@ -239,22 +407,18 @@ class VectorTree : private _VectorTreeImpl {
   typedef std::vector<this_type> subnodes_type;
   typedef T value_type;
 
-  VectorTree() = default;
+  VectorTree() : children_(*this) {}
 
   // Deep copy-constructor.
   VectorTree(const this_type& other)
       : node_value_(other.node_value_),
-        children_(other.children_),
-        parent_(other.parent_) {
-    Relink();
-  }
+        parent_(other.parent_),
+        children_(*this, other.children_) {}
 
   VectorTree(this_type&& other) noexcept
       : node_value_(std::move(other.node_value_)),
-        children_(std::move(other.children_)),
-        parent_(other.parent_) {
-    Relink();
-  }
+        parent_(other.parent_),
+        children_(*this, std::move(other.children_)) {}
 
   // This constructor can be used to recursively build trees.
   // e.g.
@@ -266,14 +430,15 @@ class VectorTree : private _VectorTreeImpl {
   //   );
   template <typename... Args>
   explicit VectorTree(const value_type& v, Args&&... args)
-      : node_value_(v), children_() {
+      : node_value_(v), children_(*this) {
     AdoptSubtree(std::forward<Args>(args)...);
   }
 
   template <typename... Args>
   explicit VectorTree(value_type&& v, Args&&... args)
-      : node_value_(std::move(v)), children_() {
-    AdoptSubtree(std::forward<Args>(args)...);
+      : node_value_(std::move(v)), children_(*this) {
+    children_.reserve(sizeof...(args));
+    (children_.emplace_back(std::forward<Args>(args)), ...);
   }
 
   ~VectorTree() { CHECK(CheckIntegrity()); }
@@ -284,33 +449,24 @@ class VectorTree : private _VectorTreeImpl {
   // excluding the case where one node is a direct ancestor of the other.
   // TODO(fangism): Add a proper check for this property, and test.
   void swap(this_type& other) {
-    // parent_'s are unchanged.
     std::swap(node_value_, other.node_value_);
     children_.swap(other.children_);  // efficient O(1) vector::swap
-    Relink();                         // O(|children|)
-    other.Relink();                   // O(|children|)
+                                      // + O(|children|) linking to parent
   }
 
   // Copy value and children, but relink new children to this node.
   VectorTree& operator=(const this_type& source) {
     if (this == &source) return *this;
     node_value_ = source.node_value_;
-    children_ = source.Children();
-    Relink();
+    children_ = source.children_;
     return *this;
   }
 
   // Explicit move-assignability needed for vector::erase()
   // No need to change parent links when children keep same parent.
   VectorTree& operator=(this_type&& source) noexcept {
-    // Keep this->parent_.  Ignore source.parent_.
-
     node_value_ = std::move(source.node_value_);
-
-    children_.clear();
-    // vector::swap only moves pointers, not elements
-    children_.swap(source.children_);
-    Relink();  // because the address of 'this' changes.
+    children_ = std::move(source.children_);
     return *this;
   }
 
@@ -325,12 +481,8 @@ class VectorTree : private _VectorTreeImpl {
   // This invalidates previous iterators/pointers to sibling children.
   template <typename... Args>
   this_type* NewChild(Args&&... args) {
-    // emplace_back() may cause realloc
-    children_.emplace_back(std::forward<Args>(args)...);
-    // Relink child to parent.
-    auto& newest = children_.back();
-    newest.parent_ = this;
-    return &newest;
+    Children().emplace_back(std::forward<Args>(args)...);
+    return &Children().back();
   }
 
   // Appends a new child node to the parent of this node.
@@ -341,27 +493,24 @@ class VectorTree : private _VectorTreeImpl {
     return ABSL_DIE_IF_NULL(parent_)->NewChild(std::forward<Args>(args)...);
   }
 
-  // No-op base case for variadic AdoptSubtree.
-  void AdoptSubtree() const {}
-
   // Appends one or more sub-trees at this level.
   // Variadic template handles one argument at a time.
   // This invalidates previous iterators/pointers to sibling children.
-  template <typename F, typename... Args>
-  void AdoptSubtree(F&& first, Args&&... args) {
-    children_.emplace_back(std::forward<F>(first));  // may cause realloc
-    // Relink child to parent.
-    auto& newest = children_.back();
-    newest.parent_ = this;
-    AdoptSubtree(std::forward<Args>(args)...);
+  template <typename... AdoptedNodeN>
+  void AdoptSubtree(AdoptedNodeN&&... node_n) {
+    children_.reserve(children_.size() + sizeof...(node_n));
+    (children_.push_back(std::forward<AdoptedNodeN>(node_n)), ...);
   }
 
   // This node takes/moves subtrees from another node (concatenates).
   // There need not be any relationship between this node and the other.
   void AdoptSubtreesFrom(this_type* other) {
-    auto& src_children = other->Children();
-    SetExpectedChildrenUpperBound(children_.size() + src_children.size());
-    AdoptSubtreesFromUnreserved(&src_children);
+    auto& src_children = other->children_;
+    children_.reserve(children_.size() + src_children.size());
+    for (auto& src_child : src_children) {
+      children_.push_back(std::move(src_child));
+    }
+    other->children_.clear();
   }
 
   // Accessors
@@ -374,9 +523,9 @@ class VectorTree : private _VectorTreeImpl {
 
   const this_type* Parent() const { return parent_; }
 
-  subnodes_type& Children() { return children_; }
+  auto& Children() { return children_; }
 
-  const subnodes_type& Children() const { return children_; }
+  const auto& Children() const { return children_; }
 
   bool is_leaf() const { return children_.empty(); }
 
@@ -651,16 +800,12 @@ class VectorTree : private _VectorTreeImpl {
     if (Children().size() != 1) return false;
 
     auto& only = Children().front();
-    only.parent_ = nullptr;  // disconnect from parent
-    std::swap(node_value_, only.node_value_);
+    node_value_ = std::move(only.node_value_);
+    // Can't do this directly, as assignment to children_ destroys its child
+    // (`only`) before it is moved.
+    auto new_children = std::move(only.children_.container_);
+    children_ = std::move(new_children);
 
-    // children_.swap(only.children_);  // but this leaks
-    // so we swap through a temporary, which still avoids any copying.
-    subnodes_type temp;
-    temp.swap(only.children_);
-    children_.swap(temp);
-
-    Relink();
     return true;
   }
 
@@ -689,25 +834,21 @@ class VectorTree : private _VectorTreeImpl {
   // Replace all direct children of this node with concatenated grandchildren.
   // Retains the value of this node.  Discards direct childrens' values.
   void FlattenOnce() {
-    // Emancipate children from this node without discarding them yet.
-    subnodes_type temp;
-    temp.swap(children_);
+    const int grandchildren_count = std::transform_reduce(
+        children_.begin(), children_.end(), 0, std::plus<>(),
+        [](const this_type& gc) { return gc.Children().size(); });
 
-    // Reserve space for all grandchildren.
-    {
-      size_t num_grandchildren = 0;
-      for (const auto& child : temp) {
-        num_grandchildren += child.Children().size();
+    // Build new children list in a standalone vector, then move-assign it to
+    // this node's children vector.
+    subnodes_type grandchildren;
+    grandchildren.reserve(grandchildren_count);
+
+    for (auto& child : children_) {
+      for (auto& grandchild : child.children_) {
+        grandchildren.push_back(std::move(grandchild));
       }
-      SetExpectedChildrenUpperBound(num_grandchildren);
     }
-
-    // Concatenate all grandchildren.
-    for (auto& child : temp) {
-      AdoptSubtreesFromUnreserved(&child.Children());
-    }
-
-    // temp, which holds the discarded children, is destroyed.
+    children_ = std::move(grandchildren);
   }
 
   // For every child, if that child has grandchildren, replace that child with
@@ -718,34 +859,38 @@ class VectorTree : private _VectorTreeImpl {
   // subranges of the original set of grandchildren.
   void FlattenOnlyChildrenWithChildren(
       std::vector<size_t>* new_offsets = nullptr) {
-    // Emancipate children from this node without discarding them yet.
-    subnodes_type temp;
-    temp.swap(children_);
+    const int new_children_count = std::transform_reduce(
+        children_.begin(), children_.end(), 0, std::plus<>(),
+        [](const this_type& gc) {
+          return std::max<size_t>(gc.Children().size(), 1u);
+        });
 
-    // Reserve space.
-    {
-      if (new_offsets != nullptr) {
-        new_offsets->clear();
-        new_offsets->reserve(temp.size());
-      }
-      size_t num_grandchildren = 0;
-      for (const auto& child : temp) {
-        if (new_offsets != nullptr) new_offsets->push_back(num_grandchildren);
-        num_grandchildren += std::max(child.Children().size(), size_t(1));
-      }
-      SetExpectedChildrenUpperBound(num_grandchildren);
+    // Build new children list in a standalone vector, then move-assign it to
+    // this node's children vector.
+    subnodes_type new_children;
+    new_children.reserve(new_children_count);
+
+    if (new_offsets != nullptr) {
+      new_offsets->clear();
+      new_offsets->reserve(children_.size());
     }
 
-    // Concatenate children-without-grandchildren and grandchildren.
-    for (auto& child : temp) {
-      if (child.is_leaf()) {
-        children_.emplace_back(std::move(child));
+    size_t new_index = 0;
+    for (auto& child : children_) {
+      if (new_offsets) new_offsets->push_back(new_index);
+      if (child.children_.empty()) {
+        // Use child node
+        new_children.push_back(std::move(child));
+        ++new_index;
       } else {
-        AdoptSubtreesFromUnreserved(&child.Children());
+        // Use grandchildren
+        for (auto& grandchild : child.children_) {
+          new_children.push_back(std::move(grandchild));
+          ++new_index;
+        }
       }
     }
-
-    // temp, which holds the discarded children, is destroyed.
+    children_ = std::move(new_children);
   }
 
   // Replace the i'th child with its children.  This may result in increasing
@@ -753,29 +898,25 @@ class VectorTree : private _VectorTreeImpl {
   void FlattenOneChild(size_t i) {
     const size_t original_size = Children().size();
     CHECK_LT(i, original_size);
-    // Unlink the grandchildren that will be adopted (in staging area).
-    subnodes_type adopted_grandchildren;
-    adopted_grandchildren.swap(Children()[i].Children());
-    {
-      // Remove i'th child.
-      const auto remove_iter = children_.begin() + i;
-      const auto insert_iter = children_.erase(remove_iter);
-      // Allocate room for new children.
-      this_type dummy_node;
-      children_.insert(insert_iter, adopted_grandchildren.size(), dummy_node);
-      // insert_iter is invalidated here, due to potential re-allocation
+
+    auto ith_child = children_.begin() + i;
+
+    if (ith_child->is_leaf()) {
+      // Empty list of grandchildren, just remove the child.
+      children_.erase(ith_child);
+      return;
     }
-    {
-      // Insert adopted grandchildren (via move-swap to avoid copying).
-      const auto insert_iter = children_.begin() + i;
-      std::swap_ranges(adopted_grandchildren.begin(),
-                       adopted_grandchildren.end(), insert_iter);
-      // Relink them to this node.
-      for (auto& child : verible::make_range(
-               insert_iter, insert_iter + adopted_grandchildren.size())) {
-        child.parent_ = this;
-      }
-    }
+
+    // Move-insert all grandchildren except the first one after the child.
+    children_.insert(ith_child + 1,
+                     std::make_move_iterator(ith_child->children_.begin() + 1),
+                     std::make_move_iterator(ith_child->children_.end()));
+    // Possible reallocation and iterator invalidation above; update iterator.
+    ith_child = children_.begin() + i;
+    // Move the first grandchild into the child's place. Can't do this directly,
+    // as assignment to *ith_child destroys the grandchild before it is moved.
+    auto first_granchild = std::move(ith_child->children_.front());
+    *ith_child = std::move(first_granchild);
   }
 
   // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
@@ -811,30 +952,21 @@ class VectorTree : private _VectorTreeImpl {
   }
 
  private:
-  // Establish parent-child links.
-  void Relink() {
-    for (auto& child : children_) {
-      child.parent_ = this;
-    }
-  }
-
-  // This node takes/moves subtrees from another array of node (concatenates).
-  void AdoptSubtreesFromUnreserved(subnodes_type* other) {
-    for (auto& child : *other) {
-      AdoptSubtree(std::move(child));  // already Relink()s
-    }
-    other->clear();
-  }
-
   // Singular value stored at this node.
   value_type node_value_;
 
-  // Array of nodes/subtrees.
-  subnodes_type children_;
-
   // Pointer up to parent node.
   // Only the root node of a tree has a nullptr parent_.
+  // This value is managed by VectorTreeChildrenList, constructors, and
+  // operator=(). There should be no need to set it manually in other places.
   this_type* parent_ = nullptr;
+
+  using VectorTreeChildrenList =
+      vector_tree_internal::VectorTreeChildrenList<std::vector<this_type>>;
+  friend VectorTreeChildrenList;
+
+  // Array of nodes/subtrees.
+  VectorTreeChildrenList children_;
 };
 
 // Stream-printable representation of the location of a node under its
