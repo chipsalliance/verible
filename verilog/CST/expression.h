@@ -15,7 +15,7 @@
 #ifndef VERIBLE_VERILOG_CST_EXPRESSION_H_
 #define VERIBLE_VERILOG_CST_EXPRESSION_H_
 
-// See comment at the top
+// See comment at the top of
 // verilog/CST/verilog_treebuilder_utils.h that explains use
 // of std::forward in Make* helper functions.
 
@@ -24,13 +24,34 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/parser/verilog_token_classifications.h"
 
 namespace verilog {
 
 // Example usage: $$ = MakeBinaryExpression($1, $2, $3);
 template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeBinaryExpression(T1&& lhs, T2&& op, T3&& rhs) {
+  const verible::SyntaxTreeLeaf& this_op(SymbolCastToLeaf(*op));
+  const auto this_tag = verilog_tokentype(this_op.Tag().tag);
+  // If parent (lhs) operator is associative and matches this one,
+  // then flatten them into the same set of siblings.
+  // This prevents excessive tree depth for long associative expressions.
+  if (IsAssociativeOperator(this_tag) &&
+      lhs->Kind() == verible::SymbolKind::kNode) {
+    const auto& lhs_node =
+        verible::down_cast<const verible::SyntaxTreeNode&>(*lhs);
+    if (lhs_node.MatchesTag(NodeEnum::kBinaryExpression)) {
+      const verible::SyntaxTreeLeaf& lhs_op =
+          verible::SymbolCastToLeaf(*lhs_node[1]);
+      const auto lhs_tag = verilog_tokentype(lhs_op.Tag().tag);
+      if (lhs_tag == this_tag) {
+        return verible::ExtendNode(std::forward<T1>(lhs), std::forward<T2>(op),
+                                   std::forward<T3>(rhs));
+      }
+    }
+  }
   return verible::MakeTaggedNode(NodeEnum::kBinaryExpression,
                                  std::forward<T1>(lhs), std::forward<T2>(op),
                                  std::forward<T3>(rhs));
@@ -60,6 +81,12 @@ const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol&);
 // Returns the false-case expression of a kConditionExpression.
 const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol&);
 
+// From binary expression operations, e.g. "a + b".
+// Associative binary operators may span more than two operands, e.g. "a+b+c".
+std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(
+    const verible::Symbol&);
+
+// TODO(fangism): evaluate constant expressions
 // From a statement like "assign foo = condition_a ? a : b;", returns condition
 // expressions "condition_a ? a : b".
 std::vector<verible::TreeSearchMatch> FindAllConditionExpressions(

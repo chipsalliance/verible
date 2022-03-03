@@ -296,6 +296,7 @@ cc_library(
         "//common/text:tree_utils",
         "//common/util:casts",
         "//common/util:logging",
+        "//verilog/parser:verilog_token_classifications",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
     ],
