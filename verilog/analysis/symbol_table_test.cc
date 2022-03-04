@@ -5175,6 +5175,136 @@ TEST(BuildSymbolTableTest, FunctionCallUnresolved) {
   }
 }
 
+TEST(BuildSymbolTableTest, FunctionCallUnresolvedNamedParameters) {
+  TestVerilogSourceFile src("call_me_not.sv",
+                            "function int vv();\n"
+                            "  return tt(.a(1), .b(2));\n"  // undefined
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentMap param_refs(
+      ReferenceComponentNodeMapView(*tt_ref->components));
+
+  ASSIGN_MUST_FIND(a_ref, param_refs, "a");
+  const ReferenceComponent& a_ref_comp(a_ref->Value());
+  EXPECT_EQ(a_ref_comp.identifier, "a");
+  EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(a_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(a_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  ASSIGN_MUST_FIND(b_ref, param_refs, "b");
+  const ReferenceComponent& b_ref_comp(b_ref->Value());
+  EXPECT_EQ(b_ref_comp.identifier, "b");
+  EXPECT_EQ(b_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(b_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(b_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    ASSIGN_MUST_HAVE_UNIQUE(err, resolve_diagnostics);
+    EXPECT_EQ(err.code(), absl::StatusCode::kNotFound);
+    EXPECT_THAT(
+        err.message(),
+        HasSubstr("Unable to resolve symbol \"tt\" from context $root::vv"));
+
+    // Call to "tt" is unresolved, as are its named parameters.
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+    EXPECT_EQ(a_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+    EXPECT_EQ(b_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+  }
+}
+
+TEST(BuildSymbolTableTest, FunctionCallResolvedNamedParameters) {
+  TestVerilogSourceFile src("call_me_not.sv",
+                            "function int tt(int a, int b);\n"
+                            "  return 0;\n"
+                            "endfunction\n"
+                            "function int vv();\n"
+                            "  return tt(.a(1), .b(2));\n"  // valid
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_tt, root_symbol, "tt");
+  EXPECT_EQ(function_tt_info.metatype, SymbolMetaType::kFunction);
+  ASSERT_NE(function_tt_info.declared_type.syntax_origin,
+            nullptr);  // returns int
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(param_a, function_tt, "a");
+  EXPECT_EQ(param_a_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  ASSERT_NE(param_a_info.declared_type.syntax_origin, nullptr);  // int a
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(param_b, function_tt, "b");
+  EXPECT_EQ(param_b_info.metatype, SymbolMetaType::kDataNetVariableInstance);
+  ASSERT_NE(param_b_info.declared_type.syntax_origin, nullptr);  // int b
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(function_vv, root_symbol, "vv");
+  EXPECT_EQ(function_vv_info.metatype, SymbolMetaType::kFunction);
+  ASSERT_NE(function_vv_info.declared_type.syntax_origin, nullptr);
+
+  EXPECT_EQ(function_vv_info.local_references_to_bind.size(), 1);
+  const auto ref_map(function_vv_info.LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(tt_ref, ref_map, "tt");
+  const ReferenceComponent& tt_ref_comp(tt_ref->components->Value());
+  EXPECT_EQ(tt_ref_comp.required_metatype, SymbolMetaType::kCallable);
+  EXPECT_EQ(tt_ref_comp.resolved_symbol, nullptr);
+
+  const ReferenceComponentMap param_refs(
+      ReferenceComponentNodeMapView(*tt_ref->components));
+
+  ASSIGN_MUST_FIND(a_ref, param_refs, "a");
+  const ReferenceComponent& a_ref_comp(a_ref->Value());
+  EXPECT_EQ(a_ref_comp.identifier, "a");
+  EXPECT_EQ(a_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(a_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(a_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  ASSIGN_MUST_FIND(b_ref, param_refs, "b");
+  const ReferenceComponent& b_ref_comp(b_ref->Value());
+  EXPECT_EQ(b_ref_comp.identifier, "b");
+  EXPECT_EQ(b_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(b_ref_comp.required_metatype,
+            SymbolMetaType::kDataNetVariableInstance);
+  EXPECT_EQ(b_ref_comp.resolved_symbol, nullptr);  // not yet resolved
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    // Call to "tt" is resolved, along with its named parameters.
+    EXPECT_EQ(tt_ref_comp.resolved_symbol, &function_tt);
+    EXPECT_EQ(a_ref_comp.resolved_symbol, &param_a);
+    EXPECT_EQ(b_ref_comp.resolved_symbol, &param_b);
+  }
+}
+
 TEST(BuildSymbolTableTest, CallNonFunction) {
   TestVerilogSourceFile src("call_me.sv",
                             "module tt();\n"

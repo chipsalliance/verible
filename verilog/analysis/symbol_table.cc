@@ -241,6 +241,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPortActualList:
         DescendPortActualList(node);
         break;
+      case NodeEnum::kArgumentList:
+        DescendCallArgumentList(node);
+        break;
       case NodeEnum::kGateInstanceRegisterVariableList: {
         // TODO: reserve() to guarantee pointer/iterator stability in VectorTree
         Descend(node);
@@ -439,6 +442,17 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // conditionals.
       const size_t num_ports = FindAllActualNamedPort(node).size();
       reference_branch_point_->SetExpectedChildrenUpperBound(num_ports);
+    }
+    Descend(node);
+  }
+
+  void DescendCallArgumentList(const SyntaxTreeNode& node) {
+    if (reference_branch_point_ != nullptr) {
+      // Pre-allocate siblings to guarantee pointer/iterator stability.
+      // FindAll* will also catch call arguments inside preprocessing
+      // conditionals.
+      const size_t num_args = FindAllNamedParams(node).size();
+      reference_branch_point_->SetExpectedChildrenUpperBound(num_args);
     }
     Descend(node);
   }
@@ -810,8 +824,16 @@ class SymbolTable::Builder : public TreeContextVisitor {
       return SymbolMetaType::kDataNetVariableInstance;
     }
 
-    if (Context().DirectParentIs(NodeEnum::kParamByName)) {
+    // module type or class parameters by name
+    if (Context().DirectParentsAre(
+            {NodeEnum::kParamByName, NodeEnum::kActualParameterByNameList})) {
       return SymbolMetaType::kParameter;
+    }
+
+    // function call arguments by name
+    if (Context().DirectParentsAre(
+            {NodeEnum::kParamByName, NodeEnum::kArgumentList})) {
+      return SymbolMetaType::kDataNetVariableInstance;
     }
 
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
