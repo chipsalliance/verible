@@ -58,6 +58,32 @@ TEST(VerilogTokenTest, IsUnaryOperatorTest) {
   EXPECT_FALSE(IsUnaryOperator(verilog_tokentype('#')));
 }
 
+TEST(VerilogTokenTest, IsAssociativeOperatorTest) {
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype('*')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('/')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('%')));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype('+')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('-')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('~')));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype('&')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('!')));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype('|')));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype('^')));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype::TK_LAND));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype::TK_LOR));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype::TK_NAND));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype::TK_NOR));
+  EXPECT_TRUE(IsAssociativeOperator(verilog_tokentype::TK_NXOR));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype::TK_INCR));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype::TK_DECR));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype(':')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('?')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype(',')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('.')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype(';')));
+  EXPECT_FALSE(IsAssociativeOperator(verilog_tokentype('#')));
+}
+
 TEST(VerilogTokenTest, IsTernaryOperatorTest) {
   EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('*')));
   EXPECT_FALSE(IsTernaryOperator(verilog_tokentype('/')));

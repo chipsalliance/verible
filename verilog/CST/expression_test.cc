@@ -110,6 +110,75 @@ TEST(ConstantIntegerValueTest, IsInteger) {
   }
 }
 
+TEST(AssociativeBinaryExpressionsTest, FlatTree) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"class   c;  endclass\n"},
+      {"function  f;  endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b + c"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b + c + d"}, "; endfunction\n"},
+      {"parameter product P = ", {kTag, "q*r"}, ";\n"},
+      {"parameter product P = ", {kTag, "q*r*s"}, ";\n"},
+      {"function  f;\n", "a = ", {kTag, "b | c | d | e"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b & c & d & e"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b || c || d || e"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b && c && d && e"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b ^ c ^ d ^ e"}, "; endfunction\n"},
+      {"function  f;\n", "a = ", {kTag, "b ~^ c ~^ d ~^ e"}, "; endfunction\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          return FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
+TEST(AssociativeBinaryExpressionsTest, ThreeFlatOperands) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function  f;\n", "a = ", {kTag, "b | c | d"}, "; endfunction\n"},
+      {"function  f;\n",
+       "a = ",
+       {kTag, "b(x) | c(y) | d(z)"},
+       "; endfunction\n"},
+      {"function  f;\n",
+       "a = ",
+       {kTag, "b(x) ^ c(y) ^ d(z)"},
+       "; endfunction\n"},
+      {"function  f;\n",
+       "a = ",
+       {kTag, "b(x) + c(y) + d(z)"},
+       "; endfunction\n"},
+      {"function  f;\n", "a = g(", {kTag, "b | c | d"}, "); endfunction\n"},
+      {"function  f;\n",
+       "a = g(",
+       {kTag, "b|c|d"},
+       ", ",
+       {kTag, "x*y*z"},
+       "); endfunction\n"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto matches = FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
+          for (const auto& match : matches) {
+            // "A op B op C" is 5 sibling tokens, due to flattening
+            EXPECT_EQ(verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(match.match))
+                          .children()
+                          .size(),
+                      5);
+          }
+          return matches;
+        });
+  }
+}
+
 TEST(GetConditionExpressionPredicateTest, Various) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {

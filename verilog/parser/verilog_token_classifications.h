@@ -28,6 +28,9 @@ bool IsComment(verilog_tokentype token_type);
 // Returns true if token enum *can* be a unary operator.
 bool IsUnaryOperator(verilog_tokentype);
 
+// Returns true if operator is an associative binary operator.
+bool IsAssociativeOperator(verilog_tokentype);
+
 // Returns true if token enum *can* be a ternary operator.
 bool IsTernaryOperator(verilog_tokentype);
 

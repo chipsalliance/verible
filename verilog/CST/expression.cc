@@ -98,6 +98,11 @@ const verible::Symbol* GetConditionExpressionFalseCase(
   return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 4);
 }
 
+std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(
+    const verible::Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekBinaryExpression());
+}
+
 std::vector<TreeSearchMatch> FindAllConditionExpressions(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekConditionExpression());

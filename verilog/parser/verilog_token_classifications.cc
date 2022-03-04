@@ -51,6 +51,24 @@ bool IsUnaryOperator(verilog_tokentype token_type) {
   }
 }
 
+bool IsAssociativeOperator(verilog_tokentype op) {
+  switch (static_cast<int>(op)) {
+    case verilog_tokentype::TK_or:
+    case verilog_tokentype::TK_and:
+    case verilog_tokentype::TK_LAND:
+    case verilog_tokentype::TK_LOR:
+    case verilog_tokentype::TK_NXOR:
+    case '+':
+    case '*':
+    case '^':
+    case '|':
+    case '&':
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool IsTernaryOperator(verilog_tokentype token_type) {
   switch (static_cast<int>(token_type)) {
     case '?':
