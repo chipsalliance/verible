@@ -17,6 +17,7 @@
 
 #include "absl/status/status.h"
 #include "common/util/logging.h"
+#include "verilog/analysis/verilog_linter_configuration.h"
 
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
@@ -28,6 +29,11 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
     config = *from_flags;
   } else {
     LOG(ERROR) << from_flags.status().message() << std::endl;
+  }
+
+  // Apply built-in policies if available.
+  for (const auto &policy : verilog::GetBuiltinProjectPolicies()) {
+    config.UseProjectPolicy(policy, filename);
   }
 
   return VerilogLintTextStructure(filename, config, text_structure);

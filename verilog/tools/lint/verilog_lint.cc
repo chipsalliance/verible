@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -198,8 +198,11 @@ int main(int argc, char** argv) {
       exit_status = 1;
       continue;
     }
-    const LinterConfiguration& config = *config_status;
-
+    LinterConfiguration& config = *config_status;
+    // Apply built-in policies if available.
+    for (const auto& policy : verilog::GetBuiltinProjectPolicies()) {
+      config.UseProjectPolicy(policy, filename);
+    }
     const int lint_status = verilog::LintOneFile(
         &std::cout, filename, config, violation_handler.get(),
         absl::GetFlag(FLAGS_check_syntax), absl::GetFlag(FLAGS_parse_fatal),

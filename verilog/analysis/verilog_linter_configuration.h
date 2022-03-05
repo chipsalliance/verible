@@ -87,11 +87,16 @@ std::string AbslUnparseFlag(const RuleBundle& bundle);
 bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
                    std::string* error);
 
-// ProjectPolicy is needed in a transitional period when new rules are
-// becoming enabled while pre-existing code is still following their
-// respective project conventions and guidelines.  These blanket waivers
-// are intended to minimize agony on current projects, while allowing
-// the full set of rules to take effect on new projects.
+// ProjectPolicy provides a way to compile-in lint policies depending on
+// filenames right into verible in case reading from the configuration
+// file is not feasible.
+//
+// Usually, using the --rules_config configuration file or the
+// .rules.verible_lint file found in the root directory of the project
+// (if --rules_config_search is set) is a better choice.
+//
+// This feature is here for legacy reasons and might change or go away.
+// Please consult the verible mailing list in case you need it.
 struct ProjectPolicy {
   // A short name for policy, for diagnostic purposes.
   absl::string_view name;
@@ -130,6 +135,10 @@ struct ProjectPolicy {
   // Returns a glob pattern for shell case statement: "*path1* | *path2* | ..."
   std::string ListPathGlobs() const;
 };
+
+// Return a list of compiled-in project policies.
+// See project_policies.cc for an implementation.
+const std::vector<ProjectPolicy>& GetBuiltinProjectPolicies();
 
 struct LinterOptions {
   // strings, ints, bools, and unprocessed values from flags, no other derived

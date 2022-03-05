@@ -332,6 +332,14 @@ cc_test(
 )
 
 cc_library(
+    name = "project_policies",
+    srcs = ["project_policies.cc"],
+    deps = [
+        ":verilog_linter_configuration",
+    ],
+)
+
+cc_library(
     name = "verilog_project",
     srcs = ["verilog_project.cc"],
     hdrs = ["verilog_project.h"],

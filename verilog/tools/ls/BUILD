@@ -19,8 +19,10 @@ cc_library(
     deps = [
         "//common/lsp:lsp-text-buffer",
         "//common/util:logging",
+        "//verilog/analysis:project_policies",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_linter",
+        "//verilog/analysis:verilog_linter_configuration",
         "@com_google_absl//absl/status",
     ],
 )
@@ -37,9 +39,9 @@ cc_library(
         "//common/text:text_structure",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_linter",
-        "//verilog/parser:verilog_token_enum",
-        "//verilog/formatting:formatter",
         "//verilog/formatting:format_style_init",
+        "//verilog/formatting:formatter",
+        "//verilog/parser:verilog_token_enum",
         "@jsonhpp",
     ],
 )
