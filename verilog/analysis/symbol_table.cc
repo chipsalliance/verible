@@ -208,6 +208,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kFunctionHeader:
         SetupFunctionHeader(node);
         break;
+      case NodeEnum::kClassConstructorPrototype:
+        DeclareConstructor(node);
+        break;
       case NodeEnum::kTaskPrototype:  // fall-through
       case NodeEnum::kTaskDeclaration:
         DeclareTask(node);
@@ -616,6 +619,17 @@ class SymbolTable::Builder : public TreeContextVisitor {
       return;
     }
 
+    if (Context().DirectParentIs(NodeEnum::kClassConstructorPrototype)) {
+      // This is a constructor or its prototype.
+      // From verilog.y, the "new" token is directly under this prototype node,
+      // and the full constructor definition also contains its prototype.
+      const SyntaxTreeNode* decl_syntax = &Context().top();
+      SymbolTableNode* declared_function = &EmplaceTypedElementInCurrentScope(
+          *decl_syntax, text, SymbolMetaType::kFunction);
+      current_scope_ = declared_function;
+      return;
+    }
+
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kTaskHeader})) {
       // We deferred adding a declared task to the current scope until this
@@ -738,6 +752,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const auto tag = leaf.Tag().tag;
     VLOG(1) << __FUNCTION__ << " [leaf]: " << VerboseToken(leaf.get());
     switch (tag) {
+      case verilog_tokentype::TK_new:  // constructor name
       case verilog_tokentype::SymbolIdentifier:
         HandleIdentifier(leaf);
         break;
@@ -1012,6 +1027,40 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const ValueSaver<SymbolTableNode*> reserve_for_function_decl(
         &current_scope_);  // no scope change yet
     Descend(function_node);
+  }
+
+  void DeclareConstructor(const SyntaxTreeNode& constructor_node) {
+    // Reserve a slot for the constructor's scope on the stack, but do not set
+    // it until we add it in HandleIdentifier(). The effective return type of
+    // the constructor is the class type.
+    const ValueSaver<SymbolTableNode*> reserve_for_function_decl(
+        &current_scope_);  // no scope change yet
+
+    const SyntaxTreeLeaf* new_keyword =
+        GetConstructorPrototypeNewKeyword(constructor_node);
+    // Create a self-reference to this class.
+    const ReferenceComponent class_type_ref{
+        .identifier = new_keyword->get().text(),  // "new"
+        .ref_type = ReferenceType::kImmediate,
+        .required_metatype = SymbolMetaType::kClass,
+        // pre-resolve this symbol to the enclosing class immediately
+        .resolved_symbol = current_scope_,  // the current class
+    };
+
+    // Build-up a reference to the constructor, rooted at the class node.
+    const CaptureDependentReference capture(this);
+    capture.Ref().PushReferenceComponent(class_type_ref);
+
+    DeclarationTypeInfo decl_type_info{
+        // There is no actual source text that references the type here.
+        // We arbitrarily designate the 'new' keyword as the reference point.
+        .syntax_origin = new_keyword,
+        .user_defined_type = capture.Ref().LastLeaf(),
+    };
+    const ValueSaver<DeclarationTypeInfo*> function_return_type(
+        &declaration_type_info_, &decl_type_info);
+
+    Descend(constructor_node);
   }
 
   void DeclarePorts(const SyntaxTreeNode& port_list) {
@@ -1361,6 +1410,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // For a data/instance/variable declaration statement, this is the declared
   // type (could be primitive or named-user-defined).
+  // For functions, this is the return type.
+  // For constructors, this is the class type.
   // Set this type before traversing declared instances and variables to capture
   // the type of the declaration.  Unset this to prevent type capture.
   // Such declarations cannot nest, so a stack is not needed.

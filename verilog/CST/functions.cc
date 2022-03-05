@@ -58,6 +58,11 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
   return verible::SearchSyntaxTree(root, NodekMethodCallExtension());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllConstructorPrototypes(
+    const Symbol& root) {
+  return verible::SearchSyntaxTree(root, NodekClassConstructorPrototype());
+}
+
 const verible::SyntaxTreeNode* GetFunctionHeader(const Symbol& function_decl) {
   return GetSubtreeAsNode(function_decl, NodeEnum::kFunctionDeclaration, 0,
                           NodeEnum::kFunctionHeader);
@@ -165,6 +170,12 @@ const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(
     const verible::Symbol& function_call) {
   return verible::GetSubtreeAsNode(
       function_call, NodeEnum::kMethodCallExtension, 2, NodeEnum::kParenGroup);
+}
+
+const verible::SyntaxTreeLeaf* GetConstructorPrototypeNewKeyword(
+    const verible::Symbol& constructor_prototype) {
+  return GetSubtreeAsLeaf(constructor_prototype,
+                          NodeEnum::kClassConstructorPrototype, 1);
 }
 
 }  // namespace verilog

@@ -779,5 +779,53 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
   }
 }
 
+TEST(FunctionCallTest, GetConstructorNewKeyword) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"class c; endclass: c"},
+      {"class c;\n"
+       "function int foo();\n"
+       "endfunction\n"
+       "endclass\n"},
+      {"class c;\n"
+       "extern function int foo();\n"
+       "endclass\n"},
+      {"class c;\n"
+       "extern function ",
+       {kTag, "new"},
+       ";\n"
+       "endclass\n"},
+      {"class c;\n"
+       "extern function ",
+       {kTag, "new"},
+       "();\n"
+       "endclass\n"},
+      {"class c;\n"
+       "extern function ",
+       {kTag, "new"},
+       "(string name);\n"
+       "endclass\n"},
+  };
+
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& ctors =
+              FindAllConstructorPrototypes(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> new_tokens;
+          for (const auto& decl : ctors) {
+            const auto* paren_group =
+                GetConstructorPrototypeNewKeyword(*decl.match);
+            new_tokens.emplace_back(
+                TreeSearchMatch{paren_group, {/* ignored context */}});
+          }
+          return new_tokens;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog

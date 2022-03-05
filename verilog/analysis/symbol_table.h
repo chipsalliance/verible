@@ -51,7 +51,7 @@ enum class SymbolMetaType {
   kParameter,
   kTypeAlias,  // typedef
   kDataNetVariableInstance,
-  kFunction,
+  kFunction,  // includes constructors
   kTask,
   kStruct,
   kEnumType,
