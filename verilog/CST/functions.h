@@ -104,6 +104,10 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
 std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
     const verible::Symbol&);
 
+// Find all constructor prototypes.
+std::vector<verible::TreeSearchMatch> FindAllConstructorPrototypes(
+    const verible::Symbol&);
+
 // Returns the function declaration header (return type, id, ports)
 const verible::SyntaxTreeNode* GetFunctionHeader(
     const verible::Symbol& function_decl);
@@ -180,6 +184,10 @@ const verible::SyntaxTreeNode* GetParenGroupFromCall(const verible::Symbol&);
 // Return the node spanning the paren group of function call extension.
 // e.g my_class.my_function(a, b, c) return the node spanning (a, b, c).
 const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(
+    const verible::Symbol&);
+
+// Returns leaf node for the "new" keyword of a constructor prototype.
+const verible::SyntaxTreeLeaf* GetConstructorPrototypeNewKeyword(
     const verible::Symbol&);
 
 }  // namespace verilog

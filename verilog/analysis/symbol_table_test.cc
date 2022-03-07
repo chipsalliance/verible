@@ -3168,6 +3168,95 @@ TEST(BuildSymbolTableTest, ClassDeclarationInheritanceFromNestedClass) {
   }
 }
 
+TEST(BuildSymbolTableTest, ClassDeclarationInLineConstructorDefinition) {
+  TestVerilogSourceFile src("ctor.sv",
+                            "class C;\n"
+                            "  function new();\n"
+                            "  endfunction\n"
+                            "endclass\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_c, root_symbol, "C");
+  EXPECT_EQ(class_c_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(class_c_info.file_origin, &src);
+  EXPECT_EQ(class_c_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(ctor, class_c, "new");
+  EXPECT_EQ(ctor_info.metatype, SymbolMetaType::kFunction);
+  EXPECT_EQ(ctor_info.file_origin, &src);
+  EXPECT_NE(ctor_info.syntax_origin, nullptr);
+  EXPECT_NE(ctor_info.declared_type.syntax_origin, nullptr);  // points to "new"
+  // constructor is already known to "return" its class type
+  EXPECT_EQ(ctor_info.declared_type.user_defined_type->Value().resolved_symbol,
+            &class_c);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest, ClassDeclarationOutOfLineConstructorDefinition) {
+  TestVerilogSourceFile src("ctor.sv",
+                            "class C;\n"
+                            "  extern function new;\n"
+                            "endclass\n"
+                            "function C::new ();\n"
+                            "endfunction\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(class_c, root_symbol, "C");
+  EXPECT_EQ(class_c_info.metatype, SymbolMetaType::kClass);
+  EXPECT_EQ(class_c_info.file_origin, &src);
+  EXPECT_EQ(class_c_info.declared_type.syntax_origin, nullptr);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(ctor, class_c, "new");
+  EXPECT_EQ(ctor_info.metatype, SymbolMetaType::kFunction);
+  EXPECT_EQ(ctor_info.file_origin, &src);
+  EXPECT_NE(ctor_info.syntax_origin, nullptr);
+  EXPECT_NE(ctor_info.declared_type.syntax_origin, nullptr);  // points to "new"
+  // constructor is already known to "return" its class type
+  EXPECT_EQ(ctor_info.declared_type.user_defined_type->Value().resolved_symbol,
+            &class_c);
+
+  // Expect a "C::new" reference from the out-of-line definition.
+  const auto ref_map(root_symbol.Value().LocalReferencesMapViewForTesting());
+  ASSIGN_MUST_FIND_EXACTLY_ONE_REF(class_c_ref, ref_map, "C");
+  const ReferenceComponent& c_ref_comp(class_c_ref->components->Value());
+  EXPECT_EQ(c_ref_comp.identifier, "C");
+  EXPECT_EQ(c_ref_comp.ref_type, ReferenceType::kImmediate);
+  EXPECT_EQ(c_ref_comp.required_metatype, SymbolMetaType::kClass);
+  // out-of-line class and method reference must be resolved at build-time
+  EXPECT_NE(c_ref_comp.resolved_symbol, nullptr);
+  const ReferenceComponent& ctor_ref_comp(class_c_ref->LastLeaf()->Value());
+  EXPECT_EQ(ctor_ref_comp.identifier, "new");
+  EXPECT_EQ(ctor_ref_comp.ref_type, ReferenceType::kDirectMember);
+  EXPECT_EQ(ctor_ref_comp.required_metatype, SymbolMetaType::kUnspecified);
+  EXPECT_NE(ctor_ref_comp.resolved_symbol, nullptr);
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+
+    EXPECT_EQ(c_ref_comp.resolved_symbol, &class_c);  // class C
+    EXPECT_EQ(ctor_ref_comp.resolved_symbol, &ctor);  // function C::new
+  }
+}
+
 TEST(BuildSymbolTableTest, ClassDeclarationReferenceInheritedMemberFromMethod) {
   TestVerilogSourceFile src("member_from_parent.sv",
                             "class base;\n"
