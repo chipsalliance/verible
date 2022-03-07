@@ -119,10 +119,10 @@ KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
-KnownProjectToolIssue[project:basejump_stl]="#1003"
-KnownProjectToolIssue[project:ibex]="#1003"
-KnownProjectToolIssue[project:uvm]="#1003"
-KnownProjectToolIssue[project:opentitan]="#1003"
+KnownProjectToolIssue[project:basejump_stl]="#1255"
+KnownProjectToolIssue[project:ibex]="#1255"
+KnownProjectToolIssue[project:uvm]="#1255"
+KnownProjectToolIssue[project:opentitan]="#1255"
 
 # Run smoke test on provided files for project.
 # Returns 0 if all tools finished without crashing.
