@@ -282,6 +282,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kLPValue:
         HandlePossibleImplicitDeclaration(node);
         break;
+      case NodeEnum::kBindDirective:
+        // TODO(#1241) Not handled right now.
+        // TODO(#1255) Not handled right now.
+        break;
       default:
         Descend(node);
         break;
