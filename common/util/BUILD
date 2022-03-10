@@ -292,6 +292,11 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "container_proxy",
+    hdrs = ["container_proxy.h"],
+)
+
 cc_test(
     name = "algorithm_test",
     srcs = ["algorithm_test.cc"],
@@ -544,6 +549,17 @@ cc_test(
     deps = [
         ":user_interaction",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "container_proxy_test",
+    srcs = ["container_proxy_test.cc"],
+    deps = [
+        ":container_proxy",
+        ":type_traits",
+        "//common/strings:display_utils",
         "@com_google_googletest//:gtest_main",
     ],
 )
