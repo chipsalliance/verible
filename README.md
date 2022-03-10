@@ -165,7 +165,7 @@ See https://github.com/chipsalliance/verible/issues/528
 
 The [`verible-verilog-ls`](./verilog/tools/ls) is a language server that
 provides the functionalities that come with the Verible command line tools
-also directly in your edtior.
+also directly in your editor.
 
 It implements the standardized [language server protocol] that is supported
 by a myriad of editors and IDEs.
