@@ -403,6 +403,10 @@ class VectorTree : private _VectorTreeImpl {
   typedef _VectorTreeImpl impl_type;
 
  public:
+  using VectorTreeChildrenList =
+      vector_tree_internal::VectorTreeChildrenList<std::vector<this_type>>;
+  friend VectorTreeChildrenList;
+
   // Self-recursive type that represents children in an expanded view.
   typedef std::vector<this_type> subnodes_type;
   typedef T value_type;
@@ -523,9 +527,9 @@ class VectorTree : private _VectorTreeImpl {
 
   const this_type* Parent() const { return parent_; }
 
-  auto& Children() { return children_; }
+  VectorTreeChildrenList& Children() { return children_; }
 
-  const auto& Children() const { return children_; }
+  const VectorTreeChildrenList& Children() const { return children_; }
 
   bool is_leaf() const { return children_.empty(); }
 
@@ -960,10 +964,6 @@ class VectorTree : private _VectorTreeImpl {
   // This value is managed by VectorTreeChildrenList, constructors, and
   // operator=(). There should be no need to set it manually in other places.
   this_type* parent_ = nullptr;
-
-  using VectorTreeChildrenList =
-      vector_tree_internal::VectorTreeChildrenList<std::vector<this_type>>;
-  friend VectorTreeChildrenList;
 
   // Array of nodes/subtrees.
   VectorTreeChildrenList children_;
