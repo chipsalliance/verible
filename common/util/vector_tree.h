@@ -200,166 +200,6 @@ class _VectorTreeImpl {
   }
 };
 
-namespace vector_tree_internal {
-
-// A wrapper of a sequence container for storing VectorTree nodes that sets
-// correct parent pointer in each inserted node. The reference to the "correct"
-// parent is passed to a constructor.
-//
-// The sole purpose of this class is to function as a children list in
-// VectorTree, both as a storage and as a public interface for tree manipulation
-// (through reference).
-//
-// This class handles parent pointer assignment for all cases where the children
-// list itself is modified. However, it does not clear or otherwise change
-// parent pointer in removed nodes.
-template <class Container>
-class VectorTreeChildrenList
-    : ContainerProxyBase<VectorTreeChildrenList<Container>, Container> {
-  using Base = ContainerProxyBase<VectorTreeChildrenList<Container>, Container>;
-  friend Base;
-
-  using ThisType = VectorTreeChildrenList<Container>;
-
-  using VectorTreeType = typename Container::value_type;
-  friend VectorTreeType;
-
- public:
-  using typename Base::container_type;
-
-  // Sequence Container interface
-
-  using typename Base::value_type;
-
-  using typename Base::const_reference;
-  using typename Base::reference;
-
-  using typename Base::const_iterator;
-  using typename Base::iterator;
-
-  using typename Base::difference_type;
-  using typename Base::size_type;
-
-  using typename Base::const_reverse_iterator;
-  using typename Base::reverse_iterator;
-
-  using Base::begin;
-  using Base::cbegin;
-  using Base::cend;
-  using Base::end;
-
-  using Base::crbegin;
-  using Base::crend;
-  using Base::rbegin;
-  using Base::rend;
-
-  using Base::back;
-  using Base::front;
-  using Base::operator[];
-  using Base::at;
-
-  using Base::empty;
-  using Base::max_size;
-  using Base::size;
-
-  using Base::emplace_back;
-  using Base::push_back;
-
-  using Base::emplace_front;
-  using Base::push_front;
-
-  using Base::emplace;
-  using Base::insert;
-
-  using Base::clear;
-  using Base::erase;
-  using Base::pop_back;
-  using Base::pop_front;
-
-  using Base::assign;
-  using Base::operator=;
-  using Base::swap;
-
-  using Base::capacity;
-  using Base::reserve;
-  using Base::resize;
-
- protected:
-  // ContainerProxy interface
-
-  container_type& underlying_container() { return container_; }
-  const container_type& underlying_container() const { return container_; }
-
-  void ElementsInserted(iterator first, iterator last) {
-    LinkChildrenToParent(iterator_range(first, last));
-  }
-
-  // Unused:
-  // void ElementsBeingRemoved(iterator first, iterator last)
-
-  // Unused:
-  // void ElementsBeingReplaced()
-
-  void ElementsWereReplaced() { LinkChildrenToParent(container_); }
-
- private:
-  // Sets parent pointer of nodes from `children` range to address of `node_`.
-  template <class Range>
-  void LinkChildrenToParent(Range&& children) {
-    for (auto& child : children) {
-      child.parent_ = &node_;
-    }
-  }
-
-  // Hide constructors and assignments from the world. This object is created
-  // and assigned-to only in VectorTree.
-
-  explicit VectorTreeChildrenList(VectorTreeType& node) : node_(node) {}
-
-  // Construction requires parent node reference.
-  VectorTreeChildrenList(const VectorTreeChildrenList&) = delete;
-
-  VectorTreeChildrenList(VectorTreeType& node,
-                         const VectorTreeChildrenList& other)
-      : node_(node), container_(other.container_) {
-    LinkChildrenToParent(container_);
-  }
-
-  VectorTreeChildrenList& operator=(const VectorTreeChildrenList& other) {
-    container_ = other.container_;
-    LinkChildrenToParent(container_);
-    return *this;
-  }
-
-  // Construction requires parent node reference.
-  VectorTreeChildrenList(VectorTreeChildrenList&&) = delete;
-
-  VectorTreeChildrenList(VectorTreeType& node,
-                         VectorTreeChildrenList&& other) noexcept
-      : node_(node), container_(std::move(other.container_)) {
-    // Note: `other` is not notified about the change because it ends up in
-    // undefined state as a result of the move.
-    LinkChildrenToParent(container_);
-  }
-
-  VectorTreeChildrenList& operator=(VectorTreeChildrenList&& other) noexcept {
-    // Note: `other` is not notified about the change because it ends up in
-    // undefined state as a result of the move.
-    container_ = std::move(other.container_);
-    LinkChildrenToParent(container_);
-    return *this;
-  }
-
-  // Reference to a VectorTree node in which this object represents a list of
-  // children.
-  VectorTreeType& node_;
-
-  // Actual data container where the nodes are stored.
-  Container container_;
-};
-
-}  // namespace vector_tree_internal
-
 // VectorTree is a hierarchical representation of information.
 // While it may be useful to maintain some invariant relationship between
 // parents and children nodes, it is not required for this class.
@@ -396,11 +236,10 @@ class VectorTree : private _VectorTreeImpl {
   typedef VectorTree<T> this_type;
   typedef _VectorTreeImpl impl_type;
 
- public:
-  using VectorTreeChildrenList =
-      vector_tree_internal::VectorTreeChildrenList<std::vector<this_type>>;
-  friend VectorTreeChildrenList;
+  // Forward declaration
+  class ChildrenList;
 
+ public:
   // Self-recursive type that represents children in an expanded view.
   typedef std::vector<this_type> subnodes_type;
   typedef T value_type;
@@ -521,9 +360,9 @@ class VectorTree : private _VectorTreeImpl {
 
   const this_type* Parent() const { return parent_; }
 
-  VectorTreeChildrenList& Children() { return children_; }
+  ChildrenList& Children() { return children_; }
 
-  const VectorTreeChildrenList& Children() const { return children_; }
+  const ChildrenList& Children() const { return children_; }
 
   bool is_leaf() const { return children_.empty(); }
 
@@ -950,17 +789,168 @@ class VectorTree : private _VectorTreeImpl {
   }
 
  private:
+  // A wrapper of a sequence container for storing VectorTree nodes that sets
+  // correct parent pointer in each inserted node. The reference to the
+  // "correct" parent is passed to a constructor.
+  //
+  // The sole purpose of this class is to function as a children list in
+  // VectorTree, both as a storage and as a public interface for tree
+  // manipulation (through reference).
+  //
+  // This class handles parent pointer assignment for all cases where the
+  // children list itself is modified. However, it does not clear or otherwise
+  // change parent pointer in removed nodes.
+  class ChildrenList : ContainerProxyBase<ChildrenList, subnodes_type> {
+    using Base = ContainerProxyBase<ChildrenList, subnodes_type>;
+    friend Base;
+
+   public:
+    using typename Base::container_type;
+
+    // Sequence Container interface
+
+    using typename Base::value_type;
+
+    using typename Base::const_reference;
+    using typename Base::reference;
+
+    using typename Base::const_iterator;
+    using typename Base::iterator;
+
+    using typename Base::difference_type;
+    using typename Base::size_type;
+
+    using typename Base::const_reverse_iterator;
+    using typename Base::reverse_iterator;
+
+    using Base::begin;
+    using Base::cbegin;
+    using Base::cend;
+    using Base::end;
+
+    using Base::crbegin;
+    using Base::crend;
+    using Base::rbegin;
+    using Base::rend;
+
+    using Base::back;
+    using Base::front;
+    using Base::operator[];
+    using Base::at;
+
+    using Base::empty;
+    using Base::max_size;
+    using Base::size;
+
+    using Base::emplace_back;
+    using Base::push_back;
+
+    using Base::emplace_front;
+    using Base::push_front;
+
+    using Base::emplace;
+    using Base::insert;
+
+    using Base::clear;
+    using Base::erase;
+    using Base::pop_back;
+    using Base::pop_front;
+
+    using Base::assign;
+    using Base::operator=;
+    using Base::swap;
+
+    using Base::capacity;
+    using Base::reserve;
+    using Base::resize;
+
+   protected:
+    // ContainerProxy interface
+
+    container_type& underlying_container() { return container_; }
+    const container_type& underlying_container() const { return container_; }
+
+    void ElementsInserted(iterator first, iterator last) {
+      LinkChildrenToParent(iterator_range(first, last));
+    }
+
+    // Unused:
+    // void ElementsBeingRemoved(iterator first, iterator last)
+
+    // Unused:
+    // void ElementsBeingReplaced()
+
+    void ElementsWereReplaced() { LinkChildrenToParent(container_); }
+
+   private:
+    // Sets parent pointer of nodes from `children` range to address of `node_`.
+    template <class Range>
+    void LinkChildrenToParent(Range&& children) {
+      for (auto& child : children) {
+        child.parent_ = &node_;
+      }
+    }
+
+    // Allow construction, assignment and direct access to `container_` inside
+    // VectorTree.
+    friend VectorTree;
+
+    // Hide constructors and assignments from the world. This object is created
+    // and assigned-to only in VectorTree.
+
+    explicit ChildrenList(VectorTree& node) : node_(node) {}
+
+    // Construction requires parent node reference.
+    ChildrenList(const ChildrenList&) = delete;
+
+    ChildrenList(VectorTree& node, const ChildrenList& other)
+        : node_(node), container_(other.container_) {
+      LinkChildrenToParent(container_);
+    }
+
+    ChildrenList& operator=(const ChildrenList& other) {
+      container_ = other.container_;
+      LinkChildrenToParent(container_);
+      return *this;
+    }
+
+    // Construction requires parent node reference.
+    ChildrenList(ChildrenList&&) = delete;
+
+    ChildrenList(VectorTree& node, ChildrenList&& other) noexcept
+        : node_(node), container_(std::move(other.container_)) {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      LinkChildrenToParent(container_);
+    }
+
+    ChildrenList& operator=(ChildrenList&& other) noexcept {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      container_ = std::move(other.container_);
+      LinkChildrenToParent(container_);
+      return *this;
+    }
+
+    // Reference to a VectorTree node in which this object represents a list of
+    // children.
+    VectorTree& node_;
+
+    // Actual data container where the nodes are stored.
+    subnodes_type container_;
+  };
+
   // Singular value stored at this node.
   value_type node_value_;
 
   // Pointer up to parent node.
   // Only the root node of a tree has a nullptr parent_.
-  // This value is managed by VectorTreeChildrenList, constructors, and
+  // This value is managed by ChildrenList, constructors, and
   // operator=(). There should be no need to set it manually in other places.
   this_type* parent_ = nullptr;
 
   // Array of nodes/subtrees.
-  VectorTreeChildrenList children_;
+  ChildrenList children_;
 };
 
 // Stream-printable representation of the location of a node under its
