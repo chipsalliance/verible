@@ -1642,7 +1642,7 @@ static const ParserTestCaseArray kModuleTests = {
     "  wire bar = 1);\n"  // wire port, no direction, with trailing assign
     "endmodule",
     "module foo (\n"
-    "  input real bar);\n"  // wreal port
+    "  input real bar);\n"  // real port
     "endmodule",
     "module foo (\n"
     "  input var i,\n"  // var keyword
@@ -2744,6 +2744,10 @@ static const ParserTestCaseArray kModuleTests = {
     "module type_reffer;\n"
     "real a = 4.76;\n"
     "var type(a) c;\n"
+    "endmodule\n",
+    "module type_reffer;\n"
+    "wreal a;\n"
+    "wreal b = 4.76;\n"
     "endmodule\n",
     "module type_reffer;\n"
     "real a = 4.76;\n"
