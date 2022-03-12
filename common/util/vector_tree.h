@@ -291,9 +291,7 @@ class VectorTreeChildrenList
   const container_type& underlying_container() const { return container_; }
 
   void ElementsInserted(iterator first, iterator last) {
-    for (auto& child : iterator_range(first, last)) {
-      child.parent_ = &node_;
-    }
+    LinkChildrenToParent(iterator_range(first, last));
   }
 
   // Unused:
@@ -302,13 +300,17 @@ class VectorTreeChildrenList
   // Unused:
   // void ElementsBeingReplaced()
 
-  void ElementsWereReplaced() {
-    for (auto& child : container_) {
+  void ElementsWereReplaced() { LinkChildrenToParent(container_); }
+
+ private:
+  // Sets parent pointer of nodes from `children` range to address of `node_`.
+  template <class Range>
+  void LinkChildrenToParent(Range&& children) {
+    for (auto& child : children) {
       child.parent_ = &node_;
     }
   }
 
- private:
   // Hide constructors and assignments from the world. This object is created
   // and assigned-to only in VectorTree.
 
@@ -320,16 +322,12 @@ class VectorTreeChildrenList
   VectorTreeChildrenList(VectorTreeType& node,
                          const VectorTreeChildrenList& other)
       : node_(node), container_(other.container_) {
-    for (auto& child : container_) {
-      child.parent_ = &node;
-    }
+    LinkChildrenToParent(container_);
   }
 
   VectorTreeChildrenList& operator=(const VectorTreeChildrenList& other) {
     container_ = other.container_;
-    for (auto& child : container_) {
-      child.parent_ = &node_;
-    }
+    LinkChildrenToParent(container_);
     return *this;
   }
 
@@ -341,18 +339,14 @@ class VectorTreeChildrenList
       : node_(node), container_(std::move(other.container_)) {
     // Note: `other` is not notified about the change because it ends up in
     // undefined state as a result of the move.
-    for (auto& child : container_) {
-      child.parent_ = &node;
-    }
+    LinkChildrenToParent(container_);
   }
 
   VectorTreeChildrenList& operator=(VectorTreeChildrenList&& other) noexcept {
     // Note: `other` is not notified about the change because it ends up in
     // undefined state as a result of the move.
     container_ = std::move(other.container_);
-    for (auto& child : container_) {
-      child.parent_ = &node_;
-    }
+    LinkChildrenToParent(container_);
     return *this;
   }
 
