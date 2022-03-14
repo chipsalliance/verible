@@ -2055,5 +2055,87 @@ TEST(VectorTreeTest, PrintTreeCustom) {
 })");
 }
 
+TEST(VectorTreeTest, ChildrenManipulation) {
+  VectorTreeTestType tree(verible::testing::MakeExampleFamilyTree());
+
+  auto& children_gp = tree.Children();
+
+  children_gp.push_back(VectorTreeTestType(NamedInterval(4, 6, "parent3")));
+
+  EXPECT_EQ(tree.Children().size(), 3);
+  EXPECT_EQ(tree.Children().back().Value(), NamedInterval(4, 6, "parent3"));
+  EXPECT_EQ(tree.Children().back().Parent(), &tree);
+
+  auto& p3 = tree.Children().back();
+  auto& children_p3 = p3.Children();
+
+  children_p3.push_back(VectorTreeTestType(NamedInterval(4, 5, "child5")));
+  children_p3.emplace_back(NamedInterval(5, 6, "child6"));
+
+  EXPECT_EQ(p3.Children().size(), 2);
+
+  EXPECT_EQ(p3.Children().at(0).Value(), NamedInterval(4, 5, "child5"));
+  EXPECT_EQ(p3.Children().at(0).Parent(), &p3);
+
+  EXPECT_EQ(p3.Children().at(1).Value(), NamedInterval(5, 6, "child6"));
+  EXPECT_EQ(p3.Children().at(1).Parent(), &p3);
+
+  auto& p2 = tree.Children().at(1);
+
+  const NamedInterval original_p2_children[] = {
+      p2.Children().at(0).Value(),
+      p2.Children().at(1).Value(),
+  };
+
+  children_p3.insert(children_p3.begin(), p2.Children().begin(),
+                     p2.Children().end());
+
+  EXPECT_EQ(p3.Children().size(), 4);
+
+  EXPECT_EQ(p3.Children().at(0).Value(), original_p2_children[0]);
+  EXPECT_EQ(p3.Children().at(0).Parent(), &p3);
+
+  EXPECT_EQ(p3.Children().at(1).Value(), original_p2_children[1]);
+  EXPECT_EQ(p3.Children().at(1).Parent(), &p3);
+
+  EXPECT_EQ(p3.Children().at(2).Value(), NamedInterval(4, 5, "child5"));
+  EXPECT_EQ(p3.Children().at(2).Parent(), &p3);
+
+  EXPECT_EQ(p3.Children().at(3).Value(), NamedInterval(5, 6, "child6"));
+  EXPECT_EQ(p3.Children().at(3).Parent(), &p3);
+
+  EXPECT_EQ(p2.Children().size(), 2);
+
+  EXPECT_EQ(p2.Children().at(0).Value(), original_p2_children[0]);
+  EXPECT_EQ(p2.Children().at(0).Parent(), &p2);
+
+  EXPECT_EQ(p2.Children().at(1).Value(), original_p2_children[1]);
+  EXPECT_EQ(p2.Children().at(1).Parent(), &p2);
+
+  p2.Children().clear();
+
+  EXPECT_EQ(p2.Children().size(), 0);
+
+  p2.Children().assign({
+      VectorTreeTestType(NamedInterval(0, 1, "foo")),
+      VectorTreeTestType(NamedInterval(1, 2, "bar")),
+      VectorTreeTestType(NamedInterval(2, 3, "baz")),
+  });
+
+  EXPECT_EQ(p2.Children().size(), 3);
+
+  EXPECT_EQ(p2.Children().at(0).Value(), NamedInterval(0, 1, "foo"));
+  EXPECT_EQ(p2.Children().at(0).Parent(), &p2);
+
+  EXPECT_EQ(p2.Children().at(1).Value(), NamedInterval(1, 2, "bar"));
+  EXPECT_EQ(p2.Children().at(1).Parent(), &p2);
+
+  EXPECT_EQ(p2.Children().at(2).Value(), NamedInterval(2, 3, "baz"));
+  EXPECT_EQ(p2.Children().at(2).Parent(), &p2);
+
+  tree.Children().clear();
+  EXPECT_TRUE(tree.Children().empty());
+}
+
 }  // namespace
 }  // namespace verible

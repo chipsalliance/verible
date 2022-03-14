@@ -231,6 +231,7 @@ cc_library(
     srcs = ["vector_tree.cc"],
     hdrs = ["vector_tree.h"],
     deps = [
+        ":container_proxy",
         ":iterator_range",
         ":logging",
         ":spacer",
