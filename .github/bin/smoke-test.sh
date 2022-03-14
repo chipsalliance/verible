@@ -110,7 +110,6 @@ KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value1.v]=10
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value3.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]=1146
-KnownIssue[project:$BASE_TEST_DIR/ivtest/ivltests/wreal.v]=1017
 
 #--- Basejump
 # These mostly crash for all the same reason except the first.

@@ -2788,6 +2788,8 @@ non_integer_type
     { $$ = move($1); }
   | TK_shortreal
     { $$ = move($1); }
+ | TK_wreal /* Verilog-AMS */
+    { $$ = move($1); }
   ;
 
 macro_digits
@@ -5207,8 +5209,6 @@ port_declaration_noattr
     trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, $1,
                           ForwardChildren($2), $3); }
-  | port_direction TK_wreal GenericIdentifier trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, $1, nullptr, $2, $3, nullptr, $4); }
   | data_type_primitive GenericIdentifier decl_dimensions_opt trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr,
                           // just expand without ForwardChildren:
@@ -5461,14 +5461,7 @@ module_port_declaration
   /* In the LRM, this is ansi_port_declaration.
    * Any of these could be prefixed with attribute_list_opt.
    */
-  : TK_wreal delay3_opt net_variable_or_decl_assigns ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3, $4); }
-  | port_direction TK_wreal list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3, $4); }
-  // | TK_wreal delay3 net_variable_list ';'
-  // | TK_wreal net_variable_list ';'
-  // | TK_wreal net_decl_assigns ';'
-  | port_direction signed_unsigned_opt qualified_id decl_dimensions_opt
+  : port_direction signed_unsigned_opt qualified_id decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
     { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3,
                           MakePackedDimensionsNode($4),
