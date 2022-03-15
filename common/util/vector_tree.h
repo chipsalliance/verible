@@ -815,7 +815,6 @@ class VectorTree {
     return true;
   }
 
- private:
   // A wrapper of a sequence container for storing VectorTree nodes that sets
   // correct parent pointer in each inserted node. The reference to the
   // "correct" parent is passed to a constructor.
