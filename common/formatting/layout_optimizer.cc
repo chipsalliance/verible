@@ -678,7 +678,8 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
                                     layout.TokensRange().begin(),
                                     PartitionPolicyEnum::kAlreadyFormatted);
         uwline.SpanUpToToken(layout.TokensRange().end());
-        current_node_ = tree_.NewChild(uwline);
+        tree_.Children().emplace_back(uwline);
+        current_node_ = &tree_.Children().back();
       } else {
         const auto tokens = layout.TokensRange();
         CHECK(current_node_->Value().TokensRange().end() == tokens.begin());
@@ -696,7 +697,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
         // Wrap previous tokens in the line
         if (slices.empty()) {
-          current_node_->NewChild(
+          current_node_->Children().emplace_back(
               UnwrappedLine(0, current_node_->Value().TokensRange().begin(),
                             PartitionPolicyEnum::kInline));
         }
@@ -706,7 +707,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         auto slice = UnwrappedLine(layout.SpacesBefore(), tokens.begin(),
                                    PartitionPolicyEnum::kInline);
         slice.SpanUpToToken(tokens.end());
-        current_node_->NewChild(slice);
+        current_node_->Children().emplace_back(slice);
       }
       return;
     }

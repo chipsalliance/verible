@@ -406,10 +406,12 @@ TEST(VectorTreeTest, RootOnlyTreeTransformComparisonDiffer) {
   }
 }
 
+// TODO(mglb): remove or move to ChildrenManipulation or something
 TEST(VectorTreeTest, NewChild) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
   {
-    auto* child = tree.NewChild(NamedInterval(1, 2, "child"));
+    tree.Children().emplace_back(NamedInterval(1, 2, "child"));
+    auto* child = &tree.Children().back();
     EXPECT_EQ(child->Parent(), &tree);
     EXPECT_EQ(Root(*child), &tree);
     EXPECT_TRUE(verible::is_leaf(*child));
@@ -422,7 +424,8 @@ TEST(VectorTreeTest, NewChild) {
     ExpectPath(*child, "{0}");
   }
   {
-    auto* child = tree.NewChild(NamedInterval(2, 3, "lil-bro"));
+    tree.Children().emplace_back(NamedInterval(2, 3, "lil-bro"));
+    auto* child = &tree.Children().back();
     EXPECT_EQ(child->Parent(), &tree);
     EXPECT_EQ(verible::Root(*child), &tree);
     EXPECT_TRUE(verible::is_leaf(*child));
@@ -437,10 +440,12 @@ TEST(VectorTreeTest, NewChild) {
   }
 }
 
+// TODO(mglb): remove or move to ChildrenManipulation or something
 TEST(VectorTreeTest, NewSibling) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
   {
-    auto* first_child = tree.NewChild(NamedInterval(1, 2, "child"));
+    tree.Children().emplace_back(NamedInterval(1, 2, "child"));
+    auto* first_child = &tree.Children().back();
     ExpectPath(*first_child, "{0}");
 
     auto* second_child =
@@ -898,7 +903,7 @@ TEST(VectorTreeTest, FamilyTreeMembersDifferentStructureExtraGreatGrand) {
       auto& lchild = DescendPath(ltree, path.begin(), path.end());
       auto& rchild = DescendPath(rtree, path.begin(), path.end());
 
-      rchild.NewChild(NamedInterval(8, 9, "black-sheep"));
+      rchild.Children().emplace_back(NamedInterval(8, 9, "black-sheep"));
       const auto result_pair = StructureEqual(ltree, rtree);
       EXPECT_EQ(result_pair.left, &lchild);
       EXPECT_EQ(result_pair.right, &rchild);

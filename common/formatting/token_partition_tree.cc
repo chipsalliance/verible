@@ -416,8 +416,8 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
     const auto uwline = leaf->Value();
     const auto previous_uwline = previous_leaf->Value();
     UpdateTokenRangeUpperBound(previous_leaf, &common_ancestor, range_end);
-    previous_leaf->NewChild(previous_uwline);
-    previous_leaf->NewChild(uwline);
+    previous_leaf->Children().emplace_back(previous_uwline);
+    previous_leaf->Children().emplace_back(uwline);
     if (range_end > common_ancestor.Value().TokensRange().end()) {
       common_ancestor.Value().SpanUpToToken(range_end);
     }
@@ -655,8 +655,9 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 
   // Create first partition group
   // and populate it with function name (e.g. { [function foo (] })
-  auto* group = fitted_partitions->NewChild(header.Value());
-  group->NewChild(header);
+  fitted_partitions->Children().emplace_back(header.Value());
+  auto* group = &fitted_partitions->Children().back();
+  group->Children().emplace_back(header);
 
   int indent;
 
@@ -679,8 +680,8 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     indent = FitsOnLine(uwline, style).final_column;
 
     // Append first argument to current group
-    auto* child = group->NewChild(subpartitions.front());
-    group->Value().Update(child);
+    group->Children().emplace_back(subpartitions.front());
+    group->Value().Update(&group->Children().back());
     // keep group indentation
 
     longest_line_len = fit_result.final_column;
@@ -693,7 +694,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     indent = first_arg.Value().IndentationSpaces();
     // wrap line
     group = group->NewSibling(first_arg.Value());  // start new group
-    group->NewChild(first_arg);  // append not fitting 1st argument
+    group->Children().emplace_back(first_arg);     // append not fitting 1st arg
     group->Value().SetIndentationSpaces(indent);
 
     // Measure first wrapped line
@@ -718,8 +719,8 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
       fit_result = FitsOnLine(uwline, style);
       if (fit_result.fits) {
         // Fits, appending child
-        auto* child = group->NewChild(arg);
-        group->Value().Update(child);
+        group->Children().emplace_back(arg);
+        group->Value().Update(&group->Children().back());
         longest_line_len = std::max(longest_line_len, fit_result.final_column);
         continue;
       }
@@ -727,7 +728,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
 
     // Forced one per line or does not fit, start new group with current child
     group = group->NewSibling(arg.Value());
-    group->NewChild(arg);
+    group->Children().emplace_back(arg);
     // no need to update because group was created
     // with current child value
 
@@ -740,11 +741,11 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   if (trailer) {
     if (wrapped_first_subpartition) {
       group = group->NewSibling(trailer->Value());
-      group->NewChild(*trailer);
+      group->Children().emplace_back(*trailer);
       group->Value().SetIndentationSpaces(first_line.IndentationSpaces());
     } else {
-      auto* child = group->NewChild(*trailer);
-      group->Value().Update(child);
+      group->Children().emplace_back(*trailer);
+      group->Value().Update(&group->Children().back());
     }
     fit_result = FitsOnLine(group->Value().Value(), style);
     longest_line_len = std::max(longest_line_len, fit_result.final_column);
@@ -852,7 +853,8 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
     uwline.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
 
     // Create new grouping node
-    auto* group = temporary_tree.NewChild(uwline);
+    temporary_tree.Children().emplace_back(uwline);
+    auto* group = &temporary_tree.Children().back();
 
     // Iterate over partitions in group
     for (const auto& partition : itr.Children()) {
@@ -860,7 +862,7 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
       const auto* node = partition.Value().Node();
 
       // Append child (warning contains original indentation)
-      group->NewChild(*node);
+      group->Children().push_back(*node);
     }
   }
 

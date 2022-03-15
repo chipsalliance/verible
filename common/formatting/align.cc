@@ -159,8 +159,9 @@ static std::size_t CreateTextNodes(
     const std::vector<std::string> lines = absl::StrSplit(text, '\n');
     auto* dst_child = dst_node;
     for (const auto& line : lines) {
-      dst_child = dst_child->NewChild(
+      dst_child->Children().emplace_back(
           Cell{line, filler, std::max(line.size(), kMinCellWidth)});
+      dst_child = &dst_child->Children().back();
     }
     depth = std::max(depth, lines.size());
     subtree_depth = std::max(
@@ -324,10 +325,11 @@ struct AlignedColumnConfiguration {
   // adding a new column.
   if (parent_column->Children().empty() ||
       parent_column->Children().back().Value().path != path) {
-    const auto* column = parent_column->NewChild(
+    parent_column->Children().emplace_back(
         ColumnPositionEntry{path, leaf->get(), properties});
+    const auto& column = parent_column->Children().back();
     ColumnsTreePath column_path;
-    verible::Path(*column, column_path);
+    verible::Path(column, column_path);
     VLOG(2) << "reserving new column for " << TreePathFormatter(path) << " at "
             << TreePathFormatter(column_path);
   }
@@ -413,8 +415,8 @@ class ColumnSchemaAggregator {
           syntax_to_columns_map_.try_emplace(subcolumn.Value().path);
       VectorTree<verible::AggregateColumnData>* aggregate_subcolumn;
       if (insert) {
-        aggregate_subcolumn = aggregate_column->NewChild();
-        CHECK_NOTNULL(aggregate_subcolumn);
+        aggregate_column->Children().emplace_back();
+        aggregate_subcolumn = &aggregate_column->Children().back();
         // Put aggregate column node's path in created index entry
         verible::Path(*aggregate_subcolumn, index_entry->second);
       } else {
@@ -991,8 +993,9 @@ void AlignablePartitionGroup::ApplyAlignment(
 
       verible::TokenPartitionTree* current_cell = nullptr;
       if (align_actions.front().ftoken != ftokens.begin()) {
-        current_cell = node.NewChild(
+        node.Children().emplace_back(
             UnwrappedLine(0, ftokens.begin(), PartitionPolicyEnum::kInline));
+        current_cell = &node.Children().back();
       }
 
       for (const auto& action : align_actions) {
@@ -1003,9 +1006,10 @@ void AlignablePartitionGroup::ApplyAlignment(
                   << StringSpanOfTokenRange(current_cell->Value().TokensRange())
                   << " ]";
         }
-        current_cell = node.NewChild(
+        node.Children().emplace_back(
             UnwrappedLine(action.new_before_spacing, action.ftoken,
                           PartitionPolicyEnum::kInline));
+        current_cell = &node.Children().back();
       }
       if (current_cell) {
         current_cell->Value().SpanUpToToken(ftokens.end());
@@ -1152,7 +1156,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
 
     auto line = UnwrappedLine(indentation, tokens.begin(),
                               PartitionPolicyEnum::kAlreadyFormatted);
-    partition.NewChild(line);
+    partition.Children().emplace_back(line);
 
     if (tokens.size() > 1) {
       // First token
@@ -1162,7 +1166,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
       auto slice =
           UnwrappedLine(0, tokens.begin(), PartitionPolicyEnum::kInline);
       slice.SpanNextToken();
-      partition.Children().back().NewChild(slice);
+      partition.Children().back().Children().emplace_back(slice);
 
       // Remaining tokens
       for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) {
@@ -1187,14 +1191,14 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
           // indentation + (this line orig. indent) - (1st line orig. indent)
           const auto line =
               UnwrappedLine(0, it, PartitionPolicyEnum::kAlreadyFormatted);
-          partition.NewChild(line);
+          partition.Children().emplace_back(line);
           // Count only spaces after the last '\n'.
           spacing -= last_newline_pos + 1;
         }
 
         auto slice = UnwrappedLine(spacing, it, PartitionPolicyEnum::kInline);
         slice.SpanNextToken();
-        partition.Children().back().NewChild(slice);
+        partition.Children().back().Children().emplace_back(slice);
       }
     }
     partition.Children().back().Value().SpanUpToToken(tokens.end());

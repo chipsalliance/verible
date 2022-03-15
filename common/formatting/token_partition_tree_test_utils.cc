@@ -40,7 +40,7 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
 
   node.Children().reserve(children_.size());
   for (const auto& child : children_) {
-    node.NewChild(child.build(tokens));
+    node.Children().push_back(child.build(tokens));
   }
 
   FormatTokenRange node_tokens;

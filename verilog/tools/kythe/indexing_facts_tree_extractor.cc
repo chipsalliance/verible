@@ -370,7 +370,7 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
     const auto parse_status = translation_unit->Parse();
     // status is also stored in translation_unit for later retrieval.
     if (parse_status.ok()) {
-      file_list_facts_tree.NewChild(BuildIndexingFactsTree(
+      file_list_facts_tree.Children().push_back(BuildIndexingFactsTree(
           file_list_facts_tree, *translation_unit, &project_extraction_state));
     } else {
       // Tolerate parse errors.
@@ -554,7 +554,7 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeLeaf& leaf) {
 
 void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
     const SyntaxTreeLeaf& symbol_identifier) {
-  facts_tree_context_.top().NewChild(IndexingNodeData(
+  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
       IndexingFactType::kVariableReference, Anchor(symbol_identifier.get())));
 }
 
@@ -661,7 +661,7 @@ void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(type_node));
+  facts_tree_context_.top().Children().push_back(std::move(type_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
@@ -678,7 +678,7 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgram(
     if (item_list) Visit(*item_list);
   }
 
-  facts_tree_context_.top().NewChild(std::move(facts_node));
+  facts_tree_context_.top().Children().push_back(std::move(facts_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
@@ -745,7 +745,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         GetIdentifierFromModulePortDeclaration(module_port_node);
     if (!leaf) return;
 
-    facts_tree_context_.top().NewChild(IndexingNodeData(
+    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
         IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
   } else if (tag == NodeEnum::kPortReference) {
     // For extracting Non-ANSI style ports:
@@ -765,16 +765,17 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
                   .GetIndexingFactType() !=
               IndexingFactType::kDataTypeReference) {
         // Append this as a variable definition.
-        facts_tree_context_.top().NewChild(IndexingNodeData(
+        facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
             IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
       } else {
         // Append this as a child to previous kDataTypeReference.
-        facts_tree_context_.top().Children().back().NewChild(IndexingNodeData(
-            IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
+        facts_tree_context_.top().Children().back().Children().emplace_back(
+            IndexingNodeData(IndexingFactType::kVariableDefinition,
+                             Anchor(leaf->get())));
       }
     } else {
       // In case no preceeded data type.
-      facts_tree_context_.top().NewChild(IndexingNodeData(
+      facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
           IndexingFactType::kVariableReference, Anchor(leaf->get())));
     }
   }
@@ -802,10 +803,9 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
 
         // Make the current port node child of this data type, remove it from
         // the top node and push the kDataTypeRefernce Node.
-        data_type_node.NewChild(
+        data_type_node.Children().push_back(
             std::move(facts_tree_context_.top().Children().back()));
-        facts_tree_context_.top().Children().pop_back();
-        facts_tree_context_.top().NewChild(std::move(data_type_node));
+        facts_tree_context_.top().Children().back() = std::move(data_type_node);
         continue;
       }
     }
@@ -828,7 +828,8 @@ void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(actual_port_node));
+  facts_tree_context_.top().Children().emplace_back(
+      std::move(actual_port_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
@@ -838,7 +839,7 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
           identifier_unpacked_dimension);
 
   if (port_name_leaf) {
-    facts_tree_context_.top().NewChild(IndexingNodeData(
+    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
         IndexingFactType::kVariableDefinition, Anchor(port_name_leaf->get())));
   }
 }
@@ -893,10 +894,10 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       if (paren_group) Visit(*paren_group);
     }
 
-    type_node.NewChild(std::move(module_instance_node));
+    type_node.Children().push_back(std::move(module_instance_node));
   }
 
-  facts_tree_context_.top().NewChild(std::move(type_node));
+  facts_tree_context_.top().Children().push_back(std::move(type_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractNetDeclaration(
@@ -910,7 +911,7 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
   // Loop through each instance and associate each declared id with the same
   // type.
   for (const TokenInfo* wire_token_info : identifiers) {
-    facts_tree_context_.top().NewChild(IndexingNodeData(
+    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
         IndexingFactType::kVariableDefinition, Anchor(*wire_token_info)));
   }
 }
@@ -945,7 +946,7 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(package_node));
+  facts_tree_context_.top().Children().push_back(std::move(package_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroDefinition(
@@ -962,13 +963,13 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
   for (const TreeSearchMatch& arg : args) {
     const SyntaxTreeLeaf* macro_arg_name = GetMacroArgName(*arg.match);
     if (macro_arg_name) {
-      macro_node.NewChild(
+      macro_node.Children().emplace_back(
           IndexingNodeData(IndexingFactType::kVariableDefinition,
                            Anchor(macro_arg_name->get())));
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(macro_node));
+  facts_tree_context_.top().Children().push_back(std::move(macro_node));
 }
 
 Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info) {
@@ -997,12 +998,12 @@ void IndexingFactsTreeExtractor::ExtractMacroCall(
     if (macro_call_args) Visit(*macro_call_args);
   }
 
-  facts_tree_context_.top().NewChild(std::move(macro_node));
+  facts_tree_context_.top().Children().push_back(std::move(macro_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroReference(
     const SyntaxTreeLeaf& macro_identifier) {
-  facts_tree_context_.top().NewChild(
+  facts_tree_context_.top().Children().emplace_back(
       IndexingNodeData(IndexingFactType::kMacroCall,
                        GetMacroAnchorFromTokenInfo(macro_identifier.get())));
 }
@@ -1028,7 +1029,7 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
     if (constructor_body) Visit(*constructor_body);
   }
 
-  facts_tree_context_.top().NewChild(std::move(constructor_node));
+  facts_tree_context_.top().Children().push_back(std::move(constructor_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
@@ -1041,7 +1042,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
       GetFunctionPrototypeHeader(function_prototype);
   if (function_header) ExtractFunctionHeader(*function_header, function_node);
 
-  facts_tree_context_.top().NewChild(std::move(function_node));
+  facts_tree_context_.top().Children().push_back(std::move(function_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
@@ -1053,7 +1054,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
   const SyntaxTreeNode* task_header = GetTaskPrototypeHeader(task_prototype);
   if (task_header) ExtractTaskHeader(*task_header, task_node);
 
-  facts_tree_context_.top().NewChild(std::move(task_node));
+  facts_tree_context_.top().Children().push_back(std::move(task_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
@@ -1075,7 +1076,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
     if (function_body) Visit(*function_body);
   }
 
-  facts_tree_context_.top().NewChild(std::move(function_node));
+  facts_tree_context_.top().Children().push_back(std::move(function_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
@@ -1095,7 +1096,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
     if (task_body) Visit(*task_body);
   }
 
-  facts_tree_context_.top().NewChild(std::move(task_node));
+  facts_tree_context_.top().Children().push_back(std::move(task_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionHeader(
@@ -1163,7 +1164,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
           struct_type->Accept(this);
         }
 
-        facts_tree_context_.top().NewChild(std::move(variable_node));
+        facts_tree_context_.top().Children().push_back(
+            std::move(variable_node));
         continue;
       }
 
@@ -1189,7 +1191,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
           if (unpacked_dimension) unpacked_dimension->Accept(this);
         }
 
-        facts_tree_context_.top().NewChild(std::move(variable_node));
+        facts_tree_context_.top().Children().push_back(
+            std::move(variable_node));
         continue;
       }
       // else this is a user defined type.
@@ -1200,8 +1203,9 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       type_identifier->Accept(this);
       MoveAndDeleteLastExtractedNode(type_node);
 
-      type_node.NewChild(IndexingNodeData(IndexingFactType::kVariableDefinition,
-                                          Anchor(port_identifier->get())));
+      type_node.Children().emplace_back(
+          IndexingNodeData(IndexingFactType::kVariableDefinition,
+                           Anchor(port_identifier->get())));
 
       {
         const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1218,7 +1222,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
         if (unpacked_dimension) unpacked_dimension->Accept(this);
       }
 
-      facts_tree_context_.top().NewChild(std::move(type_node));
+      facts_tree_context_.top().Children().push_back(std::move(type_node));
     }
   }
 }
@@ -1255,7 +1259,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     if (arguments) Visit(*arguments);
   }
 
-  facts_tree_context_.top().NewChild(std::move(function_node));
+  facts_tree_context_.top().Children().push_back(std::move(function_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
@@ -1290,7 +1294,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
     if (arguments) Visit(*arguments);
   }
 
-  facts_tree_context_.top().NewChild(std::move(function_node));
+  facts_tree_context_.top().Children().push_back(std::move(function_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractMemberExtension(
@@ -1311,7 +1315,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(member_node));
+  facts_tree_context_.top().Children().push_back(std::move(member_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractClassDeclaration(
@@ -1359,7 +1363,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
       }
 
       // Add the extends node as a child of this class node.
-      class_node.NewChild(std::move(extends_node));
+      class_node.Children().push_back(std::move(extends_node));
     }
 
     // Visit class body.
@@ -1367,7 +1371,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     if (class_item_list) Visit(*class_item_list);
   }
 
-  facts_tree_context_.top().NewChild(std::move(class_node));
+  facts_tree_context_.top().Children().push_back(std::move(class_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractClassInstances(
@@ -1401,10 +1405,10 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     instance.match->Accept(this);
     MoveAndDeleteLastExtractedNode(class_instance_node);
 
-    type_node.NewChild(std::move(class_instance_node));
+    type_node.Children().push_back(std::move(class_instance_node));
   }
 
-  facts_tree_context_.top().NewChild(std::move(type_node));
+  facts_tree_context_.top().Children().push_back(std::move(type_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractRegisterVariable(
@@ -1433,7 +1437,7 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(variable_node));
+  facts_tree_context_.top().Children().push_back(std::move(variable_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
@@ -1463,7 +1467,7 @@ void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
       Visit(*expression);
     }
   }
-  facts_tree_context_.top().NewChild(std::move(variable_node));
+  facts_tree_context_.top().Children().push_back(std::move(variable_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
@@ -1492,7 +1496,8 @@ void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
         param_list->Accept(this);
       }
 
-      facts_tree_context_.top().NewChild(std::move(variable_reference));
+      facts_tree_context_.top().Children().push_back(
+          std::move(variable_reference));
       break;
     }
     default: {
@@ -1545,7 +1550,7 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(param_node));
+  facts_tree_context_.top().Children().push_back(std::move(param_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractParamByName(
@@ -1566,7 +1571,7 @@ void IndexingFactsTreeExtractor::ExtractParamByName(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(named_param_node));
+  facts_tree_context_.top().Children().push_back(std::move(named_param_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractPackageImport(
@@ -1586,7 +1591,8 @@ void IndexingFactsTreeExtractor::ExtractPackageImport(
     package_import_data.AppendAnchor(Anchor(imported_item->get()));
   }
 
-  facts_tree_context_.top().NewChild(std::move(package_import_data));
+  facts_tree_context_.top().Children().emplace_back(
+      std::move(package_import_data));
 }
 
 // This deep-copy works even if the IndexingNodeData's copy-constructor is
@@ -1632,11 +1638,13 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
         Visit(*param_list);
       }
 
-      facts_tree_context_.top().NewChild(std::move(param_member_reference));
+      facts_tree_context_.top().Children().push_back(
+          std::move(param_member_reference));
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(member_reference_data));
+  facts_tree_context_.top().Children().emplace_back(
+      std::move(member_reference_data));
 }
 
 void IndexingFactsTreeExtractor::ExtractForInitialization(
@@ -1646,7 +1654,7 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
   const SyntaxTreeLeaf* variable_name =
       GetVariableNameFromForInitialization(for_initialization);
   if (variable_name) {
-    facts_tree_context_.top().NewChild(IndexingNodeData(
+    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
         IndexingFactType::kVariableDefinition, Anchor(variable_name->get())));
   }
 
@@ -1710,7 +1718,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
       // Parse included file and extract.
       const auto parse_status = included_file->Parse();
       if (parse_status.ok()) {
-        file_list_facts_tree_.NewChild(BuildIndexingFactsTree(
+        file_list_facts_tree_.Children().push_back(BuildIndexingFactsTree(
             file_list_facts_tree_, *included_file, extraction_state_));
       } else {
         // Tolerate parse errors.
@@ -1722,7 +1730,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   // Create a node for include statement with two Anchors:
   // 1st one holds the actual text in the include statement.
   // 2nd one holds the path of the included file relative to the file list.
-  facts_tree_context_.top().NewChild(
+  facts_tree_context_.top().Children().emplace_back(
       IndexingNodeData(IndexingFactType::kInclude, Anchor(filename_text),
                        Anchor(included_file->ResolvedPath())));
 }
@@ -1747,7 +1755,7 @@ void IndexingFactsTreeExtractor::ExtractEnumName(
     }
   }
 
-  facts_tree_context_.top().NewChild(std::move(enum_node));
+  facts_tree_context_.top().Children().push_back(std::move(enum_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
@@ -1756,7 +1764,7 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
   const SyntaxTreeLeaf* enum_type_name =
       GetIdentifierFromTypeDeclaration(enum_type_declaration);
   if (!enum_type_name) return;
-  facts_tree_context_.top().NewChild(IndexingNodeData(
+  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
       IndexingFactType::kVariableDefinition, Anchor(enum_type_name->get())));
 
   // Explore the children of this enum type to extract.
@@ -1783,7 +1791,7 @@ void IndexingFactsTreeExtractor::ExtractStructUnionTypeDeclaration(
     Visit(struct_type);
   }
 
-  facts_tree_context_.top().NewChild(std::move(struct_type_node));
+  facts_tree_context_.top().Children().push_back(std::move(struct_type_node));
 }
 
 void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
@@ -1858,8 +1866,8 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
     IndexingFactNode type_node(IndexingNodeData(
         IndexingFactType::kDataTypeReference, Anchor(type_identifier->get())));
 
-    type_node.NewChild(std::move(variable_node));
-    facts_tree_context_.top().NewChild(std::move(type_node));
+    type_node.Children().push_back(std::move(variable_node));
+    facts_tree_context_.top().Children().push_back(std::move(type_node));
   } else if (variable_name.second == 2) {
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1872,7 +1880,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
       }
     }
 
-    facts_tree_context_.top().NewChild(std::move(variable_node));
+    facts_tree_context_.top().Children().push_back(std::move(variable_node));
   }
 }
 
@@ -1894,7 +1902,7 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
         GetIdentifierFromTypeDeclaration(type_declaration);
     if (type_name == nullptr) return;
 
-    facts_tree_context_.top().NewChild(IndexingNodeData(
+    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
         IndexingFactType::kTypeDeclaration, Anchor(type_name->get())));
     return;
   }
@@ -1932,7 +1940,7 @@ void IndexingFactsTreeExtractor::ExtractAnonymousScope(
     TreeContextVisitor::Visit(node);
   }
 
-  facts_tree_context_.top().NewChild(std::move(temp_scope_node));
+  facts_tree_context_.top().Children().push_back(std::move(temp_scope_node));
 }
 
 void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(

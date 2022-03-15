@@ -1284,7 +1284,7 @@ static void non_tree_column_scanner(
           << verible::StringSpanOfTokenRange(trailing_tokens);
 
   if (!leading_tokens.empty()) {
-    column_entries->NewChild(verible::ColumnPositionEntry{
+    column_entries->Children().emplace_back(verible::ColumnPositionEntry{
         kLeadingTokensPath, *leading_tokens.front().token, FlushLeft});
   }
 
@@ -1303,7 +1303,7 @@ static void non_tree_column_scanner(
     prop.contains_delimiter = true;
     const verible::ColumnPositionEntry column{kTrailingCommaPath,
                                               *separator_it->token, prop};
-    column_entries->NewChild(column);
+    column_entries->Children().emplace_back(column);
 
     comment_it = separator_it + 1;
   }
@@ -1312,7 +1312,7 @@ static void non_tree_column_scanner(
        comment_it->token->token_enum() == TK_EOL_COMMENT)) {
     const verible::ColumnPositionEntry column{kTrailingCommentPath,
                                               *comment_it->token, FlushLeft};
-    column_entries->NewChild(column);
+    column_entries->Children().emplace_back(column);
   }
 }
 

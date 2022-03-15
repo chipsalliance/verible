@@ -140,11 +140,11 @@ static std::ostream& operator<<(std::ostream& stream,
   return stream;
 }
 
-// Validates iterator/pointer stability when calling VectorTree::NewChild.
+// Validates iterator/pointer stability when appending new child.
 // Detects unwanted reallocation.
 static ReferenceComponentNode* CheckedNewChildReferenceNode(
     ReferenceComponentNode* parent, const ReferenceComponent& component) {
-  const auto& siblings(parent->Children());
+  auto& siblings = parent->Children();
   if (!siblings.empty()) {
     CHECK_LT(siblings.size(), siblings.capacity())
         << "\nReallocation would invalidate pointers to reference nodes at:\n"
@@ -152,7 +152,8 @@ static ReferenceComponentNode* CheckedNewChildReferenceNode(
         << component << "\nFix: pre-allocate child nodes.";
   }
   // Otherwise, this first node had no prior siblings, so no need to check.
-  return parent->NewChild(component);  // copy
+  siblings.emplace_back(component);  // copy
+  return &siblings.back();
 }
 
 static absl::Status DiagnoseMemberSymbolResolutionFailure(

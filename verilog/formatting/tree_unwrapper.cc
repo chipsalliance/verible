@@ -2132,22 +2132,22 @@ class MacroCallReshaper {
         PartitionPolicyEnum::kWrap));
     group.Value().SpanUpToToken(r_paren_->Value().TokensRange().begin());
 
-    auto nodes_to_group = verible::make_range(
-        paren_group_->Children().begin() + BirthRank(*l_paren_) + 1,
-        paren_group_->Children().begin() + BirthRank(*r_paren_));
+    const auto paren_group_begin = paren_group_->Children().begin();
+    const auto args_begin = paren_group_begin + BirthRank(*l_paren_) + 1;
+    const auto args_end = paren_group_begin + BirthRank(*r_paren_);
     // Move partitions into the group.
-    for (auto& node : nodes_to_group) {
-      auto* child = group.NewChild(std::move(node));
-      verible::AdjustIndentationAbsolute(child, arguments_indentation);
+    group.Children().assign(std::make_move_iterator(args_begin),
+                            std::make_move_iterator(args_end));
+    for (auto& node : group.Children()) {
+      verible::AdjustIndentationAbsolute(&node, arguments_indentation);
     }
     // Remove leftover entries of all grouped partitions except the first.
-    paren_group_->Children().erase(nodes_to_group.begin() + 1,
-                                   nodes_to_group.end());
+    paren_group_->Children().erase(args_begin + 1, args_end);
 
     // Move the group into first grouped partition's place.
-    *nodes_to_group.begin() = std::move(group);
+    *args_begin = std::move(group);
 
-    argument_list_ = &*nodes_to_group.begin();
+    argument_list_ = &*args_begin;
     r_paren_ = NextSibling(*argument_list_);
   }
 
@@ -2159,7 +2159,8 @@ class MacroCallReshaper {
           paren_group_->Children().begin() + BirthRank(*r_paren_);
       argument_list_->Value().SpanUpToToken(
           r_paren_->Value().TokensRange().end());
-      r_paren_ = argument_list_->NewChild(std::move(*r_paren_));
+      argument_list_->Children().push_back(std::move(*r_paren_));
+      r_paren_ = &argument_list_->Children().back();
       paren_group_->Children().erase(r_paren_iter);
     }
     if (!PartitionIsForcedIntoNewLine(*r_paren_)) {
@@ -2185,8 +2186,9 @@ class MacroCallReshaper {
                                    last_argument.Value().TokensRange().begin(),
                                    PartitionPolicyEnum::kJuxtaposition));
         group.Value().SpanUpToToken(r_paren_->Value().TokensRange().end());
-        group.NewChild(std::move(last_argument));
-        group.NewChild(std::move(*r_paren_));
+        group.Children().reserve(2);
+        group.Children().push_back(std::move(last_argument));
+        group.Children().push_back(std::move(*r_paren_));
         argument_list_->Children().erase(argument_list_->Children().end() - 1);
         argument_list_->Children().back() = std::move(group);
         r_paren_ = &argument_list_->Children().back();
@@ -2209,14 +2211,18 @@ class MacroCallReshaper {
 
     const auto old_identifier_iter =
         identifier_->Parent()->Children().begin() + BirthRank(*identifier_);
+    const auto l_paren_index = BirthRank(*l_paren_);
     auto nodes_to_group = verible::iterator_range(
         paren_group_->Children().begin(),
-        paren_group_->Children().begin() + BirthRank(*l_paren_) + 1);
+        paren_group_->Children().begin() + l_paren_index + 1);
+
+    const auto nodes_count = l_paren_index + 1 + 1;  // + 1 for identifier
+    group.Children().reserve(nodes_count);
     // Move partitions into the group.
-    group.NewChild(std::move(*identifier_));
-    for (auto& node : nodes_to_group) {
-      group.NewChild(std::move(node));
-    }
+    group.Children().push_back(std::move(*identifier_));
+    group.Children().insert(group.Children().end(),
+                            std::make_move_iterator(nodes_to_group.begin()),
+                            std::make_move_iterator(nodes_to_group.end()));
     // Remove leftover entries of all grouped partitions except:
     // * First paren_group's child: will be reused as a group node.
     // * The identifier: removing it will invalidate iterators; done later.
@@ -2272,13 +2278,15 @@ class MacroCallReshaper {
                                PartitionPolicyEnum::kWrap));
     group.Value().SpanUpToToken(l_paren_->Value().TokensRange().end());
 
+    const auto l_paren_index = BirthRank(*l_paren_);
+    const auto paren_group_begin = paren_group_->Children().begin();
     auto nodes_to_group = verible::iterator_range(
-        paren_group_->Children().begin(),
-        paren_group_->Children().begin() + BirthRank(*l_paren_) + 1);
+        paren_group_begin, paren_group_begin + l_paren_index + 1);
+
     // Move partitions into the group.
-    for (auto& node : nodes_to_group) {
-      group.NewChild(std::move(node));
-    }
+    group.Children().assign(std::make_move_iterator(nodes_to_group.begin()),
+                            std::make_move_iterator(nodes_to_group.end()));
+
     // Remove leftover entries of all grouped partitions except:
     // * First paren_group's child: will be reused as a group node.
     paren_group_->Children().erase(nodes_to_group.begin() + 1,

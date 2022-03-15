@@ -772,22 +772,17 @@ class VectorTree {
 
   // Builders
 
-  // Appends a new child node to the tree at this level.
-  // 'this' node is the parent of the new child.
-  // Returns a pointer to the newly added child.
-  // This invalidates previous iterators/pointers to sibling children.
-  template <typename... Args>
-  this_type* NewChild(Args&&... args) {
-    Children().emplace_back(std::forward<Args>(args)...);
-    return &Children().back();
-  }
-
   // Appends a new child node to the parent of this node.
   // Returns a pointer to the newly added sibling.
   // This invalidates previous iterators/pointers to sibling children.
   template <typename... Args>
   this_type* NewSibling(Args&&... args) {
-    return ABSL_DIE_IF_NULL(parent_)->NewChild(std::forward<Args>(args)...);
+    CHECK_NOTNULL(parent_);
+    // `emplace_back` can invalidate `this` due to realloc, making `parent_`
+    // member unavailable.
+    auto* parent = parent_;
+    parent->Children().emplace_back(std::forward<Args>(args)...);
+    return &parent->Children().back();
   }
 
   // Accessors
