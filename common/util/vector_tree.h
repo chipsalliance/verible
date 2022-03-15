@@ -934,6 +934,10 @@ class VectorTree : private _VectorTreeImpl {
 
     // Reference to a VectorTree node in which this object represents a list of
     // children.
+    // TODO(mglb): try to get rid of this reference. See:
+    // https://github.com/chipsalliance/verible/pull/1252#discussion_r825196108
+    // Also look at MapTree::KeyValuePair() - `offsetof` is already used there
+    // so it could be user here too.
     VectorTree& node_;
 
     // Actual data container where the nodes are stored.
