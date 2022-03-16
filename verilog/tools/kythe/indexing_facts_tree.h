@@ -126,9 +126,9 @@ class IndexingNodeData {
     AppendAnchor(std::forward<Args>(args)...);
   }
 
-  // TODO(fangism): delete copy-ctor to make this move-only
-  IndexingNodeData(const IndexingNodeData&) = default;
   IndexingNodeData(IndexingNodeData&&) = default;
+
+  IndexingNodeData(const IndexingNodeData&) = delete;
   IndexingNodeData& operator=(const IndexingNodeData&) = delete;
   IndexingNodeData& operator=(IndexingNodeData&&) = delete;
 
