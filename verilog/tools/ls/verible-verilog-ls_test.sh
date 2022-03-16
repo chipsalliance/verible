@@ -48,7 +48,11 @@ awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN}
 
 # A file with a lint error (no newline at EOF). Then editing it and watching diagnostic go away.
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
-{"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":0,"character":0},"end":{"line":2,"character":0}}}}
+
+# Requesting a code-action exactly at the position the EOF message is reported.
+# This is an interesting special case, as the missing EOF-newline is an empty
+# range, yet it should be detected as overlapping with that diagnostic message.
+{"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":1,"character":9},"end":{"line":1,"character":9}}}}
 {"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}}
 {"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
 {"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://mini.sv"}}}
@@ -101,7 +105,7 @@ cat > "${JSON_EXPECTED}" <<EOF
        "method":"textDocument/publishDiagnostics",
        "params": {
           "uri": "file://mini.sv",
-          "diagnostics":[{"message":"File must end with a newline."}]
+          "diagnostics":[{"message":"File must end with a newline.","range":{"start":{"line":1,"character":9}}}]
        }
     }
   },

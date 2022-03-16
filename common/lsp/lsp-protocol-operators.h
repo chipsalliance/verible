@@ -31,8 +31,16 @@ inline constexpr bool operator<(const Position &a, const Position &b) {
 inline constexpr bool operator>=(const Position &a, const Position &b) {
   return !(a < b);
 }
+inline constexpr bool operator==(const Position &a, const Position &b) {
+  return a.line == b.line && a.character == b.character;
+}
+
+// Ranges overlap if some part of one is inside the other range.
+// Also empty ranges are considered overlapping if their start point is within
+// the other range.
+// rangerOverlap() is commutative.
 inline constexpr bool rangeOverlap(const Range &a, const Range &b) {
-  return !(a.start >= b.end || b.start >= a.end);
+  return !(a.start >= b.end || b.start >= a.end) || (a.start == b.start);
 }
 }  // namespace lsp
 }  // namespace verible
