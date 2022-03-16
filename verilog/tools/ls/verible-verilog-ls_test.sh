@@ -46,6 +46,9 @@ awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN}
 # Testing a file with syntax errors: this should output some diagnostic
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://syntaxerror.sv","text":"brokenfile\n"}}}
 
+# Let's manually request these diagnostics
+{"jsonrpc":"2.0", "id":2, "method":"textDocument/diagnostic","params":{"textDocument":{"uri":"file://syntaxerror.sv"}}}
+
 # A file with a lint error (no newline at EOF). Then editing it and watching diagnostic go away.
 {"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
 
@@ -98,7 +101,15 @@ cat > "${JSON_EXPECTED}" <<EOF
        }
      }
   },
-
+  {
+    "json_contains": {
+        "id":2,
+        "result": {
+           "kind":"full",
+           "items":[{"message":"syntax error"}]
+        }
+       }
+  },
 
   {
     "json_contains": {

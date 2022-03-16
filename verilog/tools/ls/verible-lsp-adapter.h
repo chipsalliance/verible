@@ -34,6 +34,10 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &);
 std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
     const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
 
+verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
+    const BufferTracker *tracker,
+    const verible::lsp::DocumentDiagnosticParams &p);
+
 // Given a parse tree, generate a document symbol outline
 // textDocument/documentSymbol request
 // There is a workaround for the kate editor currently. Goal is to actually
