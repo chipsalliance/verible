@@ -1808,10 +1808,9 @@ void IndexingFactsTreeExtractor::ExtractStructUnionDeclaration(
     // This can be kRegisterVariable or kVariableDeclarationAssign.
     variable.match->Accept(this);
 
+    CHECK(!facts_tree_context_.top().Children().empty());
     IndexingFactNode& recent(facts_tree_context_.top().Children().back());
     // Append the struct members to be a children of this variable.
-    CHECK(!facts_tree_context_.top().Children().empty());
-
     // TODO(fangism): move instead of copying chidren
     // However, std::move-ing each child in the loop crashes,
     // and so does recent.AdoptSubtreesFrom(&struct_node).
