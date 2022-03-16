@@ -126,11 +126,12 @@ class IndexingNodeData {
     AppendAnchor(std::forward<Args>(args)...);
   }
 
-  // TODO(fangism): delete copy-ctor to make this move-only
   IndexingNodeData(const IndexingNodeData&) = default;
+  IndexingNodeData& operator=(IndexingNodeData&&) = default;
+
+  // TODO(fangism): delete copy-ctor to make this move-only
   IndexingNodeData(IndexingNodeData&&) = default;
   IndexingNodeData& operator=(const IndexingNodeData&) = delete;
-  IndexingNodeData& operator=(IndexingNodeData&&) = delete;
 
   // Consume an Anchor object(s), variadically.
   template <typename... Args>
@@ -165,7 +166,7 @@ class IndexingNodeData {
 
  private:
   // Represents which language feature this indexing fact is about.
-  const IndexingFactType indexing_fact_type_;
+  IndexingFactType indexing_fact_type_;
 
   // Anchors representing the different tokens of this indexing fact.
   std::vector<Anchor> anchors_;
