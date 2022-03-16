@@ -99,6 +99,15 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
   return result;
 }
 
+verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
+    const BufferTracker *tracker,
+    const verible::lsp::DocumentDiagnosticParams &p) {
+  verible::lsp::FullDocumentDiagnosticReport result;
+  if (!tracker) return result;
+  result.items = CreateDiagnostics(*tracker);
+  return result;
+}
+
 static std::vector<verible::lsp::TextEdit> AutofixToTextEdits(
     const verible::AutoFix &fix, const verible::TextStructureView &text) {
   std::vector<verible::lsp::TextEdit> result;

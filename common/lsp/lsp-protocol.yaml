@@ -83,6 +83,19 @@ PublishDiagnosticsParams:
   uri: string
   diagnostics+: Diagnostic
 
+# -- textDocument/diagnostic
+DocumentDiagnosticParams:
+  textDocument: TextDocumentIdentifier
+
+# Response is a DocumentDiagnosticReport that, according to current proposal
+# in 3.17.0, is a FullDocumentDiagnosticReport that also
+# can include related documents (RelatedFullDocumentDiagnosticReport). We only
+# worry about current document for now.
+# There is also 'unchanged' kind, but not implementing that right now.
+FullDocumentDiagnosticReport:
+  kind: string = "full"
+  items+: Diagnostic
+
 # -- textDocument/codeAction
 CodeActionParams:
   textDocument: TextDocumentIdentifier

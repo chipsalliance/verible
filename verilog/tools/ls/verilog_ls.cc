@@ -66,6 +66,11 @@ static InitializeResult InitializeServer(const nlohmann::json &params) {
       {"documentRangeFormattingProvider", true},  // Format selection
       {"documentFormattingProvider", true},       // Full file format
       {"documentHighlightProvider", true},        // Highlight same symbol
+      {"diagnosticProvider",                      // Pull model of diagnostics.
+       {
+           {"interFileDependencies", false},
+           {"workspaceDiagnostics", false},
+       }},
   };
 
   return result;
@@ -134,6 +139,13 @@ int main(int argc, char *argv[]) {
 
   // Exchange of capabilities.
   dispatcher.AddRequestHandler("initialize", InitializeServer);
+
+  dispatcher.AddRequestHandler(  // Provide diagnostics on request
+      "textDocument/diagnostic",
+      [&parsed_buffers](const verible::lsp::DocumentDiagnosticParams &p) {
+        return verilog::GenerateDiagnosticReport(
+            parsed_buffers.FindBufferTrackerOrNull(p.textDocument.uri), p);
+      });
 
   dispatcher.AddRequestHandler(  // Provide autofixes
       "textDocument/codeAction",
