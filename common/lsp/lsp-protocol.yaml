@@ -35,8 +35,8 @@ Position:
   character: integer  # Zero based column
 
 Range:
-  start: Position
-  end: Position
+  start: Position     # inclusive.
+  end: Position       # exclusive.
 
 TextDocumentIdentifier:
   uri: string

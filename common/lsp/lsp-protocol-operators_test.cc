@@ -30,6 +30,61 @@ TEST(LspPositionTest, BasicOperatorsLessThanGreaterEqual) {
   EXPECT_GE(higherChar, lowerChar);
 }
 
+TEST(LspPositionTest, RangeSelfOverlap) {
+  constexpr Range range = {
+      // Range of one character wide.
+      .start = {.line = 10, .character = 2},
+      .end = {.line = 10, .character = 3},
+  };
+  EXPECT_TRUE(rangeOverlap(range, range));
+}
+
+TEST(LspPositionTest, RangeSelfOverlapEmptyRange) {
+  // Special case: empty range overlaps with itself.
+  constexpr Range empty = {
+      // Zero wide range.
+      .start = {.line = 10, .character = 2},
+      .end = {.line = 10, .character = 2},
+  };
+  EXPECT_TRUE(rangeOverlap(empty, empty));
+}
+
+TEST(LspPositionTest, EmptyRangeWithinOther) {
+  constexpr Range outer = {
+      // [2..4)
+      .start = {.line = 10, .character = 2},
+      .end = {.line = 10, .character = 4},
+  };
+
+  {
+    constexpr Range empty = {
+        .start = {.line = 10, .character = 2},
+        .end = {.line = 10, .character = 2},
+    };
+    EXPECT_TRUE(rangeOverlap(empty, outer));
+    EXPECT_TRUE(rangeOverlap(outer, empty));
+  }
+
+  {
+    constexpr Range empty = {
+        .start = {.line = 10, .character = 3},
+        .end = {.line = 10, .character = 3},
+    };
+    EXPECT_TRUE(rangeOverlap(empty, outer));
+    EXPECT_TRUE(rangeOverlap(outer, empty));
+  }
+
+  // Just outside the range.
+  {
+    constexpr Range empty = {
+        .start = {.line = 10, .character = 4},
+        .end = {.line = 10, .character = 4},
+    };
+    EXPECT_FALSE(rangeOverlap(empty, outer));
+    EXPECT_FALSE(rangeOverlap(outer, empty));
+  }
+}
+
 TEST(LspPositionTest, InsideRangeNested) {
   constexpr Range large_range = {
       .start = {.line = 10, .character = 1},
