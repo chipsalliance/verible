@@ -770,21 +770,6 @@ class VectorTree {
     return *this;
   }
 
-  // Builders
-
-  // Appends a new child node to the parent of this node.
-  // Returns a pointer to the newly added sibling.
-  // This invalidates previous iterators/pointers to sibling children.
-  template <typename... Args>
-  this_type* NewSibling(Args&&... args) {
-    CHECK_NOTNULL(parent_);
-    // `emplace_back` can invalidate `this` due to realloc, making `parent_`
-    // member unavailable.
-    auto* parent = parent_;
-    parent->Children().emplace_back(std::forward<Args>(args)...);
-    return &parent->Children().back();
-  }
-
   // Accessors
 
   T& Value() { return node_value_; }

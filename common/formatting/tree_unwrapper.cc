@@ -213,9 +213,11 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     FinishUnwrappedLine();
 
     // Create new sibling to current unwrapped line, maintaining same level.
-    active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(
-        UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
-                      partitioning));
+    auto& siblings = active_unwrapped_lines_->Parent()->Children();
+    siblings.emplace_back(UnwrappedLine(current_indentation_spaces_,
+                                        CurrentFormatTokenIterator(),
+                                        partitioning));
+    active_unwrapped_lines_ = &siblings.back();
     CurrentUnwrappedLine().SetOrigin(origin);
     VLOG(4) << "new sibling node " << NodePath(*active_unwrapped_lines_) << ": "
             << CurrentUnwrappedLine();

@@ -448,9 +448,10 @@ TEST(VectorTreeTest, NewSibling) {
     auto* first_child = &tree.Children().back();
     ExpectPath(*first_child, "{0}");
 
-    auto* second_child =
-        first_child->NewSibling(NamedInterval(2, 3, "lil-bro"));
-    // Recall that NewSibling() may invalidate reference to first_child.
+    auto& siblings = first_child->Parent()->Children();
+    siblings.emplace_back(NamedInterval(2, 3, "lil-bro"));
+    auto* second_child = &siblings.back();
+    // Recall that emplace_back() may invalidate reference to first_child.
     EXPECT_EQ(second_child->Parent(), &tree);
     EXPECT_EQ(verible::Root(*second_child), &tree);
     EXPECT_TRUE(verible::is_leaf(*second_child));
@@ -922,7 +923,9 @@ TEST(VectorTreeTest, FamilyTreeMembersDifferentStructureExtraGrand) {
       const auto& rparent = DescendPath(rtree, path.begin(), path.end() - 1);
       auto& rchild = DescendPath(rtree, path.begin(), path.end());
 
-      rchild.NewSibling(NamedInterval(8, 9, "black-sheep"));
+      rchild.Parent()->Children().emplace_back(
+          NamedInterval(8, 9, "black-sheep"));
+      // Note: `rchild` may have been moved and invalidated due to realloc.
       const auto result_pair = StructureEqual(ltree, rtree);
       EXPECT_EQ(result_pair.left, &lparent);
       EXPECT_EQ(result_pair.right, &rparent);

@@ -693,8 +693,10 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     // Use original indentation of the subpartition
     indent = first_arg.Value().IndentationSpaces();
     // wrap line
-    group = group->NewSibling(first_arg.Value());  // start new group
-    group->Children().emplace_back(first_arg);     // append not fitting 1st arg
+    auto& siblings = group->Parent()->Children();
+    siblings.emplace_back(first_arg.Value());
+    group = &siblings.back();
+    group->Children().emplace_back(first_arg);
     group->Value().SetIndentationSpaces(indent);
 
     // Measure first wrapped line
@@ -727,7 +729,9 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
     }
 
     // Forced one per line or does not fit, start new group with current child
-    group = group->NewSibling(arg.Value());
+    auto& siblings = group->Parent()->Children();
+    siblings.emplace_back(arg.Value());
+    group = &siblings.back();
     group->Children().emplace_back(arg);
     // no need to update because group was created
     // with current child value
@@ -740,7 +744,9 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
   }
   if (trailer) {
     if (wrapped_first_subpartition) {
-      group = group->NewSibling(trailer->Value());
+      auto& siblings = group->Parent()->Children();
+      siblings.emplace_back(trailer->Value());
+      group = &siblings.back();
       group->Children().emplace_back(*trailer);
       group->Value().SetIndentationSpaces(first_line.IndentationSpaces());
     } else {
