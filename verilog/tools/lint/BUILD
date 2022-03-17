@@ -240,7 +240,7 @@ cc_binary(
 )
 
 sh_test_with_runfiles_lib(
-    name = "tool_test",
+    name = "lint_tool_test",
     size = "small",
     srcs = ["lint_tool_test.sh"],
     args = ["$(location :verible-verilog-lint)"],

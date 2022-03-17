@@ -61,13 +61,24 @@ enum class AnalysisPhase {
 };
 
 // String representation of phase (needed for CHECK).
+const char* AnalysisPhaseName(const AnalysisPhase& phase);
 std::ostream& operator<<(std::ostream&, const AnalysisPhase&);
 
-// RejectedToken is a categorized error token.
+enum class ErrorSeverity {
+  kError,
+  kWarning,
+};
+const char* ErrorSeverityDescription(const ErrorSeverity& severity);
+std::ostream& operator<<(std::ostream&, const ErrorSeverity&);
+
+// RejectedToken is a categorized warning/error token.
+// TODO(hzeller): In the presence of warnings, this probably needs to be
+// renamed, as a token is not rejected per-se.
 struct RejectedToken {
   TokenInfo token_info;
   AnalysisPhase phase;
   std::string explanation;
+  ErrorSeverity severity = ErrorSeverity::kError;
 };
 
 std::ostream& operator<<(std::ostream&, const RejectedToken&);
@@ -105,10 +116,11 @@ class FileAnalyzer : public TextStructure {
   // "token_text" is the exact text of the token.
   // The "context_line" is the line in which the corresponding error happened.
   // The "message" finally is a human-readable error message
+  // TODO(hzeller): these are a lot of parameters, maybe a struct would be good.
   using ReportLinterErrorFunction = std::function<void(
-      const std::string& filename, LineColumnRange range, AnalysisPhase phase,
-      absl::string_view token_text, absl::string_view context_line,
-      const std::string& message)>;
+      const std::string& filename, LineColumnRange range,
+      ErrorSeverity severity, AnalysisPhase phase, absl::string_view token_text,
+      absl::string_view context_line, const std::string& message)>;
 
   // Extract detailed diagnostic information for rejected token.
   void ExtractLinterTokenErrorDetail(

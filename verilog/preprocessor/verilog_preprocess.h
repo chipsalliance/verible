@@ -52,6 +52,7 @@ namespace verilog {
 // TODO(fangism): configuration policy enums.
 
 // VerilogPreprocessError contains preprocessor error information.
+// TODO(hzeller): should we just use verible::RejectedToken here ?
 struct VerilogPreprocessError {
   verible::TokenInfo token_info;  // offending token
   std::string error_message;
@@ -73,7 +74,10 @@ struct VerilogPreprocessData {
   MacroDefinitionRegistry macro_definitions;
 
   // Sequence of tokens rejected by preprocessing.
+  // TODO(hzeller): Until we have a severity in VerilogPreprocessError, these
+  // are two separate vectors.
   std::vector<VerilogPreprocessError> errors;
+  std::vector<VerilogPreprocessError> warnings;
 };
 
 // VerilogPreprocess transforms a TokenStreamView.
@@ -114,7 +118,8 @@ class VerilogPreprocess {
   static std::unique_ptr<VerilogPreprocessError> ParseMacroParameter(
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
-  void RegisterMacroDefinition(const MacroDefinition&);
+  std::unique_ptr<VerilogPreprocessError> RegisterMacroDefinition(
+      const MacroDefinition&);
 
   // Results of preprocessing
   VerilogPreprocessData preprocess_data_;

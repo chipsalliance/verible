@@ -35,7 +35,7 @@
 namespace verible {
 
 // Translates phase enum into string for diagnostic messages.
-static const char* AnalysisPhaseName(const AnalysisPhase& phase) {
+const char* AnalysisPhaseName(const AnalysisPhase& phase) {
   switch (phase) {
     case AnalysisPhase::kLexPhase:
       return "lexical";
@@ -43,17 +43,29 @@ static const char* AnalysisPhaseName(const AnalysisPhase& phase) {
       return "preprocessing";
     case AnalysisPhase::kParsePhase:
       return "syntax";
-    default:
-      return "UNKNOWN";
   }
+  return "UNKNOWN";
 }
-
 std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
   return stream << AnalysisPhaseName(phase);
 }
 
+const char* ErrorSeverityDescription(const ErrorSeverity& severity) {
+  switch (severity) {
+    case ErrorSeverity::kError:
+      return "error";
+    case ErrorSeverity::kWarning:
+      return "warning";
+  }
+  return "UNKNOWN";
+}
+std::ostream& operator<<(std::ostream& stream, const ErrorSeverity& severity) {
+  return stream << ErrorSeverityDescription(severity);
+}
+
 std::ostream& operator<<(std::ostream& stream, const RejectedToken& r) {
-  return stream << r.token_info << " (" << r.phase << "): " << r.explanation;
+  return stream << r.token_info << " (" << r.phase << " " << r.severity
+                << "): " << r.explanation;
 }
 
 // Grab tokens until EOF, and initialize a stream view with all tokens.
@@ -148,7 +160,7 @@ void FileAnalyzer::ExtractLinterTokenErrorDetail(
   }
   // TODO(b/63893567): Explain syntax errors by inspecting state stack.
   error_report(
-      filename_, range, error_token.phase,
+      filename_, range, error_token.severity, error_token.phase,
       error_token.token_info.isEOF() ? "<EOF>" : error_token.token_info.text(),
       context_line, error_token.explanation);
 }
@@ -159,15 +171,20 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
   ExtractLinterTokenErrorDetail(
       error_token,
       [&](const std::string& filename, LineColumnRange range,
-          AnalysisPhase phase, absl::string_view token_text,
-          absl::string_view context_line, const std::string& message) {
+          ErrorSeverity severity, AnalysisPhase phase,
+          absl::string_view token_text, absl::string_view context_line,
+          const std::string& message) {
         // TODO(hzeller): switch to printing range, but make sure that
         // potential users are not running into trouble.
-        out << filename_ << ':' << range.start << ": " << phase;
+        out << filename_ << ':' << range.start << ": " << phase << " "
+            << severity;
         if (error_token.token_info.isEOF()) {
-          out << " error (unexpected EOF) (syntax-error).";
+          out << " (unexpected EOF)";
         } else {
-          out << " error, rejected \"" << token_text << "\" (syntax-error).";
+          out << " at token \"" << token_text << "\"";
+        }
+        if (!message.empty()) {
+          out << " : " << message;
         }
         if (diagnostic_context && !context_line.empty()) {
           out << "\n" << context_line << std::endl;

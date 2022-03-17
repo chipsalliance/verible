@@ -70,17 +70,20 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
         rejected_token,
         [&result, &rejected_token](
             const std::string &filename, verible::LineColumnRange range,
-            verible::AnalysisPhase phase, absl::string_view token_text,
-            absl::string_view context_line, const std::string &msg) {
-          // Note: msg is currently empty and not useful.
-          std::string message(phase == verible::AnalysisPhase::kLexPhase
-                                  ? "token error"
-                                  : "syntax error");
+            verible::ErrorSeverity severity, verible::AnalysisPhase phase,
+            absl::string_view token_text, absl::string_view context_line,
+            const std::string &msg) {
+          std::string message(AnalysisPhaseName(phase));
+          absl::StrAppend(&message, " ", ErrorSeverityDescription(severity));
           if (rejected_token.token_info.isEOF()) {
             absl::StrAppend(&message, " (unexpected EOF)");
           } else {
-            absl::StrAppend(&message, ", rejected \"", token_text, "\"");
+            absl::StrAppend(&message, " at \"", token_text, "\"");
           }
+          if (!msg.empty()) {  // Note: msg is often empty and not useful.
+            absl::StrAppend(&message, " ", msg);
+          }
+          // TODO(hzeller): Add severity into lsp::Diagnostic json.
           result.emplace_back(verible::lsp::Diagnostic{
               .range{.start{.line = range.start.line,
                             .character = range.start.column},

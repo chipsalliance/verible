@@ -24,6 +24,7 @@
 
 using nlohmann::json;
 using verible::AnalysisPhase;
+using verible::ErrorSeverity;
 using verible::LineColumnRange;
 
 namespace verilog {
@@ -56,8 +57,10 @@ json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer,
     analyzer->ExtractLinterTokenErrorDetail(
         rejected_token,
         [&error](const std::string& filename, LineColumnRange range,
-                 AnalysisPhase phase, absl::string_view token_text,
-                 absl::string_view context_line, const std::string& message) {
+                 ErrorSeverity severity, AnalysisPhase phase,
+                 absl::string_view token_text, absl::string_view context_line,
+                 const std::string& message) {
+          // TODO: should this do something different for severity = kWarning ?
           error["line"] = range.start.line;  // NB: zero based index
           error["column"] = range.start.column;
           error["text"] = std::string(token_text);
