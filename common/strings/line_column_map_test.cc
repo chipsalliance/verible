@@ -72,10 +72,10 @@ const LineColumnMapTestData map_test_data[] = {
 // Test test verifies that line-column offset appear to the user correctly.
 TEST(LineColumnTextTest, PrintLineColumn) {
   static constexpr LineColumnTestData text_test_data[] = {
-      {{0, 0}, "1:1"},
-      {{0, 1}, "1:2"},
-      {{1, 0}, "2:1"},
-      {{10, 8}, "11:9"},
+      {{0, 0}, "1:1:"},
+      {{0, 1}, "1:2:"},
+      {{1, 0}, "2:1:"},
+      {{10, 8}, "11:9:"},
   };
   for (const auto& test_case : text_test_data) {
     std::ostringstream oss;
@@ -86,10 +86,10 @@ TEST(LineColumnTextTest, PrintLineColumn) {
 
 TEST(LineColumnTextTest, PrintLineColumnRange) {
   static constexpr LineColumnRangeTestData text_test_data[] = {
-      {{{0, 0}, {0, 7}}, "1:1:1:7:"},
-      {{{0, 1}, {0, 3}}, "1:2:1:3:"},
-      {{{1, 0}, {2, 14}}, "2:1:3:14:"},
-      {{{10, 8}, {11, 2}}, "11:9:12:2:"},
+      {{{0, 0}, {0, 7}}, "1:1:1:7:"},   {{{0, 1}, {0, 3}}, "1:2:1:3:"},
+      {{{1, 0}, {2, 14}}, "2:1:3:14:"}, {{{10, 8}, {11, 2}}, "11:9:12:2:"},
+      {{{10, 8}, {10, 9}}, "11:9:"},  // Single character range
+      {{{10, 8}, {10, 8}}, "11:9:"},  // Empty range.
   };
   for (const auto& test_case : text_test_data) {
     std::ostringstream oss;

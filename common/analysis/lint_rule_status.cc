@@ -134,7 +134,7 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
   (*stream) << path << ':'
             << line_column_map_.GetLineColAtOffset(base,
                                                    violation.token.left(base))
-            << ": " << violation.reason << ' ' << url << " [" << rule_name
+            << ' ' << violation.reason << ' ' << url << " [" << rule_name
             << ']';
 }
 

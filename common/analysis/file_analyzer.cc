@@ -118,21 +118,8 @@ std::string FileAnalyzer::TokenErrorMessage(
   // TODO(fangism): accept a RejectedToken to get an explanation message.
   std::ostringstream output_stream;
   if (!error_token.isEOF()) {
-    // TODO(hzeller): simply print LineColumnRange ?
-    LineColumnRange range = Data().GetRangeForToken(error_token);
-    --range.end.column;  // Point to last character, not one-past-the-end.
-    output_stream << "token: \"" << error_token.text() << "\" at "
-                  << range.start;
-    if (range.start.line == range.end.line) {
-      // Only print upper bound if it differs by > 1 character.
-      if (range.start.column + 1 < range.end.column) {
-        // .column is 0-based index, so +1 to get 1-based index.
-        output_stream << '-' << range.end.column + 1;
-      }
-    } else {
-      // Already prints 1-based index.
-      output_stream << '-' << range.end;
-    }
+    const LineColumnRange range = Data().GetRangeForToken(error_token);
+    output_stream << "token: \"" << error_token.text() << "\" at " << range;
   } else {
     const auto end = Data().GetLineColAtOffset(Data().Contents().length());
     output_stream << "token: <<EOF>> at " << end;
@@ -174,10 +161,7 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
           ErrorSeverity severity, AnalysisPhase phase,
           absl::string_view token_text, absl::string_view context_line,
           const std::string& message) {
-        // TODO(hzeller): switch to printing range, but make sure that
-        // potential users are not running into trouble.
-        out << filename_ << ':' << range.start << ": " << phase << " "
-            << severity;
+        out << filename_ << ':' << range << " " << phase << " " << severity;
         if (error_token.token_info.isEOF()) {
           out << " (unexpected EOF)";
         } else {
