@@ -114,9 +114,9 @@ status="$?"
 strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
 
 cat > "$MY_EXPECT_FILE" <<EOF
--:1:8: syntax error, rejected "1"
--:2:1: syntax error, rejected "endmodule"
--:4:1: syntax error, rejected "endmodule"
+-:1:8: syntax error at token "1"
+-:2:1: syntax error at token "endmodule"
+-:4:1: syntax error at token "endmodule"
 EOF
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
@@ -170,7 +170,7 @@ status="$?"
 strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
 
 cat > "$MY_EXPECT_FILE" <<EOF
--:1:8: syntax error, rejected "1"
+-:1:8: syntax error at token "1"
 EOF
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \

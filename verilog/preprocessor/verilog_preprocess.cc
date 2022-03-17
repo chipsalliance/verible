@@ -192,16 +192,16 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
 }
 
 // Stores a macro definition for later use.
-void VerilogPreprocess::RegisterMacroDefinition(
-    const MacroDefinition& definition) {
+std::unique_ptr<VerilogPreprocessError>
+VerilogPreprocess::RegisterMacroDefinition(const MacroDefinition& definition) {
   // For now, unconditionally register the macro definition, keeping the last
   // definition if macro is re-defined.
   const bool inserted = InsertOrUpdate(&preprocess_data_.macro_definitions,
                                        definition.Name(), definition);
-  if (!inserted) {
-    LOG(INFO) << "Re-defining macro " << definition.Name();
-  }
-  // TODO(fangism): diagnose re-definitions
+  if (inserted) return nullptr;
+  return std::make_unique<VerilogPreprocessError>(
+      definition.DefinitionText(),
+      absl::StrCat("Re-defining macro '", definition.Name(), "'"));
 }
 
 // Responds to `define directives.  Macro definitions are parsed and saved
@@ -229,7 +229,9 @@ absl::Status VerilogPreprocess::HandleDefine(
     return absl::InvalidArgumentError("Error parsing macro definition.");
   }
   // For now, forward all definition tokens.
-  RegisterMacroDefinition(macro_definition);
+  if (auto warning = RegisterMacroDefinition(macro_definition); warning) {
+    preprocess_data_.warnings.push_back(*warning);
+  }
   for (const auto& token : define_tokens) {
     preprocess_data_.preprocessed_token_stream.push_back(token);
   }
