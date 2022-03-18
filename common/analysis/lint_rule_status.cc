@@ -131,11 +131,12 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
                                           absl::string_view rule_name) const {
   // TODO(fangism): Use the context member to print which named construct or
   // design element the violation appears in (or full stack thereof).
-  (*stream) << path << ':'
-            << line_column_map_.GetLineColAtOffset(base,
-                                                   violation.token.left(base))
-            << ": " << violation.reason << ' ' << url << " [" << rule_name
-            << ']';
+  const verible::LineColumnRange range{
+      line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
+      line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
+
+  (*stream) << path << ':' << range << ' ' << violation.reason << ' ' << url
+            << " [" << rule_name << ']';
 }
 
 void LintRuleStatus::WaiveViolations(

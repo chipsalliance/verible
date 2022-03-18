@@ -28,9 +28,6 @@ namespace verible {
 
 // Print to the user as 1-based index because that is how lines
 // and columns are indexed in every file diagnostic tool.
-// TODO(hzeller): this should have a ':' at the end, but the current expectation
-// in TokenErrorMessage() is that it ends with the column. Consider printing
-// a range there in the first place.
 std::ostream& operator<<(std::ostream& out, const LineColumn& line_column) {
   return out << line_column.line + 1 << ':' << line_column.column + 1;
 }
@@ -41,8 +38,17 @@ std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
   // character.
   LineColumn right = r.end;
   right.column--;
-  // That center colon should come from LineColumn already; see comment above.
-  return out << r.start << ':' << right << ':';
+  out << r.start;
+  // Only if we cover more than a single character, print range of columns.
+  if (r.start.line == right.line) {
+    if (right.column > r.start.column) out << '-' << right.column + 1;
+  } else {
+    // TODO(hzeller): what is a good format to mark a range of multiple lines
+    // that is understood by common editors ?
+    out << ':' << right;
+  }
+  out << ':';
+  return out;
 }
 
 // Records locations of line breaks, which can then be used to translate
