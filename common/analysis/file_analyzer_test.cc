@@ -165,21 +165,22 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
 
 // Verify that an error token on one character is reported correctly.
 TEST(FileAnalyzerTest, TokenErrorMessageOneCharWithContext) {
-  const std::string text("hello, world\nbye w0rld\n");
+  const std::string text("\thello, world\nbye w0rld\n");
   FakeFileAnalyzer analyzer(text, "hello.txt");
-  const TokenInfo error_token(1, analyzer.Data().Contents().substr(5, 1));
+  const TokenInfo error_token(1, analyzer.Data().Contents().substr(6, 1));
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: \",\" at 1:6:");
+    EXPECT_EQ(message, "token: \",\" at 1:7:");
   }
   {
     constexpr bool with_diagnostic_context = true;
     const auto message = analyzer.LinterTokenErrorMessage(
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
+    // The tab character is replaced with a space for the arrow to align
     EXPECT_TRUE(absl::StrContains(message,
-                                  "hello.txt:1:6: syntax error at token \",\"\n"
-                                  "hello, world\n"
-                                  "     ^"))
+                                  "hello.txt:1:7: syntax error at token \",\"\n"
+                                  " hello, world\n"
+                                  "      ^"))
         << message;
   }
 }

@@ -16,6 +16,7 @@
 
 #include "common/analysis/file_analyzer.h"
 
+#include <algorithm>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 #include <vector>
@@ -171,7 +172,10 @@ std::string FileAnalyzer::LinterTokenErrorMessage(
           out << " : " << message;
         }
         if (diagnostic_context && !context_line.empty()) {
-          out << "\n" << context_line << std::endl;
+          // Need to get rid of all tabs so that spacing
+          std::string no_tab_line(context_line.begin(), context_line.end());
+          std::replace(no_tab_line.begin(), no_tab_line.end(), '\t', ' ');
+          out << "\n" << no_tab_line << std::endl;
           out << verible::Spacer(range.start.column) << "^";
         }
       });
