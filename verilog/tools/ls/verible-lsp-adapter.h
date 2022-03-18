@@ -28,7 +28,8 @@ namespace verilog {
 
 // Given the output of the parser and a lint status, create a diagnostic
 // output to be sent in textDocument/publishDiagnostics notification.
-std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &);
+std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &,
+                                                        int message_limit);
 
 // Generate code actions from autofixes provided by the linter.
 std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
