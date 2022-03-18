@@ -14,6 +14,7 @@
 
 #include "verilog/preprocessor/verilog_preprocess.h"
 
+#include <algorithm>
 #include <map>
 #include <vector>
 
@@ -24,6 +25,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace {
@@ -35,16 +37,13 @@ using verible::container::FindOrNull;
 class PreprocessorTester {
  public:
   explicit PreprocessorTester(const char* text)
-    : analyzer_(text, "<<inline-file>>"), status_(analyzer_.Analyze()) {
-  }
+      : analyzer_(text, "<<inline-file>>"), status_(analyzer_.Analyze()) {}
 
   const VerilogPreprocessData& PreprocessorData() const {
     return analyzer_.PreprocessorData();
   }
 
-  const verible::TextStructureView& Data() const {
-    return analyzer_.Data();
-  }
+  const verible::TextStructureView& Data() const { return analyzer_.Data(); }
 
   const absl::Status& Status() const { return status_; }
 
@@ -102,11 +101,12 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   }
 }
 
-#define EXPECT_PARSE_OK() do {                                          \
+#define EXPECT_PARSE_OK()                                                \
+  do {                                                                   \
     EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure."; \
-    EXPECT_TRUE(tester.PreprocessorData().errors.empty());              \
-    EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());         \
-} while(false)
+    EXPECT_TRUE(tester.PreprocessorData().errors.empty());               \
+    EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());          \
+  } while (false)
 
 // Verify that VerilogPreprocess works without any directives.
 TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
@@ -227,20 +227,41 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
   }
 }
 
-TEST(VerilogPreprocessTest, PreprocessorConsumesDefines) {
+TEST(VerilogPreprocessTest, RedefineMacroWarning) {
   PreprocessorTester tester(
-      "`define FOO;\n"
-      "`define BAR(x) (x)\n");
+      "`define FOO 1\n"
+      "`define FOO 2\n");
+  EXPECT_PARSE_OK();
+
+  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  EXPECT_EQ(definitions.size(), 1);
+
+  const auto& warnings = tester.PreprocessorData().warnings;
+  EXPECT_EQ(warnings.size(), 1);
+  EXPECT_EQ(warnings.begin()->error_message, "Re-defining macro");
+}
+
+// We might have different modes later, in which we remove the define tokens
+// from the stream. Document the current default which registeres all the
+// defines, but also does not filter out the define calls.
+TEST(VerilogPreprocessTest, DefaultPreprocessorKeepsDefineInStream) {
+  PreprocessorTester tester(
+      "`define FOO\n"
+      "`define BAR(x) (x)\n"
+      "module x(); endmodule\n");
   EXPECT_PARSE_OK();
 
   const auto& definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_EQ(definitions.size(), 2);
 
+  // The original `define tokens are still in the stream
   const auto& token_stream = tester.Data().GetTokenStreamView();
-  for (const auto &t : token_stream) {
-    std::cerr << *t;
-  }
-  //EXPECT_EQ(token_stream.size(), 0);
+  const int count_defines =
+      std::count_if(token_stream.begin(), token_stream.end(),
+                    [](verible::TokenSequence::const_iterator t) {
+                      return t->token_enum() == verilog_tokentype::PP_define;
+                    });
+  EXPECT_EQ(count_defines, 2);
 }
 
 }  // namespace

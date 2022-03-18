@@ -118,8 +118,7 @@ class VerilogPreprocess {
   static std::unique_ptr<VerilogPreprocessError> ParseMacroParameter(
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
-  std::unique_ptr<VerilogPreprocessError> RegisterMacroDefinition(
-      const MacroDefinition&);
+  void RegisterMacroDefinition(const MacroDefinition&);
 
   // Results of preprocessing
   VerilogPreprocessData preprocess_data_;
