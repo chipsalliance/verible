@@ -204,7 +204,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string& filename, LineColumnRange range,
-           ErrorSeverity serverity, AnalysisPhase phase,
+           ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
            const std::string& message) {
           EXPECT_EQ(filename, "hello.txt");
@@ -282,7 +282,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string& filename, LineColumnRange range,
-           ErrorSeverity serverity, AnalysisPhase phase,
+           ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
            const std::string& message) {
           EXPECT_EQ(filename, "unbalanced.txt");
