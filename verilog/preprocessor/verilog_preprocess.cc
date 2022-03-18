@@ -228,13 +228,16 @@ absl::Status VerilogPreprocess::HandleDefine(
     preprocess_data_.errors.push_back(*parse_error_ptr);
     return absl::InvalidArgumentError("Error parsing macro definition.");
   }
-  // For now, forward all definition tokens.
   if (auto warning = RegisterMacroDefinition(macro_definition); warning) {
     preprocess_data_.warnings.push_back(*warning);
   }
+
+#if 0
+  // For now, forward all definition tokens.
   for (const auto& token : define_tokens) {
     preprocess_data_.preprocessed_token_stream.push_back(token);
   }
+#endif
   return absl::OkStatus();
 }
 

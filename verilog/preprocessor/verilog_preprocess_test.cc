@@ -35,12 +35,15 @@ using verible::container::FindOrNull;
 class PreprocessorTester {
  public:
   explicit PreprocessorTester(const char* text)
-      : analyzer_(text, "<<inline-file>>"), status_() {
-    status_ = analyzer_.Analyze();
+    : analyzer_(text, "<<inline-file>>"), status_(analyzer_.Analyze()) {
   }
 
   const VerilogPreprocessData& PreprocessorData() const {
     return analyzer_.PreprocessorData();
+  }
+
+  const verible::TextStructureView& Data() const {
+    return analyzer_.Data();
   }
 
   const absl::Status& Status() const { return status_; }
@@ -49,7 +52,7 @@ class PreprocessorTester {
 
  private:
   VerilogAnalyzer analyzer_;
-  absl::Status status_;
+  const absl::Status status_;
 };
 
 struct FailTest {
@@ -99,6 +102,12 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   }
 }
 
+#define EXPECT_PARSE_OK() do {                                          \
+    EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure."; \
+    EXPECT_TRUE(tester.PreprocessorData().errors.empty());              \
+    EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());         \
+} while(false)
+
 // Verify that VerilogPreprocess works without any directives.
 TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
   const char* test_cases[] = {
@@ -109,11 +118,10 @@ TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
   };
   for (const auto& test_case : test_cases) {
     PreprocessorTester tester(test_case);
-    EXPECT_TRUE(tester.Status().ok());
+    EXPECT_PARSE_OK();
+
     const auto& definitions = tester.PreprocessorData().macro_definitions;
     EXPECT_TRUE(definitions.empty());
-    EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-    EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
   }
 }
 
@@ -128,9 +136,8 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
   };
   for (const auto& test_case : test_cases) {
     PreprocessorTester tester(test_case);
-    EXPECT_TRUE(tester.Status().ok());
-    EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-    EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
+    EXPECT_PARSE_OK();
+
     const auto& definitions = tester.PreprocessorData().macro_definitions;
     EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
     auto macro = FindOrNull(definitions, "FOOOO");
@@ -145,10 +152,9 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsSimpleValue) {
   PreprocessorTester tester(
       "module foo;\nendmodule\n"
       "`define FOOOO \"bar\"\n");
+  EXPECT_PARSE_OK();
+
   const auto& definitions = tester.PreprocessorData().macro_definitions;
-  EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure.";
-  EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-  EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
@@ -161,10 +167,9 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamWithValue) {
   PreprocessorTester tester(
       "module foo;\nendmodule\n"
       "`define FOOOO(x) (x+1)\n");
+  EXPECT_PARSE_OK();
+
   const auto& definitions = tester.PreprocessorData().macro_definitions;
-  EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure.";
-  EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-  EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
@@ -181,10 +186,9 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamDefaultWithValue) {
   PreprocessorTester tester(
       "module foo;\nendmodule\n"
       "`define FOOOO(x=22) (x+3)\n");
+  EXPECT_PARSE_OK();
+
   const auto& definitions = tester.PreprocessorData().macro_definitions;
-  EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure.";
-  EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-  EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
@@ -202,10 +206,9 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
   PreprocessorTester tester(
       "`define BAAAAR(y, z) (y*z)\n"
       "`define FOOOO(x=22) (x+3)\n");
+  EXPECT_PARSE_OK();
+
   const auto& definitions = tester.PreprocessorData().macro_definitions;
-  EXPECT_TRUE(tester.Status().ok()) << "Unexpected analyzer failure.";
-  EXPECT_TRUE(tester.PreprocessorData().errors.empty());
-  EXPECT_TRUE(tester.Analyzer().GetRejectedTokens().empty());
   EXPECT_THAT(definitions, ElementsAre(Pair("BAAAAR", testing::_),
                                        Pair("FOOOO", testing::_)));
   {
@@ -222,6 +225,22 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
     const auto& params = macro->Parameters();
     EXPECT_EQ(params.size(), 1);
   }
+}
+
+TEST(VerilogPreprocessTest, PreprocessorConsumesDefines) {
+  PreprocessorTester tester(
+      "`define FOO;\n"
+      "`define BAR(x) (x)\n");
+  EXPECT_PARSE_OK();
+
+  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  EXPECT_EQ(definitions.size(), 2);
+
+  const auto& token_stream = tester.Data().GetTokenStreamView();
+  for (const auto &t : token_stream) {
+    std::cerr << *t;
+  }
+  //EXPECT_EQ(token_stream.size(), 0);
 }
 
 }  // namespace
