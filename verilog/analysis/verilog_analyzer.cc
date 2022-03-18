@@ -247,7 +247,7 @@ absl::Status VerilogAnalyzer::Analyze() {
 #if 0
       // For now, don't surface macro warnings yet in the output, as the
       // preprocessor does not yet work with `ifdef branches and thus would
-      // report redifinitions in common situations such as these
+      // report redefinitions in common situations such as these
       // `ifdef FOO
       //   `define BAR "x"
       // `else
