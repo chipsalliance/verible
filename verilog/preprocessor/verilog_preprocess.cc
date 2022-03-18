@@ -199,9 +199,9 @@ VerilogPreprocess::RegisterMacroDefinition(const MacroDefinition& definition) {
   const bool inserted = InsertOrUpdate(&preprocess_data_.macro_definitions,
                                        definition.Name(), definition);
   if (inserted) return nullptr;
-  return std::make_unique<VerilogPreprocessError>(
-      definition.DefinitionText(),
-      absl::StrCat("Re-defining macro '", definition.Name(), "'"));
+  return std::make_unique<VerilogPreprocessError>(definition.NameToken(),
+                                                  "Re-defining macro");
+  // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 
 // Responds to `define directives.  Macro definitions are parsed and saved
