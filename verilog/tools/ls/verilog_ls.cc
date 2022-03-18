@@ -84,8 +84,15 @@ static void SendDiagnostics(const std::string &uri,
   // This should not send anything if the diagnostics we're about to
   // send would be exactly the same as last time.
   verible::lsp::PublishDiagnosticsParams params;
+
+  // For the diagnostic notification (that we send somewhat unsolicited), we
+  // limit the number of diagnostic messages. In the
+  // textDocument/diagnostic RPC request, we send all of them.
+  // Arbitrary limit here. Maybe set with flag ?
+  static constexpr int kDiagnosticLimit = 500;
   params.uri = uri;
-  params.diagnostics = verilog::CreateDiagnostics(buffer_tracker);
+  params.diagnostics =
+      verilog::CreateDiagnostics(buffer_tracker, kDiagnosticLimit);
   dispatcher->SendNotification("textDocument/publishDiagnostics", params);
 }
 

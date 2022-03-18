@@ -48,24 +48,35 @@ static verible::lsp::Diagnostic ViolationToDiagnostic(
 }
 
 std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
-    const BufferTracker &tracker) {
+    const BufferTracker &tracker, int message_limit) {
   // Diagnostics should come from the latest state, including all the
   // syntax errors.
   const ParsedBuffer *const current = tracker.current();
   if (!current) return {};
-  // TODO: files that generate a lot of messages will create a huge
-  // output. So we limit the messages here.
-  // However, we should work towards emitting them around the last known
-  // edit point in the document as this is what the user sees.
-  static constexpr int kMaxMessages = 100;
   const auto &rejected_tokens = current->parser().GetRejectedTokens();
   auto const &lint_violations =
       verilog::GetSortedViolations(current->lint_result());
   std::vector<verible::lsp::Diagnostic> result;
   int remaining = rejected_tokens.size() + lint_violations.size();
-  if (remaining > kMaxMessages) remaining = kMaxMessages;
+
+  // TODO: files that generate a lot of messages will create a huge
+  // output. So we limit the messages here if "message_limit" is set.
+  //
+  // We might consider emitting them around the last known
+  // edit point in the document as this is what the user sees (if we get
+  // individual edits, not full files pushed).
+  //
+  // TODO(hzeller): to limit repetition, maybe limit the number of messages
+  // coming from the _same_ source if we have a "message_limit". So for
+  // instance, don't complain on every single line not to use tabs as
+  // indentation.
+  if (message_limit >= 0 && remaining > message_limit) {
+    remaining = message_limit;
+  }
+
   result.reserve(remaining);
   for (const auto &rejected_token : rejected_tokens) {
+    if (remaining-- <= 0) break;
     current->parser().ExtractLinterTokenErrorDetail(
         rejected_token,
         [&result, &rejected_token](
@@ -92,12 +103,11 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
               .message = message,
           });
         });
-    if (--remaining <= 0) break;
   }
 
   for (const auto &v : lint_violations) {
+    if (remaining-- <= 0) break;
     result.emplace_back(ViolationToDiagnostic(v, current->parser().Data()));
-    if (--remaining <= 0) break;
   }
   return result;
 }
@@ -107,7 +117,7 @@ verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
     const verible::lsp::DocumentDiagnosticParams &p) {
   verible::lsp::FullDocumentDiagnosticReport result;
   if (!tracker) return result;
-  result.items = CreateDiagnostics(*tracker);
+  result.items = CreateDiagnostics(*tracker, -1);  // no limit in diagnostic msg
   return result;
 }
 
