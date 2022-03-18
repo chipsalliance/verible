@@ -79,6 +79,7 @@ class MacroDefinition {
       : header_(header), name_(name), is_callable_(false) {}
 
   absl::string_view Name() const { return name_.text(); }
+  const TokenInfo& NameToken() const { return name_; }
 
   const TokenInfo& DefinitionText() const { return definition_text_; }
 
