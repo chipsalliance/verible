@@ -60,14 +60,14 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
   const TokenInfo error_token(1, analyzer.Data().Contents().substr(17, 5));
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: \"w0rld\" at 2:5:2:9:");
+    EXPECT_EQ(message, "token: \"w0rld\" at 2:5-9:");
   }
   {
     constexpr bool with_diagnostic_context = false;
     const auto message = analyzer.LinterTokenErrorMessage(
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(absl::StrContains(
-        message, "hello.txt:2:5:2:9: syntax error at token \"w0rld\""))
+        message, "hello.txt:2:5-9: syntax error at token \"w0rld\""))
         << message;
   }
   {
@@ -95,7 +95,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
   const TokenInfo error_token(1, analyzer.Data().Contents().substr(17, 5));
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: \"w0rld\" at 2:5:2:9:");
+    EXPECT_EQ(message, "token: \"w0rld\" at 2:5-9:");
   }
   {
     constexpr bool with_diagnostic_context = true;
@@ -103,7 +103,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
         {error_token, AnalysisPhase::kParsePhase}, with_diagnostic_context);
     EXPECT_TRUE(
         absl::StrContains(message,
-                          "hello.txt:2:5:2:9: syntax error at token \"w0rld\"\n"
+                          "hello.txt:2:5-9: syntax error at token \"w0rld\"\n"
                           "bye w0rld\n"
                           "    ^"))
         << message;
@@ -249,7 +249,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOF) {
   FakeFileAnalyzer analyzer(text, "unbalanced.txt");
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: <<EOF>> at 3:1:");
+    EXPECT_EQ(message, "token: <<EOF>> at 3:1");
   }
   {
     constexpr bool with_diagnostic_context = false;
@@ -268,7 +268,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
   FakeFileAnalyzer analyzer(text, "unbalanced.txt");
   {
     const auto message = analyzer.TokenErrorMessage(error_token);
-    EXPECT_EQ(message, "token: <<EOF>> at 3:8:");
+    EXPECT_EQ(message, "token: <<EOF>> at 3:8");
   }
   {
     constexpr bool with_diagnostic_context = true;

@@ -115,8 +115,8 @@ strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
 
 cat > "$MY_EXPECT_FILE" <<EOF
 -:1:8: syntax error at token "1"
--:2:1:2:9: syntax error at token "endmodule"
--:4:1:4:9: syntax error at token "endmodule"
+-:2:1-9: syntax error at token "endmodule"
+-:4:1-9: syntax error at token "endmodule"
 EOF
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \

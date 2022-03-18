@@ -107,7 +107,7 @@ status="$?"
 
 DIAGNOSTIC_OUTPUT="${TEST_TMPDIR}/expected-diagnostic.out"
 cat > "${DIAGNOSTIC_OUTPUT}" <<EOF
-${TEST_TMPDIR}/syntax-error.sv:2:1:2:8: syntax error at token "endclass"
+${TEST_TMPDIR}/syntax-error.sv:2:1-8: syntax error at token "endclass"
 endclass
 ^
 EOF
@@ -122,7 +122,7 @@ status="$?"
 }
 
 cat > "${DIAGNOSTIC_OUTPUT}" <<EOF
-${TEST_TMPDIR}/syntax-error.sv:2:1:2:8: syntax error at token "endclass"
+${TEST_TMPDIR}/syntax-error.sv:2:1-8: syntax error at token "endclass"
 EOF
 
 "$lint_tool" "$TEST_FILE" > "${MY_OUTPUT_FILE}.out"

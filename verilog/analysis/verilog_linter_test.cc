@@ -261,7 +261,7 @@ TEST_F(VerilogLinterTest, KnownTreeLintViolation) {
                                            "endtask\n");
   EXPECT_TRUE(diagnostics.first.ok());
   const auto expected =
-      "bad.sv:2:3: $psprintf is a forbidden system function "
+      "bad.sv:2:3-11: $psprintf is a forbidden system function "
       "or task, please use $sformatf instead";
   EXPECT_THAT(diagnostics.second, StartsWith(expected));
   EXPECT_THAT(diagnostics.second, EndsWith("[invalid-system-task-function]\n"));
@@ -355,7 +355,7 @@ TEST_F(VerilogLinterTest, KnownTextStructureLintViolation) {
       "endmodule\n");
   EXPECT_TRUE(diagnostics.first.ok());
   EXPECT_THAT(diagnostics.second,
-              StartsWith("long.sv:2:101: Line length exceeds "
+              StartsWith("long.sv:2:101-114: Line length exceeds "
                          "max: 100; is: 114"));
   EXPECT_THAT(diagnostics.second, EndsWith("[line-length]\n"));
 }
@@ -384,8 +384,9 @@ TEST_F(VerilogLinterTest, ModuleBodyLineLength) {
       "initial xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = "
       "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy[777777777777];\n");
   EXPECT_TRUE(diagnostics.first.ok());
-  EXPECT_THAT(diagnostics.second,
-              StartsWith("module-body.sv:3:101: Line length exceeds max: "));
+  EXPECT_THAT(
+      diagnostics.second,
+      StartsWith("module-body.sv:3:101-114: Line length exceeds max: "));
   EXPECT_THAT(diagnostics.second, EndsWith("[line-length]\n"));
 }
 

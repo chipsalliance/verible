@@ -123,9 +123,10 @@ TEST(LintRuleStatusFormatterTest, SimpleOutput) {
       "some/path/to/somewhere.fvg",
       text,
       {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1: reason1 http://foobar [test-rule]"},
+        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar [test-rule]"},
        {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4: reason2 http://foobar [test-rule]"}}};
+        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
+        "[test-rule]"}}};
 
   RunLintStatusTest(test);
 }
@@ -209,9 +210,10 @@ TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
       "some/path/to/somewhere.fvg",
       text,
       {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1: reason1 http://foobar [test-rule]"},
+        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar [test-rule]"},
        {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4: reason2 http://foobar [test-rule]"}}};
+        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
+        "[test-rule]"}}};
 
   RunLintStatusesTest(test, false);
 }
@@ -230,10 +232,10 @@ TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
       "some/path/to/somewhere.fvg",
       text,
       {{"reason1", TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1: reason1 http://foobar "
+        "some/path/to/somewhere.fvg:1:1-5: reason1 http://foobar "
         "[test-rule]\nThis is some code\n"},
        {"reason2", TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4: reason2 http://foobar "
+        "some/path/to/somewhere.fvg:2:4-7: reason2 http://foobar "
         "[test-rule]\nThat you are looking at right now\n   "}}};
   RunLintStatusesTest(test, true);
 }

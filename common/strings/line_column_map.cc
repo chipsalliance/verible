@@ -29,7 +29,7 @@ namespace verible {
 // Print to the user as 1-based index because that is how lines
 // and columns are indexed in every file diagnostic tool.
 std::ostream& operator<<(std::ostream& out, const LineColumn& line_column) {
-  return out << line_column.line + 1 << ':' << line_column.column + 1 << ':';
+  return out << line_column.line + 1 << ':' << line_column.column + 1;
 }
 
 std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
@@ -40,7 +40,14 @@ std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
   right.column--;
   out << r.start;
   // Only if we cover more than a single character, print range of columns.
-  if (r.start < right) out << right;
+  if (r.start.line == right.line) {
+    if (right.column > r.start.column) out << '-' << right.column + 1;
+  } else {
+    // TODO(hzeller): what is a good format to mark a range of multiple lines
+    // that is understood by common editors ?
+    out << ':' << right;
+  }
+  out << ':';
   return out;
 }
 
