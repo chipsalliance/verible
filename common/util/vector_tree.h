@@ -43,18 +43,24 @@ struct FeatureTraits {
   static inline constexpr bool available = true;
 };
 
-template <
-    typename Node,  //
-    typename Container_ = decltype(std::declval<Node>().Children()),
-    typename ChildNode_ = decltype(*std::declval<Node>().Children().begin()),
-    typename = std::void_t<decltype(std::declval<Node>().Children().end())>>
+// Alias to Node::subnodes_type if it exists.
+// Intended for use with detected_or_t.
+template <typename Node,  //
+          typename Type_ = typename Node::subnodes_type>
+using TreeNodeSubnodesType = Type_;
+
+template <typename Node,  //
+          typename ChildrenType_ = decltype(std::declval<Node>().Children()),
+          typename =
+              std::void_t<decltype(*std::declval<Node>().Children().begin()),
+                          decltype(std::declval<Node>().Children().end())>>
 struct TreeNodeChildrenTraits : FeatureTraits {
   // TODO(mglb):
   // - children_reference
   // - children_const_reference
 
-  // TODO(mglb): use subnodes_type if available?
-  using container_type = std::remove_reference_t<Container_>;
+  using container_type = detected_or_t<std::remove_reference_t<ChildrenType_>,
+                                       TreeNodeSubnodesType, Node>;
 };
 
 template <typename Node,  //
