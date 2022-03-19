@@ -493,9 +493,8 @@ bool HoistOnlyChild(T& node) {
   node.Value() = std::move(only.Value());
   // Can't do this directly, as assignment to children_ destroys its child
   // (`only`) before it is moved.
-  // TODO(mglb): Find another solution; see public move constructor/assignment
-  // in ChildrenList.
-  auto new_children = std::move(only.Children());
+  using Container = typename TreeNodeTraits<T>::Children::container_type;
+  auto new_children = Container(std::move(only.Children()));
   node.Children() = std::move(new_children);
 
   return true;
@@ -876,18 +875,8 @@ class VectorTree {
     using Base::reserve;
     using Base::resize;
 
-    // TODO(mglb): implemented for HoistOnlyChild(); consider another solution
-    ChildrenList(ChildrenList&& other) noexcept
-        : node_(other.node_), container_(std::move(other.container_)) {}
-
-    // TODO(mglb): made public for HoistOnlyChild(); consider another solution
-    ChildrenList& operator=(ChildrenList&& other) noexcept {
-      // Note: `other` is not notified about the change because it ends up in
-      // undefined state as a result of the move.
-      container_ = std::move(other.container_);
-      LinkChildrenToParent(container_);
-      return *this;
-    }
+    // Move-cast to wrapped container's type. Moves out the container.
+    explicit operator container_type() && { return std::move(container_); }
 
    protected:
     // ContainerProxy interface
@@ -939,11 +928,22 @@ class VectorTree {
       return *this;
     }
 
+    // Construction requires parent node reference.
+    ChildrenList(ChildrenList&&) = delete;
+
     ChildrenList(VectorTree& node, ChildrenList&& other) noexcept
         : node_(node), container_(std::move(other.container_)) {
       // Note: `other` is not notified about the change because it ends up in
       // undefined state as a result of the move.
       LinkChildrenToParent(container_);
+    }
+
+    ChildrenList& operator=(ChildrenList&& other) noexcept {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      container_ = std::move(other.container_);
+      LinkChildrenToParent(container_);
+      return *this;
     }
 
     // Reference to a VectorTree node in which this object represents a list of
