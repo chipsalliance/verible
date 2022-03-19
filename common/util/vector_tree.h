@@ -33,15 +33,54 @@
 
 namespace verible {
 
+// TreeNode concept
+// ----------------
+//
+// Class `T` must contain at least the following member in order to fulfill the
+// TreeNode concept:
+//
+// - `Container<T>& Children()`:
+//   Returns reference to a STL-like container containing the node's children.
+//
+// `TreeNodeTraits<T>` is defined for every class `T` fulfilling the TreeNode
+// concept. It can be used in SFINAE tests.
+//
+// Optional members:
+//
+// - `T* Parent()`:
+//   Returns pointer to a parent node or nullptr when the node is a tree root.
+//   Types with this member can be detected by checking whether
+//   `TreeNodeTraits<T>::Parent::available` is true.
+//
+// - `ValueType& Value()`:
+//   Returns reference to a value stored in the node.
+//   Types with this member can be detected by checking whether
+//   `TreeNodeTraits<T>::Parent::available` is true.
+//
+// - `subnodes_type` (typename):
+//   Container type which should be used for storing arrays of detached
+//   child nodes. It must be move-assignable to, and move-constructible from,
+//   a value returned by `Children()` method.
+//   When the type is absent, it is assumed to be the type returned by
+//   `Children()` method with reference and other modifiers removed.
+//   It is available through `TreeNodeTraits<T>::Children::container_type`.
+
 namespace vector_tree_internal {
 
+// TODO(mglb): move (Unavailable)FeatureTraits to some more generic header, or
+// replace them with something from C++ library.
+
+// Type used as a placeholder for unavailable feature in type traits.
 struct UnavailableFeatureTraits {
   static inline constexpr bool available = false;
 };
 
+// Type used as a base for available feature in type traits.
 struct FeatureTraits {
   static inline constexpr bool available = true;
 };
+
+// TreeNodeTraits implementation details:
 
 // Alias to Node::subnodes_type if it exists.
 // Intended for use with detected_or_t.
@@ -49,26 +88,37 @@ template <typename Node,  //
           typename Type_ = typename Node::subnodes_type>
 using TreeNodeSubnodesType = Type_;
 
+// Defined when `Node` contains `Children()` method which returns reference to
+// a STL-like container with nodes.
 template <typename Node,  //
           typename ChildrenType_ = decltype(std::declval<Node>().Children()),
           typename =
               std::void_t<decltype(*std::declval<Node>().Children().begin()),
                           decltype(std::declval<Node>().Children().end())>>
 struct TreeNodeChildrenTraits : FeatureTraits {
-  // TODO(mglb):
-  // - children_reference
-  // - children_const_reference
-
+  // Container type which should be used for storing arrays of detached
+  // child nodes. It must be move-assignable to, and move-constructible from,
+  // a value returned by `Children()` method.
   using container_type = detected_or_t<std::remove_reference_t<ChildrenType_>,
                                        TreeNodeSubnodesType, Node>;
+
+  // TODO(mglb): Implement following type aliases and use them everywhere
+  // instead of `auto&`. This will make use of reference-like objects returned
+  // from `Children()` possible.
+  // - children_reference (type returned by `Children()`)
+  // - children_const_reference (type returned by non-mutable `Children()`)
 };
 
+// Defined when `Node` contains `Value()` method.
 template <typename Node,  //
           typename Value_ = decltype(std::declval<Node>().Value())>
 struct TreeNodeValueTraits : FeatureTraits {
+  // Type of node data available through `Value()` method.
   using type = std::remove_reference_t<Value_>;
 };
 
+// Defined when `Node` contains `Parent()` method which dereferences to a type
+// fulfilling NodeTraits concept.
 template <typename Node,  //
           typename Parent_ = decltype(*std::declval<Node>().Parent()),
           typename = std::void_t<TreeNodeChildrenTraits<Parent_>>>
@@ -76,22 +126,24 @@ struct TreeNodeParentTraits : FeatureTraits {};
 
 }  // namespace vector_tree_internal
 
+// Traits of a type fulfilling TreeNode concept.
+// `TreeNodeTraits<T>` is defined for every class `T` fulfilling the TreeNode
+// concept. It can be used in SFINAE tests.
 template <class Node,  //
           typename Children_ =
               vector_tree_internal::TreeNodeChildrenTraits<Node>>
 struct TreeNodeTraits : vector_tree_internal::FeatureTraits {
-  // optional
   using Parent =
       detected_or_t<vector_tree_internal::UnavailableFeatureTraits,
                     vector_tree_internal::TreeNodeParentTraits, Node>;
-  // optional
   using Value = detected_or_t<vector_tree_internal::UnavailableFeatureTraits,
                               vector_tree_internal::TreeNodeValueTraits, Node>;
-  // required
   using Children = Children_;
 };
 
 namespace vector_tree_internal {
+
+// BirthRank implementation details:
 
 template <class T>
 inline static size_t BirthRank(const T& node, std::input_iterator_tag) {
