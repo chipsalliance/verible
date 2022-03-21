@@ -38,6 +38,7 @@ cc_test(
         "//common/text:token_info",
         "//common/util:container_util",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
