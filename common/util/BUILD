@@ -513,6 +513,18 @@ cc_test(
 )
 
 cc_test(
+    name = "trees_test",
+    srcs = ["trees_test.cc"],
+    deps = [
+        ":spacer",
+        ":trees",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "expandable_tree_view_test",
     srcs = ["expandable_tree_view_test.cc"],
     deps = [
