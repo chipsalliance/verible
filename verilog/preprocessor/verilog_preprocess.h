@@ -38,6 +38,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -88,7 +89,26 @@ class VerilogPreprocess {
   using MacroParameterInfo = verible::MacroParameterInfo;
 
  public:
-  VerilogPreprocess() {}
+  struct Config {
+    // Filter out non-matching `ifdef and `ifndef branches depending on
+    // which defines are set.
+    //
+    // This option is useful for syntax check and possibly linting in
+    // case parsing fails with all consecutive branches emitted.
+    //
+    // Note, for formatting, we do _not_ want to filter the output as we
+    // want to emit all tokens.
+    bool filter_branches = false;
+
+    // TODO(hzeller): Provide a map of command-line provided +define+'s
+  };
+
+  explicit VerilogPreprocess(const Config& config);
+
+  // Initialize preprocessing with safe default options
+  // TODO(hzeller): remove this constructor once all places using the
+  // preprocessor have been updated to pass a config.
+  VerilogPreprocess() : VerilogPreprocess(Config()){};
 
   // ScanStream reads in a stream of tokens returns the result as a move
   // of preprocessor_data_.  preprocessor_data_ should not be accessed
@@ -108,6 +128,11 @@ class VerilogPreprocess {
   absl::Status HandleDefine(TokenStreamView::const_iterator,
                             const StreamIteratorGenerator&);
 
+  absl::Status HandleIf(TokenStreamView::const_iterator ifpos,
+                        const StreamIteratorGenerator&);
+  absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
+  absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
+
   // The following functions return nullptr when there is no error:
   static std::unique_ptr<VerilogPreprocessError> ConsumeMacroDefinition(
       const StreamIteratorGenerator&, TokenStreamView*);
@@ -119,6 +144,60 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
+
+  const Config config_;
+
+  // State of a block that can have a sequence of sub-blocks with conditions
+  // (ifdef/elsif/else/endif). Only the first of the subblock whose condition
+  // matches will be selected - or the else block if none before matched.
+  class BranchBlock {
+   public:
+    BranchBlock(bool is_enabled, bool condition,
+                const verible::TokenInfo& token)
+        : outer_scope_enabled_(is_enabled), branch_token_(token) {
+      UpdateCondition(token, condition);
+    }
+
+    // Is the current block selected, i.e. should tokens pass through.
+    bool InSelectedBranch() const {
+      return outer_scope_enabled_ && current_branch_condition_met_;
+    }
+
+    // Update condition e.g. in `elsif. Return 'false' if already in an
+    // else clause.
+    bool UpdateCondition(const verible::TokenInfo& token, bool condition) {
+      if (in_else_) return false;
+      branch_token_ = token;
+      // Only the first in a row of matching conditions will select block.
+      current_branch_condition_met_ = !any_branch_matched_ && condition;
+      any_branch_matched_ |= condition;
+      return true;
+    }
+
+    // Start an `else block. Uses its internal state to determine if
+    // this will put is InSelectedBranch().
+    // Returns 'false' if already in an else block.
+    bool StartElse(const verible::TokenInfo& token) {
+      if (in_else_) return false;
+      in_else_ = true;
+      branch_token_ = token;
+      current_branch_condition_met_ = !any_branch_matched_;
+      return true;
+    }
+
+    const verible::TokenInfo& token() const { return branch_token_; }
+
+   private:
+    const bool outer_scope_enabled_;
+    verible::TokenInfo branch_token_;  // FYI for error reporting.
+    bool any_branch_matched_ = false;  // only if no branch, `else will
+    bool in_else_ = false;
+    bool current_branch_condition_met_;
+  };
+
+  // State of nested conditional blocks. For code simplicity, this always has
+  // a toplevel branch that is selected.
+  std::stack<BranchBlock> conditional_block_;
 
   // Results of preprocessing
   VerilogPreprocessData preprocess_data_;

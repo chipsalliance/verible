@@ -40,6 +40,20 @@ using verible::TokenGenerator;
 using verible::TokenStreamView;
 using verible::container::InsertOrUpdate;
 
+VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
+  // To avoid having to check at every place if the stack is empty, we always
+  // place a toplevel 'conditional' that is always selected.
+  // Thus we only need to test in `else and `endif to see if we underrun due
+  // to unbalanced statements.
+  conditional_block_.push(
+      BranchBlock(true, true, verible::TokenInfo::EOFToken()));
+}
+
+// TODO(hzeller): instead of returning a unique ptr to a
+// VerilogPreprocessError, these functions should just be non-static,
+// fill in the error directly into preprocess_data.errors and
+// return an absl::Status,
+//
 // Copies `define token iterators into a temporary buffer.
 // Assumes that the last token of a definition is the un-lexed definition body.
 // Tokens are copied from the 'generator' into 'define_tokens'.
@@ -174,23 +188,6 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
   return nullptr;
 }
 
-// Interprets preprocessor tokens as directives that act on this preprocessor
-// object and possibly transform the input token stream.
-absl::Status VerilogPreprocess::HandleTokenIterator(
-    TokenStreamView::const_iterator iter,
-    const StreamIteratorGenerator& generator) {
-  // For now, pass through all macro definition tokens to next consumer
-  // (parser).
-  switch ((*iter)->token_enum()) {
-    case PP_define:
-      return HandleDefine(iter, generator);
-    default:
-      // All other tokens are passed through unmodified.
-      preprocess_data_.preprocessed_token_stream.push_back(*iter);
-      return absl::OkStatus();
-  }
-}
-
 // Stores a macro definition for later use.
 void VerilogPreprocess::RegisterMacroDefinition(
     const MacroDefinition& definition) {
@@ -228,13 +225,127 @@ absl::Status VerilogPreprocess::HandleDefine(
     preprocess_data_.errors.push_back(*parse_error_ptr);
     return absl::InvalidArgumentError("Error parsing macro definition.");
   }
-  RegisterMacroDefinition(macro_definition);
 
-  // For now, forward all definition tokens.
-  for (const auto& token : define_tokens) {
-    preprocess_data_.preprocessed_token_stream.push_back(token);
+  // Parsing showed that things are syntatically correct.
+  // But let's only emit things if we're in an active preprocessing branch.
+  if (conditional_block_.top().InSelectedBranch()) {
+    RegisterMacroDefinition(macro_definition);
+
+    // For now, forward all definition tokens.
+    for (const auto& token : define_tokens) {
+      preprocess_data_.preprocessed_token_stream.push_back(token);
+    }
   }
 
+  return absl::OkStatus();
+}
+
+absl::Status VerilogPreprocess::HandleIf(
+    const TokenStreamView::const_iterator ifpos,  // `ifdef, `ifndef, `elseif
+    const StreamIteratorGenerator& generator) {
+  if (!config_.filter_branches) {  // nothing to do.
+    preprocess_data_.preprocessed_token_stream.push_back(*ifpos);
+    return absl::OkStatus();
+  }
+
+  // Consume macro name to check our condition.
+  TokenStreamView::const_iterator token_iter = generator();
+  if ((*token_iter)->isEOF()) {
+    preprocess_data_.errors.push_back(
+        {**token_iter, "unexpected EOF where expecting macro name"});
+    return absl::InvalidArgumentError("Error parsing preprocessor branch.");
+  }
+  const auto macro_name = *token_iter;
+  if (macro_name->token_enum() != PP_Identifier) {
+    preprocess_data_.errors.push_back({**token_iter, "expected macro name"});
+
+    return absl::InvalidArgumentError("Error parsing preprocessor branch.");
+  }
+
+  const bool negative_if = (*ifpos)->token_enum() == PP_ifndef;
+  const auto& defs = preprocess_data_.macro_definitions;
+  const bool name_is_defined = defs.find(macro_name->text()) != defs.end();
+  const bool condition_met = (name_is_defined ^ negative_if);
+
+  if ((*ifpos)->token_enum() == PP_elsif) {
+    if (conditional_block_.size() <= 1) {
+      preprocess_data_.errors.push_back({**ifpos, "Unmatched `elsif"});
+      return absl::InvalidArgumentError("Dangeling `else");
+    }
+    if (!conditional_block_.top().UpdateCondition(**ifpos, condition_met)) {
+      preprocess_data_.errors.push_back({**ifpos, "`elsif after `else"});
+      preprocess_data_.errors.push_back(
+          {conditional_block_.top().token(), "Previous `else started here."});
+      return absl::InvalidArgumentError("Duplicate `else");
+    }
+  } else {
+    // A new, nested if-branch.
+    const bool scope_enabled = conditional_block_.top().InSelectedBranch();
+    conditional_block_.push(BranchBlock(scope_enabled, condition_met, **ifpos));
+  }
+  return absl::OkStatus();
+}
+
+absl::Status VerilogPreprocess::HandleElse(
+    TokenStreamView::const_iterator else_pos) {
+  if (!config_.filter_branches) {  // nothing to do.
+    preprocess_data_.preprocessed_token_stream.push_back(*else_pos);
+    return absl::OkStatus();
+  }
+
+  if (conditional_block_.size() <= 1) {
+    preprocess_data_.errors.push_back({**else_pos, "Unmatched `else"});
+    return absl::InvalidArgumentError("Dangeling `else");
+  }
+
+  if (!conditional_block_.top().StartElse(**else_pos)) {
+    preprocess_data_.errors.push_back({**else_pos, "Duplicate `else"});
+    preprocess_data_.errors.push_back(
+        {conditional_block_.top().token(), "Previous `else started here."});
+    return absl::InvalidArgumentError("Duplicate `else");
+  }
+  return absl::OkStatus();
+}
+
+absl::Status VerilogPreprocess::HandleEndif(
+    TokenStreamView::const_iterator endif_pos) {
+  if (!config_.filter_branches) {  // nothing to do.
+    preprocess_data_.preprocessed_token_stream.push_back(*endif_pos);
+    return absl::OkStatus();
+  }
+
+  if (conditional_block_.size() <= 1) {
+    preprocess_data_.errors.push_back({**endif_pos, "Unmatched `endif"});
+    return absl::InvalidArgumentError("Dangeling `endif");
+  }
+  conditional_block_.pop();
+  return absl::OkStatus();
+}
+
+// Interprets preprocessor tokens as directives that act on this preprocessor
+// object and possibly transform the input token stream.
+absl::Status VerilogPreprocess::HandleTokenIterator(
+    TokenStreamView::const_iterator iter,
+    const StreamIteratorGenerator& generator) {
+  switch ((*iter)->token_enum()) {
+    case PP_define:
+      return HandleDefine(iter, generator);
+
+    case PP_ifdef:
+    case PP_ifndef:
+    case PP_elsif:
+      return HandleIf(iter, generator);
+    case PP_else:
+      return HandleElse(iter);
+    case PP_endif:
+      return HandleEndif(iter);
+  }
+
+  // If not return'ed above, any other tokens are passed through unmodified
+  // unless filtered by a branch.
+  if (conditional_block_.top().InSelectedBranch()) {
+    preprocess_data_.preprocessed_token_stream.push_back(*iter);
+  }
   return absl::OkStatus();
 }
 
@@ -243,15 +354,20 @@ VerilogPreprocessData VerilogPreprocess::ScanStream(
   preprocess_data_.preprocessed_token_stream.reserve(token_stream.size());
   auto iter_generator = verible::MakeConstIteratorStreamer(token_stream);
   const auto end = token_stream.end();
-  auto iter = iter_generator();
   // Token-pulling loop.
-  while (iter != end) {
+  for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     const auto status = HandleTokenIterator(iter, iter_generator);
     if (!status.ok()) {
       // Detailed errors are already in preprocessor_data_.errors.
       break;  // For now, stop after first error.
     }
-    iter = iter_generator();
+  }
+
+  if (conditional_block_.size() > 1 &&
+      preprocess_data_.errors.empty()) {  // Only report if not followup-error
+    preprocess_data_.errors.push_back(
+        {conditional_block_.top().token(),
+         "Branch started here, but never completed at end of file."});
   }
   return std::move(preprocess_data_);
 }
