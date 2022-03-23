@@ -270,7 +270,7 @@ absl::Status VerilogPreprocess::HandleIf(
   if ((*ifpos)->token_enum() == PP_elsif) {
     if (conditional_block_.size() <= 1) {
       preprocess_data_.errors.push_back({**ifpos, "Unmatched `elsif"});
-      return absl::InvalidArgumentError("Dangeling `else");
+      return absl::InvalidArgumentError("Unmatched `else");
     }
     if (!conditional_block_.top().UpdateCondition(**ifpos, condition_met)) {
       preprocess_data_.errors.push_back({**ifpos, "`elsif after `else"});
@@ -295,7 +295,7 @@ absl::Status VerilogPreprocess::HandleElse(
 
   if (conditional_block_.size() <= 1) {
     preprocess_data_.errors.push_back({**else_pos, "Unmatched `else"});
-    return absl::InvalidArgumentError("Dangeling `else");
+    return absl::InvalidArgumentError("Unmatched `else");
   }
 
   if (!conditional_block_.top().StartElse(**else_pos)) {
@@ -316,7 +316,7 @@ absl::Status VerilogPreprocess::HandleEndif(
 
   if (conditional_block_.size() <= 1) {
     preprocess_data_.errors.push_back({**endif_pos, "Unmatched `endif"});
-    return absl::InvalidArgumentError("Dangeling `endif");
+    return absl::InvalidArgumentError("Unmatched `endif");
   }
   conditional_block_.pop();
   return absl::OkStatus();
@@ -367,7 +367,8 @@ VerilogPreprocessData VerilogPreprocess::ScanStream(
       preprocess_data_.errors.empty()) {  // Only report if not followup-error
     preprocess_data_.errors.push_back(
         {conditional_block_.top().token(),
-         "Branch started here, but never completed at end of file."});
+         "Unterminated preprocessing conditional here, but never completed at "
+         "end of file."});
   }
   return std::move(preprocess_data_);
 }

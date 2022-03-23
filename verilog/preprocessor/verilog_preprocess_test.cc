@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
@@ -38,11 +39,12 @@ using verible::container::FindOrNull;
 
 class PreprocessorTester {
  public:
-  PreprocessorTester(const char* text, const VerilogPreprocess::Config& config)
+  PreprocessorTester(absl::string_view text,
+                     const VerilogPreprocess::Config& config)
       : analyzer_(text, "<<inline-file>>", config),
         status_(analyzer_.Analyze()) {}
 
-  explicit PreprocessorTester(const char* text)
+  explicit PreprocessorTester(absl::string_view text)
       : PreprocessorTester(text, VerilogPreprocess::Config()) {}
 
   const VerilogPreprocessData& PreprocessorData() const {
@@ -61,7 +63,7 @@ class PreprocessorTester {
 };
 
 struct FailTest {
-  const char* input;
+  absl::string_view input;
   int offset;
 };
 TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
@@ -115,7 +117,7 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
 
 // Verify that VerilogPreprocess works without any directives.
 TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
-  const char* test_cases[] = {
+  absl::string_view test_cases[] = {
       "",
       "\n",
       "module foo;\nendmodule\n",
@@ -131,7 +133,7 @@ TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
 }
 
 TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
-  const char* test_cases[] = {
+  absl::string_view test_cases[] = {
       "`define FOOOO\n",
       "`define     FOOOO\n",
       "module foo;\nendmodule\n"
@@ -243,7 +245,7 @@ TEST(VerilogPreprocessTest, RedefineMacroWarning) {
 
   const auto& warnings = tester.PreprocessorData().warnings;
   EXPECT_EQ(warnings.size(), 1);
-  EXPECT_EQ(warnings.begin()->error_message, "Re-defining macro");
+  EXPECT_EQ(warnings.front().error_message, "Re-defining macro");
 }
 
 // We might have different modes later, in which we remove the define tokens
@@ -270,14 +272,15 @@ TEST(VerilogPreprocessTest, DefaultPreprocessorKeepsDefineInStream) {
 }
 
 struct BranchFailTest {
-  const char* input;
+  absl::string_view input;
   int offset;
-  const char* expected_error;
+  absl::string_view expected_error;
 };
 TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
   const BranchFailTest test_cases[] = {
       {"`endif", 0, "Unmatched `endif"},
       {"`else", 0, "Unmatched `else"},
+      {"`elsif FOO", 0, "Unmatched `elsif"},
       {"`ifdef", 6, "unexpected EOF where expecting macro name"},
       {"`ifdef FOO\n`endif\n`endif", 18, "Unmatched `endif"},
       {"`ifdef FOO\n`endif\n`else", 18, "Unmatched `else"},
@@ -285,9 +288,9 @@ TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
       {"`ifdef FOO\n`else\n`else", 17, "Duplicate `else"},
       {"`ifdef FOO\n`else\n`elsif BAR", 17, "`elsif after `else"},
       {"`ifdef FOO\n`ifdef BAR`else\n`else", 27, "Duplicate `else"},
-      {"`ifdef FOO\n`else\n`ifdef BAR\n`endif", 11, "Branch started here"},
-      {"`ifdef FOO\n`elsif BAR\n", 11, "Branch started here"},
-      {"`ifdef FOO\n`elsif BAR\n`else\n", 22, "Branch started here"},
+      {"`ifdef FOO\n`else\n`ifdef BAR\n`endif", 11, "Unterminated preprocess"},
+      {"`ifdef FOO\n`elsif BAR\n", 11, "Unterminated preprocessing"},
+      {"`ifdef FOO\n`elsif BAR\n`else\n", 22, "Unterminated preprocessing"},
   };
   for (const BranchFailTest& test : test_cases) {
     PreprocessorTester tester(
@@ -295,18 +298,18 @@ TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
 
     EXPECT_FALSE(tester.Status().ok());
     ASSERT_GE(tester.PreprocessorData().errors.size(), 1);
-    const auto& error = *tester.PreprocessorData().errors.begin();
+    const auto& error = tester.PreprocessorData().errors.front();
     EXPECT_THAT(error.error_message, StartsWith(test.expected_error));
     const int error_token_offset =
         error.token_info.left(tester.Analyzer().Data().Contents());
-    EXPECT_EQ(error_token_offset, test.offset) << test.input;
+    EXPECT_EQ(error_token_offset, test.offset) << "Input: " << test.input;
   }
 }
 
 struct RawAndFiltered {
-  const char* description;
-  const char* pp_input;
-  const char* equivalent;
+  absl::string_view description;
+  absl::string_view pp_input;
+  absl::string_view equivalent;
 };
 TEST(VerilogPreprocess, FilterPPBranches) {
   const RawAndFiltered test_cases[] = {
