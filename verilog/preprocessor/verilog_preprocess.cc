@@ -49,45 +49,56 @@ VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
 
-// TODO(hzeller): instead of returning a unique ptr to a
-// VerilogPreprocessError, these functions should just be non-static,
-// fill in the error directly into preprocess_data.errors and
-// return an absl::Status,
-//
-// Copies `define token iterators into a temporary buffer.
-// Assumes that the last token of a definition is the un-lexed definition body.
-// Tokens are copied from the 'generator' into 'define_tokens'.
-std::unique_ptr<VerilogPreprocessError>
-VerilogPreprocess::ConsumeMacroDefinition(
-    const StreamIteratorGenerator& generator, TokenStreamView* define_tokens) {
+absl::StatusOr<TokenStreamView::const_iterator>
+VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
   // Next token to expect is macro definition name.
   TokenStreamView::const_iterator token_iter = generator();
   if ((*token_iter)->isEOF()) {
-    return absl::make_unique<VerilogPreprocessError>(
-        **token_iter, "unexpected EOF where expecting macro definition name");
+    preprocess_data_.errors.push_back(
+        {**token_iter, "unexpected EOF where expecting macro name"});
+    return absl::InvalidArgumentError("Unexpected EOF");
   }
-  const auto macro_name = *token_iter;
+  const auto& macro_name = *token_iter;
   if (macro_name->token_enum() != PP_Identifier) {
-    return absl::make_unique<VerilogPreprocessError>(
-        **token_iter,
-        absl::StrCat("Expected identifier for macro name, but got \"",
-                     macro_name->text(), "...\""));
+    preprocess_data_.errors.push_back(
+        {**token_iter,
+         absl::StrCat("Expected identifier for macro name, but got \"",
+                      macro_name->text(), "...\"")});
+    return absl::InvalidArgumentError("macro name expected");
   }
-  define_tokens->push_back(*token_iter);
+  return token_iter;
+}
+
+// Copies `define token iterators into a temporary buffer.
+// Assumes that the last token of a definition is the un-lexed definition body.
+// Tokens are copied from the 'generator' into 'define_tokens'.
+absl::Status VerilogPreprocess::ConsumeMacroDefinition(
+    const StreamIteratorGenerator& generator, TokenStreamView* define_tokens) {
+  auto macro_name_extract = ExtractMacroName(generator);
+  if (!macro_name_extract.ok()) {
+    return macro_name_extract.status();
+  }
+  define_tokens->push_back(**macro_name_extract);
 
   // Everything else covers macro parameters and the definition body.
+  TokenStreamView::const_iterator token_iter;
   do {
     token_iter = generator();
     if ((*token_iter)->isEOF()) {
       // Diagnose unexpected EOF downstream instead of erroring here.
       // Other subroutines can give better context about the parsing state.
       define_tokens->push_back(*token_iter);
-      return nullptr;
+      return absl::OkStatus();
     }
     define_tokens->push_back(*token_iter);
   } while ((*token_iter)->token_enum() != PP_define_body);
-  return nullptr;
+  return absl::OkStatus();
 }
+
+// TODO(hzeller): instead of returning a unique ptr to a
+// VerilogPreprocessError, these functions should just be non-static,
+// fill in the error directly into preprocess_data.errors and
+// return an absl::Status,
 
 // Interprets a single macro definition parameter.
 // Tokens are scanned by advancing the token_scan iterator (by-reference).
@@ -208,12 +219,9 @@ absl::Status VerilogPreprocess::HandleDefine(
     const StreamIteratorGenerator& generator) {
   TokenStreamView define_tokens;
   define_tokens.push_back(*iter);
-  const auto consume_error_ptr =
-      ConsumeMacroDefinition(generator, &define_tokens);
-  if (consume_error_ptr) {
-    preprocess_data_.errors.push_back(*consume_error_ptr);
-    return absl::InvalidArgumentError("Error parsing macro definition.");
-  }
+  if (auto status = ConsumeMacroDefinition(generator, &define_tokens);
+      !status.ok())
+    return status;
   CHECK_GE(define_tokens.size(), 3)
       << "Macro definition should span at least 3 tokens, but only got "
       << define_tokens.size();
@@ -248,20 +256,11 @@ absl::Status VerilogPreprocess::HandleIf(
     return absl::OkStatus();
   }
 
-  // Consume macro name to check our condition.
-  TokenStreamView::const_iterator token_iter = generator();
-  if ((*token_iter)->isEOF()) {
-    preprocess_data_.errors.push_back(
-        {**token_iter, "unexpected EOF where expecting macro name"});
-    return absl::InvalidArgumentError("Error parsing preprocessor branch.");
+  auto macro_name_extract = ExtractMacroName(generator);
+  if (!macro_name_extract.ok()) {
+    return macro_name_extract.status();
   }
-  const auto macro_name = *token_iter;
-  if (macro_name->token_enum() != PP_Identifier) {
-    preprocess_data_.errors.push_back({**token_iter, "expected macro name"});
-
-    return absl::InvalidArgumentError("Error parsing preprocessor branch.");
-  }
-
+  const auto& macro_name = *macro_name_extract.value();
   const bool negative_if = (*ifpos)->token_enum() == PP_ifndef;
   const auto& defs = preprocess_data_.macro_definitions;
   const bool name_is_defined = defs.find(macro_name->text()) != defs.end();

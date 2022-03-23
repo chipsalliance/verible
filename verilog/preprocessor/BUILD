@@ -25,6 +25,7 @@ cc_library(
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
@@ -122,6 +123,12 @@ class VerilogPreprocess {
   using StreamIteratorGenerator =
       std::function<TokenStreamView::const_iterator()>;
 
+  // Extract macro name after `define, `ifdef, `elsif ... and returns
+  // iterator of macro name or a failure status.
+  // Updates error messages on failure.
+  absl::StatusOr<TokenStreamView::const_iterator> ExtractMacroName(
+      const StreamIteratorGenerator&);
+
   absl::Status HandleTokenIterator(TokenStreamView::const_iterator,
                                    const StreamIteratorGenerator&);
 
@@ -134,8 +141,8 @@ class VerilogPreprocess {
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
 
   // The following functions return nullptr when there is no error:
-  static std::unique_ptr<VerilogPreprocessError> ConsumeMacroDefinition(
-      const StreamIteratorGenerator&, TokenStreamView*);
+  absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator&,
+                                      TokenStreamView*);
 
   static std::unique_ptr<VerilogPreprocessError> ParseMacroDefinition(
       const TokenStreamView&, MacroDefinition*);
