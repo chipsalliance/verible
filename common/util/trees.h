@@ -146,7 +146,7 @@ inline static size_t BirthRank(const T& node, std::input_iterator_tag) {
 template <class T>
 inline static size_t BirthRank(const T& node, std::random_access_iterator_tag) {
   if (node.Parent() != nullptr) {
-    return std::distance(&(node.Parent()->Children().front()), &node);
+    return std::distance(&*(node.Parent()->Children().begin()), &node);
   }
   return 0;
 }
@@ -208,13 +208,13 @@ T& DescendPath(T& node, Iterator start, Iterator end) {
   return *current_node;
 }
 
-// Returns the node reached by descending through Children().front().
+// Returns the node reached by descending through *(Children().begin()).
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 T* LeftmostDescendant(T& node) {
   T* leaf = &node;
   while (!leaf->Children().empty()) {
-    leaf = &leaf->Children().front();
+    leaf = &*leaf->Children().begin();
   }
   return leaf;
 }
@@ -424,7 +424,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool IsFirstChild(const T& node) {
   if (node.Parent() == nullptr) return true;
-  return &node.Parent()->Children().front() == &node;
+  return &*node.Parent()->Children().begin() == &node;
 }
 
 // Returns true if this node has no parent, or it is the last child of its
@@ -610,7 +610,7 @@ bool HoistOnlyChild(T& node) {
   if (node.Children().size() != 1) return false;
   // Can't do this directly, as assignment to node destroys its child
   // (`only`) before it is moved.
-  auto only = std::move(node.Children().front());
+  auto only = std::move(*node.Children().begin());
   node = std::move(only);
   return true;
 }
@@ -739,7 +739,7 @@ void FlattenOneChild(T& node, size_t i) {
   ith_child = std::next(node.Children().begin(), i);
   // Move the first grandchild into the child's place. Can't do this directly,
   // as assignment to *ith_child destroys the grandchild before it is moved.
-  auto first_granchild = std::move(ith_child->Children().front());
+  auto first_granchild = std::move(*ith_child->Children().begin());
   *ith_child = std::move(first_granchild);
 }
 
