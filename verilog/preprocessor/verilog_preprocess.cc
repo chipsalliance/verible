@@ -248,6 +248,24 @@ absl::Status VerilogPreprocess::HandleDefine(
   return absl::OkStatus();
 }
 
+absl::Status VerilogPreprocess::HandleUndef(
+    TokenStreamView::const_iterator undef_it,
+    const StreamIteratorGenerator& generator) {
+  auto macro_name_extract = ExtractMacroName(generator);
+  if (!macro_name_extract.ok()) {
+    return macro_name_extract.status();
+  }
+  const auto& macro_name = *macro_name_extract.value();
+  preprocess_data_.macro_definitions.erase(macro_name->text());
+
+  // For now, forward all `undef tokens.
+  if (conditional_block_.top().InSelectedBranch()) {
+    preprocess_data_.preprocessed_token_stream.push_back(*undef_it);
+    preprocess_data_.preprocessed_token_stream.push_back(macro_name);
+  }
+  return absl::OkStatus();
+}
+
 absl::Status VerilogPreprocess::HandleIf(
     const TokenStreamView::const_iterator ifpos,  // `ifdef, `ifndef, `elseif
     const StreamIteratorGenerator& generator) {
@@ -329,6 +347,8 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
   switch ((*iter)->token_enum()) {
     case PP_define:
       return HandleDefine(iter, generator);
+    case PP_undef:
+      return HandleUndef(iter, generator);
 
     case PP_ifdef:
     case PP_ifndef:

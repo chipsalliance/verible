@@ -234,6 +234,25 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
   }
 }
 
+TEST(VerilogPreprocessTest, UndefMacro) {
+  PreprocessorTester tester(
+      "`define FOO 42\n"
+      "`undef FOO");
+  EXPECT_PARSE_OK();
+
+  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  EXPECT_EQ(definitions.size(), 0);
+}
+
+TEST(VerilogPreprocessTest, UndefNonexistentMacro) {
+  PreprocessorTester tester("`undef FOO");
+  EXPECT_PARSE_OK();
+
+  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  EXPECT_EQ(definitions.size(), 0);
+  EXPECT_TRUE(tester.PreprocessorData().warnings.empty());  // not a problem.
+}
+
 TEST(VerilogPreprocessTest, RedefineMacroWarning) {
   PreprocessorTester tester(
       "`define FOO 1\n"
@@ -338,6 +357,23 @@ TEST(VerilogPreprocess, FilterPPBranches) {
   endmodule)",
        // ...equivalent to
        R"(
+module quux();
+endmodule)"},
+
+      {"[** Undefined macro taking else branch. defined value `undef-ed **]",
+       R"(
+`define FOO
+`undef FOO
+`ifdef FOO
+  module bar();
+`else
+  module quux();
+`endif
+  endmodule)",
+       // ...equivalent to
+       R"(
+`define FOO
+`undef FOO
 module quux();
 endmodule)"},
 
@@ -482,8 +518,10 @@ module post_nonfoo(); endmodule)"},
        R"(
 `ifdef FOO
   `define BAR 1
+  `undef FOOBAR
 `else
   `define BAZ 1
+  `undef FOOQUX
 `endif
 
 `ifdef BAR
@@ -495,6 +533,7 @@ module baz(); endmodule
        // ...equivalent to
        R"(
 `define BAZ 1
+`undef FOOQUX
 module baz(); endmodule
 )"}};
 
