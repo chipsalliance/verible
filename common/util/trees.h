@@ -221,7 +221,8 @@ T* LeftmostDescendant(T& node) {
 
 // Returns the node reached by descending through Children().back().
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
+          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr,
+          std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
 T* RightmostDescendant(T& node) {
   T* leaf = &node;
   while (!leaf->Children().empty()) {
@@ -428,8 +429,10 @@ bool IsFirstChild(const T& node) {
 
 // Returns true if this node has no parent, or it is the last child of its
 // parent.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr,
+    std::void_t<decltype(std::declval<const T>().Children().back())>* = nullptr>
 bool IsLastChild(const T& node) {
   if (node.Parent() == nullptr) return true;
   return &node.Parent()->Children().back() == &node;
