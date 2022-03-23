@@ -45,6 +45,9 @@ using match_const =
     typename std::conditional<std::is_const<Other>::value, std::add_const<T>,
                               std::remove_const<T>>::type;
 
+template <class T, class Other>
+using match_const_t = typename match_const<T, Other>::type;
+
 // Detection idiom from
 // C++ Extensions for Library Fundamentals, Version 2 (ISO/IEC TS 19568:2017)
 // https://en.cppreference.com/w/cpp/experimental/is_detected
