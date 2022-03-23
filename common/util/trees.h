@@ -151,6 +151,20 @@ inline static size_t BirthRank(const T& node, std::random_access_iterator_tag) {
   return 0;
 }
 
+// Conditional container operations:
+
+// Calls `container.reserve(new_cap)` if container supports this method.
+template <class Container>
+auto /* void */ TryReserve(Container& container,
+                           typename Container::size_type new_cap)
+    -> std::void_t<decltype(container.reserve(new_cap))> {
+  container.reserve(new_cap);
+}
+
+// No-op candidate used when Container doesn't provide `reserve()` method.
+template <class Container>
+void TryReserve(Container&, ...) {}
+
 }  // namespace trees_internal
 
 // TreeNodeTraits:
@@ -538,7 +552,8 @@ template <class T, typename... AdoptedNodeN>
 std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
 AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
-  node.Children().reserve(node.Children().size() + sizeof...(node_n));
+  trees_internal::TryReserve(node.Children(),
+                             node.Children().size() + sizeof...(node_n));
   (node.Children().push_back(std::forward<AdoptedNodeN>(node_n)), ...);
 }
 
@@ -549,7 +564,8 @@ template <class T,  //
                            !std::is_const_v<T>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
   auto& src_children = other->Children();
-  node.Children().reserve(node.Children().size() + src_children.size());
+  trees_internal::TryReserve(node.Children(),
+                             node.Children().size() + src_children.size());
   for (auto& src_child : src_children) {
     node.Children().push_back(std::move(src_child));
   }
@@ -575,7 +591,7 @@ template <
 DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
-  dst_node.Children().reserve(src_node.Children().size());
+  trees_internal::TryReserve(dst_node.Children(), src_node.Children().size());
   for (const auto& child : src_node.Children()) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
@@ -635,11 +651,11 @@ void FlattenOnce(T& node) {
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
       [](const T& gc) { return gc.Children().size(); });
 
-  // Build new children list in a standalone vector, then move-assign it to
-  // this node's children vector.
-  // FIXME(mglb): use TreeNodeTraits<T>::Children::container_type
-  std::vector<std::decay_t<T>> grandchildren;
-  grandchildren.reserve(grandchildren_count);
+  // Build new children list in a standalone container, then move-assign it to
+  // this node's children container.
+  using Container = typename TreeNodeTraits<T>::Children::container_type;
+  Container grandchildren;
+  trees_internal::TryReserve(grandchildren, grandchildren_count);
 
   for (auto& child : node.Children()) {
     for (auto& grandchild : child.Children()) {
@@ -664,11 +680,12 @@ void FlattenOnlyChildrenWithChildren(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
       [](const T& gc) { return std::max<size_t>(gc.Children().size(), 1u); });
 
-  // Build new children list in a standalone vector, then move-assign it to
-  // this node's children vector.
-  // FIXME(mglb): use TreeNodeTraits<T>::Children::container_type
-  std::vector<std::decay_t<T>> new_children;
-  new_children.reserve(new_children_count);
+  // Build new children list in a standalone container, then move-assign it to
+  // this node's children container.
+  using Container = typename TreeNodeTraits<T>::Children::container_type;
+  Container new_children;
+
+  trees_internal::TryReserve(new_children, new_children_count);
 
   if (new_offsets != nullptr) {
     new_offsets->clear();
