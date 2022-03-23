@@ -134,6 +134,8 @@ class VerilogPreprocess {
 
   absl::Status HandleDefine(TokenStreamView::const_iterator,
                             const StreamIteratorGenerator&);
+  absl::Status HandleUndef(TokenStreamView::const_iterator,
+                           const StreamIteratorGenerator&);
 
   absl::Status HandleIf(TokenStreamView::const_iterator ifpos,
                         const StreamIteratorGenerator&);
