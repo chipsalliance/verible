@@ -31,8 +31,18 @@ namespace verilog {
 // VerilogAnalyzer analyzes Verilog and SystemVerilog code syntax.
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
+  VerilogAnalyzer(absl::string_view text, absl::string_view name,
+                  const VerilogPreprocess::Config& preprocess_config)
+      : verible::FileAnalyzer(text, name),
+        preprocess_config_(preprocess_config) {}
+
+  // Legacy constructor.
+  // TODO(hzeller): Remove once every instantiation sets preprocessor config.
   VerilogAnalyzer(absl::string_view text, absl::string_view name)
-      : verible::FileAnalyzer(text, name), max_used_stack_size_(0) {}
+      : VerilogAnalyzer(text, name, VerilogPreprocess::Config()) {}
+
+  VerilogAnalyzer(const VerilogAnalyzer&) = delete;
+  VerilogAnalyzer(VerilogAnalyzer&&) = delete;
 
   // Lex-es the input text into tokens.
   absl::Status Tokenize() final;
@@ -91,9 +101,10 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   bool tokenized_ = false;
 
   // Maximum symbol stack depth.
-  size_t max_used_stack_size_;
+  size_t max_used_stack_size_ = 0;
 
   // Preprocessor.
+  const VerilogPreprocess::Config preprocess_config_;
   VerilogPreprocessData preprocessor_data_;
 
   // Status of lexing.

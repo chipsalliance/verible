@@ -225,10 +225,9 @@ absl::Status VerilogAnalyzer::Analyze() {
   ContextualizeTokens();
 
   // pseudo-preprocess token stream.
-  // TODO(fangism): preprocessor_.Configure();
   //   Not all analyses will want to preprocess.
   {
-    VerilogPreprocess preprocessor;
+    VerilogPreprocess preprocessor(preprocess_config_);
     preprocessor_data_ = preprocessor.ScanStream(Data().GetTokenStreamView());
     if (!preprocessor_data_.errors.empty()) {
       for (const auto& error : preprocessor_data_.errors) {

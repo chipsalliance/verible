@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
@@ -32,12 +33,19 @@ namespace {
 
 using testing::ElementsAre;
 using testing::Pair;
+using testing::StartsWith;
+
 using verible::container::FindOrNull;
 
 class PreprocessorTester {
  public:
-  explicit PreprocessorTester(const char* text)
-      : analyzer_(text, "<<inline-file>>"), status_(analyzer_.Analyze()) {}
+  PreprocessorTester(absl::string_view text,
+                     const VerilogPreprocess::Config& config)
+      : analyzer_(text, "<<inline-file>>", config),
+        status_(analyzer_.Analyze()) {}
+
+  explicit PreprocessorTester(absl::string_view text)
+      : PreprocessorTester(text, VerilogPreprocess::Config()) {}
 
   const VerilogPreprocessData& PreprocessorData() const {
     return analyzer_.PreprocessorData();
@@ -55,10 +63,9 @@ class PreprocessorTester {
 };
 
 struct FailTest {
-  const char* input;
+  absl::string_view input;
   int offset;
 };
-
 TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
   const FailTest test_cases[] = {
       {"`define\n", 8},                      // unterminated macro definition
@@ -110,7 +117,7 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
 
 // Verify that VerilogPreprocess works without any directives.
 TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
-  const char* test_cases[] = {
+  absl::string_view test_cases[] = {
       "",
       "\n",
       "module foo;\nendmodule\n",
@@ -126,7 +133,7 @@ TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
 }
 
 TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
-  const char* test_cases[] = {
+  absl::string_view test_cases[] = {
       "`define FOOOO\n",
       "`define     FOOOO\n",
       "module foo;\nendmodule\n"
@@ -238,7 +245,7 @@ TEST(VerilogPreprocessTest, RedefineMacroWarning) {
 
   const auto& warnings = tester.PreprocessorData().warnings;
   EXPECT_EQ(warnings.size(), 1);
-  EXPECT_EQ(warnings.begin()->error_message, "Re-defining macro");
+  EXPECT_EQ(warnings.front().error_message, "Re-defining macro");
 }
 
 // We might have different modes later, in which we remove the define tokens
@@ -262,6 +269,262 @@ TEST(VerilogPreprocessTest, DefaultPreprocessorKeepsDefineInStream) {
                       return t->token_enum() == verilog_tokentype::PP_define;
                     });
   EXPECT_EQ(count_defines, 2);
+}
+
+struct BranchFailTest {
+  absl::string_view input;
+  int offset;
+  absl::string_view expected_error;
+};
+TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
+  const BranchFailTest test_cases[] = {
+      {"`endif", 0, "Unmatched `endif"},
+      {"`else", 0, "Unmatched `else"},
+      {"`elsif FOO", 0, "Unmatched `elsif"},
+      {"`ifdef", 6, "unexpected EOF where expecting macro name"},
+      {"`ifdef FOO\n`endif\n`endif", 18, "Unmatched `endif"},
+      {"`ifdef FOO\n`endif\n`else", 18, "Unmatched `else"},
+      {"`ifdef FOO\n`endif\n`elsif BAR", 18, "Unmatched `elsif"},
+      {"`ifdef FOO\n`else\n`else", 17, "Duplicate `else"},
+      {"`ifdef FOO\n`else\n`elsif BAR", 17, "`elsif after `else"},
+      {"`ifdef FOO\n`ifdef BAR`else\n`else", 27, "Duplicate `else"},
+      {"`ifdef FOO\n`else\n`ifdef BAR\n`endif", 11, "Unterminated preprocess"},
+      {"`ifdef FOO\n`elsif BAR\n", 11, "Unterminated preprocessing"},
+      {"`ifdef FOO\n`elsif BAR\n`else\n", 22, "Unterminated preprocessing"},
+  };
+  for (const BranchFailTest& test : test_cases) {
+    PreprocessorTester tester(
+        test.input, VerilogPreprocess::Config({.filter_branches = true}));
+
+    EXPECT_FALSE(tester.Status().ok());
+    ASSERT_GE(tester.PreprocessorData().errors.size(), 1);
+    const auto& error = tester.PreprocessorData().errors.front();
+    EXPECT_THAT(error.error_message, StartsWith(test.expected_error));
+    const int error_token_offset =
+        error.token_info.left(tester.Analyzer().Data().Contents());
+    EXPECT_EQ(error_token_offset, test.offset) << "Input: " << test.input;
+  }
+}
+
+struct RawAndFiltered {
+  absl::string_view description;
+  absl::string_view pp_input;
+  absl::string_view equivalent;
+};
+TEST(VerilogPreprocess, FilterPPBranches) {
+  const RawAndFiltered test_cases[] = {
+      {"[** Defined macro taking ifdef branch **]",
+       R"(
+`define FOO 1
+`ifdef FOO
+  module bar();
+`else
+  module quux();
+`endif
+  endmodule)",
+       // ...equivalent to
+       R"(
+`define FOO 1
+ module bar();
+ endmodule)"},
+
+      {"[** Undefined macro taking else branch **]",
+       R"(
+`ifdef FOO
+  module bar();
+`else
+  module quux();
+`endif
+  endmodule)",
+       // ...equivalent to
+       R"(
+module quux();
+endmodule)"},
+
+      {"[** Negative logic: Defined macro taking ifndef-else branch **]",
+       R"(
+`define FOO 1
+`ifndef FOO
+  module bar();
+`else
+  module quux();
+`endif
+  endmodule)",
+       // ...equivalent to
+       R"(
+`define FOO 1
+module quux();
+endmodule)"},
+
+      {"[** Negative logic: Undefined macro taking ifndef branch **]",
+       R"(
+`ifndef FOO
+  module bar();
+`else
+  module quux();
+`endif
+  endmodule)",
+       // ...equivalent to
+       R"(
+module bar();
+endmodule)"},
+
+      {"[** Elsif: choice of first branch **]",
+       R"(
+`define FOO 1
+`ifdef FOO
+  module foo(); endmodule
+`elsif BAR
+  module bar(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define FOO 1
+module foo(); endmodule)"},
+
+      {"[** Elsif: choice of elsif branch **]",
+       R"(
+`define BAR 1
+`ifdef FOO
+  module foo(); endmodule
+`elsif BAR
+  module bar(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define BAR 1
+module bar(); endmodule)"},
+
+      {"[** Elsif: no branch chosen **]",
+       R"(
+`define BAZ 1
+`ifdef FOO
+  module foo(); endmodule
+`elsif BAR
+  module bar(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define BAZ 1
+)"},
+
+      {"[** Elsif: only first (`ifdef) matching branch chosen **]",
+       R"(
+`define FOO 1
+`define BAR 1
+`define BAZ 1
+`ifdef FOO
+  module foo(); endmodule
+`elsif BAR
+  module bar(); endmodule
+`elsif BAZ
+  module baz(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define FOO 1
+`define BAR 1
+`define BAZ 1
+module foo(); endmodule
+)"},
+
+      {"[** Elsif: only first (`elsif) matching branch chosen **]",
+       R"(
+`define BAR 1
+`define BAZ 1
+`define QUUX 1
+
+`ifdef FOO
+module foo(); endmodule
+`elsif BAR
+module bar(); endmodule
+`elsif BAZ
+module baz(); endmodule
+`elsif QUUX
+module quux(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define BAR 1
+`define BAZ 1
+`define QUUX 1
+module bar(); endmodule
+)"},
+
+      {"[** Nested conditions **]",
+       R"(
+`define BAR 1
+`ifdef FOO
+  module foo(); endmodule
+ `ifdef BAR
+   module foo_bar(); endmodule
+ `else
+   module foo_nonbar(); endmodule
+ `endif
+  module post_foo(); endmodule
+`else
+  module nonfoo(); endmodule
+ `ifdef BAR
+   module nonfoo_bar(); endmodule
+ `else
+   module nonfoo_nonbar(); endmodule;
+ `endif
+  module post_nonfoo(); endmodule
+`endif)",
+       // ... equivalent to
+       R"(
+`define BAR 1
+module nonfoo(); endmodule
+module nonfoo_bar(); endmodule
+module post_nonfoo(); endmodule)"},
+
+      {"[** Meta-def: Macro defined in branch controls another branch **]",
+       R"(
+`ifdef FOO
+  `define BAR 1
+`else
+  `define BAZ 1
+`endif
+
+`ifdef BAR
+module bar(); endmodule
+`endif
+`ifdef BAZ
+module baz(); endmodule
+`endif)",
+       // ...equivalent to
+       R"(
+`define BAZ 1
+module baz(); endmodule
+)"}};
+
+  for (const RawAndFiltered& test : test_cases) {
+    PreprocessorTester with_filter(
+        test.pp_input, VerilogPreprocess::Config({.filter_branches = true}));
+    EXPECT_TRUE(with_filter.Status().ok())
+        << with_filter.Status() << " " << test.description;
+    PreprocessorTester equivalent(
+        test.equivalent, VerilogPreprocess::Config({.filter_branches = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test.description;
+
+    const auto& filtered_stream = with_filter.Data().GetTokenStreamView();
+    const auto& equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(filtered_stream.size(), 0) << test.description;
+    EXPECT_EQ(filtered_stream.size(), equivalent_stream.size())
+        << test.description;
+    auto filtered_it = filtered_stream.begin();
+    auto equivalent_it = equivalent_stream.begin();
+    while (filtered_it != filtered_stream.end() &&
+           equivalent_it != equivalent_stream.end()) {
+      EXPECT_EQ((*filtered_it)->text(), (*equivalent_it)->text())
+          << test.description;
+      EXPECT_EQ((*filtered_it)->token_enum(), (*equivalent_it)->token_enum())
+          << test.description;
+      ++filtered_it;
+      ++equivalent_it;
+    }
+  }
 }
 
 }  // namespace
