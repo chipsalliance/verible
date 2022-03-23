@@ -451,18 +451,18 @@ TYPED_TEST(SimpleNodeTest, DescendPath) {
 }
 
 TYPED_TEST(SimpleNodeTest, LeftmostDescendant) {
-  EXPECT_EQ(*LeftmostDescendant(this->root), this->root.Children().front());
-  EXPECT_EQ(*LeftmostDescendant(this->root.Children().back()),
+  EXPECT_EQ(LeftmostDescendant(this->root), this->root.Children().front());
+  EXPECT_EQ(LeftmostDescendant(this->root.Children().back()),
             this->NodeAt({3, 0, 0, 0}));
-  EXPECT_EQ(*LeftmostDescendant(this->NodeAt({2, 1, 0})),
+  EXPECT_EQ(LeftmostDescendant(this->NodeAt({2, 1, 0})),
             this->NodeAt({2, 1, 0}));
 }
 
 TYPED_TEST(SimpleNodeTest, RightmostDescendant) {
-  EXPECT_EQ(*RightmostDescendant(this->root), this->NodeAt({3, 2, 1, 0}));
-  EXPECT_EQ(*RightmostDescendant(this->root.Children().back()),
+  EXPECT_EQ(RightmostDescendant(this->root), this->NodeAt({3, 2, 1, 0}));
+  EXPECT_EQ(RightmostDescendant(this->root.Children().back()),
             this->NodeAt({3, 2, 1, 0}));
-  EXPECT_EQ(*RightmostDescendant(this->NodeAt({2, 1, 0})),
+  EXPECT_EQ(RightmostDescendant(this->NodeAt({2, 1, 0})),
             this->NodeAt({2, 1, 0}));
 }
 
@@ -663,31 +663,31 @@ TYPED_TEST(NodeWithParentTest, NumAncestors) {
 }
 
 TYPED_TEST(NodeWithParentTest, Root) {
-  EXPECT_EQ(Root(this->root), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({1, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({2})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({2, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({2, 0, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({2, 1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({2, 1, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 0, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 0, 0, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 0, 1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 0, 1, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 1, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 1, 0, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 1, 1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 1, 1, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 2})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 2, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 2, 0, 0})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 2, 1})), &this->root);
-  EXPECT_EQ(Root(this->NodeAt({3, 2, 1, 0})), &this->root);
+  EXPECT_EQ(Root(this->root), this->root);
+  EXPECT_EQ(Root(this->NodeAt({0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({1, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({2})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({2, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({2, 0, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({2, 1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({2, 1, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 0, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 0, 0, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 0, 1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 0, 1, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 1, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 1, 0, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 1, 1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 1, 1, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 2})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 2, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 2, 0, 0})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 2, 1})), this->root);
+  EXPECT_EQ(Root(this->NodeAt({3, 2, 1, 0})), this->root);
 }
 
 TYPED_TEST(NodeWithParentTest, IsFirstChild) {

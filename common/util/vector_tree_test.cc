@@ -53,7 +53,7 @@ TEST(VectorTreeTest, RootOnly) {
   EXPECT_EQ(BirthRank(tree), 0);  // no parent
   EXPECT_TRUE(IsFirstChild(tree));
   EXPECT_TRUE(IsLastChild(tree));
-  EXPECT_EQ(Root(tree), &tree);
+  EXPECT_EQ(&Root(tree), &tree);
 
   const auto& value = tree.Value();
   EXPECT_EQ(value.left, 0);
@@ -65,12 +65,12 @@ TEST(VectorTreeTest, RootOnly) {
 
 TEST(VectorTreeTest, RootOnlyDescendants) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
-  EXPECT_EQ(LeftmostDescendant(tree), &tree);
-  EXPECT_EQ(RightmostDescendant(tree), &tree);
+  EXPECT_EQ(&LeftmostDescendant(tree), &tree);
+  EXPECT_EQ(&RightmostDescendant(tree), &tree);
   {  // Test const method variants.
     const auto& ctree(tree);
-    EXPECT_EQ(LeftmostDescendant(ctree), &ctree);
-    EXPECT_EQ(RightmostDescendant(ctree), &ctree);
+    EXPECT_EQ(&LeftmostDescendant(ctree), &ctree);
+    EXPECT_EQ(&RightmostDescendant(ctree), &ctree);
   }
 }
 
@@ -413,7 +413,7 @@ TEST(VectorTreeTest, NewChild) {
     tree.Children().emplace_back(NamedInterval(1, 2, "child"));
     auto* child = &tree.Children().back();
     EXPECT_EQ(child->Parent(), &tree);
-    EXPECT_EQ(Root(*child), &tree);
+    EXPECT_EQ(&Root(*child), &tree);
     EXPECT_TRUE(verible::is_leaf(*child));
 
     const auto& value(child->Value());
@@ -427,7 +427,7 @@ TEST(VectorTreeTest, NewChild) {
     tree.Children().emplace_back(NamedInterval(2, 3, "lil-bro"));
     auto* child = &tree.Children().back();
     EXPECT_EQ(child->Parent(), &tree);
-    EXPECT_EQ(verible::Root(*child), &tree);
+    EXPECT_EQ(&Root(*child), &tree);
     EXPECT_TRUE(verible::is_leaf(*child));
 
     const auto& value(child->Value());
@@ -452,7 +452,7 @@ TEST(VectorTreeTest, NewSibling) {
     auto* second_child = &siblings.back();
     // Recall that emplace_back() may invalidate reference to first_child.
     EXPECT_EQ(second_child->Parent(), &tree);
-    EXPECT_EQ(verible::Root(*second_child), &tree);
+    EXPECT_EQ(&Root(*second_child), &tree);
     EXPECT_TRUE(verible::is_leaf(*second_child));
 
     const auto& value(second_child->Value());
@@ -477,7 +477,7 @@ TEST(VectorTreeTest, OneChildPolicy) {
   {
     const auto& child = tree.Children().front();
     EXPECT_EQ(child.Parent(), &tree);
-    EXPECT_EQ(Root(child), &tree);
+    EXPECT_EQ(&Root(child), &tree);
     EXPECT_FALSE(is_leaf(child));
     EXPECT_EQ(NumAncestors(child), 1);
     EXPECT_EQ(BirthRank(child), 0);
@@ -500,7 +500,7 @@ TEST(VectorTreeTest, OneChildPolicy) {
     {
       const auto& grandchild = child.Children().front();
       EXPECT_EQ(grandchild.Parent(), &child);
-      EXPECT_EQ(Root(grandchild), &tree);
+      EXPECT_EQ(&Root(grandchild), &tree);
       EXPECT_TRUE(is_leaf(grandchild));
       EXPECT_EQ(NumAncestors(grandchild), 2);
       EXPECT_EQ(BirthRank(grandchild), 0);
@@ -514,10 +514,10 @@ TEST(VectorTreeTest, OneChildPolicy) {
       ExpectPath(grandchild, "{0,0}");
 
       // As the ancestry chain is linear, Leftmost == Rightmost.
-      EXPECT_EQ(LeftmostDescendant(child), &grandchild);
-      EXPECT_EQ(RightmostDescendant(child), &grandchild);
-      EXPECT_EQ(LeftmostDescendant(tree), &grandchild);
-      EXPECT_EQ(RightmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&LeftmostDescendant(child), &grandchild);
+      EXPECT_EQ(&RightmostDescendant(child), &grandchild);
+      EXPECT_EQ(&LeftmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&RightmostDescendant(tree), &grandchild);
 
       EXPECT_EQ(verible::NextSibling(grandchild), nullptr);
       EXPECT_EQ(verible::PreviousSibling(grandchild), nullptr);
@@ -628,7 +628,7 @@ TEST(VectorTreeTest, DeepEqualOneChildGrandchildValuesHeterogeneous) {
 template <typename T>
 void VerifyFamilyTree(const VectorTree<T>& tree) {
   EXPECT_EQ(tree.Parent(), nullptr);
-  EXPECT_EQ(Root(tree), &tree);
+  EXPECT_EQ(&Root(tree), &tree);
   EXPECT_FALSE(is_leaf(tree));
   EXPECT_EQ(NumAncestors(tree), 0);
   EXPECT_EQ(BirthRank(tree), 0);
@@ -640,7 +640,7 @@ void VerifyFamilyTree(const VectorTree<T>& tree) {
   for (int i = 0; i < 2; ++i) {
     const auto& child = tree.Children()[i];
     EXPECT_EQ(child.Parent(), &tree);
-    EXPECT_EQ(Root(child), &tree);
+    EXPECT_EQ(&Root(child), &tree);
     EXPECT_FALSE(is_leaf(child));
     EXPECT_EQ(NumAncestors(child), 1);
     EXPECT_EQ(BirthRank(child), i);
@@ -654,7 +654,7 @@ void VerifyFamilyTree(const VectorTree<T>& tree) {
     for (int j = 0; j < 2; ++j) {
       const auto& grandchild = child.Children()[j];
       EXPECT_EQ(grandchild.Parent(), &child);
-      EXPECT_EQ(Root(grandchild), &tree);
+      EXPECT_EQ(&Root(grandchild), &tree);
       EXPECT_TRUE(is_leaf(grandchild));
       EXPECT_EQ(NumAncestors(grandchild), 2);
       EXPECT_EQ(BirthRank(grandchild), j);
@@ -701,16 +701,16 @@ TEST(VectorTreeTest, FamilyTreeLeftRightmostDescendants) {
   const auto left_path = {0, 0};
   const auto right_path = {1, 1};
   {  // Test mutable method variants.
-    EXPECT_EQ(LeftmostDescendant(tree),
+    EXPECT_EQ(&LeftmostDescendant(tree),
               &DescendPath(tree, left_path.begin(), left_path.end()));
-    EXPECT_EQ(RightmostDescendant(tree),
+    EXPECT_EQ(&RightmostDescendant(tree),
               &DescendPath(tree, right_path.begin(), right_path.end()));
   }
   {  // Test const method variants.
     const auto& ctree(tree);
-    EXPECT_EQ(LeftmostDescendant(ctree),
+    EXPECT_EQ(&LeftmostDescendant(ctree),
               &DescendPath(ctree, left_path.begin(), left_path.end()));
-    EXPECT_EQ(RightmostDescendant(ctree),
+    EXPECT_EQ(&RightmostDescendant(ctree),
               &DescendPath(ctree, right_path.begin(), right_path.end()));
   }
 }
@@ -1286,7 +1286,7 @@ TEST(VectorTreeTest, HoistOnlyChildRootOnly) {
   EXPECT_EQ(tree.Parent(), nullptr);
   EXPECT_EQ(NumAncestors(tree), 0);
   EXPECT_EQ(BirthRank(tree), 0);  // no parent
-  EXPECT_EQ(Root(tree), &tree);
+  EXPECT_EQ(&Root(tree), &tree);
 
   const auto& value = tree.Value();
   EXPECT_EQ(value.left, 0);
@@ -1303,7 +1303,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
   {
     const auto& child = tree;
     EXPECT_EQ(child.Parent(), nullptr);
-    EXPECT_EQ(Root(child), &tree);
+    EXPECT_EQ(&Root(child), &tree);
     EXPECT_FALSE(is_leaf(child));
     EXPECT_EQ(NumAncestors(child), 0);
     EXPECT_EQ(BirthRank(child), 0);
@@ -1324,7 +1324,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
     {
       const auto& grandchild = child.Children().front();
       EXPECT_EQ(grandchild.Parent(), &child);
-      EXPECT_EQ(Root(grandchild), &tree);
+      EXPECT_EQ(&Root(grandchild), &tree);
       EXPECT_TRUE(is_leaf(grandchild));
       EXPECT_EQ(NumAncestors(grandchild), 1);
       EXPECT_EQ(BirthRank(grandchild), 0);
@@ -1336,10 +1336,10 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeGreatestAncestor) {
       ExpectPath(grandchild, "{0}");
 
       // As the ancestry chain is linear, Leftmost == Rightmost.
-      EXPECT_EQ(LeftmostDescendant(child), &grandchild);
-      EXPECT_EQ(RightmostDescendant(child), &grandchild);
-      EXPECT_EQ(LeftmostDescendant(tree), &grandchild);
-      EXPECT_EQ(RightmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&LeftmostDescendant(child), &grandchild);
+      EXPECT_EQ(&RightmostDescendant(child), &grandchild);
+      EXPECT_EQ(&LeftmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&RightmostDescendant(tree), &grandchild);
 
       EXPECT_EQ(verible::NextSibling(grandchild), nullptr);
       EXPECT_EQ(verible::PreviousSibling(grandchild), nullptr);
@@ -1372,7 +1372,7 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeMiddleAncestor) {
     {
       const auto& grandchild = tree.Children().front();
       EXPECT_EQ(grandchild.Parent(), &tree);
-      EXPECT_EQ(Root(grandchild), &tree);
+      EXPECT_EQ(&Root(grandchild), &tree);
       EXPECT_TRUE(is_leaf(grandchild));
       EXPECT_EQ(NumAncestors(grandchild), 1);
       EXPECT_EQ(BirthRank(grandchild), 0);
@@ -1384,8 +1384,8 @@ TEST(VectorTreeTest, HoistOnlyChildOneChildTreeMiddleAncestor) {
       ExpectPath(grandchild, "{0}");
 
       // As the ancestry chain is linear, Leftmost == Rightmost.
-      EXPECT_EQ(LeftmostDescendant(tree), &grandchild);
-      EXPECT_EQ(RightmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&LeftmostDescendant(tree), &grandchild);
+      EXPECT_EQ(&RightmostDescendant(tree), &grandchild);
 
       EXPECT_EQ(verible::NextSibling(grandchild), nullptr);
       EXPECT_EQ(verible::PreviousSibling(grandchild), nullptr);

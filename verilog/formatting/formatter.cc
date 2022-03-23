@@ -876,8 +876,8 @@ Status Formatter::Format(const ExecutionControl& control) {
   // must be done after all reshaping is done.
   {
     auto* root = tree_unwrapper.CurrentTokenPartition();
-    auto node_iter = VectorTreeLeavesIterator(LeftmostDescendant(*root));
-    const auto end = ++VectorTreeLeavesIterator(RightmostDescendant(*root));
+    auto node_iter = VectorTreeLeavesIterator(&LeftmostDescendant(*root));
+    const auto end = ++VectorTreeLeavesIterator(&RightmostDescendant(*root));
 
     // Iterate over leaves. kAlreadyFormatted partitions are either leaves
     // themselves or parents of leaf partitions with kInline policy.

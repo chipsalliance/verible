@@ -211,24 +211,24 @@ T& DescendPath(T& node, Iterator start, Iterator end) {
 // Returns the node reached by descending through *(Children().begin()).
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-T* LeftmostDescendant(T& node) {
+T& LeftmostDescendant(T& node) {
   T* leaf = &node;
   while (!leaf->Children().empty()) {
     leaf = &*leaf->Children().begin();
   }
-  return leaf;
+  return *leaf;
 }
 
 // Returns the node reached by descending through Children().back().
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr,
           std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
-T* RightmostDescendant(T& node) {
+T& RightmostDescendant(T& node) {
   T* leaf = &node;
   while (!leaf->Children().empty()) {
     leaf = &leaf->Children().back();
   }
-  return leaf;
+  return *leaf;
 }
 
 // std::function type representing a printer function in PrintTree.
@@ -377,16 +377,15 @@ constexpr bool HasAncestor(const T& node, std::nullptr_t) {
   return false;
 }
 
-// Returns pointer to the tree root, the greatest ancestor of this node.
+// Returns reference to the tree root, the greatest ancestor of this node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
-// TODO(mglb): return reference (it never returns nullptr)
-T* Root(T& node) {
+T& Root(T& node) {
   T* root = &node;
   while (root->Parent() != nullptr) {
     root = root->Parent();
   }
-  return root;
+  return *root;
 }
 
 // Returns the closest common ancestor to this and the other, else nullptr.
@@ -455,7 +454,7 @@ T* NextLeaf(T& node) {
   const size_t next_rank = birth_rank + 1;
   if (next_rank != siblings.size()) {
     // More children follow this one.
-    return LeftmostDescendant(*std::next(siblings.begin(), next_rank));
+    return &LeftmostDescendant(*std::next(siblings.begin(), next_rank));
   }
 
   // This is the last child of the group.
@@ -466,7 +465,7 @@ T* NextLeaf(T& node) {
 
   // next_ancestor is the NearestCommonAncestor() to the original
   // node and the resulting node.
-  return LeftmostDescendant(*next_ancestor);
+  return &LeftmostDescendant(*next_ancestor);
 }
 
 // Navigates to the previous leaf (node without Children()) in the tree
@@ -485,7 +484,7 @@ T* PreviousLeaf(T& node) {
   const size_t birth_rank = BirthRank(node);
   if (birth_rank > 0) {
     // More children precede this one.
-    return RightmostDescendant(*std::next(siblings.begin(), birth_rank - 1));
+    return &RightmostDescendant(*std::next(siblings.begin(), birth_rank - 1));
   }
 
   // This is the first child of the group.
@@ -496,7 +495,7 @@ T* PreviousLeaf(T& node) {
 
   // prev_ancestor is the NearestCommonAncestor() to the original
   // node and the resulting node.
-  return RightmostDescendant(*prev_ancestor);
+  return &RightmostDescendant(*prev_ancestor);
 }
 
 // Returns the next sibling node if it exists, else nullptr.

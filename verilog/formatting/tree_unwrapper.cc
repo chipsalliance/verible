@@ -1428,7 +1428,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 }
 
 static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
-  const auto& uwline = RightmostDescendant(partition)->Value();
+  const auto& uwline = RightmostDescendant(partition).Value();
   return !uwline.IsEmpty() && uwline.TokensRange().front().TokenEnum() == ';';
 }
 
@@ -1480,7 +1480,7 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
   if (policy == PartitionPolicyEnum::kAlreadyFormatted) return true;
   if (policy == PartitionPolicyEnum::kInline) return false;
   if (!is_leaf(partition)) {
-    auto* first_leaf = LeftmostDescendant(partition);
+    auto* first_leaf = &LeftmostDescendant(partition);
     const auto leaf_policy = first_leaf->Value().PartitionPolicy();
     if (leaf_policy == PartitionPolicyEnum::kAlreadyFormatted ||
         leaf_policy == PartitionPolicyEnum::kInline)
@@ -1609,14 +1609,14 @@ static void AttachTrailingSemicolonToPreviousPartition(
   // be a semicolon where one is grammatically expected.
   // In those cases, do nothing.
   if (PartitionStartsWithSemicolon(*partition)) {
-    auto* semicolon_partition = RightmostDescendant(*partition);
+    auto* semicolon_partition = &RightmostDescendant(*partition);
     // When the semicolon is forced to wrap (e.g. when previous partition ends
     // with EOL comment), wrap previous partition with a group and append the
     // semicolon partition to it.
     if (PartitionIsForcedIntoNewLine(*semicolon_partition)) {
       auto* group = verible::GroupLeafWithPreviousLeaf(semicolon_partition);
       // Update invalidated pointer
-      semicolon_partition = RightmostDescendant(*group);
+      semicolon_partition = &RightmostDescendant(*group);
       group->Value().SetPartitionPolicy(
           verible::PartitionPolicyEnum::kAlwaysExpand);
       // Set indentation of partition with semicolon to match indentation of the
@@ -1666,8 +1666,8 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
   if (children_count <= 1) return;
 
   for (int i = 0; i < children_count - 1; ++i) {
-    auto* current = RightmostDescendant(partition->Children()[i]);
-    const auto tokens = current->Value().TokensRange();
+    auto& current = RightmostDescendant(partition->Children()[i]);
+    const auto tokens = current.Value().TokensRange();
     if (tokens.empty()) continue;
 
     auto rbegin = std::make_reverse_iterator(tokens.end());
@@ -1691,7 +1691,7 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
       continue;
 
     if (!PartitionIsForcedIntoNewLine(next)) {
-      verible::MergeLeafIntoNextLeaf(current);
+      verible::MergeLeafIntoNextLeaf(&current);
       // There shouldn't be more matching partitions
       return;
     }
@@ -1778,7 +1778,7 @@ static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   // decisions independently from each other.
   auto& partition = *partition_ptr;
   auto& if_clause_partition = partition.Children().front();
-  auto* end_partition = RightmostDescendant(if_clause_partition);
+  auto* end_partition = &RightmostDescendant(if_clause_partition);
   auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
   if (end_parent != nullptr) {
@@ -2365,7 +2365,7 @@ static void IndentBetweenUVMBeginEndMacros(TokenPartitionTree* partition_ptr,
        itr = PreviousSibling(*itr)) {
     VLOG(4) << "Scanning previous sibling:\n" << *itr;
     const auto macroId =
-        LeftmostDescendant(*itr)->Value().TokensRange().front().Text();
+        LeftmostDescendant(*itr).Value().TokensRange().front().Text();
     VLOG(4) << "macro id: " << macroId;
 
     // Indent only uvm macros
@@ -2647,7 +2647,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kFunctionPrototype:
     case NodeEnum::kTaskHeader:
     case NodeEnum::kTaskPrototype: {
-      auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+      auto& last = RightmostDescendant(partition);
       if (PartitionIsCloseParenSemi(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
       }
@@ -2660,7 +2660,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
                                    NodeEnum::kRandomizeMethodCallExtension})) {
         if (partition.Value().PartitionPolicy() ==
             PartitionPolicyEnum::kAppendFittingSubPartitions) {
-          auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+          auto& last = RightmostDescendant(partition);
           if (PartitionStartsWithCloseParen(last) ||
               PartitionStartsWithSemicolon(last)) {
             verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2685,7 +2685,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         // Merge closing parenthesis into last argument partition
         // Test for ')' and MacroCallCloseToEndLine because macros
         // use its own token 'MacroCallCloseToEndLine'
-        auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+        auto& last = RightmostDescendant(partition);
         if (PartitionStartsWithCloseParen(last) ||
             PartitionIsCloseParenSemi(last)) {
           auto& token = last.Value().TokensRange().front();
@@ -2709,7 +2709,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // force own partition section.
       const auto policy = partition.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAppendFittingSubPartitions) {
-        auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+        auto& last = RightmostDescendant(partition);
         if (PartitionStartsWithCloseParen(last) ||
             PartitionStartsWithSemicolon(last)) {
           auto& token = last.Value().TokensRange().front();
@@ -2810,7 +2810,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
 
     case NodeEnum::kPreprocessorDefine: {
-      auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+      auto& last = RightmostDescendant(partition);
       // TODO(fangism): why does test fail without this clause?
       if (PartitionStartsWithCloseParen(last)) {
         verible::MergeLeafIntoPreviousLeaf(&last);
@@ -2821,7 +2821,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kConstraintDeclaration: {
       // TODO(fangism): kConstraintSet should be handled similarly with {}
       if (partition.Children().size() == 2) {
-        auto& last = *ABSL_DIE_IF_NULL(RightmostDescendant(partition));
+        auto& last = RightmostDescendant(partition);
         if (PartitionIsCloseBrace(last)) {
           verible::MergeLeafIntoPreviousLeaf(&last);
         }
@@ -2954,7 +2954,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
               verible::SymbolCastToNode(*node.children().back()))) {
         auto& seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;
-        auto& begin_partition = *LeftmostDescendant(seq_block_partition);
+        auto& begin_partition = LeftmostDescendant(seq_block_partition);
         VLOG(4) << "begin partition: " << begin_partition;
         CHECK(is_leaf(begin_partition));
         verible::MergeLeafIntoPreviousLeaf(&begin_partition);
@@ -2972,11 +2972,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         auto& seq_block_partition = partition.Children()[1];
 
         // merge "do" <- "begin"
-        auto& begin_partition = *LeftmostDescendant(seq_block_partition);
+        auto& begin_partition = LeftmostDescendant(seq_block_partition);
         verible::MergeLeafIntoPreviousLeaf(&begin_partition);
 
         // merge "end" -> "while"
-        auto& end_partition = *RightmostDescendant(seq_block_partition);
+        auto& end_partition = RightmostDescendant(seq_block_partition);
         verible::MergeLeafIntoNextLeaf(&end_partition);
 
         // Flatten only the statement block so that the control partition

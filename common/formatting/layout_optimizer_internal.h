@@ -680,7 +680,7 @@ class LayoutFunctionFactory {
           // chosen using only a few test cases.
           const int wrapping_penalty = style_.over_column_limit_penalty;
           const auto& second_layout = results[j + 1].front().layout;
-          const auto& first_line = LeftmostDescendant(second_layout)->Value();
+          const auto& first_line = LeftmostDescendant(second_layout).Value();
           const auto& first_token = first_line.TokensRange().front();
           const int token_break_penalty = first_token.before.break_penalty;
 

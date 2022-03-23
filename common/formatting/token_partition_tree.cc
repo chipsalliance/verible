@@ -437,7 +437,7 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor).Value().TokensRange().begin());
 
   return previous_leaf;
 }
@@ -483,7 +483,7 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor).Value().TokensRange().begin());
 
   return leaf_parent;
 }
@@ -529,7 +529,7 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
   // Sanity check invariants.
   VerifyFullTreeFormatTokenRanges(
       common_ancestor,
-      LeftmostDescendant(common_ancestor)->Value().TokensRange().begin());
+      LeftmostDescendant(common_ancestor).Value().TokensRange().begin());
 
   return leaf_parent;
 }

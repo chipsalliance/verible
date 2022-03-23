@@ -88,7 +88,7 @@ class VectorTreeLeavesIterator
  public:
   VectorTreeLeavesIterator() : base_type() {}
   explicit VectorTreeLeavesIterator(VectorTreeType* node)
-      : base_type(node ? LeftmostDescendant(*node) : nullptr) {}
+      : base_type(node ? &LeftmostDescendant(*node) : nullptr) {}
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
@@ -106,8 +106,8 @@ VectorTreeLeavesIterator(VectorTreeType*)
 template <typename VectorTreeType>
 iterator_range<VectorTreeLeavesIterator<VectorTreeType>>
 VectorTreeLeavesTraversal(VectorTreeType& tree) {
-  VectorTreeLeavesIterator<VectorTreeType> begin(LeftmostDescendant(tree));
-  VectorTreeLeavesIterator<VectorTreeType> end(RightmostDescendant(tree));
+  VectorTreeLeavesIterator<VectorTreeType> begin(&LeftmostDescendant(tree));
+  VectorTreeLeavesIterator<VectorTreeType> end(&RightmostDescendant(tree));
   ++end;
   return {begin, end};
 }
@@ -136,7 +136,7 @@ class VectorTreePreOrderIterator
   this_type begin() const { return *this; }
   this_type end() const {
     if (!this->node_) return this_type(nullptr);
-    return this_type(_NextNode(RightmostDescendant(*this->node_)));
+    return this_type(_NextNode(&RightmostDescendant(*this->node_)));
   }
 };
 
@@ -169,13 +169,13 @@ class VectorTreePostOrderIterator
     if (!node) return nullptr;
     if (verible::IsLastChild(*node)) return node->Parent();
     node = NextSibling(*node);
-    if (!node->Children().empty()) node = LeftmostDescendant(*node);
+    if (!node->Children().empty()) node = &LeftmostDescendant(*node);
     return node;
   }
 
   this_type begin() const {
     if (!this->node_) return this_type(nullptr);
-    return this_type(LeftmostDescendant(*this->node_));
+    return this_type(&LeftmostDescendant(*this->node_));
   }
   this_type end() const { return this_type(_NextNode(this->node_)); }
 };
