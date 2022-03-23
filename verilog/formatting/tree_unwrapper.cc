@@ -43,6 +43,7 @@
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
+#include "common/util/trees.h"
 #include "common/util/value_saver.h"
 #include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"

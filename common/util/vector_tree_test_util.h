@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/util/trees.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {

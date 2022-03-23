@@ -31,6 +31,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/trees.h"
 #include "common/util/value_saver.h"
 
 namespace verible {

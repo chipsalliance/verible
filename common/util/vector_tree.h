@@ -28,8 +28,6 @@
 #include "common/util/container_proxy.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
-#include "common/util/spacer.h"
-#include "common/util/trees.h"
 #include "common/util/type_traits.h"
 
 namespace verible {

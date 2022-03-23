@@ -29,6 +29,7 @@
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "common/util/trees.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_project.h"

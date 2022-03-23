@@ -24,6 +24,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "common/util/trees.h"
 #include "common/util/vector_tree_test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -406,7 +407,6 @@ TEST(VectorTreeTest, RootOnlyTreeTransformComparisonDiffer) {
   }
 }
 
-// TODO(mglb): remove or move to ChildrenManipulation or something
 TEST(VectorTreeTest, NewChild) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
   {
@@ -440,7 +440,6 @@ TEST(VectorTreeTest, NewChild) {
   }
 }
 
-// TODO(mglb): remove or move to ChildrenManipulation or something
 TEST(VectorTreeTest, NewSibling) {
   VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
   {

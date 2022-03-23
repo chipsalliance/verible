@@ -20,6 +20,7 @@
 #include <iterator>
 
 #include "common/util/logging.h"
+#include "common/util/trees.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {

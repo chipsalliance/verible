@@ -233,8 +233,6 @@ cc_library(
         ":container_proxy",
         ":iterator_range",
         ":logging",
-        ":spacer",
-        ":trees",
         ":type_traits",
         "@com_google_absl//absl/strings",
     ],
@@ -259,6 +257,7 @@ cc_library(
     hdrs = ["expandable_tree_view.h"],
     deps = [
         ":logging",
+        ":trees",
         ":vector_tree",
     ],
 )
@@ -269,6 +268,7 @@ cc_library(
     srcs = ["vector_tree_test_util.cc"],
     hdrs = ["vector_tree_test_util.h"],
     deps = [
+        ":trees",
         ":vector_tree",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
@@ -281,6 +281,7 @@ cc_library(
     deps = [
         ":iterator_range",
         ":logging",
+        ":trees",
         ":vector_tree",
     ],
 )

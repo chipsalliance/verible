@@ -29,6 +29,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/util/trees.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {

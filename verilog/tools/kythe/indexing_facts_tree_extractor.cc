@@ -25,6 +25,7 @@
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
+#include "common/util/trees.h"
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"

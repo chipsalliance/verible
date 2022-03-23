@@ -34,6 +34,7 @@
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
+#include "common/util/trees.h"
 #include "common/util/vector_tree.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

@@ -28,6 +28,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_context_visitor.h"
+#include "common/util/trees.h"
 
 namespace verible {
 // Base class for building unwrapped lines. TreeUnwrapper is a concrete syntax
