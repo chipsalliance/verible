@@ -73,6 +73,11 @@ using detected_or_t =
     typename type_traits_internal::detected_impl<Default, void, Op,
                                                  Args...>::type;
 
+// Alias to type T with removed reference, const, and volatile qualifiers.
+// Backport from C++20.
+template <class T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_
