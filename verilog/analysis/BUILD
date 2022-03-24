@@ -45,6 +45,7 @@ cc_library(
         "//verilog/CST:identifier",
         "//verilog/CST:module",
         "//verilog/analysis:verilog_analyzer",
+        "//verilog/preprocessor:verilog_preprocess",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

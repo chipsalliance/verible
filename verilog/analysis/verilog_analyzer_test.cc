@@ -63,6 +63,8 @@ using verible::SyntaxTreeLeaf;
 using verible::TokenInfo;
 using verible::TokenInfoTestData;
 
+static constexpr verilog::VerilogPreprocess::Config kDefaultPreprocess;
+
 bool TreeContainsToken(const ConcreteSyntaxTree& tree, const TokenInfo& token) {
   const auto* matching_leaf =
       FindFirstSubtree(tree.get(), [&](const Symbol& symbol) {
@@ -126,37 +128,37 @@ TEST(AnalyzeVerilogLexerTest, RejectsMacroBadId) {
 
 TEST(AnalyzeVerilogExpressionTest, ParsesZero) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("0", "<file>");
+      AnalyzeVerilogExpression("0", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesEmptyString) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("\"\"", "<file>");
+      AnalyzeVerilogExpression("\"\"", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesNonEmptyString) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("\"nevermore.\"", "<file>");
+      AnalyzeVerilogExpression("\"nevermore.\"", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesBinaryOp) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("a+b", "<file>");
+      AnalyzeVerilogExpression("a+b", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesParenBinaryOp) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("(a+b)", "<file>");
+      AnalyzeVerilogExpression("(a+b)", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesUnfinishedOp) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("a+", "<file>");
+      AnalyzeVerilogExpression("a+", "<file>", kDefaultPreprocess);
   auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -168,7 +170,7 @@ TEST(AnalyzeVerilogExpressionTest, ParsesUnfinishedOp) {
 
 TEST(AnalyzeVerilogExpressionTest, Unbalanced) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("(a+c", "<file>");
+      AnalyzeVerilogExpression("(a+c", "<file>", kDefaultPreprocess);
   auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -180,31 +182,31 @@ TEST(AnalyzeVerilogExpressionTest, Unbalanced) {
 
 TEST(AnalyzeVerilogExpressionTest, ParsesConcat) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("{cde, fgh, ijk}", "<file>");
+      AnalyzeVerilogExpression("{cde, fgh, ijk}", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesFunctionCall) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("average(1, 2, \"five\")", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogExpression(
+      "average(1, 2, \"five\")", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesMacroCall) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("`MACRO(a+b, 1)", "<file>");
+      AnalyzeVerilogExpression("`MACRO(a+b, 1)", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, ParsesMacroCallWithBadId) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("`MACRO(a+b, 1bad_id)", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogExpression(
+      "`MACRO(a+b, 1bad_id)", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogExpressionTest, RejectsModuleItemAttack) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogExpression("a; wire foo", "<file>");
+      AnalyzeVerilogExpression("a; wire foo", "<file>", kDefaultPreprocess);
   auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -220,19 +222,19 @@ TEST(AnalyzeVerilogExpressionTest, RejectsModuleItemAttack) {
 // More extensive tests are in verilog_parser_unittest.cc.
 TEST(AnalyzeVerilogModuleBodyTest, ParsesEmptyString) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogModuleBody("", "<file>");
+      AnalyzeVerilogModuleBody("", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogModuleBodyTest, ParsesWireDeclarations) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogModuleBody("wire fire;", "<file>");
+      AnalyzeVerilogModuleBody("wire fire;", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogModuleBodyTest, ParsesInstance) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogModuleBody("type_of_thing #(16) foo(a, b);", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogModuleBody(
+      "type_of_thing #(16) foo(a, b);", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -241,7 +243,7 @@ TEST(AnalyzeVerilogModuleBodyTest, ParsesInitialBlock) {
       "initial begin\n"
       "  a = 1;\n"
       "end",
-      "<file>");
+      "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -251,38 +253,39 @@ TEST(AnalyzeVerilogModuleBodyTest, ParsesMultipleItems) {
       "initial begin\n"
       "  a = 1;\n"
       "end",
-      "<file>");
+      "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 // The following tests check for class-body parsing.
 TEST(AnalyzeVerilogClassBodyTest, ParsesEmptyString) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogClassBody("", "<file>");
+      AnalyzeVerilogClassBody("", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogClassBodyTest, ParsesIntegerField) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogClassBody("integer foo;", "<file>");
+      AnalyzeVerilogClassBody("integer foo;", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogClassBodyTest, ParsesMethod) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogClassBody(
-      "virtual function bar();\nendfunction\n", "<file>");
+      "virtual function bar();\nendfunction\n", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogClassBodyTest, ParsesConstructor) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogClassBody(
-      "function new();\nx = 1;\nendfunction : new\n", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      AnalyzeVerilogClassBody("function new();\nx = 1;\nendfunction : new\n",
+                              "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogClassBodyTest, RejectsModuleItem) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogClassBody("initial begin\nend\n", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogClassBody(
+      "initial begin\nend\n", "<file>", kDefaultPreprocess);
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -297,25 +300,25 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsModuleItem) {
 // The following tests check for package-body parsing.
 TEST(AnalyzeVerilogPackageBodyTest, ParsesEmptyString) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogPackageBody("", "<file>");
+      AnalyzeVerilogPackageBody("", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogPackageBodyTest, ParsesExportDeclaration) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogPackageBody("export foo::bar;\n", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogPackageBody(
+      "export foo::bar;\n", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogPackageBodyTest, ParsesParameter) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogPackageBody("parameter int kFoo = 42;\n", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogPackageBody(
+      "parameter int kFoo = 42;\n", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogClassBodyTest, RejectsWireDeclaration) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogClassBody("wire [3:0] bar;\n", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogClassBody(
+      "wire [3:0] bar;\n", "<file>", kDefaultPreprocess);
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -326,28 +329,28 @@ TEST(AnalyzeVerilogClassBodyTest, RejectsWireDeclaration) {
 }
 
 TEST(AnalyzeVerilogLibraryMapTest, ParsesLibraryDeclaration) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogLibraryMap("library foo bar/*.v;", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogLibraryMap(
+      "library foo bar/*.v;", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogLibraryMapTest, ParsesLibraryInclude) {
-  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      AnalyzeVerilogLibraryMap("include /foo/bar/?.v;", "<file>");
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr = AnalyzeVerilogLibraryMap(
+      "include /foo/bar/?.v;", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 // The following tests verify that parser mode selection works.
 TEST(AnalyzeVerilogAutomaticMode, NormalModeEmptyText) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      VerilogAnalyzer::AnalyzeAutomaticMode("", "<file>");
+      VerilogAnalyzer::AnalyzeAutomaticMode("", "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
 TEST(AnalyzeVerilogAutomaticMode, NormalModeModule) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
       VerilogAnalyzer::AnalyzeAutomaticMode("module rrr;\nendmodule\n",
-                                            "<file>");
+                                            "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -356,7 +359,7 @@ TEST(AnalyzeVerilogAutomaticMode, NormalModeModuleInvalidSelection) {
       VerilogAnalyzer::AnalyzeAutomaticMode(
           "// verilog_syntax: does-not-exist-mode\n"
           "module rrr;\nendmodule\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -368,7 +371,7 @@ TEST(AnalyzeVerilogAutomaticMode, StatementsMode) {
           "if (1) begin\n"
           "  x = 0;\n"
           "end\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -380,7 +383,7 @@ TEST(AnalyzeVerilogAutomaticMode, ModuleBodyMode) {
           "initial begin\n"
           "  x = 0;\n"
           "end\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -390,7 +393,7 @@ TEST(AnalyzeVerilogAutomaticMode, ModuleBodyModeSyntaxError) {
       VerilogAnalyzer::AnalyzeAutomaticMode(
           "// verilog_syntax: parse-as-module-body\n"
           "wire wire;\n",
-          filename);
+          filename, kDefaultPreprocess);
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   EXPECT_FALSE(status.ok());
   DiagnosticMessagesContainFilename(*analyzer_ptr, filename, false);
@@ -404,7 +407,7 @@ TEST(AnalyzeVerilogAutomaticMode, ClassBodyMode) {
           "function new();\n"
           "  x = 0;\n"
           "endfunction\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -413,7 +416,7 @@ TEST(AnalyzeVerilogAutomaticMode, PackageBodyMode) {
       VerilogAnalyzer::AnalyzeAutomaticMode(
           "// verilog_syntax: parse-as-package-body\n"
           "export xx::*;\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -422,7 +425,7 @@ TEST(AnalyzeVerilogAutomaticMode, PropertySpecMode) {
       VerilogAnalyzer::AnalyzeAutomaticMode(
           "// verilog_syntax: parse-as-property-spec\n"
           "bb|=>cc\n",
-          "<file>");
+          "<file>", kDefaultPreprocess);
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
@@ -435,7 +438,8 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
   };
   for (const char* code : test_cases) {
     std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>");
+        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>",
+                                              kDefaultPreprocess);
     EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus()) << "code was:\n"
                                                              << code;
   }
@@ -460,7 +464,8 @@ TEST(AnalyzeVerilogAutomaticMode, InferredLibraryMapMode) {
   };
   for (const char* code : test_cases) {
     std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>");
+        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>",
+                                              kDefaultPreprocess);
     EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus()) << "code was:\n"
                                                              << code;
   }
@@ -487,7 +492,8 @@ TEST(AnalyzeVerilogAutomaticMode, InvalidInputs) {
   };
   for (const auto& test : test_cases) {
     std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-        VerilogAnalyzer::AnalyzeAutomaticMode(test.code, "<file>");
+        VerilogAnalyzer::AnalyzeAutomaticMode(test.code, "<file>",
+                                              kDefaultPreprocess);
     EXPECT_EQ(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus().ok(), test.valid)
         << "code was:\n"
         << test.code;
@@ -500,7 +506,8 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyModeFarthestFirstError) {
   const TokenInfoTestData test{
       "always @(posedge clk) begin ", {TK_module, "module"}, " x<=y; end\n"};
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
-      VerilogAnalyzer::AnalyzeAutomaticMode(test.code, "<file>");
+      VerilogAnalyzer::AnalyzeAutomaticMode(test.code, "<file>",
+                                            kDefaultPreprocess);
   auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus();
   ASSERT_FALSE(status.ok());
   const auto& rejects = analyzer_ptr->GetRejectedTokens();
@@ -802,7 +809,7 @@ TEST_F(VerilogAnalyzerInternalsTest, ScanParsingModeDirective) {
        ""},
   };
   for (const auto& test : test_cases) {
-    VerilogAnalyzer analyzer(test.first, "<file>");
+    VerilogAnalyzer analyzer(test.first, "<file>", kDefaultPreprocess);
     const auto lexer_status = analyzer.Tokenize();
     EXPECT_OK(lexer_status);
     absl::string_view mode =

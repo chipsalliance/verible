@@ -53,6 +53,7 @@
 #include "verilog/formatting/token_annotator.h"
 #include "verilog/formatting/tree_unwrapper.h"
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 namespace formatter {
@@ -114,8 +115,8 @@ Status VerifyFormatting(const verible::TextStructureView& text_structure,
   // Note: We cannot just Tokenize() and compare because Analyze()
   // performs additional transformations like expanding MacroArgs to
   // expression subtrees.
-  const auto reanalyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(formatted_output, filename);
+  const auto reanalyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
+      formatted_output, filename, verilog::VerilogPreprocess::Config());
   const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
   const auto reparse_status = reanalyzer->ParseStatus();
 
@@ -200,7 +201,8 @@ static Status ReformatVerilog(absl::string_view original_text,
 static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
     absl::string_view text, absl::string_view filename) {
   std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(text, filename);
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          text, filename, verilog::VerilogPreprocess::Config());
   {
     // Lex and parse code.  Exit on failure.
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();

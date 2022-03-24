@@ -32,6 +32,8 @@
 namespace verilog {
 namespace {
 
+static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+
 using verible::SyntaxTreeSearchTestCase;
 using verible::TextStructureView;
 using verible::TreeSearchMatch;
@@ -49,7 +51,8 @@ TEST(IsZeroTest, NonZero) {
       "(0)",
   };
   for (auto code : kTestCases) {
-    const auto analyzer_ptr = AnalyzeVerilogExpression(code, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
@@ -66,7 +69,8 @@ TEST(IsZeroTest, Zero) {
       "'0",
   };
   for (auto code : kTestCases) {
-    const auto analyzer_ptr = AnalyzeVerilogExpression(code, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
@@ -82,7 +86,8 @@ TEST(ConstantIntegerValueTest, NotInteger) {
       "(2)",
   };
   for (auto code : kTestCases) {
-    const auto analyzer_ptr = AnalyzeVerilogExpression(code, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
@@ -99,7 +104,8 @@ TEST(ConstantIntegerValueTest, IsInteger) {
       {"666", 666},
   };
   for (auto test : kTestCases) {
-    const auto analyzer_ptr = AnalyzeVerilogExpression(test.first, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
@@ -582,7 +588,8 @@ TEST(ReferenceIsSimpleTest, Simple) {
       "_y",
   };
   for (auto code : kTestCases) {
-    const auto analyzer_ptr = AnalyzeVerilogExpression(code, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     {
       const auto status = analyzer_ptr->LexStatus();
@@ -609,7 +616,8 @@ TEST(ReferenceIsSimpleTest, NotSimple) {
   };
   for (auto code : kTestCases) {
     VLOG(1) << __FUNCTION__ << " test: " << code;
-    const auto analyzer_ptr = AnalyzeVerilogExpression(code, "<file>");
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
     const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     {
       const auto status = analyzer_ptr->LexStatus();

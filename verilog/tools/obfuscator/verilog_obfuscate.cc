@@ -119,8 +119,8 @@ Output is written to stdout.
   const bool preserve_interface = absl::GetFlag(FLAGS_preserve_interface);
   if (preserve_interface) {
     std::set<std::string> preserved;
-    const auto status =
-        verilog::analysis::CollectInterfaceNames(content, &preserved);
+    const auto status = verilog::analysis::CollectInterfaceNames(
+        content, &preserved, verilog::VerilogPreprocess::Config());
     if (!status.ok()) {
       std::cerr << status.message();
       return 1;

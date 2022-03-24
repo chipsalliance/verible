@@ -53,6 +53,8 @@ absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
 
 namespace {
 
+static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+
 using absl::StatusCode;
 using testing::HasSubstr;
 using verible::AlignmentPolicy;
@@ -63,7 +65,7 @@ using verible::LineNumberSet;
 TEST(VerifyFormattingTest, NoError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const auto status = VerifyFormatting(text_structure, code, "<filename>");
   EXPECT_OK(status);
@@ -73,7 +75,7 @@ TEST(VerifyFormattingTest, NoError) {
 TEST(VerifyFormattingTest, LexError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("1class c;endclass\n");  // lexical error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
@@ -85,7 +87,7 @@ TEST(VerifyFormattingTest, LexError) {
 TEST(VerifyFormattingTest, ParseError) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("classc;endclass\n");  // syntax error
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
@@ -97,7 +99,7 @@ TEST(VerifyFormattingTest, ParseError) {
 TEST(VerifyFormattingTest, LexicalDifference) {
   const absl::string_view code("class c;endclass\n");
   const std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<filename>");
+      VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("class c;;endclass\n");  // different tokens
   const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");

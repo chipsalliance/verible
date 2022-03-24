@@ -26,6 +26,7 @@
 namespace verilog {
 namespace analysis {
 namespace {
+static constexpr VerilogPreprocess::Config kDefaultPreprocess;
 
 TEST(CollectInterfaceNamesTest, NonModuleTests) {
   const std::pair<absl::string_view, std::set<std::string>> kTestCases[] = {
@@ -36,7 +37,8 @@ TEST(CollectInterfaceNamesTest, NonModuleTests) {
   };
   for (const auto& test : kTestCases) {
     std::set<std::string> preserved;
-    EXPECT_OK(CollectInterfaceNames(test.first, &preserved));
+    EXPECT_OK(
+        CollectInterfaceNames(test.first, &preserved, kDefaultPreprocess));
     EXPECT_EQ(preserved, test.second);
   }
 }
@@ -52,7 +54,8 @@ TEST(CollectInterfaceNamesTest, MinimalistModuleTests) {
   };
   for (const auto& test : kTestCases) {
     std::set<std::string> preserved;
-    EXPECT_OK(CollectInterfaceNames(test.first, &preserved));
+    EXPECT_OK(
+        CollectInterfaceNames(test.first, &preserved, kDefaultPreprocess));
     EXPECT_EQ(preserved, test.second);
   }
 }
@@ -88,7 +91,8 @@ TEST(CollectInterfaceNamesTest, BiggerModuleTests) {
   };
   for (const auto& test : kTestCases) {
     std::set<std::string> preserved;
-    EXPECT_OK(CollectInterfaceNames(test.first, &preserved));
+    EXPECT_OK(
+        CollectInterfaceNames(test.first, &preserved, kDefaultPreprocess));
     EXPECT_EQ(preserved, test.second);
   }
 }

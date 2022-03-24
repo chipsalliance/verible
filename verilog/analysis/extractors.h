@@ -24,6 +24,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 namespace analysis {
@@ -31,8 +32,9 @@ namespace analysis {
 // Collect all identifiers under module header subtree in the CTS.
 // This could be useful when interface names are required to be
 // preserved.
-absl::Status CollectInterfaceNames(absl::string_view content,
-                                   std::set<std::string>* if_names);
+absl::Status CollectInterfaceNames(
+    absl::string_view content, std::set<std::string>* if_names,
+    const verilog::VerilogPreprocess::Config& preprocess_config);
 
 }  // namespace analysis
 }  // namespace verilog
