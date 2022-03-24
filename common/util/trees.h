@@ -209,7 +209,7 @@ T& DescendPath(T& node, Iterator start, Iterator end) {
     auto& children = current_node->Children();
     const auto index = *iter;
     CHECK_GE(index, 0);
-    CHECK_LT(index, children.size());
+    CHECK_LT(index, std::size(children));
     current_node = &*std::next(children.begin(), index);  // descend
   }
   return *current_node;
@@ -472,7 +472,7 @@ T* NextLeaf(T& node) {
   auto& siblings = parent->Children();
   const size_t birth_rank = BirthRank(node);
   const size_t next_rank = birth_rank + 1;
-  if (next_rank != siblings.size()) {
+  if (next_rank != std::size(siblings)) {
     // More children follow this one.
     return &LeftmostDescendant(*std::next(siblings.begin(), next_rank));
   }
@@ -531,7 +531,7 @@ T* NextSibling(T& node) {
   }
   const size_t birth_rank = BirthRank(node);
   const size_t next_rank = birth_rank + 1;
-  if (next_rank == node.Parent()->Children().size()) {
+  if (next_rank == std::size(node.Parent()->Children())) {
     return nullptr;  // This is the last child of the Parent().
   }
   // More children follow this one.
@@ -585,7 +585,7 @@ std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
 AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
   trees_internal::TryReserve(node.Children(),
-                             node.Children().size() + sizeof...(node_n));
+                             std::size(node.Children()) + sizeof...(node_n));
   (node.Children().push_back(std::forward<AdoptedNodeN>(node_n)), ...);
 }
 
@@ -598,8 +598,8 @@ template <class T,  //
                            !std::is_const_v<T>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
   auto& src_children = other->Children();
-  trees_internal::TryReserve(node.Children(),
-                             node.Children().size() + src_children.size());
+  trees_internal::TryReserve(
+      node.Children(), std::size(node.Children()) + std::size(src_children));
   for (auto& src_child : src_children) {
     node.Children().push_back(std::move(src_child));
   }
@@ -624,7 +624,8 @@ template <
 DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
-  trees_internal::TryReserve(dst_node.Children(), src_node.Children().size());
+  trees_internal::TryReserve(dst_node.Children(),
+                             std::size(src_node.Children()));
   for (const auto& child : src_node.Children()) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
@@ -637,7 +638,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
                            !std::is_const_v<T>>* = nullptr>
 bool HoistOnlyChild(T& node) {
-  if (node.Children().size() != 1) return false;
+  if (std::size(node.Children()) != 1) return false;
   // Can't do this directly, as assignment to node destroys its child
   // (`only`) before it is moved.
   auto only = std::move(*node.Children().begin());
@@ -662,7 +663,7 @@ void MergeConsecutiveSiblings(
     std::function<void(typename TreeNodeTraits<T>::Value::type*,
                        typename TreeNodeTraits<T>::Value::const_reference)>
         joiner) {
-  CHECK_LT(N + 1, node.Children().size());
+  CHECK_LT(N + 1, std::size(node.Children()));
 
   // Combine value into node[N].
   const auto nth_child = std::next(node.Children().begin(), N);
@@ -686,7 +687,7 @@ template <class T,  //
 void FlattenOnce(T& node) {
   const int grandchildren_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) { return gc.Children().size(); });
+      [](const T& gc) { return std::size(gc.Children()); });
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
@@ -717,7 +718,9 @@ void FlattenOnlyChildrenWithChildren(
     T& node, std::vector<size_t>* new_offsets = nullptr) {
   const int new_children_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) { return std::max<size_t>(gc.Children().size(), 1u); });
+      [](const T& gc) {
+        return std::max<size_t>(std::size(gc.Children()), 1u);
+      });
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
@@ -728,7 +731,7 @@ void FlattenOnlyChildrenWithChildren(
 
   if (new_offsets != nullptr) {
     new_offsets->clear();
-    new_offsets->reserve(node.Children().size());
+    new_offsets->reserve(std::size(node.Children()));
   }
 
   size_t new_index = 0;
@@ -757,7 +760,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
                            !std::is_const_v<T>>* = nullptr>
 void FlattenOneChild(T& node, size_t i) {
-  const size_t original_size = node.Children().size();
+  const size_t original_size = std::size(node.Children());
   CHECK_LT(i, original_size);
 
   auto ith_child = std::next(node.Children().begin(), i);
@@ -858,7 +861,7 @@ TreeNodePair<LT, RT> DeepEqual(
   // different.
   const auto& left_children = left.Children();
   const auto& right_children = right.Children();
-  if (left_children.size() != right_children.size()) {
+  if (std::size(left_children) != std::size(right_children)) {
     return result_type{&left, &right};
   }
 
