@@ -191,7 +191,7 @@ struct TreeNodeTraits : trees_internal::FeatureTraits {
 // Returns true when `node` is a leaf, false otherwise.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
-bool is_leaf(T& node) {
+bool is_leaf(const T& node) {
   return node.Children().empty();
 }
 
