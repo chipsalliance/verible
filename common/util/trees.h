@@ -134,7 +134,7 @@ struct TreeNodeParentTraits : FeatureTraits {};
 
 // BirthRank implementation supportin any container
 template <class T>
-inline static size_t BirthRank(const T& node, std::input_iterator_tag) {
+size_t BirthRank(const T& node, std::input_iterator_tag) {
   if (node.Parent() != nullptr) {
     size_t index = 0;
     for (const auto& child : node.Parent()->Children()) {
@@ -147,7 +147,7 @@ inline static size_t BirthRank(const T& node, std::input_iterator_tag) {
 
 // BirthRank optimized for random access containers
 template <class T>
-inline static size_t BirthRank(const T& node, std::random_access_iterator_tag) {
+size_t BirthRank(const T& node, std::random_access_iterator_tag) {
   if (node.Parent() != nullptr) {
     return std::distance(&*(node.Parent()->Children().begin()), &node);
   }
