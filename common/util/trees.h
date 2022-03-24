@@ -22,7 +22,10 @@
 // TreeNode concept:
 //
 // - `Container<T>& Children()`:
-//   Returns reference to a STL-like container containing the node's children.
+//   Returns reference to a STL-like container or a range containing the node's
+//   children.
+//   The Container must at least support `begin()` and `end()` methods.
+//   Pointer and iterator stability is not required.
 //
 // To check whether class `T` fulfills the concept one can use the
 // `TreeNodeTraits<T>` traits struct. It is defined only for classes fulfilling
