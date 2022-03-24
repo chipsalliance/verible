@@ -19,4 +19,4 @@ set -e
 # Note: verifier tool path assumes it came with the release pre-built.
 KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
 KYTHE_DIR_ABS="$(readlink -f "kythe-bin/${KYTHE_DIRNAME}")"
-bazel test --test_arg="$KYTHE_DIR_ABS/tools/verifier" verilog/tools/kythe:verification_test
+bazel test --test_output=errors --test_arg="$KYTHE_DIR_ABS/tools/verifier" verilog/tools/kythe:verification_test
