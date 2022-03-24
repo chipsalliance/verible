@@ -29,21 +29,24 @@ namespace verible {
 // This is the information that is attached to every node in an
 // ExpandableTreeView, and also contains a pointer to every corresponding
 // node in the viewed VectorTree.
-template <class T>
+template <class WrappedNodeType>
 class TreeViewNodeInfo {
+  using TreeTraits = TreeNodeTraits<WrappedNodeType>;
+  using value_const_reference = typename TreeTraits::Value::const_reference;
+
  public:
-  explicit TreeViewNodeInfo(const VectorTree<T>& node) : node_(&node) {}
+  explicit TreeViewNodeInfo(const WrappedNodeType& node) : node_(&node) {}
 
   void Unexpand() { expand_ = false; }
   void Expand() { expand_ = true; }
   bool IsExpanded() const { return expand_; }
 
-  const T& Value() const { return node_->Value(); }
+  value_const_reference Value() const { return node_->Value(); }
 
  private:
   // Immutable pointer to corresponding VectorTree node.
   // This promises to never modify the node's data.
-  const VectorTree<T>* const node_;
+  const WrappedNodeType* const node_;
 
   // Current view of this particular subtree node.
   // If true, then traverse children_, otherwise visit this node as one element.
@@ -75,23 +78,25 @@ class TreeViewNodeInfo {
 // of references to another VectorTree, thanks to similiarity in structure.
 // Structural modifications to the original tree may invalidate an entire tree
 // view, due to the use of pointers in TreeViewNodeInfo node type.
-template <class T>
+template <class WrappedNodeType>
 class ExpandableTreeView {
-  typedef T value_type;
-  typedef ExpandableTreeView<value_type> this_type;
+  using TreeTraits = TreeNodeTraits<WrappedNodeType>;
+
+  using value_type = typename TreeTraits::Value::type;
+  using this_type = ExpandableTreeView;
 
   // The type of the tree being pointed to.
   // This class treats the underlying tree as read-only.
-  typedef VectorTree<value_type> tree_type;
+  using tree_type = WrappedNodeType;
 
   // Struct type that contains a pointer to the original tree type.
   // Every node in the original tree type corresponds to a node in the
   // view impl_type.
-  typedef TreeViewNodeInfo<value_type> node_type;
+  using node_type = TreeViewNodeInfo<WrappedNodeType>;
 
   // The tree implementation type for the collection of expandable tree
   // nodes that parallel the original tree.
-  typedef VectorTree<node_type> impl_type;
+  using impl_type = VectorTree<node_type>;
 
  public:
   class iterator;
@@ -204,10 +209,12 @@ class ExpandableTreeView {
 // in which its IsExpanded() property determines whether or not a particular
 // node is visited unexpanded, or that node's children is visited; iteration
 // never visits both a node AND its children, only one or the other.
-template <class T>
-class ExpandableTreeView<T>::iterator
+template <class WrappedNodeType>
+class ExpandableTreeView<WrappedNodeType>::iterator
     : public std::iterator<std::forward_iterator_tag, const value_type> {
-  friend class ExpandableTreeView<T>;  // grant access to private constructor
+  friend class ExpandableTreeView<WrappedNodeType>;  // grant access to private
+                                                     // constructor
+
  private:
   explicit iterator(const impl_type* node) : node_(node) {}
 

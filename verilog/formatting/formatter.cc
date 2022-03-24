@@ -71,7 +71,7 @@ using verible::UnwrappedLine;
 using verible::VectorTree;
 using verible::VectorTreeLeavesIterator;
 
-typedef VectorTree<TreeViewNodeInfo<UnwrappedLine>> partition_node_type;
+typedef VectorTree<TreeViewNodeInfo<TokenPartitionTree>> partition_node_type;
 
 // Takes a TextStructureView and FormatStyle, and formats UnwrappedLines.
 class Formatter {
@@ -556,7 +556,7 @@ static std::vector<UnwrappedLine> MakeUnwrappedLinesWorklist(
     const TokenPartitionTree& format_tokens_partitions,
     std::vector<verible::PreFormatToken>* preformatted_tokens) {
   // Initialize a tree view that treats partitions as fully-expanded.
-  ExpandableTreeView<UnwrappedLine> format_tokens_partition_view(
+  ExpandableTreeView<TokenPartitionTree> format_tokens_partition_view(
       format_tokens_partitions);
 
   // For unwrapped lines that fit, don't bother expanding their partitions.
