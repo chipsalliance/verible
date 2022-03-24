@@ -59,7 +59,7 @@ class VerilogSourceFile {
   // This does not attempt to parse/analyze the contents.
   virtual absl::Status Open();
 
-  // Attempts to lex and parse the file (without preprocessing).
+  // Attempts to lex and parse the file.
   // Will Open() if the file is not already opened.
   // Depending on context, not all files are suitable for standalone parsing.
   virtual absl::Status Parse();

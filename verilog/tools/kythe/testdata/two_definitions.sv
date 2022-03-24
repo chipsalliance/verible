@@ -14,7 +14,6 @@ module top;
   `endif
 
   final begin
-//- @in1 ref DEFINED
 //- @in1 ref NOTDEFINED
     $display(in1);
     $display("TEST PASSED");
