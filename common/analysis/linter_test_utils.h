@@ -70,6 +70,8 @@ void RunLintTestCase(const LintTestCase& test,
                      const LintRuleGenerator<RuleType>& make_rule,
                      absl::string_view filename) {
   // All linters start by parsing to yield a TextStructure.
+  // TODO(hzeller): make preprocessor configurable. Right now, preprocessor
+  // is specific in verilog, no such concept in common.
   AnalyzerType analyzer(test.code, filename);
   absl::Status unused_parser_status = analyzer.Analyze();
 

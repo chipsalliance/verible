@@ -120,18 +120,22 @@ using verible::TextStructureView;
 using verilog::VerilogAnalyzer;
 
 static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
-    absl::string_view content, absl::string_view filename) {
+    absl::string_view content, absl::string_view filename,
+    const verilog::VerilogPreprocess::Config& preprocess_config) {
   switch (absl::GetFlag(FLAGS_lang)) {
     case LanguageMode::kAutoDetect:
-      return VerilogAnalyzer::AnalyzeAutomaticMode(content, filename);
+      return VerilogAnalyzer::AnalyzeAutomaticMode(content, filename,
+                                                   preprocess_config);
     case LanguageMode::kSystemVerilog: {
-      auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename);
+      auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename,
+                                                         preprocess_config);
       const auto status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
       if (!status.ok()) std::cerr << status.message() << std::endl;
       return analyzer;
     }
     case LanguageMode::kVerilogLibraryMap:
-      return verilog::AnalyzeVerilogLibraryMap(content, filename);
+      return verilog::AnalyzeVerilogLibraryMap(content, filename,
+                                               preprocess_config);
   }
   return nullptr;
 }
@@ -166,10 +170,13 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
   return verilog::IsIdentifierLike(tokentype) || (token.text() != type_str);
 }
 
-static int AnalyzeOneFile(absl::string_view content, absl::string_view filename,
-                          json* json_out) {
+static int AnalyzeOneFile(
+    absl::string_view content, absl::string_view filename,
+    const verilog::VerilogPreprocess::Config& preprocess_config,
+    json* json_out) {
   int exit_status = 0;
-  const auto analyzer = ParseWithLanguageMode(content, filename);
+  const auto analyzer =
+      ParseWithLanguageMode(content, filename, preprocess_config);
   const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   const auto parse_status = analyzer->ParseStatus();
 
@@ -291,8 +298,11 @@ int main(int argc, char** argv) {
       continue;
     }
 
+    // TODO(hzeller): make preprocessing configurable with flags.
+    const verilog::VerilogPreprocess::Config preprocess_config;
     json file_json;
-    int file_status = AnalyzeOneFile(content, filename, &file_json);
+    int file_status =
+        AnalyzeOneFile(content, filename, preprocess_config, &file_json);
     exit_status = std::max(exit_status, file_status);
     if (absl::GetFlag(FLAGS_export_json)) {
       json_out[filename] = std::move(file_json);

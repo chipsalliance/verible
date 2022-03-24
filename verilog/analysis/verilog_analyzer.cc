@@ -131,9 +131,11 @@ static absl::string_view FailingTokenKeywordToParsingMode(
 }
 
 std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
-    absl::string_view text, absl::string_view name) {
+    absl::string_view text, absl::string_view name,
+    const VerilogPreprocess::Config& preprocess_config) {
   VLOG(2) << __FUNCTION__;
-  auto analyzer = absl::make_unique<VerilogAnalyzer>(text, name);
+  auto analyzer =
+      absl::make_unique<VerilogAnalyzer>(text, name, preprocess_config);
   if (analyzer == nullptr) return analyzer;
   const absl::string_view text_base = analyzer->Data().Contents();
   // If there is any lexical error, stop right away.
@@ -146,7 +148,8 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
     // Slightly inefficient to lex text all over again, but this is
     // acceptable for an exceptional code path.
     VLOG(1) << "Analyzing using parse mode directive: " << parse_mode;
-    auto mode_analyzer = AnalyzeVerilogWithMode(text, name, parse_mode);
+    auto mode_analyzer =
+        AnalyzeVerilogWithMode(text, name, parse_mode, preprocess_config);
     if (mode_analyzer != nullptr) return mode_analyzer;
     // Silently ignore any unknown parsing modes.
   }
@@ -167,8 +170,8 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
               verilog_tokentype(first_reject.token_info.token_enum()));
       VLOG(1) << "Retrying parsing in mode: \"" << retry_parse_mode << "\".";
       if (!retry_parse_mode.empty()) {
-        auto retry_analyzer =
-            AnalyzeVerilogWithMode(text, name, retry_parse_mode);
+        auto retry_analyzer = AnalyzeVerilogWithMode(
+            text, name, retry_parse_mode, preprocess_config);
         const absl::string_view retry_text_base =
             retry_analyzer->Data().Contents();
         VLOG(1) << "Retrying to parse:\n" << retry_text_base;
@@ -287,7 +290,9 @@ using verible::TokenInfo;
 // Helper class to replace macro call argument nodes with expression trees.
 class MacroCallArgExpander : public MutableTreeVisitorRecursive {
  public:
-  explicit MacroCallArgExpander(absl::string_view text) : full_text_(text) {}
+  explicit MacroCallArgExpander(absl::string_view text,
+                                const VerilogPreprocess::Config& pre_config)
+      : full_text_(text), preprocess_config_(pre_config) {}
 
   void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
 
@@ -296,16 +301,16 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
     if (token.token_enum() == MacroArg) {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
       // Attempt to parse text as an expression.
-      std::unique_ptr<VerilogAnalyzer> expr_analyzer =
-          AnalyzeVerilogExpression(token.text(), "<macro-arg-expander>");
+      std::unique_ptr<VerilogAnalyzer> expr_analyzer = AnalyzeVerilogExpression(
+          token.text(), "<macro-arg-expander>", preprocess_config_);
       if (!expr_analyzer->ParseStatus().ok()) {
         // If that failed, try to parse text as a property.
-        expr_analyzer =
-            AnalyzeVerilogPropertySpec(token.text(), "<macro-arg-expander>");
+        expr_analyzer = AnalyzeVerilogPropertySpec(
+            token.text(), "<macro-arg-expander>", preprocess_config_);
         if (!expr_analyzer->ParseStatus().ok()) {
           // If that failed: try to infer parsing mode from comments
           expr_analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-              token.text(), "<macro-arg-expander>");
+              token.text(), "<macro-arg-expander>", preprocess_config_);
         }
       }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
@@ -359,13 +364,14 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
 
   // Full text from which tokens were lexed, for calculating byte offsets.
   absl::string_view full_text_;
+  const VerilogPreprocess::Config& preprocess_config_;
 };
 
 }  // namespace
 
 void VerilogAnalyzer::ExpandMacroCallArgExpressions() {
   VLOG(2) << __FUNCTION__;
-  MacroCallArgExpander expander(Data().Contents());
+  MacroCallArgExpander expander(Data().Contents(), preprocess_config_);
   ABSL_DIE_IF_NULL(SyntaxTree())
       ->Accept(&expander, &MutableData().MutableSyntaxTree());
   expander.ExpandSubtrees(this);

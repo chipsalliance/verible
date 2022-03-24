@@ -4,7 +4,7 @@ licenses(["notice"])
 
 package(
     default_visibility = [
-        "//verilog/analysis:__subpackages__",
+        "//verilog:__subpackages__",
         # TODO(b/130113490): standalone preprocessor tool
     ],
 )

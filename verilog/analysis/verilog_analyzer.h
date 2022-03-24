@@ -65,7 +65,8 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
   // Automatically analyze with the correct parsing mode, as detected
   // by parser directive comments.
   static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticMode(
-      absl::string_view text, absl::string_view name);
+      absl::string_view text, absl::string_view name,
+      const VerilogPreprocess::Config& preprocess_config);
 
   const VerilogPreprocessData& PreprocessorData() const {
     return preprocessor_data_;

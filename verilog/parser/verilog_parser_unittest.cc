@@ -39,6 +39,8 @@ using ParserTestData = verible::TokenInfoTestData;
 
 using ParserTestCaseArray = std::initializer_list<const char*>;
 
+static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+
 // No syntax tree expected from these inputs.
 static const ParserTestCaseArray kEmptyTests = {
     "", "    ", "\t\t\t", "\n\n", "// comment\n", "/* comment */\n",
@@ -6240,7 +6242,8 @@ static void TestVerilogLibraryParser(const ParserTestCaseArray& data) {
   for (const auto& code : data) {
     VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
     // TODO(fangism): refactor TestParserAcceptValid to accept a lambda
-    const auto analyzer = AnalyzeVerilogLibraryMap(code, "<<inline-test>>");
+    const auto analyzer =
+        AnalyzeVerilogLibraryMap(code, "<<inline-test>>", kDefaultPreprocess);
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->ParseStatus();
     if (!status.ok()) {
       // Print more detailed error message.
@@ -6294,7 +6297,8 @@ static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray& data) {
     VLOG(1) << "test_data[" << i << "] = '" << code << "'\n";
 
     // TODO(fangism): refactor TestParserAllMatched to accept a lambda
-    const auto analyzer = AnalyzeVerilogLibraryMap(code, "<<inline-test>>");
+    const auto analyzer =
+        AnalyzeVerilogLibraryMap(code, "<<inline-test>>", kDefaultPreprocess);
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->ParseStatus();
     EXPECT_TRUE(status.ok())
         << status.message()

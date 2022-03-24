@@ -24,12 +24,13 @@ namespace verilog {
 namespace analysis {
 
 // Find all modules and collect interface names
-absl::Status CollectInterfaceNames(absl::string_view content,
-                                   std::set<std::string>* if_names) {
+absl::Status CollectInterfaceNames(
+    absl::string_view content, std::set<std::string>* if_names,
+    const VerilogPreprocess::Config& preprocess_config) {
   VLOG(1) << __FUNCTION__;
 
-  const auto analyzer =
-      verilog::VerilogAnalyzer::AnalyzeAutomaticMode(content, "<file>");
+  const auto analyzer = verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
+      content, "<file>", preprocess_config);
   auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
   auto parse_status = analyzer->ParseStatus();
 
