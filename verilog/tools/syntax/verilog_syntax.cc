@@ -298,8 +298,11 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    // TODO(hzeller): make preprocessing configurable with flags.
-    const verilog::VerilogPreprocess::Config preprocess_config;
+    // TODO(hzeller): is there ever a situation in which we do not want
+    // to use the preprocessor ?
+    const verilog::VerilogPreprocess::Config preprocess_config{
+        .filter_branches = true,
+    };
     json file_json;
     int file_status =
         AnalyzeOneFile(content, filename, preprocess_config, &file_json);
