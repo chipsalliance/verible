@@ -163,6 +163,7 @@ cc_library(
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_token_enum",
+        "//verilog/preprocessor:verilog_preprocess",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
