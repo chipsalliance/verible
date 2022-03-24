@@ -21,7 +21,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
 #include "common/util/range.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"

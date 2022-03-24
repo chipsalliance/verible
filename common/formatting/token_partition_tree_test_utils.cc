@@ -19,7 +19,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
 
 namespace verible {

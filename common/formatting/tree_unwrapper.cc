@@ -29,7 +29,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"
 #include "common/util/vector_tree.h"
 

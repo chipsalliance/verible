@@ -22,7 +22,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "common/util/range.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 
 namespace verilog {
 namespace kythe {

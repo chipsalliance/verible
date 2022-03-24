@@ -26,7 +26,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/util/container_iterator_range.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

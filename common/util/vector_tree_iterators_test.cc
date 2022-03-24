@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

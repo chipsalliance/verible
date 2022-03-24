@@ -30,7 +30,7 @@
 #include "absl/strings/str_cat.h"
 #include "common/strings/compare.h"
 #include "common/util/logging.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"

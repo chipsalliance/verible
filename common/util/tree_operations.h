@@ -53,8 +53,8 @@
 //   `Children()` method with reference and other modifiers removed.
 //   It is available through `TreeNodeTraits<T>::Children::container_type`.
 
-#ifndef VERIBLE_COMMON_UTIL_TREES_H_
-#define VERIBLE_COMMON_UTIL_TREES_H_
+#ifndef VERIBLE_COMMON_UTIL_TREE_OPERATIONS_H_
+#define VERIBLE_COMMON_UTIL_TREE_OPERATIONS_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -72,7 +72,7 @@
 
 namespace verible {
 
-namespace trees_internal {
+namespace tree_operations_internal {
 
 // TODO(mglb): move (Unavailable)FeatureTraits to a more generic header, or
 // replace them with something from standard library.
@@ -169,7 +169,7 @@ auto /* void */ TryReserve(Container& container,
 template <class Container>
 void TryReserve(Container&, ...) {}
 
-}  // namespace trees_internal
+}  // namespace tree_operations_internal
 
 // TreeNodeTraits:
 
@@ -177,12 +177,15 @@ void TryReserve(Container&, ...) {}
 // `TreeNodeTraits<T>` is defined for every class `T` fulfilling the TreeNode
 // concept. It can be used in SFINAE tests.
 template <class Node,  //
-          typename Children_ = trees_internal::TreeNodeChildrenTraits<Node>>
-struct TreeNodeTraits : trees_internal::FeatureTraits {
-  using Parent = detected_or_t<trees_internal::UnavailableFeatureTraits,
-                               trees_internal::TreeNodeParentTraits, Node>;
-  using Value = detected_or_t<trees_internal::UnavailableFeatureTraits,
-                              trees_internal::TreeNodeValueTraits, Node>;
+          typename Children_ =
+              tree_operations_internal::TreeNodeChildrenTraits<Node>>
+struct TreeNodeTraits : tree_operations_internal::FeatureTraits {
+  using Parent =
+      detected_or_t<tree_operations_internal::UnavailableFeatureTraits,
+                    tree_operations_internal::TreeNodeParentTraits, Node>;
+  using Value =
+      detected_or_t<tree_operations_internal::UnavailableFeatureTraits,
+                    tree_operations_internal::TreeNodeValueTraits, Node>;
   using Children = Children_;
 };
 
@@ -354,7 +357,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 size_t BirthRank(const T& node) {
   using Iterator = decltype(node.Parent()->Children().begin());
-  return trees_internal::BirthRank(
+  return tree_operations_internal::BirthRank(
       node, typename std::iterator_traits<Iterator>::iterator_category());
 }
 
@@ -584,8 +587,8 @@ template <class T, typename... AdoptedNodeN>
 std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
 AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
-  trees_internal::TryReserve(node.Children(),
-                             std::size(node.Children()) + sizeof...(node_n));
+  using tree_operations_internal::TryReserve;
+  TryReserve(node.Children(), std::size(node.Children()) + sizeof...(node_n));
   (node.Children().push_back(std::forward<AdoptedNodeN>(node_n)), ...);
 }
 
@@ -597,9 +600,10 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
                            !std::is_const_v<T>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
+  using tree_operations_internal::TryReserve;
   auto& src_children = other->Children();
-  trees_internal::TryReserve(
-      node.Children(), std::size(node.Children()) + std::size(src_children));
+  TryReserve(node.Children(),
+             std::size(node.Children()) + std::size(src_children));
   for (auto& src_child : src_children) {
     node.Children().push_back(std::move(src_child));
   }
@@ -622,10 +626,10 @@ template <
                      TreeNodeTraits<SrcTree>::available &&
                      std::is_constructible_v<DstTree, DstValue_>>* = nullptr>
 DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
+  using tree_operations_internal::TryReserve;
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
-  trees_internal::TryReserve(dst_node.Children(),
-                             std::size(src_node.Children()));
+  TryReserve(dst_node.Children(), std::size(src_node.Children()));
   for (const auto& child : src_node.Children()) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
@@ -688,12 +692,13 @@ void FlattenOnce(T& node) {
   const int grandchildren_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
       [](const T& gc) { return std::size(gc.Children()); });
+  using tree_operations_internal::TryReserve;
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
   using Container = typename TreeNodeTraits<T>::Children::container_type;
   Container grandchildren;
-  trees_internal::TryReserve(grandchildren, grandchildren_count);
+  TryReserve(grandchildren, grandchildren_count);
 
   for (auto& child : node.Children()) {
     for (auto& grandchild : child.Children()) {
@@ -721,13 +726,14 @@ void FlattenOnlyChildrenWithChildren(
       [](const T& gc) {
         return std::max<size_t>(std::size(gc.Children()), 1u);
       });
+  using tree_operations_internal::TryReserve;
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
   using Container = typename TreeNodeTraits<T>::Children::container_type;
   Container new_children;
 
-  trees_internal::TryReserve(new_children, new_children_count);
+  TryReserve(new_children, new_children_count);
 
   if (new_offsets != nullptr) {
     new_offsets->clear();
@@ -917,4 +923,4 @@ TreeNodePair<LT, RT> StructureEqual(const LT& left, const RT& right) {
 
 }  // namespace verible
 
-#endif  // VERIBLE_COMMON_UTIL_TREES_H_
+#endif  // VERIBLE_COMMON_UTIL_TREE_OPERATIONS_H_

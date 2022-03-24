@@ -31,7 +31,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/class.h"
 #include "verilog/CST/declaration.h"

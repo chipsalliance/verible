@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 
 #include <charconv>
 #include <initializer_list>

@@ -30,7 +30,7 @@
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 #include "common/util/top_n.h"
-#include "common/util/trees.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
