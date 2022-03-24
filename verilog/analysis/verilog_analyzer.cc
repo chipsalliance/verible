@@ -246,19 +246,15 @@ absl::Status VerilogAnalyzer::Analyze() {
       const verible::RejectedToken warn_token{
           warning.token_info, verible::AnalysisPhase::kPreprocessPhase,
           warning.error_message, verible::ErrorSeverity::kWarning};
-#if 0
-      // For now, don't surface macro warnings yet in the output, as the
-      // preprocessor does not yet work with `ifdef branches and thus would
-      // report redefinitions in common situations such as these
-      // `ifdef FOO
-      //   `define BAR "x"
-      // `else
-      //   `define BAR "y"
-      // `endif
-      rejected_tokens_.push_back(warn_token);
-#else
-      LOG(INFO) << LinterTokenErrorMessage(warn_token, false);
-#endif
+      if (preprocess_config_.filter_branches) {
+        // Only if we properly filter out branches, warning about double
+        // defined macros make sense. So in this case, include them in the
+        // rejected tokens output.
+        rejected_tokens_.push_back(warn_token);
+      } else {
+        // Otherwise, merely make this a log message.
+        LOG(INFO) << LinterTokenErrorMessage(warn_token, false);
+      }
     }
     MutableData().MutableTokenStreamView() =
         preprocessor_data_.preprocessed_token_stream;  // copy
