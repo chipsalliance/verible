@@ -54,6 +54,10 @@ std::set<verible::LintViolationWithStatus> GetSortedViolations(
 // If 'lint_fatal' is true, exit nonzero on finding lint violations.
 // Returns an exit_code like status where 0 means success, 1 means some
 // errors were found (syntax, lint), and anything else is a fatal error.
+//
+// TODO(hzeller): the options to this function are a lot and many of them
+//   the same type does not help. Make at least the bool options a struct with
+//   names parameters.
 int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config,
                 verible::ViolationHandler* violation_handler, bool check_syntax,

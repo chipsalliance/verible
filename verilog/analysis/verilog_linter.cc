@@ -111,12 +111,14 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
   }
 
   // Lex and parse the contents of the file.
-  // TODO(hzeller): Chose preprocessing option. Maybe start with default
-  // to include as much as possible, but fall back to process `ifdef branches
-  // on syntax issues. For now: just the default.
-  static constexpr verilog::VerilogPreprocess::Config preprocess_config;
-  const auto analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-      content, filename, preprocess_config);
+  // Attempt first to run without preprocessing to capture more information,
+  // but if that results in parse issues, filter out preprocessing branches
+  // as that is often the reason.
+  // TODO(hzeller): this behavior could be configurable, but then again this
+  //   is something the user is expecting to work as best as possible (which
+  //   is also why we use automatic mode).
+  const auto analyzer =
+      VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(content, filename);
   if (check_syntax) {
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
     const auto parse_status = analyzer->ParseStatus();
