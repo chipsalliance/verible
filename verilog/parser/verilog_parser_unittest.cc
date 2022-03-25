@@ -1786,6 +1786,7 @@ static const ParserTestCaseArray kModuleTests = {
     "swimming bool;  // bool is an Icarus Verilog extension\n"
     "endmodule",
     // net declarations
+    "module m; wire #(100) x = y,z=k,foo; endmodule\n",
     "module m; wire signed foo; endmodule\n",
     "module m; wire signed [7:0] foo; endmodule\n",
     "module m; wire unsigned foo; endmodule\n",
