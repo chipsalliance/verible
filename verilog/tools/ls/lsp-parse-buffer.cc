@@ -33,22 +33,12 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
   return VerilogLintTextStructure(filename, config, text_structure);
 }
 
-static std::unique_ptr<verilog::VerilogAnalyzer> ParseWithPreprocessFallback(
-    absl::string_view content, absl::string_view file) {
-  std::unique_ptr<verilog::VerilogAnalyzer> parser;
-  for (bool preprocess_filter_branches : {false, true}) {
-    parser = verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
-        content, file, {.filter_branches = preprocess_filter_branches});
-    if (parser && parser->LexStatus().ok() && parser->ParseStatus().ok()) break;
-  }
-  return parser;
-}
-
 ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
                            absl::string_view content)
     : version_(version),
       uri_(uri),
-      parser_(ParseWithPreprocessFallback(content, uri)) {
+      parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(
+          content, uri)) {
   LOG(INFO) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
             << "; parser:" << parser_->ParseStatus() << std::endl;
   // TODO(hzeller): we should use a filename not URI; strip prefix.
