@@ -445,6 +445,44 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
   }
 }
 
+TEST(AnalyzeVerilogAutomaticMode, AutomaticWithFallback) {
+  static constexpr verilog::VerilogPreprocess::Config kNoBranchFilter{
+      .filter_branches = false,
+  };
+  static constexpr verilog::VerilogPreprocess::Config kWithBranchFilter{
+      .filter_branches = true,
+  };
+
+  // Test cases that are known to syntax error without branch filter enabled.
+  constexpr absl::string_view test_cases[] = {
+      R"(
+module foo();
+  always @(*) begin
+    if (a) bar();
+`ifdef SOME_MACRO
+    else if (b) baz();
+`endif
+    else qux();
+  end
+endmodule
+)"};
+  for (const absl::string_view code : test_cases) {
+    const auto should_fail =
+        VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kNoBranchFilter);
+    const auto should_succeed = VerilogAnalyzer::AnalyzeAutomaticMode(
+        code, "<file>", kWithBranchFilter);
+    // Verify that it will fail in one parse mode, then succeed with branch
+    // filtering enabled
+    EXPECT_FALSE(should_fail->ParseStatus().ok());
+    EXPECT_OK(should_succeed->ParseStatus());
+
+    // Also, fallback should succeed with that.
+    const auto with_fallback =
+        VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(code, "<file>");
+    EXPECT_OK(should_succeed->ParseStatus());
+  }
+}
+
 // Tests that automatic mode parsing can detect that some first failing
 // keywords will trigger (successful) re-parsing as a library map.
 TEST(AnalyzeVerilogAutomaticMode, InferredLibraryMapMode) {
