@@ -18,10 +18,6 @@
 #include "absl/status/status.h"
 #include "common/util/logging.h"
 
-static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{
-    .filter_branches = false,  // TODO(hzeller): switch on.
-};
-
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
     absl::string_view filename, const verilog::VerilogAnalyzer &parser) {
@@ -41,8 +37,8 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
                            absl::string_view content)
     : version_(version),
       uri_(uri),
-      parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
-          content, uri, kPreprocessConfig)) {
+      parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(
+          content, uri)) {
   LOG(INFO) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
             << "; parser:" << parser_->ParseStatus() << std::endl;
   // TODO(hzeller): we should use a filename not URI; strip prefix.
