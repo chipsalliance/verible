@@ -453,6 +453,89 @@ class ContainerProxyBase {
   void CallElementsWereReplaced() { derived()->ElementsWereReplaced(); }
 };
 
+// Macros for importing common sets of members in classes deriving from
+// ContainerProxyBase.
+// A class deriving from ContainerProxyBase can optionally use **one**
+// `USING_CONTAINER_PROXY_*_MEMBERS` macro.
+
+// Imports (via `using`) members required by C++ Container.
+// Can be called only inside body of a class deriving from ContainerProxyBase.
+// `base_type` must be inherited ContainerProxyBase class type.
+#define USING_CONTAINER_PROXY_CONTAINER_MEMBERS(base_type) \
+  using typename base_type::value_type;                    \
+  using typename base_type::reference;                     \
+  using typename base_type::const_reference;               \
+  using typename base_type::iterator;                      \
+  using typename base_type::const_iterator;                \
+  using typename base_type::difference_type;               \
+  using typename base_type::size_type;                     \
+  using base_type::begin;                                  \
+  using base_type::end;                                    \
+  using base_type::cbegin;                                 \
+  using base_type::cend;                                   \
+  using base_type::size;                                   \
+  using base_type::max_size;                               \
+  using base_type::empty;                                  \
+  using base_type::operator=;                              \
+  using base_type::swap;
+
+// **INTERNAL, DO NOT USE DIRECTLY IN CLASSES!**
+// Imports (via `using`) extra members required by C++ Reversible Container.
+// `base_type` must be inherited ContainerProxyBase class type.
+#define INTERNAL_USING_CONTAINER_PROXY_REVERSIBLE_CONTAINER_MEMBERS(base_type) \
+  using typename base_type::reverse_iterator;                                  \
+  using typename base_type::const_reverse_iterator;                            \
+  using base_type::rbegin;                                                     \
+  using base_type::rend;                                                       \
+  using base_type::crbegin;                                                    \
+  using base_type::crend;
+
+// Imports (via `using`) additional members required by C++ Sequence Container.
+// Can be called only inside body of a class deriving from ContainerProxyBase.
+// `base_type` must be inherited ContainerProxyBase class type.
+#define USING_CONTAINER_PROXY_SEQUENCE_CONTAINER_MEMBERS(base_type) \
+  USING_CONTAINER_PROXY_CONTAINER_MEMBERS(base_type)                \
+  using base_type::emplace;                                         \
+  using base_type::insert;                                          \
+  using base_type::erase;                                           \
+  using base_type::clear;                                           \
+  using base_type::assign;                                          \
+  using base_type::front;
+
+// Imports (via `using`) members supported by std::vector.
+// Can be called only inside body of a class deriving from ContainerProxyBase.
+// `base_type` must be inherited ContainerProxyBase class type.
+#define USING_CONTAINER_PROXY_STD_VECTOR_MEMBERS(base_type)              \
+  USING_CONTAINER_PROXY_SEQUENCE_CONTAINER_MEMBERS(base_type)            \
+  INTERNAL_USING_CONTAINER_PROXY_REVERSIBLE_CONTAINER_MEMBERS(base_type) \
+  using base_type::back;                                                 \
+  using base_type::emplace_front;                                        \
+  using base_type::emplace_back;                                         \
+  using base_type::push_front;                                           \
+  using base_type::push_back;                                            \
+  using base_type::pop_front;                                            \
+  using base_type::pop_back;                                             \
+  using base_type::operator[];                                           \
+  using base_type::at;                                                   \
+  using base_type::capacity;                                             \
+  using base_type::reserve;                                              \
+  using base_type::resize;
+
+// Imports (via `using`) members supported by std::list.
+// Can be called only inside body of a class deriving from ContainerProxyBase.
+// `base_type` must be inherited ContainerProxyBase class type.
+#define USING_CONTAINER_PROXY_STD_LIST_MEMBERS(base_type)                \
+  USING_CONTAINER_PROXY_SEQUENCE_CONTAINER_MEMBERS(base_type)            \
+  INTERNAL_USING_CONTAINER_PROXY_REVERSIBLE_CONTAINER_MEMBERS(base_type) \
+  using base_type::back;                                                 \
+  using base_type::emplace_front;                                        \
+  using base_type::emplace_back;                                         \
+  using base_type::push_front;                                           \
+  using base_type::push_back;                                            \
+  using base_type::pop_front;                                            \
+  using base_type::pop_back;                                             \
+  using base_type::resize;
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_CONTAINER_PROXY_H_
