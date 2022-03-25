@@ -68,6 +68,13 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
       absl::string_view text, absl::string_view name,
       const VerilogPreprocess::Config& preprocess_config);
 
+  // Automatically analyze with correct parsing mode like AnalyzeAutomaticMode()
+  // but attempt first with preprocessor disabled to get as complete as
+  // possible parse tree; if this yields to syntax errors, fall back to
+  // enabling preprocess branches.
+  static std::unique_ptr<VerilogAnalyzer> AnalyzeAutomaticPreprocessFallback(
+      absl::string_view text, absl::string_view name);
+
   const VerilogPreprocessData& PreprocessorData() const {
     return preprocessor_data_;
   }

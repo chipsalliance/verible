@@ -205,6 +205,19 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
   return analyzer;
 }
 
+std::unique_ptr<VerilogAnalyzer>
+VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(absl::string_view text,
+                                                    absl::string_view name) {
+  std::unique_ptr<verilog::VerilogAnalyzer> parser;
+  for (bool preprocess_filter_branches : {false, true}) {
+    parser = verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
+        text, name, {.filter_branches = preprocess_filter_branches});
+    if (parser && parser->LexStatus().ok() && parser->ParseStatus().ok()) break;
+    VLOG(1) << "Retry parsing with filter branches enabled";
+  }
+  return parser;
+}
+
 void VerilogAnalyzer::FilterTokensForSyntaxTree() {
   data_.FilterTokens(&VerilogLexer::KeepSyntaxTreeTokens);
 }
