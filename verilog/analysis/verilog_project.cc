@@ -33,6 +33,13 @@
 
 namespace verilog {
 
+// All files we process with the verilog project, essentially applications that
+// build a symbol table (project-tool, kythe-indexer) only benefit from
+// processing the same sequence of tokens a synthesis tool sees.
+static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{
+    .filter_branches = true,
+};
+
 VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
                                      const absl::Status& status)
     : referenced_path_(referenced_path), status_(status) {}
@@ -47,8 +54,8 @@ absl::Status VerilogSourceFile::Open() {
   if (!status_.ok()) return status_;
 
   // TODO(fangism): std::move or memory-map to avoid a short-term copy.
-  analyzed_structure_ =
-      absl::make_unique<VerilogAnalyzer>(content, ResolvedPath());
+  analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
+      content, ResolvedPath(), kPreprocessConfig);
   state_ = State::kOpened;
   // status_ is Ok here.
   return status_;
@@ -94,8 +101,8 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 absl::Status InMemoryVerilogSourceFile::Open() {
-  analyzed_structure_ = ABSL_DIE_IF_NULL(
-      absl::make_unique<VerilogAnalyzer>(contents_for_open_, ResolvedPath()));
+  analyzed_structure_ = ABSL_DIE_IF_NULL(std::make_unique<VerilogAnalyzer>(
+      contents_for_open_, ResolvedPath(), kPreprocessConfig));
   state_ = State::kOpened;
   status_ = absl::OkStatus();
   return status_;
@@ -298,6 +305,7 @@ const VerilogSourceFile* VerilogProject::LookupFileOrigin(
 
 FileList ParseSourceFileList(absl::string_view file_list_path,
                              const std::string& file_list_content) {
+  // TODO(hzeller): parse +define+ and stash into preprocessing configuration.
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
   FileList file_list_out;
   file_list_out.file_list_path = std::string(file_list_path);
