@@ -5453,7 +5453,7 @@ net_declaration
                           MakePackedDimensionsNode($3),
                           $4, $5, $6); }
   | net_type delay3 net_variable_or_decl_assigns ';'
-  { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2, $3, $4); }
+  { $$ = MakeTaggedNode(N::kNetDeclaration, $1, nullptr, nullptr, $2, $3, $4); }
   /* TODO(fangism): net_type_identifer [ delay_control ] list_of_net_decl_assignments */
   /* TODO(fangism): TK_interconnect ... */
   ;

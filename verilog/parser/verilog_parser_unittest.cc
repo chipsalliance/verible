@@ -1787,6 +1787,9 @@ static const ParserTestCaseArray kModuleTests = {
     "endmodule",
     // net declarations
     "module m; wire #(100) x = y,z=k,foo; endmodule\n",
+    "module m; wire #1.5 x = y; endmodule;\n"
+    "module m; wire #(100) x = y; endmodule;\n"
+    "module m; wire [1:0] #1 x = y; endmodule;\n"
     "module m; wire signed foo; endmodule\n",
     "module m; wire signed [7:0] foo; endmodule\n",
     "module m; wire unsigned foo; endmodule\n",
