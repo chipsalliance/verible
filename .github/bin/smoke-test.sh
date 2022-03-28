@@ -119,6 +119,88 @@ KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
 
+##
+# Some tools still not fully process all files and return a non-zero exit
+# count.
+# This is to record the expected non-zero exits, so that we can report if
+# things improve or regress.
+# TODO: get these numbers to zero. If zero, the corresponding line can be
+# removed.
+declare -A ExpectedFailCount
+
+ExpectedFailCount[syntax:ibex]=13
+ExpectedFailCount[lint:ibex]=13
+ExpectedFailCount[project:ibex]=175
+
+ExpectedFailCount[syntax:opentitan]=29
+ExpectedFailCount[lint:opentitan]=29
+ExpectedFailCount[formatter:opentitan]=1
+ExpectedFailCount[project:opentitan]=648
+
+ExpectedFailCount[project:Cores-SweRV]=21
+
+ExpectedFailCount[syntax:cva6]=6
+ExpectedFailCount[lint:cva6]=6
+ExpectedFailCount[project:cva6]=25
+
+ExpectedFailCount[syntax:uvm]=1
+ExpectedFailCount[lint:uvm]=1
+ExpectedFailCount[project:uvm]=43
+
+ExpectedFailCount[syntax:tnoc]=3
+ExpectedFailCount[lint:tnoc]=3
+ExpectedFailCount[project:tnoc]=24
+
+ExpectedFailCount[project:80x86]=2
+
+ExpectedFailCount[syntax:XilinxUnisimLibrary]=9
+ExpectedFailCount[lint:XilinxUnisimLibrary]=9
+ExpectedFailCount[project:XilinxUnisimLibrary]=27
+
+ExpectedFailCount[syntax:black-parrot]=173
+ExpectedFailCount[lint:black-parrot]=173
+ExpectedFailCount[project:black-parrot]=185
+
+ExpectedFailCount[syntax:ivtest]=192
+ExpectedFailCount[lint:ivtest]=192
+ExpectedFailCount[formatter:ivtest]=9
+ExpectedFailCount[project:ivtest]=221
+
+ExpectedFailCount[syntax:basejump_stl]=436
+ExpectedFailCount[lint:basejump_stl]=436
+ExpectedFailCount[project:basejump_stl]=542
+
+# Ideally, we expect all tools to process all files with a zero exit code.
+# However, that is not always the case, so we document the current
+# state, so that we can see regressions.
+# Currently, either way will not change the output.
+function verify_expected_non_zero_exit_count() {
+  local TOOL_SHORT_NAME=$1
+  local PROJECT_NAME=$2
+  local FILE_COUNT=$3
+  local OBSERVED_NONZERO_COUNT=$4
+
+  echo "  -> Non zero exit code ${OBSERVED_NONZERO_COUNT}/${NUM_FILES}"
+
+  expected_count_key="${TOOL_SHORT_NAME}:${PROJECT_NAME}"
+  if [[ -v ExpectedFailCount[${expected_count_key}] ]]; then
+    expected_count=${ExpectedFailCount[${expected_count_key}]}
+    if [ ${OBSERVED_NONZERO_COUNT} -gt ${expected_count} ] ; then
+      echo "::error:: 😱 More failures than expected ${expected_count}"
+      return 1
+    elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
+      echo "::notice:: 🎉 Yay, reduced non-zero exit count than expected ${expected_count}"
+    fi
+  else
+    if [ ${OBSERVED_NONZERO_COUNT} -gt 0 ] ; then
+      echo "::error:: ********************* Not mentioned in ExpectedFailCount *******"
+      echo "Add  ExpectedFailCount[${TOOL_SHORT_NAME}:${PROJECT_NAME}]=${OBSERVED_NONZERO_COUNT}"
+      return 1
+    fi
+  fi
+  return 0
+}
+
 # Run smoke test on provided files for project.
 # Returns 0 if all tools finished without crashing.
 #
@@ -199,7 +281,11 @@ function run_smoke_test() {
         fi
       fi
     done < ${FILELIST}
-    echo "  -> Non zero exit code ${non_zero_exit_code}/${NUM_FILES}"
+
+    # Let's see if number of non-zero exit codes match what we expect
+    verify_expected_non_zero_exit_count ${short_tool_name} ${PROJECT_NAME} ${NUM_FILES} ${non_zero_exit_code}
+    result=$((${result} + $?))
+
   done  # for tool
 
   rm -f ${PROJECT_FILE_LIST} ${TOOL_OUT}
