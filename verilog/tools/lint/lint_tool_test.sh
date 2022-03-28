@@ -900,6 +900,59 @@ interactive_autofix_test "@^(y***D" \
 
 ################################################################################
 
+echo "=== Test --generate_auto_waiver: run linter on a file, then use the generated waiver file to waive all violations"
+
+# File with SV base
+TEST_FILE="${TEST_TMPDIR}/generate-waiver.sv"
+cat >"${TEST_FILE}" <<EOF
+module m;
+wire x = y;      
+always @* x=y;
+always @* x=y;
+endmodule
+
+
+module m;
+
+begin 
+    wire x=y; 
+end
+begin 
+   wire s=y; 
+end
+endmodule
+
+
+module m;
+wire x = y;      
+always @* x=y;
+always @* x=y;
+endmodule
+EOF
+
+
+"$lint_tool" "${TEST_FILE}" --generate_auto_waiver "${MY_OUTPUT_FILE}"  &> /dev/null 
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+"$lint_tool" "${TEST_FILE}" --waiver_files "${MY_OUTPUT_FILE}"  &>  "${MY_OUTPUT_FILE}.err"
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+[[ -s "{$MY_OUTPUT_FILE}.err" ]] && {
+  echo "Expected ${MY_OUTPUT_FILE}.err to be empty, but got non-empty."
+  exit 1
+}
+
+
+################################################################################
+
 echo "=== Test --autofix=inplace-interactive: Choose alternative fix"
 
 # Choose alternatives with key '1' or '2'
