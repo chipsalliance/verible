@@ -132,16 +132,16 @@ ExpectedFailCount[syntax:ibex]=13
 ExpectedFailCount[lint:ibex]=13
 ExpectedFailCount[project:ibex]=175
 
-ExpectedFailCount[syntax:opentitan]=29
-ExpectedFailCount[lint:opentitan]=29
+ExpectedFailCount[syntax:opentitan]=27
+ExpectedFailCount[lint:opentitan]=27
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=648
+ExpectedFailCount[project:opentitan]=646
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
-ExpectedFailCount[syntax:cva6]=6
-ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=25
+ExpectedFailCount[syntax:cva6]=4
+ExpectedFailCount[lint:cva6]=4
+ExpectedFailCount[project:cva6]=23
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -161,10 +161,10 @@ ExpectedFailCount[syntax:black-parrot]=173
 ExpectedFailCount[lint:black-parrot]=173
 ExpectedFailCount[project:black-parrot]=185
 
-ExpectedFailCount[syntax:ivtest]=192
-ExpectedFailCount[lint:ivtest]=192
+ExpectedFailCount[syntax:ivtest]=188
+ExpectedFailCount[lint:ivtest]=188
 ExpectedFailCount[formatter:ivtest]=9
-ExpectedFailCount[project:ivtest]=221
+ExpectedFailCount[project:ivtest]=217
 
 ExpectedFailCount[syntax:basejump_stl]=436
 ExpectedFailCount[lint:basejump_stl]=436
@@ -189,7 +189,8 @@ function verify_expected_non_zero_exit_count() {
       echo "::error:: 😱 More failures than expected ${expected_count}"
       return 1
     elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
-      echo "::notice:: 🎉 Yay, reduced non-zero exit count than expected ${expected_count}"
+      echo "::notice:: 🎉 Yay, reduced non-zero exit count ${expected_count} -> ${OBSERVED_NONZERO_COUNT}"
+      echo "Set ExpectedFailCount[${TOOL_SHORT_NAME}:${PROJECT_NAME}]=${OBSERVED_NONZERO_COUNT}"
     fi
   else
     if [ ${OBSERVED_NONZERO_COUNT} -gt 0 ] ; then
