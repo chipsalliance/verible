@@ -141,8 +141,8 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
 
 // Formats and outputs violation to a file stream in a syntax accepted by
 // --waiver_files flag Path is file path of original file
-void LintStatusFormatter::FormatAuotoGeneratedWaiverViolation(
-    std::ofstream* stream, const LintViolation& violation,
+void LintStatusFormatter::FormatViolationWaiver(
+    std::ostream* stream, const LintViolation& violation,
     absl::string_view base, absl::string_view path,
     absl::string_view rule_name) const {
   const verible::LineColumnRange range{
