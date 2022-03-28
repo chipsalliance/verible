@@ -100,6 +100,9 @@ ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
 ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to if "
           "--autofix=patch or --autofix=patch-interactive");
+ABSL_FLAG(std::string, generate_auto_waiver, "",
+          "Path to auto generated waiver config file "
+          "Please refer to the README file for information about its format.");
 
 // LINT.ThenChange(README.md)
 
@@ -164,10 +167,15 @@ int main(int argc, char** argv) {
     return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
 
+  const std::string generate_auto_waiver = absl::GetFlag(FLAGS_generate_auto_waiver);
+  std::ofstream waiver_generated_stream (generate_auto_waiver, std::ofstream::out);
   std::unique_ptr<verible::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
       violation_handler.reset(new verible::ViolationPrinter(&std::cerr));
+      if(!generate_auto_waiver.empty()){
+            violation_handler.reset(new verible::ViolationWaiverPrinter(&waiver_generated_stream));
+      }
       break;
     case AutofixMode::kPatchInteractive:
       CHECK(autofix_output_stream);

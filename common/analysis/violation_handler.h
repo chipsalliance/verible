@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <ostream>
+#include <fstream>
 #include <set>
 
 #include "absl/strings/string_view.h"
@@ -51,10 +52,26 @@ class ViolationPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
-      absl::string_view base, absl::string_view path) final;
+      absl::string_view base, absl::string_view path);
 
  protected:
   std::ostream* const stream_;
+  verible::LintStatusFormatter* formatter_;
+};
+
+
+// ViolationHandler that prints all violations in a format required by --waiver_files flag
+class ViolationWaiverPrinter : public ViolationHandler {
+ public:
+  explicit ViolationWaiverPrinter(std::ofstream* stream)
+      : stream_(stream), formatter_(nullptr) {}
+
+  void HandleViolations(
+      const std::set<verible::LintViolationWithStatus>& violations,
+      absl::string_view base, absl::string_view path) ;
+
+ protected:
+  std::ofstream* const stream_;
   verible::LintStatusFormatter* formatter_;
 };
 
