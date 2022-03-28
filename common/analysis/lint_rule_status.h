@@ -244,11 +244,10 @@ class LintStatusFormatter {
   // --waiver_files flag. Path is file path of original file that is being
   // violated. Base is the string_view of the entire contents, used only for
   // byte offset calculation.
-  void FormatAuotoGeneratedWaiverViolation(std::ofstream* stream,
-                                           const LintViolation& violation,
-                                           absl::string_view base,
-                                           absl::string_view path,
-                                           absl::string_view rule_name) const;
+  void FormatViolationWaiver(std::ostream* stream,
+                             const LintViolation& violation,
+                             absl::string_view base, absl::string_view path,
+                             absl::string_view rule_name) const;
 
  private:
   // Translates byte offsets, which are supplied by LintViolations via

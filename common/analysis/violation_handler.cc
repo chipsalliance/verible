@@ -64,10 +64,14 @@ void ViolationWaiverPrinter::HandleViolations(
     absl::string_view path) {
   verible::LintStatusFormatter formatter(base);
   for (auto violation : violations) {
-    formatter.FormatAuotoGeneratedWaiverViolation(
-        stream_, *violation.violation, base, path,
-        violation.status->lint_rule_name);
-    (*stream_) << std::endl;
+    formatter.FormatViolation(message_stream_, *violation.violation, base, path,
+                              violation.status->url,
+                              violation.status->lint_rule_name);
+    (*message_stream_) << std::endl;
+
+    formatter.FormatViolationWaiver(waiver_stream_, *violation.violation, base,
+                                    path, violation.status->lint_rule_name);
+    (*waiver_stream_) << std::endl;
   }
 }
 

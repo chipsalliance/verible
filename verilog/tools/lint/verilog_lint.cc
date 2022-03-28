@@ -44,6 +44,7 @@ enum class AutofixMode {
   kPatch,               // Emit a patch
   kInplaceInteractive,  // Interactively choose fixes, apply inplace
   kInplace,             // Automatically apply patch in-place.
+  kGenerateWaiver,      // Generate waiver file for violations
 };
 
 static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
@@ -53,6 +54,7 @@ static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
       {"patch", AutofixMode::kPatch},
       {"inplace-interactive", AutofixMode::kInplaceInteractive},
       {"inplace", AutofixMode::kInplace},
+      {"generate-waiver", AutofixMode::kGenerateWaiver},
   });
   return kAutofixModeEnumStringMap;
 }
@@ -94,15 +96,14 @@ ABSL_FLAG(bool, show_diagnostic_context, false,
           "line on which the diagnostic was found,"
           "followed by a line with a position marker");
 
-ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
-          "autofix mode; one of "
-          "[no|patch-interactive|patch|inplace-interactive|inplace]");
+ABSL_FLAG(
+    AutofixMode, autofix, AutofixMode::kNo,
+    "autofix mode; one of "
+    "[no|patch-interactive|patch|inplace-interactive|inplace|generate-waiver]");
 ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to if "
-          "--autofix=patch or --autofix=patch-interactive");
-ABSL_FLAG(std::string, generate_auto_waiver, "",
-          "Path to auto generated waiver config file "
-          "Please refer to the README file for information about its format.");
+          "--autofix=patch or --autofix=patch-interactive or "
+          "--autofix=generate-waiver");
 
 // LINT.ThenChange(README.md)
 
@@ -139,7 +140,8 @@ int main(int argc, char** argv) {
   std::ostream* autofix_output_stream = nullptr;
 
   if (autofix_mode == AutofixMode::kPatch ||
-      autofix_mode == AutofixMode::kPatchInteractive) {
+      autofix_mode == AutofixMode::kPatchInteractive ||
+      autofix_mode == AutofixMode::kGenerateWaiver) {
     if (autofix_output_file.empty() || autofix_output_file == "-") {
       autofix_output_stream = &std::cout;
     } else {
@@ -167,18 +169,10 @@ int main(int argc, char** argv) {
     return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
 
-  const std::string generate_auto_waiver =
-      absl::GetFlag(FLAGS_generate_auto_waiver);
-  std::ofstream waiver_generated_stream(generate_auto_waiver,
-                                        std::ofstream::out);
   std::unique_ptr<verible::ViolationHandler> violation_handler;
   switch (autofix_mode) {
     case AutofixMode::kNo:
       violation_handler.reset(new verible::ViolationPrinter(&std::cerr));
-      if (!generate_auto_waiver.empty()) {
-        violation_handler.reset(
-            new verible::ViolationWaiverPrinter(&waiver_generated_stream));
-      }
       break;
     case AutofixMode::kPatchInteractive:
       CHECK(autofix_output_stream);
@@ -196,6 +190,10 @@ int main(int argc, char** argv) {
     case AutofixMode::kInplace:
       violation_handler.reset(
           new verible::ViolationFixer(&std::cerr, nullptr, applyAllFixes));
+      break;
+    case AutofixMode::kGenerateWaiver:
+      violation_handler.reset(new verible::ViolationWaiverPrinter(
+          &std::cerr, autofix_output_stream));
       break;
   }
 

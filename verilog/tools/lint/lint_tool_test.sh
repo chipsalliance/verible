@@ -900,7 +900,7 @@ interactive_autofix_test "@^(y***D" \
 
 ################################################################################
 
-echo "=== Test --generate_auto_waiver: run linter on a file, then use the generated waiver file to waive all violations"
+echo "=== Test --autofix=generate-waiver --autofix_output_file: run linter on a file, then use the generated waiver file to waive all violations"
 
 # File with SV base
 TEST_FILE="${TEST_TMPDIR}/generate-waiver.sv"
@@ -931,7 +931,7 @@ endmodule
 EOF
 
 
-"$lint_tool" "${TEST_FILE}" --generate_auto_waiver "${MY_OUTPUT_FILE}"  &> /dev/null 
+"$lint_tool" "${TEST_FILE}" --autofix=generate-waiver --autofix_output_file "${MY_OUTPUT_FILE}"  &> /dev/null 
 status="$?"
 [[ $status == 1 ]] || {
   echo "Expected exit code 1, but got $status"
