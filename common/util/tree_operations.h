@@ -43,12 +43,20 @@
 // - `ValueType& Value()`:
 //   Returns reference to a value stored in the node.
 //   Types with this member can be detected by checking whether
-//   `TreeNodeTraits<T>::Parent::available` is true.
+//   `TreeNodeTraits<T>::Value::available` is true.
 //
 // - `subnodes_type` (typename):
-//   Container type which should be used for storing arrays of detached
-//   child nodes. It must be move-assignable to, and move-constructible from,
-//   a value returned by `Children()` method.
+//   Container type which should be used for storing collections of detached
+//   child nodes.
+//   It must be move-assignable to, and move-constructible from a value returned
+//   by `Children()` method. It must provide at least the same STL container's
+//   interface and iterator/pointer stability guarantees as a return type of
+//   `Children()` method.
+//   The use case where this alias is useful is when `Children()` returns a
+//   container wrapped by some internal wrapper type that is either not
+//   constructible outside of the node class or has some extra logic that is
+//   not useful when used outside of a node. The `subnodes_type` in such case
+//   should be an alias to the container's real type.
 //   When the type is absent, it is assumed to be the type returned by
 //   `Children()` method with reference and other modifiers removed.
 //   It is available through `TreeNodeTraits<T>::Children::container_type`.
@@ -203,7 +211,7 @@ bool is_leaf(const T& node) {
 // This works on any internal node, not just the root.
 // This implementation fatally exits if any indices are out-of-range.
 // The const-ness of the returned reference matches the const-ness of the node
-// argumnent.
+// argument.
 template <class T, class Iterator,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 T& DescendPath(T& node, Iterator start, Iterator end) {
@@ -654,9 +662,10 @@ bool HoistOnlyChild(T& node) {
 // nodes' values, and the Nth sibling will adopt N+1's children.
 // The 'joiner' function does: *left = f(*left, *right);
 // The (N+1) sibling will be erased in the process, and every sibling
-// thereafter will be shifted back one position (same inefficiency as shifting
-// vector contents).  This invalidates all iterators after position N,
-// and iterators to the Nth node's children (possible realloc).
+// thereafter will be shifted back one position. Depending on a children
+// container type this can invalidate all interators after position N and
+// interators to Nth node children. This applies e.g. for vector-like
+// containers, with contiguous storage.
 //
 // Requires `push_back()` and `erase()` methods in the children container.
 template <class T,  //
