@@ -1428,8 +1428,12 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 }
 
 static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
-  const auto& uwline = RightmostDescendant(partition).Value();
-  return !uwline.IsEmpty() && uwline.TokensRange().front().TokenEnum() == ';';
+  const auto& uwline = partition.Value();
+  if (uwline.IsEmpty()) return false;
+  const auto first_token = uwline.TokensRange().front().TokenEnum();
+  return (first_token == ';' ||
+          first_token ==
+              verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations);
 }
 
 static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
@@ -1608,8 +1612,8 @@ static void AttachTrailingSemicolonToPreviousPartition(
   // In some cases where macros are involved, there may not necessarily
   // be a semicolon where one is grammatically expected.
   // In those cases, do nothing.
-  if (PartitionStartsWithSemicolon(*partition)) {
-    auto* semicolon_partition = &RightmostDescendant(*partition);
+  auto* semicolon_partition = &RightmostDescendant(*partition);
+  if (PartitionStartsWithSemicolon(*semicolon_partition)) {
     // When the semicolon is forced to wrap (e.g. when previous partition ends
     // with EOL comment), wrap previous partition with a group and append the
     // semicolon partition to it.
