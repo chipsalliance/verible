@@ -1539,7 +1539,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   if (previous_partition != nullptr) {
     if (!previous_partition->Value().TokensRange().empty()) {
       const auto& previous_token =
-          previous_partition->Value().TokensRange().front();
+          previous_partition->Value().TokensRange().back();
       absl::string_view original_text_between = verible::make_string_view_range(
           previous_token.Text().end(), separator->Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
@@ -1555,7 +1555,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   const auto* next_partition = NextLeaf(*partition);
   if (next_partition != nullptr) {
     if (!next_partition->Value().TokensRange().empty()) {
-      const auto& next_token = next_partition->Value().TokensRange().back();
+      const auto& next_token = next_partition->Value().TokensRange().front();
       absl::string_view original_text_between = verible::make_string_view_range(
           separator->Text().end(), next_token.Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
@@ -1592,8 +1592,8 @@ static void AttachSeparatorToPreviousOrNextPartition(
 
 void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
   CHECK_NOTNULL(partition);
-  // Skip first and last partition, as those can't contain just a separator.
-  for (int i = 1; i < static_cast<int>(partition->Children().size()) - 1; ++i) {
+  // Skip the first partition, it can't contain just a separator.
+  for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {
     auto& subpartition = partition->Children()[i];
     // This can change children count
     AttachSeparatorToPreviousOrNextPartition(&subpartition);

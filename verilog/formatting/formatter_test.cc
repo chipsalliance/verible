@@ -11842,8 +11842,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"// verilog_syntax: parse-as-module-body\n"
      "$foobarbaz(arg1, arg2,/* c1 */ /* c2 */);\n",
      "// verilog_syntax: parse-as-module-body\n"
-     "$foobarbaz(arg1, arg2\n"
-     "           ,  /* c1 */  /* c2 */);\n"},
+     "$foobarbaz(arg1,\n"
+     "           arg2,  /* c1 */  /* c2 */);\n"},
     {"// verilog_syntax: parse-as-module-body\n"
      "$foobarbaz(arg1, arg2,/* c */\n"
      ");\n",
@@ -11854,8 +11854,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "$foobarbaz(arg1, arg2,/* c1 */ /* c2 */\n"
      ");\n",
      "// verilog_syntax: parse-as-module-body\n"
-     "$foobarbaz(arg1, arg2\n"
-     "           ,  /* c1 */  /* c2 */\n"
+     "$foobarbaz(arg1,\n"
+     "           arg2,  /* c1 */  /* c2 */\n"
      ");\n"},
     {"// verilog_syntax: parse-as-module-body\n"
      "$foobarbaz(arg1, arg2,// c\n"
@@ -12012,8 +12012,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"// verilog_syntax: parse-as-module-body\n"
      "`FOOBARBAZ(arg1, arg2,/* c1 */ /* c2 */);\n",
      "// verilog_syntax: parse-as-module-body\n"
-     "`FOOBARBAZ(arg1, arg2\n"
-     "           ,  /* c1 */  /* c2 */);\n"},
+     "`FOOBARBAZ(arg1,\n"
+     "           arg2,  /* c1 */  /* c2 */);\n"},
     {"// verilog_syntax: parse-as-module-body\n"
      "`FOOBARBAZ(arg1, arg2,/* c */\n"
      ");\n",
@@ -12024,8 +12024,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "`FOOBARBAZ(arg1, arg2,/* c1 */ /* c2 */\n"
      ");\n",
      "// verilog_syntax: parse-as-module-body\n"
-     "`FOOBARBAZ(arg1, arg2\n"
-     "           ,  /* c1 */  /* c2 */\n"
+     "`FOOBARBAZ(arg1,\n"
+     "           arg2,  /* c1 */  /* c2 */\n"
      ");\n"},
     {"// verilog_syntax: parse-as-module-body\n"
      "`FOOBARBAZ(arg1, arg2,// c\n"
