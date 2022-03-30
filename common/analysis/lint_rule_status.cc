@@ -140,7 +140,7 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
 }
 
 // Formats and outputs violation to a file stream in a syntax accepted by
-// --waiver_files flag Path is file path of original file
+// --waiver_files flag. Path is file path of original file
 void LintStatusFormatter::FormatViolationWaiver(
     std::ostream* stream, const LintViolation& violation,
     absl::string_view base, absl::string_view path,

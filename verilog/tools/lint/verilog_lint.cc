@@ -102,8 +102,8 @@ ABSL_FLAG(
     "[no|patch-interactive|patch|inplace-interactive|inplace|generate-waiver]");
 ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to if "
-          "--autofix=patch or --autofix=patch-interactive or "
-          "--autofix=generate-waiver");
+          "--autofix=patch or --autofix=patch-interactive "
+          "or a waiver file if --autofix=generate-waiver");
 
 // LINT.ThenChange(README.md)
 

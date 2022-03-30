@@ -946,7 +946,8 @@ status="$?"
 }
 
 [[ -s "{$MY_OUTPUT_FILE}.err" ]] && {
-  echo "Expected ${MY_OUTPUT_FILE}.err to be empty, but got non-empty."
+  echo "Expected ${MY_OUTPUT_FILE}.err to be empty, but got:"
+  cat "${MY_OUTPUT_FILE}.err"
   exit 1
 }
 
