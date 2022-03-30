@@ -144,12 +144,6 @@ class TreeUnwrapper : public TreeContextVisitor {
   // in preformatted_tokens_.
   bool NextUnfilteredTokenIsRetained() const;
 
-  // Moves the current rightmost partition into its previous sibling,
-  // effectively merging the last two partitions.  If a partition is removed
-  // as a result, update the active_unwrapped_lines_ so it does not reference
-  // the deleted partition.
-  void MergeLastTwoPartitions();
-
   // Translate format token iterator into a numeric index, relative to
   // the start of preformatted_tokens_.
   // Mainly used for diagnostics and debugging.

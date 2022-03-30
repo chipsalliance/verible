@@ -225,23 +225,6 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
   }
 }
 
-void TreeUnwrapper::MergeLastTwoPartitions() {
-  auto* parent =
-      MergeLeafIntoPreviousLeaf(&RightmostDescendant(unwrapped_lines_));
-  if (parent != nullptr) {
-    // Pre-existing partition no longer exists, update active_unwrapped_lines_
-    // to point to a new empty partition at the current indentation level.
-    const auto current_token_iter =
-        RightmostDescendant(unwrapped_lines_).Value().TokensRange().end();
-    parent->Children().emplace_back(UnwrappedLine(
-        current_indentation_spaces_, current_token_iter
-        // TODO(fangism): partitioning policy?
-        // TODO(fangism): origin?
-        ));
-    active_unwrapped_lines_ = &parent->Children().back();
-  }
-}
-
 void TreeUnwrapper::AddTokenToCurrentUnwrappedLine() {
   CHECK(NextUnfilteredTokenIsRetained());
   // Advance CurrentFormatTokenIterator().

@@ -2731,6 +2731,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
+    case NodeEnum::kAssertionVariableDeclarationList: {
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      break;
+    }
+
     case NodeEnum::kArgumentList: {
       SetCommentLinePartitionAsAlreadyFormatted(&partition);
       AttachSeparatorsToListElementPartitions(&partition);
@@ -2891,6 +2896,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       FlattenOnlyChildrenWithChildren(partition);
       VLOG(4) << "after flatten:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
+      AttachSeparatorsToListElementPartitions(&partition);
       // Merge the 'assign' keyword with the (first) x=y assignment.
       // TODO(fangism): reshape for multiple assignments.
       verible::MergeLeafIntoNextLeaf(&partition.Children().front());
@@ -3026,7 +3032,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kPortActualList:
     case NodeEnum::kPortDeclarationList:
     case NodeEnum::kPortList:
-    case NodeEnum::kVariableDeclarationAssignmentList: {
+    case NodeEnum::kVariableDeclarationAssignmentList:
+    case NodeEnum::kMacroFormalParameterList: {
+      AttachSeparatorsToListElementPartitions(&partition);
+      break;
+    }
+
+    case NodeEnum::kModportDeclaration: {
       AttachSeparatorsToListElementPartitions(&partition);
       break;
     }
@@ -3129,24 +3141,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
-    case ',': {
-      if (CurrentUnwrappedLine().Size() == 1) {
-        // Partition would begin with a comma,
-        // instead add this token to previous partition
-        if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
-          MergeLastTwoPartitions();
-      }
-      break;
-    }
-    case verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations: {
-      // is a ';'
-      if (current_context_.DirectParentIs(
-              NodeEnum::kAssertionVariableDeclarationList) &&
-          !PartitionIsForcedIntoNewLine(*CurrentTokenPartition())) {
-        MergeLastTwoPartitions();
-      }
-      break;
-    }
     case PP_else: {
       // Do not allow non-comment tokens on the same line as `else
       // (comments were handled above)
