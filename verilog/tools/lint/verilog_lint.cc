@@ -44,6 +44,7 @@ enum class AutofixMode {
   kPatch,               // Emit a patch
   kInplaceInteractive,  // Interactively choose fixes, apply inplace
   kInplace,             // Automatically apply patch in-place.
+  kGenerateWaiver,      // Generate waiver file for violations
 };
 
 static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
@@ -53,6 +54,7 @@ static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
       {"patch", AutofixMode::kPatch},
       {"inplace-interactive", AutofixMode::kInplaceInteractive},
       {"inplace", AutofixMode::kInplace},
+      {"generate-waiver", AutofixMode::kGenerateWaiver},
   });
   return kAutofixModeEnumStringMap;
 }
@@ -94,12 +96,14 @@ ABSL_FLAG(bool, show_diagnostic_context, false,
           "line on which the diagnostic was found,"
           "followed by a line with a position marker");
 
-ABSL_FLAG(AutofixMode, autofix, AutofixMode::kNo,
-          "autofix mode; one of "
-          "[no|patch-interactive|patch|inplace-interactive|inplace]");
+ABSL_FLAG(
+    AutofixMode, autofix, AutofixMode::kNo,
+    "autofix mode; one of "
+    "[no|patch-interactive|patch|inplace-interactive|inplace|generate-waiver]");
 ABSL_FLAG(std::string, autofix_output_file, "",
           "File to write a patch with autofixes to if "
-          "--autofix=patch or --autofix=patch-interactive");
+          "--autofix=patch or --autofix=patch-interactive "
+          "or a waiver file if --autofix=generate-waiver");
 
 // LINT.ThenChange(README.md)
 
@@ -136,7 +140,8 @@ int main(int argc, char** argv) {
   std::ostream* autofix_output_stream = nullptr;
 
   if (autofix_mode == AutofixMode::kPatch ||
-      autofix_mode == AutofixMode::kPatchInteractive) {
+      autofix_mode == AutofixMode::kPatchInteractive ||
+      autofix_mode == AutofixMode::kGenerateWaiver) {
     if (autofix_output_file.empty() || autofix_output_file == "-") {
       autofix_output_stream = &std::cout;
     } else {
@@ -185,6 +190,10 @@ int main(int argc, char** argv) {
     case AutofixMode::kInplace:
       violation_handler.reset(
           new verible::ViolationFixer(&std::cerr, nullptr, applyAllFixes));
+      break;
+    case AutofixMode::kGenerateWaiver:
+      violation_handler.reset(new verible::ViolationWaiverPrinter(
+          &std::cerr, autofix_output_stream));
       break;
   }
 

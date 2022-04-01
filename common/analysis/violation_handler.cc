@@ -59,6 +59,22 @@ void ViolationPrinter::HandleViolations(
   }
 }
 
+void ViolationWaiverPrinter::HandleViolations(
+    const std::set<LintViolationWithStatus>& violations, absl::string_view base,
+    absl::string_view path) {
+  verible::LintStatusFormatter formatter(base);
+  for (auto violation : violations) {
+    formatter.FormatViolation(message_stream_, *violation.violation, base, path,
+                              violation.status->url,
+                              violation.status->lint_rule_name);
+    (*message_stream_) << std::endl;
+
+    formatter.FormatViolationWaiver(waiver_stream_, *violation.violation, base,
+                                    path, violation.status->lint_rule_name);
+    (*waiver_stream_) << std::endl;
+  }
+}
+
 void ViolationFixer::CommitFixes(absl::string_view source_content,
                                  absl::string_view source_path,
                                  const verible::AutoFix& fix) const {

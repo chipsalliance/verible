@@ -51,10 +51,30 @@ class ViolationPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
-      absl::string_view base, absl::string_view path) final;
+      absl::string_view base, absl::string_view path) override;
 
  protected:
   std::ostream* const stream_;
+  verible::LintStatusFormatter* formatter_;
+};
+
+// ViolationHandler that prints all violations in a format required by
+// --waiver_files flag
+class ViolationWaiverPrinter : public ViolationHandler {
+ public:
+  explicit ViolationWaiverPrinter(std::ostream* message_stream_,
+                                  std::ostream* waiver_stream_)
+      : message_stream_(message_stream_),
+        waiver_stream_(waiver_stream_),
+        formatter_(nullptr) {}
+
+  void HandleViolations(
+      const std::set<verible::LintViolationWithStatus>& violations,
+      absl::string_view base, absl::string_view path) override;
+
+ protected:
+  std::ostream* const message_stream_;
+  std::ostream* const waiver_stream_;
   verible::LintStatusFormatter* formatter_;
 };
 

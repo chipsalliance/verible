@@ -139,6 +139,21 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
             << " [" << rule_name << ']';
 }
 
+// Formats and outputs violation to a file stream in a syntax accepted by
+// --waiver_files flag. Path is file path of original file
+void LintStatusFormatter::FormatViolationWaiver(
+    std::ostream* stream, const LintViolation& violation,
+    absl::string_view base, absl::string_view path,
+    absl::string_view rule_name) const {
+  const verible::LineColumnRange range{
+      line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
+      line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
+
+  (*stream) << "waive" << ' ' << "--rule=" << rule_name << ' '
+            << "--line=" << range.start.line + 1 << ' ' << "--location="
+            << "\"" << path << "\"";
+}
+
 void LintRuleStatus::WaiveViolations(
     std::function<bool(const LintViolation&)>&& is_waived) {
   std::set<LintViolation> filtered_violations;
