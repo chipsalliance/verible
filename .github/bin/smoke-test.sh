@@ -130,12 +130,12 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=13
 ExpectedFailCount[lint:ibex]=13
-ExpectedFailCount[project:ibex]=172
+ExpectedFailCount[project:ibex]=173
 
-ExpectedFailCount[syntax:opentitan]=27
-ExpectedFailCount[lint:opentitan]=27
+ExpectedFailCount[syntax:opentitan]=28
+ExpectedFailCount[lint:opentitan]=28
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=648
+ExpectedFailCount[project:opentitan]=650
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
@@ -185,9 +185,20 @@ function verify_expected_non_zero_exit_count() {
   expected_count_key="${TOOL_SHORT_NAME}:${PROJECT_NAME}"
   if [[ -v ExpectedFailCount[${expected_count_key}] ]]; then
     expected_count=${ExpectedFailCount[${expected_count_key}]}
+    # We allow some 5% deviation from expected values before we complain loudly
+    local GRACE_VALUE=$(( ${expected_count} / 20 ))
+    if [ ${GRACE_VALUE} -lt 2 ]; then
+      GRACE_VALUE=2
+    fi
     if [ ${OBSERVED_NONZERO_COUNT} -gt ${expected_count} ] ; then
-      echo "::error:: 😱 More failures than expected ${expected_count}"
-      return 1
+      local ALLOWED_UP_TO=$((${expected_count} + ${GRACE_VALUE}))
+      if [ ${OBSERVED_NONZERO_COUNT} -gt ${ALLOWED_UP_TO} ]; then
+        echo "::error:: 😱 Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT}"
+        return 1
+      else
+        echo "::warning:: 😱 Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT} (will be an error once ${GRACE_VALUE} more)"
+        return 0  # Still within grace range.
+      fi
     elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
       echo "::notice:: 🎉 Yay, reduced non-zero exit count ${expected_count} -> ${OBSERVED_NONZERO_COUNT}"
       echo "Set ExpectedFailCount[${TOOL_SHORT_NAME}:${PROJECT_NAME}]=${OBSERVED_NONZERO_COUNT}"
