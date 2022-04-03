@@ -167,15 +167,15 @@ size_t BirthRank(const T& node, std::random_access_iterator_tag) {
 
 // Calls `container.reserve(new_cap)` if container supports this method.
 template <class Container>
-auto /* void */ TryReserve(Container& container,
-                           typename Container::size_type new_cap)
+auto /* void */ ReserveIfSupported(Container& container,
+                                   typename Container::size_type new_cap)
     -> std::void_t<decltype(container.reserve(new_cap))> {
   container.reserve(new_cap);
 }
 
 // No-op candidate used when Container doesn't provide `reserve()` method.
 template <class Container>
-void TryReserve(Container&, ...) {}
+void ReserveIfSupported(Container&, ...) {}
 
 }  // namespace tree_operations_internal
 
@@ -595,8 +595,9 @@ template <class T, typename... AdoptedNodeN>
 std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
 AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
-  using tree_operations_internal::TryReserve;
-  TryReserve(node.Children(), std::size(node.Children()) + sizeof...(node_n));
+  using tree_operations_internal::ReserveIfSupported;
+  ReserveIfSupported(node.Children(),
+                     std::size(node.Children()) + sizeof...(node_n));
   (node.Children().push_back(std::forward<AdoptedNodeN>(node_n)), ...);
 }
 
@@ -608,10 +609,10 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
                            !std::is_const_v<T>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
-  using tree_operations_internal::TryReserve;
+  using tree_operations_internal::ReserveIfSupported;
   auto& src_children = other->Children();
-  TryReserve(node.Children(),
-             std::size(node.Children()) + std::size(src_children));
+  ReserveIfSupported(node.Children(),
+                     std::size(node.Children()) + std::size(src_children));
   for (auto& src_child : src_children) {
     node.Children().push_back(std::move(src_child));
   }
@@ -634,10 +635,10 @@ template <
                      TreeNodeTraits<SrcTree>::available &&
                      std::is_constructible_v<DstTree, DstValue_>>* = nullptr>
 DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
-  using tree_operations_internal::TryReserve;
+  using tree_operations_internal::ReserveIfSupported;
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
-  TryReserve(dst_node.Children(), std::size(src_node.Children()));
+  ReserveIfSupported(dst_node.Children(), std::size(src_node.Children()));
   for (const auto& child : src_node.Children()) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
@@ -701,13 +702,13 @@ void FlattenOnce(T& node) {
   const int grandchildren_count = std::transform_reduce(
       node.Children().begin(), node.Children().end(), 0, std::plus<>(),
       [](const T& gc) { return std::size(gc.Children()); });
-  using tree_operations_internal::TryReserve;
+  using tree_operations_internal::ReserveIfSupported;
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
   using Container = typename TreeNodeTraits<T>::Children::container_type;
   Container grandchildren;
-  TryReserve(grandchildren, grandchildren_count);
+  ReserveIfSupported(grandchildren, grandchildren_count);
 
   for (auto& child : node.Children()) {
     for (auto& grandchild : child.Children()) {
@@ -735,14 +736,14 @@ void FlattenOnlyChildrenWithChildren(
       [](const T& gc) {
         return std::max<size_t>(std::size(gc.Children()), 1u);
       });
-  using tree_operations_internal::TryReserve;
+  using tree_operations_internal::ReserveIfSupported;
 
   // Build new children list in a standalone container, then move-assign it to
   // this node's children container.
   using Container = typename TreeNodeTraits<T>::Children::container_type;
   Container new_children;
 
-  TryReserve(new_children, new_children_count);
+  ReserveIfSupported(new_children, new_children_count);
 
   if (new_offsets != nullptr) {
     new_offsets->clear();
