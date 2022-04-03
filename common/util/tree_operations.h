@@ -242,6 +242,8 @@ T& LeftmostDescendant(T& node) {
 // Returns the node reached by descending through Children().back().
 // The const-ness of the returned reference matches the const-ness of the node
 // argumnent.
+//
+// Requires `back()` method in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr,
           std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
@@ -261,6 +263,8 @@ using PrintTreePrinterFunction = std::function<std::ostream&(
 // Pretty-print in tree-form.  Value() is enclosed in parens, and the whole
 // node is enclosed in braces.
 // This variant supports a custom value 'printer'.
+//
+// Requires `Value()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 std::ostream& PrintTree(const T& node, std::ostream* stream,
@@ -281,6 +285,8 @@ std::ostream& PrintTree(const T& node, std::ostream* stream,
 
 // Pretty-print tree, using the default stream printer, which requires that
 // operator<<(std::ostream&, const value_type&) is defined.
+//
+// Requires `Value()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 std::ostream& PrintTree(const T& node, std::ostream* stream,
@@ -292,6 +298,9 @@ std::ostream& PrintTree(const T& node, std::ostream* stream,
       indent);
 }
 
+// Stream operator overload that calls PrintTree with given stream and node.
+//
+// Requires `Value()` method in the node.
 template <typename T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 std::ostream& operator<<(std::ostream& stream, const T& node) {
@@ -337,6 +346,8 @@ using ApplyOnNodeValueFunction =
 
 // This variant of ApplyPreOrder expects a function on the underlying
 // value_type (const&).
+//
+// Requires `Value()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 void ApplyPreOrder(T& node, const ApplyOnNodeValueFunction<T>& f) {
@@ -346,6 +357,8 @@ void ApplyPreOrder(T& node, const ApplyOnNodeValueFunction<T>& f) {
 
 // This variant of ApplyPostOrder expects a function on the underlying
 // value_type.
+//
+// Requires `Value()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 void ApplyPostOrder(
@@ -361,6 +374,8 @@ void ApplyPostOrder(
 // This function is aware of children container type: it uses `std::distance()`
 // to calculate node index in random access containers (which usually performs
 // in O(1)), and O(n) loop for other containers.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 size_t BirthRank(const T& node) {
@@ -370,6 +385,8 @@ size_t BirthRank(const T& node) {
 }
 
 // Returns the number of parents between this node and the root.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 size_t NumAncestors(const T& node) {
@@ -385,6 +402,8 @@ size_t NumAncestors(const T& node) {
 // This method could have been named IsDescendedFrom().
 // nullptr is never considered an ancestor of any node.
 // 'this' node is not considered an ancestor of itself.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool HasAncestor(const T& node, const T* other) {
@@ -396,6 +415,8 @@ bool HasAncestor(const T& node, const T* other) {
 }
 
 // Overload for nullptr. Always returns false.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 constexpr bool HasAncestor(const T& node, std::nullptr_t) {
@@ -405,6 +426,8 @@ constexpr bool HasAncestor(const T& node, std::nullptr_t) {
 // Returns reference to the tree root, the greatest ancestor of this node.
 // The const-ness of the returned reference matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T& Root(T& node) {
@@ -418,6 +441,8 @@ T& Root(T& node) {
 // Returns the closest common ancestor to this and the other, else nullptr.
 // The const-ness of the returned pointer matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* NearestCommonAncestor(T& node_a, T& node_b) {
@@ -448,6 +473,8 @@ T* NearestCommonAncestor(T& node_a, T& node_b) {
 }
 
 // Returns true if this node has no parent, or it has BirthRank 0.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool IsFirstChild(const T& node) {
@@ -457,6 +484,9 @@ bool IsFirstChild(const T& node) {
 
 // Returns true if this node has no parent, or it is the last child of its
 // parent.
+//
+// Requires `back()` method in the children container.
+// Requires `Parent()` method in the node.
 template <
     class T,  //
     std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr,
@@ -470,6 +500,8 @@ bool IsLastChild(const T& node) {
 // (if it exists), else returns nullptr.
 // The const-ness of the returned pointer matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* NextLeaf(T& node) {
@@ -503,6 +535,8 @@ T* NextLeaf(T& node) {
 // (if it exists), else returns nullptr.
 // The const-ness of the returned pointer matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* PreviousLeaf(T& node) {
@@ -534,6 +568,8 @@ T* PreviousLeaf(T& node) {
 // Returns the next sibling node if it exists, else nullptr.
 // The const-ness of the returned pointer matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* NextSibling(T& node) {
@@ -552,6 +588,8 @@ T* NextSibling(T& node) {
 // Returns the previous sibling node if it exists, else nullptr.
 // The const-ness of the returned pointer matches the const-ness of the node
 // argumnent.
+//
+// Requires `Parent()` method in the node.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* PreviousSibling(T& node) {
@@ -575,6 +613,7 @@ T* PreviousSibling(T& node) {
 // It is the caller's responsibility to maintain invariants before
 // destroying this node.
 //
+// Requires `Parent()` method in the node.
 // Requires `erase()` method in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
@@ -668,6 +707,7 @@ bool HoistOnlyChild(T& node) {
 // interators to Nth node children. This applies e.g. for vector-like
 // containers, with contiguous storage.
 //
+// Requires `Value()` method in the node.
 // Requires `push_back()` and `erase()` methods in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available &&
@@ -804,6 +844,8 @@ void FlattenOneChild(T& node, size_t i) {
 // Root node's 'path' is empty.  Passing the resulting path to
 // root.DescendPath() gets you back to this node.
 // PathType can be any container with a `push_back()` interface.
+//
+// Requires `Parent()` method in the node.
 template <class T, class PathType,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 void Path(const T& node, PathType& path) {
@@ -816,6 +858,8 @@ void Path(const T& node, PathType& path) {
 // Stream-printable representation of the location of a node under its
 // greatest ancestor (root).
 // Usage: stream << NodePath(node);
+//
+// Requires `Parent()` method in the node.
 struct NodePath {
   template <class T,
             std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
@@ -859,6 +903,8 @@ struct TreeNodePair {
 // or pair of nullptr when everything matches.
 // If you want more detail about value differences, then capture them in the
 // comparison function's closure before returning.
+//
+// Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
                            TreeNodeTraits<RT>::Value::available>* = nullptr>
@@ -906,6 +952,8 @@ TreeNodePair<LT, RT> DeepEqual(
 
 // Overload for the case when left and right tree types have a defined equality
 // operator.  This also works when the left and right types are the same.
+//
+// Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
                            TreeNodeTraits<RT>::Value::available>* = nullptr>
@@ -921,6 +969,8 @@ TreeNodePair<LT, RT> DeepEqual(const LT& left, const RT& right) {
 // that differ in substructure.  Traversal order: pre-order.
 // Implementation: this is just a degenerate form of DeepEqual, where the value
 // comparison is ignored (always returns true).
+//
+// Requires `Value()` method in the node.
 template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::Value::available &&
                            TreeNodeTraits<RT>::Value::available>* = nullptr>
