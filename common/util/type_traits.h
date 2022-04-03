@@ -78,6 +78,34 @@ using detected_or_t =
 template <class T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+// Helper types for creating trait classes with a boolean member `available`
+// indicating whether the traits are available for given type `T`. Similar idea
+// as C++'s std::true_type and std::false_type, but with easier usage and
+// without `type` and `value` member declarations (which can be used for other
+// purposes).
+//
+// Usage example:
+//
+//   template <typename T /*, some SFINAE feature test */>
+//   struct SomeFeatureTraits: FeatureTraits<T> { /* ... */ };
+//
+//   template <typename T>
+//   using SomeFeature = detected_or_t<UnavailableFeatureTraits,
+//                                     SomeFeatureTraits, T>;
+//
+// Then use `SomeFeature<T>::available` boolean for checking feature
+// availability in any context.
+
+// Type used as a placeholder for unavailable feature in type traits.
+struct UnavailableFeatureTraits {
+  static inline constexpr bool available = false;
+};
+
+// Type used as a base for available feature in type traits.
+struct FeatureTraits {
+  static inline constexpr bool available = true;
+};
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_

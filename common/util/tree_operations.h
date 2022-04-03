@@ -82,19 +82,6 @@ namespace verible {
 
 namespace tree_operations_internal {
 
-// TODO(mglb): move (Unavailable)FeatureTraits to a more generic header, or
-// replace them with something from standard library.
-
-// Type used as a placeholder for unavailable feature in type traits.
-struct UnavailableFeatureTraits {
-  static inline constexpr bool available = false;
-};
-
-// Type used as a base for available feature in type traits.
-struct FeatureTraits {
-  static inline constexpr bool available = true;
-};
-
 // TreeNodeTraits implementation details:
 
 // Alias to Node::subnodes_type if it exists.
@@ -187,12 +174,12 @@ void ReserveIfSupported(Container&, ...) {}
 template <class Node,  //
           typename Children_ =
               tree_operations_internal::TreeNodeChildrenTraits<Node>>
-struct TreeNodeTraits : tree_operations_internal::FeatureTraits {
+struct TreeNodeTraits : FeatureTraits {
   using Parent =
-      detected_or_t<tree_operations_internal::UnavailableFeatureTraits,
+      detected_or_t<UnavailableFeatureTraits,
                     tree_operations_internal::TreeNodeParentTraits, Node>;
   using Value =
-      detected_or_t<tree_operations_internal::UnavailableFeatureTraits,
+      detected_or_t<UnavailableFeatureTraits,
                     tree_operations_internal::TreeNodeValueTraits, Node>;
   using Children = Children_;
 };
