@@ -4,20 +4,21 @@
 
 {pkgs ? import (builtins.fetchTarball {
   # Descriptive name to make the store path easier to identify
-  name = "nixos-2021-05";
+  name = "nixos-2021-11";
   # Commit hash
-  url = "https://github.com/NixOS/nixpkgs/archive/refs/tags/21.05.tar.gz";
+  url = "https://github.com/NixOS/nixpkgs/archive/refs/tags/21.11.tar.gz";
   # Hash obtained using `nix-prefetch-url --unpack <url>`
-  sha256 = "1ckzhh24mgz6jd1xhfgx0i9mijk6xjqxwsshnvq789xsavrmsc36";
+  sha256 = "162dywda2dvfj1248afxc45kcrg83appjd0nmdb541hl7rnncf02";
 }) {}}:
 
 
 pkgs.mkShell {
   buildInputs = with pkgs;
     [
-      git
+      bash
       bazel
       gcc
+      git
       glibc
       jdk
       python3
