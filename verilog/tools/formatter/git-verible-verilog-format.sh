@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # git-verible-verilog-format.sh
 #
 # Copyright 2020 The Verible Authors.

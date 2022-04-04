@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # verible-verilog-format-changed-lines-interactive.sh.
 
 # Copyright 2020 The Verible Authors.
