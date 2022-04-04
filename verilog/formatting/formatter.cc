@@ -41,6 +41,7 @@
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 #include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
@@ -388,7 +389,7 @@ static void DeterminePartitionExpansion(
   // Expand or not, depending on partition policy and other conditions.
 
   // If this is a leaf partition, there is nothing to expand.
-  if (node->is_leaf()) {
+  if (is_leaf(*node)) {
     VLOG(3) << "No children to expand.";
     node_view.Unexpand();
     if (partition_policy == PartitionPolicyEnum::kFitOnLineElseExpand &&
@@ -875,8 +876,8 @@ Status Formatter::Format(const ExecutionControl& control) {
   // must be done after all reshaping is done.
   {
     auto* root = tree_unwrapper.CurrentTokenPartition();
-    auto node_iter = VectorTreeLeavesIterator(root->LeftmostDescendant());
-    const auto end = ++VectorTreeLeavesIterator(root->RightmostDescendant());
+    auto node_iter = VectorTreeLeavesIterator(&LeftmostDescendant(*root));
+    const auto end = ++VectorTreeLeavesIterator(&RightmostDescendant(*root));
 
     // Iterate over leaves. kAlreadyFormatted partitions are either leaves
     // themselves or parents of leaf partitions with kInline policy.

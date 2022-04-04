@@ -1058,7 +1058,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       }
       uwline.SpanUpToToken(token_iter);
       uwline.SetOrigin(item.get());
-      partition_.NewChild(uwline);
+      partition_.Children().emplace_back(std::move(uwline));
       SymbolCastToNode(*syntax_tree_).AppendChild(std::move(item));
     }
   }

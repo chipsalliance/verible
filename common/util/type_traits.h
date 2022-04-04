@@ -45,6 +45,67 @@ using match_const =
     typename std::conditional<std::is_const<Other>::value, std::add_const<T>,
                               std::remove_const<T>>::type;
 
+template <class T, class Other>
+using match_const_t = typename match_const<T, Other>::type;
+
+// Detection idiom from
+// C++ Extensions for Library Fundamentals, Version 2 (ISO/IEC TS 19568:2017)
+// https://en.cppreference.com/w/cpp/experimental/is_detected
+
+// Only utilities that have been needed so far are implemented.
+
+namespace type_traits_internal {
+template <class Default, class AlwaysVoid, template <class...> class Op,
+          class... Args>
+struct detected_impl {
+  using type = Default;
+};
+template <class Default, template <class...> class Op, class... Args>
+struct detected_impl<Default, std::void_t<Op<Args...>>, Op, Args...> {
+  using type = Op<Args...>;
+};
+
+}  // namespace type_traits_internal
+
+// Alias to `Op<Args...>` if that type is valid; otherwise alias to `Default`.
+template <class Default, template <class...> class Op, class... Args>
+using detected_or_t =
+    typename type_traits_internal::detected_impl<Default, void, Op,
+                                                 Args...>::type;
+
+// Alias to type T with removed reference, const, and volatile qualifiers.
+// Backport from C++20.
+template <class T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+// Helper types for creating trait classes with a boolean member `available`
+// indicating whether the traits are available for given type `T`. Similar idea
+// as C++'s std::true_type and std::false_type, but with easier usage and
+// without `type` and `value` member declarations (which can be used for other
+// purposes).
+//
+// Usage example:
+//
+//   template <typename T /*, some SFINAE feature test */>
+//   struct SomeFeatureTraits: FeatureTraits<T> { /* ... */ };
+//
+//   template <typename T>
+//   using SomeFeature = detected_or_t<UnavailableFeatureTraits,
+//                                     SomeFeatureTraits, T>;
+//
+// Then use `SomeFeature<T>::available` boolean for checking feature
+// availability in any context.
+
+// Type used as a placeholder for unavailable feature in type traits.
+struct UnavailableFeatureTraits {
+  static inline constexpr bool available = false;
+};
+
+// Type used as a base for available feature in type traits.
+struct FeatureTraits {
+  static inline constexpr bool available = true;
+};
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_

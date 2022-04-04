@@ -34,6 +34,7 @@
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -90,14 +91,14 @@ typedef verible::VectorTree<ExpectedUnwrappedLine> ExpectedUnwrappedLineTree;
 void ValidateExpectedTreeNode(const ExpectedUnwrappedLineTree& etree) {
   // At each tree node, there should either be expected tokens in the node's
   // value, or node's children, but not both.
-  CHECK(etree.Value().tokens.empty() != etree.is_leaf())
+  CHECK(etree.Value().tokens.empty() != is_leaf(etree))
       << "Node should not contain both tokens and children @"
       << verible::NodePath(etree);
 }
 
 // Make sure the expect-tree is well-formed.
 void ValidateExpectedTree(const ExpectedUnwrappedLineTree& etree) {
-  etree.ApplyPreOrder(ValidateExpectedTreeNode);
+  ApplyPreOrder(etree, ValidateExpectedTreeNode);
 }
 
 // Outputs the unwrapped line followed by this expected unwrapped line

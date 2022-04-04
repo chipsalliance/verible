@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -57,7 +58,7 @@ VectorTreeTestType MakeExampleFamilyTree();
 template <class T>
 std::vector<size_t> MakePath(const VectorTree<T>& node) {
   std::vector<size_t> path;
-  node.Path(path);
+  verible::Path(node, path);
   return path;
 }
 

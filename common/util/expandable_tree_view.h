@@ -20,6 +20,7 @@
 #include <iterator>
 
 #include "common/util/logging.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -99,8 +100,8 @@ class ExpandableTreeView {
 
   // Constructs (recursively) a fully-expanded view from the input tree.
   explicit ExpandableTreeView(const tree_type& tree)
-      : view_(tree.template Transform<node_type>(
-            [](const tree_type& other) -> node_type {
+      : view_(
+            Transform<impl_type>(tree, [](const tree_type& other) -> node_type {
               // Initialize a view node using the address of corresponding node
               // in the other tree.
               return node_type(other);
@@ -133,12 +134,12 @@ class ExpandableTreeView {
 
   // Apply a mutating transformation to this tree view, pre-order traversal.
   void ApplyPreOrder(const std::function<void(impl_type&)>& f) {
-    view_.ApplyPreOrder(f);
+    verible::ApplyPreOrder(view_, f);
   }
 
   // Apply a mutating transformation to this tree view, post-order traversal.
   void ApplyPostOrder(const std::function<void(impl_type&)>& f) {
-    view_.ApplyPostOrder(f);
+    verible::ApplyPostOrder(view_, f);
   }
 
   // Properties
@@ -150,7 +151,7 @@ class ExpandableTreeView {
   // termination condition is different.
   static const impl_type* first_unexpanded_child(const impl_type& current) {
     const auto& info = current.Value();
-    if (info.IsExpanded() && !current.is_leaf()) {
+    if (info.IsExpanded() && !is_leaf(current)) {
       // Let compiler to tail-call optimize self-recursion.
       return first_unexpanded_child(current.Children().front());
     } else {
@@ -168,7 +169,7 @@ class ExpandableTreeView {
   static const impl_type* next_sibling(const impl_type& current) {
     if (current.Parent() != nullptr) {
       // Find the next sibling, if there is one.
-      const size_t birth_rank = current.BirthRank();
+      const size_t birth_rank = verible::BirthRank(current);
       const size_t next_rank = birth_rank + 1;
       if (next_rank == current.Parent()->Children().size()) {
         // This is the last child of the group.

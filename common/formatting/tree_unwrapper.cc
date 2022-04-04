@@ -29,6 +29,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
+#include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"
 #include "common/util/vector_tree.h"
 
@@ -39,23 +40,31 @@ void TreeUnwrapper::VerifyFullTreeFormatTokenRanges() const {
                                            preformatted_tokens_.begin());
 }
 
+static TokenPartitionTree MakeInitialUnwrappedLines(
+    int indentation, FormatTokenRange::const_iterator first_token) {
+  // Root node spanning the entire file
+  auto unwrapped_lines = TokenPartitionTree(UnwrappedLine(
+      indentation, first_token, PartitionPolicyEnum::kAlwaysExpand));
+  // First unwrapped line
+  unwrapped_lines.Children().emplace_back(UnwrappedLine(
+      indentation, first_token
+      // TODO(fangism): set partition policy here?
+      ));
+  return unwrapped_lines;
+}
+
 TreeUnwrapper::TreeUnwrapper(
     const TextStructureView& view,
     const preformatted_tokens_type& preformatted_tokens)
     : text_structure_view_(view),
       preformatted_tokens_(preformatted_tokens),
       next_unfiltered_token_(text_structure_view_.TokenStream().begin()),
-      unwrapped_lines_(UnwrappedLine(current_indentation_spaces_,
-                                     preformatted_tokens_.begin(),
-                                     PartitionPolicyEnum::kAlwaysExpand)),
+      unwrapped_lines_(MakeInitialUnwrappedLines(current_indentation_spaces_,
+                                                 preformatted_tokens_.begin())),
       // The "top-most" UnwrappedLine spans the entire file, so the first
       // unwrapped line should be a considered a partition (child) thereof.
       // This acts like 'pushing' the first child onto a stack.
-      active_unwrapped_lines_(unwrapped_lines_.NewChild(UnwrappedLine(
-          current_indentation_spaces_,
-          unwrapped_lines_.Value().TokensRange().begin()
-          // TODO(fangism): set partition policy here?
-          ))) {
+      active_unwrapped_lines_(&unwrapped_lines_.Children().front()) {
   // Every new unwrapped line will be initially empty, but the range
   // will point to the correct starting position in the preformatted_tokens_
   // array, and be able to 'extend' into the array of preformatted_tokens_.
@@ -105,11 +114,12 @@ std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()
   // If a node of the ExpandedTree<UnwrappedLine> has children,
   // visit only the node's children.
   std::vector<UnwrappedLine> result;
-  unwrapped_lines_.ApplyPostOrder([&result](const TokenPartitionTree& node) {
-    if (node.is_leaf()) {
-      result.push_back(node.Value());
-    }
-  });
+  verible::ApplyPostOrder(unwrapped_lines_,
+                          [&result](const TokenPartitionTree& node) {
+                            if (is_leaf(node)) {
+                              result.push_back(node.Value());
+                            }
+                          });
 
   // Filter out trailing blank UnwrappedLines.
   while (!result.empty() && result.back().IsEmpty()) {
@@ -191,7 +201,7 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     // for the sake of being able to correctly indent comments inside blocks.
     // If so, delete those so that token partition range invariants are
     // maintained through re-use of an existing node.
-    if (!active_unwrapped_lines_->is_leaf()) {
+    if (!is_leaf(*active_unwrapped_lines_)) {
       VLOG(4) << "removed pre-existing child partitions.";
       active_unwrapped_lines_->Children().clear();
     }
@@ -204,9 +214,11 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
     FinishUnwrappedLine();
 
     // Create new sibling to current unwrapped line, maintaining same level.
-    active_unwrapped_lines_ = active_unwrapped_lines_->NewSibling(
-        UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
-                      partitioning));
+    auto& siblings = active_unwrapped_lines_->Parent()->Children();
+    siblings.emplace_back(UnwrappedLine(current_indentation_spaces_,
+                                        CurrentFormatTokenIterator(),
+                                        partitioning));
+    active_unwrapped_lines_ = &siblings.back();
     CurrentUnwrappedLine().SetOrigin(origin);
     VLOG(4) << "new sibling node " << NodePath(*active_unwrapped_lines_) << ": "
             << CurrentUnwrappedLine();
@@ -215,17 +227,18 @@ void TreeUnwrapper::StartNewUnwrappedLine(PartitionPolicyEnum partitioning,
 
 void TreeUnwrapper::MergeLastTwoPartitions() {
   auto* parent =
-      MergeLeafIntoPreviousLeaf(unwrapped_lines_.RightmostDescendant());
+      MergeLeafIntoPreviousLeaf(&RightmostDescendant(unwrapped_lines_));
   if (parent != nullptr) {
     // Pre-existing partition no longer exists, update active_unwrapped_lines_
     // to point to a new empty partition at the current indentation level.
     const auto current_token_iter =
-        unwrapped_lines_.RightmostDescendant()->Value().TokensRange().end();
-    active_unwrapped_lines_ = parent->NewChild(UnwrappedLine(
+        RightmostDescendant(unwrapped_lines_).Value().TokensRange().end();
+    parent->Children().emplace_back(UnwrappedLine(
         current_indentation_spaces_, current_token_iter
         // TODO(fangism): partitioning policy?
         // TODO(fangism): origin?
         ));
+    active_unwrapped_lines_ = &parent->Children().back();
   }
 }
 
@@ -301,11 +314,11 @@ TreeUnwrapper::VisitIndentedChildren(const SyntaxTreeNode& node,
   StartNewUnwrappedLine(partitioning, &node);
 
   // Start first child right away.
+  active_unwrapped_lines_->Children().emplace_back(
+      UnwrappedLine(current_indentation_spaces_, CurrentFormatTokenIterator(),
+                    PartitionPolicyEnum::kFitOnLineElseExpand /* default */));
   const ValueSaver<TokenPartitionTree*> tree_saver(
-      &active_unwrapped_lines_,
-      active_unwrapped_lines_->NewChild(UnwrappedLine(
-          current_indentation_spaces_, CurrentFormatTokenIterator(),
-          PartitionPolicyEnum::kFitOnLineElseExpand /* default */)));
+      &active_unwrapped_lines_, &active_unwrapped_lines_->Children().back());
   VLOG(3) << __FUNCTION__ << ", new child node "
           << NodePath(*active_unwrapped_lines_) << ": "
           << CurrentUnwrappedLine();

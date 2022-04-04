@@ -30,6 +30,7 @@
 #include "absl/strings/str_cat.h"
 #include "common/strings/compare.h"
 #include "common/util/logging.h"
+#include "common/util/tree_operations.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"
@@ -853,7 +854,7 @@ void KytheFactsExtractor::ReferenceModuleNamedPort(
   const VName port_vname_anchor = CreateAnchor(port_name);
   CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vnames.back().first);
 
-  if (named_port_node.is_leaf()) {
+  if (is_leaf(named_port_node)) {
     const std::vector<std::pair<const VName*, const Scope*>> definition_vnames =
         scope_resolver_->SearchForDefinitions({port_name.Text()});
 

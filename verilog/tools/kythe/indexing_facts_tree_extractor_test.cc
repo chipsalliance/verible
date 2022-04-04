@@ -21,6 +21,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
 #include "common/util/range.h"
+#include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
@@ -99,7 +100,7 @@ struct TestFileEntry {
     const std::ptrdiff_t delta =
         std::distance(origin_text.begin(), SourceText().begin());
     // mutate in-place, pre vs. post order doesn't matter here
-    original_tree.ApplyPreOrder([delta](T::value_type& data) {
+    ApplyPreOrder(original_tree, [delta](T::value_type& data) {
       data.RebaseStringViewsForTesting(delta);
     });
     VLOG(3) << "end of " << __FUNCTION__;

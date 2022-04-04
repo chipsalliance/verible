@@ -228,13 +228,26 @@ cc_library(
 
 cc_library(
     name = "vector_tree",
-    srcs = ["vector_tree.cc"],
     hdrs = ["vector_tree.h"],
     deps = [
         ":container_proxy",
         ":iterator_range",
         ":logging",
+        ":type_traits",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "tree_operations",
+    srcs = ["tree_operations.cc"],
+    hdrs = ["tree_operations.h"],
+    deps = [
+        ":container_proxy",
+        ":iterator_range",
+        ":logging",
         ":spacer",
+        ":type_traits",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -244,6 +257,7 @@ cc_library(
     hdrs = ["expandable_tree_view.h"],
     deps = [
         ":logging",
+        ":tree_operations",
         ":vector_tree",
     ],
 )
@@ -254,6 +268,7 @@ cc_library(
     srcs = ["vector_tree_test_util.cc"],
     hdrs = ["vector_tree_test_util.h"],
     deps = [
+        ":tree_operations",
         ":vector_tree",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
@@ -266,6 +281,7 @@ cc_library(
     deps = [
         ":iterator_range",
         ":logging",
+        ":tree_operations",
         ":vector_tree",
     ],
 )
@@ -489,9 +505,22 @@ cc_test(
     name = "vector_tree_test",
     srcs = ["vector_tree_test.cc"],
     deps = [
+        ":tree_operations",
         ":vector_tree",
         ":vector_tree_test_util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "tree_operations_test",
+    srcs = ["tree_operations_test.cc"],
+    deps = [
+        ":spacer",
+        ":tree_operations",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_googletest//:gtest_main",
     ],
 )

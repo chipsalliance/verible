@@ -28,6 +28,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_context_visitor.h"
+#include "common/util/tree_operations.h"
 
 namespace verible {
 // Base class for building unwrapped lines. TreeUnwrapper is a concrete syntax
@@ -87,12 +88,12 @@ class TreeUnwrapper : public TreeContextVisitor {
 
   // Apply a mutating transformation to this class tree, pre-order traversal.
   void ApplyPreOrder(const std::function<void(TokenPartitionTree&)>& f) {
-    unwrapped_lines_.ApplyPreOrder(f);
+    verible::ApplyPreOrder(unwrapped_lines_, f);
   }
 
   // Apply a mutating transformation to this class tree, post-order traversal.
   void ApplyPostOrder(const std::function<void(TokenPartitionTree&)>& f) {
-    unwrapped_lines_.ApplyPostOrder(f);
+    verible::ApplyPostOrder(unwrapped_lines_, f);
   }
 
  protected:

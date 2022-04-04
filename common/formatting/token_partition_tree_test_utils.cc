@@ -19,6 +19,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
 
 namespace verible {
@@ -38,9 +39,9 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
     const std::vector<verible::PreFormatToken>& tokens) const {
   TokenPartitionTree node;
 
-  node.SetExpectedChildrenUpperBound(children_.size());
+  node.Children().reserve(children_.size());
   for (const auto& child : children_) {
-    node.NewChild(child.build(tokens));
+    node.Children().push_back(child.build(tokens));
   }
 
   FormatTokenRange node_tokens;

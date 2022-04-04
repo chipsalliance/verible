@@ -21,6 +21,7 @@
 
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -87,11 +88,11 @@ class VectorTreeLeavesIterator
  public:
   VectorTreeLeavesIterator() : base_type() {}
   explicit VectorTreeLeavesIterator(VectorTreeType* node)
-      : base_type(node ? node->LeftmostDescendant() : nullptr) {}
+      : base_type(node ? &LeftmostDescendant(*node) : nullptr) {}
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
-    return node->NextLeaf();
+    return NextLeaf(*node);
   }
 };
 
@@ -105,8 +106,8 @@ VectorTreeLeavesIterator(VectorTreeType*)
 template <typename VectorTreeType>
 iterator_range<VectorTreeLeavesIterator<VectorTreeType>>
 VectorTreeLeavesTraversal(VectorTreeType& tree) {
-  VectorTreeLeavesIterator<VectorTreeType> begin(tree.LeftmostDescendant());
-  VectorTreeLeavesIterator<VectorTreeType> end(tree.RightmostDescendant());
+  VectorTreeLeavesIterator<VectorTreeType> begin(&LeftmostDescendant(tree));
+  VectorTreeLeavesIterator<VectorTreeType> end(&RightmostDescendant(tree));
   ++end;
   return {begin, end};
 }
@@ -124,18 +125,18 @@ class VectorTreePreOrderIterator
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
-    if (!node->is_leaf()) return &node->Children().front();
-    while (node && node->IsLastChild()) {
+    if (!node->Children().empty()) return &node->Children().front();
+    while (node && verible::IsLastChild(*node)) {
       node = node->Parent();
     }
-    if (node) node = node->NextSibling();
+    if (node) node = NextSibling(*node);
     return node;
   }
 
   this_type begin() const { return *this; }
   this_type end() const {
     if (!this->node_) return this_type(nullptr);
-    return this_type(_NextNode(this->node_->RightmostDescendant()));
+    return this_type(_NextNode(&RightmostDescendant(*this->node_)));
   }
 };
 
@@ -166,15 +167,15 @@ class VectorTreePostOrderIterator
 
   static VectorTreeType* _NextNode(VectorTreeType* node) {
     if (!node) return nullptr;
-    if (node->IsLastChild()) return node->Parent();
-    node = node->NextSibling();
-    if (!node->is_leaf()) node = node->LeftmostDescendant();
+    if (verible::IsLastChild(*node)) return node->Parent();
+    node = NextSibling(*node);
+    if (!node->Children().empty()) node = &LeftmostDescendant(*node);
     return node;
   }
 
   this_type begin() const {
     if (!this->node_) return this_type(nullptr);
-    return this_type(this->node_->LeftmostDescendant());
+    return this_type(&LeftmostDescendant(*this->node_));
   }
   this_type end() const { return this_type(_NextNode(this->node_)); }
 };
