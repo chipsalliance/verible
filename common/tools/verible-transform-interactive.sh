@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # verible-transform-interactive.sh
 #
 # Copyright 2020 The Verible Authors.
