@@ -216,6 +216,25 @@ TEST_F(TokenRangeTest, GetRangeOfTokenVerifyAllRangesExclusive) {
   }
 }
 
+TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
+  // For the EOF token, the returned range should automatically be relative
+  // to the TextView no matter where it comes from.
+  EXPECT_EQ(data_.GetRangeForToken(data_.EOFToken()),
+            data_.GetRangeForToken(TokenInfo::EOFToken()));
+}
+
+TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
+  const TokenInfo& token = data_.FindTokenAt({0, 7});
+  EXPECT_EQ(token.text(), "world");
+  const LineColumnRange token_range = data_.GetRangeForToken(token);
+  EXPECT_EQ(token_range.start.line, 0);
+  EXPECT_EQ(token_range.start.column, 7);
+
+  const LineColumnRange text_range = data_.GetRangeForText(token.text());
+  EXPECT_EQ(text_range.start.line, 0);
+  EXPECT_EQ(text_range.start.column, 7);
+}
+
 TEST_F(TokenRangeTest, FindTokenAtPosition) {
   EXPECT_EQ(data_.FindTokenAt({0, 0}).text(), "hello");
   EXPECT_EQ(data_.FindTokenAt({0, 4}).text(), "hello");
@@ -229,13 +248,6 @@ TEST_F(TokenRangeTest, FindTokenAtPosition) {
   // Graceful handling of values out of range: EOF
   EXPECT_TRUE(data_.FindTokenAt({-1, -1}).isEOF());
   EXPECT_TRUE(data_.FindTokenAt({42, 7}).isEOF());
-}
-
-TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
-  // For the EOF token, the returned range should automatically be relative
-  // to the TextView no matter where it comes from.
-  EXPECT_EQ(data_.GetRangeForToken(data_.EOFToken()),
-            data_.GetRangeForToken(TokenInfo::EOFToken()));
 }
 
 // Checks that when lower == upper, returned range is empty.

@@ -107,6 +107,10 @@ class TextStructureView {
   // Convenience function: Given the token, return the range it covers.
   LineColumnRange GetRangeForToken(const TokenInfo& token) const;
 
+  // Convenience function: Given a text snippet, that needs to be a substring
+  // of Contents(), return the range it covers.
+  LineColumnRange GetRangeForText(absl::string_view text) const;
+
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const {
     return line_token_map_;
   }
