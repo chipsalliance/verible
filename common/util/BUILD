@@ -234,7 +234,6 @@ cc_library(
         ":iterator_range",
         ":logging",
         ":type_traits",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -243,8 +242,6 @@ cc_library(
     srcs = ["tree_operations.cc"],
     hdrs = ["tree_operations.h"],
     deps = [
-        ":container_proxy",
-        ":iterator_range",
         ":logging",
         ":spacer",
         ":type_traits",
@@ -541,6 +538,7 @@ cc_test(
     name = "vector_tree_iterators_test",
     srcs = ["vector_tree_iterators_test.cc"],
     deps = [
+        ":tree_operations",
         ":vector_tree",
         ":vector_tree_iterators",
         "@com_google_absl//absl/strings",

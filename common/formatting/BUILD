@@ -154,6 +154,7 @@ cc_test(
         ":unwrapped_line_test_utils",
         "//common/strings:split",
         "//common/util:spacer",
+        "//common/util:tree_operations",
         "//common/util:vector_tree",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",
