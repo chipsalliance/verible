@@ -33,12 +33,14 @@
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/parser/verilog_lexer.h"
 
 namespace verilog {
 
 using verible::TokenGenerator;
 using verible::TokenStreamView;
 using verible::container::InsertOrUpdate;
+using verible::container::FindOrNull;
 
 VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
   // To avoid having to check at every place if the stack is empty, we always
@@ -199,6 +201,24 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
   return nullptr;
 }
 
+// Responds to `define directives.  Macro definitions are parsed and saved
+// for use within the same file.
+absl::Status VerilogPreprocess::HandleMacroIdentifier(
+    const TokenStreamView::const_iterator iter  // points to `MACROIDENTIFIER token
+    ) {
+    const absl::string_view sv = (*iter)->text();
+    const auto* found = FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
+    if(!found) {
+      preprocess_data_.errors.push_back(VerilogPreprocessError(**iter,"Error expanding macro identifier, might not be defined before."));
+      return absl::InvalidArgumentError("Error expanding macro identifier, might not be defined before.");
+    }
+  auto& lexed=found->GetLexedDefinitionText();
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
+  const auto it_end=lexed.end();
+  for(auto it=iter_generator();it!=it_end;it++) {preprocess_data_.preprocessed_token_stream.push_back(it);}
+  return absl::OkStatus();
+}
+
 // Stores a macro definition for later use.
 void VerilogPreprocess::RegisterMacroDefinition(
     const MacroDefinition& definition) {
@@ -210,6 +230,19 @@ void VerilogPreprocess::RegisterMacroDefinition(
   preprocess_data_.warnings.emplace_back(
       VerilogPreprocessError(definition.NameToken(), "Re-defining macro"));
   // TODO(hzeller): multiline warning with 'previously defined here' location
+}
+
+absl::Status VerilogPreprocess::ExpandMacro(MacroDefinition& definition){
+  VerilogLexer lexer(definition.DefinitionText().text());
+  verible::TokenSequence myseq;
+  while (true) {
+    const verible::TokenInfo& subtoken(lexer.DoNextToken());
+    // handle lexical error
+    if (subtoken.isEOF()) break;
+    myseq.push_back(std::move(subtoken));
+  }
+  definition.SetLexedDefinitionText(std::move(myseq));
+  return absl::OkStatus();
 }
 
 // Responds to `define directives.  Macro definitions are parsed and saved
@@ -229,6 +262,12 @@ absl::Status VerilogPreprocess::HandleDefine(
   verible::MacroDefinition macro_definition(*define_tokens[0], *macro_name);
   const auto parse_error_ptr =
       ParseMacroDefinition(define_tokens, &macro_definition);
+
+  if(!macro_definition.IsCallable()){
+    auto expanding_status=ExpandMacro(macro_definition);
+    if(!expanding_status.ok())  return expanding_status;
+  }
+  
   if (parse_error_ptr) {
     preprocess_data_.errors.push_back(*parse_error_ptr);
     return absl::InvalidArgumentError("Error parsing macro definition.");
@@ -358,6 +397,10 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
       return HandleElse(iter);
     case PP_endif:
       return HandleEndif(iter);
+    case MacroIdentifier:
+      return HandleMacroIdentifier(iter);
+    case MacroIdItem:
+      return HandleMacroIdentifier(iter);
   }
 
   // If not return'ed above, any other tokens are passed through unmodified

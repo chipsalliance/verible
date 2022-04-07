@@ -23,6 +23,7 @@ cc_library(
         "//common/util:logging",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",
+        "//verilog/parser:verilog_lexer",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
