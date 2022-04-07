@@ -217,7 +217,7 @@ The name of the rule to waive is at the end of each diagnostic message in `[]`.
 
 These waiver rules can be automatically generated with the AutoFix mode `generate-waiver` to stdout,
 or to a waiver file if a path is passed to `--autofix_output_file`.
-e.g. 
+e.g.
 ```bash
 verible-verilog-lint --autofix=generate-waiver --autofix_output_file=violations.waiver ...
 ```
