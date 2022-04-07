@@ -915,7 +915,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                              .syntax_origin = &element,
                                          });
     if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name);
+      DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
     return &p.first->second;  // scope of the new (or pre-existing symbol)
   }
@@ -939,7 +939,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
             .declared_type = *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
         });
     if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name);
+      DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
     VLOG(1) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
@@ -1209,10 +1209,19 @@ class SymbolTable::Builder : public TreeContextVisitor {
     Descend(variable);
   }
 
-  void DiagnoseSymbolAlreadyExists(absl::string_view name) {
-    diagnostics_.push_back(absl::AlreadyExistsError(
-        absl::StrCat("Symbol \"", name, "\" is already defined in the ",
-                     CurrentScopeFullPath(), " scope.")));
+  void DiagnoseSymbolAlreadyExists(absl::string_view name,
+                                   absl::string_view previous) {
+    std::ostringstream here_print;
+    here_print << source_->GetTextStructure()->GetRangeForText(name);
+
+    std::ostringstream previous_print;
+    previous_print << source_->GetTextStructure()->GetRangeForText(previous);
+
+    // TODO(hzeller): output in some structured form easy to use downstream.
+    diagnostics_.push_back(absl::AlreadyExistsError(absl::StrCat(
+        source_->ReferencedPath(), ":", here_print.str(), " Symbol \"", name,
+        "\" is already defined in the ", CurrentScopeFullPath(), " scope at ",
+        previous_print.str())));
   }
 
   absl::StatusOr<SymbolTableNode*> LookupOrInjectOutOfLineDefinition(

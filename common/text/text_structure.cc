@@ -132,8 +132,21 @@ LineColumnRange TextStructureView::GetRangeForToken(
     const LineColumn eofPos = GetLineColAtOffset(Contents().length());
     return {eofPos, eofPos};
   }
+  // TODO(hzeller): This should simply be GetRangeForText(token.text()),
+  // but the more thorough error checking in GetRangeForText()
+  // exposes a token overrun in verilog_analyzer_test.cc
+  // Defer to fix in separate change.
   return {GetLineColAtOffset(token.left(Contents())),
           GetLineColAtOffset(token.right(Contents()))};
+}
+
+LineColumnRange TextStructureView::GetRangeForText(
+    absl::string_view text) const {
+  const int from = std::distance(Contents().begin(), text.begin());
+  const int to = std::distance(Contents().begin(), text.end());
+  CHECK_GE(from, 0) << '"' << text << '"';
+  CHECK_LE(to, Contents().length()) << '"' << text << '"';
+  return {GetLineColAtOffset(from), GetLineColAtOffset(to)};
 }
 
 TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {

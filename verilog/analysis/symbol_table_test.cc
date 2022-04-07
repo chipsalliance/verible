@@ -2575,9 +2575,9 @@ TEST(BuildSymbolTableTest, ModuleExplicitAndImplicitDeclarations) {
 
 TEST(BuildSymbolTableTest, ModuleImplicitRedeclared) {
   TestVerilogSourceFile src("foo.sv",
-                            "module m;"
-                            "assign a = 1'b0;"
-                            "wire a;"
+                            "module m;\n"
+                            "assign a = 1'b0;\n"
+                            "wire a;\n"
                             "endmodule\n");
   const auto status = src.Parse();
   ASSERT_TRUE(status.ok()) << status.message();
@@ -2587,7 +2587,8 @@ TEST(BuildSymbolTableTest, ModuleImplicitRedeclared) {
   EXPECT_EQ(build_diagnostics.size(), 1);
   EXPECT_FALSE(build_diagnostics.front().ok());
   EXPECT_EQ(build_diagnostics.front().message(),
-            "Symbol \"a\" is already defined in the $root::m scope.");
+            "foo.sv:3:6: Symbol \"a\" is already defined in the $root::m scope "
+            "at 2:8:");
 }
 
 TEST(BuildSymbolTableTest, ClassDeclarationSingle) {
