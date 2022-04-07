@@ -226,13 +226,24 @@ TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
 TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
   const TokenInfo& token = data_.FindTokenAt({0, 7});
   EXPECT_EQ(token.text(), "world");
-  const LineColumnRange token_range = data_.GetRangeForToken(token);
-  EXPECT_EQ(token_range.start.line, 0);
-  EXPECT_EQ(token_range.start.column, 7);
+  {  // Extract from token
+    const LineColumnRange range = data_.GetRangeForToken(token);
+    EXPECT_EQ(range.start.line, 0);
+    EXPECT_EQ(range.start.column, 7);
+  }
+  {  // Extract from token text
+    const LineColumnRange range = data_.GetRangeForText(token.text());
+    EXPECT_EQ(range.start.line, 0);
+    EXPECT_EQ(range.start.column, 7);
+  }
 
-  const LineColumnRange text_range = data_.GetRangeForText(token.text());
-  EXPECT_EQ(text_range.start.line, 0);
-  EXPECT_EQ(text_range.start.column, 7);
+  {  // Entire text range
+    const LineColumnRange range = data_.GetRangeForText(data_.Contents());
+    EXPECT_EQ(range.start.line, 0);
+    EXPECT_EQ(range.start.column, 0);
+    EXPECT_EQ(range.end.line, data_.Lines().size() - 1);
+    EXPECT_EQ(range.end.column, data_.Lines().back().length());
+  }
 }
 
 TEST_F(TokenRangeTest, FindTokenAtPosition) {
