@@ -246,9 +246,9 @@ absl::Status VerilogPreprocess::ExpandMacro(MacroDefinition* definition) {
        lexer.DoNextToken()) {
     // handle lexical error
     const verible::TokenInfo& subtoken(lexer.GetLastToken());
-    myseq.push_back(std::move(subtoken));
+    myseq.push_back(subtoken);
   }
-  definition->SetLexedDefinitionTokens(std::move(myseq));
+  definition->SetLexedDefinitionTokens(myseq);
   return absl::OkStatus();
 }
 

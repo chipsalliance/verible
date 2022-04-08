@@ -156,7 +156,7 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
-  absl::Status ExpandMacro(MacroDefinition*);
+  static absl::Status ExpandMacro(MacroDefinition*);
 
   const Config config_;
 
