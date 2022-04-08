@@ -101,6 +101,8 @@ class VerilogPreprocess {
     // want to emit all tokens.
     bool filter_branches = false;
 
+    // Expand macro definition bodies, this will relexes the macro body.
+    bool expand_macros = false;
     // TODO(hzeller): Provide a map of command-line provided +define+'s
   };
 
@@ -154,7 +156,7 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
-  absl::Status ExpandMacro(MacroDefinition&);
+  absl::Status ExpandMacro(MacroDefinition*);
 
   const Config config_;
 

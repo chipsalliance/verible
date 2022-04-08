@@ -86,9 +86,13 @@ class MacroDefinition {
   void SetDefinitionText(const TokenInfo& t) { definition_text_ = t; }
 
   // Lexes the definition_text_ and store it in lexed_macro_body
-  void SetLexedDefinitionText(const std::vector<TokenInfo> l) {lexed_macro_body = l ;} 
+  void SetLexedDefinitionTokens(const std::vector<TokenInfo>& l) {
+    lexed_definition_tokens_ = l;
+  }
 
-  const std::vector<TokenInfo>& GetLexedDefinitionText() const { return lexed_macro_body; }
+  const std::vector<TokenInfo>& GetLexedDefinitionText() const {
+    return lexed_definition_tokens_;
+  }
 
   // Macro definitions with empty () should call this.
   void SetCallable() { is_callable_ = true; }
@@ -132,8 +136,7 @@ class MacroDefinition {
 
   // un-tokenized text
   DefaultTokenInfo definition_text_;
-  std::vector<TokenInfo> lexed_macro_body;
-
+  std::vector<TokenInfo> lexed_definition_tokens_;
 };
 
 }  // namespace verible
