@@ -68,9 +68,11 @@ struct VerilogPreprocessError {
 struct VerilogPreprocessData {
   using MacroDefinition = verible::MacroDefinition;
   using MacroDefinitionRegistry = std::map<absl::string_view, MacroDefinition>;
+  using TokenSequence = std::vector<verible::TokenInfo>;
 
   // Resulting token stream after preprocessing
   verible::TokenStreamView preprocessed_token_stream;
+  std::vector<TokenSequence> lexed_macros_backup;
 
   // Map of defined macros.
   MacroDefinitionRegistry macro_definitions;
@@ -134,6 +136,7 @@ class VerilogPreprocess {
   absl::Status HandleTokenIterator(TokenStreamView::const_iterator,
                                    const StreamIteratorGenerator&);
   absl::Status HandleMacroIdentifier(TokenStreamView::const_iterator);
+  absl::Status HandleMacroIdentifier(verible::TokenInfo);
 
   absl::Status HandleDefine(TokenStreamView::const_iterator,
                             const StreamIteratorGenerator&);
@@ -156,7 +159,7 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
-  static absl::Status ExpandMacro(MacroDefinition*);
+  absl::Status ExpandMacro(const MacroDefinition&);
 
   const Config config_;
 

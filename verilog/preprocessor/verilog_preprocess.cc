@@ -217,11 +217,37 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
     return absl::InvalidArgumentError(
         "Error expanding macro identifier, might not be defined before.");
   }
-  auto& lexed = found->GetLexedDefinitionText();
+
+  // TODO: For now, only not callable macros are expanded.
+  if (!found->IsCallable() && config_.expand_macros) {
+    if (auto status = ExpandMacro(*found); !status.ok()) return status;
+  }
+  auto& lexed = preprocess_data_.lexed_macros_backup.back();
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
   const auto it_end = lexed.end();
   for (auto it = iter_generator(); it != it_end; it++) {
     preprocess_data_.preprocessed_token_stream.push_back(it);
+  }
+  return absl::OkStatus();
+}
+
+// This function searches for a macro, and expand it.
+// But it doesn't add the expanded sequence to the preprocessed stream.
+// It's only to be used inside ExpandMacro, for recursive macros.
+absl::Status VerilogPreprocess::HandleMacroIdentifier(
+    verible::TokenInfo macro_id) {
+  const absl::string_view sv = macro_id.text();
+  const auto* found =
+      FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
+  if (!found) {
+    preprocess_data_.errors.push_back(VerilogPreprocessError(
+        macro_id,
+        "Error expanding macro identifier, might not be defined before."));
+    return absl::InvalidArgumentError(
+        "Error expanding macro identifier, might not be defined before.");
+  }
+  if (!found->IsCallable() && config_.expand_macros) {
+    if (auto status = ExpandMacro(*found); !status.ok()) return status;
   }
   return absl::OkStatus();
 }
@@ -239,16 +265,36 @@ void VerilogPreprocess::RegisterMacroDefinition(
   // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 
-absl::Status VerilogPreprocess::ExpandMacro(MacroDefinition* definition) {
-  VerilogLexer lexer(definition->DefinitionText().text());
-  verible::TokenSequence myseq;
+// This function expands a macro.
+// The expanded tokens are saved as a TokenSequence, stored at
+// preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
+// as: preprocess_data_.lexed_macros_backup.back()
+absl::Status VerilogPreprocess::ExpandMacro(const MacroDefinition& definition) {
+  VerilogLexer lexer(definition.DefinitionText().text());
+  verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
-    // handle lexical error
-    const verible::TokenInfo& subtoken(lexer.GetLastToken());
-    myseq.push_back(subtoken);
+    // TODO: handle lexical error
+
+    // If the expanded token is another macro identifier that needs to be
+    // expanded.
+    // TODO: this needs to be something like HandleTokenIterator, to claim that
+    // it fully covers all cases.
+    if (lexer.GetLastToken().token_enum() == MacroIdentifier ||
+        lexer.GetLastToken().token_enum() == MacroIdItem) {
+      if (auto status = HandleMacroIdentifier(lexer.GetLastToken());
+          !status.ok())
+        return status;
+
+      // merge the expanded macro tokens into 'lexed_sequence'
+      auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
+      for (auto& u : expanded_child) lexed_sequence.push_back(u);
+      continue;
+    }
+
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
-  definition->SetLexedDefinitionTokens(myseq);
+  preprocess_data_.lexed_macros_backup.emplace_back(lexed_sequence);
   return absl::OkStatus();
 }
 
@@ -269,11 +315,6 @@ absl::Status VerilogPreprocess::HandleDefine(
   verible::MacroDefinition macro_definition(*define_tokens[0], *macro_name);
   const auto parse_error_ptr =
       ParseMacroDefinition(define_tokens, &macro_definition);
-
-  if (!macro_definition.IsCallable() && config_.expand_macros) {
-    if (auto status = ExpandMacro(&macro_definition); !status.ok())
-      return status;
-  }
 
   if (parse_error_ptr) {
     preprocess_data_.errors.push_back(*parse_error_ptr);

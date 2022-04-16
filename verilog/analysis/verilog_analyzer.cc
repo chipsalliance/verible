@@ -209,7 +209,7 @@ std::unique_ptr<VerilogAnalyzer>
 VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(absl::string_view text,
                                                     absl::string_view name) {
   std::unique_ptr<verilog::VerilogAnalyzer> parser;
-  for (bool preprocess_expand_macros : {true, false}) {
+  for (bool preprocess_expand_macros : {false, true}) {
     bool expand_macro_status = 0;
     for (bool preprocess_filter_branches : {false, true}) {
       parser = verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
@@ -223,7 +223,7 @@ VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(absl::string_view text,
       VLOG(1) << "Retry parsing with filter branches enabled";
     }
     if (expand_macro_status) break;
-    VLOG(1) << "Retry parsing with macro expanding disabled";
+    VLOG(1) << "Retry parsing with macro expanding enabled";
   }
   return parser;
 }
