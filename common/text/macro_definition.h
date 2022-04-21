@@ -105,6 +105,8 @@ class MacroDefinition {
   // Create a text substitution map to be used for macro expansion.
   absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo>&,
                                        substitution_map_type*) const;
+  absl::Status PopulateSubstitutionMap(const std::vector<DefaultTokenInfo>&,
+                                       substitution_map_type*) const;
 
   // Replace formal parameter references with actuals.
   static const TokenInfo& SubstituteText(const substitution_map_type&,
