@@ -311,6 +311,15 @@ cc_library(
     hdrs = ["container_proxy.h"],
 )
 
+cc_library(
+    name = "variant",
+    hdrs = ["variant.h"],
+    deps = [
+        ":logging",
+        ":type_traits",
+    ],
+)
+
 cc_test(
     name = "algorithm_test",
     srcs = ["algorithm_test.cc"],
@@ -588,6 +597,17 @@ cc_test(
         ":container_proxy",
         ":type_traits",
         "//common/strings:display_utils",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "variant_test",
+    srcs = ["variant_test.cc"],
+    deps = [
+        ":type_traits",
+        ":variant",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
