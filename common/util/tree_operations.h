@@ -824,6 +824,32 @@ void FlattenOnlyChildrenWithChildren(
   *TreeNodeChildren(node) = std::move(new_children);
 }
 
+// Replace the `child` with its children.  This may result in increasing
+// the number of direct children of this node.
+//
+// Requires `insert()` and `erase()` methods in the children container.
+template <class T,  //
+          std::enable_if_t<TreeNodeTraits<T>::available &&
+                           !std::is_const_v<T>>* = nullptr>
+void FlattenOneChild(
+    T& node, decltype(TreeNodeChildren(std::declval<T&>())->begin()) child) {
+  if (is_leaf(*child)) {
+    // Empty list of grandchildren, just remove the child.
+    TreeNodeChildren(node)->erase(child);
+    return;
+  }
+
+  using Container = typename TreeNodeTraits<T>::Children::container_type;
+  auto grandchildren = Container(std::move(*TreeNodeChildren(*child)));
+  // Move the first grandchild into the child's place.
+  *child = std::move(grandchildren.front());
+  // Move-insert all remaining grandchildren.
+  TreeNodeChildren(node)->insert(
+      std::next(child, 1),
+      std::make_move_iterator(std::next(grandchildren.begin(), 1)),
+      std::make_move_iterator(grandchildren.end()));
+}
+
 // Replace the i'th child with its children.  This may result in increasing
 // the number of direct children of this node.
 //
@@ -836,25 +862,7 @@ void FlattenOneChild(T& node, size_t i) {
   CHECK_LT(i, original_size);
 
   auto ith_child = std::next(TreeNodeChildren(node)->begin(), i);
-
-  if (is_leaf(*ith_child)) {
-    // Empty list of grandchildren, just remove the child.
-    TreeNodeChildren(node)->erase(ith_child);
-    return;
-  }
-
-  // Move-insert all grandchildren except the first one after the child.
-  TreeNodeChildren(node)->insert(
-      std::next(ith_child, 1),
-      std::make_move_iterator(
-          std::next(TreeNodeChildren(*ith_child)->begin(), 1)),
-      std::make_move_iterator(TreeNodeChildren(*ith_child)->end()));
-  // Possible reallocation and iterator invalidation above; update iterator.
-  ith_child = std::next(TreeNodeChildren(node)->begin(), i);
-  // Move the first grandchild into the child's place. Can't do this directly,
-  // as assignment to *ith_child destroys the grandchild before it is moved.
-  auto first_granchild = std::move(*TreeNodeChildren(*ith_child)->begin());
-  *ith_child = std::move(first_granchild);
+  FlattenOneChild(node, ith_child);
 }
 
 // Construct a path of BirthRank()s from root to this.
