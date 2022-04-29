@@ -80,6 +80,20 @@
 
 namespace verible {
 
+template <class Node,  //
+          std::enable_if_t<std::is_pointer_v<
+              decltype(std::declval<Node&>().Children())>>* = nullptr>
+auto TreeNodeChildren(Node& node) -> decltype(node.Children()) {
+  return node.Children();
+}
+
+template <class Node,  //
+          std::enable_if_t<!std::is_pointer_v<
+              decltype(std::declval<Node&>().Children())>>* = nullptr>
+auto TreeNodeChildren(Node& node) -> decltype(&node.Children()) {
+  return &node.Children();
+}
+
 namespace tree_operations_internal {
 
 // TreeNodeTraits implementation details:
@@ -93,11 +107,11 @@ using TreeNodeSubnodesType = Type_;
 // Defined when `Node` contains `Children()` method which returns reference to
 // a STL-like container with nodes.
 // TODO(mglb): Add support for children containers storing Node pointers.
-template <typename Node,  //
-          typename ChildrenType_ = decltype(std::declval<Node>().Children()),
-          typename =
-              std::void_t<decltype(*std::declval<Node>().Children().begin()),
-                          decltype(std::declval<Node>().Children().end())>>
+template <
+    typename Node,  //
+    typename ChildrenType_ = decltype(*TreeNodeChildren(std::declval<Node&>())),
+    typename = std::void_t<decltype(*std::declval<ChildrenType_>().begin()),
+                           decltype(std::declval<ChildrenType_>().end())>>
 struct TreeNodeChildrenTraits : FeatureTraits {
   // Container type which should be used for storing arrays of detached
   // child nodes. It must be move-assignable to, and move-constructible from,
@@ -111,7 +125,7 @@ template <typename Node,  //
           typename Value_ = decltype(std::declval<Node>().Value())>
 struct TreeNodeValueTraits : FeatureTraits {
   // Type of data returned by `Value()` method, without reference and const.
-  using type = std::remove_const_t<std::remove_reference_t<Value_>>;
+  using type = verible::remove_cvref_t<Value_>;
   // Reference to a type returned by `Value()` matching its constness.
   using reference = std::add_lvalue_reference_t<Value_>;
   // Const reference to a type returned by `Value()`
@@ -133,7 +147,7 @@ template <class T>
 size_t BirthRank(const T& node, std::input_iterator_tag) {
   if (node.Parent() != nullptr) {
     size_t index = 0;
-    for (const auto& child : node.Parent()->Children()) {
+    for (const auto& child : *TreeNodeChildren(*node.Parent())) {
       if (&node == &child) return index;
       ++index;
     }
@@ -145,7 +159,7 @@ size_t BirthRank(const T& node, std::input_iterator_tag) {
 template <class T>
 size_t BirthRank(const T& node, std::random_access_iterator_tag) {
   if (node.Parent() != nullptr) {
-    return std::distance(&*(node.Parent()->Children().begin()), &node);
+    return std::distance(&*(TreeNodeChildren(*node.Parent())->begin()), &node);
   }
   return 0;
 }
@@ -190,7 +204,8 @@ struct TreeNodeTraits : FeatureTraits {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 bool is_leaf(const T& node) {
-  return node.Children().empty();
+  const auto* children = TreeNodeChildren(node);
+  return !children || children->empty();
 }
 
 // Descend through children using indices specified by iterator range.
@@ -204,11 +219,12 @@ template <class T, class Iterator,  //
 T& DescendPath(T& node, Iterator start, Iterator end) {
   auto* current_node = &node;
   for (auto iter = start; iter != end; ++iter) {
-    auto& children = current_node->Children();
     const auto index = *iter;
+    auto* children = TreeNodeChildren(*current_node);
+    CHECK_NOTNULL(children);
     CHECK_GE(index, 0);
-    CHECK_LT(index, std::size(children));
-    current_node = &*std::next(children.begin(), index);  // descend
+    CHECK_LT(index, std::size(*children));
+    current_node = &*std::next(children->begin(), index);  // descend
   }
   return *current_node;
 }
@@ -220,8 +236,8 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 T& LeftmostDescendant(T& node) {
   T* leaf = &node;
-  while (!leaf->Children().empty()) {
-    leaf = &*leaf->Children().begin();
+  while (!is_leaf(*leaf)) {
+    leaf = &*TreeNodeChildren(*leaf)->begin();
   }
   return *leaf;
 }
@@ -236,8 +252,8 @@ template <class T,  //
           std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
 T& RightmostDescendant(T& node) {
   T* leaf = &node;
-  while (!leaf->Children().empty()) {
-    leaf = &leaf->Children().back();
+  while (!is_leaf(*leaf)) {
+    leaf = &TreeNodeChildren(*leaf)->back();
   }
   return *leaf;
 }
@@ -258,11 +274,11 @@ std::ostream& PrintTree(const T& node, std::ostream* stream,
                         const PrintTreePrinterFunction<T>& printer,
                         size_t indent = 0) {
   printer(*stream << Spacer(indent) << "{ (", node.Value()) << ')';
-  if (node.Children().empty()) {
+  if (is_leaf(node)) {
     *stream << " }";
   } else {
     *stream << '\n';
-    for (const auto& child : node.Children()) {
+    for (const auto& child : *TreeNodeChildren(node)) {
       PrintTree(child, stream, printer, indent + 2) << '\n';
     }
     *stream << Spacer(indent) << '}';
@@ -313,7 +329,9 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 void ApplyPreOrder(T& node, const ApplyOnNodeFunction<T>& f) {
   f(node);
-  for (auto& child : node.Children()) ApplyPreOrder(child, f);
+  if (TreeNodeChildren(node)) {
+    for (auto& child : *TreeNodeChildren(node)) ApplyPreOrder(child, f);
+  }
 }
 
 // Visits all tree nodes in post-order traversal applying function to all nodes.
@@ -321,7 +339,9 @@ void ApplyPreOrder(T& node, const ApplyOnNodeFunction<T>& f) {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr>
 void ApplyPostOrder(T& node, const ApplyOnNodeFunction<T>& f) {
-  for (auto& child : node.Children()) ApplyPostOrder(child, f);
+  if (TreeNodeChildren(node)) {
+    for (auto& child : *TreeNodeChildren(node)) ApplyPostOrder(child, f);
+  }
   f(node);
 }
 
@@ -339,7 +359,9 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available>* = nullptr>
 void ApplyPreOrder(T& node, const ApplyOnNodeValueFunction<T>& f) {
   f(node.Value());
-  for (auto& child : node.Children()) ApplyPreOrder(child, f);
+  if (TreeNodeChildren(node)) {
+    for (auto& child : *TreeNodeChildren(node)) ApplyPreOrder(child, f);
+  }
 }
 
 // This variant of ApplyPostOrder expects a function on the underlying
@@ -352,7 +374,9 @@ void ApplyPostOrder(
     T& node,
     const std::function<void(typename TreeNodeTraits<T>::Value::reference)>&
         f) {
-  for (auto& child : node.Children()) ApplyPostOrder(child, f);
+  if (TreeNodeChildren(node)) {
+    for (auto& child : *TreeNodeChildren(node)) ApplyPostOrder(child, f);
+  }
   f(node.Value());
 }
 
@@ -366,7 +390,7 @@ void ApplyPostOrder(
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 size_t BirthRank(const T& node) {
-  using Iterator = decltype(node.Parent()->Children().begin());
+  using Iterator = decltype(TreeNodeChildren(*node.Parent())->begin());
   return tree_operations_internal::BirthRank(
       node, typename std::iterator_traits<Iterator>::iterator_category());
 }
@@ -466,7 +490,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool IsFirstChild(const T& node) {
   if (node.Parent() == nullptr) return true;
-  return &*node.Parent()->Children().begin() == &node;
+  return &*TreeNodeChildren(*node.Parent())->begin() == &node;
 }
 
 // Returns true if this node has no parent, or it is the last child of its
@@ -480,7 +504,7 @@ template <
     std::void_t<decltype(std::declval<const T>().Children().back())>* = nullptr>
 bool IsLastChild(const T& node) {
   if (node.Parent() == nullptr) return true;
-  return &node.Parent()->Children().back() == &node;
+  return &TreeNodeChildren(*node.Parent())->back() == &node;
 }
 
 // Navigates to the next leaf (node without Children()) in the tree
@@ -499,7 +523,7 @@ T* NextLeaf(T& node) {
   }
 
   // Find the next sibling, if there is one.
-  auto& siblings = parent->Children();
+  auto& siblings = *TreeNodeChildren(*parent);
   const size_t birth_rank = BirthRank(node);
   const size_t next_rank = birth_rank + 1;
   if (next_rank != std::size(siblings)) {
@@ -534,7 +558,7 @@ T* PreviousLeaf(T& node) {
   }
 
   // Find the next sibling, if there is one.
-  auto& siblings = parent->Children();
+  auto& siblings = *TreeNodeChildren(*parent);
   const size_t birth_rank = BirthRank(node);
   if (birth_rank > 0) {
     // More children precede this one.
@@ -565,11 +589,11 @@ T* NextSibling(T& node) {
   }
   const size_t birth_rank = BirthRank(node);
   const size_t next_rank = birth_rank + 1;
-  if (next_rank == std::size(node.Parent()->Children())) {
+  if (next_rank == std::size(*TreeNodeChildren(*node.Parent()))) {
     return nullptr;  // This is the last child of the Parent().
   }
   // More children follow this one.
-  return &*std::next(node.Parent()->Children().begin(), next_rank);
+  return &*std::next(TreeNodeChildren(*node.Parent())->begin(), next_rank);
 }
 
 // Returns the previous sibling node if it exists, else nullptr.
@@ -588,7 +612,7 @@ T* PreviousSibling(T& node) {
     return nullptr;
   }
   // More children precede this one.
-  return &*std::next(node.Parent()->Children().begin(), birth_rank - 1);
+  return &*std::next(TreeNodeChildren(*node.Parent())->begin(), birth_rank - 1);
 }
 
 // Removes this node from its parent, and shifts ths siblings that follow this
@@ -602,11 +626,12 @@ T* PreviousSibling(T& node) {
 //
 // Requires `Parent()` method in the node.
 // Requires `erase()` method in the children container.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
-                           !std::is_const_v<T>>* = nullptr>
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
+                     !std::is_const_v<std::remove_reference_t<T>>>* = nullptr>
 void RemoveSelfFromParent(T& node) {
-  auto& siblings = ABSL_DIE_IF_NULL(node.Parent())->Children();
+  auto& siblings = *TreeNodeChildren(*ABSL_DIE_IF_NULL(node.Parent()));
   auto self_iter = std::next(siblings.begin(), verible::BirthRank(node));
   CHECK_EQ(&*self_iter, &node);
   siblings.erase(self_iter);
@@ -622,9 +647,9 @@ std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
                  (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
 AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
   using tree_operations_internal::ReserveIfSupported;
-  ReserveIfSupported(node.Children(),
-                     std::size(node.Children()) + sizeof...(node_n));
-  (node.Children().push_back(std::forward<AdoptedNodeN>(node_n)), ...);
+  auto& children = *TreeNodeChildren(node);
+  ReserveIfSupported(children, std::size(children) + sizeof...(node_n));
+  (children.push_back(std::forward<AdoptedNodeN>(node_n)), ...);
 }
 
 // This node takes/moves subtrees from another node (concatenates).
@@ -636,13 +661,13 @@ template <class T,  //
                            !std::is_const_v<T>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
   using tree_operations_internal::ReserveIfSupported;
-  auto& src_children = other->Children();
-  ReserveIfSupported(node.Children(),
-                     std::size(node.Children()) + std::size(src_children));
+  auto& src_children = *TreeNodeChildren(*other);
+  auto& children = *TreeNodeChildren(node);
+  ReserveIfSupported(children, std::size(children) + std::size(src_children));
   for (auto& src_child : src_children) {
-    node.Children().push_back(std::move(src_child));
+    children.push_back(std::move(src_child));
   }
-  other->Children().clear();
+  src_children.clear();
 }
 
 // Recursively transform a SrcTree to DstTree.
@@ -664,8 +689,9 @@ DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
   using tree_operations_internal::ReserveIfSupported;
   // Using invoke() to allow passing SrcTree's method pointers as `f`
   DstTree dst_node(std::invoke(f, src_node));
-  ReserveIfSupported(dst_node.Children(), std::size(src_node.Children()));
-  for (const auto& child : src_node.Children()) {
+  ReserveIfSupported(*TreeNodeChildren(dst_node),
+                     std::size(*TreeNodeChildren(src_node)));
+  for (const auto& child : *TreeNodeChildren(src_node)) {
     AdoptSubtree(dst_node, Transform<DstTree>(child, f));
   }
   return dst_node;
@@ -673,14 +699,15 @@ DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
 
 // If this node has exactly one child, replace this node with that child
 // and return true, otherwise, do nothing and return false.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::available &&
+                     !std::is_const_v<std::remove_reference_t<T>>>* = nullptr>
 bool HoistOnlyChild(T& node) {
-  if (std::size(node.Children()) != 1) return false;
+  if (std::size(*TreeNodeChildren(node)) != 1) return false;
   // Can't do this directly, as assignment to node destroys its child
   // (`only`) before it is moved.
-  auto only = std::move(*node.Children().begin());
+  auto only = std::move(*TreeNodeChildren(node)->begin());
   node = std::move(only);
   return true;
 }
@@ -704,10 +731,10 @@ void MergeConsecutiveSiblings(
     std::function<void(typename TreeNodeTraits<T>::Value::type*,
                        typename TreeNodeTraits<T>::Value::const_reference)>
         joiner) {
-  CHECK_LT(N + 1, std::size(node.Children()));
+  CHECK_LT(N + 1, std::size(*TreeNodeChildren(node)));
 
   // Combine value into node[N].
-  const auto nth_child = std::next(node.Children().begin(), N);
+  const auto nth_child = std::next(TreeNodeChildren(node)->begin(), N);
   const auto next_child = std::next(nth_child);
   joiner(&nth_child->Value(), next_child->Value());
 
@@ -715,20 +742,22 @@ void MergeConsecutiveSiblings(
   verible::AdoptSubtreesFrom(*nth_child, &*next_child);
 
   // Shift-left children_ by 1 beyond N.
-  node.Children().erase(next_child);  // done via move-assignment
+  TreeNodeChildren(node)->erase(next_child);  // done via move-assignment
 }
 
 // Replace all direct children of this node with concatenated grandchildren.
 // Retains the value of this node.  Discards direct childrens' values.
 //
 // Requires `insert()` and `erase()` methods in the children container.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::available &&
+                     !std::is_const_v<std::remove_reference_t<T>>>* = nullptr>
 void FlattenOnce(T& node) {
   const int grandchildren_count = std::transform_reduce(
-      node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) { return std::size(gc.Children()); });
+      TreeNodeChildren(node)->begin(), TreeNodeChildren(node)->end(), 0,
+      std::plus<>(),
+      [](const T& gc) { return std::size(*TreeNodeChildren(gc)); });
   using tree_operations_internal::ReserveIfSupported;
 
   // Build new children list in a standalone container, then move-assign it to
@@ -737,12 +766,12 @@ void FlattenOnce(T& node) {
   Container grandchildren;
   ReserveIfSupported(grandchildren, grandchildren_count);
 
-  for (auto& child : node.Children()) {
-    for (auto& grandchild : child.Children()) {
+  for (auto& child : *TreeNodeChildren(node)) {
+    for (auto& grandchild : *TreeNodeChildren(child)) {
       grandchildren.push_back(std::move(grandchild));
     }
   }
-  node.Children() = std::move(grandchildren);
+  *TreeNodeChildren(node) = std::move(grandchildren);
 }
 
 // For every child, if that child has grandchildren, replace that child with
@@ -759,9 +788,9 @@ template <class T,  //
 void FlattenOnlyChildrenWithChildren(
     T& node, std::vector<size_t>* new_offsets = nullptr) {
   const int new_children_count = std::transform_reduce(
-      node.Children().begin(), node.Children().end(), 0, std::plus<>(),
-      [](const T& gc) {
-        return std::max<size_t>(std::size(gc.Children()), 1u);
+      TreeNodeChildren(node)->begin(), TreeNodeChildren(node)->end(), 0,
+      std::plus<>(), [](const T& gc) {
+        return std::max<size_t>(std::size(*TreeNodeChildren(gc)), 1u);
       });
   using tree_operations_internal::ReserveIfSupported;
 
@@ -774,25 +803,25 @@ void FlattenOnlyChildrenWithChildren(
 
   if (new_offsets != nullptr) {
     new_offsets->clear();
-    new_offsets->reserve(std::size(node.Children()));
+    new_offsets->reserve(std::size(*TreeNodeChildren(node)));
   }
 
   size_t new_index = 0;
-  for (auto& child : node.Children()) {
+  for (auto& child : *TreeNodeChildren(node)) {
     if (new_offsets) new_offsets->push_back(new_index);
-    if (child.Children().empty()) {
+    if (is_leaf(child)) {
       // Use child node
       new_children.push_back(std::move(child));
       ++new_index;
     } else {
       // Use grandchildren
-      for (auto& grandchild : child.Children()) {
+      for (auto& grandchild : *TreeNodeChildren(child)) {
         new_children.push_back(std::move(grandchild));
         ++new_index;
       }
     }
   }
-  node.Children() = std::move(new_children);
+  *TreeNodeChildren(node) = std::move(new_children);
 }
 
 // Replace the i'th child with its children.  This may result in increasing
@@ -803,27 +832,28 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
                            !std::is_const_v<T>>* = nullptr>
 void FlattenOneChild(T& node, size_t i) {
-  const size_t original_size = std::size(node.Children());
+  const size_t original_size = std::size(*TreeNodeChildren(node));
   CHECK_LT(i, original_size);
 
-  auto ith_child = std::next(node.Children().begin(), i);
+  auto ith_child = std::next(TreeNodeChildren(node)->begin(), i);
 
   if (is_leaf(*ith_child)) {
     // Empty list of grandchildren, just remove the child.
-    node.Children().erase(ith_child);
+    TreeNodeChildren(node)->erase(ith_child);
     return;
   }
 
   // Move-insert all grandchildren except the first one after the child.
-  node.Children().insert(
+  TreeNodeChildren(node)->insert(
       std::next(ith_child, 1),
-      std::make_move_iterator(std::next(ith_child->Children().begin(), 1)),
-      std::make_move_iterator(ith_child->Children().end()));
+      std::make_move_iterator(
+          std::next(TreeNodeChildren(*ith_child)->begin(), 1)),
+      std::make_move_iterator(TreeNodeChildren(*ith_child)->end()));
   // Possible reallocation and iterator invalidation above; update iterator.
-  ith_child = std::next(node.Children().begin(), i);
+  ith_child = std::next(TreeNodeChildren(node)->begin(), i);
   // Move the first grandchild into the child's place. Can't do this directly,
   // as assignment to *ith_child destroys the grandchild before it is moved.
-  auto first_granchild = std::move(*ith_child->Children().begin());
+  auto first_granchild = std::move(*TreeNodeChildren(*ith_child)->begin());
   *ith_child = std::move(first_granchild);
 }
 
@@ -908,8 +938,8 @@ TreeNodePair<LT, RT> DeepEqual(
 
   // Subtree comparison: check number of children first, returning early if
   // different.
-  const auto& left_children = left.Children();
-  const auto& right_children = right.Children();
+  const auto& left_children = *TreeNodeChildren(left);
+  const auto& right_children = *TreeNodeChildren(right);
   if (std::size(left_children) != std::size(right_children)) {
     return result_type{&left, &right};
   }
