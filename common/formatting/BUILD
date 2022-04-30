@@ -184,6 +184,7 @@ cc_library(
         "//common/util:spacer",
         "//common/util:top_n",
         "//common/util:tree_operations",
+        "//common/util:variant",
         "//common/util:vector_tree",
     ],
 )

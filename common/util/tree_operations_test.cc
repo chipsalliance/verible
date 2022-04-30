@@ -384,9 +384,13 @@ TEST(Misc, TreeNodeTraits) {
 
 TYPED_TEST(SimpleNodeTest, StandaloneFunctionsInterface) {
   if constexpr (std::is_const_v<TypeParam>) {
-    EXPECT_TRUE(std::is_const_v<std::remove_reference_t<decltype(*TreeNodeChildren(this->root))>>);
+    EXPECT_TRUE(
+        std::is_const_v<
+            std::remove_reference_t<decltype(*TreeNodeChildren(this->root))>>);
   } else {
-    EXPECT_FALSE(std::is_const_v<std::remove_reference_t<decltype(*TreeNodeChildren(this->root))>>);
+    EXPECT_FALSE(
+        std::is_const_v<
+            std::remove_reference_t<decltype(*TreeNodeChildren(this->root))>>);
   }
 }
 

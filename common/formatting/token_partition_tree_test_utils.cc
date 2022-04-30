@@ -39,15 +39,15 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
     const std::vector<verible::PreFormatToken>& tokens) const {
   TokenPartitionTree node;
 
-  node.Children().reserve(children_.size());
+  node.Children()->reserve(children_.size());
   for (const auto& child : children_) {
-    node.Children().push_back(child.build(tokens));
+    node.Children()->push_back(child.build(tokens));
   }
 
   FormatTokenRange node_tokens;
   if (token_indexes_range_.first < 0) {
-    const auto& child_nodes = node.Children();
-    CHECK(!child_nodes.empty());
+    CHECK(!is_leaf(node));
+    const auto& child_nodes = *node.Children();
     CHECK_LT(token_indexes_range_.second, 0);
     node_tokens.set_begin(child_nodes.front().Value().TokensRange().begin());
     node_tokens.set_end(child_nodes.back().Value().TokensRange().end());

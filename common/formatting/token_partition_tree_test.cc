@@ -56,6 +56,65 @@ class TokenPartitionTreeTestFixture : public ::testing::Test,
   std::vector<TokenInfo> ftokens_;
 };
 
+class ChoicesNodeTest : public TokenPartitionTreeTestFixture {};
+
+TEST_F(ChoicesNodeTest, Misc) {
+  using TPT = TokenPartitionTreeBuilder;
+
+  auto tree_with_choice =
+      TPT(PartitionPolicyEnum::kStack,
+          {
+              TPT(2, {0, 1}, PartitionPolicyEnum::kFitOnLineElseExpand),
+              TPT(2, {1, 5}, PartitionPolicyEnum::kUninitialized),
+              TPT(2, {5, 6}, PartitionPolicyEnum::kFitOnLineElseExpand),
+          })
+          .build(pre_format_tokens_);
+
+  auto& choice_node = tree_with_choice.Children()->at(1);
+  {
+    auto choice_data = choice_node.Value();
+    choice_node = TokenPartitionTree(TokenPartitionTree::Kind::kChoice);
+    choice_node.Value() = choice_data;
+  }
+
+  EXPECT_EQ(choice_node.Children(), nullptr);
+  EXPECT_TRUE(choice_node.Choices().empty());
+  EXPECT_EQ(choice_node.kind(), TokenPartitionTree::Kind::kChoice);
+
+  choice_node.Choices().push_back(TPT(PartitionPolicyEnum::kFitOnLineElseExpand,
+                                      {
+                                          TPT({1, 3}),
+                                          TPT({3, 5}),
+                                      })
+                                      .build(pre_format_tokens_));
+  choice_node.Choices().push_back(TPT(PartitionPolicyEnum::kAlwaysExpand,
+                                      {
+                                          TPT({1, 2}),
+                                          TPT({2, 3}),
+                                          TPT({3, 4}),
+                                          TPT({4, 5}),
+                                      })
+                                      .build(pre_format_tokens_));
+
+  EXPECT_DEATH(
+      choice_node.Choices().push_back(TPT(PartitionPolicyEnum::kAlwaysExpand,
+                                          {
+                                              // Range != choice node range.
+                                              TPT({1, 2}),
+                                          })
+                                          .build(pre_format_tokens_)),
+      "must cover the same tokens");
+
+  EXPECT_EQ(choice_node.Children(), nullptr);
+  EXPECT_EQ(choice_node.Choices().size(), 2);
+  EXPECT_EQ(choice_node.Choices()[0].Parent(), nullptr);
+  EXPECT_EQ(choice_node.Choices()[0].kind(),
+            TokenPartitionTree::Kind::kPartition);
+  EXPECT_EQ(choice_node.Choices()[1].Parent(), nullptr);
+  EXPECT_EQ(choice_node.Choices()[1].kind(),
+            TokenPartitionTree::Kind::kPartition);
+}
+
 class VerifyFullTreeFormatTokenRangesTest
     : public TokenPartitionTreeTestFixture {};
 
@@ -180,8 +239,8 @@ TEST_F(FlushLeftSpacingDifferencesTest, EmptyPartitions) {
   const auto begin = preformat_tokens.begin();
   UnwrappedLine all(0, begin);
   TokenPartitionTree tree{all};  // no children
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   using V = std::vector<int>;
   const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
   EXPECT_THAT(diffs, ElementsAre());
@@ -196,8 +255,8 @@ TEST_F(FlushLeftSpacingDifferencesTest, OnePartitionsOneToken) {
   partition0.SpanUpToToken(begin + 1);
   using T = TokenPartitionTree;
   T tree{partition0, T{partition0}};  // one partition, one token
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   using V = std::vector<int>;
   const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
   EXPECT_THAT(diffs, ElementsAre(V()));
@@ -212,8 +271,8 @@ TEST_F(FlushLeftSpacingDifferencesTest, OnePartitionsTwoTokens) {
   partition0.SpanUpToToken(begin + 2);
   using T = TokenPartitionTree;
   T tree{partition0, T{partition0}};  // one partition, two tokens
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   using V = std::vector<int>;
   const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
   EXPECT_THAT(diffs, ElementsAre(V({0})));
@@ -230,8 +289,8 @@ TEST_F(FlushLeftSpacingDifferencesTest, TwoPartitionsOneTokenEach) {
   partition1.SpanUpToToken(begin + 2);
   using T = TokenPartitionTree;
   T tree{partition0, T{partition0}, T{partition1}};  // two partitions
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   using V = std::vector<int>;
   const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
   EXPECT_THAT(diffs, ElementsAre(V(), V()));
@@ -248,8 +307,8 @@ TEST_F(FlushLeftSpacingDifferencesTest, TwoPartitionsTwoTokensEach) {
   partition1.SpanUpToToken(begin + 4);
   using T = TokenPartitionTree;
   T tree{partition0, T{partition0}, T{partition1}};  // two partitions
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   using V = std::vector<int>;
   const std::vector<V> diffs(FlushLeftSpacingDifferences(range));
   EXPECT_THAT(diffs, ElementsAre(V({0}), V({0})));
@@ -375,19 +434,19 @@ TEST_F(AdjustIndentationTest, Relative) {
       tree_type{sub},  // same range, but indented more
   };
   EXPECT_EQ(tree.Value().IndentationSpaces(), 5);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 7);
 
   AdjustIndentationRelative(&tree, 1);
   EXPECT_EQ(tree.Value().IndentationSpaces(), 6);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 8);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 8);
 
   AdjustIndentationRelative(&tree, -3);
   EXPECT_EQ(tree.Value().IndentationSpaces(), 3);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 5);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 5);
 
   AdjustIndentationRelative(&tree, -4);
   EXPECT_EQ(tree.Value().IndentationSpaces(), 0);  // clamped at 0
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 1);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 1);
 }
 
 TEST_F(AdjustIndentationTest, Absolute) {
@@ -405,19 +464,19 @@ TEST_F(AdjustIndentationTest, Absolute) {
       tree_type{sub},  // same range, but indented more
   };
   EXPECT_EQ(tree.Value().IndentationSpaces(), 5);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 7);
 
   AdjustIndentationAbsolute(&tree, 5);  // no change
   EXPECT_EQ(tree.Value().IndentationSpaces(), 5);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 7);
 
   AdjustIndentationAbsolute(&tree, 8);
   EXPECT_EQ(tree.Value().IndentationSpaces(), 8);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 10);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 10);
 
   AdjustIndentationAbsolute(&tree, 0);
   EXPECT_EQ(tree.Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children().front().Value().IndentationSpaces(), 2);
+  EXPECT_EQ(tree.Children()->front().Value().IndentationSpaces(), 2);
 }
 
 static bool PropertiesEqual(const UnwrappedLine& left,
@@ -466,7 +525,7 @@ TEST_F(GroupLeafWithPreviousLeafTest, OneChild) {
   ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
-  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().front());
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children()->front());
   EXPECT_EQ(group, nullptr);
 
   // Expect no change.
@@ -513,8 +572,8 @@ TEST_F(GroupLeafWithPreviousLeafTest, TwoChild) {
       },
   };
 
-  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().back());
-  EXPECT_EQ(group, &tree.Children().back());
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children()->back());
+  EXPECT_EQ(group, &tree.Children()->back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -546,8 +605,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, TwoGenerations) {
   tree_type tree{
       all,
       tree_type{
-          part1, tree_type{part1a},  // unchanged
-          tree_type{part1b},         // target partition
+          part1,              //
+          tree_type{part1a},  // unchanged
+          tree_type{part1b},  // target partition
       },
       tree_type{part2},  // source partition
   };
@@ -558,14 +618,15 @@ TEST_F(GroupLeafWithPreviousLeafTest, TwoGenerations) {
           all,
           tree_type{part1a},
           tree_type{
-              group_part, tree_type{part1b},  // target partition
-              tree_type{part2},               // source partition
+              group_part,         //
+              tree_type{part1b},  // target partition
+              tree_type{part2},   // source partition
           },
       },
   };
 
-  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().back());
-  EXPECT_EQ(group, &tree.Children().back().Children().back());
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children()->back());
+  EXPECT_EQ(group, &tree.Children()->back().Children()->back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -630,8 +691,8 @@ TEST_F(GroupLeafWithPreviousLeafTest, Cousins) {
   };
 
   auto* group =
-      GroupLeafWithPreviousLeaf(&tree.Children().back().Children().front());
-  EXPECT_EQ(group, &tree.Children().front().Children().back());
+      GroupLeafWithPreviousLeaf(&tree.Children()->back().Children()->front());
+  EXPECT_EQ(group, &tree.Children()->front().Children()->back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -675,8 +736,8 @@ TEST_F(GroupLeafWithPreviousLeafTest, ExtendCommonAncestor) {
       },
   };
 
-  auto* group = GroupLeafWithPreviousLeaf(&tree.Children().back());
-  EXPECT_EQ(group, &tree.Children().back());
+  auto* group = GroupLeafWithPreviousLeaf(&tree.Children()->back());
+  EXPECT_EQ(group, &tree.Children()->back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -728,7 +789,7 @@ TEST_F(MergeLeafIntoPreviousLeafTest, OneChild) {
   ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
-  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children().front());
+  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children()->front());
   EXPECT_EQ(parent, nullptr);
 
   // Expect no change.
@@ -762,7 +823,7 @@ TEST_F(MergeLeafIntoPreviousLeafTest, TwoChild) {
       tree_type{all},
   };
 
-  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children().back());
+  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children()->back());
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
@@ -809,7 +870,7 @@ TEST_F(MergeLeafIntoPreviousLeafTest, TwoGenerations) {
       },
   };
 
-  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children().back());
+  auto* parent = MergeLeafIntoPreviousLeaf(&tree.Children()->back());
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
@@ -871,8 +932,8 @@ TEST_F(MergeLeafIntoPreviousLeafTest, Cousins) {
   };
 
   auto* parent =
-      MergeLeafIntoPreviousLeaf(&tree.Children().back().Children().front());
-  EXPECT_EQ(parent, &tree.Children().back());
+      MergeLeafIntoPreviousLeaf(&tree.Children()->back().Children()->front());
+  EXPECT_EQ(parent, &tree.Children()->back());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -919,7 +980,7 @@ TEST_F(MergeLeafIntoNextLeafTest, OneChild) {
   ASSERT_FALSE(is_leaf(tree));
 
   const auto saved_tree(tree);  // deep copy
-  auto* parent = MergeLeafIntoNextLeaf(&tree.Children().front());
+  auto* parent = MergeLeafIntoNextLeaf(&tree.Children()->front());
   EXPECT_EQ(parent, nullptr);
 
   // Expect no change.
@@ -953,7 +1014,7 @@ TEST_F(MergeLeafIntoNextLeafTest, TwoChild) {
       tree_type{all},
   };
 
-  auto* parent = MergeLeafIntoNextLeaf(&tree.Children().front());
+  auto* parent = MergeLeafIntoNextLeaf(&tree.Children()->front());
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
@@ -1002,8 +1063,8 @@ TEST_F(MergeLeafIntoNextLeafTest, TwoGenerations) {
   };
 
   auto* parent =
-      MergeLeafIntoNextLeaf(&tree.Children().front().Children().back());
-  EXPECT_EQ(parent, &tree.Children().front());
+      MergeLeafIntoNextLeaf(&tree.Children()->front().Children()->back());
+  EXPECT_EQ(parent, &tree.Children()->front());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -1065,8 +1126,8 @@ TEST_F(MergeLeafIntoNextLeafTest, Cousins) {
   };
 
   auto* parent =
-      MergeLeafIntoNextLeaf(&tree.Children().front().Children().back());
-  EXPECT_EQ(parent, &tree.Children().front());
+      MergeLeafIntoNextLeaf(&tree.Children()->front().Children()->back());
+  EXPECT_EQ(parent, &tree.Children()->front());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
   EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
@@ -1203,14 +1264,14 @@ TEST_F(AnyPartitionSubRangeIsDisabledTest, Various) {
   };
 
   {
-    const TokenPartitionRange empty(tree.Children().begin(),
-                                    tree.Children().begin());
+    const TokenPartitionRange empty(tree.Children()->begin(),
+                                    tree.Children()->begin());
     EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(empty, joined_token_text_,
                                                 ByteOffsetSet{}));
   }
   {
-    const TokenPartitionRange range(tree.Children().begin(),
-                                    tree.Children().end());
+    const TokenPartitionRange range(tree.Children()->begin(),
+                                    tree.Children()->end());
     EXPECT_FALSE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
                                                 ByteOffsetSet{}));
     EXPECT_TRUE(AnyPartitionSubRangeIsDisabled(range, joined_token_text_,
@@ -1285,8 +1346,8 @@ class GetSubpartitionsNoNewlinesTest
 };
 
 TEST_F(GetSubpartitionsNoNewlinesTest, NoNewlines) {
-  const TokenPartitionRange range(partition_.Children().begin(),
-                                  partition_.Children().end());
+  const TokenPartitionRange range(partition_.Children()->begin(),
+                                  partition_.Children()->end());
   const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
   EXPECT_THAT(partition_ranges,
               ElementsAre(TokenPartitionRange(range.begin(), range.end())));
@@ -1301,8 +1362,8 @@ class GetSubpartitionsNoBlanksTest
 };
 
 TEST_F(GetSubpartitionsNoBlanksTest, NoBlanks) {
-  const TokenPartitionRange range(partition_.Children().begin(),
-                                  partition_.Children().end());
+  const TokenPartitionRange range(partition_.Children()->begin(),
+                                  partition_.Children()->end());
   const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
   EXPECT_THAT(partition_ranges,
               ElementsAre(TokenPartitionRange(range.begin(), range.end())));
@@ -1317,8 +1378,8 @@ class GetSubpartitionsWithBlanksTest
 };
 
 TEST_F(GetSubpartitionsWithBlanksTest, WithBlanks) {
-  const TokenPartitionRange range(partition_.Children().begin(),
-                                  partition_.Children().end());
+  const TokenPartitionRange range(partition_.Children()->begin(),
+                                  partition_.Children()->end());
   const auto partition_ranges = GetSubpartitionsBetweenBlankLines(range);
   EXPECT_THAT(
       partition_ranges,
@@ -1352,8 +1413,8 @@ TEST_F(IndentButPreserveOtherSpacingTest, Various) {
       tree_type{partition2},
   };
 
-  const TokenPartitionRange range(tree.Children().begin(),
-                                  tree.Children().end());
+  const TokenPartitionRange range(tree.Children()->begin(),
+                                  tree.Children()->end());
   IndentButPreserveOtherSpacing(range, joined_token_text_, &pre_format_tokens_);
   // The first tokens on each partition need not be preserved, but all
   // subsequent tokens should be preserved.
@@ -1396,7 +1457,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoArguments) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartition) {
@@ -1438,7 +1499,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartition) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartitionAndTrailer) {
@@ -1484,7 +1545,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentInSubpartitionAndTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlat) {
@@ -1521,7 +1582,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlat) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlatAndTrailer) {
@@ -1564,7 +1625,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OneArgumentFlatAndTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, TwoArguments) {
@@ -1614,7 +1675,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoArguments) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, TwoArgumentsAndTrailer) {
@@ -1669,7 +1730,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoArgumentsAndTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 // All fits in one partition
@@ -1732,7 +1793,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePartition) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 // All fits in one partition
@@ -1796,7 +1857,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePartitionWithTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 // Wrap into two partitions
@@ -1868,9 +1929,9 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoPartitions) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
   EXPECT_EQ(
-      tree.Children()[1].Value().IndentationSpaces(),
+      tree.Children()->at(1).Value().IndentationSpaces(),
       header.TokensRange()[0].Length());  // indenation equal first token length
 }
 
@@ -1944,9 +2005,9 @@ TEST_F(ReshapeFittingSubpartitionsTest, TwoPartitionsWithTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
   EXPECT_EQ(
-      tree.Children()[1].Value().IndentationSpaces(),
+      tree.Children()->at(1).Value().IndentationSpaces(),
       header.TokensRange()[0].Length());  // indenation equal first token length
 }
 
@@ -1992,7 +2053,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
       },
   };
 
-  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()->at(1), [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });
@@ -2013,11 +2074,15 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFits) {
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:" << tree << "\n";
 
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[4].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(4).Value().IndentationSpaces(),
+            style.wrap_spaces);
 }
 
 // None fits
@@ -2079,12 +2144,16 @@ TEST_F(ReshapeFittingSubpartitionsTest, NoneOneFitsWithTrailer) {
   EXPECT_EQ(diff.left, nullptr) << "Expected:\n"
                                 << tree_expected << "\nGot:" << tree << "\n";
 
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[4].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[5].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(4).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(5).Value().IndentationSpaces(), 0);
 }
 
 // All fits in one partition
@@ -2128,12 +2197,12 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartition) {
       },
   };
 
-  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()->at(1), [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(3 + style.indentation_spaces);
   });
 
-  tree.Children()[0].Value().SetIndentationSpaces(3);
+  tree.Children()->at(0).Value().SetIndentationSpaces(3);
   tree.Value().SetIndentationSpaces(3);
 
   const tree_type tree_expected{
@@ -2157,7 +2226,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartition) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // keep orig indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(),
             saved_tree.Value().IndentationSpaces());
 }
 
@@ -2224,7 +2293,7 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationOnePartitionWithTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // keep orig indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(),
             saved_tree.Value().IndentationSpaces());
 }
 
@@ -2270,12 +2339,12 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
   verible::BasicFormatStyle style;  // default
   style.column_limit = 14 + 7;
 
-  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()->at(1), [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(7 + style.indentation_spaces);
   });
 
-  tree.Children()[0].Value().SetIndentationSpaces(7);
+  tree.Children()->at(0).Value().SetIndentationSpaces(7);
   tree.Value().SetIndentationSpaces(7);
 
   UnwrappedLine group1(0, header.TokensRange().begin());
@@ -2307,21 +2376,27 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitions) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check group nodes indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 7);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
             header.TokensRange()[0].Length() + 7);  // appended
 
-  EXPECT_EQ(saved_tree.Children()[0].Value().IndentationSpaces(),
-            tree.Children()[0].Children()[0].Value().IndentationSpaces());
-  EXPECT_EQ(tree.Children()[0].Children()[1].Value().IndentationSpaces(), 7);
-  EXPECT_EQ(tree.Children()[0].Children()[2].Value().IndentationSpaces(), 7);
+  EXPECT_EQ(
+      saved_tree.Children()->at(0).Value().IndentationSpaces(),
+      tree.Children()->at(0).Children()->at(0).Value().IndentationSpaces());
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(1).Value().IndentationSpaces(), 7);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(2).Value().IndentationSpaces(), 7);
 
-  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
-  EXPECT_EQ(tree.Children()[1].Children()[1].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
-  EXPECT_EQ(tree.Children()[1].Children()[2].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(0).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(1).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(2).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
 }
 
 // Wrap into two partitions
@@ -2396,21 +2471,27 @@ TEST_F(ReshapeFittingSubpartitionsTest, IndentationTwoPartitionsWithTrailer) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check group nodes indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 7);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 7);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
             header.TokensRange()[0].Length() + 7);  // appended
 
-  EXPECT_EQ(saved_tree.Children()[0].Value().IndentationSpaces(),
-            tree.Children()[0].Children()[0].Value().IndentationSpaces());
-  EXPECT_EQ(tree.Children()[0].Children()[1].Value().IndentationSpaces(), 7);
-  EXPECT_EQ(tree.Children()[0].Children()[2].Value().IndentationSpaces(), 7);
+  EXPECT_EQ(
+      saved_tree.Children()->at(0).Value().IndentationSpaces(),
+      tree.Children()->at(0).Children()->at(0).Value().IndentationSpaces());
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(1).Value().IndentationSpaces(), 7);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(2).Value().IndentationSpaces(), 7);
 
-  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
-  EXPECT_EQ(tree.Children()[1].Children()[1].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
-  EXPECT_EQ(tree.Children()[1].Children()[2].Value().IndentationSpaces(),
-            header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(0).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(1).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(2).Value().IndentationSpaces(),
+      header.TokensRange()[0].Length() + 7);  // appended
 }
 
 // One subpartition per line
@@ -2479,26 +2560,31 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePerLine) {
   // Check group nodes indentation
   const int header_width = header.TokensRange()[0].Length();
 
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 1 * kIndent);
-  EXPECT_EQ(tree.Children()[0].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent);
-  EXPECT_EQ(tree.Children()[0].Children()[1].Value().IndentationSpaces(),
-            1 * kIndent);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 1 * kIndent);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(1).Value().IndentationSpaces(),
+      1 * kIndent);
 
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[2].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(2).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[3].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(3).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 }
 
 // One subpartition per line
@@ -2577,28 +2663,34 @@ TEST_F(ReshapeFittingSubpartitionsTest, OnePerLineWithTrailer) {
   // Check group nodes indentation
   const int header_width = header.TokensRange()[0].Length();
 
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 1 * kIndent);
-  EXPECT_EQ(tree.Children()[0].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent);
-  EXPECT_EQ(tree.Children()[0].Children()[1].Value().IndentationSpaces(),
-            1 * kIndent);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 1 * kIndent);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(1).Value().IndentationSpaces(),
+      1 * kIndent);
 
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[2].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(2).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
             1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[3].Children()[0].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
-  EXPECT_EQ(tree.Children()[3].Children()[1].Value().IndentationSpaces(),
-            1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(3).Children()->at(0).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
+  EXPECT_EQ(
+      tree.Children()->at(3).Children()->at(1).Value().IndentationSpaces(),
+      1 * kIndent + header_width);
 }
 
 TEST_F(ReshapeFittingSubpartitionsTest, AvoidExceedingColumnLimit) {
@@ -2672,19 +2764,25 @@ TEST_F(ReshapeFittingSubpartitionsTest, AvoidExceedingColumnLimit) {
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check group nodes indentation
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[0].Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(
+      tree.Children()->at(0).Children()->at(0).Value().IndentationSpaces(), 0);
 
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), 1);
-  EXPECT_EQ(tree.Children()[1].Children()[0].Value().IndentationSpaces(), 1);
-  EXPECT_EQ(tree.Children()[1].Children()[1].Value().IndentationSpaces(), 1);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(), 1);
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(0).Value().IndentationSpaces(), 1);
+  EXPECT_EQ(
+      tree.Children()->at(1).Children()->at(1).Value().IndentationSpaces(), 1);
 
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), 1);
-  EXPECT_EQ(tree.Children()[2].Children()[0].Value().IndentationSpaces(), 1);
-  EXPECT_EQ(tree.Children()[2].Children()[1].Value().IndentationSpaces(), 1);
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(), 1);
+  EXPECT_EQ(
+      tree.Children()->at(2).Children()->at(0).Value().IndentationSpaces(), 1);
+  EXPECT_EQ(
+      tree.Children()->at(2).Children()->at(1).Value().IndentationSpaces(), 1);
 
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[3].Children()[0].Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(
+      tree.Children()->at(3).Children()->at(0).Value().IndentationSpaces(), 0);
 }
 
 // Tests with real-world example
@@ -2763,7 +2861,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
   verible::BasicFormatStyle style;
   style.column_limit = 20;
 
-  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()->at(1), [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });
@@ -2787,13 +2885,19 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentations
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[4].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[5].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[6].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(4).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(5).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(6).Value().IndentationSpaces(),
+            style.wrap_spaces);
 }
 
 TEST_F(ReshapeFittingSubpartitionsFunctionTest,
@@ -2843,7 +2947,7 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
   verible::BasicFormatStyle style;
   style.column_limit = 40;
 
-  ApplyPreOrder(tree.Children()[1], [&style](TokenPartitionTree& node) {
+  ApplyPreOrder(tree.Children()->at(1), [&style](TokenPartitionTree& node) {
     auto& uwline = node.Value();
     uwline.SetIndentationSpaces(style.wrap_spaces);
   });
@@ -2885,10 +2989,13 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentations
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(), style.wrap_spaces);
-  EXPECT_EQ(tree.Children()[3].Value().IndentationSpaces(), style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
+            style.wrap_spaces);
+  EXPECT_EQ(tree.Children()->at(3).Value().IndentationSpaces(),
+            style.wrap_spaces);
 }
 
 TEST_F(ReshapeFittingSubpartitionsFunctionTest,
@@ -2969,10 +3076,10 @@ TEST_F(ReshapeFittingSubpartitionsFunctionTest,
                                 << tree_expected << "\nGot:" << tree << "\n";
 
   // Check indentations (appending)
-  EXPECT_EQ(tree.Children()[0].Value().IndentationSpaces(), 0);
-  EXPECT_EQ(tree.Children()[1].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(0).Value().IndentationSpaces(), 0);
+  EXPECT_EQ(tree.Children()->at(1).Value().IndentationSpaces(),
             header.TokensRange()[0].Length());
-  EXPECT_EQ(tree.Children()[2].Value().IndentationSpaces(),
+  EXPECT_EQ(tree.Children()->at(2).Value().IndentationSpaces(),
             header.TokensRange()[0].Length());
 }
 
@@ -3058,7 +3165,7 @@ class TokenPartitionTreesEqualPredFormatTest
 TEST_F(TokenPartitionTreesEqualPredFormatTest, EqualityCheck) {
   using TPT = TokenPartitionTreeBuilder;
 
-  static const auto ref_tree =
+  static const TokenPartitionTree ref_tree =
       TPT(PartitionPolicyEnum::kAlwaysExpand,
           {
               TPT(2, {0, 2}, PartitionPolicyEnum::kFitOnLineElseExpand),
@@ -3149,6 +3256,39 @@ TEST_F(TokenPartitionTreesEqualPredFormatTest, EqualityCheck) {
                  "  { (>>>>[three four], policy: uninitialized) }\n"
                  "}\n");
   }
+}
+
+TEST(TokenPartitionTreeTest, Misc) {
+  {
+    auto partition = TokenPartitionTree();
+    Visit(Overload{
+              [](UnwrappedLineNode&) { SUCCEED(); },
+              [](TokenPartitionChoiceNode&) { ADD_FAILURE(); },
+              [](auto&) { ADD_FAILURE(); },
+          },
+          partition);
+  }
+  {
+    auto partition = TokenPartitionTree(TokenPartitionTree::Kind::kPartition);
+    Visit(Overload{
+              [](UnwrappedLineNode&) { SUCCEED(); },
+              [](TokenPartitionChoiceNode&) { ADD_FAILURE(); },
+              [](auto&) { ADD_FAILURE(); },
+          },
+          partition);
+  }
+  {
+    auto partition = TokenPartitionTree(TokenPartitionTree::Kind::kChoice);
+    Visit(Overload{
+              [](TokenPartitionChoiceNode&) { SUCCEED(); },
+              [](UnwrappedLineNode&) { ADD_FAILURE(); },
+              [](auto&) { ADD_FAILURE(); },
+          },
+          partition);
+  }
+
+  // TODO: deep copy constructor
+  // TODO: move constructor
 }
 
 }  // namespace
