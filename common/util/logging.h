@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,5 +46,41 @@ ABSL_MUST_USE_RESULT T DieIfNull(const char* file, int line,
 #define ABSL_DIE_IF_NULL(val) \
   ::verible::DieIfNull(__FILE__, __LINE__, #val, (val))
 #endif
+
+#include <string_view>
+
+namespace verible {
+
+// Returns std::string_view with full (qualifiers included) and human
+// readable name of type `T`. Use only for debugging purposes. Works only on
+// GCC, Clang, MSVC, and can stop working reliably in future versions of even
+// these compilers.
+template <typename T>
+constexpr auto TypeNameAsString() {
+  std::string_view name;
+  int prefix_len = 0;
+  int suffix_len = 0;
+#ifdef __clang__
+  name = __PRETTY_FUNCTION__;
+  prefix_len = sizeof("auto verible::TypeNameAsString() [T = ") - 1;
+  suffix_len = sizeof("]") - 1;
+#elif defined(__GNUC__)
+  name = __PRETTY_FUNCTION__;
+  prefix_len =
+      sizeof("constexpr auto verible::TypeNameAsString() [with T = ") - 1;
+  suffix_len = sizeof("]") - 1;
+#elif defined(_MSC_VER)
+  name = __FUNCSIG__;
+  prefix_len = sizeof("auto __cdecl verible::TypeNameAsString<") - 1;
+  suffix_len = sizeof(">(void)") - 1;
+#else
+  name = "/*UNKNOWN*/";
+#endif
+  name.remove_prefix(prefix_len);
+  name.remove_suffix(suffix_len);
+  return name;
+}
+
+}  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_LOGGING_H_
