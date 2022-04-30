@@ -94,6 +94,38 @@ auto TreeNodeChildren(Node& node) -> decltype(&node.Children()) {
   return &node.Children();
 }
 
+// TODO(mglb): move Require* and Has* to more generic header (type_traits.h?)
+
+template <class Container,
+          typename Value = decltype(*std::declval<Container&>().begin()),  //
+          typename = std::void_t<decltype(
+              std::declval<Container&>().push_back(std::declval<Value>()))>>
+using RequirePushBackMethod = bool;
+
+template <typename Container>
+static constexpr bool HasPushBackMethod =
+    is_detected_v<RequirePushBackMethod, Container>;
+
+template <class Container,  //
+          typename = std::void_t<decltype(std::declval<Container&>().clear())>>
+using RequireClearMethod = bool;
+
+template <typename Container>
+static constexpr bool HasClearMethod =
+    is_detected_v<RequireClearMethod, Container>;
+
+template <class Container,  //
+          typename Iterator_ = decltype(std::declval<Container&>().begin()),
+          typename = std::void_t<decltype(
+              std::declval<Container&>().erase(std::declval<Iterator_>()))>>
+using RequireEraseMethod = bool;
+
+template <typename Container>
+static constexpr bool HasEraseMethod =
+    is_detected_v<RequireEraseMethod, Container>;
+
+// TODO(mglb): HasInsertMethod
+
 namespace tree_operations_internal {
 
 // TreeNodeTraits implementation details:
@@ -103,6 +135,10 @@ namespace tree_operations_internal {
 template <typename Node,  //
           typename Type_ = typename Node::subnodes_type>
 using TreeNodeSubnodesType = Type_;
+
+template <typename Container,  //
+          typename = std::void_t<decltype(std::declval<Container>().back())>>
+using RequireBidirectionalContainer = bool;
 
 // Defined when `Node` contains `Children()` method which returns reference to
 // a STL-like container with nodes.
@@ -118,6 +154,11 @@ struct TreeNodeChildrenTraits : FeatureTraits {
   // a value returned by `Children()` method.
   using container_type = verible::remove_cvref_t<
       detected_or_t<ChildrenType_, TreeNodeSubnodesType, Node>>;
+
+  // true if container exposed by `Children()` method is bidirectional (i.e. has
+  // `back()` method), otherwise false.
+  static constexpr bool container_is_bidirectional =
+      is_detected_v<RequireBidirectionalContainer, ChildrenType_>;
 };
 
 // Defined when `Node` contains `Value()` method.
@@ -247,9 +288,11 @@ T& LeftmostDescendant(T& node) {
 // argumnent.
 //
 // Requires `back()` method in the children container.
-template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available>* = nullptr,
-          std::void_t<decltype(std::declval<T>().Children().back())>* = nullptr>
+template <
+    class T,  //
+    std::enable_if_t<TreeNodeTraits<T>::available &&
+                     TreeNodeTraits<T>::Children::container_is_bidirectional>* =
+        nullptr>
 T& RightmostDescendant(T& node) {
   T* leaf = &node;
   while (!is_leaf(*leaf)) {
@@ -500,8 +543,9 @@ bool IsFirstChild(const T& node) {
 // Requires `Parent()` method in the node.
 template <
     class T,  //
-    std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr,
-    std::void_t<decltype(std::declval<const T>().Children().back())>* = nullptr>
+    std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
+                     TreeNodeTraits<T>::Children::container_is_bidirectional>* =
+        nullptr>
 bool IsLastChild(const T& node) {
   if (node.Parent() == nullptr) return true;
   return &TreeNodeChildren(*node.Parent())->back() == &node;
@@ -643,9 +687,12 @@ void RemoveSelfFromParent(T& node) {
 //
 // Requires `push_back()` method in the children container.
 template <class T, typename... AdoptedNodeN>
-std::enable_if_t<TreeNodeTraits<T>::available && !std::is_const_v<T> &&
-                 (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
-AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
+std::enable_if_t<
+    TreeNodeTraits<T>::available &&
+    !std::is_const_v<std::remove_reference_t<T>> &&
+    HasPushBackMethod<decltype(*TreeNodeChildren(std::declval<T&>()))> &&
+    (std::is_convertible_v<std::decay_t<AdoptedNodeN>, T> && ...)>
+/* void */ AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
   using tree_operations_internal::ReserveIfSupported;
   auto& children = *TreeNodeChildren(node);
   ReserveIfSupported(children, std::size(children) + sizeof...(node_n));
@@ -658,7 +705,9 @@ AdoptSubtree(T& node, AdoptedNodeN&&... node_n) {
 // Requires `push_back()` and `clear()` method in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
+                           !std::is_const_v<std::remove_reference_t<T>> &&
+                           HasPushBackMethod<decltype(*TreeNodeChildren(
+                               std::declval<T&>()))>>* = nullptr>
 void AdoptSubtreesFrom(T& node, T* other) {
   using tree_operations_internal::ReserveIfSupported;
   auto& src_children = *TreeNodeChildren(*other);
@@ -677,14 +726,15 @@ void AdoptSubtreesFrom(T& node, T* other) {
 //   auto tree_other = orig_tree.Transform<OtherType>(
 //       [](const SrcTree& node) { return ... });
 //
-// Requires `push_back()` method in the children container.
-template <
-    class DstTree, class SrcTree, class SrcNodeToDstValueFunc,
-    class DstValue_ =
-        std::invoke_result_t<SrcNodeToDstValueFunc, const SrcTree&>,  //
-    std::enable_if_t<TreeNodeTraits<DstTree>::available &&
-                     TreeNodeTraits<SrcTree>::available &&
-                     std::is_constructible_v<DstTree, DstValue_>>* = nullptr>
+// Requires `push_back()` method in the children container of DstTree.
+template <class DstTree, class SrcTree, class SrcNodeToDstValueFunc,
+          class DstValue_ =
+              std::invoke_result_t<SrcNodeToDstValueFunc, const SrcTree&>,  //
+          std::enable_if_t<TreeNodeTraits<DstTree>::available &&
+                           TreeNodeTraits<SrcTree>::available &&
+                           std::is_constructible_v<DstTree, DstValue_> &&
+                           HasPushBackMethod<decltype(*TreeNodeChildren(
+                               std::declval<DstTree&>()))>>* = nullptr>
 DstTree Transform(const SrcTree& src_node, const SrcNodeToDstValueFunc& f) {
   using tree_operations_internal::ReserveIfSupported;
   // Using invoke() to allow passing SrcTree's method pointers as `f`
@@ -725,7 +775,9 @@ bool HoistOnlyChild(T& node) {
 // Requires `push_back()` and `erase()` methods in the children container.
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Value::available &&
-                           !std::is_const_v<T>>* = nullptr>
+                           !std::is_const_v<std::remove_reference_t<T>> &&
+                           HasPushBackMethod<decltype(*TreeNodeChildren(
+                               std::declval<T&>()))>>* = nullptr>
 void MergeConsecutiveSiblings(
     T& node, size_t N,
     std::function<void(typename TreeNodeTraits<T>::Value::type*,
@@ -783,8 +835,12 @@ void FlattenOnce(T& node) {
 //
 // Requires `push_back()` method in the children container.
 template <class T,  //
-          std::enable_if_t<TreeNodeTraits<T>::available &&
-                           !std::is_const_v<T>>* = nullptr>
+          std::enable_if_t<
+              TreeNodeTraits<T>::available &&
+              !std::is_const_v<std::remove_reference_t<T>> &&
+              HasPushBackMethod<decltype(*TreeNodeChildren(std::declval<T&>()))>
+
+              >* = nullptr>
 void FlattenOnlyChildrenWithChildren(
     T& node, std::vector<size_t>* new_offsets = nullptr) {
   const int new_children_count = std::transform_reduce(
@@ -872,7 +928,8 @@ void FlattenOneChild(T& node, size_t i) {
 //
 // Requires `Parent()` method in the node.
 template <class T, class PathType,  //
-          std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
+          std::enable_if_t<TreeNodeTraits<T>::Parent::available &&
+                           HasPushBackMethod<PathType>>* = nullptr>
 void Path(const T& node, PathType& path) {
   if (node.Parent() != nullptr) {
     Path(*node.Parent(), path);
