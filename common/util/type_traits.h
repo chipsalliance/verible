@@ -59,10 +59,12 @@ template <class Default, class AlwaysVoid, template <class...> class Op,
           class... Args>
 struct detected_impl {
   using type = Default;
+  static constexpr bool value = false;
 };
 template <class Default, template <class...> class Op, class... Args>
 struct detected_impl<Default, std::void_t<Op<Args...>>, Op, Args...> {
   using type = Op<Args...>;
+  static constexpr bool value = true;
 };
 
 }  // namespace type_traits_internal
@@ -72,6 +74,11 @@ template <class Default, template <class...> class Op, class... Args>
 using detected_or_t =
     typename type_traits_internal::detected_impl<Default, void, Op,
                                                  Args...>::type;
+
+// true if type `Op<Args...>` is valid; otherwise false.
+template <template <class...> class Op, class... Args>
+constexpr inline bool is_detected_v =
+    type_traits_internal::detected_impl<void, void, Op, Args...>::value;
 
 // Alias to type T with removed reference, const, and volatile qualifiers.
 // Backport from C++20.
