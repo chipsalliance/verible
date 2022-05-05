@@ -149,9 +149,10 @@ class VerilogPreprocess {
   absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
 
-  static absl::Status ParseMacroCall(const StreamIteratorGenerator&,
-                                     verible::MacroCall*,
-                                     const verible::MacroDefinition&);
+  static absl::Status ConsumeAndParseMacroCall(TokenStreamView::const_iterator,
+                                               const StreamIteratorGenerator&,
+                                               verible::MacroCall*,
+                                               const verible::MacroDefinition&);
 
   // The following functions return nullptr when there is no error:
   absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator&,
@@ -164,9 +165,9 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
-  absl::Status ExpandMacro(const absl::string_view&);
-  absl::Status ExpandCallableMacro(const verible::MacroCall&,
-                                   const verible::MacroDefinition*);
+  absl::Status ExpandText(const absl::string_view&);
+  absl::Status ExpandMacro(const verible::MacroCall&,
+                           const verible::MacroDefinition*);
 
   const Config config_;
 
