@@ -77,8 +77,8 @@ class TokenPartitionNode {
  protected:
   void SetParent(TokenPartitionTree* parent) { parent_ = parent; }
 
-  static void SetParent(TokenPartitionNode& node, TokenPartitionTree* parent) {
-    node.parent_ = parent;
+  static void SetParent(TokenPartitionNode* node, TokenPartitionTree* parent) {
+    node->parent_ = parent;
   }
 
   // Value-related interface
@@ -577,7 +577,7 @@ void TokenPartitionBranchNode::ChildrenList::LinkChildrenToParent(
   for (auto& child : children) {
     Visit(
         [variant](TokenPartitionNode& node) {
-          TokenPartitionNode::SetParent(node, variant);
+          TokenPartitionNode::SetParent(&node, variant);
         },
         child);
   }
@@ -603,7 +603,7 @@ void TokenPartitionChoiceNode::ChoicesList::VerifyAndProcessNewChoices(
           CHECK(subnode.Tokens() == node->Tokens())
               << "Each choice subtree must cover the same tokens as the Choice "
                  "node.";
-          TokenPartitionNode::SetParent(subnode, nullptr);
+          TokenPartitionNode::SetParent(&subnode, nullptr);
         },
         subtree);
   }
