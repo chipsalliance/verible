@@ -18,6 +18,7 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
@@ -31,6 +32,7 @@
 #include "common/util/spacer.h"
 #include "common/util/top_n.h"
 #include "common/util/tree_operations.h"
+#include "common/util/value_saver.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -129,52 +131,140 @@ std::vector<std::vector<int>> FlushLeftSpacingDifferences(
   return flush_left_spacing_deltas;
 }
 
-std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
-                                                   int indent) const {
-  const auto& value = node.Value();
-  const auto& children = *node.Children();
-  stream << Spacer(indent) << "{ ";
-  if ((node.kind() == TokenPartitionTree::Kind::kChoice &&
-       node.Choices().empty()) ||
-      (node.kind() != TokenPartitionTree::Kind::kChoice && children.empty())) {
-    stream << '(';
-    value.AsCode(&stream, verbose, origin_printer);
-    stream << ") }";
-  } else {
-    stream << '('
-           // similar to UnwrappedLine::AsCode()
-           << Spacer(value.IndentationSpaces(),
-                     UnwrappedLine::kIndentationMarker);
-    // <auto> just means the concatenation of all subpartitions
-    if (node.kind() == TokenPartitionTree::Kind::kChoice) {
-      stream << "[<auto>], <CHOICE>) @";
+// FIXME(mglb): Duplicate of function from unwrapped_line.cc. Expose the other
+// function and remove this one.
+static void TokenFormatter(std::string* out, const PreFormatToken& token,
+                           bool verbose) {
+  if (verbose) {
+    std::ostringstream oss;
+    token.before.CompactNotation(oss);
+    absl::StrAppend(out, oss.str());
+  }
+  absl::StrAppend(out, token.Text());
+}
+
+// TokenPartitionNode visitor which recursively prints tree in textual form.
+// TODO(mglb): Consider merging with TokenPartitionTreePrinter
+class TokenPartitionNodePrinter {
+  static constexpr int kIndentationSpaces = 2;
+
+ public:
+  explicit TokenPartitionNodePrinter(
+      std::ostream& stream, bool verbose = false,
+      bool print_branch_tokens = false, bool print_node_path = false,
+      UnwrappedLine::OriginPrinterFunction origin_printer =
+          UnwrappedLine::DefaultOriginPrinter)
+      : stream_(stream),
+        verbose_(verbose),
+        print_branch_tokens_(print_branch_tokens),
+        print_node_path_(print_node_path),
+        origin_printer_(std::move(origin_printer)),
+        indent_(0) {}
+
+  void operator()(const UnwrappedLineNode& node) {
+    stream_ << Spacer(indent_) << "{ ";
+
+    if (node.Children().empty()) {
+      stream_ << '(';
+      node.Value().AsCode(&stream_, verbose_, origin_printer_);
+      stream_ << ") }";
     } else {
-      stream << "[<auto>], policy: " << value.PartitionPolicy() << ") @";
-    }
-    stream << NodePath(node);
-    if (value.Origin() != nullptr) {
-      stream << ", (origin: ";
-      origin_printer(stream, value.Origin());
-      stream << ")";
-    }
-    stream << '\n';
-    if (node.kind() == TokenPartitionTree::Kind::kChoice) {
-      for (const auto& child : node.Choices()) {
-        TokenPartitionTreePrinter(child, verbose, origin_printer)
-                .PrintTree(stream, indent + 2)
-            << '\n';
+      stream_ << '('
+              // similar to UnwrappedLine::AsCode()
+              << Spacer(node.Value().IndentationSpaces(),
+                        UnwrappedLine::kIndentationMarker);
+
+      stream_ << "[";
+      PrintNodeTokens(node, !node.Children().empty());
+      stream_ << "], policy: " << node.Value().PartitionPolicy() << ")";
+
+      if (print_node_path_) {
+        const auto* var = TokenPartitionVariant::GetFromStoredObject(&node);
+        const auto* tpt = static_cast<const TokenPartitionTree*>(var);
+        stream_ << " @" << NodePath(*tpt);
       }
-      stream << Spacer(indent) << '}';
-    } else {
-      // token range spans all of children nodes
-      for (const auto& child : children) {
-        TokenPartitionTreePrinter(child, verbose, origin_printer)
-                .PrintTree(stream, indent + 2)
-            << '\n';
+
+      if (node.Value().Origin() != nullptr) {
+        stream_ << ", (origin: ";
+        origin_printer_(stream_, node.Value().Origin());
+        stream_ << ")";
       }
-      stream << Spacer(indent) << '}';
+      stream_ << '\n';
+
+      {
+        auto indent_saver = ValueSaver(&indent_, indent_ + kIndentationSpaces);
+        for (const auto& child : node.Children()) {
+          Visit(*this, child);
+          stream_ << '\n';
+        }
+      }
+
+      stream_ << Spacer(indent_) << "}";
     }
   }
+
+  void operator()(const TokenPartitionChoiceNode& node) {
+    stream_ << Spacer(indent_) << "Choice { ("
+            << Spacer(node.Value().IndentationSpaces(),
+                      UnwrappedLine::kIndentationMarker)
+            << "[";
+    PrintNodeTokens(node, !node.Choices().empty());
+    stream_ << "])";
+
+    if (print_node_path_) {
+      const auto* var = TokenPartitionVariant::GetFromStoredObject(&node);
+      const auto* tpt = static_cast<const TokenPartitionTree*>(var);
+      stream_ << " @" << NodePath(*tpt);
+    }
+
+    if (!node.Choices().empty()) {
+      stream_ << '\n';
+      {
+        auto indent_saver = ValueSaver(&indent_, indent_ + kIndentationSpaces);
+        for (const auto& child : node.Choices()) {
+          Visit(*this, child);
+          stream_ << '\n';
+        }
+      }
+
+      stream_ << Spacer(indent_) << "} // Choice";
+    } else {
+      stream_ << " }";
+    }
+  }
+
+  void operator()(const TokenPartitionNode& node) {
+    stream_ << Spacer(indent_) << "UnknownNode { ([";
+    PrintNodeTokens(node, false);
+    stream_ << "]) }";
+  }
+
+ private:
+  void PrintNodeTokens(const TokenPartitionNode& node, bool is_branch) {
+    if (print_branch_tokens_ || !is_branch) {
+      stream_ << absl::StrJoin(
+          node.Tokens(), " ",
+          [=](std::string* out, const PreFormatToken& token) {
+            TokenFormatter(out, token, this->verbose_);
+          });
+    } else {
+      stream_ << "<auto>";
+    }
+  }
+
+  std::ostream& stream_;
+  bool verbose_;
+  bool print_branch_tokens_;
+  bool print_node_path_;
+  UnwrappedLine::OriginPrinterFunction origin_printer_;
+  int indent_;
+};
+
+std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
+                                                   int indent) const {
+  auto printer =
+      TokenPartitionNodePrinter(stream, verbose, false, true, origin_printer);
+  Visit(printer, node);
   return stream;
 }
 
