@@ -151,6 +151,7 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
 // Parse and unparse for RuleBundle (for commandlineflags)
 std::string RuleBundle::UnparseConfiguration(const char separator) const {
   std::vector<std::string> switches;
+  switches.reserve(rules.size());
   for (const auto& rule : rules) {
     switches.push_back(absl::StrCat(
         // If rule is set off, prepend "-"

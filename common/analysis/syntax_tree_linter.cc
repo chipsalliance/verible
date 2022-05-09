@@ -35,6 +35,7 @@ void SyntaxTreeLinter::Lint(const Symbol& root) {
 
 std::vector<LintRuleStatus> SyntaxTreeLinter::ReportStatus() const {
   std::vector<LintRuleStatus> status;
+  status.reserve(rules_.size());
   for (const auto& rule : rules_) {
     status.push_back(ABSL_DIE_IF_NULL(rule)->Report());
   }
