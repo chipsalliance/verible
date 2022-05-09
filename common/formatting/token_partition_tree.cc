@@ -273,6 +273,12 @@ std::ostream& operator<<(std::ostream& stream,
   return printer.PrintTree(stream);
 }
 
+std::ostream& operator<<(std::ostream& stream, const TokenPartitionTree& node) {
+  auto printer = TokenPartitionNodePrinter(stream, false, true, false);
+  Visit(printer, node);
+  return stream;
+}
+
 // Detects when there is a vertical separation of more than one line between
 // two token partitions.
 class BlankLineSeparatorDetector {

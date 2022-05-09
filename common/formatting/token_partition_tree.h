@@ -363,6 +363,8 @@ struct TokenPartitionTreePrinter {
 std::ostream& operator<<(std::ostream& stream,
                          const TokenPartitionTreePrinter& printer);
 
+std::ostream& operator<<(std::ostream& stream, const TokenPartitionTree& node);
+
 // TokenPartitionTree
 // ==================
 
