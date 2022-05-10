@@ -281,7 +281,7 @@ class Variant {
   constexpr Variant(Variant&& other) noexcept { Construct(std::move(other)); }
 
   // TODO(mglb): enable conditionally
-  template <class T, std::enable_if_t<type_list_contains_v<T>>* = nullptr>
+  template <class T, typename = std::enable_if_t<type_list_contains_v<T>>>
   constexpr explicit Variant(T&& obj) noexcept {
     Construct(std::forward<T>(obj));
   }
