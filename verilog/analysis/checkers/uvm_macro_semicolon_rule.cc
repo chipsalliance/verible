@@ -40,9 +40,8 @@ VERILOG_REGISTER_LINT_RULE(UvmMacroSemicolonRule);
 const LintRuleDescriptor& UvmMacroSemicolonRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "uvm-macro-semicolon",
-      .dv_topic =
-          "uvm-macro-semicolon-convention",  // TODO(b/155128436): verify
-                                             // style guide anchor name
+      .topic = "uvm-macro-semicolon-convention",  // TODO(b/155128436): verify
+                                                  // style guide anchor name
       .desc = "Checks that no `uvm_* macro calls end with ';'.",
   };
   return d;

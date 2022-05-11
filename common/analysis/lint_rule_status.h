@@ -157,9 +157,7 @@ struct LintRuleStatus {
   LintRuleStatus(const std::set<LintViolation>& vs,
                  const Descriptor& descriptor)
       : lint_rule_name(descriptor.name),
-        url(!descriptor.dv_topic.empty()
-                ? GetVerificationCitation(descriptor.dv_topic)
-                : GetStyleGuideCitation(descriptor.topic)),
+        url(GetStyleGuideCitation(descriptor.topic)),
         violations(vs) {}
 
   explicit LintRuleStatus(const std::set<LintViolation>& vs) : violations(vs) {}

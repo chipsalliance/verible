@@ -49,7 +49,7 @@ VERILOG_REGISTER_LINT_RULE(VoidCastRule);
 const LintRuleDescriptor& VoidCastRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "void-cast",
-      .dv_topic = "void-casts",
+      .topic = "void-casts",
       .desc =
           "Checks that void casts do not contain certain function/method "
           "calls. ",

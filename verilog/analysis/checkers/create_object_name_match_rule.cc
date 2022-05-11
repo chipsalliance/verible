@@ -56,7 +56,7 @@ VERILOG_REGISTER_LINT_RULE(CreateObjectNameMatchRule);
 const LintRuleDescriptor& CreateObjectNameMatchRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "create-object-name-match",
-      .dv_topic = "naming",
+      .topic = "uvm-naming",
       .desc =
           "Checks that the 'name' argument of `type_id::create()` "
           "matches the name of the variable to which it is assigned.",

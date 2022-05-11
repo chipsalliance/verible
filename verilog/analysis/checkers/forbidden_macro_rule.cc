@@ -36,7 +36,7 @@
 namespace verilog {
 namespace analysis {
 
-using verible::GetVerificationCitation;
+using verible::GetStyleGuideCitation;
 using verible::container::FindWithDefault;
 using verible::matcher::Matcher;
 
@@ -47,7 +47,7 @@ VERILOG_REGISTER_LINT_RULE(ForbiddenMacroRule);
 const LintRuleDescriptor& ForbiddenMacroRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbidden-macro",
-      .dv_topic = "logging",
+      .topic = "uvm-logging",
       .desc = "Checks that no forbidden macro calls are used.",
   };
   return d;
@@ -62,9 +62,9 @@ static const Matcher& MacroCallMatcher() {
 // Set of invalid macros and URLs
 const std::map<std::string, std::string>&
 ForbiddenMacroRule::InvalidMacrosMap() {
-  // TODO(hzeller): don't use GetVerificationCitation here, more downstream.
+  // TODO(hzeller): don't use GetStyleGuideCitation here, more downstream.
   static const auto* invalid_symbols = new std::map<std::string, std::string>({
-      {"`uvm_warning", GetVerificationCitation("logging")},
+      {"`uvm_warning", GetStyleGuideCitation("uvm-logging")},
   });
   return *invalid_symbols;
 }

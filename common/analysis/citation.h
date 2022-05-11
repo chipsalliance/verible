@@ -23,10 +23,6 @@ namespace verible {
 // Given a styleguide topic, return a reference to some styleguide
 // citation for the given topic (e.g. just the topic-name or an URL).
 std::string GetStyleGuideCitation(absl::string_view topic);
-
-// Given a verification styleguide topic, return a reference to
-// a citation (e.g. just the topic-name or an URL).
-std::string GetVerificationCitation(absl::string_view topic);
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_ANALYSIS_CITATION_H_
