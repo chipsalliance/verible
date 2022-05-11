@@ -104,7 +104,7 @@ Check that constraint names follow the lower_snake_case convention and end with 
 Enabled by default: true
 
 ### create-object-name-match
-Checks that the 'name' argument of `type_id::create()` matches the name of the variable to which it is assigned. See [Verification-Style: naming].
+Checks that the 'name' argument of `type_id::create()` matches the name of the variable to which it is assigned. See [Style: uvm-naming].
 
 Enabled by default: true
 
@@ -162,7 +162,7 @@ Checks that there are no occurrences of `\` when breaking the string literal lin
 Enabled by default: true
 
 ### forbidden-macro
-Checks that no forbidden macro calls are used. See [Verification-Style: logging].
+Checks that no forbidden macro calls are used. See [Style: uvm-logging].
 
 Enabled by default: true
 
@@ -182,7 +182,7 @@ Checks that `interface` names use lower_snake_case naming convention and end wit
 Enabled by default: true
 
 ### invalid-system-task-function
-Checks that no forbidden system tasks or functions are used. These consist of the following functions: `$psprintf`, `$random`, and `$dist_*`. As well as non-LRM function `$srandom`. See [Verification-Style: forbidden-system-functions].
+Checks that no forbidden system tasks or functions are used. These consist of the following functions: `$psprintf`, `$random`, and `$dist_*`. As well as non-LRM function `$srandom`. See [Style: forbidden-system-functions].
 
 Enabled by default: true
 
@@ -368,7 +368,7 @@ Checks that unpacked dimension ranges are declared in big-endian order `[0:N-1]`
 Enabled by default: true
 
 ### uvm-macro-semicolon
-Checks that no `uvm_* macro calls end with ';'. See [Verification-Style: uvm-macro-semicolon-convention].
+Checks that no `uvm_* macro calls end with ';'. See [Style: uvm-macro-semicolon-convention].
 
 Enabled by default: false
 
@@ -378,11 +378,11 @@ Checks that there are no generate-begin blocks inside a generate region. See [St
 Enabled by default: true
 
 ### void-cast
-Checks that void casts do not contain certain function/method calls.  See [Verification-Style: void-casts].
+Checks that void casts do not contain certain function/method calls.  See [Style: void-casts].
 
 Enabled by default: true
 
 
 ## Version
 
-Generated on 2022-05-11 11:45:56 -0700 from [2a1254c4](https://github.com/google/verible/commit/2a1254c470c7bd3f8042f60183562fa155795690)
+Generated on 2022-05-11 12:33:01 -0700 from [f327d4f6](https://github.com/google/verible/commit/f327d4f67be0c8b7561848c28fc215aa51485728)
