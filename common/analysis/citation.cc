@@ -20,10 +20,4 @@ namespace verible {
 std::string GetStyleGuideCitation(absl::string_view topic) {
   return absl::StrCat("[Style: ", topic, "]");
 }
-
-// Return a reference to some verification style citation for the given topic.
-std::string GetVerificationCitation(absl::string_view topic) {
-  return absl::StrCat("[Verification-Style: ", topic, "]");
-}
-
 }  // namespace verible

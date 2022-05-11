@@ -44,7 +44,7 @@ VERILOG_REGISTER_LINT_RULE(ForbiddenSystemTaskFunctionRule);
 const LintRuleDescriptor& ForbiddenSystemTaskFunctionRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "invalid-system-task-function",
-      .dv_topic = "forbidden-system-functions",
+      .topic = "forbidden-system-functions",
       .desc =
           "Checks that no forbidden system tasks or functions are used. These "
           "consist of the following functions: `$psprintf`, `$random`, and "

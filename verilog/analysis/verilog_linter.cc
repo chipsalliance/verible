@@ -400,10 +400,7 @@ void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
     const auto& d = rule.second.descriptor;
     *os << "### " << rule.first << "\n";
     *os << d.desc;
-    *os << " See "
-        << (d.dv_topic.empty() ? verible::GetStyleGuideCitation(d.topic)
-                               : verible::GetVerificationCitation(d.dv_topic))
-        << ".\n\n";
+    *os << " See " << verible::GetStyleGuideCitation(d.topic) << ".\n\n";
 
     if (!d.param.empty()) {
       *os << "##### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
