@@ -31,7 +31,8 @@ using ::testing::ElementsAre;
 using verible::testing::NamedInterval;
 using verible::testing::VectorTreeTestType;
 
-using ExpandableTreeViewTestType = ExpandableTreeView<NamedInterval>;
+using ExpandableTreeViewTestType =
+    ExpandableTreeView<VectorTree<NamedInterval>>;
 
 // Test that basic Tree View operations work on a singleton node.
 TEST(ExpandableTreeViewTest, RootOnly) {
@@ -250,7 +251,8 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPreOrder) {
 
   std::vector<absl::string_view> visit_order;
   tree_view.ApplyPreOrder(
-      [=, &visit_order](VectorTree<TreeViewNodeInfo<NamedInterval>>& node) {
+      [=, &visit_order](
+          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>>& node) {
         const absl::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p') {
@@ -282,7 +284,8 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPostOrder) {
 
   std::vector<absl::string_view> visit_order;
   tree_view.ApplyPostOrder(
-      [=, &visit_order](VectorTree<TreeViewNodeInfo<NamedInterval>>& node) {
+      [=, &visit_order](
+          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>>& node) {
         const absl::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p' && name.back() == '1') {
