@@ -1428,8 +1428,12 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
 }
 
 static bool PartitionStartsWithSemicolon(const TokenPartitionTree& partition) {
-  const auto& uwline = RightmostDescendant(partition).Value();
-  return !uwline.IsEmpty() && uwline.TokensRange().front().TokenEnum() == ';';
+  const auto& uwline = partition.Value();
+  if (uwline.IsEmpty()) return false;
+  const auto first_token = uwline.TokensRange().front().TokenEnum();
+  return (first_token == ';' ||
+          first_token ==
+              verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations);
 }
 
 static bool PartitionIsCloseParenSemi(const TokenPartitionTree& partition) {
@@ -1535,7 +1539,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   if (previous_partition != nullptr) {
     if (!previous_partition->Value().TokensRange().empty()) {
       const auto& previous_token =
-          previous_partition->Value().TokensRange().front();
+          previous_partition->Value().TokensRange().back();
       absl::string_view original_text_between = verible::make_string_view_range(
           previous_token.Text().end(), separator->Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
@@ -1551,7 +1555,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   const auto* next_partition = NextLeaf(*partition);
   if (next_partition != nullptr) {
     if (!next_partition->Value().TokensRange().empty()) {
-      const auto& next_token = next_partition->Value().TokensRange().back();
+      const auto& next_token = next_partition->Value().TokensRange().front();
       absl::string_view original_text_between = verible::make_string_view_range(
           separator->Text().end(), next_token.Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
@@ -1588,8 +1592,8 @@ static void AttachSeparatorToPreviousOrNextPartition(
 
 void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
   CHECK_NOTNULL(partition);
-  // Skip first and last partition, as those can't contain just a separator.
-  for (int i = 1; i < static_cast<int>(partition->Children().size()) - 1; ++i) {
+  // Skip the first partition, it can't contain just a separator.
+  for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {
     auto& subpartition = partition->Children()[i];
     // This can change children count
     AttachSeparatorToPreviousOrNextPartition(&subpartition);
@@ -1608,8 +1612,8 @@ static void AttachTrailingSemicolonToPreviousPartition(
   // In some cases where macros are involved, there may not necessarily
   // be a semicolon where one is grammatically expected.
   // In those cases, do nothing.
-  if (PartitionStartsWithSemicolon(*partition)) {
-    auto* semicolon_partition = &RightmostDescendant(*partition);
+  auto* semicolon_partition = &RightmostDescendant(*partition);
+  if (PartitionStartsWithSemicolon(*semicolon_partition)) {
     // When the semicolon is forced to wrap (e.g. when previous partition ends
     // with EOL comment), wrap previous partition with a group and append the
     // semicolon partition to it.
@@ -2727,6 +2731,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       break;
     }
 
+    case NodeEnum::kAssertionVariableDeclarationList: {
+      AttachTrailingSemicolonToPreviousPartition(&partition);
+      break;
+    }
+
     case NodeEnum::kArgumentList: {
       SetCommentLinePartitionAsAlreadyFormatted(&partition);
       AttachSeparatorsToListElementPartitions(&partition);
@@ -2887,6 +2896,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       FlattenOnlyChildrenWithChildren(partition);
       VLOG(4) << "after flatten:\n" << partition;
       AttachTrailingSemicolonToPreviousPartition(&partition);
+      AttachSeparatorsToListElementPartitions(&partition);
       // Merge the 'assign' keyword with the (first) x=y assignment.
       // TODO(fangism): reshape for multiple assignments.
       verible::MergeLeafIntoNextLeaf(&partition.Children().front());
@@ -3022,7 +3032,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kPortActualList:
     case NodeEnum::kPortDeclarationList:
     case NodeEnum::kPortList:
-    case NodeEnum::kVariableDeclarationAssignmentList: {
+    case NodeEnum::kVariableDeclarationAssignmentList:
+    case NodeEnum::kMacroFormalParameterList: {
+      AttachSeparatorsToListElementPartitions(&partition);
+      break;
+    }
+
+    case NodeEnum::kModportDeclaration: {
       AttachSeparatorsToListElementPartitions(&partition);
       break;
     }
@@ -3125,24 +3141,6 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
 
   // Post-token-handling token partition adjustments:
   switch (leaf.Tag().tag) {
-    case ',': {
-      if (CurrentUnwrappedLine().Size() == 1) {
-        // Partition would begin with a comma,
-        // instead add this token to previous partition
-        if (!PartitionIsForcedIntoNewLine(*CurrentTokenPartition()))
-          MergeLastTwoPartitions();
-      }
-      break;
-    }
-    case verilog_tokentype::SemicolonEndOfAssertionVariableDeclarations: {
-      // is a ';'
-      if (current_context_.DirectParentIs(
-              NodeEnum::kAssertionVariableDeclarationList) &&
-          !PartitionIsForcedIntoNewLine(*CurrentTokenPartition())) {
-        MergeLastTwoPartitions();
-      }
-      break;
-    }
     case PP_else: {
       // Do not allow non-comment tokens on the same line as `else
       // (comments were handled above)
