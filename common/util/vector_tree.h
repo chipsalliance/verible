@@ -182,62 +182,8 @@ class VectorTree {
    public:
     using typename Base::container_type;
 
-    // Sequence Container interface
-
-    using typename Base::value_type;
-
-    using typename Base::const_reference;
-    using typename Base::reference;
-
-    using typename Base::const_iterator;
-    using typename Base::iterator;
-
-    using typename Base::difference_type;
-    using typename Base::size_type;
-
-    using typename Base::const_reverse_iterator;
-    using typename Base::reverse_iterator;
-
-    using Base::begin;
-    using Base::cbegin;
-    using Base::cend;
-    using Base::end;
-
-    using Base::crbegin;
-    using Base::crend;
-    using Base::rbegin;
-    using Base::rend;
-
-    using Base::back;
-    using Base::front;
-    using Base::operator[];
-    using Base::at;
-
-    using Base::empty;
-    using Base::max_size;
-    using Base::size;
-
-    using Base::emplace_back;
-    using Base::push_back;
-
-    using Base::emplace_front;
-    using Base::push_front;
-
-    using Base::emplace;
-    using Base::insert;
-
-    using Base::clear;
-    using Base::erase;
-    using Base::pop_back;
-    using Base::pop_front;
-
-    using Base::assign;
-    using Base::operator=;
-    using Base::swap;
-
-    using Base::capacity;
-    using Base::reserve;
-    using Base::resize;
+    // Import (via `using`) ContainerProxy members supported by std::vector.
+    USING_CONTAINER_PROXY_STD_VECTOR_MEMBERS(Base)
 
     // Move-cast to wrapped container's type. Moves out the container.
     explicit operator container_type() && { return std::move(container_); }
