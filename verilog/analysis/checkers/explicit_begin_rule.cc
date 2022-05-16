@@ -42,7 +42,7 @@ using verible::TokenStreamLintRule;
 VERILOG_REGISTER_LINT_RULE(ExplicitBeginRule);
 
 static const char kMessage[] =
-    "All block construct shall explicitely use begin/end";
+    "All block construct shall explicitely use begin/end.";
 
 const LintRuleDescriptor& ExplicitBeginRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -89,6 +89,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo& token) {
           break;
         case TK_COMMENT_BLOCK:
         case TK_EOL_COMMENT:
+        case TK_NEWLINE:
           break;
         case TK_if:
         case TK_for:
@@ -123,6 +124,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo& token) {
           break;
         case TK_COMMENT_BLOCK:
         case TK_EOL_COMMENT:
+        case TK_NEWLINE:
           break;
         case TK_begin:
           // If we got our begin token, we go back to normal status
@@ -139,7 +141,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo& token) {
 
   if (raise_violation) {
     violations_.insert(LintViolation(
-        last_condition_start_, absl::StrCat(kMessage),
+        token, absl::StrCat(kMessage, " Expected begin, got ", token.text()),
         {AutoFix(
             "Insert begin",
             {end_of_condition_statement_,

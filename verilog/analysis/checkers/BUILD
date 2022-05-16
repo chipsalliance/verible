@@ -1244,6 +1244,20 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "explicit_begin_rule_test",
+    srcs = ["explicit_begin_rule_test.cc"],
+    deps = [
+        ":explicit_begin_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:token_stream_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "explicit_function_lifetime_rule",
     srcs = ["explicit_function_lifetime_rule.cc"],
