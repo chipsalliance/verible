@@ -31,18 +31,27 @@ namespace analysis {
 // matches the opening `ifdef or `ifndef.
 //
 // Accepted examples:
-//   `ifdef FOO
-//   `endif  // FOO
+//   if (FOO) begin
 //
-//   `ifndef BAR
-//   `endif  // BAR
+//   else begin
+//
+//   else if (FOO) begin
+//
+//   for (FOO) begin
 //
 // Rejected examples:
-//   `ifdef FOO
-//   `endif
+//   if (FOO)
+//       BAR
 //
-//   `ifdef FOO
-//   `endif  // BAR
+//   else
+//       BAR
+//
+//   else if (FOO)
+//       BAR
+//
+//   for (FOO) begin
+//       BAR
+//
 //
 class ExplicitBeginRule : public verible::TokenStreamLintRule {
  public:
@@ -58,12 +67,7 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
 
  private:
   // States of the internal token-based analysis.
-  enum class State {
-    kNormal,
-    kInCondition,
-    kInElse,
-    kExpectBegin
-  };
+  enum class State { kNormal, kInCondition, kInElse, kExpectBegin };
 
   // Internal lexical analysis state.
   State state_;
@@ -73,8 +77,8 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
 
   // Token information for the last seen block opening (for/if/else).
   verible::TokenInfo last_condition_start_ = verible::TokenInfo::EOFToken();
-  verible::TokenInfo end_of_condition_statement_ = verible::TokenInfo::EOFToken();
-
+  verible::TokenInfo end_of_condition_statement_ =
+      verible::TokenInfo::EOFToken();
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
