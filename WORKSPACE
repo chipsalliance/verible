@@ -35,7 +35,7 @@ http_archive(
     name = "com_github_gflags_gflags",
     sha256 = "cfdba0f2f17e8b1ff75c98113d5080d8ec016148426abcc19130864e2952d7bd",
     strip_prefix = "gflags-827c769e5fc98e0f2a34c47cef953cc6328abced",
-    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip" ],
+    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip"],
 )
 
 http_archive(
@@ -119,39 +119,29 @@ http_archive(
     ],
 )
 
-# We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
-# part of the protobuf release yet
-# (https://github.com/protocolbuffers/protobuf/issues/5918).
-http_archive(
-    name = "net_zlib",
-    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9",
-    strip_prefix = "zlib-1.2.12",
-    urls = [
-        "https://zlib.net/zlib-1.2.12.tar.gz",
-        "https://zlib.net/fossils/zlib-1.2.12.tar.gz",
-    ],
-)
-
 http_archive(
     name = "com_google_protobuf",
-    repo_mapping = {"@zlib": "@net_zlib"},
-    sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
-    strip_prefix = "protobuf-3.13.0",
+    sha256 = "662879e41508a5ecce3be2c65563a8fac3301a48adef3113913ec4010f405a33",
+    strip_prefix = "protobuf-3.20.1",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.20.1.zip",
     ],
 )
 
 http_archive(
     name = "rules_proto",
-    sha256 = "e4fe70af52135d2ee592a07f916e6e1fc7c94cf8786c15e8c0d0f08b1fe5ea16",
-    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
-    url = "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.zip",
+    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
+    strip_prefix = "rules_proto-4.0.0-3.20.0",
+    urls = [
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.20.0.tar.gz",
+    ],
 )
 
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+load(
+    "@rules_proto//proto:repositories.bzl",
+    "rules_proto_dependencies",
+    "rules_proto_toolchains",
+)
 
 rules_proto_dependencies()
 
@@ -169,11 +159,11 @@ http_archive(
 http_archive(
     name = "jsonhpp",
     build_file = "//bazel:jsonhpp.BUILD",
-    strip_prefix = "json-3.10.2",
     sha256 = "081ed0f9f89805c2d96335c3acfa993b39a0a5b4b4cef7edb68dd2210a13458c",
+    strip_prefix = "json-3.10.2",
     urls = [
-        "https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.tar.gz"
-    ]
+        "https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.tar.gz",
+    ],
 )
 
 http_archive(
