@@ -48,9 +48,9 @@ cc_library(
     }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
+        "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@jsonhpp",
-        "//common/util:logging",
     ],
 )
 
