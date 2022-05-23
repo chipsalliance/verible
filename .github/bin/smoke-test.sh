@@ -101,13 +101,6 @@ KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_mod
 # There is also bug 1008 which only shows up if compiled with asan
 
 #--- ivtest
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/stask_sens_null_arg.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_port_default14.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr1763333.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/blankport.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/param_times.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value1.v]=1010
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/sv_default_port_value3.v]=1010
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]=1146
 
@@ -128,8 +121,8 @@ declare -A KnownProjectToolIssue
 # removed.
 declare -A ExpectedFailCount
 
-ExpectedFailCount[syntax:ibex]=13
-ExpectedFailCount[lint:ibex]=13
+ExpectedFailCount[syntax:ibex]=12
+ExpectedFailCount[lint:ibex]=12
 ExpectedFailCount[project:ibex]=173
 
 ExpectedFailCount[syntax:opentitan]=28
@@ -163,7 +156,7 @@ ExpectedFailCount[project:black-parrot]=185
 
 ExpectedFailCount[syntax:ivtest]=188
 ExpectedFailCount[lint:ivtest]=188
-ExpectedFailCount[formatter:ivtest]=9
+ExpectedFailCount[formatter:ivtest]=2
 ExpectedFailCount[project:ivtest]=217
 
 ExpectedFailCount[syntax:basejump_stl]=436
