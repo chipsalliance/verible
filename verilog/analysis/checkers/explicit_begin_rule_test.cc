@@ -43,57 +43,39 @@ TEST(ExplicitBeginRuleTest, AcceptsBlank) {
 }
 
 // Tests that properly matched if/begin passes.
-TEST(ExplicitBeginRuleTest, AcceptsEndifWithComment) {
+TEST(ExplicitBeginRuleTest, AcceptsBlocksWithBegin) {
   const std::initializer_list<LintTestCase> kTestCases = {
-    {"if (FOO) begin"},
-    {"if (FOO)\n begin"},
-    {"if (FOO) //Comment\n begin"},
-    {"else begin \n FOO"},
-    {"else \nbegin \n FOO"},
-    {"else //Comment\n begin \n FOO"},
-    {"else \n //Comment\n begin \n FOO"},
-    {"else if (FOO) begin"},
-    {"else if (FOO)\n begin"},
-    {"else if (FOO) //Comment\n begin"},
-    {"else if (FOO)\n //Comment\n begin"},
+      {"if (FOO) begin"},
+      {"if (FOO)\n begin"},
+      {"if (FOO) //Comment\n begin"},
+      {"else begin \n FOO"},
+      {"else \nbegin \n FOO"},
+      {"else //Comment\n begin \n FOO"},
+      {"else \n //Comment\n begin \n FOO"},
+      {"else if (FOO) begin"},
+      {"else if (FOO)\n begin"},
+      {"else if (FOO) //Comment\n begin"},
+      {"else if (FOO)\n //Comment\n begin"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
 }
 
 // Tests that unmatched block/begin fails is detected.
-TEST(ExplicitBeginRuleTest, RejectsEndifWithoutComment) {
+TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
   const std::initializer_list<LintTestCase> kTestCases = {
-     {"if (FOO) BAR"},
-    {"if (FOO)\n BAR"},
-    {"if (FOO) //Comment\n BAR"},
-    {"else \n FOO"},
-    {"else \n \n FOO"},
-    {"else //Comment\n  FOO"},
-    {"else \n //Comment\n FOO"},
-    {"else if (FOO) BAR"},
-    {"else if (FOO)\n BAR"},
-    {"else if (FOO) //Comment\n BAR"},
-    {"else if (FOO)\n //Comment\n BAR"},
+      {{TK_if, "if"}, " (FOO) BAR"},
+      {{TK_if, "if"}, " (FOO)\n BAR"},
+      {{TK_if, "if"}, " (FOO) //Comment\n BAR"},
+      {{TK_else, "else"}, " \n FOO"},
+      {{TK_else, "else"}, " \n \n FOO"},
+      {{TK_else, "else"}, " //Comment\n  FOO"},
+      {{TK_else, "else"}, " \n //Comment\n FOO"},
+      {"else ", {TK_if, "if"}, " (FOO) BAR"},
+      {"else ", {TK_if, "if"}, " (FOO)\n BAR"},
+      {"else ", {TK_if, "if"}, " (FOO) //Comment\n BAR"},
+      {"else ", {TK_if, "if"}, " (FOO)\n //Comment\n BAR"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
-}
-
-TEST(ExplicitBeginRuleTest, ApplyAutoFix) {
-  // Alternatives the auto fix offers
-  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
-    {"if (FOO) BAR","if (FOO) begin BAR"},
-    {"if (FOO)\n BAR","if (FOO) begin\n BAR"},
-    {"if (FOO) //Comment\n BAR","if (FOO) begin //Comment\n BAR"},
-    {"else \n FOO","else  begin \n FOO"},
-    {"else \n \n FOO","else begin  \n \n FOO"},
-    {"else //Comment\n  FOO","else begin //Comment\n  FOO"},
-    {"else \n //Comment\n FOO","else begin \n //Comment\n FOO"},
-    {"else if (FOO) BAR","else if (FOO) begin BAR"},
-    {"else if (FOO)\n BAR","else if (FOO) begin\n BAR"},
-    {"else if (FOO) //Comment\n BAR","else if (FOO) begin //Comment\n BAR"},
-    {"else if (FOO)\n //Comment\n BAR","else if (FOO) begin\n //Comment\n BAR"},
-  };
-  RunApplyFixCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases, "");
 }
 
 }  // namespace
