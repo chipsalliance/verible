@@ -141,11 +141,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo& token) {
 
   if (raise_violation) {
     violations_.insert(LintViolation(
-        token, absl::StrCat(kMessage, " Expected begin, got ", token.text()),
-        {AutoFix(
-            "Insert begin",
-            {end_of_condition_statement_,
-             absl::StrCat(end_of_condition_statement_.text(), " begin")})}));
+        last_condition_start_, absl::StrCat(kMessage, " Expected begin, got ", token.text())));
 
     // Once the violation is raised, we go back to a normal, default, state
     condition_expr_level_ = 0;
