@@ -360,6 +360,20 @@ jobs:
     - name: Tests
       run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
+    - name: Build Verible Binaries
+      run: bazel build -c opt :install-binaries
+
+    - name: Prepare release
+      run: |
+        VERSION=$(git describe --match=v*)
+        bazel run -c opt :install -- "/private/var/tmp/verible-${VERSION}-macos"
+        tar -zcvf "verible-${VERSION}-macos.tar.gz" "/private/var/tmp/verible-${VERSION}-macos"
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: verible-*.tar.gz
+
   PrepareVSPlugin:
     container: debian:bullseye
     runs-on: [self-hosted, Linux, X64]
@@ -445,7 +459,7 @@ jobs:
 
 
   Release:
-    needs: [ Check, Build, WindowsBuild, PrepareVSPlugin ]
+    needs: [ Check, Build, WindowsBuild, PrepareVSPlugin, MacOsBuild ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
