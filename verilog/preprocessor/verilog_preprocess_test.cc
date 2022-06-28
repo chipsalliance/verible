@@ -737,7 +737,28 @@ $display(5,,2,,"C");
 $display(1,,0,,"C");
 $display(5,,0,,"C");
 endmodule
-`undef MACRO)"}
+`undef MACRO)"},
+
+      {"[** Nested callable macros **]",
+       R"(
+`define MACRO1(n) real x=n;
+`define MACRO2(m) real y=m; `MACRO1(1)
+module foo;
+`MACRO1(2)
+`MACRO2(3)
+endmodule
+`undef MACRO1
+`undef MACRO2)",
+       // ...equivalent to
+       R"(
+`define MACRO1(n) real x=n;
+`define MACRO2(m) real y=m; `MACRO1(1)
+module foo;
+real x=2;
+real y=3; real x=1;
+endmodule
+`undef MACRO1
+`undef MACRO2)"}
 
   };
 

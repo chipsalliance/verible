@@ -258,7 +258,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
     const TokenStreamView::const_iterator
         iter  // points to `MACROIDENTIFIER token
     ,
-    const StreamIteratorGenerator& generator) {
+    const StreamIteratorGenerator& generator, bool forward = 1) {
   // Note: since this function is called we know that config_.expand_macros is
   // true.
 
@@ -284,32 +284,11 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
       return status;
   }
   auto& lexed = preprocess_data_.lexed_macros_backup.back();
+  if (!forward) return absl::OkStatus();
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
   const auto it_end = lexed.end();
   for (auto it = iter_generator(); it != it_end; it++) {
     preprocess_data_.preprocessed_token_stream.push_back(it);
-  }
-  return absl::OkStatus();
-}
-
-// This function searches for a macro, and expand it.
-// But it doesn't add the expanded sequence to the preprocessed stream.
-// It's only to be used inside ExpandMacro, for recursive macros.
-absl::Status VerilogPreprocess::HandleMacroIdentifier(
-    verible::TokenInfo macro_id) {
-  const absl::string_view sv = macro_id.text();
-  const auto* found =
-      FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
-  if (!found) {
-    preprocess_data_.errors.push_back(VerilogPreprocessError(
-        macro_id,
-        "Error expanding macro identifier, might not be defined before."));
-    return absl::InvalidArgumentError(
-        "Error expanding macro identifier, might not be defined before.");
-  }
-  if (!found->IsCallable() && config_.expand_macros) {
-    if (auto status = ExpandText(found->DefinitionText().text()); !status.ok())
-      return status;
   }
   return absl::OkStatus();
 }
@@ -335,8 +314,22 @@ absl::Status VerilogPreprocess::ExpandText(
     const absl::string_view& definition_text) {
   VerilogLexer lexer(definition_text);
   verible::TokenSequence lexed_sequence;
+  verible::TokenSequence expanded_lexed_sequence;
+  // Populating the lexed token sequence.
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
+    lexed_sequence.push_back(lexer.GetLastToken());
+  }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
+  const auto end = lexed_streamview.end();
+
+  // Token-pulling loop.
+  for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
+    auto& last_token = **iter;
     // TODO: handle lexical error
     if (lexer.GetLastToken().token_enum() == TK_SPACE)
       continue;  // don't forward spaces
@@ -344,21 +337,21 @@ absl::Status VerilogPreprocess::ExpandText(
     // expanded.
     // TODO: this needs to be something like HandleTokenIterator, to claim that
     // it fully covers all cases.
-    if (lexer.GetLastToken().token_enum() == MacroIdentifier ||
-        lexer.GetLastToken().token_enum() == MacroIdItem) {
-      if (auto status = HandleMacroIdentifier(lexer.GetLastToken());
+    if (last_token.token_enum() == MacroIdentifier ||
+        last_token.token_enum() == MacroIdItem ||
+        last_token.token_enum() == MacroCallId) {
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
           !status.ok())
         return status;
 
-      // merge the expanded macro tokens into 'lexed_sequence'
+      // merge the expanded macro tokens into 'expanded_lexed_sequence'
       auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto& u : expanded_child) lexed_sequence.push_back(u);
+      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
       continue;
     }
-
-    lexed_sequence.push_back(lexer.GetLastToken());
+    expanded_lexed_sequence.push_back(last_token);
   }
-  preprocess_data_.lexed_macros_backup.emplace_back(lexed_sequence);
+  preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
 }
 
@@ -379,44 +372,55 @@ absl::Status VerilogPreprocess::ExpandMacro(
 
   VerilogLexer lexer(macro_definition->DefinitionText().text());
   verible::TokenSequence lexed_sequence;
+  verible::TokenSequence expanded_lexed_sequence;
+  // Populating the lexed token sequence.
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
+    lexed_sequence.push_back(lexer.GetLastToken());
+  }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
+  const auto end = lexed_streamview.end();
+
+  // Token-pulling loop.
+  for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
     // TODO: handle lexical error
-    if (lexer.GetLastToken().token_enum() == TK_SPACE)
-      continue;  // don't forward spaces
+    auto& last_token = **iter;
+    if (last_token.token_enum() == TK_SPACE) continue;  // don't forward spaces
     // If the expanded token is another macro identifier that needs to be
     // expanded.
     // TODO: this needs to be something like HandleTokenIterator, to claim that
     // it fully covers all cases.
-    if (lexer.GetLastToken().token_enum() == MacroIdentifier ||
-        lexer.GetLastToken().token_enum() == MacroIdItem) {
-      if (auto status = HandleMacroIdentifier(lexer.GetLastToken());
+    if (last_token.token_enum() == MacroIdentifier ||
+        last_token.token_enum() == MacroIdItem ||
+        last_token.token_enum() == MacroCallId) {
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
           !status.ok())
         return status;
 
-      // merge the expanded macro tokens into 'lexed_sequence'
+      // merge the expanded macro tokens into 'expanded_lexed_sequence'
       auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-      for (auto& u : expanded_child) lexed_sequence.push_back(u);
+      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
       continue;
     }
     if (macro_definition->IsCallable()) {
       // Check if the last token is a formal parameter
-      const auto& last_token = lexer.GetLastToken();
       const auto* replacement = FindOrNull(subs_map, last_token.text());
       if (replacement) {
         if (auto status = ExpandText(replacement->text()); !status.ok())
           return status;
-
-        // merge the expanded macro tokens into 'lexed_sequence'
+        // merge the expanded macro tokens into 'expanded_lexed_sequence'
         auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
-        for (auto& u : expanded_child) lexed_sequence.push_back(u);
+        for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
         continue;
       }
     }
-
-    lexed_sequence.push_back(lexer.GetLastToken());
+    expanded_lexed_sequence.push_back(last_token);
   }
-  preprocess_data_.lexed_macros_backup.emplace_back(lexed_sequence);
+  preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
   return absl::OkStatus();
 }
 
