@@ -24,6 +24,8 @@
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
 #include "verilog/transform/strip_comments.h"
+#include "verilog/parser/verilog_lexer.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
@@ -49,6 +51,44 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
+static absl::Status MultipleCU(const SubcommandArgsRange& args,
+                                  std::istream&, std::ostream& outs,
+                                  std::ostream&) {
+  if (args.empty()) {
+    return absl::InvalidArgumentError(
+        "Missing file argument.");
+  }
+
+  for(auto source_file:args){
+    std::string source_contents;
+    if (auto status = verible::file::GetContents(source_file, &source_contents);
+        !status.ok()) {
+      return status;
+    }
+    verilog::VerilogPreprocess::Config config;
+    config.filter_branches=1;
+    verilog::VerilogPreprocess preprocessor(config);
+    verilog::VerilogLexer lexer(source_contents);
+    verible::TokenSequence lexed_sequence;
+      for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+        lexer.DoNextToken()) {
+        // For now we will store the syntax tree tokens only, ignoring all the white-space characters.
+        // however that should be stored to output the source code just like it was, but with conditionals filtered.
+        if(lexer.KeepSyntaxTreeTokens(lexer.GetLastToken())) lexed_sequence.push_back(lexer.GetLastToken());
+    }
+    verible::TokenStreamView lexed_streamview;
+    // Initializing the lexed token stream view.
+    InitTokenStreamView(lexed_sequence, &lexed_streamview);
+
+    verilog::VerilogPreprocessData preprocessed_data = preprocessor.ScanStream(lexed_streamview);
+    auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
+    for(auto u:preprocessed_stream) outs<<*u<<'\n'; // output the preprocessed tokens.
+    for(auto u:preprocessed_data.errors) outs<<u.error_message<<'\n'; // for debugging.
+
+  }
+  return absl::OkStatus();
+}
+
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
     {"strip-comments",  //
      {&StripComments,   //
@@ -60,6 +100,17 @@ Input:
 
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.
+)"}},
+
+    {"multiple-cu",  //
+     {&MultipleCU,   //
+      R"(multiple-cu file1 file2 ...
+
+Input:
+  'file's are Verilog or SystemVerilog source files.
+  each one will be preprocessed in a separate compilation unit.
+Output: (stdout)
+  Contents of original file with compiler directives interpreted.
 )"}},
 };
 
