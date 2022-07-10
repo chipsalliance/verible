@@ -14,6 +14,8 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:subcommand",
         "//verilog/transform:strip_comments",
+        "//verilog/preprocessor:verilog_preprocess",
+        "//verilog/parser:verilog_lexer",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
