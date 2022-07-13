@@ -20,16 +20,16 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/lexer/token_stream_adapter.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
-#include "verilog/transform/strip_comments.h"
-#include "verilog/parser/verilog_lexer.h"
-#include "verilog/preprocessor/verilog_preprocess.h"
-#include "common/lexer/token_stream_adapter.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/parser/verilog_token_enum.h"
 #include "verilog/analysis/flow_tree.h"
+#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_lexer.h"
+#include "verilog/parser/verilog_token_enum.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
+#include "verilog/transform/strip_comments.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
@@ -69,67 +69,68 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-
-static absl::Status MultipleCU(const SubcommandArgsRange& args,
-                                  std::istream&, std::ostream& outs,
-                                  std::ostream&) {
+static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
+                               std::ostream& outs, std::ostream&) {
   if (args.empty()) {
-    return absl::InvalidArgumentError(
-        "Missing file argument.");
+    return absl::InvalidArgumentError("Missing file argument.");
   }
 
-  for(auto source_file:args){
+  for (auto source_file : args) {
     std::string source_contents;
     if (auto status = verible::file::GetContents(source_file, &source_contents);
         !status.ok()) {
       return status;
     }
     verilog::VerilogPreprocess::Config config;
-    config.filter_branches=1;
-    //config.expand_macros=1;
+    config.filter_branches = 1;
+    // config.expand_macros=1;
     verilog::VerilogPreprocess preprocessor(config);
     verilog::VerilogLexer lexer(source_contents);
     verible::TokenSequence lexed_sequence;
-      for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
-        lexer.DoNextToken()) {
-        // For now we will store the syntax tree tokens only, ignoring all the white-space characters.
-        // however that should be stored to output the source code just like it was, but with conditionals filtered.
-        if(verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) lexed_sequence.push_back(lexer.GetLastToken());
+    for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+         lexer.DoNextToken()) {
+      // For now we will store the syntax tree tokens only, ignoring all the
+      // white-space characters. however that should be stored to output the
+      // source code just like it was, but with conditionals filtered.
+      if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+        lexed_sequence.push_back(lexer.GetLastToken());
     }
     verible::TokenStreamView lexed_streamview;
     // Initializing the lexed token stream view.
     InitTokenStreamView(lexed_sequence, &lexed_streamview);
-    verilog::VerilogPreprocessData preprocessed_data = preprocessor.ScanStream(lexed_streamview);
+    verilog::VerilogPreprocessData preprocessed_data =
+        preprocessor.ScanStream(lexed_streamview);
     auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
-    for(auto u:preprocessed_stream) outs<<*u<<'\n'; // output the preprocessed tokens.
-    for(auto& u:preprocessed_data.errors) outs<<u.error_message<<'\n'; // for debugging.  
+    for (auto u : preprocessed_stream)
+      outs << *u << '\n';  // output the preprocessed tokens.
+    for (auto& u : preprocessed_data.errors)
+      outs << u.error_message << '\n';  // for debugging.
     //  parsing just as a trial
     std::string post_preproc;
-    for(auto u:preprocessed_stream) post_preproc+=std::string{u->text()};
+    for (auto u : preprocessed_stream) post_preproc += std::string{u->text()};
     std::string source_view{post_preproc};
-    verilog::VerilogAnalyzer analyzer(source_view,"file1",config); 
+    verilog::VerilogAnalyzer analyzer(source_view, "file1", config);
     auto analyze_status = analyzer.Analyze();
     const auto& mydata = analyzer.Data().Contents();
     /* outs<<mydata; */
 
-
     /* TODO(karimtera): regarding conditionals
-     1) Modify VerilogPreprocess config to have a configuration to generate SV source codes for all possible variants.
-     2) Then use parser, directly from VerilogAnalyzer or from VerilogParser to have less dependences.
-     3) Now, we should have multiple trees, we need to merge them as described by Tom in Verible's issue.
-     4) Finally, travese the tree and output the chosen path based on definitions. 
+     1) Modify VerilogPreprocess config to have a configuration to generate SV
+     source codes for all possible variants. 2) Then use parser, directly from
+     VerilogAnalyzer or from VerilogParser to have less dependences. 3) Now, we
+     should have multiple trees, we need to merge them as described by Tom in
+     Verible's issue. 4) Finally, travese the tree and output the chosen path
+     based on definitions.
     */
   }
   return absl::OkStatus();
 }
 
-
 static absl::Status GenerateVariants(const SubcommandArgsRange& args,
-                                  std::istream&, std::ostream& outs,
-                                  std::ostream&) {
+                                     std::istream&, std::ostream& outs,
+                                     std::ostream&) {
   if (args.empty()) {
-    return absl::InvalidArgumentError(
-        "Missing file argument.");
+    return absl::InvalidArgumentError("Missing file argument.");
   }
 
   const char* source_file = args[0];
@@ -140,23 +141,23 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   }
   verilog::VerilogLexer lexer(source_contents);
   verible::TokenSequence lexed_sequence;
-    for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
-      lexer.DoNextToken()) {
-      // For now we will store the syntax tree tokens only, ignoring all the white-space characters.
-      // however that should be stored to output the source code just like it was. 
-      if(verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) lexed_sequence.push_back(lexer.GetLastToken());
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    // For now we will store the syntax tree tokens only, ignoring all the
+    // white-space characters. however that should be stored to output the
+    // source code just like it was.
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+      lexed_sequence.push_back(lexer.GetLastToken());
   }
 
   verilog::FlowTree control_flow_tree(lexed_sequence);
   auto status = control_flow_tree.GenerateControlFlowTree();
   status = control_flow_tree.DepthFirstSearch(0);
-  int cnt=1;
-  for(const auto& u:control_flow_tree.variants_){
-    outs<<"Variant number "<<cnt++<<":\n";
-    for(auto k:u) outs<<k<<'\n';
+  int cnt = 1;
+  for (const auto& u : control_flow_tree.variants_) {
+    outs << "Variant number " << cnt++ << ":\n";
+    for (auto k : u) outs << k << '\n';
     puts("");
-
-
   }
 
   return absl::OkStatus();
