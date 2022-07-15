@@ -97,7 +97,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
     std::string source_view{post_preproc};
     verilog::VerilogAnalyzer analyzer(source_view, "file1", config);
     auto analyze_status = analyzer.Analyze();
-    const auto& mydata = analyzer.Data().Contents();
+    /* const auto& mydata = analyzer.Data().Contents(); */
     /* outs<<mydata; */
 
     /* TODO(karimtera): regarding conditionals
