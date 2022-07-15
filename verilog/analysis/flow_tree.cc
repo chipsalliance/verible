@@ -41,10 +41,10 @@ absl::Status FlowTree::GenerateControlFlowTree() {
       elses_[ifs_.back()].push_back(idx);
       if (current_enum == PP_endif) {
         auto& myelses = elses_[ifs_.back()];
-        for (int i = 0; i < myelses.size(); i++) {
-          for (int j = i + 1; j < myelses.size(); j++) {
-            if (!i && j == myelses.size() - 1) continue;
-            edges_[myelses[i]].push_back(myelses[j] + 1);
+        for (auto it = myelses.begin(); it != myelses.end(); it++) {
+          for (auto it2 = it + 1; it2 != myelses.end(); it2++) {
+            if (it == myelses.begin() && it2 == myelses.end() - 1) continue;
+            edges_[*it].push_back(*it2 + (it2 != myelses.end() - 1));
           }
         }
         ifs_.pop_back();
@@ -53,7 +53,6 @@ absl::Status FlowTree::GenerateControlFlowTree() {
     idx++;
   }
   idx = 0;
-  int prv_enum = 0;
   for (auto u : source_sequence_) {
     current_enum = u.token_enum();
     if (current_enum != PP_else && current_enum != PP_elsif) {
@@ -61,7 +60,6 @@ absl::Status FlowTree::GenerateControlFlowTree() {
     } else {
       if (idx > 0) edges_[idx - 1].push_back(edges_[idx].back());
     }
-    prv_enum = current_enum;
     idx++;
   }
 
@@ -78,7 +76,7 @@ absl::Status FlowTree::DepthFirstSearch(int index) {
   for (auto u : edges_[index]) {
     auto status = FlowTree::DepthFirstSearch(u);  // handle errors
   }
-  if (index == source_sequence_.size() - 1) {
+  if (index == int(source_sequence_.size()) - 1) {
     variants_.push_back(current_sequence_);
   }
   if (curr.token_enum() != PP_Identifier && curr.token_enum() != PP_ifndef &&
