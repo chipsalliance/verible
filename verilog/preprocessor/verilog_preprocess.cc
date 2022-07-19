@@ -31,6 +31,7 @@
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
 #include "common/util/logging.h"
+#include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -38,6 +39,7 @@ namespace verilog {
 
 using verible::TokenGenerator;
 using verible::TokenStreamView;
+using verible::container::FindOrNull;
 using verible::container::InsertOrUpdate;
 
 VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
@@ -199,6 +201,98 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
   return nullptr;
 }
 
+// Parses a callable macro actual parameters, and saves it into a MacroCall
+absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
+    TokenStreamView::const_iterator iter,
+    const StreamIteratorGenerator& generator, verible::MacroCall* macro_call,
+    const verible::MacroDefinition& macro_definition) {
+  // Parsing the macro .
+  const absl::string_view macro_name_str = (*iter)->text().substr(1);
+  verible::TokenInfo macro_name_token(MacroCallId, macro_name_str);
+  macro_call->macro_name = macro_name_token;
+
+  // Checking if the macro has formal parameters.
+  if (!macro_definition.IsCallable()) {
+    macro_call->has_parameters = 0;
+    return absl::OkStatus();
+  }
+  macro_call->has_parameters = 1;
+
+  // Parsing parameters.
+  TokenStreamView::const_iterator token_iter = generator();
+  int parameters_size = macro_definition.Parameters().size();
+  if ((*token_iter)->text() == "(") {
+    token_iter = generator();  // skip the "("
+  } else {
+    return absl::InvalidArgumentError(
+        "Error it is illegal to call a callable macro without ().");
+  }
+
+  while (parameters_size > 0) {
+    if ((*token_iter)->token_enum() == MacroArg) {
+      macro_call->positional_arguments.emplace_back(**token_iter);
+      token_iter = generator();
+      if ((*token_iter)->text() == ",") token_iter = generator();
+      parameters_size--;
+      continue;
+    } else if ((*token_iter)->text() == ",") {
+      macro_call->positional_arguments.emplace_back(
+          verible::DefaultTokenInfo());
+      token_iter = generator();
+      parameters_size--;
+      continue;
+    } else if ((*token_iter)->text() == ")")
+      break;
+  }
+  if (parameters_size > 0) {
+    while (parameters_size--)
+      macro_call->positional_arguments.emplace_back(
+          verible::DefaultTokenInfo());
+  }
+  return absl::OkStatus();
+}
+
+// Responds to `define directives.  Macro definitions are parsed and saved
+// for use within the same file.
+absl::Status VerilogPreprocess::HandleMacroIdentifier(
+    const TokenStreamView::const_iterator
+        iter  // points to `MACROIDENTIFIER token
+    ,
+    const StreamIteratorGenerator& generator, bool forward = 1) {
+  // Note: since this function is called we know that config_.expand_macros is
+  // true.
+
+  // Finding the macro definition.
+  const absl::string_view sv = (*iter)->text();
+  const auto* found =
+      FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
+  if (!found) {
+    preprocess_data_.errors.push_back(VerilogPreprocessError(
+        **iter,
+        "Error expanding macro identifier, might not be defined before."));
+    return absl::InvalidArgumentError(
+        "Error expanding macro identifier, might not be defined before.");
+  }
+
+  if (config_.expand_macros) {
+    verible::MacroCall macro_call;
+    if (auto status =
+            ConsumeAndParseMacroCall(iter, generator, &macro_call, *found);
+        !status.ok())
+      return status;
+    if (auto status = ExpandMacro(macro_call, found); !status.ok())
+      return status;
+  }
+  auto& lexed = preprocess_data_.lexed_macros_backup.back();
+  if (!forward) return absl::OkStatus();
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
+  const auto it_end = lexed.end();
+  for (auto it = iter_generator(); it != it_end; it++) {
+    preprocess_data_.preprocessed_token_stream.push_back(it);
+  }
+  return absl::OkStatus();
+}
+
 // Stores a macro definition for later use.
 void VerilogPreprocess::RegisterMacroDefinition(
     const MacroDefinition& definition) {
@@ -210,6 +304,124 @@ void VerilogPreprocess::RegisterMacroDefinition(
   preprocess_data_.warnings.emplace_back(
       VerilogPreprocessError(definition.NameToken(), "Re-defining macro"));
   // TODO(hzeller): multiline warning with 'previously defined here' location
+}
+
+// This function expands a text.
+// The expanded tokens are saved as a TokenSequence, stored at
+// preprocess_data_.lexed_macros_backup Can be accessed directly after expansion
+// as: preprocess_data_.lexed_macros_backup.back()
+absl::Status VerilogPreprocess::ExpandText(
+    const absl::string_view& definition_text) {
+  VerilogLexer lexer(definition_text);
+  verible::TokenSequence lexed_sequence;
+  verible::TokenSequence expanded_lexed_sequence;
+  // Populating the lexed token sequence.
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    lexed_sequence.push_back(lexer.GetLastToken());
+  }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
+  const auto end = lexed_streamview.end();
+
+  // Token-pulling loop.
+  for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
+    auto& last_token = **iter;
+    // TODO: handle lexical error
+    if (lexer.GetLastToken().token_enum() == TK_SPACE)
+      continue;  // don't forward spaces
+    // If the expanded token is another macro identifier that needs to be
+    // expanded.
+    // TODO: this needs to be something like HandleTokenIterator, to claim that
+    // it fully covers all cases.
+    if (last_token.token_enum() == MacroIdentifier ||
+        last_token.token_enum() == MacroIdItem ||
+        last_token.token_enum() == MacroCallId) {
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
+          !status.ok())
+        return status;
+
+      // merge the expanded macro tokens into 'expanded_lexed_sequence'
+      auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
+      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+      continue;
+    }
+    expanded_lexed_sequence.push_back(last_token);
+  }
+  preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
+  return absl::OkStatus();
+}
+
+// This method expands a callable macro call, that follows this form:
+// `MACRO([param1],[param2],...)
+absl::Status VerilogPreprocess::ExpandMacro(
+    const verible::MacroCall& macro_call,
+    const verible::MacroDefinition* macro_definition) {
+  const auto& actual_parameters = macro_call.positional_arguments;
+
+  std::map<absl::string_view, verible::DefaultTokenInfo> subs_map;
+  if (macro_definition->IsCallable()) {
+    if (auto status = macro_definition->PopulateSubstitutionMap(
+            actual_parameters, &subs_map);
+        !status.ok())
+      return status;
+  }
+
+  VerilogLexer lexer(macro_definition->DefinitionText().text());
+  verible::TokenSequence lexed_sequence;
+  verible::TokenSequence expanded_lexed_sequence;
+  // Populating the lexed token sequence.
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    lexed_sequence.push_back(lexer.GetLastToken());
+  }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+
+  auto iter_generator = verible::MakeConstIteratorStreamer(lexed_streamview);
+  const auto end = lexed_streamview.end();
+
+  // Token-pulling loop.
+  for (auto iter = iter_generator(); iter != end; iter = iter_generator()) {
+    // TODO: handle lexical error
+    auto& last_token = **iter;
+    if (last_token.token_enum() == TK_SPACE) continue;  // don't forward spaces
+    // If the expanded token is another macro identifier that needs to be
+    // expanded.
+    // TODO: this needs to be something like HandleTokenIterator, to claim that
+    // it fully covers all cases.
+    if (last_token.token_enum() == MacroIdentifier ||
+        last_token.token_enum() == MacroIdItem ||
+        last_token.token_enum() == MacroCallId) {
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
+          !status.ok())
+        return status;
+
+      // merge the expanded macro tokens into 'expanded_lexed_sequence'
+      auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
+      for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+      continue;
+    }
+    if (macro_definition->IsCallable()) {
+      // Check if the last token is a formal parameter
+      const auto* replacement = FindOrNull(subs_map, last_token.text());
+      if (replacement) {
+        if (auto status = ExpandText(replacement->text()); !status.ok())
+          return status;
+        // merge the expanded macro tokens into 'expanded_lexed_sequence'
+        auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
+        for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
+        continue;
+      }
+    }
+    expanded_lexed_sequence.push_back(last_token);
+  }
+  preprocess_data_.lexed_macros_backup.emplace_back(expanded_lexed_sequence);
+  return absl::OkStatus();
 }
 
 // Responds to `define directives.  Macro definitions are parsed and saved
@@ -229,6 +441,7 @@ absl::Status VerilogPreprocess::HandleDefine(
   verible::MacroDefinition macro_definition(*define_tokens[0], *macro_name);
   const auto parse_error_ptr =
       ParseMacroDefinition(define_tokens, &macro_definition);
+
   if (parse_error_ptr) {
     preprocess_data_.errors.push_back(*parse_error_ptr);
     return absl::InvalidArgumentError("Error parsing macro definition.");
@@ -358,6 +571,11 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
       return HandleElse(iter);
     case PP_endif:
       return HandleEndif(iter);
+  }
+  if (config_.expand_macros && ((*iter)->token_enum() == MacroIdentifier ||
+                                (*iter)->token_enum() == MacroIdItem ||
+                                (*iter)->token_enum() == MacroCallId)) {
+    return HandleMacroIdentifier(iter, generator);
   }
 
   // If not return'ed above, any other tokens are passed through unmodified

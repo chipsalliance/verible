@@ -68,9 +68,11 @@ struct VerilogPreprocessError {
 struct VerilogPreprocessData {
   using MacroDefinition = verible::MacroDefinition;
   using MacroDefinitionRegistry = std::map<absl::string_view, MacroDefinition>;
+  using TokenSequence = std::vector<verible::TokenInfo>;
 
   // Resulting token stream after preprocessing
   verible::TokenStreamView preprocessed_token_stream;
+  std::vector<TokenSequence> lexed_macros_backup;
 
   // Map of defined macros.
   MacroDefinitionRegistry macro_definitions;
@@ -101,6 +103,8 @@ class VerilogPreprocess {
     // want to emit all tokens.
     bool filter_branches = false;
 
+    // Expand macro definition bodies, this will relexes the macro body.
+    bool expand_macros = false;
     // TODO(hzeller): Provide a map of command-line provided +define+'s
   };
 
@@ -131,6 +135,9 @@ class VerilogPreprocess {
 
   absl::Status HandleTokenIterator(TokenStreamView::const_iterator,
                                    const StreamIteratorGenerator&);
+  absl::Status HandleMacroIdentifier(TokenStreamView::const_iterator,
+                                     const StreamIteratorGenerator&,
+                                     bool forward);
 
   absl::Status HandleDefine(TokenStreamView::const_iterator,
                             const StreamIteratorGenerator&);
@@ -141,6 +148,11 @@ class VerilogPreprocess {
                         const StreamIteratorGenerator&);
   absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
+
+  static absl::Status ConsumeAndParseMacroCall(TokenStreamView::const_iterator,
+                                               const StreamIteratorGenerator&,
+                                               verible::MacroCall*,
+                                               const verible::MacroDefinition&);
 
   // The following functions return nullptr when there is no error:
   absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator&,
@@ -153,6 +165,9 @@ class VerilogPreprocess {
       TokenStreamView::const_iterator*, MacroParameterInfo*);
 
   void RegisterMacroDefinition(const MacroDefinition&);
+  absl::Status ExpandText(const absl::string_view&);
+  absl::Status ExpandMacro(const verible::MacroCall&,
+                           const verible::MacroDefinition*);
 
   const Config config_;
 

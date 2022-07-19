@@ -67,6 +67,33 @@ absl::Status MacroDefinition::PopulateSubstitutionMap(
   return absl::OkStatus();
 }
 
+absl::Status MacroDefinition::PopulateSubstitutionMap(
+    const std::vector<DefaultTokenInfo>& macro_call_args,
+    substitution_map_type* arg_map) const {
+  if (macro_call_args.size() != parameter_info_array_.size()) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Error calling macro ", name_.text(), " with ",
+                     macro_call_args.size(), " arguments, but definition has ",
+                     parameter_info_array_.size(), " formal parameters."));
+    // TODO(fangism): also allow one blank argument when number of formals is 0.
+  }
+  auto actuals_iter = macro_call_args.begin();
+  const auto actuals_end = macro_call_args.end();
+  auto formals_iter = parameter_info_array_.begin();
+  for (; actuals_iter != actuals_end; ++actuals_iter, ++formals_iter) {
+    auto& replacement_text = (*arg_map)[formals_iter->name.text()];
+    if (!actuals_iter->text().empty()) {
+      // Actual text is provided.
+      replacement_text = *actuals_iter;
+    } else if (!formals_iter->default_value.text().empty()) {
+      // Use default parameter value.
+      replacement_text = formals_iter->default_value;
+    }
+    // else leave blank as empty string.
+  }
+  return absl::OkStatus();
+}
+
 const TokenInfo& MacroDefinition::SubstituteText(
     const substitution_map_type& substitution_map, const TokenInfo& token_info,
     int actual_token_enum) {

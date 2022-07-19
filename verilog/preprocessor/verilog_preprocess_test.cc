@@ -566,5 +566,230 @@ module baz(); endmodule
   }
 }
 
+TEST(VerilogPreprocessTest, MacroExpansion) {
+  const RawAndFiltered test_cases[] = {
+      {"[** Multi-tokens macros being correctly parsed **]",
+       R"(
+`define ASSIGN1 =1
+`define ASSIGN0 =0
+module foo;
+wire x`ASSIGN1;
+wire y `ASSIGN0;
+endmodule)",
+       // ...equivalent to
+       R"(
+`define ASSIGN1 =1
+`define ASSIGN0 =0
+module foo;
+wire x =1;
+wire y =0;
+endmodule)"},
+
+      {"[** Multi-tokens macros not empty after undefing **]",
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+module foo;
+`XWIRE = 1;
+`YWIRE = 0;
+endmodule
+`undef XWIRE
+`undef YWIRE)",
+       // ...equivalent to
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+module foo;
+wire x = 1;
+wire y = 0;
+endmodule
+`undef XWIRE
+`undef YWIRE)"},
+
+      {"[** Macros that contain other macro calls, redefining the inner macro "
+       "**]",
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+`define ASSIGN1XWIRE `XWIRE = 1;
+`define ASSIGN0YWIRE `YWIRE = 0;
+module foo;
+`ASSIGN1XWIRE
+`ASSIGN0YWIRE
+`define XWIRE wire new_x_wire
+`ASSIGN1XWIRE
+endmodule)",
+       // ...equivalent to
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+`define ASSIGN1XWIRE `XWIRE = 1;
+`define ASSIGN0YWIRE `YWIRE = 0;
+module foo;
+wire x = 1;
+wire y = 0;
+`define XWIRE wire new_x_wire
+wire new_x_wire = 1;
+endmodule)"},
+
+      {"[** Macros contatining back to back macro calls **]",
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+`define ASSIGN1 = 1
+`define ASSIGN0 = 0
+`define ASSIGN1XWIRE `XWIRE `ASSIGN1;
+`define ASSIGN0YWIRE `YWIRE `ASSIGN0;
+module foo;
+`ASSIGN1XWIRE
+`ASSIGN0YWIRE
+`define XWIRE wire new_x_wire
+`ASSIGN1XWIRE
+endmodule)",
+       // ...equivalent to
+       R"(
+`define XWIRE wire x
+`define YWIRE wire y
+`define ASSIGN1 = 1
+`define ASSIGN0 = 0
+`define ASSIGN1XWIRE `XWIRE `ASSIGN1;
+`define ASSIGN0YWIRE `YWIRE `ASSIGN0;
+module foo;
+wire x = 1;
+wire y = 0;
+`define XWIRE wire new_x_wire
+wire new_x_wire = 1;
+endmodule)"},
+
+      {"[** Macros with formal parameters, expanded with both default value, "
+       "and actual passed value **]",
+       R"(
+`define LSb(n=2) [n-1:0]
+module testcase_ppMacro;
+localparam int A = 123;
+wire a = A`LSb();
+wire b = A`LSb(5);
+wire c = A[5-1:0]; 
+endmodule)",
+       // ...equivalent to
+       R"(
+`define LSb(n=2) [n-1:0]
+module testcase_ppMacro;
+localparam int A = 123;
+wire a = A[2-1:0];
+wire b = A[5-1:0];
+wire c = A[5-1:0]; 
+endmodule)"},
+
+      {"[** Actual parameter is another macro call **]",
+       R"(
+`define FOO a
+`define A(n) n
+`define B(n=x) n ,y
+module m;
+wire `A(xyz);
+wire `B(`FOO);
+endmodule
+`undef B
+`undef A
+`undef FOO)",
+       // ...equivalent to
+       R"(
+`define FOO a
+`define A(n) n
+`define B(n=x) n ,y
+module m;
+wire xyz;
+wire a ,y;
+endmodule
+`undef B
+`undef A
+`undef FOO)"},
+
+      {"[** Multiple parameter macros (From 2017 SV-LRM) **]",
+       R"(
+`define MACRO1(a=5,b="B",c) $display(a,,b,,c);
+`define MACRO2(a=5, b, c="C") $display(a,,b,,c);
+`define MACRO3(a=5, b=0, c="C") $display(a,,b,,c);
+module m;
+`MACRO1 ( , 2, 3 )
+`MACRO1 ( 1 , , 3 ) 
+`MACRO1 ( , 2, )
+`MACRO2 (1, , 3)
+`MACRO2 (, 2, )
+`MACRO2 (, 2)
+`MACRO3 ( 1 )
+`MACRO3 ()
+endmodule
+`undef MACRO)",
+       // ...equivalent to
+       R"(
+`define MACRO1(a=5,b="B",c) $display(a,,b,,c);
+`define MACRO2(a=5, b, c="C") $display(a,,b,,c);
+`define MACRO3(a=5, b=0, c="C") $display(a,,b,,c);
+module m;
+$display(5,,2,,3);
+$display(1,,"B",,3);
+$display(5,,2,,);
+$display(1,,,,3);
+$display(5,,2,,"C");
+$display(5,,2,,"C");
+$display(1,,0,,"C");
+$display(5,,0,,"C");
+endmodule
+`undef MACRO)"},
+
+      {"[** Nested callable macros **]",
+       R"(
+`define MACRO1(n) real x=n;
+`define MACRO2(m) real y=m; `MACRO1(1)
+module foo;
+`MACRO1(2)
+`MACRO2(3)
+endmodule
+`undef MACRO1
+`undef MACRO2)",
+       // ...equivalent to
+       R"(
+`define MACRO1(n) real x=n;
+`define MACRO2(m) real y=m; `MACRO1(1)
+module foo;
+real x=2;
+real y=3; real x=1;
+endmodule
+`undef MACRO1
+`undef MACRO2)"}
+
+  };
+
+  for (const auto& test_case : test_cases) {
+    PreprocessorTester expanded(
+        test_case.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
+    EXPECT_TRUE(expanded.Status().ok())
+        << expanded.Status() << " " << test_case.description;
+    PreprocessorTester equivalent(
+        test_case.equivalent,
+        VerilogPreprocess::Config({.expand_macros = false}));
+    EXPECT_TRUE(equivalent.Status().ok())
+        << equivalent.Status() << " " << test_case.description;
+    const auto& expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto& equivalent_stream = equivalent.Data().GetTokenStreamView();
+    EXPECT_GT(expanded_stream.size(), 0) << test_case.description;
+    EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
+        << test_case.description;
+    auto expanded_it = expanded_stream.begin();
+    auto equivalent_it = equivalent_stream.begin();
+    while (expanded_it != expanded_stream.end() &&
+           equivalent_it != equivalent_stream.end()) {
+      EXPECT_EQ((*expanded_it)->text(), (*equivalent_it)->text())
+          << test_case.description;
+      EXPECT_EQ((*expanded_it)->token_enum(), (*equivalent_it)->token_enum())
+          << test_case.description;
+      ++expanded_it;
+      ++equivalent_it;
+    }
+  }
+}
+
 }  // namespace
 }  // namespace verilog
