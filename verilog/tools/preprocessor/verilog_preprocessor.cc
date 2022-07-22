@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -32,16 +33,9 @@
 #include "verilog/transform/strip_comments.h"
 
 using verible::SubcommandArgsRange;
-using verible::SubcommandEntry;
 
-static absl::Status StripComments(const SubcommandArgsRange& args,
-                                  std::istream&, std::ostream& outs,
-                                  std::ostream&) {
-  if (args.empty()) {
-    return absl::InvalidArgumentError(
-        "Missing file argument.  Use '-' for stdin.");
-  }
-  const char* source_file = args[0];
+static absl::Status StripComments(const char* source_file, std::istream&,
+                                  std::ostream& outs, std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -55,71 +49,59 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
+static absl::Status MultipleCU(const char* source_file, std::istream&,
                                std::ostream& outs, std::ostream&) {
-  if (args.empty()) {
-    return absl::InvalidArgumentError("Missing file argument.");
+  std::string source_contents;
+  if (auto status = verible::file::GetContents(source_file, &source_contents);
+      !status.ok()) {
+    return status;
   }
-
-  for (auto source_file : args) {
-    std::string source_contents;
-    if (auto status = verible::file::GetContents(source_file, &source_contents);
-        !status.ok()) {
-      return status;
-    }
-    verilog::VerilogPreprocess::Config config;
-    config.filter_branches = 1;
-    // config.expand_macros=1;
-    verilog::VerilogPreprocess preprocessor(config);
-    verilog::VerilogLexer lexer(source_contents);
-    verible::TokenSequence lexed_sequence;
-    for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
-         lexer.DoNextToken()) {
-      // For now we will store the syntax tree tokens only, ignoring all the
-      // white-space characters. however that should be stored to output the
-      // source code just like it was, but with conditionals filtered.
-      if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
-        lexed_sequence.push_back(lexer.GetLastToken());
-    }
-    verible::TokenStreamView lexed_streamview;
-    // Initializing the lexed token stream view.
-    InitTokenStreamView(lexed_sequence, &lexed_streamview);
-    verilog::VerilogPreprocessData preprocessed_data =
-        preprocessor.ScanStream(lexed_streamview);
-    auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
-    for (auto u : preprocessed_stream)
-      outs << *u << '\n';  // output the preprocessed tokens.
-    for (auto& u : preprocessed_data.errors)
-      outs << u.error_message << '\n';  // for debugging.
-    //  parsing just as a trial
-    std::string post_preproc;
-    for (auto u : preprocessed_stream) post_preproc += std::string{u->text()};
-    std::string source_view{post_preproc};
-    verilog::VerilogAnalyzer analyzer(source_view, "file1", config);
-    auto analyze_status = analyzer.Analyze();
-    /* const auto& mydata = analyzer.Data().Contents(); */
-    /* outs<<mydata; */
-
-    /* TODO(karimtera): regarding conditionals
-     1) Modify VerilogPreprocess config to have a configuration to generate SV
-     source codes for all possible variants. 2) Then use parser, directly from
-     VerilogAnalyzer or from VerilogParser to have less dependences. 3) Now, we
-     should have multiple trees, we need to merge them as described by Tom in
-     Verible's issue. 4) Finally, travese the tree and output the chosen path
-     based on definitions.
-    */
+  verilog::VerilogPreprocess::Config config;
+  config.filter_branches = 1;
+  // config.expand_macros=1;
+  verilog::VerilogPreprocess preprocessor(config);
+  verilog::VerilogLexer lexer(source_contents);
+  verible::TokenSequence lexed_sequence;
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    // For now we will store the syntax tree tokens only, ignoring all the
+    // white-space characters. however that should be stored to output the
+    // source code just like it was, but with conditionals filtered.
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+      lexed_sequence.push_back(lexer.GetLastToken());
   }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+  verilog::VerilogPreprocessData preprocessed_data =
+      preprocessor.ScanStream(lexed_streamview);
+  auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
+  for (auto u : preprocessed_stream)
+    outs << *u << '\n';  // output the preprocessed tokens.
+  for (auto& u : preprocessed_data.errors)
+    outs << u.error_message << '\n';  // for debugging.
+  //  parsing just as a trial
+  std::string post_preproc;
+  for (auto u : preprocessed_stream) post_preproc += std::string{u->text()};
+  std::string source_view{post_preproc};
+  verilog::VerilogAnalyzer analyzer(source_view, "file1", config);
+  auto analyze_status = analyzer.Analyze();
+  /* const auto& mydata = analyzer.Data().Contents(); */
+  /* outs<<mydata; */
+
+  /* TODO(karimtera): regarding conditionals
+   1) Modify VerilogPreprocess config to have a configuration to generate SV
+   source codes for all possible variants. 2) Then use parser, directly from
+   VerilogAnalyzer or from VerilogParser to have less dependences. 3) Now, we
+   should have multiple trees, we need to merge them as described by Tom in
+   Verible's issue. 4) Finally, travese the tree and output the chosen path
+   based on definitions.
+  */
   return absl::OkStatus();
 }
 
-static absl::Status GenerateVariants(const SubcommandArgsRange& args,
-                                     std::istream&, std::ostream& outs,
-                                     std::ostream&) {
-  if (args.empty()) {
-    return absl::InvalidArgumentError("Missing file argument.");
-  }
-
-  const char* source_file = args[0];
+static absl::Status GenerateVariants(const char* source_file, std::istream&,
+                                     std::ostream& outs, std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -149,74 +131,73 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
-    {"strip-comments",  //
-     {&StripComments,   //
-      R"(strip-comments file
-
-Input:
-  'file' is a Verilog or SystemVerilog source file.
-  Use '-' to read from stdin.
-
-Output: (stdout)
-  Contents of original file with // and /**/ comments removed.
-)"}},
-
-    {"multiple-cu",  //
-     {&MultipleCU,   //
-      R"(multiple-cu file1 file2 ...
-
-Input:
-  'file's are Verilog or SystemVerilog source files.
-  each one will be preprocessed in a separate compilation unit.
-Output: (stdout)
-  Contents of original file with compiler directives interpreted.
-)"}},
-
-    {"generate-variants",  //
-     {&GenerateVariants,   //
-      R"(bypass-conditionals file 
-
-Input:
- 'file' is Verilog or SystemVerilog source file.
-Output: (stdout)
-  Every possible source variants.
-)"}},
-};
+ABSL_FLAG(bool, strip_comments, false,
+          "Replaces comments with white-spaces in files passed.");
+ABSL_FLAG(bool, multiple_cu, true,
+          "Files are preprocessed in separate compilation units.");
+ABSL_FLAG(bool, generate_variants, false,
+          "Generates every possible variants w.r.t. compiler conditionals");
 
 int main(int argc, char* argv[]) {
-  // Create a registry of subcommands (locally, rather than as a static global).
-  verible::SubcommandRegistry commands;
-  for (const auto& entry : kCommands) {
-    const auto status = commands.RegisterCommand(entry.first, entry.second);
-    if (!status.ok()) {
-      std::cerr << status.message() << std::endl;
-      return 2;  // fatal error
-    }
-  }
-
-  const std::string usage = absl::StrCat("usage: ", argv[0],
-                                         " command args...\n"
-                                         "available commands:\n",
-                                         commands.ListCommands());
+  const std::string usage =
+      absl::StrCat("usage:\n", argv[0], " [options] file [<file>...]\n\n",
+                   "options summary:\n",
+                   "-multiple_cu: Files are preprocessed in separate "
+                   "compilation units.\n",
+                   "-strip_comments: Replaces one/multi-line comments with "
+                   "equal white-spaces.\n",
+                   "-generate_variants: Generates every possible variants "
+                   "w.r.t. compiler conditionals.\n");
 
   // Process invocation args.
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
-  if (args.size() == 1) {
+  if (args.empty()) {
     std::cerr << absl::ProgramUsageMessage() << std::endl;
     return 1;
   }
-  // args[0] is the program name
-  // args[1] is the subcommand
-  // subcommand args start at [2]
-  const SubcommandArgsRange command_args(args.cbegin() + 2, args.cend());
 
-  const auto& sub = commands.GetSubcommandEntry(args[1]);
-  // Run the subcommand.
-  const auto status = sub.main(command_args, std::cin, std::cout, std::cerr);
-  if (!status.ok()) {
-    std::cerr << status.message() << std::endl;
+  // Get flags.
+  bool strip_comments_flag = absl::GetFlag(FLAGS_strip_comments);
+  bool multiple_cu_flag = absl::GetFlag(FLAGS_multiple_cu);
+  bool generate_variants_flag = absl::GetFlag(FLAGS_generate_variants);
+
+  // Check for flags and argument illegal usage.
+  if (strip_comments_flag && generate_variants_flag) {  // Illegal usage.
+    std::cerr << "ERROR: the flags passed shouldn't be used together.\n\n"
+              << absl::ProgramUsageMessage() << std::endl;
     return 1;
   }
+  if (args.size() ==
+      1) {  // No Files are passed (files are passed as positional arguments).
+    std::cerr << "ERROR: No System-Verilog files were passed.\n\n"
+              << absl::ProgramUsageMessage() << std::endl;
+    return 1;
+  }
+
+  // Select the operation mode and execute it.
+  if (strip_comments_flag) {
+    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+      if (auto status = StripComments(filename, std::cin, std::cout, std::cerr);
+          !status.ok()) {
+        return 1;
+      }
+    }
+  } else if (generate_variants_flag) {
+    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+      if (auto status =
+              GenerateVariants(filename, std::cin, std::cout, std::cerr);
+          !status.ok()) {
+        return 1;
+      }
+    }
+  } else if (multiple_cu_flag) {
+    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+      if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr);
+          !status.ok()) {
+        return 1;
+      }
+    }
+  }
+
   return 0;
 }
