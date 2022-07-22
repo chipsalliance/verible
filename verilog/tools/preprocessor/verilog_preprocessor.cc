@@ -39,6 +39,7 @@ static absl::Status StripComments(const char* source_file, std::istream&,
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
+    std::cerr << "ERROR: passed file can't be open\n.";
     return status;
   }
 
@@ -54,6 +55,7 @@ static absl::Status MultipleCU(const char* source_file, std::istream&,
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
+    std::cerr << "ERROR: passed file can't be open\n.";
     return status;
   }
   verilog::VerilogPreprocess::Config config;
@@ -105,8 +107,11 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
-    return status;
+    std::cerr << "ERROR: passed file can't be open\n.";
+    return status;  // check if the the file is not readable or doesn't exist.
   }
+
+  // Lexing the input SV source code.
   verilog::VerilogLexer lexer(source_contents);
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
@@ -118,13 +123,19 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
       lexed_sequence.push_back(lexer.GetLastToken());
   }
 
+  // Control flow tree constructing.
   verilog::FlowTree control_flow_tree(lexed_sequence);
-  auto status = control_flow_tree.GenerateControlFlowTree();
-  status = control_flow_tree.DepthFirstSearch(0);
-  int cnt = 1;
-  for (const auto& u : control_flow_tree.variants_) {
-    outs << "Variant number " << cnt++ << ":\n";
-    for (auto k : u) outs << k << '\n';
+  auto status =
+      control_flow_tree
+          .GenerateControlFlowTree();  // construct the control flow tree.
+  status = control_flow_tree.DepthFirstSearch(
+      0);  // traverse the tree by dfs from the root (node 0).
+
+  // Printing the token streams of every possible variant.
+  int variants_counter = 1;
+  for (const auto& current_variant : control_flow_tree.variants_) {
+    outs << "Variant number " << variants_counter++ << ":\n";
+    for (auto token : current_variant) outs << token << '\n';
     puts("");
   }
 
@@ -179,6 +190,7 @@ int main(int argc, char* argv[]) {
     for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
       if (auto status = StripComments(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
+        std::cerr << "ERROR: stripping comments failed.\n";
         return 1;
       }
     }
@@ -187,6 +199,7 @@ int main(int argc, char* argv[]) {
       if (auto status =
               GenerateVariants(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
+        std::cerr << "ERROR: generating variants failed.\n";
         return 1;
       }
     }
@@ -194,6 +207,8 @@ int main(int argc, char* argv[]) {
     for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
       if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
+        std::cerr
+            << "ERROR: preprocessing in multiple comiplation units failed.\n";
         return 1;
       }
     }
