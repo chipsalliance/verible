@@ -30,16 +30,25 @@ class FlowTree {
   explicit FlowTree(verible::TokenSequence source_sequence)
       : source_sequence_(std::move(source_sequence)){};
 
-  absl::Status GenerateControlFlowTree();
-  absl::Status DepthFirstSearch(int index);
-  std::vector<verible::TokenSequence> variants_;
+  absl::Status GenerateControlFlowTree();  // constructs the control flow tree.
+  absl::Status DepthFirstSearch(
+      int index);  // travese the tree in a depth first manner.
+  std::vector<verible::TokenSequence>
+      variants_;  // a memory for all variants generated.
 
  private:
-  std::vector<int> ifs_;
-  std::map<int, std::vector<int>> elses_;
-  std::map<int, std::vector<int>> edges_;
-  verible::TokenSequence source_sequence_;
-  verible::TokenSequence current_sequence_;
+  std::vector<int>
+      ifs_;  // vector of all `ifdef/`ifndef indexes in source_sequence_.
+  std::map<int, std::vector<int>> elses_;  // indexes of `elsif/`else indexes in
+                                           // source_sequence_ of each if block.
+  std::map<int, std::vector<int>>
+      edges_;  // the tree edges which defines the possible next childs of each
+               // token in source_sequence_.
+  verible::TokenSequence
+      source_sequence_;  // the original source code lexed token seqouence.
+  verible::TokenSequence
+      current_sequence_;  // the variant's token sequence currrently being built
+                          // by DepthFirstSearch.
 };
 
 }  // namespace verilog
