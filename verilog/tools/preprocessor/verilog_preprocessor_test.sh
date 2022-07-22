@@ -51,7 +51,33 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test the 'help' command."
+echo "=== Test -strip_comments: white out comments"
+
+cat > "$MY_INPUT_FILE" <<EOF
+// fake Verilog file.
+/*
+  file description
+*/
+
+module mmm;
+  logic l1;  // l1 is for blah
+  /* l2 does this */
+  logic l2;
+endmodule
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+                     
+  
+                  
+  
+
+module mmm;
+  logic l1;                   
+                    
+  logic l2;
+endmodule
+EOF
 
 "$preprocessor" help > "$MY_OUTPUT_FILE" 2>&1
 
@@ -106,14 +132,12 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-                     
-  
-                  
-  
+
+ 
 
 module mmm;
-  logic l1;                   
-                    
+  logic l1;  
+   
   logic l2;
 endmodule
 EOF
@@ -130,7 +154,34 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
-# Same but piped into stdin.
+################################################################################
+echo "=== Test strip-comments: replace comments"
+
+cat > "$MY_INPUT_FILE" <<EOF
+// fake Verilog file.
+/*
+  file description
+*/
+
+module mmm;
+  logic l1;  // l1 is for blah
+  /* l2 does this */
+  logic l2;
+endmodule
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+//...................
+/*
+..................
+*/
+
+module mmm;
+  logic l1;  //...............
+  /*..............*/
+  logic l2;
+endmodule
+EOF
 
 "$preprocessor" strip-comments - < "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
 
