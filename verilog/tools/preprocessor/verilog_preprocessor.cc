@@ -22,6 +22,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
+#include "common/util/cmd_positional_arguments.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
@@ -34,7 +35,7 @@
 
 using verible::SubcommandArgsRange;
 
-static absl::Status StripComments(const char* source_file, std::istream&,
+static absl::Status StripComments(absl::string_view source_file, std::istream&,
                                   std::ostream& outs, std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
@@ -50,7 +51,7 @@ static absl::Status StripComments(const char* source_file, std::istream&,
   return absl::OkStatus();
 }
 
-static absl::Status MultipleCU(const char* source_file, std::istream&,
+static absl::Status MultipleCU(absl::string_view source_file, std::istream&,
                                std::ostream& outs, std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
@@ -91,19 +92,12 @@ static absl::Status MultipleCU(const char* source_file, std::istream&,
   /* const auto& mydata = analyzer.Data().Contents(); */
   /* outs<<mydata; */
 
-  /* TODO(karimtera): regarding conditionals
-   1) Modify VerilogPreprocess config to have a configuration to generate SV
-   source codes for all possible variants. 2) Then use parser, directly from
-   VerilogAnalyzer or from VerilogParser to have less dependences. 3) Now, we
-   should have multiple trees, we need to merge them as described by Tom in
-   Verible's issue. 4) Finally, travese the tree and output the chosen path
-   based on definitions.
-  */
   return absl::OkStatus();
 }
 
-static absl::Status GenerateVariants(const char* source_file, std::istream&,
-                                     std::ostream& outs, std::ostream&) {
+static absl::Status GenerateVariants(absl::string_view source_file,
+                                     std::istream&, std::ostream& outs,
+                                     std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -161,7 +155,7 @@ int main(int argc, char* argv[]) {
                    "w.r.t. compiler conditionals.\n");
 
   // Process invocation args.
-  const auto args = verible::InitCommandLine(usage, &argc, &argv);
+  auto args = verible::InitCommandLine(usage, &argc, &argv);
   if (args.empty()) {
     std::cerr << absl::ProgramUsageMessage() << std::endl;
     return 1;
@@ -185,9 +179,19 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  verible::CmdPositionalArguments positional_arguments(args);
+  if (auto status = positional_arguments.ParseArgs(); !status.ok()) {
+    std::cerr << "ERROR: parsing positional arguments failed.\n";
+    return 1;
+  }
+
+  auto include_dirs = positional_arguments.GetIncludeDirs();
+  auto defines = positional_arguments.GetDefines();
+  auto files = positional_arguments.GetFiles();
+
   // Select the operation mode and execute it.
   if (strip_comments_flag) {
-    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+    for (auto filename : files) {
       if (auto status = StripComments(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
         std::cerr << "ERROR: stripping comments failed.\n";
@@ -195,7 +199,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else if (generate_variants_flag) {
-    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+    for (auto filename : files) {
       if (auto status =
               GenerateVariants(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
@@ -204,7 +208,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else if (multiple_cu_flag) {
-    for (auto filename : verible::make_range(args.begin() + 1, args.end())) {
+    for (auto filename : files) {
       if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
         std::cerr

@@ -13,6 +13,7 @@ cc_binary(
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:subcommand",
+        "//common/util:cmd_positional_arguments",
         "//verilog/transform:strip_comments",
         "//verilog/preprocessor:verilog_preprocess",
         "//verilog/parser:verilog_lexer",
