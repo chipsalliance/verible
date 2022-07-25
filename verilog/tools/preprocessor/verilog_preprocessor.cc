@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
                    "w.r.t. compiler conditionals.\n");
 
   // Process invocation args.
-  auto args = verible::InitCommandLine(usage, &argc, &argv);
+  const auto args = verible::InitCommandLine(usage, &argc, &argv);
   if (args.empty()) {
     std::cerr << absl::ProgramUsageMessage() << std::endl;
     return 1;

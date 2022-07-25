@@ -25,8 +25,8 @@ namespace verible {
 
 class CmdPositionalArguments {
  public:
-  explicit CmdPositionalArguments(std::vector<char *> &args)
-      : all_args_(std::move(args)){};
+  explicit CmdPositionalArguments(const std::vector<char *> &args)
+      : all_args_(args){};
 
   // Main function that parses arguments.
   absl::Status ParseArgs();

@@ -67,11 +67,12 @@ absl::Status CmdPositionalArguments::ParseArgs() {
   // 2) +define+<foo>[=<value>]
   // 3) +incdir+<dir>
 
-  for (int argument_index = 0; argument_index < all_args_.size();
-       argument_index++) {
-    if (!argument_index)
-      continue;  // all_args_[0] is the tool's name, which can be skipped.
-    absl::string_view argument = all_args_[argument_index];
+  int argument_index = 0;
+  for (absl::string_view argument : all_args_) {
+    if (!argument_index) {
+      argument_index++;
+      continue;
+    }  // all_args_[0] is the tool's name, which can be skipped.
     if (argument[0] != '+') {  // the argument is a SV file name.
       if (auto status = SetFile(argument); !status.ok())
         return status;  // add it to the file arguments.
@@ -85,11 +86,12 @@ absl::Status CmdPositionalArguments::ParseArgs() {
       absl::string_view plus_argument_type = argument_plus_splitted[0];
       if (absl::StrContains(plus_argument_type, "define")) {
         // define argument.
-        for (int define_argument_index = 1;
-             define_argument_index < argument_plus_splitted.size();
-             define_argument_index++) {
-          absl::string_view define_argument =
-              argument_plus_splitted[define_argument_index];
+        int define_argument_index = 0;
+        for (absl::string_view define_argument : argument_plus_splitted) {
+          if (!define_argument_index) {
+            define_argument_index++;
+            continue;
+          }
           // define_argument is something like <macro1>=<value>.
           std::pair<absl::string_view, absl::string_view> macro_pair =
               absl::StrSplit(
@@ -98,23 +100,27 @@ absl::Status CmdPositionalArguments::ParseArgs() {
           if (auto status = CmdPositionalArguments::SetDefine(macro_pair);
               !status.ok())
             return status;  // add the define argument.
+          define_argument_index++;
         }
       } else if (absl::StrContains(plus_argument_type, "incdir")) {
         // incdir argument.
-        for (int incdir_argument_index = 1;
-             incdir_argument_index < argument_plus_splitted.size();
-             incdir_argument_index++) {
-          absl::string_view incdir_argument =
-              argument_plus_splitted[incdir_argument_index];
+        int incdir_argument_index = 0;
+        for (absl::string_view incdir_argument : argument_plus_splitted) {
+          if (!incdir_argument_index) {
+            incdir_argument_index++;
+            continue;
+          }
           if (auto status =
                   CmdPositionalArguments::SetIncludeDir(incdir_argument);
               !status.ok())
             return status;  // add file argument.
+          incdir_argument_index++;
         }
       } else {
         return absl::InvalidArgumentError("Unkown argument.");
       }
     }
+    argument_index++;
   }
   return absl::OkStatus();
 }
