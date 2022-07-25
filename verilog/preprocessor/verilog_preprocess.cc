@@ -586,6 +586,22 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
   return absl::OkStatus();
 }
 
+// Add defines passed to the tool with +define+<foo>[=<value>].
+absl::Status VerilogPreprocess::AddDefineFromCmdLine(
+    std::pair<absl::string_view, absl::string_view> define) {
+  // manually create the tokens to save them into a MacroDefinition.
+  verible::TokenInfo macro_directive(PP_define, "`define");
+  verible::TokenInfo macro_name(PP_Identifier, define.first);
+  verible::TokenInfo macro_body(PP_define_body, define.second);
+  verible::MacroDefinition macro_definition(macro_directive, macro_name);
+  macro_definition.SetDefinitionText(macro_body);
+
+  // add the macro definition to memeory.
+  RegisterMacroDefinition(macro_definition);
+
+  return absl::OkStatus();
+}
+
 VerilogPreprocessData VerilogPreprocess::ScanStream(
     const TokenStreamView& token_stream) {
   preprocess_data_.preprocessed_token_stream.reserve(token_stream.size());

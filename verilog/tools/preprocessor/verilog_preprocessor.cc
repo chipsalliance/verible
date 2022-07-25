@@ -51,8 +51,11 @@ static absl::Status StripComments(absl::string_view source_file, std::istream&,
   return absl::OkStatus();
 }
 
-static absl::Status MultipleCU(absl::string_view source_file, std::istream&,
-                               std::ostream& outs, std::ostream&) {
+static absl::Status MultipleCU(
+    absl::string_view source_file, std::istream&, std::ostream& outs,
+    std::ostream&,
+    const std::vector<std::pair<absl::string_view, absl::string_view>>&
+        defines) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -63,6 +66,15 @@ static absl::Status MultipleCU(absl::string_view source_file, std::istream&,
   config.filter_branches = 1;
   // config.expand_macros=1;
   verilog::VerilogPreprocess preprocessor(config);
+
+  // Add defines passed with +define+<foo> to the tool.
+  for (auto define : defines) {
+    if (auto status = preprocessor.AddDefineFromCmdLine(define); !status.ok()) {
+      std::cerr << "ERROR: couldn't add macros passed to tool.\n";
+      return status;
+    }
+  }
+
   verilog::VerilogLexer lexer(source_contents);
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
@@ -209,7 +221,8 @@ int main(int argc, char* argv[]) {
     }
   } else if (multiple_cu_flag) {
     for (auto filename : files) {
-      if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr);
+      if (auto status =
+              MultipleCU(filename, std::cin, std::cout, std::cerr, defines);
           !status.ok()) {
         std::cerr
             << "ERROR: preprocessing in multiple comiplation units failed.\n";

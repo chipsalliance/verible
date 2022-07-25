@@ -123,6 +123,10 @@ class VerilogPreprocess {
   // TODO(fangism): ExpandMacro, ExpandMacroCall
   // TODO(b/111544845): ExpandEvalStringLiteral
 
+  // Add defines passed to the tool with +define+<foo>[=<value>].
+  absl::Status AddDefineFromCmdLine(
+      std::pair<absl::string_view, absl::string_view> define);
+
  private:
   using StreamIteratorGenerator =
       std::function<TokenStreamView::const_iterator()>;
