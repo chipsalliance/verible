@@ -30,6 +30,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
+#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
@@ -552,6 +553,135 @@ absl::Status VerilogPreprocess::HandleEndif(
   return absl::OkStatus();
 }
 
+// Handle `include directives.
+absl::Status VerilogPreprocess::HandleInclude(
+    TokenStreamView::const_iterator iter,
+    const StreamIteratorGenerator& generator) {
+  // karimtera(TODO): how to differentiate between <file> and "file"?? both are
+  // the same token, need to edit the lexer.
+  TokenStreamView::const_iterator token_iter =
+      generator();  // token_iter should now be pointing to a token containing
+                    // the file path.
+  auto file_token_iter = *token_iter;
+  if (file_token_iter->token_enum() != TK_StringLiteral) {
+    preprocess_data_.errors.push_back(
+        {**token_iter, "Expected a path to a SV file."});
+    return absl::InvalidArgumentError("Expected a path to a SV file.");
+  }
+  // currently the file path looks like "path", we need to remove "".
+  const auto& token_text = file_token_iter->text();
+  absl::string_view file_path(
+      token_text.begin() + 1,
+      token_text.size() - 2);  // removed 2 " chars surrounding the path.
+
+  bool is_absolute = !file_path.find_first_of("/");
+
+  std::string file_path_to_search = std::string(file_path);
+
+  if (auto status = verible::file::FileExists(file_path_to_search);
+      !status.ok()) {  // file doesn't exist in the current directory.
+    // if it's absolute then it's an error.
+    if (is_absolute) {
+      preprocess_data_.errors.push_back({**token_iter, "no such file found."});
+      return absl::InvalidArgumentError("ERROR: included file can't be found.");
+    }
+
+    bool found = 0;
+    for (const auto& base_dir : search_paths_) {
+      file_path_to_search = absl::StrCat(base_dir, "/", file_path);
+      auto search_status = verible::file::FileExists(file_path_to_search);
+      if (search_status.ok()) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      preprocess_data_.errors.push_back({**token_iter, "no such file found."});
+      return absl::InvalidArgumentError("ERROR: included file can't be found.");
+    }
+  }
+
+  // actually open the file.
+  std::string source_contents;
+  if (auto status =
+          verible::file::GetContents(file_path_to_search, &source_contents);
+      !status.ok()) {
+    preprocess_data_.errors.push_back(
+        {**token_iter, "ERROR: passed file can't be open"});
+    return absl::InvalidArgumentError("ERROR: passed file can't be open.");
+  }
+
+  verilog::VerilogPreprocess child_preprocessor(config_);
+  // karimtera(TODO): share the macros defined with child pp.
+  // karimtera(TODO): limit number of nested pps.
+
+  verilog::VerilogLexer lexer(source_contents);
+  verible::TokenSequence lexed_sequence;
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    // For now we will store the syntax tree tokens only, ignoring all the
+    // white-space characters. however that should be stored to output the
+    // source code just like it was, but with conditionals filtered.
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+      lexed_sequence.push_back(lexer.GetLastToken());
+  }
+
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+  verilog::VerilogPreprocessData child_preprocessed_data =
+      child_preprocessor.ScanStream(lexed_streamview);
+  auto& child_preprocessed_stream =
+      child_preprocessed_data.preprocessed_token_stream;
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
+  /// A very un-efficient work-around to not lose ownership of the child
+  /// included tokens. Steps:
+  /// 1) Own the TokenInfo's content by copying into a
+  /// pair of int, and string.
+  ///
+  /// 2) Push it back inside the parent's
+  /// preprocess_data_.child_preprocessed_stream which is a memory containing
+  /// sequences of these pairs(not tokens).
+  ///
+  /// 3) Create a TokenSequence out of the
+  /// pair sequence.
+  ///
+  /// 4) Push it into preprocess_data_.lexed_macros_backup which
+  /// is a memory backup created for expanded macros (might change its name).
+  ///
+  /// 5) Push it into preprocess_data_.preprocessed_token_stream safely.
+  std::vector<std::pair<int, std::string>> owner;
+  for (auto u : child_preprocessed_stream) {
+    auto child_token = *u;
+    owner.push_back(
+        {child_token.token_enum(), std::string(child_token.text())});
+  }
+  preprocess_data_.child_included_content.emplace_back(owner);
+
+  const auto& child_preprocessed_pair_sequence =
+      preprocess_data_.child_included_content.back();
+
+  std::vector<verible::TokenInfo> child_sequence;
+  for (const auto& u : child_preprocessed_pair_sequence) {
+    verible::TokenInfo child_sequence_token(u.first, u.second);
+    child_sequence.push_back(child_sequence_token);
+  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  preprocess_data_.lexed_macros_backup.push_back(child_sequence);
+  auto& sequence_to_add = preprocess_data_.lexed_macros_backup.back();
+  auto iter_generator = verible::MakeConstIteratorStreamer(sequence_to_add);
+
+  const auto it_end = sequence_to_add.end();
+  for (auto it = iter_generator(); it != it_end; it++) {
+    preprocess_data_.preprocessed_token_stream.push_back(it);
+  }
+
+  return absl::OkStatus();
+}
 // Interprets preprocessor tokens as directives that act on this preprocessor
 // object and possibly transform the input token stream.
 absl::Status VerilogPreprocess::HandleTokenIterator(
@@ -572,17 +702,28 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
     case PP_endif:
       return HandleEndif(iter);
   }
+
   if (config_.expand_macros && ((*iter)->token_enum() == MacroIdentifier ||
                                 (*iter)->token_enum() == MacroIdItem ||
                                 (*iter)->token_enum() == MacroCallId)) {
     return HandleMacroIdentifier(iter, generator);
   }
 
+  if (config_.include_files && (*iter)->token_enum() == PP_include)
+    return HandleInclude(iter, generator);
+
   // If not return'ed above, any other tokens are passed through unmodified
   // unless filtered by a branch.
   if (conditional_block_.top().InSelectedBranch()) {
     preprocess_data_.preprocessed_token_stream.push_back(*iter);
   }
+  return absl::OkStatus();
+}
+
+// Add search directory paths passed to the tool with +incdir+<path>.
+absl::Status VerilogPreprocess::AddIncludeDirFromCmdLine(
+    absl::string_view include_dir_path) {
+  search_paths_.push_back(std::string(include_dir_path));
   return absl::OkStatus();
 }
 

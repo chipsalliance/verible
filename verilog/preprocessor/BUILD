@@ -21,6 +21,7 @@ cc_library(
         "//common/text:token_stream_view",
         "//common/util:container_util",
         "//common/util:logging",
+        "//common/util:file_util",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token_enum",
         "//verilog/parser:verilog_lexer",

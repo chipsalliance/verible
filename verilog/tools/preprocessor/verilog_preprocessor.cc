@@ -54,8 +54,8 @@ static absl::Status StripComments(absl::string_view source_file, std::istream&,
 static absl::Status MultipleCU(
     absl::string_view source_file, std::istream&, std::ostream& outs,
     std::ostream&,
-    const std::vector<std::pair<absl::string_view, absl::string_view>>&
-        defines) {
+    const std::vector<std::pair<absl::string_view, absl::string_view>>& defines,
+    const std::vector<absl::string_view>& include_dirs) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -64,13 +64,23 @@ static absl::Status MultipleCU(
   }
   verilog::VerilogPreprocess::Config config;
   config.filter_branches = 1;
-  // config.expand_macros=1;
+  config.expand_macros = 1;
+  config.include_files = 1;
   verilog::VerilogPreprocess preprocessor(config);
 
   // Add defines passed with +define+<foo> to the tool.
   for (auto define : defines) {
     if (auto status = preprocessor.AddDefineFromCmdLine(define); !status.ok()) {
       std::cerr << "ERROR: couldn't add macros passed to tool.\n";
+      return status;
+    }
+  }
+
+  // Add search paths for `includes.
+  for (auto path : include_dirs) {
+    if (auto status = preprocessor.AddIncludeDirFromCmdLine(path);
+        !status.ok()) {
+      std::cerr << "ERROR: couldn't add include search paths to tool.\n";
       return status;
     }
   }
@@ -86,6 +96,7 @@ static absl::Status MultipleCU(
       lexed_sequence.push_back(lexer.GetLastToken());
   }
   verible::TokenStreamView lexed_streamview;
+
   // Initializing the lexed token stream view.
   InitTokenStreamView(lexed_sequence, &lexed_streamview);
   verilog::VerilogPreprocessData preprocessed_data =
@@ -221,8 +232,8 @@ int main(int argc, char* argv[]) {
     }
   } else if (multiple_cu_flag) {
     for (auto filename : files) {
-      if (auto status =
-              MultipleCU(filename, std::cin, std::cout, std::cerr, defines);
+      if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr,
+                                   defines, include_dirs);
           !status.ok()) {
         std::cerr
             << "ERROR: preprocessing in multiple comiplation units failed.\n";

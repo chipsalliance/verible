@@ -74,6 +74,10 @@ struct VerilogPreprocessData {
   verible::TokenStreamView preprocessed_token_stream;
   std::vector<TokenSequence> lexed_macros_backup;
 
+  // A backup memory of pairs sequence, which owns the content text unlike a
+  // TokenInfo or a TokenSequence.
+  std::vector<std::vector<std::pair<int, std::string>>> child_included_content;
+
   // Map of defined macros.
   MacroDefinitionRegistry macro_definitions;
 
@@ -103,6 +107,9 @@ class VerilogPreprocess {
     // want to emit all tokens.
     bool filter_branches = false;
 
+    // Inlude files with `include.
+    bool include_files = false;
+
     // Expand macro definition bodies, this will relexes the macro body.
     bool expand_macros = false;
     // TODO(hzeller): Provide a map of command-line provided +define+'s
@@ -126,6 +133,9 @@ class VerilogPreprocess {
   // Add defines passed to the tool with +define+<foo>[=<value>].
   absl::Status AddDefineFromCmdLine(
       std::pair<absl::string_view, absl::string_view> define);
+
+  // Add search directory paths passed to the tool with +incdir+<path>.
+  absl::Status AddIncludeDirFromCmdLine(absl::string_view include_dir_path);
 
  private:
   using StreamIteratorGenerator =
@@ -172,6 +182,8 @@ class VerilogPreprocess {
   absl::Status ExpandText(const absl::string_view&);
   absl::Status ExpandMacro(const verible::MacroCall&,
                            const verible::MacroDefinition*);
+  absl::Status HandleInclude(TokenStreamView::const_iterator,
+                             const StreamIteratorGenerator&);
 
   const Config config_;
 
@@ -222,6 +234,9 @@ class VerilogPreprocess {
     bool in_else_ = false;
     bool current_branch_condition_met_;
   };
+
+  // Paths to search into during handling `include
+  std::vector<std::string> search_paths_;
 
   // State of nested conditional blocks. For code simplicity, this always has
   // a toplevel branch that is selected.
