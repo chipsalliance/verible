@@ -113,6 +113,9 @@ class VerilogPreprocess {
     // Expand macro definition bodies, this will relexes the macro body.
     bool expand_macros = false;
     // TODO(hzeller): Provide a map of command-line provided +define+'s
+
+    // Foward `define statements
+    bool forward_define = true;
   };
 
   explicit VerilogPreprocess(const Config& config);
@@ -184,6 +187,10 @@ class VerilogPreprocess {
                            const verible::MacroDefinition*);
   absl::Status HandleInclude(TokenStreamView::const_iterator,
                              const StreamIteratorGenerator&);
+
+  // Generate a const_iterator to a non-whitespace token.
+  static TokenStreamView::const_iterator GenerateBypassWhiteSpaces(
+      const StreamIteratorGenerator&);
 
   const Config config_;
 

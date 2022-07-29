@@ -66,6 +66,7 @@ static absl::Status MultipleCU(
   config.filter_branches = 1;
   config.expand_macros = 1;
   config.include_files = 1;
+  config.forward_define = 0;
   verilog::VerilogPreprocess preprocessor(config);
 
   // Add defines passed with +define+<foo> to the tool.
@@ -92,10 +93,26 @@ static absl::Status MultipleCU(
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was, but with conditionals filtered.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
-      lexed_sequence.push_back(lexer.GetLastToken());
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
   verible::TokenStreamView lexed_streamview;
+
+  // Tyring to create a string_view between 2 consecutive tokens to preserve the
+  // white-spaces as suggested by fangism. It worked but it solves a different
+  // problem, where I have a non-whitespace token stream, and want to preserve
+  // the whitespaces in between.
+  /* auto it_end=lexed_sequence.end(); */
+  /* auto it_prv=lexed_sequence.begin(); */
+  /* for(auto it=lexed_sequence.begin();it!=it_end;it++){ */
+  /*   if(it==it_prv) continue; */
+  /*   std::cout<<it_prv->text(); */
+  /*   absl::string_view
+   * white_space(it_prv->text().end(),std::distance(it_prv->text().end(),it->text().begin()));
+   */
+  /*   std::cout<<white_space; */
+  /*   it_prv=it; */
+  /* } */
+  /* std::cout<<(*(it_end-1)).text(); */
 
   // Initializing the lexed token stream view.
   InitTokenStreamView(lexed_sequence, &lexed_streamview);
@@ -103,7 +120,8 @@ static absl::Status MultipleCU(
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream)
-    outs << *u << '\n';  // output the preprocessed tokens.
+    outs << u->text();  // output the preprocessed tokens.
+  /* outs << *u << '\n';  // output the preprocessed tokens. */
   for (auto& u : preprocessed_data.errors)
     outs << u.error_message << '\n';  // for debugging.
   //  parsing just as a trial
@@ -136,7 +154,6 @@ static absl::Status GenerateVariants(absl::string_view source_file,
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
       lexed_sequence.push_back(lexer.GetLastToken());
   }
 
@@ -152,7 +169,7 @@ static absl::Status GenerateVariants(absl::string_view source_file,
   int variants_counter = 1;
   for (const auto& current_variant : control_flow_tree.variants_) {
     outs << "Variant number " << variants_counter++ << ":\n";
-    for (auto token : current_variant) outs << token << '\n';
+    for (auto token : current_variant) outs << token.text();
     puts("");
   }
 
