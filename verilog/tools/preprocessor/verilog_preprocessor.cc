@@ -154,7 +154,7 @@ static absl::Status GenerateVariants(absl::string_view source_file,
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was.
-      lexed_sequence.push_back(lexer.GetLastToken());
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
 
   // Control flow tree constructing.
