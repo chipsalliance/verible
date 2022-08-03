@@ -32,7 +32,7 @@ mkdir -p $PREFIX_DOC
 mkdir -p $PREFIX_MAN
 
 # Binaries
-bazel run :install -c opt -- $PREFIX_BIN
+bazel run :install ${BAZEL_OPTS} -c opt -- $PREFIX_BIN
 for BIN in $PREFIX_BIN/*; do
     ls -l $BIN
     file $BIN
