@@ -13,11 +13,18 @@
     },
     "icon": "images/icon.png",
     "contributes": {
-        "languages": [{
-            "id": "system-verilog",
-            "extensions": [ ".sv" ],
-            "aliases": [ "System Verilog", "systemverilog" ]
-        }],
+        "languages": [
+            {
+                "id": "system-verilog",
+                "extensions": [
+                    ".sv"
+                ],
+                "aliases": [
+                    "System Verilog",
+                    "systemverilog"
+                ]
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "verible",
@@ -50,7 +57,7 @@
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
-		"vsix": "vsce package -o verible.vsix"
+        "vsix": "vsce package -o verible.vsix"
     },
     "devDependencies": {
         "@types/glob": "^7.1.4",
@@ -65,9 +72,9 @@
         "mocha": "^9.1.1",
         "ts-loader": "^9.2.5",
         "typescript": "^4.4.3",
+        "vsce": "^1.100.1",
         "webpack": "^5.52.1",
-        "webpack-cli": "^4.8.0",
-        "vsce": "^1.100.1"
+        "webpack-cli": "^4.10.0"
     },
     "dependencies": {
         "vscode-languageclient": "^7.0.0"
