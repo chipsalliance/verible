@@ -1,0 +1,16 @@
+--- a/re2/stringpiece.h	2022-08-04 16:30:21.118891027 -0700
++++ b/re2/stringpiece.h	2022-08-04 17:13:40.643799856 -0700
+@@ -52,11 +52,8 @@
+   // expected.
+   StringPiece()
+       : data_(NULL), size_(0) {}
+-#ifdef __cpp_lib_string_view
+-  StringPiece(const std::string_view& str)
+-      : data_(str.data()), size_(str.size()) {}
+-#endif
+-  StringPiece(const std::string& str)
++  template <typename StringT = std::string>
++  StringPiece(const StringT& str)
+       : data_(str.data()), size_(str.size()) {}
+   StringPiece(const char* str)
+       : data_(str), size_(str == NULL ? 0 : strlen(str)) {}
