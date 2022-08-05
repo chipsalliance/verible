@@ -22,16 +22,14 @@ http_archive(
 )
 
 # Googletest
+# This requires RE2.
+# Note this must use a commit from the `abseil` branch of the RE2 project.
+# https://github.com/google/re2/tree/abseil
 http_archive(
     name = "com_googlesource_code_re2",
-    # As a consequence of the patch to absl, we need to prepare RE2 to be
-    # ready to accept anything that looks like a string-piece, including the
-    # absl string-piece
-    patch_args = ["-p1"],
-    patches = ["//bazel:re2-stringpiece.patch"],
-    sha256 = "9f3b65f2e0c78253fcfdfce1754172b0f97ffdb643ee5fd67f0185acf91a3f28",
-    strip_prefix = "re2-2022-06-01",
-    urls = ["https://github.com/google/re2/archive/refs/tags/2022-06-01.zip"],
+    sha256 = "a0a58f5094149be289cff43b663bdf2f9f0e7e58533c4bde38a77ea559797ec3",
+    strip_prefix = "re2-aed1d79f1f46af3f54563d57510aade4722c5cd6",
+    urls = ["https://github.com/google/re2/archive/aed1d79f1f46af3f54563d57510aade4722c5cd6.zip"],  # 2022-08-05
 )
 http_archive(
     name = "com_google_googletest",
