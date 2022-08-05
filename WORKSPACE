@@ -109,16 +109,6 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
 bison_register_toolchains()
 
-http_archive(
-    name = "bazel_toolchains",
-    sha256 = "882fecfc88d3dc528f5c5681d95d730e213e39099abff2e637688a91a9619395",
-    strip_prefix = "bazel-toolchains-3.4.0",
-    urls = [
-        "https://github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/3.4.0/bazel-toolchains-3.4.0.tar.gz",
-    ],
-)
-
 # We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
 # part of the protobuf release yet
 # (https://github.com/protocolbuffers/protobuf/issues/5918).
