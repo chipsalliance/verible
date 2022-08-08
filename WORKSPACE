@@ -2,6 +2,13 @@ workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Bazel platform rules, needed as dependency to absl.
+http_archive(
+    name = "platforms",
+    sha256 = "a879ea428c6d56ab0ec18224f976515948822451473a80d06c2e50af0bbe5121",
+    strip_prefix = "platforms-da5541f26b7de1dc8e04c075c99df5351742a4a2",
+    urls = ["https://github.com/bazelbuild/platforms/archive/da5541f26b7de1dc8e04c075c99df5351742a4a2.zip"],  # 2022-05-27
+)
 http_archive(
     name = "com_google_absl",
     # On MSVC's STL implementation, string_view cannot be constructed from
@@ -9,17 +16,26 @@ http_archive(
     # implementation to solve the issue
     patch_args = ["-p1"],
     patches = ["//bazel:absl.patch"],
-    sha256 = "a4567ff02faca671b95e31d315bab18b42b6c6f1a60e91c6ea84e5a2142112c2",
-    strip_prefix = "abseil-cpp-20211102.0",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip"],
+    sha256 = "5b7640be0e119de1a9d941cb6b2607d76978eba5720196f1d4fc6de0421d2241",
+    strip_prefix = "abseil-cpp-20220623.0",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.zip"],
 )
 
 # Googletest
+# This requires RE2.
+# Note this must use a commit from the `abseil` branch of the RE2 project.
+# https://github.com/google/re2/tree/abseil
+http_archive(
+    name = "com_googlesource_code_re2",
+    sha256 = "a0a58f5094149be289cff43b663bdf2f9f0e7e58533c4bde38a77ea559797ec3",
+    strip_prefix = "re2-aed1d79f1f46af3f54563d57510aade4722c5cd6",
+    urls = ["https://github.com/google/re2/archive/aed1d79f1f46af3f54563d57510aade4722c5cd6.zip"],  # 2022-08-05
+)
 http_archive(
     name = "com_google_googletest",
-    sha256 = "353571c2440176ded91c2de6d6cd88ddd41401d14692ec1f99e35d013feda55a",
-    strip_prefix = "googletest-release-1.11.0",
-    urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip"],
+    sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
+    strip_prefix = "googletest-release-1.12.1",
+    urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip"],
 )
 
 http_archive(
