@@ -669,7 +669,7 @@ module testcase_ppMacro;
 localparam int A = 123;
 wire a = A`LSb();
 wire b = A`LSb(5);
-wire c = A[5-1:0]; 
+wire c = A[5-1:0];
 endmodule)",
        // ...equivalent to
        R"(
@@ -678,7 +678,7 @@ module testcase_ppMacro;
 localparam int A = 123;
 wire a = A[2-1:0];
 wire b = A[5-1:0];
-wire c = A[5-1:0]; 
+wire c = A[5-1:0];
 endmodule)"},
 
       {"[** Actual parameter is another macro call **]",
@@ -713,7 +713,7 @@ endmodule
 `define MACRO3(a=5, b=0, c="C") $display(a,,b,,c);
 module m;
 `MACRO1 ( , 2, 3 )
-`MACRO1 ( 1 , , 3 ) 
+`MACRO1 ( 1 , , 3 )
 `MACRO1 ( , 2, )
 `MACRO2 (1, , 3)
 `MACRO2 (, 2, )
