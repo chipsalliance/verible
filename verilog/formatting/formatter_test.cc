@@ -18214,6 +18214,17 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
   }
 }
 
+#if 0
+// https://github.com/chipsalliance/verible/issues/1381
+TEST(FormatterEndToEndTest, FuzzingRegressions) {
+  FormatStyle style;
+  std::ostringstream stream;
+  absl::string_view input("P#(\0\0//\0//\0,);", 14);
+  const auto status = FormatVerilog(input, "<filename>", style, stream);
+  EXPECT_OK(status);
+}
+#endif
+
 // Extracts the first non-whitespace token and prepends it with number of
 // of newlines seen in front of it. So "\n \n\n  foo" -> "3foo"
 std::string NLCountAndfirstWord(absl::string_view str) {
