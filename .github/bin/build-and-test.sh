@@ -83,7 +83,6 @@ case "$MODE" in
     ;;
 
   asan|asan-clang)
-    BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unreachable-code" # https://github.com/google/re2/issues/384
     bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild //...
     ;;
 
