@@ -32,7 +32,14 @@
 
 PROJECT_ROOT=$(dirname $0)/../../
 OUTPUT_DIR=coverage-html
+COVERAGE_DATA=bazel-out/_coverage/_coverage_report.dat
 
 cd $PROJECT_ROOT
-genhtml -o ${OUTPUT_DIR} bazel-out/_coverage/_coverage_report.dat
+if [ ! -r "${COVERAGE_DATA}" ]; then
+  echo "First, run coverage tests; invoke"
+  echo "MODE=coverage .github/bin/build-and-test.sh"
+  exit
+fi
+
+genhtml -o ${OUTPUT_DIR} ${COVERAGE_DATA}
 echo "Output in $(realpath ${OUTPUT_DIR}/index.html)"
