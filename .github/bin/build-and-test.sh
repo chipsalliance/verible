@@ -19,6 +19,10 @@ set -e
 source ./.github/settings.sh
 
 if [[ "${MODE}" == *-clang ]]; then
+  # Baseline in case we don't find a specific version below
+  export CXX=clang++
+  export CC=clang
+
   # clang versions supported. Starting with 13, we
   # get some warnings in absl, so let's not go beyond
   # 12 for now.
