@@ -59,7 +59,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-tidy-11
+        sudo apt -qq -y install bazel clang-tidy-11
         echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
     - name: Create Cache Timestamp
@@ -132,9 +132,8 @@ jobs:
       run: |
         set -x
         source ./.github/settings.sh
-        sudo apt -qq -y install clang-10
+        sudo apt -qq -y install bazel clang-10
         ./.github/bin/set-compiler.sh 9
-        ./.github/bin/install-bazel.sh
         ./.github/bin/install-python.sh
 
     - name: ${{ matrix.mode }} Verible

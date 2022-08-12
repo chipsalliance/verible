@@ -31,10 +31,9 @@ export BAZEL_CXXOPTS="-std=c++17"
 # Reduce the verbosity of progress output on CI
 export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
 
+# TODO: this variable only seems to be used in the releasing section now.
+# Move there.
 export BAZEL_VERSION=4.0.0
-# Without following environment variable set, Bazel updates itself to the
-# latest version
-export USE_BAZEL_VERSION=$BAZEL_VERSION
 
 # TODO(b/171989992): revert to using release version after upgrading system
 #   libraries/image (need: GLIBCXX_3.4.26, CXXABI_1.3.11, GLIBC_2.29).
