@@ -18346,24 +18346,33 @@ foobar, input    bit [4] foobaz,
   }
 }
 
+// The following regressions have been found by a fuzzer, so the input might
+// look a bit 'funny'. Nevertheless, they expose real bugs in the code.
+
+[[maybe_unused]] void TestForNonCrash(absl::string_view input) {
+  FormatStyle style;
+  std::ostringstream stream;
+  const auto status = FormatVerilog(input, "<filename>", style, stream);
+  EXPECT_OK(status);
+}
+
 #if 0
 // https://github.com/chipsalliance/verible/issues/1381
 TEST(FormatterEndToEndTest, FuzzingRegression_1381) {
-  FormatStyle style;
-  std::ostringstream stream;
-  absl::string_view input("P#(\0\0//\0//\0,);", 14);
-  const auto status = FormatVerilog(input, "<filename>", style, stream);
-  EXPECT_OK(status);
+  TestForNonCrash({"P#(\0\0//\0//\0,);", 14});
 }
 #endif
 
 #if 0
-TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree) {
-  FormatStyle style;
-  std::ostringstream stream;
-  absl::string_view input("`c(`c(//););", 12);
-  const auto status = FormatVerilog(input, "<filename>", style, stream);
-  EXPECT_OK(status);
+// https://github.com/chipsalliance/verible/issues/1384
+TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree_1384) {
+  TestForNonCrash("`c(`c(//););");
+}
+#endif
+
+#if 0
+TEST(FormatterEndToEndTest, FuzzingRegression) {
+  TestForNonCrash({"`c(`c()\0;);", 12});
 }
 #endif
 
