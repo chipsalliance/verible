@@ -44,19 +44,18 @@ absl::Status CmdPositionalArguments::SetIncludeDir(
 }
 
 // Gets include directories arguments.
-std::vector<absl::string_view> CmdPositionalArguments::GetIncludeDirs() {
+std::vector<absl::string_view> CmdPositionalArguments::GetIncludeDirs() const {
   return include_dirs_;
 }
 
-std::vector<std::pair<absl::string_view, absl::string_view>>
-
 // Gets macro defines arguments.
-CmdPositionalArguments::GetDefines() {
+std::vector<std::pair<absl::string_view, absl::string_view>>
+CmdPositionalArguments::GetDefines() const {
   return defines_;
 }
 
 // Gets SV files arguments.
-std::vector<absl::string_view> CmdPositionalArguments::GetFiles() {
+std::vector<absl::string_view> CmdPositionalArguments::GetFiles() const {
   return files_;
 }
 

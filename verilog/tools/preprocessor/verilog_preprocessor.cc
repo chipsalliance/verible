@@ -168,7 +168,7 @@ static absl::Status GenerateVariants(absl::string_view source_file,
   // Printing the token streams of every possible variant.
   int variants_counter = 1;
   for (const auto& current_variant : control_flow_tree.variants_) {
-    outs << "Variant number " << variants_counter++ << ":\n";
+    outs << "//////// variant: " << variants_counter++ << "////////:\n";
     for (auto token : current_variant) outs << token.text();
     puts("");
   }
@@ -185,14 +185,7 @@ ABSL_FLAG(bool, generate_variants, false,
 
 int main(int argc, char* argv[]) {
   const std::string usage =
-      absl::StrCat("usage:\n", argv[0], " [options] file [<file>...]\n\n",
-                   "options summary:\n",
-                   "-multiple_cu: Files are preprocessed in separate "
-                   "compilation units.\n",
-                   "-strip_comments: Replaces one/multi-line comments with "
-                   "equal white-spaces.\n",
-                   "-generate_variants: Generates every possible variants "
-                   "w.r.t. compiler conditionals.\n");
+      absl::StrCat("usage:\n", argv[0], " [options] file [<file>...]\n");
 
   // Process invocation args.
   const auto args = verible::InitCommandLine(usage, &argc, &argv);

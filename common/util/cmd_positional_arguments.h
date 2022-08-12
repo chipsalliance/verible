@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,13 +32,14 @@ class CmdPositionalArguments {
   absl::Status ParseArgs();
 
   // Gets include directories arguments.
-  std::vector<absl::string_view> GetIncludeDirs();
+  std::vector<absl::string_view> GetIncludeDirs() const;
 
   // Gets macro defines arguments.
-  std::vector<std::pair<absl::string_view, absl::string_view>> GetDefines();
+  std::vector<std::pair<absl::string_view, absl::string_view>> GetDefines()
+      const;
 
   // Gets SV files arguments.
-  std::vector<absl::string_view> GetFiles();
+  std::vector<absl::string_view> GetFiles() const;
 
  private:
   // Sets a include directory argument.

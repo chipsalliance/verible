@@ -53,7 +53,7 @@ preprocessor="$(rlocation ${TEST_WORKSPACE}/$1)"
 ################################################################################
 echo "=== Test the 'help' command."
 
-"$preprocessor" --help > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" --helpfull > "$MY_OUTPUT_FILE" 2>&1
 
 # status="$?"
 # [[ $status == 0 ]] || {

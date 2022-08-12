@@ -463,12 +463,14 @@ absl::Status VerilogPreprocess::HandleDefine(
 
   // Parsing showed that things are syntatically correct.
   // But let's only emit things if we're in an active preprocessing branch.
-  if (conditional_block_.top().InSelectedBranch() && config_.forward_define) {
+  if (conditional_block_.top().InSelectedBranch()) {
     RegisterMacroDefinition(macro_definition);
 
     // For now, forward all definition tokens.
-    for (const auto& token : define_tokens) {
-      preprocess_data_.preprocessed_token_stream.push_back(token);
+    if (config_.forward_define) {
+      for (const auto& token : define_tokens) {
+        preprocess_data_.preprocessed_token_stream.push_back(token);
+      }
     }
   }
 
