@@ -4,3 +4,6 @@ tags
 releasing/out
 compile_commands.json
 
+# Local user config
+.envrc
+.direnv
