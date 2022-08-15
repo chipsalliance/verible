@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_FLOW_TREE_H_
 
 #include <map>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -24,31 +25,47 @@
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
+using TokenSequenceConstIterator = verible::TokenSequence::const_iterator;
+
+struct ConditionalBlock {
+  // Start of a ifdef/ifndef block
+  TokenSequenceConstIterator if_block_begin;
+
+  // Subsequent else/elsif blocks
+  std::vector<TokenSequenceConstIterator> else_block;
+};
 
 class FlowTree {
  public:
   explicit FlowTree(verible::TokenSequence source_sequence)
       : source_sequence_(std::move(source_sequence)){};
 
-  absl::Status GenerateControlFlowTree();  // constructs the control flow tree.
-  absl::Status DepthFirstSearch(
-      int index);  // travese the tree in a depth first manner.
-  std::vector<verible::TokenSequence>
-      variants_;  // a memory for all variants generated.
+  // Constructs the control flow tree by adding the tree edges in edges_.
+  absl::Status GenerateControlFlowTree();
+
+  // Generates all possible variants.
+  absl::Status GenerateVariants();
+
+  // A memory for all variants generated.
+  std::vector<verible::TokenSequence> variants_;
 
  private:
-  std::vector<int>
-      ifs_;  // vector of all `ifdef/`ifndef indexes in source_sequence_.
-  std::map<int, std::vector<int>> elses_;  // indexes of `elsif/`else indexes in
-                                           // source_sequence_ of each if block.
-  std::map<int, std::vector<int>>
-      edges_;  // the tree edges which defines the possible next childs of each
-               // token in source_sequence_.
-  verible::TokenSequence
-      source_sequence_;  // the original source code lexed token seqouence.
-  verible::TokenSequence
-      current_sequence_;  // the variant's token sequence currrently being built
-                          // by DepthFirstSearch.
+  // Traveses the tree in a depth first manner.
+  absl::Status DepthFirstSearch(TokenSequenceConstIterator current_node);
+
+  // The tree edges which defines the possible next childs of each token in
+  // source_sequence_.
+  std::map<TokenSequenceConstIterator, std::vector<TokenSequenceConstIterator>>
+      edges_;
+
+  // Holds all of the conditional blocks.
+  std::vector<ConditionalBlock> if_blocks_;
+
+  // The original source code lexed token seqouence.
+  const verible::TokenSequence source_sequence_;
+
+  // The variant's token sequence currrently being built by DepthFirstSearch.
+  verible::TokenSequence current_sequence_;
 };
 
 }  // namespace verilog

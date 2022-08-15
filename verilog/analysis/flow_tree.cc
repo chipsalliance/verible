@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance wedge_from_iteratorh the
@@ -27,34 +27,40 @@
 
 namespace verilog {
 
+absl::Status FlowTree::GenerateVariants() {
+  return DepthFirstSearch(source_sequence_.begin());
+}
+
 // Constructs the control flow tree, which determines the edge from each node
 // (token index) to the next possible childs, And save edge_from_iterator in
 // edges_.
 absl::Status FlowTree::GenerateControlFlowTree() {
   // Adding edges for if blocks.
-  int token_index = 0;
   int current_token_enum = 0;
-  for (auto current_token : source_sequence_) {
-    current_token_enum = current_token.token_enum();
+  ConditionalBlock empty_conditional_block;
 
+  for (TokenSequenceConstIterator iter = source_sequence_.begin();
+       iter != source_sequence_.end(); iter++) {
+    current_token_enum = iter->token_enum();
     if (current_token_enum == PP_ifdef || current_token_enum == PP_ifndef) {
-      ifs_.push_back(token_index);  // add index of `ifdef and `ifndef to ifs_.
-      elses_[ifs_.back()].push_back(
-          token_index);  // also add edge_from_iterator to elses_ as if will
-                         // help marking edges later on.
+      // Add iterator of `ifdef/`ifndef to if_blocks_.
+      if_blocks_.push_back(empty_conditional_block);
+      if_blocks_.back().if_block_begin = iter;
+
+      // Also treat `ifdef/ifndef as an else, to help marking edges later on.
+      if_blocks_.back().else_block.push_back(iter);
 
     } else if (current_token_enum == PP_else ||
                current_token_enum == PP_elsif ||
                current_token_enum == PP_endif) {
-      elses_[ifs_.back()].push_back(
-          token_index);  // add index of `elsif, `else and `endif to else_ of
-                         // the last recent if block.
-      if (current_token_enum ==
-          PP_endif) {  // if the current token is an `endif, then we are ready
-                       // to create edges for this if block.
-        auto& current_if_block =
-            elses_[ifs_.back()];  // current_if_block contains all indexes of
-                                  // ifs and elses in the latest block.
+      // Add iterator of `elsif/`else/`endif to else_block of the last recent if
+      // block.
+      if_blocks_.back().else_block.push_back(iter);
+
+      // If the current token is an `endif, then we are ready to create edges
+      // for this if block.
+      if (current_token_enum == PP_endif) {
+        auto& current_if_block = if_blocks_.back().else_block;
 
         // Adding edges for each index in the if block using a nested loop.
         for (auto edge_from_iterator = current_if_block.begin();
@@ -62,40 +68,37 @@ absl::Status FlowTree::GenerateControlFlowTree() {
              edge_from_iterator++) {
           for (auto edge_to_iterator = edge_from_iterator + 1;
                edge_to_iterator != current_if_block.end(); edge_to_iterator++) {
+            // Skips edges from `if to `endif if there is `else in this block.
             if (edge_from_iterator == current_if_block.begin() &&
                 edge_to_iterator == current_if_block.end() - 1 &&
-                current_if_block.size() > 2)
-              continue;  // skip edges from `if to `endif if there is an else in
-                         // this bloc wheneven there is an else in this block.
+                current_if_block.size() > 2) {
+              continue;
+            }
+
             edges_[*edge_from_iterator].push_back(
                 *edge_to_iterator +
-                (edge_to_iterator !=
-                 current_if_block.end() - 1));  // add the possible edge.
+                (edge_to_iterator != current_if_block.end() - 1));
           }
         }
-        ifs_.pop_back();  // the if block edges were added, ready to pop it.
+        // The if block edges were added successfully, ready to pop it.
+        if_blocks_.pop_back();
       }
     }
-    token_index++;  // increment the token index.
   }
 
   // Adding edges for non-if blocks.
-  token_index = 0;
-  for (auto current_token : source_sequence_) {
-    current_token_enum = current_token.token_enum();
+  for (TokenSequenceConstIterator iter = source_sequence_.begin();
+       iter != source_sequence_.end(); iter++) {
+    current_token_enum = iter->token_enum();
     if (current_token_enum != PP_else && current_token_enum != PP_elsif) {
-      if (token_index > 0)
-        edges_[token_index - 1].push_back(
-            token_index);  // edges from a token to the one coming after it
-                           // directly.
+      // Edges from a token to the one coming after it directly.
+      if (iter != source_sequence_.begin()) edges_[iter - 1].push_back(iter);
+
     } else {
-      if (token_index > 0)
-        edges_[token_index - 1].push_back(
-            edges_[token_index]
-                .back());  // edges from the last token in `ifdef/`ifndef body
-                           // to `endif from the same if block.
+      if (iter != source_sequence_.begin()) {
+        edges_[iter - 1].push_back(edges_[iter].back());
+      }
     }
-    token_index++;  // increment the token index.
   }
 
   return absl::OkStatus();
@@ -104,43 +107,43 @@ absl::Status FlowTree::GenerateControlFlowTree() {
 // Traveses the control flow tree in a depth first manner, appending the visited
 // tokens to current_sequence_, then adding current_sequence_ to variants_ upon
 // completing.
-absl::Status FlowTree::DepthFirstSearch(int current_node_index) {
-  // skips preprocessor directives so that current_sequence_ doesn't contain
-  // any.
-  const auto& current_token = source_sequence_[current_node_index];
-  if (current_token.token_enum() != PP_Identifier &&
-      current_token.token_enum() != PP_ifndef &&
-      current_token.token_enum() != PP_ifdef &&
-      current_token.token_enum() != PP_define &&
-      current_token.token_enum() != PP_define_body &&
-      current_token.token_enum() != PP_elsif &&
-      current_token.token_enum() != PP_else &&
-      current_token.token_enum() != PP_endif)
-    current_sequence_.push_back(current_token);
+absl::Status FlowTree::DepthFirstSearch(
+    TokenSequenceConstIterator current_node) {
+  // Skips directives so that current_sequence_ doesn't contain any.
+  if (current_node->token_enum() != PP_Identifier &&
+      current_node->token_enum() != PP_ifndef &&
+      current_node->token_enum() != PP_ifdef &&
+      current_node->token_enum() != PP_define &&
+      current_node->token_enum() != PP_define_body &&
+      current_node->token_enum() != PP_elsif &&
+      current_node->token_enum() != PP_else &&
+      current_node->token_enum() != PP_endif) {
+    current_sequence_.push_back(*current_node);
+  }
 
-  // do recursive search through every possible edge.
-  for (auto next_node : edges_[current_node_index]) {
+  // Do recursive search through every possible edge.
+  for (auto next_node : edges_[current_node]) {
     if (auto status = FlowTree::DepthFirstSearch(next_node); !status.ok()) {
       std::cerr << "ERROR: DepthFirstSearch fails\n";
       return status;
     }
   }
-  if (current_node_index ==
-      int(source_sequence_.size()) -
-          1) {  // if the current node is the last one, push the completed
-                // current_sequence_ to variants_.
+  // If the current node is the last one, push the completed current_sequence_
+  // to variants_.
+  if (current_node == source_sequence_.end() - 1) {
     variants_.push_back(current_sequence_);
   }
-  if (current_token.token_enum() != PP_Identifier &&
-      current_token.token_enum() != PP_ifndef &&
-      current_token.token_enum() != PP_ifdef &&
-      current_token.token_enum() != PP_define &&
-      current_token.token_enum() != PP_define_body &&
-      current_token.token_enum() != PP_elsif &&
-      current_token.token_enum() != PP_else &&
-      current_token.token_enum() != PP_endif)
-    current_sequence_
-        .pop_back();  // remove tokens to back track into other variants.
+  if (current_node->token_enum() != PP_Identifier &&
+      current_node->token_enum() != PP_ifndef &&
+      current_node->token_enum() != PP_ifdef &&
+      current_node->token_enum() != PP_define &&
+      current_node->token_enum() != PP_define_body &&
+      current_node->token_enum() != PP_elsif &&
+      current_node->token_enum() != PP_else &&
+      current_node->token_enum() != PP_endif) {
+    // Remove tokens to back track into other variants.
+    current_sequence_.pop_back();
+  }
   return absl::OkStatus();
 }
 

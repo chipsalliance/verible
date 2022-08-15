@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,10 +97,10 @@ static absl::Status MultipleCU(const char* source_file, std::istream&,
   verilog::VerilogPreprocessData preprocessed_data =
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
-  for (auto u : preprocessed_stream)
-    outs << *u << '\n';  // output the preprocessed tokens.
-  for (auto& u : preprocessed_data.errors)
-    outs << u.error_message << '\n';  // for debugging.
+  for (auto u : preprocessed_stream) outs << *u << '\n';
+  // for debugging.
+  for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
+
   //  parsing just as a trial
   std::string post_preproc;
   for (auto u : preprocessed_stream) post_preproc += std::string{u->text()};
@@ -144,11 +144,17 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
 
   // Control flow tree constructing.
   verilog::FlowTree control_flow_tree(lexed_sequence);
-  auto status =
-      control_flow_tree
-          .GenerateControlFlowTree();  // construct the control flow tree.
-  status = control_flow_tree.DepthFirstSearch(
-      0);  // traverse the tree by dfs from the root (node 0).
+
+  auto status = control_flow_tree.GenerateControlFlowTree();
+  if (!status.ok()) {
+    std::cerr << "ERROR:: couldn't generate the control flow tree.\n";
+    return status;
+  }
+  status = control_flow_tree.GenerateVariants();
+  if (!status.ok()) {
+    std::cerr << "ERROR:: couldn't generate variants.\n";
+    return status;
+  }
 
   // Printing the token streams of every possible variant.
   int variants_counter = 1;
