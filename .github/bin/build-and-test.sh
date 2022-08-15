@@ -77,20 +77,25 @@ else
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
 fi
 
+# If parameter given and the MODE allows choosing, we build the target
+# as provided, otherwise all. This allows manual invocation of interesting
+# targets.
+CHOSEN_TARGET=${1:-//...}
+
 case "$MODE" in
   test|test-clang)
-    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS //...
+    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS "$CHOSEN_TARGET"
     ;;
 
   asan|asan-clang)
-    bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild //...
+    bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild "$CHOSEN_TARGET"
     ;;
 
   coverage)
     bazel coverage \
           --combined_report=lcov \
           --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
-          //...
+          "$CHOSEN_TARGET"
     # output will be in bazel-out/_coverage/_coverage_report.dat
     ;;
 
