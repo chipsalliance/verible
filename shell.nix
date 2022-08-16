@@ -20,7 +20,8 @@ pkgs.mkShell {
       gcc
       git
       glibc
-      jdk
+      jdk11
+      lcov
       python3
     ];
 

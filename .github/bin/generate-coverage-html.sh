@@ -37,7 +37,10 @@ COVERAGE_DATA=bazel-out/_coverage/_coverage_report.dat
 cd $PROJECT_ROOT
 if [ ! -r "${COVERAGE_DATA}" ]; then
   echo "First, run coverage tests; invoke"
-  echo "MODE=coverage .github/bin/build-and-test.sh"
+  echo "  MODE=coverage .github/bin/build-and-test.sh"
+  echo
+  echo ".. or with a specific target"
+  echo "  MODE=coverage .github/bin/build-and-test.sh //foo/bar:baz_test"
   exit
 fi
 
