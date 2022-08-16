@@ -18371,8 +18371,16 @@ TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree_1384) {
 #endif
 
 #if 0
-TEST(FormatterEndToEndTest, FuzzingRegression) {
+// https://github.com/chipsalliance/verible/issues/1386
+TEST(FormatterEndToEndTest, FuzzingRegressionHierachyInvariant) {
   TestForNonCrash({"`c(`c()\0;);", 12});
+}
+#endif
+
+#if 0
+// Possibly same ? https://github.com/chipsalliance/verible/issues/1386
+TEST(FormatterEndToEndTest, FuzzingRegression_outofmemory) {
+  TestForNonCrash({"`f(1'O`f())\n", 12});
 }
 #endif
 
