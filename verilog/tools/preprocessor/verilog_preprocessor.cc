@@ -34,6 +34,20 @@
 
 using verible::SubcommandArgsRange;
 
+bool PrintGeneratedVariant(const verible::TokenSequence& recieved_variant,
+                           const int variants_counter,
+                           const bool is_variant_complete) {
+  if (!is_variant_complete) {
+    // Only accepts 2 variants at most. (to test the functionality).
+    // TODO(karimtera): How many variants are practical?
+    return variants_counter < 2;
+  }
+  std::cout << "Variant number " << variants_counter + 1 << ":\n";
+  for (auto token : recieved_variant) std::cout << token << '\n';
+  puts("");
+  return true;
+}
+
 static absl::Status StripComments(const SubcommandArgsRange& args,
                                   std::istream&, std::ostream& outs,
                                   std::ostream&) {
@@ -150,18 +164,10 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
     std::cerr << "ERROR:: couldn't generate the control flow tree.\n";
     return status;
   }
-  status = control_flow_tree.GenerateVariants();
+  status = control_flow_tree.GenerateVariants(PrintGeneratedVariant);
   if (!status.ok()) {
     std::cerr << "ERROR:: couldn't generate variants.\n";
     return status;
-  }
-
-  // Printing the token streams of every possible variant.
-  int variants_counter = 1;
-  for (const auto& current_variant : control_flow_tree.variants_) {
-    outs << "Variant number " << variants_counter++ << ":\n";
-    for (auto token : current_variant) outs << token << '\n';
-    puts("");
   }
 
   return absl::OkStatus();

@@ -27,8 +27,8 @@
 
 namespace verilog {
 
-absl::Status FlowTree::GenerateVariants() {
-  return DepthFirstSearch(source_sequence_.begin());
+absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
+  return DepthFirstSearch(receiver, source_sequence_.begin());
 }
 
 // Constructs the control flow tree, which determines the edge from each node
@@ -60,7 +60,7 @@ absl::Status FlowTree::GenerateControlFlowTree() {
       // If the current token is an `endif, then we are ready to create edges
       // for this if block.
       if (current_token_enum == PP_endif) {
-        auto& current_if_block = if_blocks_.back().else_block;
+        const auto &current_if_block = if_blocks_.back().else_block;
 
         // Adding edges for each index in the if block using a nested loop.
         for (auto edge_from_iterator = current_if_block.begin();
@@ -105,10 +105,13 @@ absl::Status FlowTree::GenerateControlFlowTree() {
 }
 
 // Traveses the control flow tree in a depth first manner, appending the visited
-// tokens to current_sequence_, then adding current_sequence_ to variants_ upon
-// completing.
+// tokens to current_sequence_, then provide the completed variant to the user
+// using a callback function (VariantReceiver).
 absl::Status FlowTree::DepthFirstSearch(
-    TokenSequenceConstIterator current_node) {
+    const VariantReceiver &receiver, TokenSequenceConstIterator current_node) {
+  if (!receiver(current_sequence_, variants_counter_, false)) {
+    return absl::OkStatus();
+  }
   // Skips directives so that current_sequence_ doesn't contain any.
   if (current_node->token_enum() != PP_Identifier &&
       current_node->token_enum() != PP_ifndef &&
@@ -123,7 +126,8 @@ absl::Status FlowTree::DepthFirstSearch(
 
   // Do recursive search through every possible edge.
   for (auto next_node : edges_[current_node]) {
-    if (auto status = FlowTree::DepthFirstSearch(next_node); !status.ok()) {
+    if (auto status = FlowTree::DepthFirstSearch(receiver, next_node);
+        !status.ok()) {
       std::cerr << "ERROR: DepthFirstSearch fails\n";
       return status;
     }
@@ -131,7 +135,8 @@ absl::Status FlowTree::DepthFirstSearch(
   // If the current node is the last one, push the completed current_sequence_
   // to variants_.
   if (current_node == source_sequence_.end() - 1) {
-    variants_.push_back(current_sequence_);
+    receiver(current_sequence_, variants_counter_, true);
+    variants_counter_++;
   }
   if (current_node->token_enum() != PP_Identifier &&
       current_node->token_enum() != PP_ifndef &&
