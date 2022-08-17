@@ -40,7 +40,7 @@ bool PrintGeneratedVariant(const verible::TokenSequence& recieved_variant,
   if (!is_variant_complete) {
     // Only accepts 2 variants at most. (to test the functionality).
     // TODO(karimtera): How many variants are practical?
-    return variants_counter < 2;
+    return variants_counter < 20;
   }
   std::cout << "Variant number " << variants_counter + 1 << ":\n";
   for (auto token : recieved_variant) std::cout << token << '\n';

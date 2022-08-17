@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_FLOW_TREE_H_
 #define VERIBLE_VERILOG_FLOW_TREE_H_
 
+#include <bitset>
 #include <map>
 #include <stack>
 #include <string>
@@ -35,11 +36,11 @@ using VariantReceiver =
     std::function<bool(const verible::TokenSequence &, const int, const bool)>;
 
 struct ConditionalBlock {
-  // Start of a ifdef/ifndef block
-  TokenSequenceConstIterator if_block_begin;
-
-  // Subsequent else/elsif blocks
-  std::vector<TokenSequenceConstIterator> else_block;
+  TokenSequenceConstIterator ifdef_iterator;
+  TokenSequenceConstIterator ifndef_iterator;
+  std::vector<TokenSequenceConstIterator> elsif_iterators;
+  TokenSequenceConstIterator else_iterator;
+  TokenSequenceConstIterator endif_iterator;
 };
 
 // FlowTree class builds the control flow graph of a tokenized System-Verilog
@@ -60,12 +61,29 @@ class FlowTree {
  private:
   // Traveses the tree in a depth first manner.
   absl::Status DepthFirstSearch(const VariantReceiver &receiver,
-                                TokenSequenceConstIterator current_node);
+                                TokenSequenceConstIterator current_node,
+                                std::bitset<128> assumed);
+
+  // Checks if the iterator points to a conditonal directive (`ifdef/ifndef...).
+  static bool IsConditional(TokenSequenceConstIterator iterator);
+
+  //
+  absl::Status AddBlockEdges(const ConditionalBlock &block);
 
   // The tree edges which defines the possible next childs of each token in
   // source_sequence_.
   std::map<TokenSequenceConstIterator, std::vector<TokenSequenceConstIterator>>
       edges_;
+
+  // Extracts the conditional macro checked.
+  static absl::Status MacroFollows(
+      TokenSequenceConstIterator conditional_iterator);
+
+  // Adds macro to conditional_macro_id_ map.
+  absl::Status AddMacroOfConditionalToMap(
+      TokenSequenceConstIterator conditional_iterator);
+
+  int GetMacroIDOfConditional(TokenSequenceConstIterator conditional_iterator);
 
   // Holds all of the conditional blocks.
   std::vector<ConditionalBlock> if_blocks_;
@@ -75,6 +93,17 @@ class FlowTree {
 
   // The variant's token sequence currrently being built by DepthFirstSearch.
   verible::TokenSequence current_sequence_;
+
+  // Macros assumed in the variant that is currently begin built.
+  // TODO(karimtera): Is it better to use dymanic_bitset?
+  std::bitset<128> current_macros_;
+
+  // Mapping each conditional macro to an integer ID,
+  // to use it later as a bit offset.
+  std::map<absl::string_view, int> conditional_macro_id_;
+
+  // Number of macros appeared in `ifdef/`ifndef/`elsif.
+  int conditional_macros_counter = 0;
 
   // Number of vairants generated so far.
   int variants_counter_ = 0;
