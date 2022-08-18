@@ -34,18 +34,15 @@
 
 using verible::SubcommandArgsRange;
 
-bool PrintGeneratedVariant(const verible::TokenSequence& recieved_variant,
-                           const int variants_counter,
-                           const bool is_variant_complete) {
-  if (!is_variant_complete) {
-    // Only accepts 2 variants at most. (to test the functionality).
-    // TODO(karimtera): How many variants are practical?
-    return variants_counter < 20;
-  }
-  std::cout << "Variant number " << variants_counter + 1 << ":\n";
-  for (auto token : recieved_variant) std::cout << token << '\n';
+bool PrintGeneratedVariant(const verilog::Variant& variant) {
+  static int variants_counter = 1;
+  std::cout << "Variant number " << variants_counter << ":\n";
+  for (auto token : variant.sequence) std::cout << token << '\n';
   puts("");
-  return true;
+  variants_counter++;
+  // Only accepts 20 variants at most. (to test the functionality).
+  // TODO(karimtera): How many variants are practical?
+  return variants_counter < 20;
 }
 
 static absl::Status StripComments(const SubcommandArgsRange& args,
@@ -159,12 +156,7 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
   // Control flow tree constructing.
   verilog::FlowTree control_flow_tree(lexed_sequence);
 
-  auto status = control_flow_tree.GenerateControlFlowTree();
-  if (!status.ok()) {
-    std::cerr << "ERROR:: couldn't generate the control flow tree.\n";
-    return status;
-  }
-  status = control_flow_tree.GenerateVariants(PrintGeneratedVariant);
+  auto status = control_flow_tree.GenerateVariants(PrintGeneratedVariant);
   if (!status.ok()) {
     std::cerr << "ERROR:: couldn't generate variants.\n";
     return status;

@@ -145,8 +145,8 @@ absl::Status FlowTree::AddMacroOfConditionalToMap(
   auto macro_identifier = macro_iterator->text();
   if (conditional_macro_id_.find(macro_identifier) ==
       conditional_macro_id_.end()) {
-    conditional_macros_counter++;
-    conditional_macro_id_[macro_identifier] = conditional_macros_counter;
+    conditional_macro_id_[macro_identifier] = conditional_macros_counter_;
+    conditional_macros_counter_++;
   }
   return absl::OkStatus();
 }
@@ -168,8 +168,12 @@ int FlowTree::GetMacroIDOfConditional(
 
 // An API that provides a callback function to receive variants.
 absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
-  std::bitset<128> assumed;
-  return DepthFirstSearch(receiver, source_sequence_.begin(), assumed);
+  auto status = GenerateControlFlowTree();
+  if (!status.ok()) {
+    return absl::InvalidArgumentError(
+        "Error: creating the control flow graph has failed.");
+  }
+  return DepthFirstSearch(receiver, source_sequence_.begin(), 1);
 }
 
 // Constructs the control flow tree, which determines the edge from each node
@@ -253,10 +257,9 @@ absl::Status FlowTree::GenerateControlFlowTree() {
 // using a callback function (VariantReceiver).
 absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
                                         TokenSequenceConstIterator current_node,
-                                        std::bitset<128> assumed) {
-  if (!receiver(current_sequence_, variants_counter_, false)) {
-    return absl::OkStatus();
-  }
+                                        bool wants_more) {
+  if (!wants_more) return absl::OkStatus();
+
   // Skips directives so that current_sequence_ doesn't contain any.
   if (current_node->token_enum() != PP_Identifier &&
       current_node->token_enum() != PP_ifndef &&
@@ -266,7 +269,7 @@ absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
       current_node->token_enum() != PP_elsif &&
       current_node->token_enum() != PP_else &&
       current_node->token_enum() != PP_endif) {
-    current_sequence_.push_back(*current_node);
+    current_variant_.sequence.push_back(*current_node);
   }
 
   // Checks if the current token is a `ifdef/`ifndef/`elsif.
@@ -276,26 +279,26 @@ absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
     int macro_id = GetMacroIDOfConditional(current_node);
     bool negated = (current_node->token_enum() == PP_ifndef);
     // Checks if this macro is already assumed to be defined/undefined.
-    if (assumed.test(macro_id)) {
+    if (current_variant_.assumed.test(macro_id)) {
       bool assume_condition_is_true =
-          (negated ^ current_macros_.test(macro_id));
+          (negated ^ current_variant_.macros_mask.test(macro_id));
       if (auto status = DepthFirstSearch(
               receiver, edges_[current_node][!assume_condition_is_true],
-              assumed);
+              wants_more);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails.";
         return status;
       }
     } else {
-      assumed.flip(macro_id);
+      current_variant_.assumed.flip(macro_id);
       // This macro wans't assumed before, then we can check both edges.
       // Assume the condition is true.
       if (negated)
-        current_macros_.reset(macro_id);
+        current_variant_.macros_mask.reset(macro_id);
       else
-        current_macros_.set(macro_id);
+        current_variant_.macros_mask.set(macro_id);
       if (auto status =
-              DepthFirstSearch(receiver, edges_[current_node][0], assumed);
+              DepthFirstSearch(receiver, edges_[current_node][0], wants_more);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails.";
         return status;
@@ -303,22 +306,24 @@ absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
 
       // Assume the condition is false.
       if (!negated)
-        current_macros_.reset(macro_id);
+        current_variant_.macros_mask.reset(macro_id);
       else
-        current_macros_.set(macro_id);
+        current_variant_.macros_mask.set(macro_id);
       if (auto status =
-              DepthFirstSearch(receiver, edges_[current_node][1], assumed);
+              DepthFirstSearch(receiver, edges_[current_node][1], wants_more);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails.";
         return status;
       }
+      // Undo the change to allow for backtracking.
+      current_variant_.assumed.flip(macro_id);
     }
   } else {
     // Do recursive search through every possible edge.
     // Expected to be only one edge in this case.
     for (auto next_node : edges_[current_node]) {
       if (auto status =
-              FlowTree::DepthFirstSearch(receiver, next_node, assumed);
+              FlowTree::DepthFirstSearch(receiver, next_node, wants_more);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails\n";
         return status;
@@ -328,8 +333,7 @@ absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
   // If the current node is the last one, push the completed current_sequence_
   // then it is ready to be sent.
   if (current_node == source_sequence_.end() - 1) {
-    receiver(current_sequence_, variants_counter_, true);
-    variants_counter_++;
+    wants_more &= receiver(current_variant_);
   }
   if (current_node->token_enum() != PP_Identifier &&
       current_node->token_enum() != PP_ifndef &&
@@ -340,7 +344,7 @@ absl::Status FlowTree::DepthFirstSearch(const VariantReceiver &receiver,
       current_node->token_enum() != PP_else &&
       current_node->token_enum() != PP_endif) {
     // Remove tokens to back track into other variants.
-    current_sequence_.pop_back();
+    current_variant_.sequence.pop_back();
   }
   return absl::OkStatus();
 }
