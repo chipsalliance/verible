@@ -18380,19 +18380,24 @@ TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree_1384) {
 }
 #endif
 
-#if 0
 // https://github.com/chipsalliance/verible/issues/1386
 TEST(FormatterEndToEndTest, FuzzingRegressionHierachyInvariant) {
-  TestForNonCrash(string_view_from_literal("`c(`c()\0;);"));
-}
-#endif
-
 #if 0
+  // Original sample input from fuzzer
+  TestForNonCrash(string_view_from_literal("`c(`c()\0;);"));
+#endif
+#if 0
+  // Lexically correct variant (`\0` -> `\n`)
+  TestForNonCrash(string_view_from_literal("`c(`c()\n;);"));
+#endif
+  // Lexically correct variant (`\0` removed)
+  TestForNonCrash(string_view_from_literal("`c(`c(););"));
+}
+
 // Possibly same ? https://github.com/chipsalliance/verible/issues/1386
 TEST(FormatterEndToEndTest, FuzzingRegression_outofmemory) {
-  TestForNonCrash({"`f(1'O`f())\n", 12});
+  TestForNonCrash(string_view_from_literal("`f(1'O`f())\n"));
 }
-#endif
 
 }  // namespace
 }  // namespace formatter
