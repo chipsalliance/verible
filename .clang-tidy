@@ -33,6 +33,7 @@ Checks: >
   -readability-qualified-auto,
   -readability-redundant-access-specifiers,
   -readability-use-anyofallof,
+  -readability-identifier-length,
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,
