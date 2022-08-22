@@ -2084,10 +2084,6 @@ class MacroCallReshaper {
       }
     }
 
-    argument_list_ = FindDirectChild(
-        paren_group_, OriginTagIs{NodeTag(NodeEnum::kArgumentList),
-                                  NodeTag(NodeEnum::kMacroArgList)});
-
     if (is_leaf(*paren_group_)) {
       l_paren_ = paren_group_;
       r_paren_ = paren_group_;
@@ -2102,6 +2098,17 @@ class MacroCallReshaper {
               ')', verilog_tokentype::MacroCallCloseToEndLine}(*r_paren_)) {
         LOG_BUG(LOG(ERROR), "')' not found.");
         return false;
+      }
+      const auto l_paren_index = BirthRank(*l_paren_);
+      const auto r_paren_index = BirthRank(*r_paren_);
+      CHECK_LE(l_paren_index, r_paren_index);
+      for (std::size_t i = l_paren_index + 1; i < r_paren_index; ++i) {
+        auto& child = paren_group_->Children()[i];
+        if (OriginTagIs{NodeTag(NodeEnum::kArgumentList),
+                        NodeTag(NodeEnum::kMacroArgList)}(child)) {
+          argument_list_ = &child;
+          break;
+        }
       }
     }
     return true;

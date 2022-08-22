@@ -18363,12 +18363,10 @@ TEST(FormatterEndToEndTest, FuzzingRegression_1381) {
 }
 #endif
 
-#if 0
 // https://github.com/chipsalliance/verible/issues/1384
 TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree_1384) {
   TestForNonCrash("`c(`c(//););");
 }
-#endif
 
 #if 0
 // https://github.com/chipsalliance/verible/issues/1386
