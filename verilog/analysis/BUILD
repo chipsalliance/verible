@@ -75,6 +75,18 @@ cc_library(
 )
 
 cc_library(
+    name = "flow_tree",
+    srcs = ["flow_tree.cc"],
+    hdrs = ["flow_tree.h"],
+    deps = [
+        "//common/lexer:token_stream_adapter",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],
     hdrs = ["lint_rule_registry.h"],
