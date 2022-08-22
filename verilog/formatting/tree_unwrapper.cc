@@ -2687,11 +2687,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         MacroCallReshaper(style, &partition).Reshape();
         break;
       }
-      // If there are no call args, join the '(' and ')' together.
       if (MacroCallArgsIsEmpty(*GetMacroCallArgs(node))) {
-        // FIXME (mglb): Do more checks: EOL comments can be inside.
-        FlattenOnce(partition);
-        VLOG(4) << "NODE: kMacroCall (flattened):\n" << partition;
+        // If there are no call args, join the name, '(' and ')' together.
+        partition.Children().clear();
       } else {
         // Merge closing parenthesis into last argument partition
         // Test for ')' and MacroCallCloseToEndLine because macros

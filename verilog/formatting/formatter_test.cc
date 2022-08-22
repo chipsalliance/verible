@@ -29,6 +29,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
+#include "common/strings/display_utils.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
@@ -18346,14 +18347,23 @@ foobar, input    bit [4] foobaz,
   }
 }
 
+// Creates a string_view spanning a whole string literal.
+// Works correctly with strings containing null bytes.
+template <std::size_t N>
+constexpr absl::string_view string_view_from_literal(const char (&s)[N]) {
+  return absl::string_view(s, N - 1);
+}
+
 // The following regressions have been found by a fuzzer, so the input might
 // look a bit 'funny'. Nevertheless, they expose real bugs in the code.
 
 [[maybe_unused]] void TestForNonCrash(absl::string_view input) {
+  using verible::EscapeString;
   FormatStyle style;
   std::ostringstream stream;
   const auto status = FormatVerilog(input, "<filename>", style, stream);
-  EXPECT_OK(status);
+  EXPECT_OK(status) << "Reason: " << status.message() << "\nEscaped input: \""
+                    << EscapeString(input) << "\"";
 }
 
 #if 0
@@ -18368,19 +18378,24 @@ TEST(FormatterEndToEndTest, FuzzingRegression_UseAfterFree_1384) {
   TestForNonCrash("`c(`c(//););");
 }
 
-#if 0
 // https://github.com/chipsalliance/verible/issues/1386
 TEST(FormatterEndToEndTest, FuzzingRegressionHierachyInvariant) {
-  TestForNonCrash({"`c(`c()\0;);", 12});
-}
-#endif
-
 #if 0
+  // Original sample input from fuzzer
+  TestForNonCrash(string_view_from_literal("`c(`c()\0;);"));
+#endif
+#if 0
+  // Lexically correct variant (`\0` -> `\n`)
+  TestForNonCrash(string_view_from_literal("`c(`c()\n;);"));
+#endif
+  // Lexically correct variant (`\0` removed)
+  TestForNonCrash(string_view_from_literal("`c(`c(););"));
+}
+
 // Possibly same ? https://github.com/chipsalliance/verible/issues/1386
 TEST(FormatterEndToEndTest, FuzzingRegression_outofmemory) {
-  TestForNonCrash({"`f(1'O`f())\n", 12});
+  TestForNonCrash(string_view_from_literal("`f(1'O`f())\n"));
 }
-#endif
 
 }  // namespace
 }  // namespace formatter

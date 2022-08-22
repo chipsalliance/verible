@@ -179,6 +179,7 @@ cc_test(
         ":format_style",
         ":formatter",
         "//common/formatting:align",
+        "//common/strings:display_utils",
         "//common/strings:position",
         "//common/text:text_structure",
         "//common/util:logging",
