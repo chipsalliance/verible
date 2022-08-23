@@ -145,6 +145,86 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
+echo "=== Test strip-comments: delete comments"
+
+cat > "$MY_INPUT_FILE" <<EOF
+// fake Verilog file.
+/*
+  file description
+*/
+
+module mmm;
+  logic l1;  // l1 is for blah
+  /* l2 does this */
+  logic l2;
+endmodule
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+
+ 
+
+module mmm;
+  logic l1;  
+   
+  logic l2;
+endmodule
+EOF
+
+"$preprocessor" strip-comments "$MY_INPUT_FILE" "" > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test strip-comments: replace comments"
+
+cat > "$MY_INPUT_FILE" <<EOF
+// fake Verilog file.
+/*
+  file description
+*/
+
+module mmm;
+  logic l1;  // l1 is for blah
+  /* l2 does this */
+  logic l2;
+endmodule
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+//...................
+/*
+..................*/
+
+module mmm;
+  logic l1;  //...............
+  /*..............*/
+  logic l2;
+endmodule
+EOF
+
+"$preprocessor" strip-comments "$MY_INPUT_FILE" . > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+
+################################################################################
 echo "=== Test strip-comments: on a lexically invalid source file"
 
 cat > "$MY_INPUT_FILE" <<EOF
