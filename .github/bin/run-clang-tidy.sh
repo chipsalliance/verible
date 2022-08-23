@@ -25,9 +25,19 @@ touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet
 readonly FILES_TO_PROCESS=${TMPDIR}/clang-tidy-files.list
 readonly TIDY_OUT=${TMPDIR}/clang-tidy.out
 
-# Using clang-tidy-11 as it still checks for google-runtime-references,
-# non-const references - which is the preferred style in this project.
-readonly CLANG_TIDY=clang-tidy-11
+# Use clang-tidy-11 if available as it still checks for
+# google-runtime-references, non-const references - which is the
+# preferred style in this project.
+# If not, increase version until we find some that is available.
+# (from old to new, as newer ones might have warnings not yet
+# anticipated in the clang-tidy configuration).
+CLANG_TIDY=clang-tidy
+for version in 11 12 13 14 ; do
+  if command -v clang-tidy-${version}; then
+    CLANG_TIDY=clang-tidy-${version}
+    break
+  fi
+done
 hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
 
 echo ::group::Build compilation database
