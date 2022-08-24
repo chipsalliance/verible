@@ -170,8 +170,7 @@ int FlowTree::GetMacroIDOfConditional(
 absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
   auto status = GenerateControlFlowTree();
   if (!status.ok()) {
-    return absl::InvalidArgumentError(
-        "Error: creating the control flow graph has failed.");
+    return status;
   }
   return DepthFirstSearch(receiver, source_sequence_.begin());
 }
@@ -200,7 +199,7 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           auto status = AddMacroOfConditionalToMap(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
-                "Error couldn't give a macro an ID.");
+                "ERROR: couldn't give a macro an ID.");
           }
           break;
         }
@@ -210,24 +209,33 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           auto status = AddMacroOfConditionalToMap(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
-                "Error couldn't give a macro an ID.");
+                "ERROR: couldn't give a macro an ID.");
           }
           break;
         }
         case PP_elsif: {
+          if (if_blocks_.empty()) {
+            return absl::InvalidArgumentError("ERROR: Unmatched `elsif.");
+          }
           if_blocks_.back().elsif_iterators.push_back(iter);
           auto status = AddMacroOfConditionalToMap(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
-                "Error couldn't give a macro an ID.");
+                "ERROR: couldn't give a macro an ID.");
           }
           break;
         }
         case PP_else: {
+          if (if_blocks_.empty()) {
+            return absl::InvalidArgumentError("ERROR: Unmatched `else.");
+          }
           if_blocks_.back().else_iterator = iter;
           break;
         }
         case PP_endif: {
+          if (if_blocks_.empty()) {
+            return absl::InvalidArgumentError("ERROR: Unmatched `endif.");
+          }
           if_blocks_.back().endif_iterator = iter;
           auto status = AddBlockEdges(if_blocks_.back());
           if (!status.ok()) return status;
@@ -248,6 +256,11 @@ absl::Status FlowTree::GenerateControlFlowTree() {
       }
     }
   }
+
+  // Checks for uncompleted conditionals.
+  if (!if_blocks_.empty())
+    return absl::InvalidArgumentError(
+        "ERROR: Uncompleted conditional is found.");
 
   return absl::OkStatus();
 }

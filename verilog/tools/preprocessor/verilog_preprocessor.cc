@@ -34,7 +34,7 @@
 
 using verible::SubcommandArgsRange;
 
-bool PrintGeneratedVariant(const verilog::Variant& variant) {
+bool PrintGeneratedVariant(const verilog::FlowTree::Variant& variant) {
   static int variants_counter = 1;
   std::cout << "Variant number " << variants_counter << ":\n";
   for (auto token : variant.sequence) std::cout << token << '\n';
@@ -149,8 +149,9 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
       lexed_sequence.push_back(lexer.GetLastToken());
+    }
   }
 
   // Control flow tree constructing.
@@ -158,7 +159,6 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
 
   auto status = control_flow_tree.GenerateVariants(PrintGeneratedVariant);
   if (!status.ok()) {
-    std::cerr << "ERROR:: couldn't generate variants.\n";
     return status;
   }
 

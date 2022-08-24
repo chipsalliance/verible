@@ -86,6 +86,22 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "flow_tree_test",
+    srcs = ["flow_tree_test.cc"],
+    deps = [
+        ":flow_tree",
+        "//common/util:logging",
+        "//common/lexer:token_stream_adapter",
+        "//verilog/parser:verilog_lexer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+
 cc_library(
     name = "lint_rule_registry",
     srcs = ["lint_rule_registry.cc"],

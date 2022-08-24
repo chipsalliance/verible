@@ -17,7 +17,6 @@
 
 #include <bitset>
 #include <map>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -27,41 +26,52 @@
 
 namespace verilog {
 
-using BitSet = std::bitset<128>;
-using TokenSequenceConstIterator = verible::TokenSequence::const_iterator;
-
-struct ConditionalBlock {
-  TokenSequenceConstIterator ifdef_iterator;
-  TokenSequenceConstIterator ifndef_iterator;
-  std::vector<TokenSequenceConstIterator> elsif_iterators;
-  TokenSequenceConstIterator else_iterator;
-  TokenSequenceConstIterator endif_iterator;
-};
-
-struct Variant {
-  // Contains the token sequence of the variant.
-  verible::TokenSequence sequence;
-
-  // The i-th bit in "macros_mask" is 1 when the macro (with ID = i) is assumed
-  // to be defined, o.w. it is assumed to be undefined.
-  BitSet macros_mask;
-
-  // The i-th bit in "assumed" is 1 when the macro (with ID = i) is visited or
-  // assumed (either defined or not), o.w. it is not visited (its value doesn't
-  // affect this variant).
-  BitSet assumed;
-};
-
-// Receive a complete token sequence of one variant.
-// variant_sequence: the generated variant token sequence.
-using VariantReceiver = std::function<bool(const Variant &variant)>;
-
 // FlowTree class builds the control flow graph of a tokenized System-Verilog
 // source code. Furthermore, enabling doing the following queries on the graph:
 // 1) Generating all the possible variants (provided via a callback function).
 // 2) TODO(karimtera): uniquely identify a variant with a bitset.
 class FlowTree {
  public:
+  using BitSet = std::bitset<128>;
+  using TokenSequenceConstIterator = verible::TokenSequence::const_iterator;
+
+  struct ConditionalBlock {
+    TokenSequenceConstIterator ifdef_iterator;
+    TokenSequenceConstIterator ifndef_iterator;
+    std::vector<TokenSequenceConstIterator> elsif_iterators;
+    TokenSequenceConstIterator else_iterator;
+    TokenSequenceConstIterator endif_iterator;
+  };
+
+  struct Variant {
+    // Contains the token sequence of the variant.
+    verible::TokenSequence sequence;
+
+    // The i-th bit in "macros_mask" is 1 when the macro (with ID = i) is
+    // assumed to be defined, o.w. it is assumed to be undefined.
+    BitSet macros_mask;
+
+    // The i-th bit in "assumed" is 1 when the macro (with ID = i) is visited or
+    // assumed (either defined or not), o.w. it is not visited (its value
+    // doesn't affect this variant).
+    //
+    // e.g.:
+    //  `ifdef A
+    //    `ifdef B
+    //    ...
+    //    `endif
+    //  `endif
+    //
+    // Consider the variant in which A is undefined,
+    // we notice that B doesn't affect the variant.
+    // Then the bit corresponding to B in "assumed" is 0.
+    BitSet assumed;
+  };
+
+  // Receive a complete token sequence of one variant.
+  // variant_sequence: the generated variant token sequence.
+  using VariantReceiver = std::function<bool(const Variant &variant)>;
+
   explicit FlowTree(verible::TokenSequence source_sequence)
       : source_sequence_(std::move(source_sequence)){};
 
