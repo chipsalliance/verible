@@ -319,6 +319,12 @@ class VerilogProject {
       buffer_to_analyzer_map_;
 };
 
+// TODO(karimtera): Using "MacroDefiniton" struct might be better.
+struct TextMacroDefinition {
+  std::string name;
+  std::string value;
+};
+
 // File list for compiling a System Verilog project.
 struct FileList {
   // Ordered list of files to compile.
@@ -327,6 +333,8 @@ struct FileList {
   std::vector<std::string> include_dirs;
   // Path to the file list.
   std::string file_list_path;
+  // Defined macros.
+  std::vector<TextMacroDefinition> defines;
 };
 
 // Reads in a list of files line-by-line from 'file_list_file'. The include
@@ -338,6 +346,11 @@ absl::StatusOr<FileList> ParseSourceFileListFromFile(
 // directories are prefixed by "+incdir+"
 FileList ParseSourceFileList(absl::string_view file_list_path,
                              const std::string& file_list_content);
+
+// Parse positional parameters from command line and extract files, +incdir+ and
+// +define+.
+absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
+    const std::vector<char*>& cmdline);
 
 }  // namespace verilog
 

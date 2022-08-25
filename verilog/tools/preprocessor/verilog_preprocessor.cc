@@ -22,12 +22,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
-#include "common/util/cmd_positional_arguments.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
@@ -145,15 +145,7 @@ ABSL_FLAG(bool, generate_variants, false,
 
 int main(int argc, char* argv[]) {
   const std::string usage =
-      absl::StrCat("usage:\n", argv[0], " [options] file [<file>...]\n\n",
-                   "options summary:\n",
-                   "-multiple_cu: Files are preprocessed in separate "
-                   "compilation units.\n",
-                   "-strip_comments: Replaces one/multi-line comments with "
-                   "equal white-spaces.\n",
-                   "-generate_variants: Generates every possible variants "
-                   "w.r.t. compiler conditionals.\n");
-
+      absl::StrCat("usage:\n", argv[0], " [options] file [<file>...]\n");
   // Process invocation args.
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
   if (args.empty()) {
@@ -162,9 +154,9 @@ int main(int argc, char* argv[]) {
   }
 
   // Get flags.
-  bool strip_comments_flag = absl::GetFlag(FLAGS_strip_comments);
-  bool multiple_cu_flag = absl::GetFlag(FLAGS_multiple_cu);
-  bool generate_variants_flag = absl::GetFlag(FLAGS_generate_variants);
+  const bool strip_comments_flag = absl::GetFlag(FLAGS_strip_comments);
+  const bool multiple_cu_flag = absl::GetFlag(FLAGS_multiple_cu);
+  const bool generate_variants_flag = absl::GetFlag(FLAGS_generate_variants);
 
   // Check for flags and argument illegal usage.
   if (strip_comments_flag && generate_variants_flag) {  // Illegal usage.
@@ -172,26 +164,26 @@ int main(int argc, char* argv[]) {
               << absl::ProgramUsageMessage() << std::endl;
     return 1;
   }
-  if (args.size() ==
-      1) {  // No Files are passed (files are passed as positional arguments).
+  auto parsed_file_list = verilog::ParseSourceFileListFromCommandline(args);
+  if (!parsed_file_list.ok()) {
+    std::cerr << parsed_file_list.status();
+    return 1;
+  }
+
+  auto include_dirs = parsed_file_list->include_dirs;
+  auto defines = parsed_file_list->defines;
+  auto files = parsed_file_list->file_paths;
+
+  if (files.empty()) {
+    // No Files were passed (files should be passed as positional arguments).
     std::cerr << "ERROR: No System-Verilog files were passed.\n\n"
               << absl::ProgramUsageMessage() << std::endl;
     return 1;
   }
 
-  verible::CmdPositionalArguments positional_arguments(args);
-  if (auto status = positional_arguments.ParseArgs(); !status.ok()) {
-    std::cerr << "ERROR: parsing positional arguments failed.\n";
-    return 1;
-  }
-
-  auto include_dirs = positional_arguments.GetIncludeDirs();
-  auto defines = positional_arguments.GetDefines();
-  auto files = positional_arguments.GetFiles();
-
   // Select the operation mode and execute it.
   if (strip_comments_flag) {
-    for (auto filename : files) {
+    for (const auto& filename : files) {
       if (auto status = StripComments(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
         std::cerr << "ERROR: stripping comments failed.\n";
@@ -199,7 +191,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else if (generate_variants_flag) {
-    for (auto filename : files) {
+    for (const auto& filename : files) {
       if (auto status =
               GenerateVariants(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
@@ -208,7 +200,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else if (multiple_cu_flag) {
-    for (auto filename : files) {
+    for (const auto& filename : files) {
       if (auto status = MultipleCU(filename, std::cin, std::cout, std::cerr);
           !status.ok()) {
         std::cerr

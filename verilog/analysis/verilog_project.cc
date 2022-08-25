@@ -341,4 +341,50 @@ absl::StatusOr<FileList> ParseSourceFileListFromFile(
   return ParseSourceFileList(file_list_file, content);
 }
 
+absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
+    const std::vector<char*>& cmdline) {
+  FileList file_list_out;
+  for (std::string argument :
+       verible::make_range(cmdline.begin() + 1, cmdline.end())) {
+    // cmdline[0] is the tool's name, which can be skipped.
+    if (argument[0] != '+') {
+      // Then "argument" is a SV file name.
+      file_list_out.file_paths.push_back(argument);
+    } else {
+      // it should be either a define or incdir.
+      std::vector<std::string> argument_plus_splitted =
+          absl::StrSplit(argument, absl::ByChar('+'), absl::SkipEmpty());
+      if (argument_plus_splitted.size() < 2) {
+        return absl::InvalidArgumentError("Unkown argument.");
+      }
+      std::string plus_argument_type = argument_plus_splitted[0];
+      if (absl::StrContains(plus_argument_type, "define")) {
+        // define argument.
+        for (const std::string& define_argument :
+             verible::make_range(argument_plus_splitted.begin() + 1,
+                                 argument_plus_splitted.end())) {
+          // argument_plus_splitted[0] is 'define' so it is safe to skip it.
+          // define_argument is something like <macro1>=<value>.
+          std::pair<std::string, std::string> macro_pair = absl::StrSplit(
+              define_argument, absl::ByChar('='), absl::SkipEmpty());
+          TextMacroDefinition macro{macro_pair.first, macro_pair.second};
+          // add the define argument.
+          file_list_out.defines.push_back(macro);
+        }
+      } else if (absl::StrContains(plus_argument_type, "incdir")) {
+        // incdir argument.
+        for (const std::string& incdir_argument :
+             verible::make_range(argument_plus_splitted.begin() + 1,
+                                 argument_plus_splitted.end())) {
+          // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
+          file_list_out.include_dirs.push_back(incdir_argument);
+        }
+      } else {
+        return absl::InvalidArgumentError("Unkown argument.");
+      }
+    }
+  }
+  return file_list_out;
+}
+
 }  // namespace verilog

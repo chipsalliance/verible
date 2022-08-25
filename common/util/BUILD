@@ -42,16 +42,6 @@ cc_library(
 )
 
 cc_library(
-    name = "cmd_positional_arguments",
-    srcs = ["cmd_positional_arguments.cc"],
-    hdrs = ["cmd_positional_arguments.h"],
-    deps = [
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library(
     name = "subcommand",
     srcs = ["subcommand.cc"],
     hdrs = ["subcommand.h"],
