@@ -28,8 +28,7 @@ from absl import logging
 
 @dataclasses.dataclass
 class FileList:
-  """Contents of a System Verilog file list."""
-  path: str
+  """Contents of a System Verilog filelist."""
   files: List[str]
   include_dirs: List[str]
   lib_dirs: List[str]
@@ -55,9 +54,8 @@ def MatchAndAppend(line: str, prefix: str, output: List[str]) -> bool:
   return False
 
 
-def ParseFileList(file_list_path: str, content: str) -> FileList:
+def ParseFileList(content: str) -> FileList:
   result = FileList(
-      path=file_list_path,
       files=[],
       include_dirs=[],
       lib_dirs=[],

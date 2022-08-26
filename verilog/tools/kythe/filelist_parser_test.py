@@ -24,9 +24,7 @@ class FilelistParserTest(unittest.TestCase):
 
   def test_empty_filelist(self):
     filelist = ""
-    filelist_path = "/tmp/path"
-    result = filelist_parser.ParseFileList(filelist_path, filelist)
-    self.assertEqual(result.path, filelist_path)
+    result = filelist_parser.ParseFileList(filelist)
     self.assertSequenceEqual(result.files, [])
     self.assertSequenceEqual(result.include_dirs, [])
 
@@ -39,9 +37,7 @@ class FilelistParserTest(unittest.TestCase):
 
 /a/source/file/1.sv
 /a/source/file/2.sv"""
-    filelist_path = "/tmp/path"
-    result = filelist_parser.ParseFileList(filelist_path, filelist)
-    self.assertEqual(result.path, filelist_path)
+    result = filelist_parser.ParseFileList(filelist)
     self.assertSequenceEqual(result.files,
                              ["/a/source/file/1.sv", "/a/source/file/2.sv"])
     self.assertSequenceEqual(result.include_dirs,
@@ -58,9 +54,7 @@ class FilelistParserTest(unittest.TestCase):
 comment
 to remove */
 /a/source/file/4.sv"""
-    filelist_path = "/tmp/path"
-    result = filelist_parser.ParseFileList(filelist_path, filelist)
-    self.assertEqual(result.path, filelist_path)
+    result = filelist_parser.ParseFileList(filelist)
     self.assertSequenceEqual(result.files, [
         "/a/source/file/1.sv", "/a/source/file/2.sv", "/a/source/file/3.sv",
         "/a/source/file/4.sv"
@@ -87,9 +81,7 @@ to remove */
 /A/SOURCE/FILE/LOWER1.SV
 /A/SOURCE/FILE/LOWER2.SV
 """
-    filelist_path = "/tmp/path"
-    result = filelist_parser.ParseFileList(filelist_path, filelist)
-    self.assertEqual(result.path, filelist_path)
+    result = filelist_parser.ParseFileList(filelist)
     self.assertSequenceEqual(result.files, [
         "/a/source/file/normal.sv", "/A/SOURCE/FILE/UPPER.SV",
         "/A/SOURCE/FILE/V_PARAM_UPPER.SV", "/A/SOURCE/FILE/L_PARAM_UPPER.SV",
