@@ -18,9 +18,6 @@ py_proto_library(
     name = "storage_py_proto",
     srcs = ["storage.proto"],
     srcs_version = "PY2AND3",
-    deps = [
-        "@com_google_protobuf//:protobuf_python",
-    ],
 )
 
 proto_library(
@@ -28,6 +25,9 @@ proto_library(
     srcs = ["analysis.proto"],
     deps = [
         ":storage_proto",
+        # NOTE: These dependencies are not used in our local copy (which is
+        # modified because of the py_proto_library limitation). Keep it here
+        # until py_proto_library gets fixed.
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -44,6 +44,5 @@ py_proto_library(
     srcs_version = "PY2AND3",
     deps = [
         ":storage_py_proto",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )

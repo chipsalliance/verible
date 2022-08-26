@@ -18,8 +18,8 @@ syntax = "proto3";
 
 package kythe.proto;
 
-import "google/protobuf/any.proto";
-import "google/protobuf/timestamp.proto";
+// NOTE: dropped "google/protobuf/any.proto" & "google/protobuf/timestamp.proto"
+// because of limitations of py_proto_library
 import "third_party/proto/kythe/storage.proto";
 
 option go_package = "analysis_go_proto";
@@ -145,8 +145,9 @@ message CompilationUnit {
 
     reserved 3;
 
+    // NOTE: Dropped because of limitations of py_proto_library
     // Per-language or per-tool details.
-    repeated google.protobuf.Any details = 4;
+    // repeated google.protobuf.Any details = 4;
   }
 
   // The absolute path of the current working directory where the build tool
@@ -176,8 +177,9 @@ message CompilationUnit {
   // sort by name in order to canonicalize the message.
   repeated Env environment = 10;
 
+  // NOTE: Dropped because of limitations of py_proto_library
   // Per-language or per-tool details.
-  repeated google.protobuf.Any details = 11;
+  // repeated google.protobuf.Any details = 11;
 }
 
 // KzipInfo contains a summary of the contents of a kzip. It provides a
@@ -220,12 +222,13 @@ message KzipInfo {
 // build from a repository. This message is stored in the
 // CompilationUnit.details field.
 message BuildMetadata {
+  // NOTE: Dropped because of limitations of py_proto_library
   // The commit_timestamp is generally the timestamp at which the source for
   // this build was checked into version control, but can be any timestamp
   // associated with the origin of this build. In the case that a project is
   // made up of multiple repositories, this timestamp should be the one
   // associated with the primary/super repository.
-  google.protobuf.Timestamp commit_timestamp = 1;
+  // google.protobuf.Timestamp commit_timestamp = 1;
 }
 
 // A FilesRequest specifies a collection of files to be fetched from a
