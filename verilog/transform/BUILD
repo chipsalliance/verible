@@ -45,7 +45,6 @@ cc_library(
     deps = [
         "//common/strings:comment_utils",
         "//common/strings:range",
-        "//common/strings:split",
         "//common/text:token_info",
         "//common/util:iterator_range",
         "//common/util:spacer",

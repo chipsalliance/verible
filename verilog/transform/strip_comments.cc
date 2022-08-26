@@ -17,9 +17,9 @@
 #include <iostream>
 #include <vector>
 
+#include "absl/strings/str_split.h"
 #include "common/strings/comment_utils.h"
 #include "common/strings/range.h"
-#include "common/strings/split.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_range.h"
 #include "common/util/spacer.h"
@@ -38,8 +38,9 @@ using verible::TokenInfo;
 // Tabs are considered non-newline characters.
 static void ReplaceNonNewlines(absl::string_view text, std::ostream* output,
                                char replacement) {
-  const std::vector<absl::string_view> lines(verible::SplitLines(text));
-  if (lines.empty()) return;
+  if (text.empty()) return;
+  const std::vector<absl::string_view> lines(
+      absl::StrSplit(text, absl::ByChar('\n')));
   // no newline before first element
   *output << Spacer(lines.front().size(), replacement);
   for (const auto& line : verible::make_range(lines.begin() + 1, lines.end())) {

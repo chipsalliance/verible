@@ -42,9 +42,23 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
     return status;
   }
 
-  // TODO(fangism): parse a subcommand-specific flag for replacement option
-  // See documentation for 'replacement' arg of the library function:
-  verilog::StripVerilogComments(source_contents, &outs, ' ');
+  char replace_char;
+  if (args.size() == 1) {
+    replace_char = ' ';
+  } else if (args.size() == 2) {
+    absl::string_view replace_str(args[1]);
+    if (replace_str.empty())
+      replace_char = '\0';
+    else if (replace_str.length() == 1)
+      replace_char = replace_str[0];
+    else
+      return absl::InvalidArgumentError(
+          "Replacement must be a single character.");
+  } else {
+    return absl::InvalidArgumentError("Too many arguments.");
+  }
+
+  verilog::StripVerilogComments(source_contents, &outs, replace_char);
 
   return absl::OkStatus();
 }
@@ -52,11 +66,18 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
     {"strip-comments",  //
      {&StripComments,   //
-      R"(strip-comments file
+      R"(strip-comments file [replacement-char]
 
-Input:
+Inputs:
   'file' is a Verilog or SystemVerilog source file.
   Use '-' to read from stdin.
+
+  'replacement-char' is a character to replace comments with.
+  If not given, or given as a single space character, the comment contents and
+  delimiters are replaced with spaces.
+  If an empty string, the comment contents and delimiters are deleted. Newlines
+  are not deleted.
+  If a single character, the comment contents are replaced with the character.
 
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.

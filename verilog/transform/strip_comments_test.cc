@@ -101,6 +101,35 @@ TEST(StripVerilogCommentsTest, Various) {
           "a a\n"
           "bb\n"
           "c\n"
+          "*/  \n"  // end-of-comment at start of line
+          "end\n",
+          // delete
+          "begin\n"
+          "     \n"
+          "end\n",
+          // space-out
+          "begin\n"
+          "    \n"
+          "   \n"
+          "  \n"
+          " \n"
+          "    \n"
+          "end\n",
+          // other char
+          "begin\n"
+          "  /*\n"
+          "...\n"
+          "..\n"
+          ".\n"
+          "*/  \n"  // trailing spaces
+          "end\n",
+      },
+      {
+          "begin\n"
+          "  /*\n"
+          "a a\n"
+          "bb\n"
+          "c\n"
           "  */  \n"  // trailing spaces
           "end\n",
           // delete
