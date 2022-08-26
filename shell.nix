@@ -16,7 +16,7 @@ pkgs.mkShell {
   buildInputs = with pkgs;
     [
       bash
-      bazel
+      bazel_4
       gcc
       git
       glibc
