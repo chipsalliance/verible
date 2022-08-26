@@ -123,42 +123,26 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
 bison_register_toolchains()
 
-# We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
-# part of the protobuf release yet
-# (https://github.com/protocolbuffers/protobuf/issues/5918).
-http_archive(
-    name = "net_zlib",
-    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9",
-    strip_prefix = "zlib-1.2.12",
-    urls = [
-        "https://zlib.net/zlib-1.2.12.tar.gz",
-        "https://zlib.net/fossils/zlib-1.2.12.tar.gz",
-    ],
-)
-
 http_archive(
     name = "com_google_protobuf",
-    repo_mapping = {"@zlib": "@net_zlib"},
-    sha256 = "1c744a6a1f2c901e68c5521bc275e22bdc66256eeb605c2781923365b7087e5f",
-    strip_prefix = "protobuf-3.13.0",
+    sha256 = "468a16f50694822291da57e304197f5322607dbed1a9d93192ff18de642c6cac",
+    strip_prefix = "protobuf-21.5",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/v21.5.zip",
     ],
 )
 
 http_archive(
     name = "rules_proto",
-    sha256 = "e4fe70af52135d2ee592a07f916e6e1fc7c94cf8786c15e8c0d0f08b1fe5ea16",
-    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
-    url = "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.zip",
+    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
+    strip_prefix = "rules_proto-4.0.0-3.20.0",
+    urls = [
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.20.0.tar.gz",
+    ],
 )
 
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
-
 rules_proto_dependencies()
-
 rules_proto_toolchains()
 
 http_archive(

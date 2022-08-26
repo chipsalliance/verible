@@ -75,6 +75,7 @@ else
   # Don't rely on implicit template type deduction
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # Protobuffer issue
 fi
 
 # If parameter given and the MODE allows choosing, we build the target
