@@ -1,7 +1,6 @@
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 # Bazel platform rules, needed as dependency to absl.
 http_archive(
@@ -198,19 +197,6 @@ http_archive(
     sha256 = "f798690ddb6bba453ed489665c408bb0ce630bd7f0992c160c9414f933481a91",
     strip_prefix = "bazel-compilation-database-ace73b04e76111afa09934f8771a2798847e724e",
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/ace73b04e76111afa09934f8771a2798847e724e.tar.gz"],
-)
-
-git_repository(
-    name = "boringssl",
-    # Commits must come from the main-with-bazel branch.
-    commit = "b9232f9e27e5668bc0414879dcdedb2a59ea75f2",
-    # Use the GitHub mirror because the official source at
-    # https://boringssl.googlesource.com/boringssl does not allow
-    # unauthenticated git clone and the archives suffer from
-    # https://github.com/google/gitiles/issues/84 preventing the use of
-    # sha256sum on archives.
-    remote = "https://github.com/google/boringssl",
-    shallow_since = "1603819042 +0000",
 )
 
 http_archive(
