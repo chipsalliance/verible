@@ -9,6 +9,7 @@ http_archive(
     strip_prefix = "platforms-da5541f26b7de1dc8e04c075c99df5351742a4a2",
     urls = ["https://github.com/bazelbuild/platforms/archive/da5541f26b7de1dc8e04c075c99df5351742a4a2.zip"],  # 2022-05-27
 )
+
 http_archive(
     name = "com_google_absl",
     # On MSVC's STL implementation, string_view cannot be constructed from
@@ -31,6 +32,7 @@ http_archive(
     strip_prefix = "re2-215bf4aa0bdc081862590463bc98a00bb2be48f2",
     urls = ["https://github.com/google/re2/archive/215bf4aa0bdc081862590463bc98a00bb2be48f2.zip"],  # 2022-08-09
 )
+
 http_archive(
     name = "com_google_googletest",
     sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
@@ -51,7 +53,7 @@ http_archive(
     name = "com_github_gflags_gflags",
     sha256 = "cfdba0f2f17e8b1ff75c98113d5080d8ec016148426abcc19130864e2952d7bd",
     strip_prefix = "gflags-827c769e5fc98e0f2a34c47cef953cc6328abced",
-    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip" ],
+    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip"],
 )
 
 http_archive(
@@ -132,6 +134,10 @@ http_archive(
     ],
 )
 
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
 http_archive(
     name = "rules_proto",
     sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
@@ -142,7 +148,9 @@ http_archive(
 )
 
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
 rules_proto_dependencies()
+
 rules_proto_toolchains()
 
 http_archive(
@@ -157,11 +165,11 @@ http_archive(
 http_archive(
     name = "jsonhpp",
     build_file = "//bazel:jsonhpp.BUILD",
-    strip_prefix = "json-3.10.2",
     sha256 = "081ed0f9f89805c2d96335c3acfa993b39a0a5b4b4cef7edb68dd2210a13458c",
+    strip_prefix = "json-3.10.2",
     urls = [
-        "https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.tar.gz"
-    ]
+        "https://github.com/nlohmann/json/archive/refs/tags/v3.10.2.tar.gz",
+    ],
 )
 
 http_archive(
@@ -189,4 +197,11 @@ http_archive(
     sha256 = "f798690ddb6bba453ed489665c408bb0ce630bd7f0992c160c9414f933481a91",
     strip_prefix = "bazel-compilation-database-ace73b04e76111afa09934f8771a2798847e724e",
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/ace73b04e76111afa09934f8771a2798847e724e.tar.gz"],
+)
+
+http_archive(
+    name = "absl_py",
+    sha256 = "b9130d6f49a21dc44f56da89d5e8409807e93d28c194c23e27777f3c8cceef81",
+    strip_prefix = "abseil-py-1.2.0",
+    urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.2.0.tar.gz"],
 )

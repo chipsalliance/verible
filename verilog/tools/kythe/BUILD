@@ -1,6 +1,7 @@
 # 'verible-verilog-kythe-extractor' is a program for extracting Verilog/SystemVerilog to kythe facts.
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 licenses(["notice"])
 
@@ -259,5 +260,43 @@ sh_test(
     tags = ["manual"],
     deps = [
         "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+
+py_library(
+    name = "filelist_parser",
+    srcs = ["filelist_parser.py"],
+    imports = ["."],
+    srcs_version = "PY3",
+    deps = [
+        "//third_party/py/dataclasses",
+        "@absl_py//absl/logging",
+    ],
+)
+
+py_test(
+    name = "filelist_parser_test",
+    size = "small",
+    srcs = ["filelist_parser_test.py"],
+    main = "filelist_parser_test.py",
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":filelist_parser",
+    ],
+)
+
+py_binary(
+    name = "verilog_kythe_kzip_writer",
+    srcs = ["verilog_kythe_kzip_writer.py"],
+    main = "verilog_kythe_kzip_writer.py",
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":filelist_parser",
+        "//third_party/proto/kythe:analysis_py_proto",
+        "@absl_py//absl:app",
+        "@absl_py//absl/flags",
+        "@absl_py//absl/logging",
     ],
 )
