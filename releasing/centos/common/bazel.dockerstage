@@ -11,6 +11,6 @@ RUN java -version
 RUN javac -version
 
 ADD https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-$TARGET_VERSION/vbatts-bazel-epel-$TARGET_VERSION.repo /etc/yum.repos.d
-RUN yum install -y --nogpgcheck bazel3
+RUN yum install -y --nogpgcheck bazel4
 
 RUN bazel --version
