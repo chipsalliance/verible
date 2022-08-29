@@ -165,7 +165,6 @@ jobs:
 
   Kythe:
     runs-on: ubuntu-20.04
-    if: false   # Currently disabled, need to investigate failure.
 
     steps:
 

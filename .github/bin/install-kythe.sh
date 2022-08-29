@@ -41,6 +41,10 @@ else
     # Use release, which comes with pre-built binaries
     wget --no-verbose -O kythe.tar.gz \
       "https://github.com/kythe/kythe/releases/download/$KYTHE_VERSION/kythe-$KYTHE_VERSION.tar.gz"
-    tar -xzf kythe.tar.gz
+    # Only interested in a few files.
+    tar -xzf kythe.tar.gz \
+       "kythe-${KYTHE_VERSION}/tools/verifier" \
+       "kythe-${KYTHE_VERSION}/tools/kzip" \
+       "kythe-${KYTHE_VERSION}/extractors.bazelrc"
   )
 fi
