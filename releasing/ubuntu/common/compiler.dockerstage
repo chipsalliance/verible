@@ -3,3 +3,7 @@ RUN apt-get install -y  \
     build-essential     \
     g++                 \
     gcc
+
+# Link libstdc++ statically: more resilience against library version mismatch
+ENV BAZEL_LINKOPTS "-static-libstdc++:-lm"
+ENV BAZEL_LINKLIBS "-l%:libstdc++.a"
