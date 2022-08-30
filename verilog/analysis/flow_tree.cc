@@ -1,17 +1,16 @@
 // Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance wedge_from_iteratorh the
-// License. You may obtain a copy of the License at
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in wredge_from_iteratoring,
+// Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an "AS IS" BASIS,
-// Wedge_from_iteratorHOUT WARRANTIES OR CONDedge_from_iteratorIONS OF ANY KIND,
-// eedge_from_iteratorher express or implied. See the License for the specific
-// language governing permissions and limedge_from_iteratorations under the
-// License.
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "verilog/analysis/flow_tree.h"
 
@@ -31,50 +30,47 @@ namespace verilog {
 // Such that the first edge represents the condition being true,
 // and the second edge represents the condition being false.
 absl::Status FlowTree::AddBlockEdges(const ConditionalBlock &block) {
-  bool contains_elsif = !block.elsif_iterators.empty();
-  bool contains_else = block.else_iterator != source_sequence_.end();
+  bool contains_elsif = !block.elsif_locations.empty();
+  bool contains_else = block.else_location != source_sequence_.end();
 
   // Handling `ifdef/ifndef.
-  auto ifdef_or_ifndef =
-      (block.ifdef_iterator == source_sequence_.end() ? block.ifndef_iterator
-                                                      : block.ifdef_iterator);
 
   // Assuming the condition is true.
-  edges_[ifdef_or_ifndef].push_back(ifdef_or_ifndef + 1);
+  edges_[block.if_location].push_back(block.if_location + 1);
 
   // Assuming the condition is false.
   // Checking if there is an `elsif.
   if (contains_elsif) {
     // Add edge to the first `elsif in the block.
-    edges_[ifdef_or_ifndef].push_back(block.elsif_iterators[0]);
+    edges_[block.if_location].push_back(block.elsif_locations[0]);
   } else if (contains_else) {
     // Checking if there is an `else.
-    edges_[ifdef_or_ifndef].push_back(block.else_iterator);
+    edges_[block.if_location].push_back(block.else_location);
   } else {
     // `endif exists.
-    edges_[ifdef_or_ifndef].push_back(block.endif_iterator);
+    edges_[block.if_location].push_back(block.endif_location);
   }
 
   // Handling `elsif.
   if (contains_elsif) {
-    for (auto iter = block.elsif_iterators.begin();
-         iter != block.elsif_iterators.end(); iter++) {
+    for (auto iter = block.elsif_locations.begin();
+         iter != block.elsif_locations.end(); iter++) {
       // Assuming the condition is true.
       edges_[*iter].push_back((*iter) + 1);
 
       // Assuming the condition is false.
-      if (iter + 1 != block.elsif_iterators.end())
+      if (iter + 1 != block.elsif_locations.end())
         edges_[*iter].push_back(*(iter + 1));
       else if (contains_else)
-        edges_[*iter].push_back(block.else_iterator);
+        edges_[*iter].push_back(block.else_location);
       else
-        edges_[*iter].push_back(block.endif_iterator);
+        edges_[*iter].push_back(block.endif_location);
     }
   }
 
   // Handling `else.
   if (contains_else) {
-    edges_[block.else_iterator].push_back(block.else_iterator + 1);
+    edges_[block.else_location].push_back(block.else_location + 1);
   }
 
   // For edges that are generated assuming the conditons are true,
@@ -88,21 +84,21 @@ absl::Status FlowTree::AddBlockEdges(const ConditionalBlock &block) {
   //    <group_of_lines>
   // `endif
   // Edge to be added: from <line_final> to `endif.
-  edges_[block.endif_iterator - 1].push_back(block.endif_iterator);
+  edges_[block.endif_location - 1].push_back(block.endif_location);
   if (contains_elsif) {
-    for (auto iter : block.elsif_iterators)
-      edges_[iter - 1].push_back(block.endif_iterator);
+    for (auto iter : block.elsif_locations)
+      edges_[iter - 1].push_back(block.endif_location);
   } else if (contains_else) {
-    edges_[block.else_iterator - 1].push_back(block.endif_iterator);
+    edges_[block.else_location - 1].push_back(block.endif_location);
   }
 
   // Connecting `endif to the next token directly (if not EOF).
-  auto next_iter = block.endif_iterator + 1;
+  auto next_iter = block.endif_location + 1;
   if (next_iter != source_sequence_.end() &&
       next_iter->token_enum() != PP_else &&
       next_iter->token_enum() != PP_elsif &&
       next_iter->token_enum() != PP_endif) {
-    edges_[block.endif_iterator].push_back(next_iter);
+    edges_[block.endif_location].push_back(next_iter);
   }
 
   return absl::OkStatus();
@@ -132,9 +128,9 @@ absl::Status FlowTree::MacroFollows(
     return absl::OkStatus();
 }
 
-// Adds a conditional macro to conditional_macro_id_ if not added before,
-// And gives it a new ID.
-absl::Status FlowTree::AddMacroOfConditionalToMap(
+// Adds a conditional macro to conditional_macros_ if not added before,
+// And gives it a new ID, then saves the ID in conditional_macro_id_ map.
+absl::Status FlowTree::AddMacroOfConditional(
     TokenSequenceConstIterator conditional_iterator) {
   auto status = MacroFollows(conditional_iterator);
   if (!status.ok()) {
@@ -146,6 +142,7 @@ absl::Status FlowTree::AddMacroOfConditionalToMap(
   if (conditional_macro_id_.find(macro_identifier) ==
       conditional_macro_id_.end()) {
     conditional_macro_id_[macro_identifier] = conditional_macros_counter_;
+    conditional_macros_.push_back(macro_iterator);
     conditional_macros_counter_++;
   }
   return absl::OkStatus();
@@ -182,10 +179,9 @@ absl::Status FlowTree::GenerateControlFlowTree() {
   // Adding edges for if blocks.
   int current_token_enum = 0;
   ConditionalBlock empty_block;
-  empty_block.ifdef_iterator = source_sequence_.end();
-  empty_block.ifndef_iterator = source_sequence_.end();
-  empty_block.else_iterator = source_sequence_.end();
-  empty_block.endif_iterator = source_sequence_.end();
+  empty_block.if_location = source_sequence_.end();
+  empty_block.else_location = source_sequence_.end();
+  empty_block.endif_location = source_sequence_.end();
 
   for (TokenSequenceConstIterator iter = source_sequence_.begin();
        iter != source_sequence_.end(); iter++) {
@@ -195,8 +191,9 @@ absl::Status FlowTree::GenerateControlFlowTree() {
       switch (current_token_enum) {
         case PP_ifdef: {
           if_blocks_.push_back(empty_block);
-          if_blocks_.back().ifdef_iterator = iter;
-          auto status = AddMacroOfConditionalToMap(iter);
+          if_blocks_.back().if_location = iter;
+          if_blocks_.back().positive_condition = 1;
+          auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
                 "ERROR: couldn't give a macro an ID.");
@@ -205,8 +202,9 @@ absl::Status FlowTree::GenerateControlFlowTree() {
         }
         case PP_ifndef: {
           if_blocks_.push_back(empty_block);
-          if_blocks_.back().ifndef_iterator = iter;
-          auto status = AddMacroOfConditionalToMap(iter);
+          if_blocks_.back().if_location = iter;
+          if_blocks_.back().positive_condition = 0;
+          auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
                 "ERROR: couldn't give a macro an ID.");
@@ -217,8 +215,8 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           if (if_blocks_.empty()) {
             return absl::InvalidArgumentError("ERROR: Unmatched `elsif.");
           }
-          if_blocks_.back().elsif_iterators.push_back(iter);
-          auto status = AddMacroOfConditionalToMap(iter);
+          if_blocks_.back().elsif_locations.push_back(iter);
+          auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
                 "ERROR: couldn't give a macro an ID.");
@@ -229,14 +227,14 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           if (if_blocks_.empty()) {
             return absl::InvalidArgumentError("ERROR: Unmatched `else.");
           }
-          if_blocks_.back().else_iterator = iter;
+          if_blocks_.back().else_location = iter;
           break;
         }
         case PP_endif: {
           if (if_blocks_.empty()) {
             return absl::InvalidArgumentError("ERROR: Unmatched `endif.");
           }
-          if_blocks_.back().endif_iterator = iter;
+          if_blocks_.back().endif_location = iter;
           auto status = AddBlockEdges(if_blocks_.back());
           if (!status.ok()) return status;
           // TODO(karimtera): add an error message.
@@ -290,8 +288,8 @@ absl::Status FlowTree::DepthFirstSearch(
       current_node->token_enum() == PP_elsif) {
     int macro_id = GetMacroIDOfConditional(current_node);
     bool negated = (current_node->token_enum() == PP_ifndef);
-    // Checks if this macro is already assumed to be defined/undefined.
-    if (current_variant_.assumed.test(macro_id)) {
+    // Checks if this macro is already visited (either defined/undefined).
+    if (current_variant_.visited.test(macro_id)) {
       bool assume_condition_is_true =
           (negated ^ current_variant_.macros_mask.test(macro_id));
       if (auto status = DepthFirstSearch(
@@ -301,8 +299,8 @@ absl::Status FlowTree::DepthFirstSearch(
         return status;
       }
     } else {
-      current_variant_.assumed.flip(macro_id);
-      // This macro wans't assumed before, then we can check both edges.
+      current_variant_.visited.flip(macro_id);
+      // This macro wans't visited before, then we can check both edges.
       // Assume the condition is true.
       if (negated)
         current_variant_.macros_mask.reset(macro_id);
@@ -325,7 +323,7 @@ absl::Status FlowTree::DepthFirstSearch(
         return status;
       }
       // Undo the change to allow for backtracking.
-      current_variant_.assumed.flip(macro_id);
+      current_variant_.visited.flip(macro_id);
     }
   } else {
     // Do recursive search through every possible edge.

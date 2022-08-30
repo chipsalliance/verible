@@ -33,17 +33,9 @@
 #include "verilog/transform/strip_comments.h"
 
 using verible::SubcommandArgsRange;
+using verible::SubcommandEntry;
 
-bool PrintGeneratedVariant(const verilog::FlowTree::Variant& variant) {
-  static int variants_counter = 1;
-  std::cout << "Variant number " << variants_counter << ":\n";
-  for (auto token : variant.sequence) std::cout << token << '\n';
-  puts("");
-  variants_counter++;
-  // Only accepts 20 variants at most. (to test the functionality).
-  // TODO(karimtera): How many variants are practical?
-  return variants_counter < 20;
-}
+ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
 
 static absl::Status StripComments(const SubcommandArgsRange& args,
                                   std::istream&, std::ostream& outs,
@@ -80,8 +72,8 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static absl::Status MultipleCU(const char* source_file, std::istream&,
-                               std::ostream& outs, std::ostream&) {
+static absl::Status PreprocessSingleFile(const char* source_file, std::istream&,
+                                         std::ostream& outs, std::ostream&) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -132,8 +124,29 @@ static absl::Status MultipleCU(const char* source_file, std::istream&,
   return absl::OkStatus();
 }
 
-static absl::Status GenerateVariants(const char* source_file, std::istream&,
-                                     std::ostream& outs, std::ostream&) {
+static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
+                               std::ostream& outs, std::ostream&) {
+  if (args.empty()) {
+    return absl::InvalidArgumentError("Missing file arguments.");
+  }
+  for (const char* source_file : args) {
+    outs << source_file << ":\n";
+    auto status = PreprocessSingleFile(source_file, std::cin, outs, std::cerr);
+    if (!status.ok()) return status;
+    outs << '\n';
+  }
+  return absl::OkStatus();
+}
+
+static absl::Status GenerateVariants(const SubcommandArgsRange& args,
+                                     std::istream&, std::ostream& outs,
+                                     std::ostream&) {
+  const int limit_variants = absl::GetFlag(FLAGS_limit_variants);
+  if (args.size() > 1) {
+    return absl::InvalidArgumentError(
+        "ERROR: generate-variants only works on one file.");
+  }
+  const char* source_file = args[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -156,8 +169,16 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
 
   // Control flow tree constructing.
   verilog::FlowTree control_flow_tree(lexed_sequence);
-
-  auto status = control_flow_tree.GenerateVariants(PrintGeneratedVariant);
+  int counter = 0;
+  auto status = control_flow_tree.GenerateVariants(
+      [limit_variants, &counter](const verilog::FlowTree::Variant& variant) {
+        if (counter == limit_variants) return false;
+        counter++;
+        std::cout << "Variant number " << counter << ":\n";
+        for (auto token : variant.sequence) std::cout << token << '\n';
+        puts("");
+        return true;
+      });
   if (!status.ok()) {
     return status;
   }
@@ -166,45 +187,41 @@ static absl::Status GenerateVariants(const char* source_file, std::istream&,
 }
 
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
-    {"strip-comments",  //
-     {&StripComments,   //
+    {"strip-comments",
+     {&StripComments,
       R"(strip-comments file [replacement-char]
-
 Inputs:
   'file' is a Verilog or SystemVerilog source file.
   Use '-' to read from stdin.
-
   'replacement-char' is a character to replace comments with.
   If not given, or given as a single space character, the comment contents and
   delimiters are replaced with spaces.
   If an empty string, the comment contents and delimiters are deleted. Newlines
   are not deleted.
   If a single character, the comment contents are replaced with the character.
-
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.
 )"}},
-
-    {"multiple-cu",  //
-     {&MultipleCU,   //
-      R"(multiple-cu file1 file2 ...
-
-Input:
-  'file's are Verilog or SystemVerilog source files.
-  each one will be preprocessed in a separate compilation unit.
+    {"multiple-cu",
+     {&MultipleCU,
+      R"(multiple-cu file [more_files]
+Inputs:
+  'file' is a Verilog or SystemVerilog source file.
+   There can be multiple SystemVerilog source files.
+   Each one of them will be compiled in a separate compilation unit.
 Output: (stdout)
-  Contents of original file with compiler directives interpreted.
+  The preprocessed files content (same contents with directives interpreted).
+)"}},
+    {"generate-variants",
+     {&GenerateVariants,
+      R"(genera-variants file [-limit_variants number]
+Inputs:
+  'file' is a Verilog or SystemVerilog source file.
+  '-limit_variants' flag limits variants to 'number' (20 by default).
+Output: (stdout)
+   Generates every possible variant considering the conditional directives.
 )"}},
 
-    {"generate-variants",  //
-     {&GenerateVariants,   //
-      R"(bypass-conditionals file 
-
-Input:
- 'file' is Verilog or SystemVerilog source file.
-Output: (stdout)
-  Every possible source variants.
-)"}},
 };
 
 int main(int argc, char* argv[]) {

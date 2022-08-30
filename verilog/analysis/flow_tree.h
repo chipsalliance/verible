@@ -28,19 +28,33 @@ namespace verilog {
 
 // FlowTree class builds the control flow graph of a tokenized System-Verilog
 // source code. Furthermore, enabling doing the following queries on the graph:
-// 1) Generating all the possible variants (provided via a callback function).
-// 2) TODO(karimtera): uniquely identify a variant with a bitset.
+// - Generating all the possible variants (provided via a callback function).
 class FlowTree {
+ private:
+  // 'kMaxDistinctMacros' shows the maximum number of distinct macros that can
+  // be considered in conditonal directives.
+  static constexpr int kMaxDistinctMacros = 128;
+
  public:
-  using BitSet = std::bitset<128>;
+  using BitSet = std::bitset<kMaxDistinctMacros>;
   using TokenSequenceConstIterator = verible::TokenSequence::const_iterator;
 
+  // "ConditionalBlock" saves locations of conditionals in a "TokenSequence".
+  //  All locations should point inside this specific "TokenSequence".
+  //  Since it is only used in conjunction with a "TokenSequence",
+  //  It should be initialized to last location in this "TokenSequence",
+  //  For example in "GenerateControlFlowTree" is initialized to
+  //  'source_sequence_.end()'.
   struct ConditionalBlock {
-    TokenSequenceConstIterator ifdef_iterator;
-    TokenSequenceConstIterator ifndef_iterator;
-    std::vector<TokenSequenceConstIterator> elsif_iterators;
-    TokenSequenceConstIterator else_iterator;
-    TokenSequenceConstIterator endif_iterator;
+    // "if_location" points to `ifdef or `ifndef.
+    TokenSequenceConstIterator if_location;
+
+    // When "positive_condition" equals 1, then "if_location" points to `ifdef,
+    // Otherwise it points to `ifndef.
+    bool positive_condition;
+    std::vector<TokenSequenceConstIterator> elsif_locations;
+    TokenSequenceConstIterator else_location;
+    TokenSequenceConstIterator endif_location;
   };
 
   struct Variant {
@@ -48,11 +62,11 @@ class FlowTree {
     verible::TokenSequence sequence;
 
     // The i-th bit in "macros_mask" is 1 when the macro (with ID = i) is
-    // assumed to be defined, o.w. it is assumed to be undefined.
+    // assumed to be defined, otherwise it is assumed to be undefined.
     BitSet macros_mask;
 
-    // The i-th bit in "assumed" is 1 when the macro (with ID = i) is visited or
-    // assumed (either defined or not), o.w. it is not visited (its value
+    // The i-th bit in "visited" is 1 when the macro (with ID = i) is visited or
+    // assumed (either defined or not), otherwise it is not visited (its value
     // doesn't affect this variant).
     //
     // e.g.:
@@ -64,8 +78,8 @@ class FlowTree {
     //
     // Consider the variant in which A is undefined,
     // we notice that B doesn't affect the variant.
-    // Then the bit corresponding to B in "assumed" is 0.
-    BitSet assumed;
+    // Then the bit corresponding to B in "visited" is 0.
+    BitSet visited;
   };
 
   // Receive a complete token sequence of one variant.
@@ -77,6 +91,12 @@ class FlowTree {
 
   // Generates all possible variants.
   absl::Status GenerateVariants(const VariantReceiver &receiver);
+
+  // Returns all the used macros in conditionals, ordered with the same ID as
+  // used in BitSets.
+  const std::vector<TokenSequenceConstIterator> &GetUsedMacros() {
+    return conditional_macros_;
+  }
 
  private:
   // Constructs the control flow tree by adding the tree edges in edges_.
@@ -101,8 +121,9 @@ class FlowTree {
   static absl::Status MacroFollows(
       TokenSequenceConstIterator conditional_iterator);
 
-  // Adds macro to conditional_macro_id_ map.
-  absl::Status AddMacroOfConditionalToMap(
+  // Adds macro to conditional_macros_ vector, and save its ID in
+  // conditional_macro_id_ map.
+  absl::Status AddMacroOfConditional(
       TokenSequenceConstIterator conditional_iterator);
 
   int GetMacroIDOfConditional(TokenSequenceConstIterator conditional_iterator);
@@ -123,6 +144,9 @@ class FlowTree {
   // Mapping each conditional macro to an integer ID,
   // to use it later as a bit offset.
   std::map<absl::string_view, int> conditional_macro_id_;
+
+  // A vector containing all the macros used placed by their given ID.
+  std::vector<TokenSequenceConstIterator> conditional_macros_;
 
   // Number of macros appeared in `ifdef/`ifndef/`elsif.
   int conditional_macros_counter_ = 0;

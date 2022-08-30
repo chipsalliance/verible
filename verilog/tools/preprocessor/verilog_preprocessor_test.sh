@@ -51,33 +51,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test -strip_comments: white out comments"
-
-cat > "$MY_INPUT_FILE" <<EOF
-// fake Verilog file.
-/*
-  file description
-*/
-
-module mmm;
-  logic l1;  // l1 is for blah
-  /* l2 does this */
-  logic l2;
-endmodule
-EOF
-
-cat > "$MY_EXPECT_FILE" <<EOF
-                     
-  
-                  
-  
-
-module mmm;
-  logic l1;                   
-                    
-  logic l2;
-endmodule
-EOF
+echo "=== Test the 'help' command."
 
 "$preprocessor" help > "$MY_OUTPUT_FILE" 2>&1
 
@@ -115,7 +89,7 @@ status="$?"
   exit 1
 }
 
-################################################################################
+################################################################################################################################################################
 echo "=== Test strip-comments: white out comments"
 
 cat > "$MY_INPUT_FILE" <<EOF
@@ -123,7 +97,6 @@ cat > "$MY_INPUT_FILE" <<EOF
 /*
   file description
 */
-
 module mmm;
   logic l1;  // l1 is for blah
   /* l2 does this */
@@ -132,12 +105,13 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-
- 
-
+                     
+  
+                  
+  
 module mmm;
-  logic l1;  
-   
+  logic l1;                   
+                    
   logic l2;
 endmodule
 EOF
@@ -154,34 +128,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
-################################################################################
-echo "=== Test strip-comments: replace comments"
-
-cat > "$MY_INPUT_FILE" <<EOF
-// fake Verilog file.
-/*
-  file description
-*/
-
-module mmm;
-  logic l1;  // l1 is for blah
-  /* l2 does this */
-  logic l2;
-endmodule
-EOF
-
-cat > "$MY_EXPECT_FILE" <<EOF
-//...................
-/*
-..................
-*/
-
-module mmm;
-  logic l1;  //...............
-  /*..............*/
-  logic l2;
-endmodule
-EOF
+# Same but piped into stdin.
 
 "$preprocessor" strip-comments - < "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
 
@@ -203,7 +150,6 @@ cat > "$MY_INPUT_FILE" <<EOF
 /*
   file description
 */
-
 module mmm;
   logic l1;  // l1 is for blah
   /* l2 does this */
@@ -212,9 +158,7 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-
  
-
 module mmm;
   logic l1;  
    
@@ -242,7 +186,6 @@ cat > "$MY_INPUT_FILE" <<EOF
 /*
   file description
 */
-
 module mmm;
   logic l1;  // l1 is for blah
   /* l2 does this */
@@ -255,7 +198,6 @@ cat > "$MY_EXPECT_FILE" <<EOF
 /*
 ..................
 */
-
 module mmm;
   logic l1;  //...............
   /*..............*/
@@ -310,6 +252,5 @@ status="$?"
   "Expected exit code 1, but got $status"
   exit 1
 }
-
 ################################################################################
 echo "PASS"

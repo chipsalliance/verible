@@ -28,13 +28,6 @@ namespace verilog {
 namespace {
 
 using testing::StartsWith;
-using VariantReceiver = std::function<bool(const FlowTree::Variant& variant)>;
-
-// Global variables for testing, 'VariantReceiver's updates them.
-std::vector<FlowTree::Variant> g_variants;
-
-// Resets the global variants vector (to be used before any test).
-void ResetGlobalTestingVariables() { g_variants.clear(); }
 
 // Lexes a SystemVerilog source code, and returns a TokenSequence.
 verible::TokenSequence LexToSequence(absl::string_view source_contents) {
@@ -49,44 +42,54 @@ verible::TokenSequence LexToSequence(absl::string_view source_contents) {
   return lexed_sequence;
 }
 
-// A VariantReceiver function that add variants into g_variants.
-bool GetVariant(const FlowTree::Variant& variant) {
-  g_variants.push_back(variant);
-  return true;
-}
-
 TEST(FlowTree, MultipleConditionalsSameMacro) {
   const absl::string_view test_case =
       R"(
     `ifdef A
-      A_TRUE
+      A_TRUE_1
     `else
-      A_FALSE
+      A_FALSE_1
     `endif
 
     `ifdef A
-      A_TRUE
+      A_TRUE_2
     `else
-      A_FALSE
+      A_FALSE_2
     `endif
 
     `ifndef A
-      A_FALSE
+      A_FALSE_3
     `else
-      A_TRUE
+      A_TRUE_3
     `endif)";
 
   FlowTree tree_test(LexToSequence(test_case));
-  ResetGlobalTestingVariables();
-  auto status = tree_test.GenerateVariants(GetVariant);
+  std::vector<FlowTree::Variant> variants;
+  auto status =
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+        variants.push_back(variant);
+        return true;
+      });
   EXPECT_TRUE(status.ok());
-  EXPECT_EQ(g_variants.size(), 2);
-  for (const auto& variant : g_variants[0].sequence) {
-    EXPECT_EQ(variant.text(), "A_TRUE");
-  }
-  for (const auto& variant : g_variants[1].sequence) {
-    EXPECT_EQ(variant.text(), "A_FALSE");
-  }
+  EXPECT_EQ(variants.size(), 2);
+
+  const auto& used_macros = tree_test.GetUsedMacros();
+  EXPECT_EQ(used_macros.size(), 1);
+  EXPECT_THAT(used_macros[0]->text(), "A");
+
+  // First variant: A is defined.
+  EXPECT_TRUE(variants[0].macros_mask.test(0));
+  EXPECT_TRUE(variants[0].visited.test(0));
+  EXPECT_THAT(variants[0].sequence[0].text(), "A_TRUE_1");
+  EXPECT_THAT(variants[0].sequence[1].text(), "A_TRUE_2");
+  EXPECT_THAT(variants[0].sequence[2].text(), "A_TRUE_3");
+
+  // Second variant: A is undefined.
+  EXPECT_FALSE(variants[1].macros_mask.test(0));
+  EXPECT_TRUE(variants[1].visited.test(0));
+  EXPECT_THAT(variants[1].sequence[0].text(), "A_FALSE_1");
+  EXPECT_THAT(variants[1].sequence[1].text(), "A_FALSE_2");
+  EXPECT_THAT(variants[1].sequence[2].text(), "A_FALSE_3");
 }
 
 TEST(FlowTree, UnmatchedElses) {
@@ -122,8 +125,8 @@ TEST(FlowTree, UnmatchedElses) {
 
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
-    ResetGlobalTestingVariables();
-    auto status = tree_test.GenerateVariants(GetVariant);
+    auto status = tree_test.GenerateVariants(
+        [](const FlowTree::Variant& variant) { return true; });
     EXPECT_FALSE(status.ok());
     EXPECT_THAT(status.message(), StartsWith("ERROR: Unmatched"));
   }
@@ -149,8 +152,8 @@ TEST(FlowTree, UncompletedConditionals) {
 
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
-    ResetGlobalTestingVariables();
-    auto status = tree_test.GenerateVariants(GetVariant);
+    auto status = tree_test.GenerateVariants(
+        [](const FlowTree::Variant& variant) { return true; });
     EXPECT_FALSE(status.ok());
     EXPECT_THAT(status.message(), StartsWith("ERROR: Uncompleted"));
   }
@@ -171,13 +174,28 @@ TEST(FlowTree, NestedConditionals) {
 
   for (auto test : test_cases) {
     FlowTree tree_test(LexToSequence(test));
-    ResetGlobalTestingVariables();
-    auto status = tree_test.GenerateVariants(GetVariant);
+    std::vector<FlowTree::Variant> variants;
+    auto status = tree_test.GenerateVariants(
+        [&variants](const FlowTree::Variant& variant) {
+          variants.push_back(variant);
+          return true;
+        });
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(g_variants.size(), 3);
-    for (const auto& variant : g_variants) {
+    EXPECT_EQ(variants.size(), 3);
+    for (const auto& variant : variants) {
       EXPECT_EQ(variant.sequence.size(), 1);
+      if (variant.macros_mask.test(0) == 0) {
+        // Check that if A is undefined, then B is not visited.
+        EXPECT_FALSE(variant.visited.test(1));
+      } else {
+        // Check that if A is defined, then B is visited.
+        EXPECT_TRUE(variant.visited.test(1));
+      }
     }
+    const auto& used_macros = tree_test.GetUsedMacros();
+    EXPECT_EQ(used_macros.size(), 2);
+    EXPECT_THAT(used_macros[0]->text(), "A");
+    EXPECT_THAT(used_macros[1]->text(), "B");
   }
 }
 
