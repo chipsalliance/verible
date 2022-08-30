@@ -17,7 +17,7 @@
 import sys
 import unittest
 
-import filelist_parser
+from verilog.tools.kythe import filelist_parser
 
 
 class FilelistParserTest(unittest.TestCase):
