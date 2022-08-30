@@ -121,14 +121,14 @@ declare -A KnownProjectToolIssue
 # removed.
 declare -A ExpectedFailCount
 
-ExpectedFailCount[syntax:ibex]=12
-ExpectedFailCount[lint:ibex]=12
-ExpectedFailCount[project:ibex]=176
+ExpectedFailCount[syntax:ibex]=14
+ExpectedFailCount[lint:ibex]=14
+ExpectedFailCount[project:ibex]=185
 
 ExpectedFailCount[syntax:opentitan]=31
 ExpectedFailCount[lint:opentitan]=31
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=691
+ExpectedFailCount[project:opentitan]=700
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
@@ -159,9 +159,9 @@ ExpectedFailCount[lint:ivtest]=188
 ExpectedFailCount[formatter:ivtest]=2
 ExpectedFailCount[project:ivtest]=217
 
-ExpectedFailCount[syntax:basejump_stl]=445
-ExpectedFailCount[lint:basejump_stl]=445
-ExpectedFailCount[project:basejump_stl]=551
+ExpectedFailCount[syntax:basejump_stl]=451
+ExpectedFailCount[lint:basejump_stl]=451
+ExpectedFailCount[project:basejump_stl]=557
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
