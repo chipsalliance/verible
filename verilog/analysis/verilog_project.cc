@@ -25,6 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/strip.h"
+#include "absl/time/time.h"
 #include "absl/types/optional.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
@@ -70,7 +71,10 @@ absl::Status VerilogSourceFile::Parse() {
   if (!status_.ok()) return status_;
 
   // Lex, parse, populate underlying TextStructureView.
+  absl::Time analyze_start = absl::Now();
   status_ = analyzed_structure_->Analyze();
+  LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
+            << absl::ToInt64Milliseconds(absl::Now() - analyze_start) << "ms";
   state_ = State::kParsed;
   return status_;
 }
