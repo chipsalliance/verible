@@ -10,7 +10,7 @@
 [![codecov](https://codecov.io/gh/chipsalliance/verible/branch/master/graph/badge.svg?token=5f656dpmDT)](https://codecov.io/gh/chipsalliance/verible)
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2020-10-08' }
+freshness: { owner: 'hzeller' reviewed: '2022-08-31' }
 *-->
 
 The Verible project's main mission is to parse SystemVerilog (IEEE 1800-2017)
@@ -58,4 +58,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2022-08-31 12:47:48 -0700 from [537ca0ca](https://github.com/google/verible/commit/537ca0caecfb3901527dcd7d90802a001ce6225d)
+Generated on 2022-08-31 15:09:13 -0700 from [4faba50b](https://github.com/google/verible/commit/4faba50b9fa6c30cf18b59f1254c15fc214d72c3)
