@@ -322,7 +322,7 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
 
   // Process each file in the original listed order.
   for (const IndexingFactNode& root : file_list.Children()) {
-    absl::Time extraction_start = absl::Now();
+    const absl::Time extraction_start = absl::Now();
     // 'root' corresponds to the fact tree for a particular file.
     // 'file_path' is path-resolved.
     const absl::string_view file_path(GetFilePathFromRoot(root));

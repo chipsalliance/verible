@@ -71,7 +71,7 @@ absl::Status VerilogSourceFile::Parse() {
   if (!status_.ok()) return status_;
 
   // Lex, parse, populate underlying TextStructureView.
-  absl::Time analyze_start = absl::Now();
+  const absl::Time analyze_start = absl::Now();
   status_ = analyzed_structure_->Analyze();
   LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
             << absl::ToInt64Milliseconds(absl::Now() - analyze_start) << "ms";
