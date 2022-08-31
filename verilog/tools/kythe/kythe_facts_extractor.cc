@@ -28,6 +28,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
+#include "absl/time/time.h"
 #include "common/strings/compare.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
@@ -321,6 +322,7 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
 
   // Process each file in the original listed order.
   for (const IndexingFactNode& root : file_list.Children()) {
+    const absl::Time extraction_start = absl::Now();
     // 'root' corresponds to the fact tree for a particular file.
     // 'file_path' is path-resolved.
     const absl::string_view file_path(GetFilePathFromRoot(root));
@@ -344,6 +346,9 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
     const auto indexing_data = kythe_extractor.ExtractFile(root);
     for (const Fact& fact : indexing_data.facts) kythe_output->Emit(fact);
     for (const Edge& edge : indexing_data.edges) kythe_output->Emit(edge);
+    LOG(INFO) << "Extracted Kythe facts of " << source->ResolvedPath() << " in "
+              << absl::ToInt64Milliseconds(absl::Now() - extraction_start)
+              << "ms";
   }
 
   VLOG(1) << "end of " << __FUNCTION__;
