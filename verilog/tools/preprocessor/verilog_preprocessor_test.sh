@@ -158,6 +158,7 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
+
  
 module mmm;
   logic l1;  
