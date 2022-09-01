@@ -24,6 +24,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "absl/types/optional.h"
 #include "common/text/text_structure.h"
@@ -344,23 +345,24 @@ absl::StatusOr<FileList> ParseSourceFileListFromFile(
 absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
     const std::vector<char*>& cmdline) {
   FileList file_list_out;
-  for (std::string argument :
+  for (absl::string_view argument :
        verible::make_range(cmdline.begin() + 1, cmdline.end())) {
     // cmdline[0] is the tool's name, which can be skipped.
+    if (argument.empty()) continue;
     if (argument[0] != '+') {
       // Then "argument" is a SV file name.
-      file_list_out.file_paths.push_back(argument);
+      file_list_out.file_paths.push_back(std::string(argument));
     } else {
       // it should be either a define or incdir.
-      std::vector<std::string> argument_plus_splitted =
+      std::vector<absl::string_view> argument_plus_splitted =
           absl::StrSplit(argument, absl::ByChar('+'), absl::SkipEmpty());
       if (argument_plus_splitted.size() < 2) {
         return absl::InvalidArgumentError("Unkown argument.");
       }
-      std::string plus_argument_type = argument_plus_splitted[0];
-      if (absl::StrContains(plus_argument_type, "define")) {
+      absl::string_view plus_argument_type = argument_plus_splitted[0];
+      if (plus_argument_type == "define") {
         // define argument.
-        for (const std::string& define_argument :
+        for (const absl::string_view define_argument :
              verible::make_range(argument_plus_splitted.begin() + 1,
                                  argument_plus_splitted.end())) {
           // argument_plus_splitted[0] is 'define' so it is safe to skip it.
@@ -371,13 +373,13 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
           // add the define argument.
           file_list_out.defines.push_back(macro);
         }
-      } else if (absl::StrContains(plus_argument_type, "incdir")) {
+      } else if (plus_argument_type == "incdir") {
         // incdir argument.
-        for (const std::string& incdir_argument :
+        for (const absl::string_view incdir_argument :
              verible::make_range(argument_plus_splitted.begin() + 1,
                                  argument_plus_splitted.end())) {
           // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
-          file_list_out.include_dirs.push_back(incdir_argument);
+          file_list_out.include_dirs.push_back(std::string(incdir_argument));
         }
       } else {
         return absl::InvalidArgumentError("Unkown argument.");

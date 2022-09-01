@@ -323,6 +323,9 @@ class VerilogProject {
 struct TextMacroDefinition {
   std::string name;
   std::string value;
+  bool operator==(const TextMacroDefinition& macro_definition) const {
+    return name == macro_definition.name && value == macro_definition.value;
+  }
 };
 
 // File list for compiling a System Verilog project.
