@@ -233,7 +233,7 @@ EOF
 
 status="$?"
 [[ $status == 0 ]] || {
-  "Expected exit code 1, but got $status"
+  "Expected exit code 0, but got $status"
   exit 0
 }
 
@@ -252,5 +252,243 @@ status="$?"
   "Expected exit code 1, but got $status"
   exit 1
 }
+################################################################################
+echo "=== Test multiple-compilation-unit: on a source file with conditionals"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "file.sv"
+module m();
+  wire x = 1;
+\`ifdef A
+  real is_defined = 1;
+\`else
+  real is_defined = 0;
+\`endif
+// pre-blank line
+
+// post-blank line
+endmodule
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+(#259: "\`include")
+(#313: ""file.sv"")
+(#359: "module")
+(#293: "m")
+(#40: "(")
+(#41: ")")
+(#59: ";")
+(#417: "wire")
+(#293: "x")
+(#61: "=")
+(#300: "1")
+(#59: ";")
+(#379: "real")
+(#293: "is_defined")
+(#61: "=")
+(#300: "0")
+(#59: ";")
+(#336: "endmodule")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test generate-variants: on a source file with nested conditionals"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+  \`ifdef B
+    B_TRUE
+  \`else
+    B_FALSE
+  \`endif
+\`else
+  A_FALSE
+\`endif
+
+\`ifdef A
+  A_TRUE
+\`endif
+
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+Variant number 1:
+(#293: "A_TRUE")
+(#293: "B_TRUE")
+(#293: "A_TRUE")
+Variant number 2:
+(#293: "A_TRUE")
+(#293: "B_FALSE")
+(#293: "A_TRUE")
+Variant number 3:
+(#293: "A_FALSE")
+EOF
+
+"$preprocessor" generate-variants "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test generate-variants: with limited variants"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+
+\`ifndef A
+  A_FALSE
+\`else
+  A_TRUE
+\`endif
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+Variant number 1:
+(#293: "A_TRUE")
+(#293: "A_TRUE")
+(#293: "A_TRUE")
+EOF
+
+"$preprocessor" generate-variants "$MY_INPUT_FILE" --limit_variants 1 > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test generate-variants: with invalid conditionals"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+EOF
+
+"$preprocessor" generate-variants "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 0
+}
+
+################################################################################
+echo "=== Test generate-variants: with multiple files"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+EOF
+
+"$preprocessor" generate-variants "$MY_INPUT_FILE" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 0
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: with missing files"
+
+"$preprocessor" multiple-compilation-unit > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 0
+}
+
+################################################################################
+echo "=== Test generate-variants: with multiple files"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+EOF
+
+"$preprocessor" generate-variants "$MY_INPUT_FILE" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 0
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: with multiple files"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+EOF
+
+
+cat > "$MY_EXPECT_FILE" <<EOF
+(#293: "A_FALSE")
+
+(#293: "A_FALSE")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 
+
+status="$?"
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
 ################################################################################
 echo "PASS"

@@ -73,11 +73,12 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
 }
 
 static absl::Status PreprocessSingleFile(const char* source_file, std::istream&,
-                                         std::ostream& outs, std::ostream&) {
+                                         std::ostream& outs,
+                                         std::ostream& message_stream) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
-    std::cerr << "ERROR: passed file can't be open\n.";
+    message_stream << source_file << status;
     return status;
   }
   verilog::VerilogPreprocess::Config config;
@@ -101,36 +102,19 @@ static absl::Status PreprocessSingleFile(const char* source_file, std::istream&,
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << *u << '\n';
-  // for debugging.
   for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
 
-  //  parsing just as a trial
-  std::string post_preproc;
-  for (auto u : preprocessed_stream) post_preproc += std::string{u->text()};
-  std::string source_view{post_preproc};
-  verilog::VerilogAnalyzer analyzer(source_view, "file1", config);
-  auto analyze_status = analyzer.Analyze();
-  /* const auto& mydata = analyzer.Data().Contents(); */
-  /* outs<<mydata; */
-
-  /* TODO(karimtera): regarding conditionals
-   1) Modify VerilogPreprocess config to have a configuration to generate SV
-   source codes for all possible variants. 2) Then use parser, directly from
-   VerilogAnalyzer or from VerilogParser to have less dependences. 3) Now, we
-   should have multiple trees, we need to merge them as described by Tom in
-   Verible's issue. 4) Finally, travese the tree and output the chosen path
-   based on definitions.
-  */
   return absl::OkStatus();
 }
 
 static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
-                               std::ostream& outs, std::ostream&) {
+                               std::ostream& outs,
+                               std::ostream& message_stream) {
   if (args.empty()) {
     return absl::InvalidArgumentError("Missing file arguments.");
   }
   for (const char* source_file : args) {
-    outs << source_file << ":\n";
+    message_stream << source_file << ":\n";
     auto status = PreprocessSingleFile(source_file, std::cin, outs, std::cerr);
     if (!status.ok()) return status;
     outs << '\n';
@@ -140,7 +124,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
 
 static absl::Status GenerateVariants(const SubcommandArgsRange& args,
                                      std::istream&, std::ostream& outs,
-                                     std::ostream&) {
+                                     std::ostream& message_stream) {
   const int limit_variants = absl::GetFlag(FLAGS_limit_variants);
   if (args.size() > 1) {
     return absl::InvalidArgumentError(
@@ -150,8 +134,8 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
-    std::cerr << "ERROR: passed file can't be open\n.";
-    return status;  // check if the the file is not readable or doesn't exist.
+    message_stream << source_file << status;
+    return status;
   }
 
   // Lexing the input SV source code.
@@ -171,12 +155,15 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   verilog::FlowTree control_flow_tree(lexed_sequence);
   int counter = 0;
   auto status = control_flow_tree.GenerateVariants(
-      [limit_variants, &counter](const verilog::FlowTree::Variant& variant) {
+      [limit_variants, &outs, &message_stream,
+       &counter](const verilog::FlowTree::Variant& variant) {
         if (counter == limit_variants) return false;
         counter++;
-        std::cout << "Variant number " << counter << ":\n";
-        for (auto token : variant.sequence) std::cout << token << '\n';
-        puts("");
+        message_stream << "Variant number " << counter << ":\n";
+        for (auto token : variant.sequence) outs << token << '\n';
+        // TODO(karimtera): Consider creating an output file per vairant,
+        // Such that the files naming reflects which defines are
+        // defined/undefined.
         return true;
       });
   if (!status.ok()) {
@@ -202,26 +189,32 @@ Inputs:
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.
 )"}},
-    {"multiple-cu",
+    {"multiple-compilation-unit",
      {&MultipleCU,
-      R"(multiple-cu file [more_files]
+      R"(multiple-compilation-unit file [more_files]
 Inputs:
   'file' is a Verilog or SystemVerilog source file.
    There can be multiple SystemVerilog source files.
-   Each one of them will be compiled in a separate compilation unit.
+   Each one of them will be prepropcessed separatly which means that declarations
+   scoopes will end by the end of each file, and won't be seen from other files.
 Output: (stdout)
   The preprocessed files content (same contents with directives interpreted).
 )"}},
     {"generate-variants",
      {&GenerateVariants,
-      R"(genera-variants file [-limit_variants number]
+      R"(generate-variants file [-limit_variants number]
 Inputs:
   'file' is a Verilog or SystemVerilog source file.
   '-limit_variants' flag limits variants to 'number' (20 by default).
 Output: (stdout)
    Generates every possible variant considering the conditional directives.
 )"}},
+    // TODO(karimtera): We can add another argument to `generate-variants`,
+    // Which allows us to set some defines, as if we are only interested
+    // in the variants in which these defines are set.
 
+    // TODO(karimtera): Another candidate subcommand is `list-defines`,
+    // Which would be the output of `GetUsedMacros()`.
 };
 
 int main(int argc, char* argv[]) {

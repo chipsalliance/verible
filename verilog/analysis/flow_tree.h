@@ -45,17 +45,6 @@ class FlowTree {
   //  It should be initialized to last location in this "TokenSequence",
   //  For example in "GenerateControlFlowTree" is initialized to
   //  'source_sequence_.end()'.
-  struct ConditionalBlock {
-    // "if_location" points to `ifdef or `ifndef.
-    TokenSequenceConstIterator if_location;
-
-    // When "positive_condition" equals 1, then "if_location" points to `ifdef,
-    // Otherwise it points to `ifndef.
-    bool positive_condition;
-    std::vector<TokenSequenceConstIterator> elsif_locations;
-    TokenSequenceConstIterator else_location;
-    TokenSequenceConstIterator endif_location;
-  };
 
   struct Variant {
     // Contains the token sequence of the variant.
@@ -99,6 +88,18 @@ class FlowTree {
   }
 
  private:
+  struct ConditionalBlock {
+    // "if_location" points to `ifdef or `ifndef.
+    TokenSequenceConstIterator if_location;
+
+    // When "positive_condition" equals 1, then "if_location" points to `ifdef,
+    // Otherwise it points to `ifndef.
+    bool positive_condition;
+    std::vector<TokenSequenceConstIterator> elsif_locations;
+    TokenSequenceConstIterator else_location;
+    TokenSequenceConstIterator endif_location;
+  };
+
   // Constructs the control flow tree by adding the tree edges in edges_.
   absl::Status GenerateControlFlowTree();
 
