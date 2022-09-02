@@ -199,5 +199,92 @@ TEST(FlowTree, NestedConditionals) {
   }
 }
 
+TEST(FlowTree, MultipleElseIfs) {
+  const absl::string_view test_case =
+      R"(
+    `ifdef A
+      A_TRUE
+    `elsif B
+      B_TRUE
+    `elsif EMPTY
+    `elsif C
+      C_TRUE
+    `endif)";
+
+  FlowTree tree_test(LexToSequence(test_case));
+  std::vector<FlowTree::Variant> variants;
+  auto status =
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+        variants.push_back(variant);
+        return true;
+      });
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(variants.size(), 5);
+
+  const auto& used_macros = tree_test.GetUsedMacros();
+  EXPECT_EQ(used_macros.size(), 4);
+  EXPECT_THAT(used_macros[0]->text(), "A");
+  EXPECT_THAT(used_macros[1]->text(), "B");
+  EXPECT_THAT(used_macros[2]->text(), "EMPTY");
+  EXPECT_THAT(used_macros[3]->text(), "C");
+
+  // A is defined.
+  EXPECT_TRUE(variants[0].macros_mask.test(0));
+  EXPECT_THAT(variants[0].sequence[0].text(), "A_TRUE");
+
+  // B is defined.
+  EXPECT_TRUE(variants[1].macros_mask.test(1));
+  EXPECT_THAT(variants[1].sequence[0].text(), "B_TRUE");
+
+  // EMPTY is defined.
+  EXPECT_TRUE(variants[2].macros_mask.test(2));
+  EXPECT_TRUE(variants[2].sequence.empty());
+
+  // C is defined.
+  EXPECT_TRUE(variants[3].macros_mask.test(3));
+  EXPECT_THAT(variants[3].sequence[0].text(), "C_TRUE");
+}
+
+TEST(FlowTree, SwappedNegatedIfs) {
+  const absl::string_view test_case =
+      R"(
+    `ifndef A
+      A_FALSE
+    `elsif B
+      B_TRUE
+    `endif
+
+    `ifndef B
+      B_FALSE
+    `elsif A
+      A_TRUE
+    `endif)";
+
+  FlowTree tree_test(LexToSequence(test_case));
+  std::vector<FlowTree::Variant> variants;
+  auto status =
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+        variants.push_back(variant);
+        return true;
+      });
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(variants.size(), 4);
+
+  const auto& used_macros = tree_test.GetUsedMacros();
+  EXPECT_EQ(used_macros.size(), 2);
+  EXPECT_THAT(used_macros[0]->text(), "A");
+  EXPECT_THAT(used_macros[1]->text(), "B");
+
+  EXPECT_THAT(variants[0].sequence[0].text(), "A_FALSE");
+  EXPECT_THAT(variants[0].sequence[1].text(), "B_FALSE");
+
+  EXPECT_THAT(variants[1].sequence[0].text(), "A_FALSE");
+
+  EXPECT_THAT(variants[2].sequence[0].text(), "B_TRUE");
+  EXPECT_THAT(variants[2].sequence[1].text(), "A_TRUE");
+
+  EXPECT_THAT(variants[3].sequence[0].text(), "B_FALSE");
+}
+
 }  // namespace
 }  // namespace verilog

@@ -72,7 +72,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static absl::Status PreprocessSingleFile(const char* source_file, std::istream&,
+static absl::Status PreprocessSingleFile(absl::string_view source_file,
                                          std::ostream& outs,
                                          std::ostream& message_stream) {
   std::string source_contents;
@@ -115,7 +115,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   }
   for (const char* source_file : args) {
     message_stream << source_file << ":\n";
-    auto status = PreprocessSingleFile(source_file, std::cin, outs, std::cerr);
+    auto status = PreprocessSingleFile(source_file, outs, message_stream);
     if (!status.ok()) return status;
     outs << '\n';
   }
