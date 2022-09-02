@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2022 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,17 +16,26 @@
 #include <iostream>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/lexer/token_stream_adapter.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/subcommand.h"
+#include "verilog/analysis/flow_tree.h"
+#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_lexer.h"
+#include "verilog/parser/verilog_token_enum.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
+
+ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
 
 static absl::Status StripComments(const SubcommandArgsRange& args,
                                   std::istream&, std::ostream& outs,
@@ -63,25 +72,149 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
-    {"strip-comments",  //
-     {&StripComments,   //
-      R"(strip-comments file [replacement-char]
+static absl::Status PreprocessSingleFile(absl::string_view source_file,
+                                         std::ostream& outs,
+                                         std::ostream& message_stream) {
+  std::string source_contents;
+  if (auto status = verible::file::GetContents(source_file, &source_contents);
+      !status.ok()) {
+    message_stream << source_file << status;
+    return status;
+  }
+  verilog::VerilogPreprocess::Config config;
+  config.filter_branches = 1;
+  // config.expand_macros=1;
+  verilog::VerilogPreprocess preprocessor(config);
+  verilog::VerilogLexer lexer(source_contents);
+  verible::TokenSequence lexed_sequence;
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    // For now we will store the syntax tree tokens only, ignoring all the
+    // white-space characters. however that should be stored to output the
+    // source code just like it was, but with conditionals filtered.
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+      lexed_sequence.push_back(lexer.GetLastToken());
+  }
+  verible::TokenStreamView lexed_streamview;
+  // Initializing the lexed token stream view.
+  InitTokenStreamView(lexed_sequence, &lexed_streamview);
+  verilog::VerilogPreprocessData preprocessed_data =
+      preprocessor.ScanStream(lexed_streamview);
+  auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
+  for (auto u : preprocessed_stream) outs << *u << '\n';
+  for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
 
+  return absl::OkStatus();
+}
+
+static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
+                               std::ostream& outs,
+                               std::ostream& message_stream) {
+  if (args.empty()) {
+    return absl::InvalidArgumentError("Missing file arguments.");
+  }
+  for (const char* source_file : args) {
+    message_stream << source_file << ":\n";
+    auto status = PreprocessSingleFile(source_file, outs, message_stream);
+    if (!status.ok()) return status;
+    outs << '\n';
+  }
+  return absl::OkStatus();
+}
+
+static absl::Status GenerateVariants(const SubcommandArgsRange& args,
+                                     std::istream&, std::ostream& outs,
+                                     std::ostream& message_stream) {
+  const int limit_variants = absl::GetFlag(FLAGS_limit_variants);
+  if (args.size() > 1) {
+    return absl::InvalidArgumentError(
+        "ERROR: generate-variants only works on one file.");
+  }
+  const char* source_file = args[0];
+  std::string source_contents;
+  if (auto status = verible::file::GetContents(source_file, &source_contents);
+      !status.ok()) {
+    message_stream << source_file << status;
+    return status;
+  }
+
+  // Lexing the input SV source code.
+  verilog::VerilogLexer lexer(source_contents);
+  verible::TokenSequence lexed_sequence;
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    // For now we will store the syntax tree tokens only, ignoring all the
+    // white-space characters. however that should be stored to output the
+    // source code just like it was.
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
+      lexed_sequence.push_back(lexer.GetLastToken());
+    }
+  }
+
+  // Control flow tree constructing.
+  verilog::FlowTree control_flow_tree(lexed_sequence);
+  int counter = 0;
+  auto status = control_flow_tree.GenerateVariants(
+      [limit_variants, &outs, &message_stream,
+       &counter](const verilog::FlowTree::Variant& variant) {
+        if (counter == limit_variants) return false;
+        counter++;
+        message_stream << "Variant number " << counter << ":\n";
+        for (auto token : variant.sequence) outs << token << '\n';
+        // TODO(karimtera): Consider creating an output file per vairant,
+        // Such that the files naming reflects which defines are
+        // defined/undefined.
+        return true;
+      });
+  if (!status.ok()) {
+    return status;
+  }
+
+  return absl::OkStatus();
+}
+
+static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
+    {"strip-comments",
+     {&StripComments,
+      R"(strip-comments file [replacement-char]
 Inputs:
   'file' is a Verilog or SystemVerilog source file.
   Use '-' to read from stdin.
-
   'replacement-char' is a character to replace comments with.
   If not given, or given as a single space character, the comment contents and
   delimiters are replaced with spaces.
   If an empty string, the comment contents and delimiters are deleted. Newlines
   are not deleted.
   If a single character, the comment contents are replaced with the character.
-
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.
 )"}},
+    {"multiple-compilation-unit",
+     {&MultipleCU,
+      R"(multiple-compilation-unit file [more_files]
+Inputs:
+  'file' is a Verilog or SystemVerilog source file.
+   There can be multiple SystemVerilog source files.
+   Each one of them will be prepropcessed separatly which means that declarations
+   scoopes will end by the end of each file, and won't be seen from other files.
+Output: (stdout)
+  The preprocessed files content (same contents with directives interpreted).
+)"}},
+    {"generate-variants",
+     {&GenerateVariants,
+      R"(generate-variants file [-limit_variants number]
+Inputs:
+  'file' is a Verilog or SystemVerilog source file.
+  '-limit_variants' flag limits variants to 'number' (20 by default).
+Output: (stdout)
+   Generates every possible variant considering the conditional directives.
+)"}},
+    // TODO(karimtera): We can add another argument to `generate-variants`,
+    // Which allows us to set some defines, as if we are only interested
+    // in the variants in which these defines are set.
+
+    // TODO(karimtera): Another candidate subcommand is `list-defines`,
+    // Which would be the output of `GetUsedMacros()`.
 };
 
 int main(int argc, char* argv[]) {
