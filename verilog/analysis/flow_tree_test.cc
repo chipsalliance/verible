@@ -141,13 +141,13 @@ TEST(FlowTree, UnvalidConditionals) {
       A_FALSE
       )",
       R"(
-    `ifdef 
+    `ifdef
       A_TRUE
     `else
       A_FALSE
       )",
       R"(
-    `ifndef 
+    `ifndef
       A_TRUE
     `else
       A_FALSE
@@ -325,7 +325,7 @@ TEST(FlowTree, CompleteConditional) {
       B_TRUE
     `elsif C
       C_TRUE
-    `else 
+    `else
       ALL_FALSE
     `endif)";
 
