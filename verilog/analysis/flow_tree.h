@@ -21,8 +21,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "common/lexer/token_stream_adapter.h"
-#include "verilog/parser/verilog_token_enum.h"
+#include "common/text/token_stream_view.h"
 
 namespace verilog {
 

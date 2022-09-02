@@ -79,7 +79,7 @@ cc_library(
     srcs = ["flow_tree.cc"],
     hdrs = ["flow_tree.h"],
     deps = [
-        "//common/lexer:token_stream_adapter",
+        "//common/text:token_stream_view",
         "//verilog/parser:verilog_token_enum",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
@@ -91,11 +91,9 @@ cc_test(
     srcs = ["flow_tree_test.cc"],
     deps = [
         ":flow_tree",
-        "//common/util:logging",
-        "//common/lexer:token_stream_adapter",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_token_enum",
-        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
