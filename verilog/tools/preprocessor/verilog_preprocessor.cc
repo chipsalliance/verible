@@ -15,6 +15,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/usage.h"
@@ -39,11 +40,19 @@ ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
 static absl::Status StripComments(const SubcommandArgsRange& args,
                                   std::istream&, std::ostream& outs,
                                   std::ostream&) {
-  if (args.empty()) {
+  // Parse the arguments into a FileList.
+  std::vector<absl::string_view> cmdline_args(args.begin(),args.end());
+  auto parsed_file_list = verilog::ParseSourceFileListFromCommandline(cmdline_args);
+  if (!parsed_file_list.ok()) {
+    return parsed_file_list.status();
+  }
+  const auto& files = parsed_file_list->file_paths;
+
+  if (files.empty()) {
     return absl::InvalidArgumentError(
         "Missing file argument.  Use '-' for stdin.");
   }
-  const absl::string_view source_file = args[0];
+  const absl::string_view source_file = files[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -110,10 +119,20 @@ static absl::Status PreprocessSingleFile(absl::string_view source_file,
 static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
                                std::ostream& outs,
                                std::ostream& message_stream) {
-  if (args.empty()) {
-    return absl::InvalidArgumentError("Missing file arguments.");
+  // Parse the arguments into a FileList.
+  std::vector<absl::string_view> cmdline_args(args.begin(),args.end());
+  auto parsed_file_list = verilog::ParseSourceFileListFromCommandline(cmdline_args);
+  if (!parsed_file_list.ok()) {
+    return parsed_file_list.status();
   }
-  for (absl::string_view source_file : args) {
+  const auto& files = parsed_file_list->file_paths;
+  //TODO(karimtera): Pass defines and incdirs to "PreprocessSingleFile()".
+
+  if (files.empty()) {
+    return absl::InvalidArgumentError(
+        "ERROR: Missing file argument.");
+  }
+  for (const absl::string_view source_file : files) {
     message_stream << source_file << ":\n";
     auto status = PreprocessSingleFile(source_file, outs, message_stream);
     if (!status.ok()) return status;
@@ -125,12 +144,25 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
 static absl::Status GenerateVariants(const SubcommandArgsRange& args,
                                      std::istream&, std::ostream& outs,
                                      std::ostream& message_stream) {
+  // Parse the arguments into a FileList.
+  std::vector<absl::string_view> cmdline_args(args.begin(),args.end());
+  auto parsed_file_list = verilog::ParseSourceFileListFromCommandline(cmdline_args);
+  if (!parsed_file_list.ok()) {
+    return parsed_file_list.status();
+  }
+  const auto& files = parsed_file_list->file_paths;
+
   const int limit_variants = absl::GetFlag(FLAGS_limit_variants);
-  if (args.size() > 1) {
+
+  if (files.empty()) {
+    return absl::InvalidArgumentError(
+        "ERROR: Missing file argument.");
+  }
+  if (files.size() > 1) {
     return absl::InvalidArgumentError(
         "ERROR: generate-variants only works on one file.");
   }
-  const absl::string_view source_file = args[0];
+  const auto& source_file = files[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {

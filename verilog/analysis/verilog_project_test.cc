@@ -594,8 +594,6 @@ TEST(VerilogProjectTest, ParseSourceFileList) {
 
 TEST(VerilogProjectTest, ParseSourceFileListFromCommandline) {
   std::vector<absl::string_view> cmdline;
-  // The first argument will be discarded.
-  cmdline.push_back("the_tool_name");
   cmdline.push_back("+define+macro1=text1+macro2+macro3=text3");
   cmdline.push_back("file1");
   cmdline.push_back("+define+macro4");
