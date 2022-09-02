@@ -123,7 +123,7 @@ void ViolationFixer::HandleViolation(
     return;
   }
 
-  static std::string_view previous_fix_conflict =
+  static absl::string_view previous_fix_conflict =
       "The fix conflicts with "
       "previously applied fixes, rejecting.\n";
 

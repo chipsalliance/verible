@@ -136,7 +136,7 @@ class LayoutItem {
       // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
       if (const auto line_break_pos = token.Text().find('\n');
-          line_break_pos != std::string_view::npos) {
+          line_break_pos != absl::string_view::npos) {
         // Multiline tokens are not really supported.
         // Use number of characters up to the first line break.
         len += line_break_pos;
