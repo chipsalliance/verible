@@ -132,6 +132,36 @@ TEST(FlowTree, UnmatchedElses) {
   }
 }
 
+TEST(FlowTree, UnvalidConditionals) {
+  const absl::string_view test_cases[] = {
+      R"(
+    `ifdef A
+      A_TRUE
+    `elsif
+      A_FALSE
+      )",
+      R"(
+    `ifdef 
+      A_TRUE
+    `else
+      A_FALSE
+      )",
+      R"(
+    `ifndef 
+      A_TRUE
+    `else
+      A_FALSE
+    `endif
+    )"};
+
+  for (auto test : test_cases) {
+    FlowTree tree_test(LexToSequence(test));
+    auto status = tree_test.GenerateVariants(
+        [](const FlowTree::Variant& variant) { return true; });
+    EXPECT_FALSE(status.ok());
+  }
+}
+
 TEST(FlowTree, UncompletedConditionals) {
   const absl::string_view test_cases[] = {
       R"(
@@ -284,6 +314,47 @@ TEST(FlowTree, SwappedNegatedIfs) {
   EXPECT_THAT(variants[2].sequence[1].text(), "A_TRUE");
 
   EXPECT_THAT(variants[3].sequence[0].text(), "B_FALSE");
+}
+
+TEST(FlowTree, CompleteConditional) {
+  const absl::string_view test_case =
+      R"(
+    `ifdef A
+      A_TRUE
+    `elsif B
+      B_TRUE
+    `elsif C
+      C_TRUE
+    `else 
+      ALL_FALSE
+    `endif)";
+
+  FlowTree tree_test(LexToSequence(test_case));
+  std::vector<FlowTree::Variant> variants;
+  auto status =
+      tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
+        variants.push_back(variant);
+        return true;
+      });
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(variants.size(), 4);
+
+  const auto& used_macros = tree_test.GetUsedMacros();
+  EXPECT_EQ(used_macros.size(), 3);
+  EXPECT_THAT(used_macros[0]->text(), "A");
+  EXPECT_THAT(used_macros[1]->text(), "B");
+  EXPECT_THAT(used_macros[2]->text(), "C");
+
+  EXPECT_TRUE(variants[0].macros_mask.test(0));
+  EXPECT_THAT(variants[0].sequence[0].text(), "A_TRUE");
+
+  EXPECT_TRUE(variants[1].macros_mask.test(1));
+  EXPECT_THAT(variants[1].sequence[0].text(), "B_TRUE");
+
+  EXPECT_TRUE(variants[2].macros_mask.test(2));
+  EXPECT_THAT(variants[2].sequence[0].text(), "C_TRUE");
+
+  EXPECT_THAT(variants[3].sequence[0].text(), "ALL_FALSE");
 }
 
 }  // namespace

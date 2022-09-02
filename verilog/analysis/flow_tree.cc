@@ -88,7 +88,8 @@ absl::Status FlowTree::AddBlockEdges(const ConditionalBlock &block) {
   if (contains_elsif) {
     for (auto iter : block.elsif_locations)
       edges_[iter - 1].push_back(block.endif_location);
-  } else if (contains_else) {
+  }
+  if (contains_else) {
     edges_[block.else_location - 1].push_back(block.endif_location);
   }
 
