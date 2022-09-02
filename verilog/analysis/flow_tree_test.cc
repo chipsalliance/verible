@@ -18,7 +18,6 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "common/lexer/token_stream_adapter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/parser/verilog_lexer.h"

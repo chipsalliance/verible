@@ -27,7 +27,6 @@
 #include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_token_enum.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
 
