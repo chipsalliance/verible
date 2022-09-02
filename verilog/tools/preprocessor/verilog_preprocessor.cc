@@ -44,7 +44,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError(
         "Missing file argument.  Use '-' for stdin.");
   }
-  const char* source_file = args[0];
+  const absl::string_view source_file = args[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {
@@ -113,7 +113,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   if (args.empty()) {
     return absl::InvalidArgumentError("Missing file arguments.");
   }
-  for (const char* source_file : args) {
+  for (absl::string_view source_file : args) {
     message_stream << source_file << ":\n";
     auto status = PreprocessSingleFile(source_file, outs, message_stream);
     if (!status.ok()) return status;
@@ -130,7 +130,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError(
         "ERROR: generate-variants only works on one file.");
   }
-  const char* source_file = args[0];
+  const absl::string_view source_file = args[0];
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
       !status.ok()) {

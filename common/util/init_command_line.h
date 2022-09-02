@@ -22,9 +22,13 @@
 namespace verible {
 
 // Initializes command-line tool, including parsing flags.
+// The recognized flags are initialized and their text removed from the
+// input command line, returning the remaining positional parameters.
+// Positional parameters after `--` are returned as-is and not interpreted
+// as flags.
 // Returns positional arguments, where element[0] is the program name.
-std::vector<char*> InitCommandLine(absl::string_view usage, int* argc,
-                                   char*** argv);
+std::vector<absl::string_view> InitCommandLine(absl::string_view usage,
+                                               int* argc, char*** argv);
 
 }  // namespace verible
 

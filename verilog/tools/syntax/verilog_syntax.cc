@@ -290,7 +290,7 @@ int main(int argc, char** argv) {
 
   int exit_status = 0;
   // All positional arguments are file names.  Exclude program name.
-  for (const char* filename :
+  for (absl::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
     std::string content;
     if (!verible::file::GetContents(filename, &content).ok()) {
@@ -308,7 +308,8 @@ int main(int argc, char** argv) {
         AnalyzeOneFile(content, filename, preprocess_config, &file_json);
     exit_status = std::max(exit_status, file_status);
     if (absl::GetFlag(FLAGS_export_json)) {
-      json_out[filename] = std::move(file_json);
+      json_out[std::string{filename.begin(), filename.end()}] =
+          std::move(file_json);
     }
   }
 

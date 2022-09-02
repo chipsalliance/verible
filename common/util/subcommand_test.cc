@@ -40,7 +40,7 @@ TEST(SubcommandRegistryTest, HelpNoArgsTest) {
   const SubcommandEntry& help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
-  std::vector<char*> args;
+  std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const auto status = help.main(range, ins, outs, errs);
   EXPECT_TRUE(status.ok()) << "Unexpected error:\n" << status.message();
@@ -54,8 +54,7 @@ TEST(SubcommandRegistryTest, HelpHelpCommand) {
   const SubcommandEntry& help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
-  char arg[] = "help";
-  std::vector<char*> args{arg};
+  std::vector<absl::string_view> args{"help"};
   const SubcommandArgsRange range(args.begin(), args.end());
 
   const auto status = help.main(range, ins, outs, errs);
@@ -82,7 +81,7 @@ TEST(SubcommandRegistryTest, RegisterCommandPublicOk) {
     EXPECT_TRUE(absl::StrContains(registry.ListCommands(), "fizz"));
   }
 
-  std::vector<char*> args;
+  std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const SubcommandEntry& fizz_entry(registry.GetSubcommandEntry("fizz"));
 
@@ -111,7 +110,7 @@ TEST(SubcommandRegistryTest, RegisterCommandHiddenOk) {
     EXPECT_FALSE(absl::StrContains(registry.ListCommands(), "buzz"));
   }
 
-  std::vector<char*> args;
+  std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const SubcommandEntry& buzz_entry(registry.GetSubcommandEntry("buzz"));
 
@@ -148,7 +147,7 @@ TEST(SubcommandRegistryTest, RegisterCommandMultipleCommands) {
   }
 
   // Run each subcommand once.
-  std::vector<char*> args;
+  std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   {
     const SubcommandEntry& fizz_entry(registry.GetSubcommandEntry("fizz"));

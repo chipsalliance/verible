@@ -46,7 +46,7 @@ static std::string GetBuildVersion() {
 }
 
 // We might want to have argc edited in the future, hence non-const param.
-std::vector<char*> InitCommandLine(
+std::vector<absl::string_view> InitCommandLine(
     absl::string_view usage,
     int* argc,  // NOLINT(readability-non-const-parameter)
     char*** argv) {
@@ -62,7 +62,8 @@ std::vector<char*> InitCommandLine(
   google::InstallFailureSignalHandler();
 #endif
 
-  return absl::ParseCommandLine(*argc, *argv);
+  const auto positional_parameters = absl::ParseCommandLine(*argc, *argv);
+  return {positional_parameters.cbegin(), positional_parameters.cend()};
 }
 
 }  // namespace verible
