@@ -18,6 +18,7 @@ cc_binary(
         "//verilog/parser:verilog_lexer",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/analysis:flow_tree",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
