@@ -26,6 +26,7 @@
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
@@ -80,7 +81,7 @@ static absl::Status PreprocessSingleFile(absl::string_view source_file,
     return status;
   }
   verilog::VerilogPreprocess::Config config;
-  config.filter_branches = 1;
+  config.filter_branches = true;
   // config.expand_macros=1;
   verilog::VerilogPreprocess preprocessor(config);
   verilog::VerilogLexer lexer(source_contents);
@@ -90,8 +91,9 @@ static absl::Status PreprocessSingleFile(absl::string_view source_file,
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was, but with conditionals filtered.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
       lexed_sequence.push_back(lexer.GetLastToken());
+    }
   }
   verible::TokenStreamView lexed_streamview;
   // Initializing the lexed token stream view.

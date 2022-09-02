@@ -592,5 +592,37 @@ TEST(VerilogProjectTest, ParseSourceFileList) {
               ElementsAre(".", "/an/include_dir1", "/an/include_dir2"));
 }
 
+TEST(VerilogProjectTest, ParseSourceFileListFromCommandline) {
+  std::vector<absl::string_view> cmdline;
+  // The first argument will be discarded.
+  cmdline.push_back("the_tool_name");
+  cmdline.push_back("+define+macro1=text1+macro2+macro3=text3");
+  cmdline.push_back("file1");
+  cmdline.push_back("+define+macro4");
+  cmdline.push_back("file2");
+  cmdline.push_back("+incdir+~/path/to/file1+path/to/file2");
+  cmdline.push_back("+incdir+./path/to/file3");
+  cmdline.push_back("+define+macro5");
+  cmdline.push_back("file3");
+  cmdline.push_back("+incdir+../path/to/file4+./path/to/file5");
+  auto parsed_file_list = ParseSourceFileListFromCommandline(cmdline);
+  ASSERT_TRUE(parsed_file_list.ok());
+
+  EXPECT_THAT(parsed_file_list->file_paths,
+              ElementsAre("file1", "file2", "file3"));
+  EXPECT_THAT(parsed_file_list->include_dirs,
+              ElementsAre("~/path/to/file1", "path/to/file2", "./path/to/file3",
+                          "../path/to/file4", "./path/to/file5"));
+  std::vector<TextMacroDefinition> macros;
+  macros.push_back(TextMacroDefinition{"macro1", "text1"});
+  macros.push_back(TextMacroDefinition{"macro2", ""});
+  macros.push_back(TextMacroDefinition{"macro3", "text3"});
+  macros.push_back(TextMacroDefinition{"macro4", ""});
+  macros.push_back(TextMacroDefinition{"macro5", ""});
+  EXPECT_THAT(
+      parsed_file_list->defines,
+      ElementsAre(macros[0], macros[1], macros[2], macros[3], macros[4]));
+}
+
 }  // namespace
 }  // namespace verilog

@@ -24,6 +24,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
@@ -343,6 +344,53 @@ absl::StatusOr<FileList> ParseSourceFileListFromFile(
   const auto read_status = verible::file::GetContents(file_list_file, &content);
   if (!read_status.ok()) return read_status;
   return ParseSourceFileList(file_list_file, content);
+}
+
+absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
+    const std::vector<absl::string_view>& cmdline) {
+  FileList file_list_out;
+  for (absl::string_view argument :
+       verible::make_range(cmdline.begin() + 1, cmdline.end())) {
+    // cmdline[0] is the tool's name, which can be skipped.
+    if (argument.empty()) continue;
+    if (argument[0] != '+') {
+      // Then "argument" is a SV file name.
+      file_list_out.file_paths.push_back(std::string(argument));
+    } else {
+      // it should be either a define or incdir.
+      std::vector<absl::string_view> argument_plus_splitted =
+          absl::StrSplit(argument, absl::ByChar('+'), absl::SkipEmpty());
+      if (argument_plus_splitted.size() < 2) {
+        return absl::InvalidArgumentError("Unkown argument.");
+      }
+      absl::string_view plus_argument_type = argument_plus_splitted[0];
+      if (plus_argument_type == "define") {
+        // define argument.
+        for (const absl::string_view define_argument :
+             verible::make_range(argument_plus_splitted.begin() + 1,
+                                 argument_plus_splitted.end())) {
+          // argument_plus_splitted[0] is 'define' so it is safe to skip it.
+          // define_argument is something like <macro1>=<value>.
+          std::pair<std::string, std::string> macro_pair = absl::StrSplit(
+              define_argument, absl::ByChar('='), absl::SkipEmpty());
+          TextMacroDefinition macro{macro_pair.first, macro_pair.second};
+          // add the define argument.
+          file_list_out.defines.push_back(macro);
+        }
+      } else if (plus_argument_type == "incdir") {
+        // incdir argument.
+        for (const absl::string_view incdir_argument :
+             verible::make_range(argument_plus_splitted.begin() + 1,
+                                 argument_plus_splitted.end())) {
+          // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
+          file_list_out.include_dirs.push_back(std::string(incdir_argument));
+        }
+      } else {
+        return absl::InvalidArgumentError("Unkown argument.");
+      }
+    }
+  }
+  return file_list_out;
 }
 
 }  // namespace verilog
