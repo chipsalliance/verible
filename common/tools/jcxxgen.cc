@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Need filename";
     return 1;
   }
-  const std::string &schema_filename = file_args[1];
+  const std::string schema_filename{file_args[1].begin(), file_args[1].end()};
   auto objects = LoadObjectTypes(schema_filename);
   if (!objects) {
     fprintf(stderr, "Couldn't parse spec\n");

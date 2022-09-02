@@ -30,7 +30,7 @@ namespace verible {
 
 // This should be the same type returned by InitCommandLine in
 // common/util/init_command_line.h
-using SubcommandArgs = std::vector<char*>;
+using SubcommandArgs = std::vector<absl::string_view>;
 using SubcommandArgsIterator = SubcommandArgs::const_iterator;
 using SubcommandArgsRange =
     verible::container_iterator_range<SubcommandArgsIterator>;
