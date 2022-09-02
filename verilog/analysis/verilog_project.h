@@ -321,6 +321,8 @@ class VerilogProject {
 
 // TODO(karimtera): Using "MacroDefiniton" struct might be better.
 struct TextMacroDefinition {
+  TextMacroDefinition(std::string name, std::string value)
+      : name(std::move(name)), value(std::move(value)){};
   std::string name;
   std::string value;
   bool operator==(const TextMacroDefinition& macro_definition) const {
