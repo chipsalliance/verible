@@ -597,7 +597,7 @@ TEST(VerilogProjectTest, ParseInvalidSourceFileListFromCommandline) {
       {"+define+macro1="}, {"+define+"}, {"+not_valid_define+"}};
   for (const auto& cmdline : test_cases) {
     auto parsed_file_list = ParseSourceFileListFromCommandline(cmdline);
-    ASSERT_FALSE(parsed_file_list.ok());
+    EXPECT_FALSE(parsed_file_list.ok());
   }
 }
 
@@ -611,6 +611,7 @@ TEST(VerilogProjectTest, ParseSourceFileListFromCommandline) {
       "+incdir+./path/to/file3",
       "+define+macro5",
       "file3",
+      "+define+macro6=a=b",
       "+incdir+../path/to/file4+./path/to/file5"};
   auto parsed_file_list = ParseSourceFileListFromCommandline(cmdline);
   ASSERT_TRUE(parsed_file_list.ok());
@@ -620,14 +621,12 @@ TEST(VerilogProjectTest, ParseSourceFileListFromCommandline) {
   EXPECT_THAT(parsed_file_list->include_dirs,
               ElementsAre("~/path/to/file1", "path/to/file2", "./path/to/file3",
                           "../path/to/file4", "./path/to/file5"));
-  std::vector<TextMacroDefinition> macros = {{"macro1", "text1"},
-                                             {"macro2", ""},
-                                             {"macro3", "text3"},
-                                             {"macro4", ""},
-                                             {"macro5", ""}};
-  EXPECT_THAT(
-      parsed_file_list->defines,
-      ElementsAre(macros[0], macros[1], macros[2], macros[3], macros[4]));
+  std::vector<TextMacroDefinition> macros = {
+      {"macro1", "text1"}, {"macro2", ""}, {"macro3", "text3"},
+      {"macro4", ""},      {"macro5", ""}, {"macro6", "a=b"}};
+  EXPECT_THAT(parsed_file_list->defines,
+              ElementsAre(macros[0], macros[1], macros[2], macros[3], macros[4],
+                          macros[5]));
 }
 
 }  // namespace

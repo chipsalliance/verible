@@ -350,8 +350,7 @@ absl::StatusOr<FileList> ParseSourceFileListFromFile(
 absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
     const std::vector<absl::string_view>& cmdline) {
   FileList result;
-  for (absl::string_view argument :
-       verible::make_range(cmdline.begin(), cmdline.end())) {
+  for (absl::string_view argument : cmdline) {
     if (argument.empty()) continue;
     if (argument[0] != '+') {
       // Then "argument" is a SV file name.
