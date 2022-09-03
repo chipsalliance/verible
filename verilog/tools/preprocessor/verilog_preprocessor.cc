@@ -153,6 +153,8 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
     return parsed_file_list.status();
   }
   const auto& files = parsed_file_list->file_paths;
+  // TODO(karimtera): Pass the +define's to the preprocessor, and only
+  // generate variants with theses defines fixed.
 
   const int limit_variants = absl::GetFlag(FLAGS_limit_variants);
 

@@ -368,7 +368,6 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
     }
     absl::string_view plus_argument_type = argument_plus_splitted[0];
     if (plus_argument_type == "define") {
-      // define argument.
       for (const absl::string_view define_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
@@ -386,7 +385,6 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
         result.defines.emplace_back(macro_pair.first, macro_pair.second);
       }
     } else if (plus_argument_type == "incdir") {
-      // incdir argument.
       for (const absl::string_view incdir_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
