@@ -492,4 +492,73 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
+echo "=== Test multiple-compilation-unit: passing defines"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`ifdef A
+  A_TRUE
+\`else
+  A_FALSE
+\`endif
+
+\`ifndef B
+  B_FALSE
+\`else
+  B_TRUE
+\`endif
+EOF
+
+
+cat > "$MY_EXPECT_FILE" <<EOF
+(#293: "A_TRUE")
+(#293: "B_FALSE")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+cat > "$MY_EXPECT_FILE" <<EOF
+(#293: "A_TRUE")
+(#293: "B_TRUE")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A=a_value+B=b_value > "$MY_OUTPUT_FILE" 
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A +define+B > "$MY_OUTPUT_FILE" 
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
 echo "PASS"
