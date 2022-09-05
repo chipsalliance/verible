@@ -123,6 +123,17 @@ class VerilogPreprocess {
   // TODO(fangism): ExpandMacro, ExpandMacroCall
   // TODO(b/111544845): ExpandEvalStringLiteral
 
+  // Add defines passed to the tool with +define+<foo>[=<value>].
+  // NOTE: Since both of the arguments are string_views, it doesn't own the
+  // referenced memory.
+  // The user should ensure that owning strings outlive the VerilogPreprocess
+  // object.
+  void SetExternalDefine(absl::string_view define_name,
+                         absl::string_view define_body);
+  // TODO(karimtera): It would be better to pass the "FileList" all at once,
+  // and hold it inside the preprocessor object, that way it can use the incdirs
+  // also, without needing to pass another obeject.
+
  private:
   using StreamIteratorGenerator =
       std::function<TokenStreamView::const_iterator()>;

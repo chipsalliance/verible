@@ -791,5 +791,56 @@ endmodule
   }
 }
 
+// TODO(karimtera): This test doesn't use "PreprocessorTester",
+// as there isn't a way to tell "VerilogAnalyzer" about external defines.
+// Typically, all tests should use "PreprocessorTester".
+TEST(VerilogPreprocessTest, SetExternalDefines) {
+  // Test case input tokens.
+  const verible::TokenSequence test_case_tokens = {
+      {verible::TokenInfo(MacroIdentifier, "`MACRO1")},
+      {MacroIdentifier, "`MACRO2"}};
+  verible::TokenStreamView test_case_stream_view;
+  verible::InitTokenStreamView(test_case_tokens, &test_case_stream_view);
+
+  VerilogPreprocess::Config test_config({.expand_macros = true});
+  VerilogPreprocess preprocessor(test_config);
+
+  preprocessor.SetExternalDefine("MACRO1", "VALUE1");
+  preprocessor.SetExternalDefine("MACRO2", "VALUE2");
+
+  const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
+
+  EXPECT_THAT(pp_data.preprocessed_token_stream[0]->text(), "VALUE1");
+  EXPECT_THAT(pp_data.preprocessed_token_stream[1]->text(), "VALUE2");
+}
+
+// TODO(karimtera): This test doesn't use "PreprocessorTester",
+// as there isn't a way to tell "VerilogAnalyzer" about external defines.
+// Typically, all tests should use "PreprocessorTester".
+TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
+  // Test case input tokens.
+  const verible::TokenSequence test_case_tokens = {
+      {verible::TokenInfo(PP_undef, "`undef")},
+      {verible::TokenInfo(PP_Identifier, "MACRO1")},
+      {verible::TokenInfo(MacroIdentifier, "`MACRO1")},
+      {verible::TokenInfo(MacroIdentifier, "`MACRO2")}};
+  verible::TokenStreamView test_case_stream_view;
+  verible::InitTokenStreamView(test_case_tokens, &test_case_stream_view);
+
+  VerilogPreprocess::Config test_config({.expand_macros = true});
+  VerilogPreprocess preprocessor(test_config);
+
+  preprocessor.SetExternalDefine("MACRO1", "VALUE1");
+  preprocessor.SetExternalDefine("MACRO2", "VALUE2");
+
+  const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
+
+  const auto& errors = pp_data.errors;
+
+  EXPECT_THAT(errors.size(), 1);
+  EXPECT_THAT(errors.front().error_message,
+              StartsWith("Error expanding macro identifier"));
+}
+
 }  // namespace
 }  // namespace verilog
