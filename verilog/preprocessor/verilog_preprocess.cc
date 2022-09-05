@@ -586,9 +586,9 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
   return absl::OkStatus();
 }
 
-// Adds a define passed to the tool with +define+<foo>[=<value>].
-void VerilogPreprocess::AddDefineFromCmdLine(absl::string_view define_name,
-                                             absl::string_view define_body) {
+// Sets a define passed to the tool with +define+<foo>[=<value>].
+void VerilogPreprocess::SetExternalDefine(absl::string_view define_name,
+                                          absl::string_view define_body) {
   // manually create the tokens to save them into a MacroDefinition.
   verible::TokenInfo macro_directive(PP_define, "`define");
   verible::TokenInfo macro_name(PP_Identifier, define_name);

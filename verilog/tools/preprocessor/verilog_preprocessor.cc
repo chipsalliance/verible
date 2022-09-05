@@ -96,9 +96,9 @@ static absl::Status PreprocessSingleFile(
   // config.expand_macros=1;
   verilog::VerilogPreprocess preprocessor(config);
 
-  // Adding defines to the preprocessor.
+  // Setting defines in the preprocessor.
   for (const auto& define : defines) {
-    preprocessor.AddDefineFromCmdLine(define.name, define.value);
+    preprocessor.SetExternalDefine(define.name, define.value);
   }
 
   verilog::VerilogLexer lexer(source_contents);

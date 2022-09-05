@@ -791,5 +791,25 @@ endmodule
   }
 }
 
+TEST(VerilogPreprocessTest, SetExternalDefines) {
+  // Test case input tokens.
+  const verible::TokenSequence test_case_tokens = {
+      {verible::TokenInfo(MacroIdentifier, "`MACRO1")},
+      {MacroIdentifier, "`MACRO2"}};
+  verible::TokenStreamView test_case_stream_view;
+  verible::InitTokenStreamView(test_case_tokens, &test_case_stream_view);
+
+  VerilogPreprocess::Config test_config({.expand_macros = true});
+  VerilogPreprocess preprocessor(test_config);
+
+  preprocessor.SetExternalDefine("MACRO1", "VALUE1");
+  preprocessor.SetExternalDefine("MACRO2", "VALUE2");
+
+  const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
+
+  EXPECT_THAT(pp_data.preprocessed_token_stream[0]->text(), "VALUE1");
+  EXPECT_THAT(pp_data.preprocessed_token_stream[1]->text(), "VALUE2");
+}
+
 }  // namespace
 }  // namespace verilog
