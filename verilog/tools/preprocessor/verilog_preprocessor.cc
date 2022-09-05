@@ -35,6 +35,7 @@
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
 
+// TODO(karimtera): Add a boolean flag to configure the macro expansion.
 ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
 
 static absl::Status StripComments(const SubcommandArgsRange& args,
