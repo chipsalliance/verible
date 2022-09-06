@@ -58,9 +58,9 @@ http_archive(
 
 http_archive(
     name = "com_github_google_glog",
-    sha256 = "087a3de2eccce54a597fbb9d1530d4b8c1bae6ff6083511c19fe56b01a1f4f05",
-    strip_prefix = "glog-0.5.0-rc2",
-    urls = ["https://github.com/google/glog/archive/v0.5.0-rc2.tar.gz"],
+    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
+    strip_prefix = "glog-0.6.0",
+    urls = ["https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz"],
 )
 
 #
