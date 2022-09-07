@@ -131,6 +131,17 @@ struct ReferenceComponent {
   const SymbolTableNode* resolved_symbol = nullptr;
 
  public:
+  ReferenceComponent(
+    const absl::string_view& identifier,
+    const ReferenceType& ref_type,
+    const SymbolMetaType required_metatype = SymbolMetaType::kUnspecified,
+    const SymbolTableNode* resolved_symbol = nullptr) :
+  identifier(identifier),
+  ref_type(ref_type),
+  required_metatype(required_metatype),
+  resolved_symbol(resolved_symbol)
+  {}
+
   ReferenceComponent(const ReferenceComponent&) = default;  // safe to copy
   ReferenceComponent(ReferenceComponent&&) = default;
   ReferenceComponent& operator=(const ReferenceComponent&) = delete;
@@ -184,6 +195,10 @@ struct DependentReferences {
   std::unique_ptr<ReferenceComponentNode> components;
 
  public:
+  DependentReferences(
+    std::unique_ptr<ReferenceComponentNode> components
+  ) : components(std::move(components)) {}
+
   DependentReferences() = default;
   // move-only
   DependentReferences(const DependentReferences&) = delete;
@@ -256,7 +271,11 @@ struct DeclarationTypeInfo {
   bool implicit = false;
 
  public:
-  DeclarationTypeInfo() = default;
+  DeclarationTypeInfo(const verible::Symbol* syntax_origin = nullptr,
+    const ReferenceComponentNode* user_defined_type = nullptr) :
+    syntax_origin(syntax_origin),
+    user_defined_type(user_defined_type)
+  {}
 
   // copy-able, move-able, assignable
   DeclarationTypeInfo(const DeclarationTypeInfo&) = default;
@@ -333,6 +352,17 @@ struct SymbolInfo {
 
  public:  // methods
   SymbolInfo() = default;
+
+  SymbolInfo(const SymbolMetaType& metatype,
+    const VerilogSourceFile* file_origin = nullptr,
+    const verible::Symbol* syntax_origin = nullptr,
+    const DeclarationTypeInfo& declared_type = DeclarationTypeInfo()
+    ) :
+    metatype(metatype),
+    file_origin(file_origin),
+    syntax_origin(syntax_origin),
+    declared_type(declared_type)
+  {}
 
   // move-only
   SymbolInfo(const SymbolInfo&) = delete;
@@ -427,7 +457,7 @@ class SymbolTable {
   // and string memory, otherwise string memory is owned by 'project'.
   explicit SymbolTable(VerilogProject* project)
       : project_(project),
-        symbol_table_root_(SymbolInfo{.metatype = SymbolMetaType::kRoot}) {}
+        symbol_table_root_(SymbolInfo(SymbolMetaType::kRoot)) {}
 
   // can become move-able when needed
   SymbolTable(const SymbolTable&) = delete;
