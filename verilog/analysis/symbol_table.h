@@ -193,7 +193,8 @@ struct DependentReferences {
   std::unique_ptr<ReferenceComponentNode> components;
 
  public:
-  DependentReferences(std::unique_ptr<ReferenceComponentNode> components)
+  explicit DependentReferences(
+      std::unique_ptr<ReferenceComponentNode> components)
       : components(std::move(components)) {}
 
   DependentReferences() = default;
@@ -268,8 +269,9 @@ struct DeclarationTypeInfo {
   bool implicit = false;
 
  public:
-  DeclarationTypeInfo(const verible::Symbol* syntax_origin = nullptr,
-                      const ReferenceComponentNode* user_defined_type = nullptr)
+  explicit DeclarationTypeInfo(
+      const verible::Symbol* syntax_origin = nullptr,
+      const ReferenceComponentNode* user_defined_type = nullptr)
       : syntax_origin(syntax_origin), user_defined_type(user_defined_type) {}
 
   // copy-able, move-able, assignable
@@ -348,10 +350,11 @@ struct SymbolInfo {
  public:  // methods
   SymbolInfo() = default;
 
-  SymbolInfo(const SymbolMetaType& metatype,
-             const VerilogSourceFile* file_origin = nullptr,
-             const verible::Symbol* syntax_origin = nullptr,
-             const DeclarationTypeInfo& declared_type = DeclarationTypeInfo())
+  explicit SymbolInfo(
+      const SymbolMetaType& metatype,
+      const VerilogSourceFile* file_origin = nullptr,
+      const verible::Symbol* syntax_origin = nullptr,
+      const DeclarationTypeInfo& declared_type = DeclarationTypeInfo())
       : metatype(metatype),
         file_origin(file_origin),
         syntax_origin(syntax_origin),
