@@ -178,10 +178,7 @@ absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
 absl::Status FlowTree::GenerateControlFlowTree() {
   // Adding edges for if blocks.
   int current_token_enum = 0;
-  ConditionalBlock empty_block;
-  empty_block.if_location = source_sequence_.end();
-  empty_block.else_location = source_sequence_.end();
-  empty_block.endif_location = source_sequence_.end();
+  const TokenSequenceConstIterator non_location = source_sequence_.end();
 
   for (TokenSequenceConstIterator iter = source_sequence_.begin();
        iter != source_sequence_.end(); iter++) {
@@ -190,9 +187,7 @@ absl::Status FlowTree::GenerateControlFlowTree() {
     if (IsConditional(iter)) {
       switch (current_token_enum) {
         case PP_ifdef: {
-          if_blocks_.push_back(empty_block);
-          if_blocks_.back().if_location = iter;
-          if_blocks_.back().positive_condition = 1;
+          if_blocks_.emplace_back(iter, true, non_location);
           auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
@@ -201,9 +196,7 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           break;
         }
         case PP_ifndef: {
-          if_blocks_.push_back(empty_block);
-          if_blocks_.back().if_location = iter;
-          if_blocks_.back().positive_condition = 0;
+          if_blocks_.emplace_back(iter, false, non_location);
           auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(

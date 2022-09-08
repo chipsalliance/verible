@@ -88,6 +88,14 @@ class FlowTree {
 
  private:
   struct ConditionalBlock {
+    ConditionalBlock(TokenSequenceConstIterator if_location,
+                     bool is_positive,
+                     TokenSequenceConstIterator non_location)
+        : if_location(if_location),
+          positive_condition(is_positive),
+          else_location(non_location),
+          endif_location(non_location) {}
+
     // "if_location" points to `ifdef or `ifndef.
     TokenSequenceConstIterator if_location;
 
