@@ -147,10 +147,8 @@ TEST(SymbolTableNodeFullPathTest, Print) {
 
 TEST(ReferenceComponentTest, MatchesMetatypeTest) {
   {  // kUnspecified matches all metatypes
-    const ReferenceComponent component(
-        "",
-        ReferenceType::kUnqualified,
-        SymbolMetaType::kUnspecified);
+    const ReferenceComponent component("", ReferenceType::kUnqualified,
+                                       SymbolMetaType::kUnspecified);
     for (const auto& other :
          {SymbolMetaType::kUnspecified, SymbolMetaType::kParameter,
           SymbolMetaType::kFunction, SymbolMetaType::kTask}) {
@@ -159,10 +157,8 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // kCallable matches only kFunction and kTask
-    const ReferenceComponent component(
-        "",
-        ReferenceType::kUnqualified,
-        SymbolMetaType::kCallable);
+    const ReferenceComponent component("", ReferenceType::kUnqualified,
+                                       SymbolMetaType::kCallable);
     for (const auto& other :
          {SymbolMetaType::kFunction, SymbolMetaType::kTask}) {
       const auto status = component.MatchesMetatype(other);
@@ -176,10 +172,8 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // kClass matches only kClass and kTypeAlias
-    const ReferenceComponent component(
-        "",
-        ReferenceType::kUnqualified,
-        SymbolMetaType::kClass);
+    const ReferenceComponent component("", ReferenceType::kUnqualified,
+                                       SymbolMetaType::kClass);
     for (const auto& other :
          {SymbolMetaType::kClass, SymbolMetaType::kTypeAlias}) {
       const auto status = component.MatchesMetatype(other);
@@ -194,10 +188,8 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
     }
   }
   {  // all other types must be matched exactly
-    const ReferenceComponent component(
-        "",
-        ReferenceType::kUnqualified,
-        SymbolMetaType::kFunction);
+    const ReferenceComponent component("", ReferenceType::kUnqualified,
+                                       SymbolMetaType::kFunction);
 
     for (const auto& other :
          {SymbolMetaType::kUnspecified, SymbolMetaType::kParameter,
@@ -214,11 +206,9 @@ TEST(ReferenceNodeFullPathTest, Print) {
   typedef ReferenceComponentNode Node;
   typedef ReferenceComponent Data;
   const Node root(
-      Data("xx",
-           ReferenceType::kUnqualified,
-           SymbolMetaType::kClass),
+      Data("xx", ReferenceType::kUnqualified, SymbolMetaType::kClass),
       Node(Data("yy", ReferenceType::kDirectMember),
-      Node(Data("zz", ReferenceType::kMemberOfTypeOfParent))));
+           Node(Data("zz", ReferenceType::kMemberOfTypeOfParent))));
   {
     std::ostringstream stream;
     ReferenceNodeFullPath(stream, root);
@@ -244,12 +234,9 @@ TEST(DependentReferencesTest, PrintEmpty) {
 }
 
 TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
-  const DependentReferences dep_refs(
-      absl::make_unique<ReferenceComponentNode>(
-          ReferenceComponent("foo",
-                             ReferenceType::kUnqualified,
-                             SymbolMetaType::kUnspecified,
-                             nullptr)));
+  const DependentReferences dep_refs(absl::make_unique<ReferenceComponentNode>(
+      ReferenceComponent("foo", ReferenceType::kUnqualified,
+                         SymbolMetaType::kUnspecified, nullptr)));
   std::ostringstream stream;
   stream << dep_refs;
   EXPECT_EQ(stream.str(), "{ (@foo -> <unresolved>) }");
@@ -261,27 +248,21 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
   SymbolTableNode root(
       SymbolInfo(SymbolMetaType::kRoot),
       KV{"p_pkg",
-         SymbolTableNode(
-             SymbolInfo(SymbolMetaType::kPackage),
-             KV{"c_class", SymbolTableNode(SymbolInfo(
-                               SymbolMetaType::kClass))})});
+         SymbolTableNode(SymbolInfo(SymbolMetaType::kPackage),
+                         KV{"c_class", SymbolTableNode(SymbolInfo(
+                                           SymbolMetaType::kClass))})});
 
   // Bookmark symbol table nodes.
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root, "p_pkg");
   MUST_ASSIGN_LOOKUP_SYMBOL(c_class, p_pkg, "c_class");
 
   // Construct references already resolved to above nodes.
-  const DependentReferences dep_refs(
-      absl::make_unique<ReferenceComponentNode>(
-          ReferenceComponent("p_pkg",
-                             ReferenceType::kUnqualified,
-                             SymbolMetaType::kPackage,
-                             &p_pkg),
-          ReferenceComponentNode(
-              ReferenceComponent("c_class",
-                                 ReferenceType::kDirectMember,
-                                 SymbolMetaType::kClass,
-                                 &c_class))));
+  const DependentReferences dep_refs(absl::make_unique<ReferenceComponentNode>(
+      ReferenceComponent("p_pkg", ReferenceType::kUnqualified,
+                         SymbolMetaType::kPackage, &p_pkg),
+      ReferenceComponentNode(
+          ReferenceComponent("c_class", ReferenceType::kDirectMember,
+                             SymbolMetaType::kClass, &c_class))));
 
   // Print and compare.
   std::ostringstream stream;
@@ -396,12 +377,10 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     // mind the destruction ordering here:
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
-    root2.Value().local_references_to_bind.push_back(DependentReferences(
-          absl::make_unique<ReferenceComponentNode>(ReferenceComponent(
-                "foo",
-                ReferenceType::kUnqualified,
-                SymbolMetaType::kUnspecified,
-                &root1))));
+    root2.Value().local_references_to_bind.push_back(
+        DependentReferences(absl::make_unique<ReferenceComponentNode>(
+            ReferenceComponent("foo", ReferenceType::kUnqualified,
+                               SymbolMetaType::kUnspecified, &root1))));
     // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
   EXPECT_DEATH(test_func(),
@@ -418,12 +397,10 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     // mind the destruction ordering here:
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
-    root1.Value().local_references_to_bind.push_back(DependentReferences(
-        absl::make_unique<ReferenceComponentNode>(ReferenceComponent(
-                "foo",
-                ReferenceType::kUnqualified,
-                SymbolMetaType::kUnspecified,
-                &root1))));
+    root1.Value().local_references_to_bind.push_back(
+        DependentReferences(absl::make_unique<ReferenceComponentNode>(
+            ReferenceComponent("foo", ReferenceType::kUnqualified,
+                               SymbolMetaType::kUnspecified, &root1))));
     root2.Value().declared_type.user_defined_type =
         root1.Value().local_references_to_bind.front().components.get();
     // CheckIntegrity() will fail on destruction of symbol_table_2.

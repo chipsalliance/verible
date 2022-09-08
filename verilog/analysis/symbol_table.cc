@@ -478,12 +478,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // Create a self-reference to this struct type so that it can be linked
     // for declarations that use this type.
     const ReferenceComponent anon_type_ref(
-        anon_name,
-        ReferenceType::kImmediate,
-        SymbolMetaType::kStruct,
+        anon_name, ReferenceType::kImmediate, SymbolMetaType::kStruct,
         // pre-resolve this symbol immediately
-        new_struct
-    );
+        new_struct);
 
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(anon_type_ref);
@@ -501,12 +498,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
         enum_type, anon_name, SymbolMetaType::kEnumType);
 
     const ReferenceComponent anon_type_ref(
-        anon_name,
-        ReferenceType::kImmediate,
-        SymbolMetaType::kEnumType,
+        anon_name, ReferenceType::kImmediate, SymbolMetaType::kEnumType,
         // pre-resolve this symbol immediately
-        new_enum
-    );
+        new_enum);
 
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(anon_type_ref);
@@ -522,13 +516,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
       const auto& syntax_origin =
           *ABSL_DIE_IF_NULL(symbol.Value().syntax_origin);
 
-      const ReferenceComponent itr_ref(
-          enum_constant_name,
-          ReferenceType::kImmediate,
-          SymbolMetaType::kEnumConstant,
-          // pre-resolve this symbol immediately
-          &symbol
-      );
+      const ReferenceComponent itr_ref(enum_constant_name,
+                                       ReferenceType::kImmediate,
+                                       SymbolMetaType::kEnumConstant,
+                                       // pre-resolve this symbol immediately
+                                       &symbol);
 
       // CaptureDependentReference class doesn't support
       // copy constructor
@@ -703,11 +695,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // reference.
     DependentReferences& ref(reference_builders_.top());
 
-    const ReferenceComponent new_ref(
-        text,
-        InferReferenceType(),
-        InferMetaType()
-    );
+    const ReferenceComponent new_ref(text, InferReferenceType(),
+                                     InferMetaType());
 
     // For instances' named ports, and types' named parameters,
     // add references as siblings of the same parent.
@@ -729,13 +718,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
             EmplaceTypedElementInCurrentScope(
                 leaf, text, SymbolMetaType::kDataNetVariableInstance);
 
-        const ReferenceComponent implicit_ref(
-            text,
-            InferReferenceType(),
-            InferMetaType(),
-            // pre-resolve
-            &implicit_declaration
-        );
+        const ReferenceComponent implicit_ref(text, InferReferenceType(),
+                                              InferMetaType(),
+                                              // pre-resolve
+                                              &implicit_declaration);
 
         ref.PushReferenceComponent(implicit_ref);
         return;
@@ -908,12 +894,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode* EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
                                                 SymbolMetaType metatype) {
-    const auto p =
-        current_scope_->TryEmplace(name, SymbolInfo(
-                                             metatype,
-                                             source_,
-                                             &element
-                                         ));
+    const auto p = current_scope_->TryEmplace(
+        name, SymbolInfo(metatype, source_, &element));
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
@@ -930,14 +912,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
     VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
-        name,
-        SymbolInfo(
-            metatype,
-            source_,
-            &element,
-            // associate this instance with its declared type
-            *ABSL_DIE_IF_NULL(declaration_type_info_)  // copy
-        ));
+        name, SymbolInfo(metatype, source_, &element,
+                         // associate this instance with its declared type
+                         *ABSL_DIE_IF_NULL(declaration_type_info_)  // copy
+                         ));
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
@@ -1047,8 +1025,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // Create a self-reference to this class.
     const ReferenceComponent class_type_ref(
         new_keyword->get().text(),  // "new"
-        ReferenceType::kImmediate,
-        SymbolMetaType::kClass,
+        ReferenceType::kImmediate, SymbolMetaType::kClass,
         // pre-resolve this symbol to the enclosing class immediately
         current_scope_  // the current class
     );
@@ -1060,9 +1037,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     DeclarationTypeInfo decl_type_info(
         // There is no actual source text that references the type here.
         // We arbitrarily designate the 'new' keyword as the reference point.
-        new_keyword,
-        capture.Ref().LastLeaf()
-    );
+        new_keyword, capture.Ref().LastLeaf());
     const ValueSaver<DeclarationTypeInfo*> function_return_type(
         &declaration_type_info_, &decl_type_info);
 
@@ -1161,12 +1136,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // This is a self-reference.
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(ReferenceComponent(
-        instance_name,
-        ReferenceType::kUnqualified,
+        instance_name, ReferenceType::kUnqualified,
         SymbolMetaType::kDataNetVariableInstance,
         // Start with its type already resolved to the node we just declared.
-        &new_instance
-    ));
+        &new_instance));
 
     // Inform that named port identifiers will yield parallel children from
     // this reference branch point.
@@ -1252,11 +1225,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view inner_key = inner_ref.identifier;
 
     const auto p = outer_scope->TryEmplace(
-        inner_key, SymbolInfo(
-                       metatype,
-                       source_,
-                       definition_syntax
-                   ));
+        inner_key, SymbolInfo(metatype, source_, definition_syntax));
     SymbolTableNode* inner_symbol = &p.first->second;
     if (p.second) {
       // If injection succeeded, then the outer_scope did not already contain a

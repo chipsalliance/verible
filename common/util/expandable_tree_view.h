@@ -215,10 +215,10 @@ class ExpandableTreeView<WrappedNodeType>::iterator {
                                                      // constructor
  public:
   using iterator_category = std::forward_iterator_tag;
-  using value_type = value_type;
+  using value_type = typename TreeTraits::Value::type;
   using difference_type = int;
-  using pointer = value_type*;
-  using reference = value_type&;
+  using pointer = typename TreeTraits::Value::type*;
+  using reference = typename TreeTraits::Value::type&;
 
  private:
   explicit iterator(const impl_type* node) : node_(node) {}

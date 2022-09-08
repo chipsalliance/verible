@@ -201,19 +201,13 @@ using LayoutTree = VectorTree<LayoutItem>;
 // Single segment of LayoutFunction
 // Maps starting column to a linear cost function and its optimal layout.
 struct LayoutFunctionSegment {
-  LayoutFunctionSegment(
-    int column,
-    const LayoutTree& layout,
-    int span,
-    float intercept,
-    int gradient
-  ) :
-    column(column),
-    layout(layout),
-    span(span),
-    intercept(intercept),
-    gradient(gradient)
-  {}
+  LayoutFunctionSegment(int column, const LayoutTree& layout, int span,
+                        float intercept, int gradient)
+      : column(column),
+        layout(layout),
+        span(span),
+        intercept(intercept),
+        gradient(gradient) {}
 
   // Starting column.
   // AKA: knot.

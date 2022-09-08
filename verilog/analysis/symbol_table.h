@@ -132,15 +132,13 @@ struct ReferenceComponent {
 
  public:
   ReferenceComponent(
-    const absl::string_view& identifier,
-    const ReferenceType& ref_type,
-    const SymbolMetaType required_metatype = SymbolMetaType::kUnspecified,
-    const SymbolTableNode* resolved_symbol = nullptr) :
-  identifier(identifier),
-  ref_type(ref_type),
-  required_metatype(required_metatype),
-  resolved_symbol(resolved_symbol)
-  {}
+      const absl::string_view& identifier, const ReferenceType& ref_type,
+      const SymbolMetaType required_metatype = SymbolMetaType::kUnspecified,
+      const SymbolTableNode* resolved_symbol = nullptr)
+      : identifier(identifier),
+        ref_type(ref_type),
+        required_metatype(required_metatype),
+        resolved_symbol(resolved_symbol) {}
 
   ReferenceComponent(const ReferenceComponent&) = default;  // safe to copy
   ReferenceComponent(ReferenceComponent&&) = default;
@@ -195,9 +193,8 @@ struct DependentReferences {
   std::unique_ptr<ReferenceComponentNode> components;
 
  public:
-  DependentReferences(
-    std::unique_ptr<ReferenceComponentNode> components
-  ) : components(std::move(components)) {}
+  DependentReferences(std::unique_ptr<ReferenceComponentNode> components)
+      : components(std::move(components)) {}
 
   DependentReferences() = default;
   // move-only
@@ -272,10 +269,8 @@ struct DeclarationTypeInfo {
 
  public:
   DeclarationTypeInfo(const verible::Symbol* syntax_origin = nullptr,
-    const ReferenceComponentNode* user_defined_type = nullptr) :
-    syntax_origin(syntax_origin),
-    user_defined_type(user_defined_type)
-  {}
+                      const ReferenceComponentNode* user_defined_type = nullptr)
+      : syntax_origin(syntax_origin), user_defined_type(user_defined_type) {}
 
   // copy-able, move-able, assignable
   DeclarationTypeInfo(const DeclarationTypeInfo&) = default;
@@ -354,15 +349,13 @@ struct SymbolInfo {
   SymbolInfo() = default;
 
   SymbolInfo(const SymbolMetaType& metatype,
-    const VerilogSourceFile* file_origin = nullptr,
-    const verible::Symbol* syntax_origin = nullptr,
-    const DeclarationTypeInfo& declared_type = DeclarationTypeInfo()
-    ) :
-    metatype(metatype),
-    file_origin(file_origin),
-    syntax_origin(syntax_origin),
-    declared_type(declared_type)
-  {}
+             const VerilogSourceFile* file_origin = nullptr,
+             const verible::Symbol* syntax_origin = nullptr,
+             const DeclarationTypeInfo& declared_type = DeclarationTypeInfo())
+      : metatype(metatype),
+        file_origin(file_origin),
+        syntax_origin(syntax_origin),
+        declared_type(declared_type) {}
 
   // move-only
   SymbolInfo(const SymbolInfo&) = delete;
