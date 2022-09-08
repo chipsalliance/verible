@@ -177,26 +177,18 @@ absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
 // edges_.
 absl::Status FlowTree::GenerateControlFlowTree() {
   // Adding edges for if blocks.
-  int current_token_enum = 0;
   const TokenSequenceConstIterator non_location = source_sequence_.end();
 
   for (TokenSequenceConstIterator iter = source_sequence_.begin();
        iter != source_sequence_.end(); iter++) {
-    current_token_enum = iter->token_enum();
+    int current_token_enum = iter->token_enum();
 
     if (IsConditional(iter)) {
       switch (current_token_enum) {
-        case PP_ifdef: {
-          if_blocks_.emplace_back(iter, true, non_location);
-          auto status = AddMacroOfConditional(iter);
-          if (!status.ok()) {
-            return absl::InvalidArgumentError(
-                "ERROR: couldn't give a macro an ID.");
-          }
-          break;
-        }
+        case PP_ifdef:
         case PP_ifndef: {
-          if_blocks_.emplace_back(iter, false, non_location);
+          const bool is_positive = (current_token_enum == PP_ifdef);
+          if_blocks_.emplace_back(iter, is_positive, non_location);
           auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
