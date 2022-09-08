@@ -42,7 +42,7 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 
 # Turn warnings to 11. And fail compliation if we encounter one.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wall --cxxopt=-Wextra"
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-W --cxxopt=-Wall --cxxopt=-Wextra"
 
 # The following warning only reports with clang++; it is ignored by gcc
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wunreachable-code"
@@ -56,9 +56,10 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-missing-field-initializers"
 # Warnings in our code-base, that we might consider removing.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 
-# This is generated (only on CI?) when compiling storage.pb.cc;
-# some memset is out of range ?
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
+# If compiled with c++20 compatible compilers, it complains about extending
+# std::iterator. Can be removed once
+# https://github.com/chipsalliance/verible/issues/1400 is fixed.
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"
 
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
@@ -68,9 +69,6 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-array-bounds"
 # This option is only recognized by gcc
 if [[ ! "${CXX}" == clang* ]]; then
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
-  # Current protobuf creates a warning on newer compilers, hopefully
-  # fixed with protobuf > 21.5
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-stringop-overflow"        # protobuf
 else
   # -- only recognized by clang
   # Don't rely on implicit template type deduction
