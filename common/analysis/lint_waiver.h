@@ -124,8 +124,8 @@ class LintWaiverBuilder {
         waive_one_line_keyword_(waive_line_command),
         waive_range_start_keyword_(waive_start_command),
         waive_range_stop_keyword_(waive_stop_command),
-        is_token_comment_(is_comment),
-        is_token_whitespace_(is_space) {}
+        is_token_comment_(std::move(is_comment)),
+        is_token_whitespace_(std::move(is_space)) {}
 
   // Takes a single line's worth of tokens and determines updates to the set of
   // waived lines.  Pass a slice of tokens using make_range.
