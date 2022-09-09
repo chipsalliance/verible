@@ -81,8 +81,8 @@ cc_library(
     deps = [
         "//common/text:token_stream_view",
         "//verilog/parser:verilog_token_enum",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -98,7 +98,6 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
-
 
 cc_library(
     name = "lint_rule_registry",
