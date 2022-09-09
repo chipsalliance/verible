@@ -187,8 +187,7 @@ absl::Status FlowTree::GenerateControlFlowTree() {
       switch (current_token_enum) {
         case PP_ifdef:
         case PP_ifndef: {
-          const bool is_positive = (current_token_enum == PP_ifdef);
-          if_blocks_.emplace_back(iter, is_positive, non_location);
+          if_blocks_.emplace_back(iter, non_location);
           auto status = AddMacroOfConditional(iter);
           if (!status.ok()) {
             return absl::InvalidArgumentError(
