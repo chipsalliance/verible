@@ -88,12 +88,14 @@ class FlowTree {
 
  private:
   struct ConditionalBlock {
+    ConditionalBlock(TokenSequenceConstIterator if_location,
+                     TokenSequenceConstIterator non_location)
+        : if_location(if_location),
+          else_location(non_location),
+          endif_location(non_location) {}
+
     // "if_location" points to `ifdef or `ifndef.
     TokenSequenceConstIterator if_location;
-
-    // When "positive_condition" equals 1, then "if_location" points to `ifdef,
-    // Otherwise it points to `ifndef.
-    bool positive_condition;
     std::vector<TokenSequenceConstIterator> elsif_locations;
     TokenSequenceConstIterator else_location;
     TokenSequenceConstIterator endif_location;
