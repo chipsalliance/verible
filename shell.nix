@@ -16,6 +16,7 @@ pkgs.mkShell {
       python3
 
       # Ease development
-      clang-tools_11  # clang-format
+      clang-tools_11    # clang-format
+      bazel-buildtools  # buildifier
     ];
 }
