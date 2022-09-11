@@ -121,9 +121,9 @@ class UnwrappedLine {
   // PreFormatToken spanned by this range, which is initially empty.
   UnwrappedLine(int d, token_iterator b,
                 PartitionPolicyEnum p = PartitionPolicyEnum::kUninitialized)
-      : indentation_spaces_(d), tokens_(b, b), partition_policy_(p) {}
+      : tokens_(b, b), indentation_spaces_(d), partition_policy_(p) {}
 
-  // Allow default construction for use in resize-able containers.
+  // Allow default construction for use in resizeable containers.
   UnwrappedLine() = default;
   UnwrappedLine(const UnwrappedLine&) = default;
   UnwrappedLine(UnwrappedLine&&) = default;
@@ -183,21 +183,21 @@ class UnwrappedLine {
  private:
   // Data members:
 
-  // indentation_spaces_ is the number of spaces to indent from the left.
-  int indentation_spaces_;
-
   // The range of sequential PreFormatTokens spanned by this UnwrappedLine.
   // These represent the tokens that will be formatted independently.
   // The memory for these must be owned elsewhere.
   FormatTokenRange tokens_;
 
-  // This determines under what conditions this UnwrappedLine should be
-  // further partitioned for formatting.
-  PartitionPolicyEnum partition_policy_ = PartitionPolicyEnum::kUninitialized;
-
   // Hint about the origin of this partition, e.g. a particular syntax
   // tree node/leaf.
   const Symbol* origin_ = nullptr;
+
+  // indentation_spaces_ is the number of spaces to indent from the left.
+  int indentation_spaces_;
+
+  // This determines under what conditions this UnwrappedLine should be
+  // further partitioned for formatting.
+  PartitionPolicyEnum partition_policy_ = PartitionPolicyEnum::kUninitialized;
 };
 
 std::ostream& operator<<(std::ostream&, const UnwrappedLine&);

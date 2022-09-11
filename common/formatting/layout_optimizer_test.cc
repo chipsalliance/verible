@@ -2294,10 +2294,10 @@ TEST_F(TreeReconstructorTest, InlineSpacingReconstruction) {
           .build(pre_format_tokens_);
 
   const auto layout_tree =
-      LT(LI(LayoutType::kJuxtaposition, 1, true),               //
-         LT(LI(tree_expected.Children()[0].Value(), true, 1)),  //
-         LT(LI(tree_expected.Children()[1].Value())),           //
-         LT(LI(tree_expected.Children()[2].Value())));
+      LT(LI(LayoutType::kJuxtaposition, 1, true),                   //
+         LT(LI(tree_expected.Children()->at(0).Value(), true, 1)),  //
+         LT(LI(tree_expected.Children()->at(1).Value())),           //
+         LT(LI(tree_expected.Children()->at(2).Value())));
 
   auto optimized_tree = TokenPartitionTree();
 
@@ -2435,10 +2435,10 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
-                                    LT(LI(tree.Children()[0].Value())),  //
-                                    LT(LI(tree.Children()[1].Value())),  //
-                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),         //
+                                    LT(LI(tree.Children()->at(0).Value())),  //
+                                    LT(LI(tree.Children()->at(1).Value())),  //
+                                    LT(LI(tree.Children()->at(2).Value())));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 5, 4.0F, 0},
         {35, expected_layout, 5, 4.0F, 100},
@@ -2457,10 +2457,11 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),        //
-                                    LT(LI(tree.Children()[0].Value(), 1)),  //
-                                    LT(LI(tree.Children()[1].Value(), 2)),  //
-                                    LT(LI(tree.Children()[2].Value(), 3)));
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, true),            //
+           LT(LI(tree.Children()->at(0).Value(), 1)),  //
+           LT(LI(tree.Children()->at(1).Value(), 2)),  //
+           LT(LI(tree.Children()->at(2).Value(), 3)));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 8, 4.0F, 0},
         {32, expected_layout, 8, 4.0F, 100},
@@ -2480,10 +2481,10 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
-                                    LT(LI(tree.Children()[0].Value())),  //
-                                    LT(LI(tree.Children()[1].Value())),  //
-                                    LT(LI(tree.Children()[2].Value())));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),         //
+                                    LT(LI(tree.Children()->at(0).Value())),  //
+                                    LT(LI(tree.Children()->at(1).Value())),  //
+                                    LT(LI(tree.Children()->at(2).Value())));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 5, 4.0F, 0},
         {35, expected_layout, 5, 4.0F, 100},
@@ -2502,10 +2503,11 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),        //
-                                    LT(LI(tree.Children()[0].Value(), 1)),  //
-                                    LT(LI(tree.Children()[1].Value(), 2)),  //
-                                    LT(LI(tree.Children()[2].Value(), 3)));
+    const auto expected_layout =
+        LT(LI(LayoutType::kStack, 0, true),            //
+           LT(LI(tree.Children()->at(0).Value(), 1)),  //
+           LT(LI(tree.Children()->at(1).Value(), 2)),  //
+           LT(LI(tree.Children()->at(2).Value(), 3)));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 8, 4.0F, 0},
         {32, expected_layout, 8, 4.0F, 100},
@@ -2524,9 +2526,9 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
-                                    LT(LI(tree.Children()[0].Value())),  //
-                                    LT(LI(tree.Children()[1].Value())));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),         //
+                                    LT(LI(tree.Children()->at(0).Value())),  //
+                                    LT(LI(tree.Children()->at(1).Value())));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 31, 2.0F, 0},
         {9, expected_layout, 31, 2.0F, 100},
@@ -2544,9 +2546,9 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
                           })
                           .build(pre_format_tokens_);
 
-    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),     //
-                                    LT(LI(tree.Children()[0].Value())),  //
-                                    LT(LI(tree.Children()[1].Value())));
+    const auto expected_layout = LT(LI(LayoutType::kStack, 0, true),         //
+                                    LT(LI(tree.Children()->at(0).Value())),  //
+                                    LT(LI(tree.Children()->at(1).Value())));
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 31, 2.0F, 0},
         {9, expected_layout, 31, 2.0F, 100},
@@ -2567,9 +2569,9 @@ TEST_F(TokenPartitionsLayoutOptimizerTest, CalculateOptimalLayout) {
 
     const auto expected_layout =
         LT(LI(LayoutType::kJuxtaposition, 3, true),
-           LT(LI(tree.Children()[0].Value(), true, 3)),
-           LT(LI(tree.Children()[1].Value(), false, 0)),
-           LT(LI(tree.Children()[2].Value(), false, 0)));
+           LT(LI(tree.Children()->at(0).Value(), true, 3)),
+           LT(LI(tree.Children()->at(1).Value(), false, 0)),
+           LT(LI(tree.Children()->at(2).Value(), false, 0)));
 
     const auto expected_lf = LayoutFunction{
         {0, expected_layout, 31, 0.0, 0},

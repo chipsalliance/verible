@@ -39,6 +39,12 @@ class ValueSaver {
   const T oldval_;
 };
 
+template <typename T>
+ValueSaver(T*, const T&) -> ValueSaver<T>;
+
+template <typename T>
+ValueSaver(T*) -> ValueSaver<T>;
+
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_UTIL_VALUE_SAVER_H_

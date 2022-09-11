@@ -18,6 +18,7 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
@@ -31,6 +32,7 @@
 #include "common/util/spacer.h"
 #include "common/util/top_n.h"
 #include "common/util/tree_operations.h"
+#include "common/util/value_saver.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
@@ -46,8 +48,8 @@ void VerifyTreeNodeFormatTokenRanges(const TokenPartitionTree& node,
     return std::distance(base, iter);
   };
 
-  const auto& children = node.Children();
-  if (!children.empty()) {
+  if (!is_leaf(node)) {
+    const auto& children = *node.Children();
     const TokenPartitionTreePrinter node_printer(node);
     {
       // Hierarchy invariant: parent's range == range spanned by children.
@@ -129,43 +131,152 @@ std::vector<std::vector<int>> FlushLeftSpacingDifferences(
   return flush_left_spacing_deltas;
 }
 
+// FIXME(mglb): Duplicate of function from unwrapped_line.cc. Expose the other
+// function and remove this one.
+static void TokenFormatter(std::string* out, const PreFormatToken& token,
+                           bool verbose) {
+  if (verbose) {
+    std::ostringstream oss;
+    token.before.CompactNotation(oss);
+    absl::StrAppend(out, oss.str());
+  }
+  absl::StrAppend(out, token.Text());
+}
+
+// TokenPartitionNode visitor which recursively prints tree in textual form.
+// TODO(mglb): Consider merging with TokenPartitionTreePrinter
+class TokenPartitionNodePrinter {
+  static constexpr int kIndentationSpaces = 2;
+
+ public:
+  explicit TokenPartitionNodePrinter(
+      std::ostream& stream, bool verbose = false,
+      bool print_branch_tokens = false, bool print_node_path = false,
+      UnwrappedLine::OriginPrinterFunction origin_printer =
+          UnwrappedLine::DefaultOriginPrinter)
+      : stream_(stream),
+        verbose_(verbose),
+        print_branch_tokens_(print_branch_tokens),
+        print_node_path_(print_node_path),
+        origin_printer_(std::move(origin_printer)),
+        indent_(0) {}
+
+  void operator()(const UnwrappedLineNode& node) {
+    stream_ << Spacer(indent_) << "{ ";
+
+    if (node.Children().empty()) {
+      stream_ << '(';
+      node.Value().AsCode(&stream_, verbose_, origin_printer_);
+      stream_ << ") }";
+    } else {
+      stream_ << '('
+              // similar to UnwrappedLine::AsCode()
+              << Spacer(node.Value().IndentationSpaces(),
+                        UnwrappedLine::kIndentationMarker);
+
+      stream_ << "[";
+      PrintNodeTokens(node, !node.Children().empty());
+      stream_ << "], policy: " << node.Value().PartitionPolicy() << ")";
+
+      if (print_node_path_) {
+        const auto* var = TokenPartitionVariant::GetFromStoredObject(&node);
+        const auto* tpt = static_cast<const TokenPartitionTree*>(var);
+        stream_ << " @" << NodePath(*tpt);
+      }
+
+      if (node.Value().Origin() != nullptr) {
+        stream_ << ", (origin: ";
+        origin_printer_(stream_, node.Value().Origin());
+        stream_ << ")";
+      }
+      stream_ << '\n';
+
+      {
+        auto indent_saver = ValueSaver(&indent_, indent_ + kIndentationSpaces);
+        for (const auto& child : node.Children()) {
+          Visit(*this, child);
+          stream_ << '\n';
+        }
+      }
+
+      stream_ << Spacer(indent_) << "}";
+    }
+  }
+
+  void operator()(const TokenPartitionChoiceNode& node) {
+    stream_ << Spacer(indent_) << "Choice { ("
+            << Spacer(node.Value().IndentationSpaces(),
+                      UnwrappedLine::kIndentationMarker)
+            << "[";
+    PrintNodeTokens(node, !node.Choices().empty());
+    stream_ << "])";
+
+    if (print_node_path_) {
+      const auto* var = TokenPartitionVariant::GetFromStoredObject(&node);
+      const auto* tpt = static_cast<const TokenPartitionTree*>(var);
+      stream_ << " @" << NodePath(*tpt);
+    }
+
+    if (!node.Choices().empty()) {
+      stream_ << '\n';
+      {
+        auto indent_saver = ValueSaver(&indent_, indent_ + kIndentationSpaces);
+        for (const auto& child : node.Choices()) {
+          Visit(*this, child);
+          stream_ << '\n';
+        }
+      }
+
+      stream_ << Spacer(indent_) << "} // Choice";
+    } else {
+      stream_ << " }";
+    }
+  }
+
+  void operator()(const TokenPartitionNode& node) {
+    stream_ << Spacer(indent_) << "UnknownNode { ([";
+    PrintNodeTokens(node, false);
+    stream_ << "]) }";
+  }
+
+ private:
+  void PrintNodeTokens(const TokenPartitionNode& node, bool is_branch) {
+    if (print_branch_tokens_ || !is_branch) {
+      stream_ << absl::StrJoin(
+          node.Tokens(), " ",
+          [=](std::string* out, const PreFormatToken& token) {
+            TokenFormatter(out, token, this->verbose_);
+          });
+    } else {
+      stream_ << "<auto>";
+    }
+  }
+
+  std::ostream& stream_;
+  bool verbose_;
+  bool print_branch_tokens_;
+  bool print_node_path_;
+  UnwrappedLine::OriginPrinterFunction origin_printer_;
+  int indent_;
+};
+
 std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
                                                    int indent) const {
-  const auto& value = node.Value();
-  const auto& children = node.Children();
-  stream << Spacer(indent) << "{ ";
-  if (children.empty()) {
-    stream << '(';
-    value.AsCode(&stream, verbose, origin_printer);
-    stream << ") }";
-  } else {
-    stream << '('
-           // similar to UnwrappedLine::AsCode()
-           << Spacer(value.IndentationSpaces(),
-                     UnwrappedLine::kIndentationMarker)
-           // <auto> just means the concatenation of all subpartitions
-           << "[<auto>], policy: " << value.PartitionPolicy() << ") @"
-           << NodePath(node);
-    if (value.Origin() != nullptr) {
-      stream << ", (origin: ";
-      origin_printer(stream, value.Origin());
-      stream << ")";
-    }
-    stream << '\n';
-    // token range spans all of children nodes
-    for (const auto& child : children) {
-      TokenPartitionTreePrinter(child, verbose, origin_printer)
-              .PrintTree(stream, indent + 2)
-          << '\n';
-    }
-    stream << Spacer(indent) << '}';
-  }
+  auto printer =
+      TokenPartitionNodePrinter(stream, verbose, false, true, origin_printer);
+  Visit(printer, node);
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream,
                          const TokenPartitionTreePrinter& printer) {
   return printer.PrintTree(stream);
+}
+
+std::ostream& operator<<(std::ostream& stream, const TokenPartitionTree& node) {
+  auto printer = TokenPartitionNodePrinter(stream, false, true, false);
+  Visit(printer, node);
+  return stream;
 }
 
 // Detects when there is a vertical separation of more than one line between
@@ -263,9 +374,15 @@ bool AnyPartitionSubRangeIsDisabled(TokenPartitionRange range,
 }
 
 void AdjustIndentationRelative(TokenPartitionTree* tree, int amount) {
-  ApplyPreOrder(*ABSL_DIE_IF_NULL(tree), [&](UnwrappedLine& line) {
-    const int new_indent = std::max<int>(line.IndentationSpaces() + amount, 0);
-    line.SetIndentationSpaces(new_indent);
+  ApplyPreOrder(*ABSL_DIE_IF_NULL(tree), [&](TokenPartitionTree& node) {
+    const int new_indent =
+        std::max<int>(node.Value().IndentationSpaces() + amount, 0);
+    node.Value().SetIndentationSpaces(new_indent);
+    if (node.IsChoice()) {
+      for (auto& choice : node.Choices()) {
+        AdjustIndentationRelative(&choice, amount);
+      }
+    }
   });
 }
 
@@ -322,7 +439,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
   mutable_tokens_begin->before.break_decision =
       verible::SpacingOptions::MustWrap;
 
-  for (auto& child : already_formatted_partition_node->Children()) {
+  for (auto& child : *already_formatted_partition_node->Children()) {
     auto slice = child.Value();
     if (slice.PartitionPolicy() != PartitionPolicyEnum::kInline) {
       VLOG(1) << "Partition policy is not kInline - ignoring. Parent "
@@ -347,16 +464,18 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
       decision = verible::SpacingOptions::MustAppend;
   }
   // Children are no longer needed
-  already_formatted_partition_node->Children().clear();
+  already_formatted_partition_node->Children()->clear();
   VLOG(4) << __FUNCTION__ << ": partition after:\n"
           << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
 }
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
   CHECK_NOTNULL(tree);
-  CHECK_LT(pos + 1, tree->Children().size());
-  const auto& current = tree->Children()[pos];
-  const auto& next = tree->Children()[pos + 1];
+  CHECK_LT(pos + 1, tree->Children()->size());
+  const auto& current = tree->Children()->at(pos);
+  const auto& next = tree->Children()->at(pos + 1);
+  CHECK(current.IsPartition() && !current.IsAlreadyFormatted());
+  CHECK(next.IsPartition() && !next.IsAlreadyFormatted());
   // Merge of a non-leaf partition and a leaf partition produces a non-leaf
   // partition with token range wider than concatenated token ranges of its
   // children.
@@ -411,18 +530,25 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
 
   auto* leaf_parent = leaf->Parent();
   {
-    // Extend the upper-bound of the previous leaf partition to cover the
-    // partition that is about to be removed.
-    const auto range_end = leaf->Value().TokensRange().end();
     const auto uwline = leaf->Value();
+    const auto range_end = uwline.TokensRange().end();
     const auto previous_uwline = previous_leaf->Value();
+
+    TokenPartitionTree group(previous_uwline);
+    group.Children()->reserve(2);
+    group.Children()->push_back(std::move(*previous_leaf));
+    group.Children()->push_back(std::move(*leaf));
+
+    *previous_leaf = std::move(group);
+    // Extend the upper-bound of the group partition to cover the
+    // partition that is about to be removed.
     UpdateTokenRangeUpperBound(previous_leaf, &common_ancestor, range_end);
-    previous_leaf->Children().emplace_back(previous_uwline);
-    previous_leaf->Children().emplace_back(uwline);
+
     if (range_end > common_ancestor.Value().TokensRange().end()) {
       common_ancestor.Value().SpanUpToToken(range_end);
     }
     VLOG(5) << "common ancestor (after updating target):\n" << common_ancestor;
+
     // Shrink lower-bounds of the originating subtree.
     UpdateTokenRangeLowerBound(leaf_parent, &common_ancestor, range_end);
     VLOG(5) << "common ancestor (after updating origin):\n" << common_ancestor;
@@ -442,13 +568,75 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
   return previous_leaf;
 }
 
-// Note: this destroys leaf
-TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
+TokenPartitionTree* GroupLeafWithNextLeaf(TokenPartitionTree* leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
+  auto* next_leaf = NextLeaf(*leaf);
+  if (next_leaf == nullptr) return nullptr;
+  VLOG(4) << "next leaf:\n" << *next_leaf;
+
+  // If there is no common ancestor, do nothing and return.
+  auto& common_ancestor =
+      *ABSL_DIE_IF_NULL(NearestCommonAncestor(*leaf, *next_leaf));
+  VLOG(4) << "common ancestor:\n" << common_ancestor;
+
+  // Verify continuity of token ranges between adjacent leaves.
+  CHECK(leaf->Value().TokensRange().end() ==
+        next_leaf->Value().TokensRange().begin());
+
+  auto* leaf_parent = leaf->Parent();
+  {
+    const auto uwline = leaf->Value();
+    const auto range_begin = uwline.TokensRange().begin();
+    const auto next_uwline = next_leaf->Value();
+
+    TokenPartitionTree group(next_uwline);
+    group.Children()->reserve(2);
+    group.Children()->push_back(std::move(*leaf));
+    group.Children()->push_back(std::move(*next_leaf));
+
+    *next_leaf = std::move(group);
+
+    UpdateTokenRangeLowerBound(next_leaf, &common_ancestor, range_begin);
+    if (range_begin < common_ancestor.Value().TokensRange().begin()) {
+      common_ancestor.Value().SpanBackToToken(range_begin);
+    }
+    VLOG(4) << "common ancestor (after updating target):\n" << common_ancestor;
+
+    // Extend the upper-bound of the group partition to cover the
+    // partition that is about to be removed.
+    UpdateTokenRangeUpperBound(next_leaf, &common_ancestor, range_begin);
+    VLOG(4) << "common ancestor (after updating origin):\n" << common_ancestor;
+
+    // Shrink upper-bounds of the originating subtree.
+    UpdateTokenRangeUpperBound(leaf_parent, &common_ancestor, range_begin);
+
+    // Remove the obsolete partition, leaf.
+    // Caution: Existing references to the obsolete partition (and beyond)
+    // will be invalidated!
+    RemoveSelfFromParent(*leaf);
+    VLOG(4) << "common ancestor (after destroying leaf):\n" << common_ancestor;
+  }
+
+  // Sanity check invariants.
+  VerifyFullTreeFormatTokenRanges(
+      common_ancestor,
+      LeftmostDescendant(common_ancestor).Value().TokensRange().begin());
+
+  return next_leaf;
+}
+
+// Note: this destroys leaf
+TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
+  // TODO(mglb): find LeafPartition or Choice or AlreadyFormatted instead of
+  // leaf
+  CHECK_NOTNULL(leaf);
+  VLOG(4) << "origin leaf:\n" << *leaf;
+  CHECK(leaf->IsLeafPartition() && !leaf->IsAlreadyFormatted());
   auto* target_leaf = PreviousLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
+  CHECK(target_leaf->IsLeafPartition() && !target_leaf->IsAlreadyFormatted());
 
   // If there is no common ancestor, do nothing and return.
   auto& common_ancestor =
@@ -492,9 +680,11 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
 TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
+  CHECK(leaf->IsLeafPartition() && !leaf->IsAlreadyFormatted());
   auto* target_leaf = NextLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
+  CHECK(target_leaf->IsLeafPartition() && !target_leaf->IsAlreadyFormatted());
 
   // If there is no common ancestor, do nothing and return.
   auto& common_ancestor =
@@ -787,16 +977,16 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
   VectorTree<TokenPartitionTreeWrapper>* fitted_tree = nullptr;
 
   // Leaf or simple node, e.g. '[function foo ( ) ;]'
-  if (node->Children().size() < 2) {
+  if (node->Children()->size() < 2) {
     // Nothing to do
     return;
   }
 
   // Partition with arguments should have at least one argument
-  const auto& children = node->Children();
+  const auto& children = *node->Children();
   const auto& header = children[0];
   const auto& args_partition = children[1];
-  const auto& subpartitions = args_partition.Children();
+  const auto& subpartitions = *args_partition.Children();
   const auto* trailer = children.size() > 2 ? &children[2] : nullptr;
 
   const bool one_per_line = args_partition.Value().PartitionPolicy() ==
@@ -860,8 +1050,8 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
     uwline.SetPartitionPolicy(PartitionPolicyEnum::kFitOnLineElseExpand);
 
     // Create new grouping node
-    temporary_tree.Children().emplace_back(uwline);
-    auto* group = &temporary_tree.Children().back();
+    temporary_tree.Children()->emplace_back(uwline);
+    auto* group = &temporary_tree.Children()->back();
 
     // Iterate over partitions in group
     for (const auto& partition : itr.Children()) {
@@ -869,20 +1059,20 @@ void ReshapeFittingSubpartitions(const BasicFormatStyle& style,
       const auto* node = partition.Value().Node();
 
       // Append child (warning contains original indentation)
-      group->Children().push_back(*node);
+      group->Children()->push_back(*node);
     }
   }
 
   // Update grouped childrens indentation in case of expanding grouping
   // partitions
-  for (auto& group : temporary_tree.Children()) {
-    for (auto& subpart : group.Children()) {
+  for (auto& group : *temporary_tree.Children()) {
+    for (auto& subpart : *group.Children()) {
       AdjustIndentationAbsolute(&subpart, group.Value().IndentationSpaces());
     }
   }
 
   // Remove moved nodes
-  node->Children().clear();
+  node->Children()->clear();
 
   // Move back from temporary tree
   AdoptSubtreesFrom(*node, &temporary_tree);

@@ -25,9 +25,351 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "common/util/container_iterator_range.h"
+#include "common/util/container_proxy.h"
+#include "common/util/variant.h"
 #include "common/util/vector_tree.h"
 
 namespace verible {
+
+class TokenPartitionNode;
+class TokenPartitionBranchNode;
+
+class UnwrappedLineNode;
+class TokenPartitionChoiceNode;
+
+class TokenPartitionTree;
+
+// Base node classes with common functionality
+// ===========================================
+
+// Base class for all TokenPartition nodes.
+class TokenPartitionNode {
+ public:
+  // Constructors & assignment operators
+
+  TokenPartitionNode() = default;
+  TokenPartitionNode(const TokenPartitionNode&) = default;
+  TokenPartitionNode(TokenPartitionNode&&) = default;
+
+  TokenPartitionNode& operator=(const TokenPartitionNode& rhs) {
+    if (this == &rhs) {
+      return *this;
+    }
+
+    // Intentionally keeping current parent
+    value_ = rhs.value_;
+    return *this;
+  }
+
+  TokenPartitionNode& operator=(TokenPartitionNode&& rhs) noexcept {
+    // Intentionally keeping current parent
+    value_ = rhs.value_;
+    return *this;
+  }
+
+  //
+
+  TokenPartitionTree* Parent() { return parent_; }
+  const TokenPartitionTree* Parent() const { return parent_; }
+
+  FormatTokenRange Tokens() const { return value_.TokensRange(); }
+
+ protected:
+  void SetParent(TokenPartitionTree* parent) { parent_ = parent; }
+
+  static void SetParent(TokenPartitionNode* node, TokenPartitionTree* parent) {
+    node->parent_ = parent;
+  }
+
+  // Value-related interface
+  // -----------------------
+
+  explicit TokenPartitionNode(const UnwrappedLine& uwline) : value_(uwline) {}
+
+  UnwrappedLine& Value() { return value_; }
+  const UnwrappedLine& Value() const { return value_; }
+
+ private:
+  TokenPartitionTree* parent_ = nullptr;
+  // TODO(mglb): this is here just to provide Tokens(), which is a common
+  // thing in all nodes. Break UnwrappedLine into separate node members and
+  // move node-specific ones to appropriate subnodes.
+  UnwrappedLine value_;
+};
+
+// Base class for TokenPartition nodes providing child nodes list.
+class TokenPartitionBranchNode : public TokenPartitionNode {
+ public:
+  using subnodes_type = std::vector<TokenPartitionTree>;
+
+  // Constructors & assignment operators
+
+  TokenPartitionBranchNode() = default;
+  TokenPartitionBranchNode(const TokenPartitionBranchNode& other) = default;
+  TokenPartitionBranchNode(TokenPartitionBranchNode&& other) = default;
+
+  TokenPartitionBranchNode& operator=(const TokenPartitionBranchNode& other) =
+      default;
+
+  TokenPartitionBranchNode& operator=(TokenPartitionBranchNode&& other) =
+      default;
+
+  //
+
+  class ChildrenList : private ContainerProxyBase<ChildrenList, subnodes_type> {
+    using Base = ContainerProxyBase<ChildrenList, subnodes_type>;
+    friend Base;
+
+   public:
+    using typename Base::container_type;
+
+    // Import (via `using`) ContainerProxy members supported by std::vector.
+    USING_CONTAINER_PROXY_STD_VECTOR_MEMBERS(Base)
+
+    // Move-cast to wrapped container's type. Moves out the container.
+    explicit operator container_type() && { return std::move(container_); }
+
+   protected:
+    // ContainerProxy interface
+    // ------------------------
+
+    container_type& underlying_container() { return container_; }
+    const container_type& underlying_container() const { return container_; }
+
+    void ElementsInserted(iterator first, iterator last) {
+      LinkChildrenToParent(iterator_range(first, last));
+    }
+
+    // void ElementsBeingRemoved(iterator first, iterator last) {}
+
+    // void ElementsBeingReplaced() {}
+
+    void ElementsWereReplaced() { LinkChildrenToParent(container_); }
+
+   private:
+    // Sets parent pointer of nodes from `children` range to address of `node_`.
+    template <class Range>
+    void LinkChildrenToParent(Range&& children);
+
+    // Allow construction, assignment and direct access to `container_` inside
+    // TokenPartitionBranchNode.
+    friend TokenPartitionBranchNode;
+
+    ChildrenList() = default;
+
+    ChildrenList(const ChildrenList& other) : container_(other.container_) {
+      LinkChildrenToParent(container_);
+    }
+
+    ChildrenList(ChildrenList&& other) noexcept
+        : container_(std::move(other.container_)) {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      LinkChildrenToParent(container_);
+    }
+
+    ChildrenList& operator=(const ChildrenList& other) {
+      container_ = other.container_;
+      LinkChildrenToParent(container_);
+      return *this;
+    }
+
+    ChildrenList& operator=(ChildrenList&& other) noexcept {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      container_ = std::move(other.container_);
+      LinkChildrenToParent(container_);
+      return *this;
+    }
+
+    // Actual data container where child nodes are stored.
+    subnodes_type container_;
+  };
+
+  //
+
+  ChildrenList& Children() { return children_; };
+  const ChildrenList& Children() const { return children_; };
+
+  //
+
+ protected:
+  explicit TokenPartitionBranchNode(const UnwrappedLine& uwline)
+      : TokenPartitionNode(uwline) {}
+
+  //
+
+ private:
+  static constexpr size_t ChildrenMemberOffset() {
+    // TODO(mglb): Explain this (copy-paste related comment from map_tree.h)
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
+    return offsetof(TokenPartitionBranchNode, children_);
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+  }
+
+  ChildrenList children_;
+};
+
+// Concrete node classes
+// =====================
+
+class UnwrappedLineNode : public TokenPartitionBranchNode {
+ public:
+  UnwrappedLineNode() = default;
+  UnwrappedLineNode(const UnwrappedLineNode&) = default;
+  UnwrappedLineNode(UnwrappedLineNode&&) = default;
+
+  UnwrappedLineNode& operator=(const UnwrappedLineNode&) = default;
+  UnwrappedLineNode& operator=(UnwrappedLineNode&&) = default;
+
+  explicit UnwrappedLineNode(const UnwrappedLine& uwline)
+      : TokenPartitionBranchNode(uwline) {}
+
+  using TokenPartitionNode::Value;
+};
+
+class TokenPartitionChoiceNode : public TokenPartitionNode {
+  using subnodes_type = std::vector<TokenPartitionTree>;
+
+ public:
+  TokenPartitionChoiceNode() = default;
+  TokenPartitionChoiceNode(const TokenPartitionChoiceNode&) = default;
+  TokenPartitionChoiceNode(TokenPartitionChoiceNode&&) = default;
+
+  TokenPartitionChoiceNode& operator=(const TokenPartitionChoiceNode&) =
+      default;
+  TokenPartitionChoiceNode& operator=(TokenPartitionChoiceNode&&) = default;
+
+  explicit TokenPartitionChoiceNode(const UnwrappedLine& uwline)
+      : TokenPartitionNode(uwline) {}
+
+  class ChoicesList : ContainerProxyBase<ChoicesList, subnodes_type> {
+    using Base = ContainerProxyBase<ChoicesList, subnodes_type>;
+    friend Base;
+
+   public:
+    using typename Base::container_type;
+
+    // Import (via `using`) ContainerProxy members supported by std::vector.
+    USING_CONTAINER_PROXY_STD_VECTOR_MEMBERS(Base)
+
+    // Move-cast to wrapped container's type. Moves out the container.
+    explicit operator subnodes_type() && { return std::move(container_); }
+
+   protected:
+    // ContainerProxy interface
+
+    container_type& underlying_container() { return container_; }
+    const container_type& underlying_container() const { return container_; }
+
+    void ElementsInserted(iterator first, iterator last) {
+      VerifyAndProcessNewChoices(iterator_range(first, last));
+    }
+
+    // void ElementsBeingRemoved(iterator first, iterator last) {}
+
+    // void ElementsBeingReplaced() {}
+
+    void ElementsWereReplaced() { VerifyAndProcessNewChoices(container_); }
+
+   private:
+    template <class Range>
+    void VerifyAndProcessNewChoices(Range&& choice_subtrees);
+
+    // Allow assignment inside TokenPartitionChoiceNode.
+    friend TokenPartitionChoiceNode;
+
+    ChoicesList() = default;
+
+    ChoicesList(const ChoicesList& other) : container_(other.container_) {
+      VerifyAndProcessNewChoices(container_);
+    }
+
+    ChoicesList(ChoicesList&& other) noexcept
+        : container_(std::move(other.container_)) {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      VerifyAndProcessNewChoices(container_);
+    }
+
+    ChoicesList& operator=(const ChoicesList& other) {
+      container_ = other.container_;
+      VerifyAndProcessNewChoices(container_);
+      return *this;
+    }
+
+    ChoicesList& operator=(ChoicesList&& other) noexcept {
+      // Note: `other` is not notified about the change because it ends up in
+      // undefined state as a result of the move.
+      container_ = std::move(other.container_);
+      VerifyAndProcessNewChoices(container_);
+      return *this;
+    }
+
+    // Actual data container where choice subtrees are stored.
+    subnodes_type container_;
+  };
+
+  ChoicesList& Choices() { return choices_; }
+  const ChoicesList& Choices() const { return choices_; }
+
+  using TokenPartitionNode::Value;
+
+ private:
+  static constexpr size_t ChoicesMemberOffset() {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
+    return offsetof(TokenPartitionChoiceNode, choices_);
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+  }
+
+  ChoicesList choices_;
+};
+
+// TokenPartitionTreePrinter
+// =========================
+
+// Custom printer, alternative to the default stream operator<<.
+// Modeled after VectorTree<>::PrintTree, but suppresses printing of the
+// tokens for non-leaf nodes because a node's token range always spans
+// that of all of its children.
+// Usage: stream << TokenPartitionTreePrinter(tree) << std::endl;
+struct TokenPartitionTreePrinter {
+  explicit TokenPartitionTreePrinter(
+      const TokenPartitionTree& n, bool verbose = false,
+      UnwrappedLine::OriginPrinterFunction origin_printer =
+          UnwrappedLine::DefaultOriginPrinter)
+      : node(n), verbose(verbose), origin_printer(std::move(origin_printer)) {}
+
+  std::ostream& PrintTree(std::ostream& stream, int indent = 0) const;
+
+  // The (sub)tree to display.
+  const TokenPartitionTree& node;
+  // If true, display inter-token information.
+  bool verbose;
+
+  UnwrappedLine::OriginPrinterFunction origin_printer;
+};
+
+std::ostream& operator<<(std::ostream& stream,
+                         const TokenPartitionTreePrinter& printer);
+
+std::ostream& operator<<(std::ostream& stream, const TokenPartitionTree& node);
+
+// TokenPartitionTree
+// ==================
+
+using TokenPartitionVariant =
+    verible::Variant<UnwrappedLineNode, TokenPartitionChoiceNode>;
 
 // Opaque type alias for a hierarchically partitioned format token stream.
 // Objects of this type maintain the following invariants:
@@ -35,9 +377,243 @@ namespace verible {
 //      equal to that of its children.
 //   2) Adjacent siblings begin/end iterators are equal (continuity).
 //
-// TODO(fangism): Promote this to a class that privately inherits the base.
-// Methods on this class will preserve invariants.
-using TokenPartitionTree = VectorTree<UnwrappedLine>;
+class TokenPartitionTree : public TokenPartitionVariant {
+ public:
+  // Type alias for TreeNode interface
+  using subnodes_type = TokenPartitionBranchNode::subnodes_type;
+
+  // TODO(mglb): replace using class hierarchy
+  enum class Kind : int8_t {
+    kPartition,
+    kChoice,
+  };
+
+  friend std::ostream& operator<<(std::ostream& s, Kind kind) {
+    switch (kind) {
+      case Kind::kPartition:
+        return s << "partition";
+      case Kind::kChoice:
+        return s << "choice";
+      default:
+        return s << "<unknown>";
+    }
+  }
+
+  TokenPartitionTree() = default;
+
+  explicit TokenPartitionTree(Kind kind)
+      : TokenPartitionVariant(
+            (kind == Kind::kPartition)
+                ? TokenPartitionVariant(in_place_type<UnwrappedLineNode>)
+                : TokenPartitionVariant(
+                      in_place_type<TokenPartitionChoiceNode>)) {}
+
+  TokenPartitionTree(const TokenPartitionTree& other) = default;
+
+  TokenPartitionTree(TokenPartitionTree&& other) = default;
+
+  // This constructor can be used to recursively build trees.
+  // e.g.
+  //   // looks like function-call, but just invokes constructor:
+  //   typedef TokenPartitionTree<Foo> FooNode;
+  //   auto foo_tree = FooNode({value-initializer},
+  //        FooNode({value-initializer}, /* children nodes... */ ),
+  //        FooNode({value-initializer}, /* children nodes... */ )
+  //   );
+  template <typename... Args>
+  explicit TokenPartitionTree(const UnwrappedLine& v, Args&&... args)
+      : TokenPartitionVariant(in_place_type<UnwrappedLineNode>, v) {
+    auto& node = get<UnwrappedLineNode>(*this);
+    node.Children().reserve(sizeof...(args));
+    (node.Children().emplace_back(std::forward<Args>(args)), ...);
+  }
+
+  template <typename... Args>
+  explicit TokenPartitionTree(UnwrappedLine&& v, Args&&... args)
+      : TokenPartitionVariant(in_place_type<UnwrappedLineNode>, v) {
+    auto& node = get<UnwrappedLineNode>(*this);
+    node.Children().reserve(sizeof...(args));
+    (node.Children().emplace_back(std::forward<Args>(args)), ...);
+  }
+
+  ~TokenPartitionTree() {}
+
+  // Swaps values and subtrees of two nodes.
+  // This operation is safe for unrelated trees (no common ancestor).
+  // This operation is safe when the two nodes share a common ancestor,
+  // excluding the case where one node is a direct ancestor of the other.
+  // TODO(fangism): Add a proper check for this property, and test.
+  using TokenPartitionVariant::swap;
+
+  TokenPartitionTree& operator=(const TokenPartitionTree& source) {
+    TokenPartitionVariant::operator=(source);
+    return *this;
+  }
+
+  TokenPartitionTree& operator=(TokenPartitionTree&& source) noexcept {
+    TokenPartitionVariant::operator=(std::move(source));
+    return *this;
+  }
+
+  // TreeNode interface:
+
+  UnwrappedLine& Value() {
+    return Visit([](auto& node) -> UnwrappedLine& { return node.Value(); },
+                 *this);
+  }
+  const UnwrappedLine& Value() const {
+    return Visit(
+        [](const auto& node) -> const UnwrappedLine& { return node.Value(); },
+        *this);
+  }
+
+  TokenPartitionTree* Parent() {
+    return Visit([](TokenPartitionNode& node) { return node.Parent(); }, *this);
+  }
+  const TokenPartitionTree* Parent() const {
+    return Visit([](const TokenPartitionNode& node) { return node.Parent(); },
+                 *this);
+  }
+
+  TokenPartitionBranchNode::ChildrenList* Children() {
+    using ChildrenList = TokenPartitionBranchNode::ChildrenList;
+    return Visit(
+        Overload{
+            [](TokenPartitionBranchNode& node) -> ChildrenList* {
+              return &node.Children();
+            },
+            [](TokenPartitionNode& node) -> ChildrenList* { return nullptr; },
+        },
+        *this);
+  }
+  const TokenPartitionBranchNode::ChildrenList* Children() const {
+    using ChildrenList = TokenPartitionBranchNode::ChildrenList;
+    return Visit(
+        Overload{
+            [](const TokenPartitionBranchNode& node) -> const ChildrenList* {
+              return &node.Children();
+            },
+            [](const TokenPartitionNode& node) -> const ChildrenList* {
+              return nullptr;
+            },
+        },
+        *this);
+  }
+
+  // Choice node interface
+
+  auto& Choices() {
+    using ChoicesList = TokenPartitionChoiceNode::ChoicesList;
+    return *Visit(Overload{
+                      [](TokenPartitionChoiceNode& node) -> ChoicesList* {
+                        return &node.Choices();
+                      },
+                      [](TokenPartitionNode& node) -> ChoicesList* {
+                        LOG(FATAL) << "Unexpected node type";
+                        return nullptr;
+                      },
+                  },
+                  *this);
+  }
+
+  const auto& Choices() const {
+    using ChoicesList = TokenPartitionChoiceNode::ChoicesList;
+    return *Visit(
+        Overload{
+            [](const TokenPartitionChoiceNode& node) -> const ChoicesList* {
+              return &node.Choices();
+            },
+            [](const TokenPartitionNode& node) -> const ChoicesList* {
+              LOG(FATAL) << "Unexpected node type";
+              return nullptr;
+            },
+        },
+        *this);
+  }
+
+  // Node type checks:
+
+  Kind kind() const {
+    return Visit(
+        Overload{
+            [](const TokenPartitionChoiceNode&) { return Kind::kChoice; },
+            [](const UnwrappedLineNode&) { return Kind::kPartition; },
+        },
+        *this);
+  }
+
+  bool IsChoice() const { return kind() == Kind::kChoice; }
+
+  bool IsPartition() const { return kind() == Kind::kPartition; }
+
+  bool IsLeafPartition() const {
+    return kind() == Kind::kPartition && Children()->empty();
+  }
+
+  bool IsAlreadyFormatted() const {
+    return kind() == Kind::kPartition &&
+           Value().PartitionPolicy() == PartitionPolicyEnum::kAlreadyFormatted;
+  }
+};
+
+// Node implementations
+// ====================
+
+template <class Range>
+void TokenPartitionBranchNode::ChildrenList::LinkChildrenToParent(
+    Range&& children) {
+  // FIXME(mglb): Fragile magic - document!
+
+  static constexpr size_t offset_in_node =
+      TokenPartitionBranchNode::ChildrenMemberOffset();
+
+  std::byte* const this_ptr = reinterpret_cast<std::byte*>(this);
+  std::byte* const node_ptr = this_ptr - offset_in_node;
+
+  TokenPartitionBranchNode* const node =
+      reinterpret_cast<TokenPartitionBranchNode*>(node_ptr);
+
+  TokenPartitionTree* variant = std::launder(static_cast<TokenPartitionTree*>(
+      TokenPartitionTree::GetFromStoredObject(node)));
+
+  for (auto& child : children) {
+    Visit(
+        [variant](TokenPartitionNode& node) {
+          TokenPartitionNode::SetParent(&node, variant);
+        },
+        child);
+  }
+}
+
+template <class Range>
+void TokenPartitionChoiceNode::ChoicesList::VerifyAndProcessNewChoices(
+    Range&& choice_subtrees) {
+  // FIXME(mglb): Fragile magic - document!
+
+  static constexpr size_t offset_in_node =
+      TokenPartitionChoiceNode::ChoicesMemberOffset();
+
+  std::byte* const this_ptr = reinterpret_cast<std::byte*>(this);
+  std::byte* const node_ptr = this_ptr - offset_in_node;
+
+  TokenPartitionChoiceNode* const node =
+      std::launder(reinterpret_cast<TokenPartitionChoiceNode*>(node_ptr));
+
+  for (auto& subtree : choice_subtrees) {
+    Visit(
+        [node](TokenPartitionNode& subnode) {
+          CHECK(subnode.Tokens() == node->Tokens())
+              << "Each choice subtree must cover the same tokens as the Choice "
+                 "node.";
+          TokenPartitionNode::SetParent(&subnode, nullptr);
+        },
+        subtree);
+  }
+}
+
+//
+
+// using TokenPartitionTree = VectorTree<UnwrappedLine>;
 using TokenPartitionIterator = TokenPartitionTree::subnodes_type::iterator;
 using TokenPartitionRange = container_iterator_range<TokenPartitionIterator>;
 
@@ -68,31 +644,6 @@ std::vector<const UnwrappedLine*> FindLargestPartitions(
 // A perfectly formatted (flushed-left) original spacing will return all zeros.
 std::vector<std::vector<int>> FlushLeftSpacingDifferences(
     const TokenPartitionRange& partitions);
-
-// Custom printer, alternative to the default stream operator<<.
-// Modeled after VectorTree<>::PrintTree, but suppresses printing of the
-// tokens for non-leaf nodes because a node's token range always spans
-// that of all of its children.
-// Usage: stream << TokenPartitionTreePrinter(tree) << std::endl;
-struct TokenPartitionTreePrinter {
-  explicit TokenPartitionTreePrinter(
-      const TokenPartitionTree& n, bool verbose = false,
-      UnwrappedLine::OriginPrinterFunction origin_printer =
-          UnwrappedLine::DefaultOriginPrinter)
-      : node(n), verbose(verbose), origin_printer(std::move(origin_printer)) {}
-
-  std::ostream& PrintTree(std::ostream& stream, int indent = 0) const;
-
-  // The (sub)tree to display.
-  const TokenPartitionTree& node;
-  // If true, display inter-token information.
-  bool verbose;
-
-  UnwrappedLine::OriginPrinterFunction origin_printer;
-};
-
-std::ostream& operator<<(std::ostream& stream,
-                         const TokenPartitionTreePrinter& printer);
 
 // Returns true if any substring range spanned by the token partition 'range' is
 // disabled by 'disabled_byte_ranges'.

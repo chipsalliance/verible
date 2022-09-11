@@ -206,7 +206,7 @@ bool VerifyUnwrappedLines(std::ostream* stream,
     *stream << "expected:\n" << *diff.right << std::endl;
     *stream << "but got :\n"
             << verible::TokenPartitionTreePrinter(*diff.left) << std::endl;
-    const auto left_children = diff.left->Children().size();
+    const auto left_children = diff.left->Children()->size();
     const auto right_children = diff.right->Children().size();
     EXPECT_EQ(left_children, right_children) << "code:\n"
                                              << test_case.source_code;

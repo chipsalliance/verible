@@ -983,7 +983,7 @@ void AlignablePartitionGroup::ApplyAlignment(
     const GroupAlignmentData& align_data) const {
   auto row = alignable_rows_.begin();
   for (const auto& align_actions : align_data.align_actions_2D) {
-    (*row)->Children().clear();
+    (*row)->Children()->clear();
     VLOG(3) << __FUNCTION__ << " processing row: " << **row;
     if (!align_actions.empty()) {
       auto& node = **row;
@@ -994,9 +994,9 @@ void AlignablePartitionGroup::ApplyAlignment(
 
       verible::TokenPartitionTree* current_cell = nullptr;
       if (align_actions.front().ftoken != ftokens.begin()) {
-        node.Children().emplace_back(
+        node.Children()->emplace_back(
             UnwrappedLine(0, ftokens.begin(), PartitionPolicyEnum::kInline));
-        current_cell = &node.Children().back();
+        current_cell = &node.Children()->back();
       }
 
       for (const auto& action : align_actions) {
@@ -1007,10 +1007,10 @@ void AlignablePartitionGroup::ApplyAlignment(
                   << StringSpanOfTokenRange(current_cell->Value().TokensRange())
                   << " ]";
         }
-        node.Children().emplace_back(
+        node.Children()->emplace_back(
             UnwrappedLine(action.new_before_spacing, action.ftoken,
                           PartitionPolicyEnum::kInline));
-        current_cell = &node.Children().back();
+        current_cell = &node.Children()->back();
       }
       if (current_cell) {
         current_cell->Value().SpanUpToToken(ftokens.end());
@@ -1140,7 +1140,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
     VLOG(4) << "partition before:\n"
             << TokenPartitionTreePrinter(partition, true);
 
-    partition.Children().clear();
+    partition.Children()->clear();
     auto tokens = partition.Value().TokensRange();
     if (tokens.empty()) {
       partition.Value().SetPartitionPolicy(
@@ -1157,7 +1157,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
 
     auto line = UnwrappedLine(indentation, tokens.begin(),
                               PartitionPolicyEnum::kAlreadyFormatted);
-    partition.Children().emplace_back(line);
+    partition.Children()->emplace_back(line);
 
     if (tokens.size() > 1) {
       // First token
@@ -1167,7 +1167,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
       auto slice =
           UnwrappedLine(0, tokens.begin(), PartitionPolicyEnum::kInline);
       slice.SpanNextToken();
-      partition.Children().back().Children().emplace_back(slice);
+      partition.Children()->back().Children()->emplace_back(slice);
 
       // Remaining tokens
       for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) {
@@ -1180,7 +1180,7 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
         std::size_t last_newline_pos = whitespace.find_last_of('\n');
         if (last_newline_pos != absl::string_view::npos) {
           // Update end of current line.
-          partition.Children().back().Value().SpanUpToToken(it);
+          partition.Children()->back().Value().SpanUpToToken(it);
           // Start a new line.
           // Newlines count does not matter here. All newlines in leading
           // whitespace of the first token in a line are always preserved.
@@ -1192,19 +1192,19 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range) {
           // indentation + (this line orig. indent) - (1st line orig. indent)
           const auto line =
               UnwrappedLine(0, it, PartitionPolicyEnum::kAlreadyFormatted);
-          partition.Children().emplace_back(line);
+          partition.Children()->emplace_back(line);
           // Count only spaces after the last '\n'.
           spacing -= last_newline_pos + 1;
         }
 
         auto slice = UnwrappedLine(spacing, it, PartitionPolicyEnum::kInline);
         slice.SpanNextToken();
-        partition.Children().back().Children().emplace_back(slice);
+        partition.Children()->back().Children()->emplace_back(slice);
       }
     }
-    partition.Children().back().Value().SpanUpToToken(tokens.end());
+    partition.Children()->back().Value().SpanUpToToken(tokens.end());
 
-    if (partition.Children().size() == 1) {
+    if (partition.Children()->size() == 1) {
       HoistOnlyChild(partition);
     } else {
       partition.Value().SetPartitionPolicy(PartitionPolicyEnum::kAlwaysExpand);
@@ -1271,7 +1271,7 @@ void TabularAlignTokens(
   // possibly some other ignored element like comments.
 
   auto& partition = *partition_ptr;
-  auto& subpartitions = partition.Children();
+  auto& subpartitions = *partition.Children();
   // Identify groups of partitions to align, separated by blank lines.
   const TokenPartitionRange subpartitions_range(subpartitions.begin(),
                                                 subpartitions.end());

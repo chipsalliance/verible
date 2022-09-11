@@ -162,7 +162,7 @@ class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
 
   std::string Render() {
     std::ostringstream stream;
-    for (auto& child : partition_.Children()) {
+    for (auto& child : *partition_.Children()) {
       const auto policy = child.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAlreadyFormatted) {
         ApplyAlreadyFormattedPartitionPropertiesToTokens(&child,
@@ -333,7 +333,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, OneInterTokenPaddingWithIndent) {
     ftoken.before.spaces_required = 1;
   }
   // Indent each partition.
-  for (auto& child : partition_.Children()) {
+  for (auto& child : *partition_.Children()) {
     child.Value().SetIndentationSpaces(4);
   }
 
@@ -354,7 +354,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
   }
   // Leave the 'commented' line indented.
   pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
-  partition_.Children()[1].Value().SetIndentationSpaces(1);
+  partition_.Children()->at(1).Value().SetIndentationSpaces(1);
 
   // Pretend lines that begin with "three" are to be ignored, like comments.
   auto ignore_threes = [](const TokenPartitionTree& partition) {
@@ -406,7 +406,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  for (auto& child : partition_.Children()) {
+  for (auto& child : *partition_.Children()) {
     child.Value().SetIndentationSpaces(3);
   }
   pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
@@ -442,7 +442,7 @@ TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  for (auto& child : partition_.Children()) {
+  for (auto& child : *partition_.Children()) {
     child.Value().SetIndentationSpaces(1);
   }
   pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
@@ -510,7 +510,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, DisabledByColumnLimitIndented) {
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  for (auto& child : partition_.Children()) {
+  for (auto& child : *partition_.Children()) {
     child.Value().SetIndentationSpaces(3);
   }
 
@@ -592,7 +592,7 @@ class MultiAlignmentGroupTest : public AlignmentTestFixture {
     std::ostringstream stream;
     int position = 0;
     const absl::string_view text(sample_);
-    for (auto& child : partition_.Children()) {
+    for (auto& child : *partition_.Children()) {
       const auto policy = child.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAlreadyFormatted) {
         ApplyAlreadyFormattedPartitionPropertiesToTokens(&child,
@@ -717,8 +717,8 @@ class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
 };
 
 TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
-  const TokenPartitionRange children(partition_.Children().begin(),
-                                     partition_.Children().end());
+  const TokenPartitionRange children(partition_.Children()->begin(),
+                                     partition_.Children()->end());
 
   const std::vector<TaggedTokenPartitionRange> ranges(
       GetPartitionAlignmentSubranges(children, [](const TokenPartitionTree&
@@ -820,8 +820,8 @@ class GetPartitionAlignmentSubrangesSubtypedTestFixture
 };
 
 TEST_F(GetPartitionAlignmentSubrangesSubtypedTestFixture, VariousRanges) {
-  const TokenPartitionRange children(partition_.Children().begin(),
-                                     partition_.Children().end());
+  const TokenPartitionRange children(partition_.Children()->begin(),
+                                     partition_.Children()->end());
 
   const std::vector<TaggedTokenPartitionRange> ranges(
       GetPartitionAlignmentSubranges(children, &PartitionSelector));
@@ -1058,7 +1058,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       }
       uwline.SpanUpToToken(token_iter);
       uwline.SetOrigin(item.get());
-      partition_.Children().emplace_back(std::move(uwline));
+      partition_.Children()->emplace_back(std::move(uwline));
       SymbolCastToNode(*syntax_tree_).AppendChild(std::move(item));
     }
   }
@@ -1185,7 +1185,7 @@ TEST_F(SubcolumnsTreeAlignmentTest, OneInterTokenPaddingExceptFront) {
     ftoken.before.spaces_required = 1;
   }
   // Find first token of each line and require 0 spaces before them.
-  for (auto& line : partition_.Children()) {
+  for (auto& line : *partition_.Children()) {
     const auto tokens = line.Value().TokensRange();
     if (!tokens.empty()) {
       const PreFormatToken& front = tokens.front();
@@ -1232,7 +1232,7 @@ TEST_F(SubcolumnsTreeAlignmentTest,
   for (auto& ftoken : pre_format_tokens_) {
     ftoken.before.spaces_required = 1;
   }
-  for (auto& line : partition_.Children()) {
+  for (auto& line : *partition_.Children()) {
     line.Value().SetIndentationSpaces(2);
   }
 
@@ -1262,7 +1262,7 @@ class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
     std::ostringstream stream;
     int position = 0;
     const absl::string_view text(sample_);
-    for (auto& child : partition_.Children()) {
+    for (auto& child : *partition_.Children()) {
       const auto policy = child.Value().PartitionPolicy();
       if (policy == PartitionPolicyEnum::kAlreadyFormatted) {
         ApplyAlreadyFormattedPartitionPropertiesToTokens(&child,

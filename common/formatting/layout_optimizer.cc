@@ -90,7 +90,7 @@ int AlreadyFormattedPartitionLength(const TokenPartitionTree& partition) {
     width += token.before.spaces_required + token.Length();
   }
 
-  for (const auto& child : partition.Children()) {
+  for (const auto& child : *partition.Children()) {
     CHECK_EQ(child.Value().PartitionPolicy(), PartitionPolicyEnum::kInline);
     if (child.Value().TokensRange().begin() != tokens.begin()) {
       const auto& first_token = child.Value().TokensRange().front();
@@ -500,7 +500,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
 
   // Traverse and calculate children layouts
 
-  absl::FixedArray<LayoutFunction> layouts(node.Children().size());
+  absl::FixedArray<LayoutFunction> layouts(node.Children()->size());
 
   switch (node.Value().PartitionPolicy()) {
     case PartitionPolicyEnum::kJuxtaposition:
@@ -509,7 +509,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kFitOnLineElseExpand:
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
-      std::transform(node.Children().begin(), node.Children().end(),
+      std::transform(node.Children()->begin(), node.Children()->end(),
                      layouts.begin(), [=](const TokenPartitionTree& n) {
                        return this->CalculateOptimalLayout(n);
                      });
@@ -520,7 +520,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kAlwaysExpand:
     case PartitionPolicyEnum::kTabularAlignment: {
       const int indentation = node.Value().IndentationSpaces();
-      std::transform(node.Children().begin(), node.Children().end(),
+      std::transform(node.Children()->begin(), node.Children()->end(),
                      layouts.begin(), [=](const TokenPartitionTree& n) {
                        const int relative_indentation =
                            n.Value().IndentationSpaces() - indentation;
@@ -558,10 +558,11 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kStack:
       return factory_.Stack(layouts.begin(), layouts.end());
     case PartitionPolicyEnum::kWrap: {
-      if (VLOG_IS_ON(0) && node.Children().size() > 2) {
-        const int indentation = node.Children()[1].Value().IndentationSpaces();
-        for (const auto& child : iterator_range(node.Children().begin() + 2,
-                                                node.Children().end())) {
+      if (VLOG_IS_ON(0) && node.Children()->size() > 2) {
+        const int indentation =
+            node.Children()->at(1).Value().IndentationSpaces();
+        for (const auto& child : iterator_range(node.Children()->begin() + 2,
+                                                node.Children()->end())) {
           if (child.Value().IndentationSpaces() != indentation) {
             VLOG(0) << "Indentations of subpartitions from the second to the "
                        "last are not equal. Using indentation of the second "
@@ -571,8 +572,8 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
         }
       }
       const int hanging_indentation =
-          (node.Children().size() > 1)
-              ? (node.Children()[1].Value().IndentationSpaces() -
+          (node.Children()->size() > 1)
+              ? (node.Children()->at(1).Value().IndentationSpaces() -
                  node.Value().IndentationSpaces())
               : 0;
 
@@ -592,7 +593,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       const int indentation = node.Value().IndentationSpaces();
       for (size_t i = 0; i < layouts.size(); ++i) {
         const int relative_indentation =
-            node.Children()[i].Value().IndentationSpaces() - indentation;
+            node.Children()->at(i).Value().IndentationSpaces() - indentation;
         layouts[i] = factory_.Indent(layouts[i], relative_indentation);
       }
       auto stack = factory_.Stack(layouts.begin(), layouts.end());
@@ -615,7 +616,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       // When not a leaf, it contains partitions with kInline
       // policy. Pack them horizontally.
       const bool all_children_are_inlines =
-          std::all_of(node.Children().begin(), node.Children().end(),
+          std::all_of(node.Children()->begin(), node.Children()->end(),
                       [](const TokenPartitionTree& child) {
                         return child.Value().PartitionPolicy() ==
                                PartitionPolicyEnum::kInline;
@@ -631,7 +632,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       // Preserve spacing of the first sublayout. This has to be done because
       // the first layout in a line uses IndentationSpaces instead of
       // SpacesBefore.
-      const auto indent = node.Children().front().Value().IndentationSpaces();
+      const auto indent = node.Children()->front().Value().IndentationSpaces();
       layouts.front() = factory_.Indent(layouts.front(), indent);
 
       return factory_.Juxtaposition(layouts.begin(), layouts.end());
@@ -679,26 +680,26 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
                                     layout.TokensRange().begin(),
                                     PartitionPolicyEnum::kAlreadyFormatted);
         uwline.SpanUpToToken(layout.TokensRange().end());
-        tree_.Children().emplace_back(uwline);
-        current_node_ = &tree_.Children().back();
+        tree_.Children()->emplace_back(uwline);
+        current_node_ = &tree_.Children()->back();
       } else {
         const auto tokens = layout.TokensRange();
         CHECK(current_node_->Value().TokensRange().end() == tokens.begin());
 
         current_node_->Value().SpanUpToToken(tokens.end());
 
-        auto& slices = current_node_->Children();
+        auto& slices = *current_node_->Children();
         // TODO(mglb): add support for break_decision == Preserve
         if (layout.SpacesBefore() == tokens.front().before.spaces_required) {
           // No need for separate inline partition
-          if (!slices.empty())
+          if (!is_leaf(*current_node_))
             slices.back().Value().SpanUpToToken(tokens.end());
           return;
         }
 
         // Wrap previous tokens in the line
-        if (slices.empty()) {
-          current_node_->Children().emplace_back(
+        if (is_leaf(*current_node_)) {
+          current_node_->Children()->emplace_back(
               UnwrappedLine(0, current_node_->Value().TokensRange().begin(),
                             PartitionPolicyEnum::kInline));
         }
@@ -708,7 +709,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         auto slice = UnwrappedLine(layout.SpacesBefore(), tokens.begin(),
                                    PartitionPolicyEnum::kInline);
         slice.SpanUpToToken(tokens.end());
-        current_node_->Children().emplace_back(slice);
+        current_node_->Children()->emplace_back(slice);
       }
       return;
     }
@@ -756,20 +757,19 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 void TreeReconstructor::ReplaceTokenPartitionTreeNode(
     TokenPartitionTree* node) {
   CHECK_NOTNULL(node);
-  CHECK(!tree_.Children().empty());
+  CHECK(!is_leaf(tree_));
 
-  if (tree_.Children().size() == 1) {
-    *node = std::move(tree_.Children().front());
+  if (tree_.Children()->size() == 1) {
+    *node = std::move(tree_.Children()->front());
   } else {
-    const auto& first_line = tree_.Children().front().Value();
-    const auto& last_line = tree_.Children().back().Value();
+    const auto& first_line = tree_.Children()->front().Value();
+    const auto& last_line = tree_.Children()->back().Value();
 
-    node->Value() = UnwrappedLine(current_indentation_spaces_,
+    tree_.Value() = UnwrappedLine(current_indentation_spaces_,
                                   first_line.TokensRange().begin(),
                                   PartitionPolicyEnum::kAlwaysExpand);
-    node->Value().SpanUpToToken(last_line.TokensRange().end());
-    node->Children().clear();
-    AdoptSubtreesFrom(*node, &tree_);
+    tree_.Value().SpanUpToToken(last_line.TokensRange().end());
+    *node = std::move(tree_);
   }
 }
 
