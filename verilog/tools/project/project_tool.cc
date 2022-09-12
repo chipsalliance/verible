@@ -291,7 +291,6 @@ Project options, including source file list.
 };
 
 int main(int argc, char* argv[]) {
-  VLOG(1) << __FUNCTION__;
   // Create a registry of subcommands (locally, rather than as a static global).
   verible::SubcommandRegistry commands;
   for (const auto& entry : kCommands) {
