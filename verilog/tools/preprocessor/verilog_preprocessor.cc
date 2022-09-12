@@ -84,7 +84,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
 
 static absl::Status PreprocessSingleFile(
     absl::string_view source_file,
-    const std::vector<verilog::TextMacroDefinition>& defines,
+    const verilog::FileList::PreprocessingInfo& preprocessing_info,
     std::ostream& outs, std::ostream& message_stream) {
   std::string source_contents;
   if (auto status = verible::file::GetContents(source_file, &source_contents);
@@ -97,10 +97,8 @@ static absl::Status PreprocessSingleFile(
   // config.expand_macros=1;
   verilog::VerilogPreprocess preprocessor(config);
 
-  // Setting defines in the preprocessor.
-  for (const auto& define : defines) {
-    preprocessor.SetExternalDefine(define.name, define.value);
-  }
+  // Setting the preprocessing info (defines, and incdirs) in the preprocessor.
+  preprocessor.setPreprocessingInfo(preprocessing_info);
 
   verilog::VerilogLexer lexer(source_contents);
   verible::TokenSequence lexed_sequence;
@@ -136,15 +134,15 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
     return parsed_file_list.status();
   }
   const auto& files = parsed_file_list->file_paths;
-  const auto& defines = parsed_file_list->defines;
+  const auto& preprocessing_info = parsed_file_list->preprocessing;
 
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");
   }
   for (const absl::string_view source_file : files) {
     message_stream << source_file << ":\n";
-    auto status =
-        PreprocessSingleFile(source_file, defines, outs, message_stream);
+    auto status = PreprocessSingleFile(source_file, preprocessing_info, outs,
+                                       message_stream);
     if (!status.ok()) return status;
     outs << '\n';
   }

@@ -63,7 +63,8 @@ struct VerilogProjectConfig {
   std::string file_list_root;
 
   absl::Status LoadFromGlobalFlags() {
-    file_list.include_dirs = absl::GetFlag(FLAGS_include_dir_paths);
+    file_list.preprocessing.include_dirs =
+        absl::GetFlag(FLAGS_include_dir_paths);
 
     file_list.file_list_path = absl::GetFlag(FLAGS_file_list_path);
     if (file_list.file_list_path.empty()) {
@@ -110,7 +111,7 @@ struct ProjectSymbols {
     // Load all source files first.
     // Error-out early if any files failed to open.
     project = absl::make_unique<verilog::VerilogProject>(
-        config.file_list_root, config.file_list.include_dirs);
+        config.file_list_root, config.file_list.preprocessing.include_dirs);
     for (const auto& file : config.file_list.file_paths) {
       const auto open_status = project->OpenTranslationUnit(file);
       if (!open_status.ok()) return open_status.status();

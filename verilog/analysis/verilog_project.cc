@@ -314,7 +314,7 @@ FileList ParseSourceFileList(absl::string_view file_list_path,
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
   FileList file_list_out;
   file_list_out.file_list_path = std::string(file_list_path);
-  file_list_out.include_dirs.push_back(".");
+  file_list_out.preprocessing.include_dirs.push_back(".");
   std::string file_path;
   std::istringstream stream(file_list_content);
   while (std::getline(stream, file_path)) {
@@ -329,7 +329,7 @@ FileList ParseSourceFileList(absl::string_view file_list_path,
     if (absl::StartsWith(file_path, kIncludeDirPrefix)) {
       // Handle includes
       // TODO(karimtera): split directories by comma, to allow multiple dirs.
-      file_list_out.include_dirs.emplace_back(
+      file_list_out.preprocessing.include_dirs.emplace_back(
           absl::StripPrefix(file_path, kIncludeDirPrefix));
     } else {
       // A regular file
@@ -382,14 +382,16 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
               "after '=' is missing");
         }
         // add the define argument.
-        result.defines.emplace_back(macro_pair.first, macro_pair.second);
+        result.preprocessing.defines.emplace_back(macro_pair.first,
+                                                  macro_pair.second);
       }
     } else if (plus_argument_type == "incdir") {
       for (const absl::string_view incdir_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
         // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
-        result.include_dirs.emplace_back(std::string(incdir_argument));
+        result.preprocessing.include_dirs.emplace_back(
+            std::string(incdir_argument));
       }
     } else {
       return absl::InvalidArgumentError(absl::StrCat(

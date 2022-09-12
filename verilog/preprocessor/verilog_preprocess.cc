@@ -586,18 +586,24 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
   return absl::OkStatus();
 }
 
-// Sets a define passed to the tool with +define+<foo>[=<value>].
-void VerilogPreprocess::SetExternalDefine(absl::string_view define_name,
-                                          absl::string_view define_body) {
-  // manually create the tokens to save them into a MacroDefinition.
-  verible::TokenInfo macro_directive(PP_define, "`define");
-  verible::TokenInfo macro_name(PP_Identifier, define_name);
-  verible::TokenInfo macro_body(PP_define_body, define_body);
-  verible::MacroDefinition macro_definition(macro_directive, macro_name);
-  macro_definition.SetDefinitionText(macro_body);
+void VerilogPreprocess::setPreprocessingInfo(
+    const verilog::FileList::PreprocessingInfo& preprocess_info) {
+  preprocess_info_ = preprocess_info;
 
-  // Registers the macro definition to memeory.
-  RegisterMacroDefinition(macro_definition);
+  // Adding defines.
+  for (const auto& define : preprocess_info_.defines) {
+    // manually create the tokens to save them into a MacroDefinition.
+    verible::TokenInfo macro_directive(PP_define, "`define");
+    verible::TokenInfo macro_name(PP_Identifier, define.name);
+    verible::TokenInfo macro_body(PP_define_body, define.value);
+    verible::MacroDefinition macro_definition(macro_directive, macro_name);
+    macro_definition.SetDefinitionText(macro_body);
+
+    // Registers the macro definition to memeory.
+    RegisterMacroDefinition(macro_definition);
+  }
+
+  // We can directly access "preprocess_info_.include_dirs" whenever needed.
 }
 
 VerilogPreprocessData VerilogPreprocess::ScanStream(
