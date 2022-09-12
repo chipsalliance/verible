@@ -308,7 +308,7 @@ struct AlignedColumnConfiguration {
 /* static */ ColumnPositionTree* ColumnSchemaScanner::ReserveNewColumn(
     ColumnPositionTree* parent_column, const Symbol& symbol,
     const AlignmentColumnProperties& properties, const SyntaxTreePath& path) {
-  CHECK_NOTNULL(parent_column);
+  ABSL_DIE_IF_NULL(parent_column);
   // The path helps establish a total ordering among all desired alignment
   // points, given that they may come from optional or repeated language
   // constructs.
@@ -410,7 +410,7 @@ class ColumnSchemaAggregator {
  private:
   void CollectColumnsTree(const ColumnPositionTree& column,
                           VectorTree<AggregateColumnData>* aggregate_column) {
-    CHECK_NOTNULL(aggregate_column);
+    ABSL_DIE_IF_NULL(aggregate_column);
     for (const auto& subcolumn : column.Children()) {
       const auto [index_entry, insert] =
           syntax_to_columns_map_.try_emplace(subcolumn.Value().path);

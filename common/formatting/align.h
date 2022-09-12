@@ -122,7 +122,7 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   static ColumnPositionTree* ReserveNewColumn(
       ColumnPositionTree* parent_column, const Symbol& symbol,
       const AlignmentColumnProperties& properties) {
-    CHECK_NOTNULL(parent_column);
+    ABSL_DIE_IF_NULL(parent_column);
     const SyntaxTreePath::value_type subindex =
         parent_column->Children().size();
     const auto subpath = GetSubpath(parent_column->Value().path, {subindex});
@@ -385,8 +385,8 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     // Identify the last token covered by the origin tree.
     const SyntaxTreeLeaf* first_leaf = GetLeftmostLeaf(*origin);
     const SyntaxTreeLeaf* last_leaf = GetRightmostLeaf(*origin);
-    CHECK_NOTNULL(first_leaf);
-    CHECK_NOTNULL(last_leaf);
+    ABSL_DIE_IF_NULL(first_leaf);
+    ABSL_DIE_IF_NULL(last_leaf);
     const TokenInfo& first_tree_token = first_leaf->get();
     const TokenInfo& last_tree_token = last_leaf->get();
 

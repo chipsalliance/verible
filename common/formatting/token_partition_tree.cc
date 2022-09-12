@@ -301,8 +301,8 @@ void IndentButPreserveOtherSpacing(TokenPartitionRange partition_range,
 void ApplyAlreadyFormattedPartitionPropertiesToTokens(
     TokenPartitionTree* already_formatted_partition_node,
     std::vector<PreFormatToken>* ftokens) {
-  CHECK_NOTNULL(already_formatted_partition_node);
-  CHECK_NOTNULL(ftokens);
+  ABSL_DIE_IF_NULL(already_formatted_partition_node);
+  ABSL_DIE_IF_NULL(ftokens);
 
   VLOG(4) << __FUNCTION__ << ": partition:\n"
           << TokenPartitionTreePrinter(*already_formatted_partition_node, true);
@@ -353,7 +353,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
 }
 
 void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
-  CHECK_NOTNULL(tree);
+  ABSL_DIE_IF_NULL(tree);
   CHECK_LT(pos + 1, tree->Children().size());
   const auto& current = tree->Children()[pos];
   const auto& next = tree->Children()[pos + 1];
@@ -394,7 +394,7 @@ static void UpdateTokenRangeUpperBound(TokenPartitionTree* leaf,
 }
 
 TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
-  CHECK_NOTNULL(leaf);
+  ABSL_DIE_IF_NULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* previous_leaf = PreviousLeaf(*leaf);
   if (previous_leaf == nullptr) return nullptr;
@@ -444,7 +444,7 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
 
 // Note: this destroys leaf
 TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
-  CHECK_NOTNULL(leaf);
+  ABSL_DIE_IF_NULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* target_leaf = PreviousLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;
@@ -490,7 +490,7 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
 
 // Note: this destroys leaf
 TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
-  CHECK_NOTNULL(leaf);
+  ABSL_DIE_IF_NULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* target_leaf = NextLeaf(*leaf);
   if (target_leaf == nullptr) return nullptr;

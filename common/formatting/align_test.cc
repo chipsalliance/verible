@@ -1078,7 +1078,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
   SymbolPtr ParseItem(
       std::vector<verible::PreFormatToken>::iterator* it,
       const std::vector<verible::PreFormatToken>::iterator& end) {
-    CHECK_NOTNULL(it);
+    ABSL_DIE_IF_NULL(it);
     if (*it == end) return SymbolPtr(nullptr);
 
     if ((*it)->Text() == "(") {

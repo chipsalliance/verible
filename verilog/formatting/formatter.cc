@@ -723,7 +723,7 @@ class ContinuationCommentAligner {
 
  private:
   int GetTokenColumn(const verible::TokenInfo* token) {
-    CHECK_NOTNULL(token);
+    ABSL_DIE_IF_NULL(token);
     const int column =
         line_column_map_.GetLineColAtOffset(base_text_, token->left(base_text_))
             .column;
@@ -889,7 +889,7 @@ Status Formatter::Format(const ExecutionControl& control) {
             &(*node_iter), &unwrapper_data.preformatted_tokens);
       } else if (partition_policy == PartitionPolicyEnum::kInline) {
         auto* parent = node_iter->Parent();
-        CHECK_NOTNULL(parent);
+        ABSL_DIE_IF_NULL(parent);
         CHECK_EQ(parent->Value().PartitionPolicy(),
                  PartitionPolicyEnum::kAlreadyFormatted);
         // This removes the node pointed to by node_iter (and all other

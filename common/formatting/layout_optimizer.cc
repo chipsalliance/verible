@@ -38,7 +38,7 @@ namespace verible {
 
 void OptimizeTokenPartitionTree(const BasicFormatStyle& style,
                                 TokenPartitionTree* node) {
-  CHECK_NOTNULL(node);
+  ABSL_DIE_IF_NULL(node);
   VLOG(4) << __FUNCTION__ << ", before:\n"
           << verible::TokenPartitionTreePrinter(*node);
 
@@ -57,7 +57,7 @@ namespace {
 // Otherwise adopts whole 'source'.
 void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
                                      LayoutTree* destination) {
-  CHECK_NOTNULL(destination);
+  ABSL_DIE_IF_NULL(destination);
   const auto& src_item = source.Value();
   const auto& dst_item = destination->Value();
   if (!verible::is_leaf(source) && src_item.Type() == dst_item.Type() &&
@@ -466,7 +466,7 @@ LayoutFunction LayoutFunctionFactory::Choice(
 
 void TokenPartitionsLayoutOptimizer::Optimize(int indentation,
                                               TokenPartitionTree* node) const {
-  CHECK_NOTNULL(node);
+  ABSL_DIE_IF_NULL(node);
   CHECK_GE(indentation, 0);
 
   const LayoutFunction layout_function = CalculateOptimalLayout(*node);
@@ -755,7 +755,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
 void TreeReconstructor::ReplaceTokenPartitionTreeNode(
     TokenPartitionTree* node) {
-  CHECK_NOTNULL(node);
+  ABSL_DIE_IF_NULL(node);
   CHECK(!tree_.Children().empty());
 
   if (tree_.Children().size() == 1) {

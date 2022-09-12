@@ -399,7 +399,7 @@ verible::TokenWithContext TreeUnwrapper::VerboseToken(
 static void VerilogOriginPrinter(
     std::ostream& stream, const verible::TokenInfo::Context& token_context,
     const verible::Symbol* symbol) {
-  CHECK_NOTNULL(symbol);
+  ABSL_DIE_IF_NULL(symbol);
 
   if (symbol->Kind() == verible::SymbolKind::kNode) {
     stream << NodeEnum(symbol->Tag().tag);
@@ -1500,7 +1500,7 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
 // a partition preceding or following it.
 static void AttachSeparatorToPreviousOrNextPartition(
     TokenPartitionTree* partition) {
-  CHECK_NOTNULL(partition);
+  ABSL_DIE_IF_NULL(partition);
   VLOG(5) << __FUNCTION__ << ": subpartition:\n" << *partition;
 
   if (!is_leaf(*partition)) {
@@ -1591,7 +1591,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
 }
 
 void AttachSeparatorsToListElementPartitions(TokenPartitionTree* partition) {
-  CHECK_NOTNULL(partition);
+  ABSL_DIE_IF_NULL(partition);
   // Skip the first partition, it can't contain just a separator.
   for (int i = 1; i < static_cast<int>(partition->Children().size()); ++i) {
     auto& subpartition = partition->Children()[i];

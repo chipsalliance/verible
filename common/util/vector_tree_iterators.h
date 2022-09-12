@@ -45,11 +45,11 @@ class VectorTreeIteratorBase {
   explicit VectorTreeIteratorBase(pointer node) : node_(node) {}
 
   reference operator*() const {
-    CHECK_NOTNULL(node_);
+    ABSL_DIE_IF_NULL(node_);
     return *node_;
   }
   pointer operator->() const {
-    CHECK_NOTNULL(node_);
+    ABSL_DIE_IF_NULL(node_);
     return node_;
   }
   ImplType& operator++() {

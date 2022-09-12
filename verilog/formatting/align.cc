@@ -120,7 +120,7 @@ static bool IgnoreWithinPortDeclarationPartitionGroup(
 
   // Ignore .x or .x(x) port declarations.
   // These can appear in a list_of_port_or_port_declarations.
-  CHECK_NOTNULL(uwline.Origin());
+  ABSL_DIE_IF_NULL(uwline.Origin());
   return uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
          verible::SymbolCastToNode(*uwline.Origin())
              .MatchesTag(NodeEnum::kPort);
@@ -164,7 +164,7 @@ static bool IgnoreWithinActualNamedParameterPartitionGroup(
 
   // ignore everything that isn't passing a parameter by name
   const auto& uwline = partition.Value();
-  CHECK_NOTNULL(uwline.Origin());
+  ABSL_DIE_IF_NULL(uwline.Origin());
   return !(uwline.Origin()->Kind() == verible::SymbolKind::kNode &&
            verible::SymbolCastToNode(*uwline.Origin())
                .MatchesTag(NodeEnum::kParamByName));
@@ -183,7 +183,7 @@ static bool IgnoreWithinActualNamedPortPartitionGroup(
     return true;
   }
 
-  CHECK_NOTNULL(uwline.Origin());
+  ABSL_DIE_IF_NULL(uwline.Origin());
   if (uwline.Origin()->Kind() != verible::SymbolKind::kNode) return true;
 
   // ignore implicit connections .aaa
@@ -359,7 +359,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionRange:
       case NodeEnum::kDimensionSlice: {
-        CHECK_NOTNULL(current_dimensions_group_);
+        ABSL_DIE_IF_NULL(current_dimensions_group_);
         CHECK_EQ(node.children().size(), 5);
 
         SyntaxTreePath dimension_path = Path();
@@ -385,7 +385,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       }
       case NodeEnum::kDimensionScalar:
       case NodeEnum::kDimensionAssociativeType: {
-        CHECK_NOTNULL(current_dimensions_group_);
+        ABSL_DIE_IF_NULL(current_dimensions_group_);
         CHECK_EQ(node.children().size(), 3);
 
         SyntaxTreePath dimension_path = Path();
@@ -1200,7 +1200,7 @@ class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
           break;
         }
         CHECK_EQ(node.children().size(), 5);
-        CHECK_NOTNULL(item_column_);
+        ABSL_DIE_IF_NULL(item_column_);
         ReserveNewColumn(item_column_, *node[0], FlushLeft,
                          GetSubpath(Path(), {0}));  // '['
         ReserveNewColumn(item_column_, *node[1], FlushRight,
