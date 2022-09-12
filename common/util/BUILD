@@ -98,6 +98,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
         "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
         "@com_google_absl//absl/flags:usage",  # buildcleaner: keep
+        "@com_google_absl//absl/log:initialize",  # buildcleaner: keep
         "@com_google_absl//absl/strings",  # buildcleaner: keep
         "@com_google_absl//absl/time",  # buildcleaner: keep
     ],
@@ -134,13 +135,17 @@ cc_library(
     ],
 )
 
+# TODO: once all absl logging features are established in abseil-cpp, we
+# should IWYU them directly in places where we need logging and remove
+# this common/util:logging target.
 cc_library(
     name = "logging",
     hdrs = ["logging.h"],
     deps = [
-        "@com_github_google_glog//:glog",
-        "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/log:die_if_null",
+        "@com_google_absl//absl/random",
     ],
 )
 

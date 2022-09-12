@@ -22,7 +22,7 @@
 #include "absl/flags/usage_config.h"
 #include "absl/time/time.h"
 #include "common/util/generated_verible_build_version.h"
-#include "common/util/logging.h"
+#include "absl/log/initialize.h"
 
 namespace verible {
 
@@ -54,12 +54,14 @@ std::vector<absl::string_view> InitCommandLine(
   usage_config.version_string = GetBuildVersion;
   absl::SetFlagsUsageConfig(usage_config);
   absl::SetProgramUsageMessage(usage);  // copies usage string
-  google::InitGoogleLogging(**argv);
+  absl::InitializeLog();
 
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.
 #if !defined(__SANITIZE_ADDRESS__)
+#if 0  // Currently no replacement in absl/log
   google::InstallFailureSignalHandler();
+#endif
 #endif
 
   const auto positional_parameters = absl::ParseCommandLine(*argc, *argv);

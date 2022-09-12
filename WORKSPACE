@@ -18,9 +18,9 @@ http_archive(
     # implementation to solve the issue
     patch_args = ["-p1"],
     patches = ["//bazel:absl.patch"],
-    sha256 = "5b7640be0e119de1a9d941cb6b2607d76978eba5720196f1d4fc6de0421d2241",
-    strip_prefix = "abseil-cpp-20220623.0",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.zip"],
+    sha256 = "13c086356d01079377b9d894ee461cf63550bafd4119e93107afa70e0eb16fec",
+    strip_prefix = "abseil-cpp-0a066f31d981d69f7bde961055691906dabd4a3c",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/0a066f31d981d69f7bde961055691906dabd4a3c.zip"],
 )
 
 # Googletest
@@ -46,22 +46,6 @@ http_archive(
     sha256 = "69fb4b965c538509324960817965791761d57010f42bf12ce9769c4259c7d018",
     strip_prefix = "rules_cc-e7c97c3af74e279a5db516a19f642e862ff58548",
     urls = ["https://github.com/bazelbuild/rules_cc/archive/e7c97c3af74e279a5db516a19f642e862ff58548.zip"],
-)
-
-# Google logging. Hopefully, this functionality makes it to absl so that we can drop this
-# extra dependency.
-http_archive(
-    name = "com_github_gflags_gflags",
-    sha256 = "cfdba0f2f17e8b1ff75c98113d5080d8ec016148426abcc19130864e2952d7bd",
-    strip_prefix = "gflags-827c769e5fc98e0f2a34c47cef953cc6328abced",
-    urls = ["https://github.com/gflags/gflags/archive/827c769e5fc98e0f2a34c47cef953cc6328abced.zip"],
-)
-
-http_archive(
-    name = "com_github_google_glog",
-    sha256 = "8a83bf982f37bb70825df71a9709fa90ea9f4447fb3c099e1d720a439d88bad6",
-    strip_prefix = "glog-0.6.0",
-    urls = ["https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz"],
 )
 
 #
