@@ -131,11 +131,6 @@ struct ReferenceComponent {
   const SymbolTableNode* resolved_symbol = nullptr;
 
  public:
-  ReferenceComponent(const ReferenceComponent&) = default;  // safe to copy
-  ReferenceComponent(ReferenceComponent&&) = default;
-  ReferenceComponent& operator=(const ReferenceComponent&) = delete;
-  ReferenceComponent& operator=(ReferenceComponent&&) = delete;
-
   absl::Status MatchesMetatype(SymbolMetaType) const;
 
   // Resolves this symbol and verifies that metatypes are compatible, which is

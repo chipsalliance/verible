@@ -223,12 +223,6 @@ struct LayoutFunctionSegment {
     CHECK_GE(margin, column);
     return intercept + gradient * (margin - column);
   }
-
-  LayoutFunctionSegment(const LayoutFunctionSegment&) = default;
-  LayoutFunctionSegment& operator=(const LayoutFunctionSegment&) = default;
-
-  LayoutFunctionSegment(LayoutFunctionSegment&&) = default;
-  LayoutFunctionSegment& operator=(LayoutFunctionSegment&&) = default;
 };
 
 template <bool IsConstIterator>
