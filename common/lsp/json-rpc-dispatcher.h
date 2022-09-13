@@ -76,7 +76,7 @@ class JsonRpcDispatcher {
   using StatsMap = std::map<std::string, int>;
 
   // Responses are written using the "out" write function.
-  explicit JsonRpcDispatcher(const WriteFun &out) : write_fun_(out) {}
+  explicit JsonRpcDispatcher(WriteFun out) : write_fun_(std::move(out)) {}
   JsonRpcDispatcher(const JsonRpcDispatcher &) = delete;
 
   // Add a request handler for RPC calls that receive data and send a response.
