@@ -423,7 +423,7 @@ class ColumnSchemaAggregator {
       } else {
         // Fact: existing aggregate_subcolumn is a direct child of
         // aggregate_column
-        CHECK_GT(aggregate_column->Children().size(),
+        CHECK_GT(static_cast<int>(aggregate_column->Children().size()),
                  index_entry->second.back());
         aggregate_subcolumn =
             &aggregate_column->Children()[index_entry->second.back()];

@@ -709,7 +709,7 @@ static AppendFittingSubpartitionsResult AppendFittingSubpartitions(
       make_container_range(subpartitions.begin() + 1, subpartitions.end());
   for (const auto& arg : remaining_args) {
     // Every group should have at least one child
-    CHECK_GT(group->Children().size(), 0);
+    CHECK(!group->Children().empty());
 
     if (!one_per_line) {
       // Try appending current argument to current line

@@ -205,8 +205,7 @@ T& DescendPath(T& node, Iterator start, Iterator end) {
   auto* current_node = &node;
   for (auto iter = start; iter != end; ++iter) {
     auto& children = current_node->Children();
-    const auto index = *iter;
-    CHECK_GE(index, 0);
+    const std::size_t index = *iter;
     CHECK_LT(index, std::size(children));
     current_node = &*std::next(children.begin(), index);  // descend
   }

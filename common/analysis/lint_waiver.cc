@@ -194,7 +194,7 @@ void LintWaiverBuilder::ProcessTokenRangesByLine(
     const int end_dist = std::distance(tokens.begin(), token_range.end());
     CHECK_LE(0, begin_dist);
     CHECK_LE(begin_dist, end_dist);
-    CHECK_LE(end_dist, tokens.size());
+    CHECK_LE(end_dist, static_cast<int>(tokens.size()));
     ProcessLine(token_range, i);
   }
 

@@ -145,7 +145,7 @@ LineColumnRange TextStructureView::GetRangeForText(
   const int from = std::distance(Contents().begin(), text.begin());
   const int to = std::distance(Contents().begin(), text.end());
   CHECK_GE(from, 0) << '"' << text << '"';
-  CHECK_LE(to, Contents().length()) << '"' << text << '"';
+  CHECK_LE(to, static_cast<int>(Contents().length())) << '"' << text << '"';
   return {GetLineColAtOffset(from), GetLineColAtOffset(to)};
 }
 
