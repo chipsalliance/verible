@@ -23,7 +23,7 @@ readonly CLANG_TIDY_SEEN_CACHE=${TMPDIR}/clang-tidy-hashes.cache
 touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet
 
 readonly FILES_TO_PROCESS=${TMPDIR}/clang-tidy-files.list
-readonly TIDY_OUT=${TMPDIR}/clang-tidy.out
+readonly TIDY_OUT=${TMPDIR}/clang-tidy-verible.out
 
 # Use clang-tidy-11 if available as it still checks for
 # google-runtime-references, non-const references - which is the
@@ -55,11 +55,12 @@ readonly EXEC_ROOT=$(bazel info execution_root)
 # (TODO: could the tidy result be different if an include content changes ?
 #  Then we have to do g++ -E (using compilation database knowing about -I etc.)
 #  or combine hashes of all mentioned #includes that are also in our list)
-# Make need to re-run file dependent on clang-tidy configuration + file content.
+# Make need to re-run file dependent on clang-tidy configuration, WORKSPACE
+# and of course file content.
 for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
                 -or -name "*.h" -and -not -name "*test*.h" \
              | grep -v "verilog/tools/kythe") ; do
-  (echo $CLANG_TIDY ; cat .clang-tidy $f) | md5sum | sed "s|-|$f|g"
+  (echo $CLANG_TIDY ; cat .clang-tidy WORKSPACE $f) | md5sum | sed "s|-|$f|g"
 done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 
 join -v2 ${CLANG_TIDY_SEEN_CACHE} ${CLANG_TIDY_SEEN_CACHE}.new \
@@ -78,6 +79,10 @@ if [ -s ${FILES_TO_PROCESS} ]; then
     | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}
 
   cat ${TIDY_OUT}
+  echo "::endgroup::"
+
+  echo ::group::Summary
+  sed 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < ${TIDY_OUT} | sort | uniq -c | sort -n
 
   echo "::endgroup::"
 

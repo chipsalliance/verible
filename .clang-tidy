@@ -34,6 +34,7 @@ Checks: >
   -readability-redundant-access-specifiers,
   -readability-use-anyofallof,
   -readability-identifier-length,
+  -readability-convert-member-functions-to-static,  # creates false positive ?
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,
