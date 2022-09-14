@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_UTIL_LOGGING_H_
 
 #ifdef __GNUC__
+// b/246413374
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
@@ -28,8 +29,10 @@
 #include "absl/log/log.h"
 
 namespace verible {
+// Used in the VLOG macro to check logging condition.
+// This value is set in InitCommandLine() from GLOG_v environment variable
 extern int global_vlog_level_;
-}
+}  // namespace verible
 
 // There is no vlog yet, so very simple work-around here.
 #ifndef VLOG_IS_ON

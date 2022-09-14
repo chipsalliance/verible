@@ -14,8 +14,7 @@
 
 #include "common/util/init_command_line.h"
 
-#include <stdlib.h>
-
+#include <cstdlib>
 #include <vector>
 
 #include "absl/flags/flag.h"

@@ -13,5 +13,6 @@
 // limitations under the License.
 
 namespace verible {
+// Used as 'extern' reference in logging.h. Set in init_command_line.cc
 int global_vlog_level_ = 0;
-}
+}  // namespace verible
