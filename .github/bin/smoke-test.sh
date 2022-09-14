@@ -125,10 +125,10 @@ ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=185
 
-ExpectedFailCount[syntax:opentitan]=31
-ExpectedFailCount[lint:opentitan]=31
+ExpectedFailCount[syntax:opentitan]=32
+ExpectedFailCount[lint:opentitan]=32
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=700
+ExpectedFailCount[project:opentitan]=706
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
@@ -159,9 +159,9 @@ ExpectedFailCount[lint:ivtest]=188
 ExpectedFailCount[formatter:ivtest]=2
 ExpectedFailCount[project:ivtest]=217
 
-ExpectedFailCount[syntax:basejump_stl]=451
-ExpectedFailCount[lint:basejump_stl]=451
-ExpectedFailCount[project:basejump_stl]=557
+ExpectedFailCount[syntax:basejump_stl]=456
+ExpectedFailCount[lint:basejump_stl]=452
+ExpectedFailCount[project:basejump_stl]=562
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
@@ -186,10 +186,10 @@ function verify_expected_non_zero_exit_count() {
     if [ ${OBSERVED_NONZERO_COUNT} -gt ${expected_count} ] ; then
       local ALLOWED_UP_TO=$((${expected_count} + ${GRACE_VALUE}))
       if [ ${OBSERVED_NONZERO_COUNT} -gt ${ALLOWED_UP_TO} ]; then
-        echo "::error:: 😱 Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT}"
+        echo "::error:: 😱 ${expected_count_key} Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT}"
         return 1
       else
-        echo "::warning:: 😱 Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT} (will be an error once ${GRACE_VALUE} more)"
+        echo "::warning:: 😱 ${expected_count_key} Expected failures ${expected_count}, got ${OBSERVED_NONZERO_COUNT} (will be an error once ${GRACE_VALUE} more)"
         return 0  # Still within grace range.
       fi
     elif [ ${OBSERVED_NONZERO_COUNT} -lt ${expected_count} ] ; then
