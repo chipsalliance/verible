@@ -140,6 +140,7 @@ cc_library(
 # this common/util:logging target.
 cc_library(
     name = "logging",
+    srcs = ["logging.cc"],
     hdrs = ["logging.h"],
     deps = [
         "@com_google_absl//absl/base:core_headers",

@@ -27,13 +27,15 @@
 #include "absl/log/die_if_null.h"
 #include "absl/log/log.h"
 
-// There is no vlog yet.
-// Here just shimmed so that it compiles, to be removed once VLOG is there.
-// TODO: at least allow for --v flag.
-#define VLOG(x) LOG_IF(INFO, false)
+namespace verible {
+extern int global_vlog_level_;
+}
+
+// There is no vlog yet, so very simple work-around here.
 #ifndef VLOG_IS_ON
-#define VLOG_IS_ON(x) (false)
+#define VLOG_IS_ON(x) (::verible::global_vlog_level_ >= (x))
 #endif
+#define VLOG(x) LOG_IF(INFO, VLOG_IS_ON(x))
 #define DVLOG(x) VLOG(x)
 
 #define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)

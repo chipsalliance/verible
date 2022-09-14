@@ -14,6 +14,8 @@
 
 #include "common/util/init_command_line.h"
 
+#include <stdlib.h>
+
 #include <vector>
 
 #include "absl/flags/flag.h"
@@ -21,8 +23,10 @@
 #include "absl/flags/usage.h"
 #include "absl/flags/usage_config.h"
 #include "absl/log/initialize.h"
+#include "absl/strings/numbers.h"
 #include "absl/time/time.h"
 #include "common/util/generated_verible_build_version.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -56,10 +60,17 @@ std::vector<absl::string_view> InitCommandLine(
   absl::SetProgramUsageMessage(usage);  // copies usage string
   absl::InitializeLog();
 
+  // Simulating the old GLOG_v level for now.
+  const char* vlog_level_env = getenv("GLOG_v");
+  if (!vlog_level_env ||
+      !absl::SimpleAtoi(vlog_level_env, &verible::global_vlog_level_)) {
+    global_vlog_level_ = 0;
+  }
+
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.
 #if !defined(__SANITIZE_ADDRESS__)
-#if 0  // Currently no replacement in absl/log
+#if 0  // Used to be in GLOG. Currently no replacement in absl/log
   google::InstallFailureSignalHandler();
 #endif
 #endif
