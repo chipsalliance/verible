@@ -25,8 +25,8 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
-#include "third_party/proto/kythe/analysis.pb.h"
 #include "common/util/ziplain.h"
+#include "third_party/proto/kythe/analysis.pb.h"
 
 namespace verilog {
 namespace kythe {

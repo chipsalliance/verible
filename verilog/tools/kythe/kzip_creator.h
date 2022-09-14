@@ -21,8 +21,8 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "third_party/proto/kythe/analysis.pb.h"
 #include "common/util/ziplain.h"
+#include "third_party/proto/kythe/analysis.pb.h"
 
 namespace verilog {
 namespace kythe {
