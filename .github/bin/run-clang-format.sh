@@ -16,7 +16,7 @@
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
 # Run on all files.
-find . -name "*.h" -o -name "*.cc" | grep -v third_party/|external_libs/ \
+find . -name "*.h" -o -name "*.cc" | grep -v 'third_party/|external_libs/' \
   | xargs -P2 clang-format -i
 
 # Check if we got any diff
