@@ -32,7 +32,6 @@ namespace verilog {
 namespace kythe {
 namespace {
 
-constexpr absl::string_view kRoot = "root/";
 constexpr absl::string_view kProtoUnitRoot = "root/pbunits/";
 constexpr absl::string_view kFileRoot = "root/files/";
 
