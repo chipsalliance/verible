@@ -24,8 +24,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "absl/log/log.h"
 #include "absl/log/die_if_null.h"
+#include "absl/log/log.h"
 
 // There is no vlog yet.
 // Here just shimmed so that it compiles, to be removed once VLOG is there.

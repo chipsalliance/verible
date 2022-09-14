@@ -20,9 +20,9 @@
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "absl/flags/usage_config.h"
+#include "absl/log/initialize.h"
 #include "absl/time/time.h"
 #include "common/util/generated_verible_build_version.h"
-#include "absl/log/initialize.h"
 
 namespace verible {
 
