@@ -310,9 +310,9 @@ cc_library(
         "//common/util:file_util",
         "//common/util:ziplain",
         "//third_party/proto/kythe:analysis_cc_proto",
-        "@boringssl//:crypto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_boringssl//:crypto",
     ],
 )
 
