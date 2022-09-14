@@ -286,6 +286,7 @@ void StateNode::_OpenGroupBalance(const BasicFormatStyle& style) {
           break;
         case SpacingDecision::Align:
           LOG(FATAL) << kNotForAlignment;
+          break;
         case SpacingDecision::Append:
           VLOG(4) << "current token is appended or aligned";
           wrap_column_positions.push(prev_state->current_column);
