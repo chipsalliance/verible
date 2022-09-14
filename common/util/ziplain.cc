@@ -8,10 +8,13 @@
 #include <memory>
 #include <vector>
 
-namespace ziplain {
-ByteSource MemoryByteSource(std::string_view input) {
+#include "absl/strings/string_view.h"
+
+namespace verible {
+
+ByteSource MemoryByteSource(absl::string_view input) {
   auto is_called = std::make_shared<bool>(false);
-  return [is_called, input]() -> std::string_view {
+  return [is_called, input]() -> absl::string_view {
     if (!*is_called) {
       *is_called = true;
       return input;
@@ -30,7 +33,7 @@ ByteSource FileByteSource(const char *filename) {
     char buffer[65536];
   };
   auto state = std::make_shared<State>(f);  // capture req. copy-constructable
-  return [state]() -> std::string_view {
+  return [state]() -> absl::string_view {
     size_t r = fread(state->buffer, 1, sizeof(State::buffer), state->file);
     return {state->buffer, r};
   };
@@ -54,7 +57,7 @@ class HeaderWriter {
     pos_ += 4;
     return *this;
   }
-  HeaderWriter &AddLiteral(std::string_view str) {
+  HeaderWriter &AddLiteral(absl::string_view str) {
     memcpy(pos_, str.data(), str.size());
     pos_ += str.size();
     return *this;
@@ -87,12 +90,12 @@ struct Encoder::Impl {
                            : compression_level > 9 ? 9
                                                    : compression_level),
         delegate_write_(std::move(out)),
-        out_([this](std::string_view s) {
+        out_([this](absl::string_view s) {
           output_file_offset_ += s.size();  // Keep track of offsets.
           return delegate_write_(s);
         }) {}
 
-  bool AddFile(std::string_view filename, ByteSource content_generator) {
+  bool AddFile(absl::string_view filename, ByteSource content_generator) {
     if (is_finished_) return false;  // Can't add more files.
     if (!content_generator) return false;
 
@@ -103,55 +106,55 @@ struct Encoder::Impl {
     const uint16_t mod_date = 0;
 
     bool success =  // Assemble local file header
-      HeaderWriter(scratch_space_)
-        .AddLiteral("PK\x03\x04")
-        .AddInt16(kPkZipVersion)  // Minimum version needed
-        .AddInt16(0x08)           // Flags. Sizes and CRC in data descriptor.
-        .AddInt16(compression_level_ == 0 ? 0 : 8)
-        .AddInt16(mod_time)
-        .AddInt16(mod_date)
-        .AddInt32(0)  // CRC32. Known later.
-        .AddInt32(0)  // Compressed size: known later.
-        .AddInt32(0)  // Uncompressed size: known later.
-        .AddInt16(filename.length())
-        .AddInt16(0)  // Extra field length
-        .AddLiteral(filename)
-        .Write(out_);
+        HeaderWriter(scratch_space_)
+            .AddLiteral("PK\x03\x04")
+            .AddInt16(kPkZipVersion)  // Minimum version needed
+            .AddInt16(0x08)  // Flags. Sizes and CRC in data descriptor.
+            .AddInt16(compression_level_ == 0 ? 0 : 8)
+            .AddInt16(mod_time)
+            .AddInt16(mod_date)
+            .AddInt32(0)  // CRC32. Known later.
+            .AddInt32(0)  // Compressed size: known later.
+            .AddInt32(0)  // Uncompressed size: known later.
+            .AddInt16(filename.length())
+            .AddInt16(0)  // Extra field length
+            .AddLiteral(filename)
+            .Write(out_);
     if (!success) return false;
 
     // Data output
     const CompressResult compress_result =
-      compression_level_ == 0 ? CopyData(content_generator, out_)
-                              : CompressData(content_generator, out_);
+        compression_level_ == 0 ? CopyData(content_generator, out_)
+                                : CompressData(content_generator, out_);
 
     success =  // Assemble Data Descriptor after file with known CRC and size.
-      HeaderWriter(scratch_space_)
-        .AddInt32(compress_result.input_crc)
-        .AddInt32(compress_result.output_size)
-        .AddInt32(compress_result.input_size)
-        .Write(out_);
+        HeaderWriter(scratch_space_)
+            .AddInt32(compress_result.input_crc)
+            .AddInt32(compress_result.output_size)
+            .AddInt32(compress_result.input_size)
+            .Write(out_);
 
     // Append directory file header entry to be written in Finish()
     HeaderWriter(scratch_space_)
-      .AddLiteral("PK\x01\x02")
-      .AddInt16(kPkZipVersion)  // Our Version
-      .AddInt16(kPkZipVersion)  // Readable by version
-      .AddInt16(0x08)           // Flag
-      .AddInt16(compression_level_ == 0 ? 0 : 8)
-      .AddInt16(mod_time)
-      .AddInt16(mod_date)
-      .AddInt32(compress_result.input_crc)
-      .AddInt32(compress_result.output_size)
-      .AddInt32(compress_result.input_size)
-      .AddInt16(filename.length())
-      .AddInt16(0)  // Extra field length
-      .AddInt16(0)  // file comment length
-      .AddInt16(0)  // disk number
-      .AddInt16(0)  // Internal file attr
-      .AddInt32(0)  // External file attr
-      .AddInt32(start_offset)
-      .AddLiteral(filename)
-      .Append(&central_dir_data_);
+        .AddLiteral("PK\x01\x02")
+        .AddInt16(kPkZipVersion)  // Our Version
+        .AddInt16(kPkZipVersion)  // Readable by version
+        .AddInt16(0x08)           // Flag
+        .AddInt16(compression_level_ == 0 ? 0 : 8)
+        .AddInt16(mod_time)
+        .AddInt16(mod_date)
+        .AddInt32(compress_result.input_crc)
+        .AddInt32(compress_result.output_size)
+        .AddInt32(compress_result.input_size)
+        .AddInt16(filename.length())
+        .AddInt16(0)  // Extra field length
+        .AddInt16(0)  // file comment length
+        .AddInt16(0)  // disk number
+        .AddInt16(0)  // Internal file attr
+        .AddInt32(0)  // External file attr
+        .AddInt32(start_offset)
+        .AddLiteral(filename)
+        .Append(&central_dir_data_);
 
     return success;
   }
@@ -165,24 +168,24 @@ struct Encoder::Impl {
     }
 
     // End of central directory record
-    constexpr std::string_view comment("Created with ziplain");
+    constexpr absl::string_view comment("Created with ziplain");
     return HeaderWriter(scratch_space_)
-      .AddLiteral("PK\x05\x06")  // End of central directory signature
-      .AddInt16(0)               // our disk number
-      .AddInt16(0)               // disk where it all starts
-      .AddInt16(file_count_)     // Number of directory records on this disk
-      .AddInt16(file_count_)     // ... and overall
-      .AddInt32(central_dir_data_.size())
-      .AddInt32(start_offset)
-      .AddInt16(comment.length())
-      .AddLiteral(comment)
-      .Write(out_);
+        .AddLiteral("PK\x05\x06")  // End of central directory signature
+        .AddInt16(0)               // our disk number
+        .AddInt16(0)               // disk where it all starts
+        .AddInt16(file_count_)     // Number of directory records on this disk
+        .AddInt16(file_count_)     // ... and overall
+        .AddInt32(central_dir_data_.size())
+        .AddInt32(start_offset)
+        .AddInt16(comment.length())
+        .AddLiteral(comment)
+        .Write(out_);
   }
 
   CompressResult CopyData(ByteSource generator, ByteSink out) {
     uint32_t crc = 0;
     size_t processed_size = 0;
-    std::string_view chunk;
+    absl::string_view chunk;
     while (!(chunk = generator()).empty()) {
       crc = crc32(crc, (const uint8_t *)chunk.data(), chunk.size());
       processed_size += chunk.size();
@@ -193,7 +196,7 @@ struct Encoder::Impl {
 
   CompressResult CompressData(ByteSource generator, ByteSink out) {
     uint32_t crc = 0;
-    std::string_view chunk;
+    absl::string_view chunk;
     z_stream stream;
     memset(&stream, 0x00, sizeof(stream));
 
@@ -219,7 +222,7 @@ struct Encoder::Impl {
       } while (stream.avail_out == 0);
     } while (!chunk.empty());
 
-    CompressResult result = { crc, stream.total_in, stream.total_out };
+    CompressResult result = {crc, stream.total_in, stream.total_out};
     deflateEnd(&stream);
     return result;
   }
@@ -240,8 +243,9 @@ Encoder::Encoder(int compression_level, ByteSink out)
 
 Encoder::~Encoder() {}
 
-bool Encoder::AddFile(std::string_view filename, ByteSource content) {
+bool Encoder::AddFile(absl::string_view filename, ByteSource content) {
   return impl_->AddFile(filename, std::move(content));
 }
 bool Encoder::Finish() { return impl_->Finish(); }
-}  // namespace ziplain
+
+}  // namespace verible

@@ -1,6 +1,5 @@
 workspace(name = "com_google_verible")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
@@ -222,15 +221,10 @@ maybe(
     ],
 )
 
-git_repository(
-    name = "boringssl",
-    # Commits must come from the main-with-bazel branch.
-    commit = "b9232f9e27e5668bc0414879dcdedb2a59ea75f2",
-    # Use the GitHub mirror because the official source at
-    # https://boringssl.googlesource.com/boringssl does not allow
-    # unauthenticated git clone and the archives suffer from
-    # https://github.com/google/gitiles/issues/84 preventing the use of
-    # sha256sum on archives.
-    remote = "https://github.com/google/boringssl",
-    shallow_since = "1603819042 +0000",
+# For sha256
+http_archive(
+    name = "com_google_boringssl",
+    sha256 = "7128f303ded3a647c4ff08d9396ac86a03f3f2f8ab3080fe8183f9092860736d",
+    strip_prefix = "boringssl-b9232f9e27e5668bc0414879dcdedb2a59ea75f2",
+    urls = ["https://github.com/google/boringssl/archive/b9232f9e27e5668bc0414879dcdedb2a59ea75f2.zip"],
 )

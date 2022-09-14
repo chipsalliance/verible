@@ -307,12 +307,12 @@ cc_library(
     srcs = ["kzip_creator.cc"],
     hdrs = ["kzip_creator.h"],
     deps = [
-        "//third_party/ziplain:ziplain",
+        "//common/util:file_util",
+        "//common/util:ziplain",
+        "//third_party/proto/kythe:analysis_cc_proto",
+        "@boringssl//:crypto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "//third_party/proto/kythe:analysis_cc_proto",
-        "//common/util:file_util",
-        "@boringssl//:crypto",
     ],
 )
 
@@ -323,7 +323,7 @@ cc_binary(
     ],
     visibility = ["//visibility:public"],
     deps = [
-      ":kzip_creator",
+        ":kzip_creator",
         "//common/util:file_util",
         "//common/util:init_command_line",
         "//third_party/proto/kythe:analysis_cc_proto",
@@ -333,4 +333,3 @@ cc_binary(
         "@com_google_absl//absl/strings",
     ],
 )
-

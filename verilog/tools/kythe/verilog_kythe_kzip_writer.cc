@@ -43,10 +43,6 @@ ABSL_FLAG(std::string, corpus, "",
 
 ABSL_FLAG(std::string, output_path, "", "Path where to write the kzip.");
 
-constexpr std::string_view kRoot = "root/";
-constexpr std::string_view kProtoUnitRoot = "root/pbunits/";
-constexpr std::string_view kFileRoot = "root/files/";
-
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] --filelist_path FILE "
