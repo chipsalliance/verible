@@ -15,8 +15,16 @@
 #ifndef VERIBLE_COMMON_UTIL_LOGGING_H_
 #define VERIBLE_COMMON_UTIL_LOGGING_H_
 
-#include "absl/log/log.h"
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
 #include "absl/log/check.h"
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+#include "absl/log/log.h"
 #include "absl/log/die_if_null.h"
 
 // There is no vlog yet.
