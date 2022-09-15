@@ -445,7 +445,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
                        old_range.start));
     }
     for (; last_consumed_line < old_range.start - 1; ++last_consumed_line) {
-      CHECK_LT(last_consumed_line, orig_lines.size());
+      CHECK_LT(last_consumed_line, static_cast<int>(orig_lines.size()));
       const absl::string_view& line(orig_lines[last_consumed_line]);
       output_lines.emplace_back(line.begin(), line.end());  // copy string
     }
