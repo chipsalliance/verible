@@ -16,6 +16,7 @@
 
 #include <zlib.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -91,6 +92,15 @@ class HeaderWriter {
   const char *begin_;
   char *pos_;
 };
+
+// Returns the value clamped to the [low, high] interval. If the value is in the
+// interval, returns the value. Otherwise returns low or high depending which
+// one is closer.
+// TODO(ikr): Repace with std::clamp once we move to c++17
+inline int Clamp(int value, int low, int high) {
+  return std::min(std::max(value, low), high);
+}
+
 }  // namespace
 
 struct Encoder::Impl {
@@ -102,9 +112,7 @@ struct Encoder::Impl {
   };
 
   Impl(int compression_level, ByteSink out)
-      : compression_level_(compression_level < 0   ? 0
-                           : compression_level > 9 ? 9
-                                                   : compression_level),
+      : compression_level_(Clamp(compression_level, 0, 9)),
         delegate_write_(std::move(out)),
         out_([this](absl::string_view s) {
           output_file_offset_ += s.size();  // Keep track of offsets.
