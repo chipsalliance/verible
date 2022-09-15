@@ -593,11 +593,12 @@ cc_test(
 )
 
 cc_library(
-    name = "ziplain",
-    srcs = ["ziplain.cc"],
-    hdrs = ["ziplain.h"],
+    name = "simple_zip",
+    srcs = ["simple_zip.cc"],
+    hdrs = ["simple_zip.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//third_party/portable_endian",
         "@com_google_absl//absl/strings",
         "@zlib",
     ],

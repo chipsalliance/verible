@@ -25,7 +25,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
-#include "common/util/ziplain.h"
+#include "common/util/simple_zip.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 
 namespace verilog {
@@ -48,7 +48,7 @@ std::string SHA256Digest(absl::string_view content) {
 KzipCreator::KzipCreator(absl::string_view output_path)
     : zip_file_(fopen(std::string(output_path).c_str(), "wb"), &fclose) {
   constexpr int kCompressionLevel = 9;
-  archive_ = std::make_unique<verible::Encoder>(
+  archive_ = std::make_unique<verible::zip::Encoder>(
       kCompressionLevel, [this](absl::string_view s) {
         return fwrite(s.data(), 1, s.size(), this->zip_file_.get()) == s.size();
       });
@@ -60,7 +60,7 @@ std::string KzipCreator::AddSourceFile(absl::string_view path,
                                        absl::string_view content) {
   const std::string digest = SHA256Digest(content);
   const std::string archive_path = verible::file::JoinPath(kFileRoot, digest);
-  archive_->AddFile(archive_path, verible::MemoryByteSource(content));
+  archive_->AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return digest;
 }
 
@@ -73,7 +73,7 @@ absl::Status KzipCreator::AddCompilationUnit(
   const std::string digest = SHA256Digest(content);
   const std::string archive_path =
       verible::file::JoinPath(kProtoUnitRoot, digest);
-  archive_->AddFile(archive_path, verible::MemoryByteSource(content));
+  archive_->AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return absl::OkStatus();
 }
 

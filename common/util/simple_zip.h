@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_COMMON_UTIL_ZIPLAIN_H_
-#define VERIBLE_COMMON_UTIL_ZIPLAIN_H_
-
-#include <time.h>
+// Originally published at https://github.com/hzeller/ziplain
+#ifndef VERIBLE_COMMON_UTIL_SIMPLE_ZIP_H_
+#define VERIBLE_COMMON_UTIL_SIMPLE_ZIP_H_
 
 #include <cstdint>
 #include <functional>
@@ -25,6 +24,7 @@
 #include "absl/strings/string_view.h"
 
 namespace verible {
+namespace zip {
 
 // A ByteSource is a generator function that returns content, possibly chunked
 // in multiple pieces.
@@ -73,6 +73,7 @@ class Encoder {
   std::unique_ptr<Impl> impl_;
 };
 
+}  // namespace zip
 }  // namespace verible
 
-#endif  // VERIBLE_COMMON_UTIL_ZIPLAIN_H_
+#endif  // VERIBLE_COMMON_UTIL_SIMPLE_ZIP_H_

@@ -21,7 +21,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "common/util/ziplain.h"
+#include "common/util/simple_zip.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 
 namespace verilog {
@@ -44,7 +44,7 @@ class KzipCreator final {
 
  private:
   std::unique_ptr<FILE, decltype(&fclose)> zip_file_;
-  std::unique_ptr<verible::Encoder> archive_ = nullptr;
+  std::unique_ptr<verible::zip::Encoder> archive_ = nullptr;
 };
 
 }  // namespace kythe

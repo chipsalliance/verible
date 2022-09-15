@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/util/ziplain.h"
+#include "common/util/simple_zip.h"
 
-#include <endian.h>
-#include <string.h>
 #include <zlib.h>
 
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "third_party/portable_endian/portable_endian.h"
 
 namespace verible {
+namespace zip {
 
 ByteSource MemoryByteSource(absl::string_view input) {
   auto is_called = std::make_shared<bool>(false);
@@ -55,6 +56,7 @@ ByteSource FileByteSource(const char *filename) {
 
 // Header writer, taking care of little-endianness writing of fields.
 namespace {
+
 class HeaderWriter {
  public:
   HeaderWriter(char *buffer) : begin_(buffer), pos_(buffer) {}
@@ -182,7 +184,7 @@ struct Encoder::Impl {
     }
 
     // End of central directory record
-    constexpr absl::string_view comment("Created with ziplain");
+    constexpr absl::string_view comment("Created with Verible simple zip");
     return HeaderWriter(scratch_space_)
         .AddLiteral("PK\x05\x06")  // End of central directory signature
         .AddInt16(0)               // our disk number
@@ -262,4 +264,5 @@ bool Encoder::AddFile(absl::string_view filename, ByteSource content) {
 }
 bool Encoder::Finish() { return impl_->Finish(); }
 
+}  // namespace zip
 }  // namespace verible

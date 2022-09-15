@@ -308,7 +308,7 @@ cc_library(
     hdrs = ["kzip_creator.h"],
     deps = [
         "//common/util:file_util",
-        "//common/util:ziplain",
+        "//common/util:simple_zip",
         "//third_party/proto/kythe:analysis_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
