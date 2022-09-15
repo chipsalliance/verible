@@ -200,13 +200,6 @@ http_archive(
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/ace73b04e76111afa09934f8771a2798847e724e.tar.gz"],
 )
 
-http_archive(
-    name = "absl_py",
-    sha256 = "b9130d6f49a21dc44f56da89d5e8409807e93d28c194c23e27777f3c8cceef81",
-    strip_prefix = "abseil-py-1.2.0",
-    urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.2.0.tar.gz"],
-)
-
 # zlib is imported through protobuf. Make the dependency explicit considering
 # it's used outside protobuf.
 maybe(
