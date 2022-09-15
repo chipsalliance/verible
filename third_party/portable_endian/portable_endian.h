@@ -6,6 +6,7 @@
 // This code is trivial anyway. Consider it an example on how to get the endian
 // conversion functions on different platforms.
 
+// Forked from https://gist.github.com/panzi/6856583
 #ifndef PORTABLE_ENDIAN_H__
 #define PORTABLE_ENDIAN_H__
 
