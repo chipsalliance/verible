@@ -40,7 +40,7 @@ static const char kMessage[] = "Do not use defparam.";
 const LintRuleDescriptor& ForbidDefparamRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-defparam",
-      .topic = "defparam",
+      .topic = "module-instantiation",
       .desc = "Do not use defparam.",
   };
   return d;
