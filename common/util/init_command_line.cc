@@ -69,7 +69,7 @@ std::vector<absl::string_view> InitCommandLine(
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.
 #if !defined(__SANITIZE_ADDRESS__)
-#if 0  // Used to be in GLOG. Currently no replacement in absl/log
+#if 0  // Used to be in GLOG. Use absl/debugging/failure_signal_handler.h ?
   google::InstallFailureSignalHandler();
 #endif
 #endif
