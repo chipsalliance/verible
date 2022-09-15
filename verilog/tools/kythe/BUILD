@@ -287,10 +287,10 @@ cc_binary(
         ":kzip_creator",
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:logging",
         "//third_party/proto/kythe:analysis_cc_proto",
         "//verilog/analysis:verilog_project",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
