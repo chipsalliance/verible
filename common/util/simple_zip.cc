@@ -20,7 +20,6 @@
 #include <cstdio>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "third_party/portable_endian/portable_endian.h"
@@ -84,9 +83,7 @@ class HeaderWriter {
     return out({begin_, static_cast<size_t>(pos_ - begin_)});
   }
 
-  void Append(std::vector<char> *buf) {
-    buf->insert(buf->end(), begin_, static_cast<const char *>(pos_));
-  }
+  void Append(std::string *buffer) { buffer->append(begin_, pos_ - begin_); }
 
  private:
   const char *begin_;
@@ -249,7 +246,7 @@ struct Encoder::Impl {
 
   size_t file_count_ = 0;
   size_t output_file_offset_ = 0;
-  std::vector<char> central_dir_data_;
+  std::string central_dir_data_;
   bool is_finished_ = false;
   char scratch_space_[1 << 20];  // to assemble headers and compression data
 };
