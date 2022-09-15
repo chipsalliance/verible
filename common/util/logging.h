@@ -39,7 +39,11 @@ extern int global_vlog_level_;
 #define VLOG_IS_ON(x) (::verible::global_vlog_level_ >= (x))
 #endif
 #define VLOG(x) LOG_IF(INFO, VLOG_IS_ON(x))
+#ifdef NDEBUG
+#define DVLOG(x) LOG_IF(INFO, false)
+#else
 #define DVLOG(x) VLOG(x)
+#endif
 
 #define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)
 
