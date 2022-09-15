@@ -62,7 +62,7 @@ class Encoder {
   ~Encoder();
 
   // Add a file with given filename and content.
-  bool AddFile(absl::string_view filename, ByteSource content);
+  bool AddFile(absl::string_view filename, const ByteSource &content_generator);
 
   // Finalize container. Note if your byte-sink is wrapping a file, you
   // might need to close it after Finish() returns.
