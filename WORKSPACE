@@ -1,6 +1,7 @@
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 # Bazel platform rules, needed as dependency to absl.
 http_archive(
@@ -204,4 +205,26 @@ http_archive(
     sha256 = "b9130d6f49a21dc44f56da89d5e8409807e93d28c194c23e27777f3c8cceef81",
     strip_prefix = "abseil-py-1.2.0",
     urls = ["https://github.com/abseil/abseil-py/archive/refs/tags/v1.2.0.tar.gz"],
+)
+
+# zlib is imported through protobuf. Make the dependency explicit considering
+# it's used outside protobuf.
+maybe(
+    http_archive,
+    name = "zlib",
+    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+    sha256 = "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9",
+    strip_prefix = "zlib-1.2.12",
+    urls = [
+        "https://zlib.net/zlib-1.2.12.tar.gz",
+        "https://zlib.net/fossils/zlib-1.2.12.tar.gz",
+    ],
+)
+
+# For sha256
+http_archive(
+    name = "com_google_boringssl",
+    sha256 = "7128f303ded3a647c4ff08d9396ac86a03f3f2f8ab3080fe8183f9092860736d",
+    strip_prefix = "boringssl-b9232f9e27e5668bc0414879dcdedb2a59ea75f2",
+    urls = ["https://github.com/google/boringssl/archive/b9232f9e27e5668bc0414879dcdedb2a59ea75f2.zip"],
 )

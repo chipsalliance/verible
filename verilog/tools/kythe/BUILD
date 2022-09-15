@@ -288,7 +288,7 @@ py_test(
 )
 
 py_binary(
-    name = "verilog_kythe_kzip_writer",
+    name = "verilog_kythe_kzip_writer_py",
     srcs = ["verilog_kythe_kzip_writer.py"],
     main = "verilog_kythe_kzip_writer.py",
     python_version = "PY3",
@@ -299,5 +299,37 @@ py_binary(
         "@absl_py//absl:app",
         "@absl_py//absl/flags",
         "@absl_py//absl/logging",
+    ],
+)
+
+cc_library(
+    name = "kzip_creator",
+    srcs = ["kzip_creator.cc"],
+    hdrs = ["kzip_creator.h"],
+    deps = [
+        "//common/util:file_util",
+        "//common/util:simple_zip",
+        "//third_party/proto/kythe:analysis_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_boringssl//:crypto",
+    ],
+)
+
+cc_binary(
+    name = "verilog-kythe-kzip-writer",
+    srcs = [
+        "verilog_kythe_kzip_writer.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":kzip_creator",
+        "//common/util:file_util",
+        "//common/util:init_command_line",
+        "//third_party/proto/kythe:analysis_cc_proto",
+        "//verilog/analysis:verilog_project",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
