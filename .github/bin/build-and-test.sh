@@ -66,10 +66,7 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"
 # tight warnings on for 'our' code-base.
 # TODO(hzeller): Remove after
 #            https://github.com/chipsalliance/verible/issues/747 is figured out
-# This option is only recognized by gcc
-if [[ ! "${CXX}" == clang* ]]; then
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-cast-function-type"       # gflags
-else
+if [[ "${CXX}" == clang* ]]; then
   # -- only recognized by clang
   # Don't rely on implicit template type deduction
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
