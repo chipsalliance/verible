@@ -603,3 +603,14 @@ cc_library(
         "@zlib",
     ],
 )
+
+cc_test(
+    name = "simple_zip_test",
+    srcs = ["simple_zip_test.cc"],
+    deps = [
+        ":file_util",
+        ":simple_zip",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
