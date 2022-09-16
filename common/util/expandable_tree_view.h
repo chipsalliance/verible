@@ -210,10 +210,15 @@ class ExpandableTreeView {
 // node is visited unexpanded, or that node's children is visited; iteration
 // never visits both a node AND its children, only one or the other.
 template <class WrappedNodeType>
-class ExpandableTreeView<WrappedNodeType>::iterator
-    : public std::iterator<std::forward_iterator_tag, const value_type> {
+class ExpandableTreeView<WrappedNodeType>::iterator {
   friend class ExpandableTreeView<WrappedNodeType>;  // grant access to private
                                                      // constructor
+ public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = typename TreeTraits::Value::type;
+  using difference_type = int;
+  using pointer = typename TreeTraits::Value::type*;
+  using reference = typename TreeTraits::Value::type&;
 
  private:
   explicit iterator(const impl_type* node) : node_(node) {}
