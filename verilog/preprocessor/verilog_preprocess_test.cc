@@ -792,8 +792,8 @@ endmodule
 }
 
 // TODO(karimtera): This test doesn't use "PreprocessorTester",
-// as there isn't a way to tell "VerilogAnalyzer" about external defines.
-// Typically, all tests should use "PreprocessorTester".
+// as there isn't a way to tell "VerilogAnalyzer" about external preprocessing
+// info. Typically, all tests should use "PreprocessorTester".
 TEST(VerilogPreprocessTest, SetExternalDefines) {
   // Test case input tokens.
   const verible::TokenSequence test_case_tokens = {
@@ -805,8 +805,13 @@ TEST(VerilogPreprocessTest, SetExternalDefines) {
   VerilogPreprocess::Config test_config({.expand_macros = true});
   VerilogPreprocess preprocessor(test_config);
 
-  preprocessor.SetExternalDefine("MACRO1", "VALUE1");
-  preprocessor.SetExternalDefine("MACRO2", "VALUE2");
+  verilog::TextMacroDefinition macro1("MACRO1", "VALUE1");
+  verilog::TextMacroDefinition macro2("MACRO2", "VALUE2");
+  verilog::FileList::PreprocessingInfo preprocessing_info;
+  preprocessing_info.defines.push_back(macro1);
+  preprocessing_info.defines.push_back(macro2);
+
+  preprocessor.setPreprocessingInfo(preprocessing_info);
 
   const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
 
@@ -815,8 +820,8 @@ TEST(VerilogPreprocessTest, SetExternalDefines) {
 }
 
 // TODO(karimtera): This test doesn't use "PreprocessorTester",
-// as there isn't a way to tell "VerilogAnalyzer" about external defines.
-// Typically, all tests should use "PreprocessorTester".
+// as there isn't a way to tell "VerilogAnalyzer" about external preprocessing
+// info. Typically, all tests should use "PreprocessorTester".
 TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
   // Test case input tokens.
   const verible::TokenSequence test_case_tokens = {
@@ -830,8 +835,13 @@ TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
   VerilogPreprocess::Config test_config({.expand_macros = true});
   VerilogPreprocess preprocessor(test_config);
 
-  preprocessor.SetExternalDefine("MACRO1", "VALUE1");
-  preprocessor.SetExternalDefine("MACRO2", "VALUE2");
+  verilog::TextMacroDefinition macro1("MACRO1", "VALUE1");
+  verilog::TextMacroDefinition macro2("MACRO2", "VALUE2");
+  verilog::FileList::PreprocessingInfo preprocessing_info;
+  preprocessing_info.defines.push_back(macro1);
+  preprocessing_info.defines.push_back(macro2);
+
+  preprocessor.setPreprocessingInfo(preprocessing_info);
 
   const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
 

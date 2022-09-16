@@ -200,8 +200,8 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
       absl::GetFlag(FLAGS_include_dir_paths);
   // Merge the include dirs from the file list.
   include_dir_paths.insert(include_dir_paths.end(),
-                           file_list_or->include_dirs.begin(),
-                           file_list_or->include_dirs.end());
+                           file_list_or->preprocessing.include_dirs.begin(),
+                           file_list_or->preprocessing.include_dirs.end());
   verilog::VerilogProject project(file_list_root, include_dir_paths);
 
   const std::vector<absl::Status> errors(

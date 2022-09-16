@@ -358,11 +358,17 @@ cc_test(
 )
 
 cc_library(
+    name = "verilog_filelist",
+    hdrs = ["verilog_filelist.h"],
+)
+
+cc_library(
     name = "verilog_project",
     srcs = ["verilog_project.cc"],
     hdrs = ["verilog_project.h"],
     deps = [
         ":verilog_analyzer",
+        ":verilog_filelist",
         "//common/strings:string_memory_map",
         "//common/text:text_structure",
         "//common/util:file_util",

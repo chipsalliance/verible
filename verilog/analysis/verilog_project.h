@@ -27,6 +27,7 @@
 #include "common/strings/string_memory_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_filelist.h"
 
 namespace verilog {
 
@@ -317,29 +318,6 @@ class VerilogProject {
   //   This can come from the .begin() of any entry in string_view_map_.
   std::map<absl::string_view::const_iterator, file_set_type::const_iterator>
       buffer_to_analyzer_map_;
-};
-
-// TODO(karimtera): Using "MacroDefiniton" struct might be better.
-struct TextMacroDefinition {
-  TextMacroDefinition(std::string name, std::string value)
-      : name(std::move(name)), value(std::move(value)){};
-  std::string name;
-  std::string value;
-  bool operator==(const TextMacroDefinition& macro_definition) const {
-    return name == macro_definition.name && value == macro_definition.value;
-  }
-};
-
-// File list for compiling a System Verilog project.
-struct FileList {
-  // Ordered list of files to compile.
-  std::vector<std::string> file_paths;
-  // Directories where to search for the included files.
-  std::vector<std::string> include_dirs;
-  // Path to the file list.
-  std::string file_list_path;
-  // Defined macros.
-  std::vector<TextMacroDefinition> defines;
 };
 
 // Reads in a list of files line-by-line from 'file_list_file'. The include

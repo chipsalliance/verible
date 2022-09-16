@@ -588,7 +588,7 @@ TEST(VerilogProjectTest, ParseSourceFileList) {
   EXPECT_EQ(parsed_file_list->file_list_path, file_list_file.filename());
   EXPECT_THAT(parsed_file_list->file_paths,
               ElementsAre("/a/source/file/1.sv", "/a/source/file/2.sv"));
-  EXPECT_THAT(parsed_file_list->include_dirs,
+  EXPECT_THAT(parsed_file_list->preprocessing.include_dirs,
               ElementsAre(".", "/an/include_dir1", "/an/include_dir2"));
 }
 
@@ -618,13 +618,13 @@ TEST(VerilogProjectTest, ParseSourceFileListFromCommandline) {
 
   EXPECT_THAT(parsed_file_list->file_paths,
               ElementsAre("file1", "file2", "file3"));
-  EXPECT_THAT(parsed_file_list->include_dirs,
+  EXPECT_THAT(parsed_file_list->preprocessing.include_dirs,
               ElementsAre("~/path/to/file1", "path/to/file2", "./path/to/file3",
                           "../path/to/file4", "./path/to/file5"));
   std::vector<TextMacroDefinition> macros = {
       {"macro1", "text1"}, {"macro2", ""}, {"macro3", "text3"},
       {"macro4", ""},      {"macro5", ""}, {"macro6", "a=b"}};
-  EXPECT_THAT(parsed_file_list->defines,
+  EXPECT_THAT(parsed_file_list->preprocessing.defines,
               ElementsAre(macros[0], macros[1], macros[2], macros[3], macros[4],
                           macros[5]));
 }
