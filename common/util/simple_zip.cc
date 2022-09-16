@@ -255,7 +255,7 @@ struct Encoder::Impl {
 Encoder::Encoder(int compression_level, ByteSink out)
     : impl_(new Impl(compression_level, std::move(out))) {}
 
-Encoder::~Encoder() {}
+Encoder::~Encoder() { Finish(); }
 
 bool Encoder::AddFile(absl::string_view filename,
                       const ByteSource &content_generator) {

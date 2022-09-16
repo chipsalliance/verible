@@ -97,3 +97,21 @@ TEST(SimpleZip, ReadFromFileByteSource) {
   EXPECT_EQ(CountSubstr("PK\x01\x02", result), 1);  // one per file in directory
   EXPECT_EQ(CountSubstr("PK\x05\x06", result), 1);  // directory footer
 }
+
+TEST(SimpleZip, ImplicitFinishOnDestruction) {
+  std::string result;
+
+  {
+    verible::zip::Encoder zipper(0, [&result](absl::string_view out) {
+      result.append(out.begin(), out.end());
+      return true;
+    });
+    zipper.AddFile("foo.txt", verible::zip::MemoryByteSource("Hello world"));
+    // no explicit call to Finish()
+  }
+
+  EXPECT_EQ(CountSubstr("Hello world", result), 1);
+  EXPECT_EQ(CountSubstr("PK\x03\x04", result), 1);  // one per file
+  EXPECT_EQ(CountSubstr("PK\x01\x02", result), 1);  // one per file in directory
+  EXPECT_EQ(CountSubstr("PK\x05\x06", result), 1);  // directory footer
+}

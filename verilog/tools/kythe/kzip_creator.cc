@@ -43,24 +43,20 @@ std::string SHA256Digest(absl::string_view content) {
       absl::string_view(reinterpret_cast<const char*>(buf.data()), buf.size()));
 }
 
+constexpr int kKZipCompressionLevel = 9;
 }  // namespace
 
 KzipCreator::KzipCreator(absl::string_view output_path)
-    : zip_file_(fopen(std::string(output_path).c_str(), "wb"), &fclose) {
-  constexpr int kCompressionLevel = 9;
-  archive_ = std::make_unique<verible::zip::Encoder>(
-      kCompressionLevel, [this](absl::string_view s) {
-        return fwrite(s.data(), 1, s.size(), this->zip_file_.get()) == s.size();
-      });
-}
-
-KzipCreator::~KzipCreator() { archive_->Finish(); }
+    : zip_file_(fopen(std::string(output_path).c_str(), "wb"), &fclose),
+      archive_(kKZipCompressionLevel, [this](absl::string_view s) {
+        return fwrite(s.data(), 1, s.size(), zip_file_.get()) == s.size();
+      }) {}
 
 std::string KzipCreator::AddSourceFile(absl::string_view path,
                                        absl::string_view content) {
   const std::string digest = SHA256Digest(content);
   const std::string archive_path = verible::file::JoinPath(kFileRoot, digest);
-  archive_->AddFile(archive_path, verible::zip::MemoryByteSource(content));
+  archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return digest;
 }
 
@@ -73,7 +69,7 @@ absl::Status KzipCreator::AddCompilationUnit(
   const std::string digest = SHA256Digest(content);
   const std::string archive_path =
       verible::file::JoinPath(kProtoUnitRoot, digest);
-  archive_->AddFile(archive_path, verible::zip::MemoryByteSource(content));
+  archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return absl::OkStatus();
 }
 
