@@ -14,6 +14,7 @@
 
 #include "common/util/init_command_line.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <vector>
 
@@ -21,6 +22,7 @@
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "absl/flags/usage_config.h"
+#include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/strings/numbers.h"
 #include "absl/time/time.h"
@@ -57,14 +59,25 @@ std::vector<absl::string_view> InitCommandLine(
   usage_config.version_string = GetBuildVersion;
   absl::SetFlagsUsageConfig(usage_config);
   absl::SetProgramUsageMessage(usage);  // copies usage string
-  absl::InitializeLog();
 
-  // Simulating the old GLOG_v level for now.
-  const char* vlog_level_env = getenv("GLOG_v");
+  // To avoid confusing and rarely used flags, we just enable logging via
+  // environment variables.
+  const char* const stderr_log_level = getenv("VERIBLE_LOGLEVEL_STDERR");
+  int log_level = 0;
+  if (stderr_log_level && absl::SimpleAtoi(stderr_log_level, &log_level)) {
+    absl::SetStderrThreshold(
+        static_cast<absl::LogSeverityAtLeast>(std::clamp(log_level, 0, 3)));
+  }
+
+  // Until vlog is provided in absl, we use our own global variable, defined
+  // in logging.cc
+  const char* const vlog_level_env = getenv("VERIBLE_VLOG_DETAIL");
   if (!vlog_level_env ||
       !absl::SimpleAtoi(vlog_level_env, &verible::global_vlog_level_)) {
     global_vlog_level_ = 0;
   }
+
+  absl::InitializeLog();
 
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.

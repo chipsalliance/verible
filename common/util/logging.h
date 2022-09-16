@@ -29,8 +29,8 @@
 #include "absl/log/log.h"
 
 namespace verible {
-// Used in the VLOG macro to check logging condition.
-// This value is set in InitCommandLine() from GLOG_v environment variable
+// Used in the VLOG macro to check logging condition. This value is set in
+// InitCommandLine() from VERIBLE_VLOG_DETAIL environment variable.
 extern int global_vlog_level_;
 }  // namespace verible
 

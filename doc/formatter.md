@@ -1,7 +1,7 @@
 # SystemVerilog Formatter Developer Guide
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2020-10-16' }
+freshness: { owner: 'hzeller' reviewed: '2022-09-16' }
 *-->
 
 ## Design
@@ -133,15 +133,18 @@ tree node types, which are shown as constants like `kPackageDeclaration`.
 indentation. Add `--show_inter_token_info` to show even more information about
 InterTokenInfo before each token.
 
-A lot of other details are traced by running with `-v=4 --alsologtostderr`.
+A lot of other details are traced by running with environment variables
+`VERIBLE_LOGLEVEL_STDERR=0 VERIBLE_VLOG_DETAIL=4`. The stderr loglevel
+indicates that we want to see info logs and up on stderr (without that we
+wouldn't see any vlog outputs), and vlog detail is logging all verbose logging
+commands (`VLOG()`) up to and including log-level 4.
 
-Selective output from Verible modules can be controlled via [glog] environment
-variable `GLOG_vmodule`, for example output from `tree_unwrapper` might be enabled
-with `GLOG_vmodule="tree_unwrapper=4"`. Real world [TreeUnwrapper] example:
+(TODO: introduce `VERIBLE_VLOG_MODULE` once vmodule available in absl log).
+Real world [TreeUnwrapper] example:
 ```
 echo 'module m; initial a = b + c; endmodule' | \
-  GLOG_vmodule='tree_unwrapper=3' \
-  GLOG_logtostderr=1 \
+  VERIBLE_LOGLEVEL_STDERR=0 \
+  VERIBLE_VLOG_DETAIL=3 \
   bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
 ```
 
@@ -220,4 +223,3 @@ non-aligned formatting.
 [TreeUnwrapper]: https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.h
 [TokenPartitionTree]: https://cs.opensource.google/verible/verible/+/master:common/formatting/token_partition_tree.h
 [AlignablePartitionGroup]: https://cs.opensource.google/verible/verible/+/master:common/formatting/align.h?q=file:align.h%20class:AlignablePartitionGroup&ss=verible%2Fverible
-[glog]: https://github.com/google/glog
