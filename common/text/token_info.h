@@ -94,7 +94,7 @@ class TokenInfo {
   // a series of abutting substring ranges.  Useful for lexer operation.
   void AdvanceText(int token_length) {
     // The end of the previous token is the beginning of the next.
-    text_ = absl::string_view(text_.end(), token_length);
+    text_ = absl::string_view(text_.data() + text_.length(), token_length);
   }
 
   // Writes a human-readable string representation of the token.

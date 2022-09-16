@@ -296,7 +296,7 @@ jobs:
       run: bazel info
 
     - name: Run Tests
-      run: bazel test --test_output=errors //...
+      run: bazel test --keep_going --test_output=errors //...
 
     - name: Build Verible Binaries
       run: bazel build -c opt :install-binaries
