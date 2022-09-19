@@ -43,7 +43,6 @@ jobs:
       run: ./.github/bin/run-clang-format.sh
 
   ClangTidy:
-    if: false  # currently disabled, see #1434
     runs-on: ubuntu-20.04
 
     steps:

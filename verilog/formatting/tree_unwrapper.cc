@@ -2044,11 +2044,9 @@ class MacroCallReshaper {
   }
 
   // Report a bug/untested situation, but don't abort.
-  // As macro to be agnostic to logging implementation changes
-  // (hopefully ABSL will provide logging soon, to reduce glog dependency)
-#define LOG_BUG(log_sink, reason)                             \
-  log_sink << "formatting of macro call failed: " << (reason) \
-           << "\n*** Please file a bug. ***";
+#define LOG_PARTITION_BUG(reason)                               \
+  LOG(ERROR) << "formatting of macro call failed: " << (reason) \
+             << "\n*** Please file a bug. ***";
 
   bool FindInitialPartitions() {
     // Note: identifier can contain tokens for macro name + EOL comment
@@ -2056,29 +2054,29 @@ class MacroCallReshaper {
         main_node_, ContainsToken{verilog_tokentype::SystemTFIdentifier,
                                   verilog_tokentype::MacroCallId});
     if (!identifier_) {
-      LOG_BUG(LOG(ERROR), "identifier not found.");
+      LOG_PARTITION_BUG("identifier not found.");
       return false;
     }
 
     paren_group_ = FindDirectChild(main_node_,
                                    OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
     if (!paren_group_) {
-      LOG_BUG(LOG(ERROR), "paren_group not found.");
+      LOG_PARTITION_BUG("paren_group not found.");
       return false;
     }
 
     // Make sure there's nothing between identifier and paren group partitions.
     // Optional comment partitions are expected to be inside paren group.
     if (NextSibling(*identifier_) != paren_group_) {
-      LOG_BUG(LOG(ERROR),
-              "Unexpected partitions between identifier and paren_group.");
+      LOG_PARTITION_BUG(
+          "Unexpected partitions between identifier and paren_group.");
       return false;
     }
 
     if (!IsLastChild(*paren_group_)) {
       semicolon_ = &main_node_->Children().back();
       if (!ContainsToken{';'}(*semicolon_)) {
-        LOG_BUG(LOG(ERROR), "Unexpected partition(s) after the call.");
+        LOG_PARTITION_BUG("Unexpected partition(s) after the call.");
         LOG(ERROR) << "\n" << *main_node_;
         return false;
       }
@@ -2090,13 +2088,13 @@ class MacroCallReshaper {
     } else {
       l_paren_ = FindDirectChild(paren_group_, IsLeftParenPartition);
       if (!l_paren_) {
-        LOG_BUG(LOG(ERROR), "'(' not found.");
+        LOG_PARTITION_BUG("'(' not found.");
         return false;
       }
       r_paren_ = &paren_group_->Children().back();
       if (!ContainsToken{
               ')', verilog_tokentype::MacroCallCloseToEndLine}(*r_paren_)) {
-        LOG_BUG(LOG(ERROR), "')' not found.");
+        LOG_PARTITION_BUG("')' not found.");
         return false;
       }
       const auto l_paren_index = BirthRank(*l_paren_);
@@ -2114,7 +2112,7 @@ class MacroCallReshaper {
     return true;
   }
 
-#undef LOG_BUG
+#undef LOG_PARTITION_BUG
 
   bool ReshapeEmptyParenGroup() {
     if (paren_group_->Children().size() == 2 && l_paren_ != r_paren_ &&

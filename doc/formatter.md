@@ -1,7 +1,7 @@
 # SystemVerilog Formatter Developer Guide
 
 <!--*
-freshness: { owner: 'hzeller' reviewed: '2020-10-16' }
+freshness: { owner: 'hzeller' reviewed: '2022-09-16' }
 *-->
 
 ## Design
@@ -133,15 +133,20 @@ tree node types, which are shown as constants like `kPackageDeclaration`.
 indentation. Add `--show_inter_token_info` to show even more information about
 InterTokenInfo before each token.
 
-A lot of other details are traced by running with `-v=4 --alsologtostderr`.
+A lot of other details are traced by running with environment variables
+`VERIBLE_LOGTHRESHOLD=0 VERIBLE_VLOG_DETAIL=8`. The log threshold
+indicates that we want to see info logs and up (there are four levels: INFO=0,
+WARNING=1, ERROR=2, FATAL=3) printed to stderr (without that we wouldn't see
+any vlog outputs as they go to INFO), and vlog detail is logging all verbose
+logging commands (`VLOG()`) up to and including VLOG detail 8; the higher the
+number, the more details.
 
-Selective output from Verible modules can be controlled via [glog] environment
-variable `GLOG_vmodule`, for example output from `tree_unwrapper` might be enabled
-with `GLOG_vmodule="tree_unwrapper=4"`. Real world [TreeUnwrapper] example:
+(TODO: introduce `VERIBLE_VLOG_MODULE` once vmodule available in absl log).
+Real world [TreeUnwrapper] example:
 ```
 echo 'module m; initial a = b + c; endmodule' | \
-  GLOG_vmodule='tree_unwrapper=3' \
-  GLOG_logtostderr=1 \
+  VERIBLE_LOGTHRESHOLD=0 \
+  VERIBLE_VLOG_DETAIL=8 \
   bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
 ```
 
@@ -220,4 +225,3 @@ non-aligned formatting.
 [TreeUnwrapper]: https://cs.opensource.google/verible/verible/+/master:verilog/formatting/tree_unwrapper.h
 [TokenPartitionTree]: https://cs.opensource.google/verible/verible/+/master:common/formatting/token_partition_tree.h
 [AlignablePartitionGroup]: https://cs.opensource.google/verible/verible/+/master:common/formatting/align.h?q=file:align.h%20class:AlignablePartitionGroup&ss=verible%2Fverible
-[glog]: https://github.com/google/glog

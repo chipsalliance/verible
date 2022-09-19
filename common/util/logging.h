@@ -16,35 +16,35 @@
 #define VERIBLE_COMMON_UTIL_LOGGING_H_
 
 #ifdef __GNUC__
-// glog/logging does some integer signed/unsigned compares
+// b/246413374
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
-
-// Quiet fatal logging does not exist in glog; work around here
-#define COMPACT_GOOGLE_LOG_QFATAL COMPACT_GOOGLE_LOG_FATAL
-#include "glog/logging.h"
-#include "glog/vlog_is_on.h"
-
+#include "absl/log/check.h"
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
 
-#include "absl/base/attributes.h"
+#include "absl/log/die_if_null.h"
+#include "absl/log/log.h"
 
-// Helper for `ABSL_DIE_IF_NULL`.
 namespace verible {
-template <typename T>
-ABSL_MUST_USE_RESULT T DieIfNull(const char* file, int line,
-                                 const char* exprtext, T&& t) {
-  CHECK((t != nullptr)) << file << ":" << line << ": " << exprtext;
-  return std::forward<T>(t);
-}
+// Used in the VLOG macro to check logging condition. This value is set in
+// InitCommandLine() from VERIBLE_VLOG_DETAIL environment variable.
+extern int global_vlog_level_;
 }  // namespace verible
 
-#ifndef ABSL_DIE_IF_NULL
-#define ABSL_DIE_IF_NULL(val) \
-  ::verible::DieIfNull(__FILE__, __LINE__, #val, (val))
+// There is no vlog yet, so very simple work-around here.
+#ifndef VLOG_IS_ON
+#define VLOG_IS_ON(x) (::verible::global_vlog_level_ >= (x))
 #endif
+#define VLOG(x) LOG_IF(INFO, VLOG_IS_ON(x))
+#ifdef NDEBUG
+#define DVLOG(x) LOG_IF(INFO, false)
+#else
+#define DVLOG(x) VLOG(x)
+#endif
+
+#define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)
 
 #endif  // VERIBLE_COMMON_UTIL_LOGGING_H_
