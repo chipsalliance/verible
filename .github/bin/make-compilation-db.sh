@@ -17,14 +17,14 @@ set -u
 set -e
 set -o pipefail
 
-readonly EXEC_ROOT=$(bazel info execution_root)
+readonly OUTPUT_BASE=$(bazel info output_base)
 
 # First, build the compilation database baseline with placeholders for exec-root
 bazel build :compdb > /dev/null 2>&1
 
-# Fix up the __EXEC_ROOT__ to the path used by bazel and put the resulting
+# Fix up the __OUTPUT_BASE__ to the path used by bazel and put the resulting
 # db with the expected name in the root directory of the project.
 cat bazel-bin/compile_commands.json \
-  | sed "s|__EXEC_ROOT__|$EXEC_ROOT|" \
+  | sed "s|__OUTPUT_BASE__|$OUTPUT_BASE|g" \
   | sed 's/-fno-canonical-system-headers//g' \
         > compile_commands.json
