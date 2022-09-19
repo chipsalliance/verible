@@ -13,20 +13,23 @@ exports_files([
     "LICENSE",
 ])
 
+BINARIES = [
+    "//common/tools:verible-patch-tool",
+    "//verilog/tools/diff:verible-verilog-diff",
+    "//verilog/tools/formatter:verible-verilog-format",
+    "//verilog/tools/kythe:verible-verilog-kythe-extractor",
+    "//verilog/tools/kythe:verilog-kythe-kzip-writer",
+    "//verilog/tools/lint:verible-verilog-lint",
+    "//verilog/tools/ls:verible-verilog-ls",
+    "//verilog/tools/obfuscator:verible-verilog-obfuscate",
+    "//verilog/tools/preprocessor:verible-verilog-preprocessor",
+    "//verilog/tools/project:verible-verilog-project",
+    "//verilog/tools/syntax:verible-verilog-syntax",
+]
+
 filegroup(
     name = "install-binaries",
-    srcs = [
-        "//common/tools:verible-patch-tool",
-        "//verilog/tools/diff:verible-verilog-diff",
-        "//verilog/tools/formatter:verible-verilog-format",
-        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
-        "//verilog/tools/lint:verible-verilog-lint",
-        "//verilog/tools/ls:verible-verilog-ls",
-        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
-        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
-        "//verilog/tools/project:verible-verilog-project",
-        "//verilog/tools/syntax:verible-verilog-syntax",
-    ],
+    srcs = BINARIES,
 )
 
 filegroup(
@@ -77,17 +80,7 @@ compilation_database(
     # Unfortunately, compilation_database does not support filesets yet,
     # so expand them here manually.
     # https://github.com/grailbio/bazel-compilation-database/issues/84
-    targets = [
-        "//common/tools:verible-patch-tool",
-        "//verilog/tools/diff:verible-verilog-diff",
-        "//verilog/tools/formatter:verible-verilog-format",
-        "//verilog/tools/kythe:verible-verilog-kythe-extractor",
-        "//verilog/tools/lint:verible-verilog-lint",
-        "//verilog/tools/obfuscator:verible-verilog-obfuscate",
-        "//verilog/tools/preprocessor:verible-verilog-preprocessor",
-        "//verilog/tools/project:verible-verilog-project",
-        "//verilog/tools/syntax:verible-verilog-syntax",
-        "//verilog/tools/ls:verible-verilog-ls",
+    targets = BINARIES + [
         "//common/lsp:dummy-ls",
     ],
 
