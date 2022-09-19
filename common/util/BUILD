@@ -147,7 +147,6 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/log:die_if_null",
-        "@com_google_absl//absl/random",
     ],
 )
 

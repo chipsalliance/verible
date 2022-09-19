@@ -134,17 +134,19 @@ indentation. Add `--show_inter_token_info` to show even more information about
 InterTokenInfo before each token.
 
 A lot of other details are traced by running with environment variables
-`VERIBLE_LOGLEVEL_STDERR=0 VERIBLE_VLOG_DETAIL=4`. The stderr loglevel
-indicates that we want to see info logs and up on stderr (without that we
-wouldn't see any vlog outputs), and vlog detail is logging all verbose logging
-commands (`VLOG()`) up to and including log-level 4.
+`VERIBLE_LOGTHRESHOLD=0 VERIBLE_VLOG_DETAIL=8`. The log threshold
+indicates that we want to see info logs and up (there are four levels: INFO=0,
+WARNING=1, ERROR=2, FATAL=3) printed to stderr (without that we wouldn't see
+any vlog outputs as they go to INFO), and vlog detail is logging all verbose
+logging commands (`VLOG()`) up to and including VLOG detail 8; the higher the
+number, the more details.
 
 (TODO: introduce `VERIBLE_VLOG_MODULE` once vmodule available in absl log).
 Real world [TreeUnwrapper] example:
 ```
 echo 'module m; initial a = b + c; endmodule' | \
-  VERIBLE_LOGLEVEL_STDERR=0 \
-  VERIBLE_VLOG_DETAIL=3 \
+  VERIBLE_LOGTHRESHOLD=0 \
+  VERIBLE_VLOG_DETAIL=8 \
   bazel run //verilog/tools/formatter:verible-verilog-format -- -show_token_partition_tree -
 ```
 

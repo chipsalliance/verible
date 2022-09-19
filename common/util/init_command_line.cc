@@ -62,7 +62,7 @@ std::vector<absl::string_view> InitCommandLine(
 
   // To avoid confusing and rarely used flags, we just enable logging via
   // environment variables.
-  const char* const stderr_log_level = getenv("VERIBLE_LOGLEVEL_STDERR");
+  const char* const stderr_log_level = getenv("VERIBLE_LOGTHRESHOLD");
   int log_level = 0;
   if (stderr_log_level && absl::SimpleAtoi(stderr_log_level, &log_level)) {
     absl::SetStderrThreshold(
