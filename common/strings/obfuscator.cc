@@ -37,7 +37,7 @@ absl::string_view Obfuscator::operator()(absl::string_view input) {
     return (p != nullptr) ? *p : input;
   } else {
     const std::string* str = translator_.insert_using_value_generator(
-        std::string(input), [=]() { return generator_(input); });
+        std::string(input), [this, input]() { return generator_(input); });
     return *str;
   }
 }
