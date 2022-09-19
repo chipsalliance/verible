@@ -59,7 +59,9 @@ readonly EXEC_ROOT=$(bazel info execution_root)
 # and of course file content.
 for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
                 -or -name "*.h" -and -not -name "*test*.h" \
-             | grep -v "verilog/tools/kythe") ; do
+             | grep -v "verilog/tools/kythe" \
+             | grep -v "verilog/tools/ls/vscode" \
+             ) ; do
   (echo $CLANG_TIDY ; cat .clang-tidy WORKSPACE $f) | md5sum | sed "s|-|$f|g"
 done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 

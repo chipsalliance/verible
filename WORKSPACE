@@ -196,9 +196,9 @@ http_archive(
 
 http_archive(
     name = "com_grail_bazel_compdb",
-    sha256 = "f798690ddb6bba453ed489665c408bb0ce630bd7f0992c160c9414f933481a91",
-    strip_prefix = "bazel-compilation-database-ace73b04e76111afa09934f8771a2798847e724e",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/ace73b04e76111afa09934f8771a2798847e724e.tar.gz"],
+    sha256 = "a3ff6fe238eec8202270dff75580cba3d604edafb8c3408711e82633c153efa8",
+    strip_prefix = "bazel-compilation-database-940cedacdb8a1acbce42093bf67f3a5ca8b265f7",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/940cedacdb8a1acbce42093bf67f3a5ca8b265f7.tar.gz"],
 )
 
 # zlib is imported through protobuf. Make the dependency explicit considering
