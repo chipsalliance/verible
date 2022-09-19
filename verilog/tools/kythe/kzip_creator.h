@@ -33,7 +33,6 @@ class KzipCreator final {
  public:
   // Initializes the archive. Crashes if initialization fails.
   explicit KzipCreator(absl::string_view output_path);
-  ~KzipCreator();
 
   // Adds source code file to the Kzip. Returns its SHA digest.
   std::string AddSourceFile(absl::string_view path, absl::string_view content);
@@ -44,7 +43,7 @@ class KzipCreator final {
 
  private:
   std::unique_ptr<FILE, decltype(&fclose)> zip_file_;
-  std::unique_ptr<verible::zip::Encoder> archive_ = nullptr;
+  verible::zip::Encoder archive_;
 };
 
 }  // namespace kythe

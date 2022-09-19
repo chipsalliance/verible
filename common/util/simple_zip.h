@@ -54,16 +54,20 @@ ByteSource FileByteSource(const char *filename);
 // No more files can be added after Finish().
 class Encoder {
  public:
-  // Create an encoder writing to ByteSink.
+  // Create a zip file encoder writing to ByteSink.
   // No compression on "compression_level" zero, otherwise deflate
   Encoder(int compression_level, ByteSink out);
+
+  // Will also Finish() if not called already.
   ~Encoder();
 
-  // Add a file with given filename and content.
+  // Add a file with given filename and content from the generator function.
   bool AddFile(absl::string_view filename, const ByteSource &content_generator);
 
-  // Finalize container. Note if your byte-sink is wrapping a file, you
-  // might need to close it after Finish() returns.
+  // Finalize container.
+  // After this, no new files can be added.
+  // Note if your byte-sink is wrapping a file, you might need to close it
+  // after Finish() returns.
   bool Finish();
 
  private:
