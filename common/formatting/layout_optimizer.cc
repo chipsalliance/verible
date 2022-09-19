@@ -510,7 +510,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kAppendFittingSubPartitions:
     case PartitionPolicyEnum::kJuxtapositionOrIndentedStack: {
       std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), [=](const TokenPartitionTree& n) {
+                     layouts.begin(), [this](const TokenPartitionTree& n) {
                        return this->CalculateOptimalLayout(n);
                      });
       break;
@@ -520,27 +520,27 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
     case PartitionPolicyEnum::kAlwaysExpand:
     case PartitionPolicyEnum::kTabularAlignment: {
       const int indentation = node.Value().IndentationSpaces();
-      std::transform(node.Children().begin(), node.Children().end(),
-                     layouts.begin(), [=](const TokenPartitionTree& n) {
-                       const int relative_indentation =
-                           n.Value().IndentationSpaces() - indentation;
-                       if (relative_indentation < 0) {
-                         VLOG(0)
-                             << "(Child indentation) < (parent indentation). "
-                                "Assuming 0. Parent node:\n"
-                             << node;
-                       }
+      std::transform(
+          node.Children().begin(), node.Children().end(), layouts.begin(),
+          [this, &node, indentation](const TokenPartitionTree& n) {
+            const int relative_indentation =
+                n.Value().IndentationSpaces() - indentation;
+            if (relative_indentation < 0) {
+              VLOG(0) << "(Child indentation) < (parent indentation). "
+                         "Assuming 0. Parent node:\n"
+                      << node;
+            }
 
-                       LayoutFunction lf;
+            LayoutFunction lf;
 
-                       if (relative_indentation > 0)
-                         lf = factory_.Indent(this->CalculateOptimalLayout(n),
-                                              relative_indentation);
-                       else
-                         lf = this->CalculateOptimalLayout(n);
-
-                       return lf;
-                     });
+            if (relative_indentation > 0) {
+              lf = factory_.Indent(this->CalculateOptimalLayout(n),
+                                   relative_indentation);
+            } else {
+              lf = this->CalculateOptimalLayout(n);
+            }
+            return lf;
+          });
       break;
     }
 

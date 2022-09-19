@@ -129,7 +129,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line contains any non-space, non-comment tokens.
   const bool line_has_tokens =
-      std::any_of(tokens.begin(), tokens.end(), [=](const TokenInfo& t) {
+      std::any_of(tokens.begin(), tokens.end(), [this](const TokenInfo& t) {
         return !(is_token_whitespace_(t) || is_token_comment_(t));
       });
 

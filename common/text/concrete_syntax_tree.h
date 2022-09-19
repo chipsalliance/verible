@@ -171,6 +171,7 @@ class SyntaxTreeNode : public Symbol {
       default:
         // TODO(hzeller): with constexpr magic, can we static_assert() this ?
         LOG(FATAL) << "need more choice " << enums.size();
+        return false;
     }
   }
 
