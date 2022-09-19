@@ -16,10 +16,8 @@
 #ifndef VERIBLE_COMMON_UTIL_SIMPLE_ZIP_H_
 #define VERIBLE_COMMON_UTIL_SIMPLE_ZIP_H_
 
-#include <cstdint>
 #include <functional>
 #include <memory>
-#include <string>
 
 #include "absl/strings/string_view.h"
 

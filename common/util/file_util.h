@@ -108,7 +108,7 @@ class ScopedTestFile {
   ScopedTestFile& operator=(ScopedTestFile&&) = default;
 
   // Filename created by this instance.
-  absl::string_view filename() const { return filename_; }
+  const std::string& filename() const { return filename_; }
 
  private:
   std::string filename_;

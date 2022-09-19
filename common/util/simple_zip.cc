@@ -17,6 +17,7 @@
 #include <zlib.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <memory>
 #include <string>
