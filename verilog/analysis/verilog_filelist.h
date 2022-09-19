@@ -32,20 +32,39 @@ struct TextMacroDefinition {
 };
 
 // File list for compiling a System Verilog project.
+// TODO: ideally, all the strings would be string_views, but we need to make
+//       sure to have the relevant backing store live.
+// TODO: are there cases in which files and incdirs are interleaved so that
+//       the first files don't see all the incdirs yet, but after more incdirs
+//       are added, all of them are relevant ? If so, this would require some
+//       restructering.
+// TODO: document if files are relative to tool invocation or relative to
+//       file_list_path (the latter makes more sense, but I think currently that
+//       is underspecified).
+// TODO: Alongside previous: also introduce file_list_root field ?
 struct FileList {
   // A struct holding information relevant to "VerilogPreprocess" preprocessor.
   struct PreprocessingInfo {
     // Directories where to search for the included files.
     std::vector<std::string> include_dirs;
+
     // Defined macros.
     std::vector<TextMacroDefinition> defines;
   };
-  // Ordered list of files to compile.
-  std::vector<std::string> file_paths;
+
   // Path to the file list.
   std::string file_list_path;
+
+  // Ordered list of files to compile.
+  std::vector<std::string> file_paths;
+
   // Information relevant to the preprocessor.
   PreprocessingInfo preprocessing;
+
+  // Merge other file list into this one, essentially concatenating all
+  // vectors of information at the end.
+  // Modifies this FileList except "file_list_path", which is left untouched.
+  void Append(const FileList& other);
 };
 
 }  // namespace verilog

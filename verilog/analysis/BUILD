@@ -359,7 +359,17 @@ cc_test(
 
 cc_library(
     name = "verilog_filelist",
+    srcs = ["verilog_filelist.cc"],
     hdrs = ["verilog_filelist.h"],
+)
+
+cc_test(
+    name = "verilog_filelist_test",
+    srcs = ["verilog_filelist_test.cc"],
+    deps = [
+        ":verilog_filelist",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
