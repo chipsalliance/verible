@@ -17,6 +17,8 @@ set -u
 set -e
 set -o pipefail
 
+bazel --version
+
 readonly OUTPUT_BASE=$(bazel info output_base)
 
 # First, build the compilation database baseline with placeholders for exec-root

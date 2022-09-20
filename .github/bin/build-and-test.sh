@@ -18,6 +18,8 @@ set -e
 
 source ./.github/settings.sh
 
+bazel --version
+
 if [[ "${MODE}" == *-clang ]]; then
   # Baseline in case we don't find a specific version below
   export CXX=clang++

@@ -59,6 +59,8 @@ jobs:
 
     - name: Install Dependencies
       run: |
+        source ./.github/settings.sh
+        ./.github/bin/install-bazel.sh
         sudo apt -qq -y install clang-tidy-11
         echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
