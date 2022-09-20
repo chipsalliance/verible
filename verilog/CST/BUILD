@@ -13,7 +13,7 @@ package(
         "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/ls:__pkg__",  # DocumentSymbol
         "//verilog/tools/syntax:__pkg__",  # for printing
-        "//:__pkg__",   # compilation database
+        "//:compdb_visible",
     ],
 )
 

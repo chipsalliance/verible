@@ -5,7 +5,7 @@ licenses(["notice"])
 package(
     default_visibility = [
         "//:__subpackages__",
-        "//:__pkg__",   # compilation database
+        "//:compdb_visible",
     ],
 )
 

@@ -10,7 +10,7 @@ package(
         "//verilog/analysis:__subpackages__",
         "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/lint:__subpackages__",
-        "//:__pkg__",   # compilation database
+        "//:compdb_visible",
     ],
 )
 

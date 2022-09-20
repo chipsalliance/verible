@@ -10,7 +10,7 @@ package(
         "//verilog/analysis:__subpackages__",
         "//verilog/parser:__subpackages__",
         "//verilog/preprocessor:__subpackages__",
-        "//:__pkg__",   # compilation database
+        "//:compdb_visible",
     ],
 )
 

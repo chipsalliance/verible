@@ -8,7 +8,7 @@ package(
         "//common/parser:__subpackages__",  # for parser_test_util
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
-        "//:__pkg__",   # compilation database
+        "//:compdb_visible",
     ],
 )
 

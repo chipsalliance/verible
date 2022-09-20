@@ -5,8 +5,8 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
-#load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
-load("//bazel:all_compdb_rules.bzl", "ALL_COMPDB_RULES")
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("//bazel:compilation_db_seed_targets.bzl", "COMPDB_SEED_TARGETS")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -73,17 +73,13 @@ action_listener(
     visibility = ["//visibility:public"],
 )
 
-filegroup(
-   name = "all",
-   srcs = ALL_COMPDB_RULES,
-   testonly = True,  # Allow to include testonly targets
+package_group(
+    name = "compdb_visible",
+    packages = ["//..."],
 )
 
-# TODO:
-# Testing currently without the compdb. Just the file-list above triggers
-# issues on MacOs and Windows
-#compilation_database(
-#    name = "compdb",
-#    targets = [ ":all" ],
-#    testonly = True,    # We want targets that are dependent on testonly libs
-#)
+compilation_database(
+    name = "compdb",
+    targets = COMPDB_SEED_TARGETS,
+    testonly = True,    # We want targets that are dependent on testonly libs
+)
