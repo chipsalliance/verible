@@ -15,6 +15,10 @@ pkgs.mkShell {
       lcov
       python3
 
+      # for experimenting with --//bazel:use_local_flex_bison
+      flex
+      bison
+
       # Ease development
       clang-tools_11    # clang-format
       bazel-buildtools  # buildifier

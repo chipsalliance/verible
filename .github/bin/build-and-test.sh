@@ -56,10 +56,8 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-missing-field-initializers"
 # Warnings in our code-base, that we might consider removing.
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 
-# If compiled with c++20 compatible compilers, it complains about extending
-# std::iterator. Can be removed once
-# https://github.com/chipsalliance/verible/issues/1400 is fixed.
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-deprecated-declarations"
+# Newer bisons produce an unused label in generated code
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-label"
 
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
