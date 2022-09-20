@@ -195,6 +195,7 @@ http_archive(
     ],
 )
 
+# From 2022-09-19
 http_archive(
     name = "com_grail_bazel_compdb",
     sha256 = "a3ff6fe238eec8202270dff75580cba3d604edafb8c3408711e82633c153efa8",

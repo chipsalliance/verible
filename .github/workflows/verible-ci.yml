@@ -56,7 +56,7 @@ jobs:
   ClangTidy:
     container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
-
+    if: false   # currently disabled. REMOVE BEVORE PR merge.
     env:
       GHA_MACHINE_TYPE: "n2-standard-4"
 
@@ -361,7 +361,13 @@ jobs:
       with:
         path: "/private/var/tmp/_bazel_runner"
         key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos_
+        restore-keys: FORCE_EMPTY_CACHE_bazelcache_macos_
+
+    - name: TESTING TESTING TESTING remove before PR merge.
+      # See that the filelist target containing all cc_binary,cc_test work
+      run: |
+        bazel --version
+        bazel build --noshow_progress -c opt :all
 
     - name: Tests
       run: bazel test --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
@@ -413,14 +419,20 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows2_
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: FORCE_EMPTY_CACHE_bazelcache_windows_
 
     - name: Install dependencies
       run: choco install llvm
 
     - name: Debug bazel directory settings
       run: bazel info
+
+    - name: TESTING TESTING TESTING remove before PR merge.
+      # See that the filelist target containing all cc_binary,cc_test work
+      run: |
+        bazel --version
+        bazel build --noshow_progress -c opt :all
 
     - name: Run Tests
       run: bazel test --noshow_progress --test_output=errors //...

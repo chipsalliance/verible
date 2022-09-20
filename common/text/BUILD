@@ -13,6 +13,7 @@ package(
         "//common/lexer:__subpackages__",
         "//common/parser:__subpackages__",
         "//verilog:__subpackages__",
+        "//:__pkg__",   # compilation database
     ],
 )
 

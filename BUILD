@@ -5,7 +5,8 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
-load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+#load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("//bazel:all_compdb_rules.bzl", "ALL_COMPDB_RULES")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -72,12 +73,17 @@ action_listener(
     visibility = ["//visibility:public"],
 )
 
-compilation_database(
-    name = "compdb",
-    targets = [
-        ":install-binaries",
-        "//common/lsp:dummy-ls",
-    ],
-    # TODO: is there a way to essentially specify //... so that all tests
-    # are included as well ?
+filegroup(
+   name = "all",
+   srcs = ALL_COMPDB_RULES,
+   testonly = True,  # Allow to include testonly targets
 )
+
+# TODO:
+# Testing currently without the compdb. Just the file-list above triggers
+# issues on MacOs and Windows
+#compilation_database(
+#    name = "compdb",
+#    targets = [ ":all" ],
+#    testonly = True,    # We want targets that are dependent on testonly libs
+#)

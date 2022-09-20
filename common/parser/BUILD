@@ -7,6 +7,7 @@ package(
     default_visibility = [
         "//common/analysis:__subpackages__",
         "//verilog/parser:__subpackages__",
+        "//:__pkg__",   # compilation database
     ],
 )
 

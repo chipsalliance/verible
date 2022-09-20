@@ -6,7 +6,7 @@ licenses(["notice"])
 
 package(
     default_visibility = [
-        "//visibility:private",
+        "//:__pkg__",   # compilation database
     ],
 )
 

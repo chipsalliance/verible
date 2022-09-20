@@ -6,6 +6,7 @@ package(
     default_visibility = [
         "//verilog:__subpackages__",
         # TODO(b/130113490): standalone preprocessor tool
+        "//:__pkg__",   # compilation database
     ],
 )
 

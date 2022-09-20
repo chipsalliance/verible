@@ -5,6 +5,7 @@ licenses(["notice"])
 default_visibility = [
     "//verilog/analysis:__subpackages__",
     "//verilog/tools:__subpackages__",
+    "//:__pkg__",   # compilation database
 ]
 
 package(

@@ -13,6 +13,7 @@ licenses(["notice"])
 package(
     default_visibility = [
         "//verilog:__subpackages__",
+        "//:__pkg__",   # compilation database
     ],
 )
 

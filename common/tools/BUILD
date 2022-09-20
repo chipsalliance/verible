@@ -1,5 +1,11 @@
 """This package contains language-agnostic tools in the Verible project."""
 
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
@@ -12,7 +18,6 @@ exports_files([
 cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//common/strings:patch",
         "//common/util:file_util",
@@ -60,7 +65,6 @@ sh_test_with_runfiles_lib(
 cc_binary(
     name = "jcxxgen",
     srcs = ["jcxxgen.cc"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:init_command_line",
         "@com_google_absl//absl/container:flat_hash_map",
