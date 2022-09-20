@@ -28,22 +28,24 @@
 #include "absl/log/die_if_null.h"
 #include "absl/log/log.h"
 
+// There is no vlog yet, so very simple work-around here until it shows up
+#ifndef VLOG
 namespace verible {
 // Used in the VLOG macro to check logging condition. This value is set in
 // InitCommandLine() from VERIBLE_VLOG_DETAIL environment variable.
 extern int global_vlog_level_;
 }  // namespace verible
 
-// There is no vlog yet, so very simple work-around here.
-#ifndef VLOG_IS_ON
 #define VLOG_IS_ON(x) (::verible::global_vlog_level_ >= (x))
-#endif
 #define VLOG(x) LOG_IF(INFO, VLOG_IS_ON(x))
+
 #ifdef NDEBUG
 #define DVLOG(x) LOG_IF(INFO, false)
 #else
 #define DVLOG(x) VLOG(x)
-#endif
+#endif  // NDEBUG
+
+#endif  // VLOG
 
 #define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)
 
