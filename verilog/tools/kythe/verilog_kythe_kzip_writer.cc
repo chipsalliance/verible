@@ -79,8 +79,13 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
       verible::file::GetContents(filelist_path, &filelist_content);
   CHECK(read_status.ok()) << "Failed to open the file list at "
                           << filelist_path;
-  const auto filelist =
-      verilog::ParseSourceFileList(filelist_path, filelist_content);
+  verilog::FileList filelist;
+  if (auto status = verilog::AppendFileListFromContent(
+          filelist_path, filelist_content, &filelist);
+      !status.ok()) {
+    LOG(ERROR) << "Filelist parse error " << status;
+    return 1;
+  }
 
   kythe::proto::IndexedCompilation compilation;
   const std::string code_revision = absl::GetFlag(FLAGS_code_revision);

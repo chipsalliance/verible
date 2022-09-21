@@ -187,21 +187,21 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   const std::string file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
   // Load file list.
-  const auto file_list_or(verilog::ParseSourceFileListFromFile(file_list_path));
-  if (!file_list_or.ok()) {
-    LOG(ERROR) << "Error while reading file list: "
-               << file_list_or.status().message();
+  verilog::FileList file_list;
+  if (auto status = verilog::AppendFileListFromFile(file_list_path, &file_list);
+      !status.ok()) {
+    LOG(ERROR) << "Error while reading file list: " << status;
     return 1;
   }
-  const std::vector<std::string>& file_paths(file_list_or->file_paths);
+  const std::vector<std::string>& file_paths(file_list.file_paths);
 
   // List of the directories for where to look for included files.
   std::vector<std::string> include_dir_paths =
       absl::GetFlag(FLAGS_include_dir_paths);
   // Merge the include dirs from the file list.
   include_dir_paths.insert(include_dir_paths.end(),
-                           file_list_or->preprocessing.include_dirs.begin(),
-                           file_list_or->preprocessing.include_dirs.end());
+                           file_list.preprocessing.include_dirs.begin(),
+                           file_list.preprocessing.include_dirs.end());
   verilog::VerilogProject project(file_list_root, include_dir_paths);
 
   const std::vector<absl::Status> errors(
