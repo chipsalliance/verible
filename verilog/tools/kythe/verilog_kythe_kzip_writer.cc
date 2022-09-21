@@ -24,7 +24,7 @@
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
 #include "third_party/proto/kythe/analysis.pb.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog_filelist.h"
 #include "verilog/tools/kythe/kzip_creator.h"
 
 ABSL_FLAG(std::string, filelist_path, "",

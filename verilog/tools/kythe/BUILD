@@ -289,7 +289,7 @@ cc_binary(
         "//common/util:init_command_line",
         "//common/util:logging",
         "//third_party/proto/kythe:analysis_cc_proto",
-        "//verilog/analysis:verilog_project",
+        "//verilog/analysis:verilog_filelist",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
