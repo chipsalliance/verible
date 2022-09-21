@@ -42,9 +42,9 @@ cc_library(
     srcs = ["extractors.cc"],
     hdrs = ["extractors.h"],
     deps = [
+        ":verilog_analyzer",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
-        "//verilog/analysis:verilog_analyzer",
         "//verilog/preprocessor:verilog_preprocess",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -362,7 +362,7 @@ cc_library(
     srcs = ["verilog_filelist.cc"],
     hdrs = ["verilog_filelist.h"],
     deps = [
-        "//common/util:container_iterator_range",
+        "//common/util:iterator_range",
         "//common/util:file_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -375,6 +375,7 @@ cc_test(
     srcs = ["verilog_filelist_test.cc"],
     deps = [
         ":verilog_filelist",
+        "//common/util:file_util",
         "@com_google_googletest//:gtest_main",
     ],
 )
