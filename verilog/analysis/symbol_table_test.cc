@@ -8990,8 +8990,9 @@ struct FileListTestCase {
 };
 
 TEST(ParseSourceFileListFromFileTest, FileNotFound) {
-  const auto files_or_status(ParseSourceFileListFromFile("/no/such/file.txt"));
-  EXPECT_FALSE(files_or_status.ok());
+  FileList file_list;
+  const auto status(AppendFileListFromFile("/no/such/file.txt", &file_list));
+  EXPECT_FALSE(status.ok());
 }
 
 TEST(ParseSourceFileListFromFileTest, VariousValidFiles) {
@@ -9014,11 +9015,10 @@ TEST(ParseSourceFileListFromFileTest, VariousValidFiles) {
   };
   for (const auto& test : kTestCases) {
     const ScopedTestFile test_file(testing::TempDir(), test.contents);
-    const auto files_or_status(
-        ParseSourceFileListFromFile(test_file.filename()));
-    ASSERT_TRUE(files_or_status.ok()) << files_or_status.status().message();
-    EXPECT_THAT(files_or_status->file_paths,
-                ElementsAreArray(test.expected_files))
+    FileList file_list;
+    const auto status(AppendFileListFromFile(test_file.filename(), &file_list));
+    ASSERT_TRUE(status.ok()) << status;
+    EXPECT_THAT(file_list.file_paths, ElementsAreArray(test.expected_files))
         << "input: " << test.contents;
   }
 }

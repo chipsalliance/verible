@@ -74,13 +74,8 @@ struct VerilogProjectConfig {
 
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
 
-    // Load file list.
-    auto file_list_or(
-        verilog::ParseSourceFileListFromFile(file_list.file_list_path));
-    if (!file_list_or.ok()) return file_list_or.status();
-    file_list = std::move(*file_list_or);
-
-    return absl::OkStatus();
+    return verilog::AppendFileListFromFile(file_list.file_list_path,
+                                           &file_list);
   }
 };
 

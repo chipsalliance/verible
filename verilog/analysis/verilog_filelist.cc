@@ -27,24 +27,13 @@
 #include "common/util/iterator_range.h"
 
 namespace verilog {
-void FileList::Append(const FileList& other) {
-  file_paths.insert(file_paths.end(), other.file_paths.begin(),
-                    other.file_paths.end());
-  preprocessing.include_dirs.insert(preprocessing.include_dirs.end(),
-                                    other.preprocessing.include_dirs.begin(),
-                                    other.preprocessing.include_dirs.end());
-  preprocessing.defines.insert(preprocessing.defines.end(),
-                               other.preprocessing.defines.begin(),
-                               other.preprocessing.defines.end());
-}
-
-FileList ParseSourceFileList(absl::string_view file_list_path,
-                             const std::string& file_list_content) {
+absl::Status AppendFileListFromContent(absl::string_view file_list_path,
+                                       const std::string& file_list_content,
+                                       FileList* append_to) {
   // TODO(hzeller): parse +define+ and stash into preprocessing configuration.
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
-  FileList file_list_out;
-  file_list_out.file_list_path = std::string(file_list_path);
-  file_list_out.preprocessing.include_dirs.push_back(".");
+  append_to->file_list_path = std::string(file_list_path);
+  append_to->preprocessing.include_dirs.push_back(".");  // Should we do that?
   std::string file_path;
   std::istringstream stream(file_list_content);
   while (std::getline(stream, file_path)) {
@@ -59,32 +48,31 @@ FileList ParseSourceFileList(absl::string_view file_list_path,
     if (absl::StartsWith(file_path, kIncludeDirPrefix)) {
       // Handle includes
       // TODO(karimtera): split directories by comma, to allow multiple dirs.
-      file_list_out.preprocessing.include_dirs.emplace_back(
+      append_to->preprocessing.include_dirs.emplace_back(
           absl::StripPrefix(file_path, kIncludeDirPrefix));
     } else {
       // A regular file
-      file_list_out.file_paths.push_back(file_path);
+      append_to->file_paths.push_back(file_path);
     }
   }
-  return file_list_out;
+  return absl::OkStatus();
 }
 
-absl::StatusOr<FileList> ParseSourceFileListFromFile(
-    absl::string_view file_list_file) {
+absl::Status AppendFileListFromFile(absl::string_view file_list_file,
+                                    FileList* append_to) {
   std::string content;
-  const auto read_status = verible::file::GetContents(file_list_file, &content);
+  auto read_status = verible::file::GetContents(file_list_file, &content);
   if (!read_status.ok()) return read_status;
-  return ParseSourceFileList(file_list_file, content);
+  return AppendFileListFromContent(file_list_file, content, append_to);
 }
 
-absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
-    const std::vector<absl::string_view>& cmdline) {
-  FileList result;
+absl::Status AppendFileListFromCommandline(
+    const std::vector<absl::string_view>& cmdline, FileList* append_to) {
   for (absl::string_view argument : cmdline) {
     if (argument.empty()) continue;
     if (argument[0] != '+') {
       // Then "argument" is a SV file name.
-      result.file_paths.push_back(std::string(argument));
+      append_to->file_paths.push_back(std::string(argument));
       continue;
     }
     // It should be either a define or incdir.
@@ -112,15 +100,15 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
               "after '=' is missing");
         }
         // add the define argument.
-        result.preprocessing.defines.emplace_back(macro_pair.first,
-                                                  macro_pair.second);
+        append_to->preprocessing.defines.emplace_back(macro_pair.first,
+                                                      macro_pair.second);
       }
     } else if (plus_argument_type == "incdir") {
       for (const absl::string_view incdir_argument :
            verible::make_range(argument_plus_splitted.begin() + 1,
                                argument_plus_splitted.end())) {
         // argument_plus_splitted[0] is 'incdir' so it is safe to skip it.
-        result.preprocessing.include_dirs.emplace_back(
+        append_to->preprocessing.include_dirs.emplace_back(
             std::string(incdir_argument));
       }
     } else {
@@ -129,6 +117,6 @@ absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
           plus_argument_type, "'"));
     }
   }
-  return result;
+  return absl::OkStatus();
 }
 }  // namespace verilog

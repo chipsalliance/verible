@@ -43,12 +43,13 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
                                   std::ostream&) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
-  auto parsed_file_list =
-      verilog::ParseSourceFileListFromCommandline(cmdline_args);
-  if (!parsed_file_list.ok()) {
-    return parsed_file_list.status();
+  verilog::FileList file_list;
+  if (auto status =
+          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
+      !status.ok()) {
+    return status;
   }
-  const auto& files = parsed_file_list->file_paths;
+  const auto& files = file_list.file_paths;
 
   if (files.empty()) {
     return absl::InvalidArgumentError(
@@ -128,13 +129,14 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
                                std::ostream& message_stream) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
-  auto parsed_file_list =
-      verilog::ParseSourceFileListFromCommandline(cmdline_args);
-  if (!parsed_file_list.ok()) {
-    return parsed_file_list.status();
+  verilog::FileList file_list;
+  if (auto status =
+          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
+      !status.ok()) {
+    return status;
   }
-  const auto& files = parsed_file_list->file_paths;
-  const auto& preprocessing_info = parsed_file_list->preprocessing;
+  const auto& files = file_list.file_paths;
+  const auto& preprocessing_info = file_list.preprocessing;
 
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");
@@ -154,12 +156,13 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
                                      std::ostream& message_stream) {
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
-  auto parsed_file_list =
-      verilog::ParseSourceFileListFromCommandline(cmdline_args);
-  if (!parsed_file_list.ok()) {
-    return parsed_file_list.status();
+  verilog::FileList file_list;
+  if (auto status =
+          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
+      !status.ok()) {
+    return status;
   }
-  const auto& files = parsed_file_list->file_paths;
+  const auto& files = file_list.file_paths;
   // TODO(karimtera): Pass the +define's to the preprocessor, and only
   // generate variants with theses defines fixed.
 

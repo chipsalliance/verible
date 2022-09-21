@@ -63,27 +63,31 @@ struct FileList {
 
   // Information relevant to the preprocessor.
   PreprocessingInfo preprocessing;
-
-  // Merge other file list into this one, essentially concatenating all
-  // vectors of information at the end.
-  // Modifies this FileList except "file_list_path", which is left untouched.
-  void Append(const FileList& other);
 };
 
-// Reads in a list of files line-by-line from 'file_list_file'. The include
-// directories are prefixed by "+incdir+"
-absl::StatusOr<FileList> ParseSourceFileListFromFile(
-    absl::string_view file_list_file);
+// Reads in a list of files line-by-line from "file_list_file" and
+// appends it to the given filelist.
+// Sets the "file_list_path" in FileList.
+// +incdir+ adds to include directories (TODO: +define+).
+//
+// TODO: Maybe remove this as it creates an ephemeral strings with the content.
+// If we always use an externally owned string_view (see ..FromContent() below)
+// we can replace std::string in FileList with string_views; that way, it is
+// always possible to pinpoint back to the owning string view in case we want
+// to provide detailed error messages.
+absl::Status AppendFileListFromFile(absl::string_view file_list_file,
+                                    FileList* append_to);
 
 // Reads in a list of files line-by-line from the given string. The include
-// directories are prefixed by "+incdir+"
-FileList ParseSourceFileList(absl::string_view file_list_path,
-                             const std::string& file_list_content);
+// directories are prefixed by "+incdir+" (TODO: +define+)
+absl::Status AppendFileListFromContent(absl::string_view file_list_path,
+                                       const std::string& file_list_content,
+                                       FileList* append_to);
 
-// Parse positional parameters from command line and extract files, +incdir+ and
-// +define+.
-absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
-    const std::vector<absl::string_view>& cmdline);
+// Parse positional parameters from command line and extract files,
+// +incdir+ and +define+ and appends to FileList.
+absl::Status AppendFileListFromCommandline(
+    const std::vector<absl::string_view>& cmdline, FileList* append_to);
 
 }  // namespace verilog
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_FILELIST_H_
