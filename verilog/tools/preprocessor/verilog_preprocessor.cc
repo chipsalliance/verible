@@ -24,10 +24,10 @@
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/status_macros.h"
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog_filelist.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
@@ -44,11 +44,8 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
-  if (auto status =
-          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(
+      verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
   const auto& files = file_list.file_paths;
 
   if (files.empty()) {
@@ -57,10 +54,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
   }
   const absl::string_view source_file = files[0];
   std::string source_contents;
-  if (auto status = verible::file::GetContents(source_file, &source_contents);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(verible::file::GetContents(source_file, &source_contents));
 
   char replace_char;
   if (args.size() == 1) {
@@ -130,11 +124,8 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
-  if (auto status =
-          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(
+      verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
   const auto& files = file_list.file_paths;
   const auto& preprocessing_info = file_list.preprocessing;
 
@@ -143,9 +134,8 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   }
   for (const absl::string_view source_file : files) {
     message_stream << source_file << ":\n";
-    auto status = PreprocessSingleFile(source_file, preprocessing_info, outs,
-                                       message_stream);
-    if (!status.ok()) return status;
+    RETURN_IF_ERROR(PreprocessSingleFile(source_file, preprocessing_info, outs,
+                                         message_stream));
     outs << '\n';
   }
   return absl::OkStatus();
@@ -157,11 +147,8 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   // Parse the arguments into a FileList.
   std::vector<absl::string_view> cmdline_args(args.begin(), args.end());
   verilog::FileList file_list;
-  if (auto status =
-          verilog::AppendFileListFromCommandline(cmdline_args, &file_list);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(
+      verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
   const auto& files = file_list.file_paths;
   // TODO(karimtera): Pass the +define's to the preprocessor, and only
   // generate variants with theses defines fixed.
@@ -199,7 +186,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   // Control flow tree constructing.
   verilog::FlowTree control_flow_tree(lexed_sequence);
   int counter = 0;
-  auto status = control_flow_tree.GenerateVariants(
+  return control_flow_tree.GenerateVariants(
       [limit_variants, &outs, &message_stream,
        &counter](const verilog::FlowTree::Variant& variant) {
         if (counter == limit_variants) return false;
@@ -211,11 +198,6 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
         // defined/undefined.
         return true;
       });
-  if (!status.ok()) {
-    return status;
-  }
-
-  return absl::OkStatus();
 }
 
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {

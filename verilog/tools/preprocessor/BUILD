@@ -12,10 +12,10 @@ cc_binary(
     deps = [
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:status_macros",
         "//common/util:subcommand",
         "//verilog/analysis:flow_tree",
-        "//verilog/analysis:verilog_analyzer",
-        "//verilog/analysis:verilog_project",
+        "//verilog/analysis:verilog_filelist",
         "//verilog/parser:verilog_lexer",
         "//verilog/preprocessor:verilog_preprocess",
         "//verilog/transform:strip_comments",

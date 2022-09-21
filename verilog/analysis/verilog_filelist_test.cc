@@ -38,7 +38,7 @@ TEST(FileListTest, AppendFileListFromFile) {
   const ScopedTestFile file_list_file(tempdir, file_list_content);
   FileList result;
   auto status = AppendFileListFromFile(file_list_file.filename(), &result);
-  ASSERT_TRUE(status.ok());
+  ASSERT_TRUE(status.ok()) << status;
 
   EXPECT_EQ(result.file_list_path, file_list_file.filename());
   EXPECT_THAT(result.file_paths,
@@ -71,7 +71,7 @@ TEST(FileListTest, AppendFileListFromCommandline) {
       "+incdir+../path/to/file4+./path/to/file5"};
   FileList result;
   auto status = AppendFileListFromCommandline(cmdline, &result);
-  ASSERT_TRUE(status.ok());
+  ASSERT_TRUE(status.ok()) << status;
 
   EXPECT_THAT(result.file_paths, ElementsAre("file1", "file2", "file3"));
   EXPECT_THAT(result.preprocessing.include_dirs,
