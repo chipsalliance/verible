@@ -361,6 +361,13 @@ cc_library(
     name = "verilog_filelist",
     srcs = ["verilog_filelist.cc"],
     hdrs = ["verilog_filelist.h"],
+    deps = [
+        "//common/util:container_iterator_range",
+        "//common/util:file_util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test(
