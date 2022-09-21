@@ -278,7 +278,7 @@ cc_library(
 )
 
 cc_binary(
-    name = "verilog-kythe-kzip-writer",
+    name = "verible-verilog-kythe-kzip-writer",
     srcs = [
         "verilog_kythe_kzip_writer.cc",
     ],
