@@ -27,7 +27,7 @@ cc_library(
     srcs = ["lint_rule_status.cc"],
     hdrs = ["lint_rule_status.h"],
     deps = [
-        "//common/analysis:citation",
+        ":citation",
         "//common/strings:line_column_map",
         "//common/text:concrete_syntax_leaf",
         "//common/text:symbol",
