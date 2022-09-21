@@ -18,6 +18,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+
 namespace verilog {
 
 // TODO(karimtera): Using "MacroDefiniton" struct might be better.
@@ -66,6 +69,21 @@ struct FileList {
   // Modifies this FileList except "file_list_path", which is left untouched.
   void Append(const FileList& other);
 };
+
+// Reads in a list of files line-by-line from 'file_list_file'. The include
+// directories are prefixed by "+incdir+"
+absl::StatusOr<FileList> ParseSourceFileListFromFile(
+    absl::string_view file_list_file);
+
+// Reads in a list of files line-by-line from the given string. The include
+// directories are prefixed by "+incdir+"
+FileList ParseSourceFileList(absl::string_view file_list_path,
+                             const std::string& file_list_content);
+
+// Parse positional parameters from command line and extract files, +incdir+ and
+// +define+.
+absl::StatusOr<FileList> ParseSourceFileListFromCommandline(
+    const std::vector<absl::string_view>& cmdline);
 
 }  // namespace verilog
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_FILELIST_H_
