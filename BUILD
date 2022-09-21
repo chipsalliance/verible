@@ -20,7 +20,7 @@ filegroup(
         "//verilog/tools/diff:verible-verilog-diff",
         "//verilog/tools/formatter:verible-verilog-format",
         "//verilog/tools/kythe:verible-verilog-kythe-extractor",
-        "//verilog/tools/kythe:verilog-kythe-kzip-writer",
+        "//verilog/tools/kythe:verible-verilog-kythe-kzip-writer",
         "//verilog/tools/lint:verible-verilog-lint",
         "//verilog/tools/ls:verible-verilog-ls",
         "//verilog/tools/obfuscator:verible-verilog-obfuscate",
