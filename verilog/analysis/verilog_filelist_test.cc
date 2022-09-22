@@ -60,6 +60,12 @@ TEST(FileListTest, AppendFileListFromInvalidCommandline) {
   }
 }
 
+// EXPECT_THAT expects that
+static bool operator==(const TextMacroDefinition& a,
+                       const TextMacroDefinition& b) {
+  return a.name == b.name && a.value == b.value;
+}
+
 TEST(FileListTest, AppendFileListFromCommandline) {
   std::vector<absl::string_view> cmdline = {
       "+define+macro1=text1+macro2+macro3=text3",
