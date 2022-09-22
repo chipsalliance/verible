@@ -49,7 +49,10 @@ TEST(FileListTest, AppendFileListFromFile) {
 
 TEST(FileListTest, AppendFileListFromInvalidCommandline) {
   std::vector<std::vector<absl::string_view>> test_cases = {
-      {"+define+macro1="}, {"+define+"}, {"+not_valid_define+"}};
+      {"+define+macro1="},
+      {"+define+"},
+      {"+not_valid_define+"},
+      {"+foobar+baz"}};
   for (const auto& cmdline : test_cases) {
     FileList result;
     auto status = AppendFileListFromCommandline(cmdline, &result);

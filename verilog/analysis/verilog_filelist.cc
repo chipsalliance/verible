@@ -113,8 +113,8 @@ absl::Status AppendFileListFromCommandline(
       }
     } else {
       return absl::InvalidArgumentError(absl::StrCat(
-          "ERROR: Expected either '+define+' or '+incdir+' but got '",
-          plus_argument_type, "'"));
+          "ERROR: Expected either '+define+' or '+incdir+' but got '+",
+          plus_argument_type, "+'"));
     }
   }
   return absl::OkStatus();
