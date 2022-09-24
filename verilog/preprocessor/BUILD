@@ -18,6 +18,7 @@ cc_library(
         "//common/lexer:token_stream_adapter",
         "//common/text:macro_definition",
         "//common/text:token_info",
+        "//common/text:text_structure",
         "//common/text:token_stream_view",
         "//common/util:container_util",
         "//common/util:logging",

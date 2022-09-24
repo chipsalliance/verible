@@ -48,6 +48,7 @@
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_filelist.h"
 
 namespace verilog {
@@ -74,6 +75,10 @@ struct VerilogPreprocessData {
   // Resulting token stream after preprocessing
   verible::TokenStreamView preprocessed_token_stream;
   std::vector<TokenSequence> lexed_macros_backup;
+  
+  // A backup memory of pairs sequence, which owns the content text unlike a
+  // TokenInfo or a TokenSequence.
+  std::vector<std::unique_ptr<verible::TextStructure>> child_included_content;
 
   // Map of defined macros.
   MacroDefinitionRegistry macro_definitions;
@@ -103,6 +108,9 @@ class VerilogPreprocess {
     // Note, for formatting, we do _not_ want to filter the output as we
     // want to emit all tokens.
     bool filter_branches = false;
+
+    // Inlude files with `include.
+    bool include_files = false;
 
     // Expand macro definition bodies, this will relexes the macro body.
     bool expand_macros = false;
@@ -173,6 +181,8 @@ class VerilogPreprocess {
   absl::Status ExpandText(const absl::string_view&);
   absl::Status ExpandMacro(const verible::MacroCall&,
                            const verible::MacroDefinition*);
+  absl::Status HandleInclude(TokenStreamView::const_iterator,
+                           const StreamIteratorGenerator&);
 
   const Config config_;
 

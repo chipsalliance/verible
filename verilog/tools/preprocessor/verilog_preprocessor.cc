@@ -89,6 +89,7 @@ static absl::Status PreprocessSingleFile(
   }
   verilog::VerilogPreprocess::Config config;
   config.filter_branches = true;
+  config.include_files = true;
   // config.expand_macros=1;
   verilog::VerilogPreprocess preprocessor(config);
 
