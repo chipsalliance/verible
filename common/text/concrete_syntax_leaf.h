@@ -28,7 +28,7 @@
 
 namespace verible {
 
-class SyntaxTreeLeaf : public Symbol {
+class SyntaxTreeLeaf final : public Symbol {
  public:
   SyntaxTreeLeaf() = delete;
 

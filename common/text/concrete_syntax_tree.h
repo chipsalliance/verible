@@ -71,7 +71,7 @@ struct ForwardChildren {
 // SyntaxTreeNode is a language-agnostic node structure, supporting an
 // arbitrary number of children.  The 'tag' field is a node type enumeration
 // used by various language front-ends.
-class SyntaxTreeNode : public Symbol {
+class SyntaxTreeNode final : public Symbol {
  public:
   explicit SyntaxTreeNode(const int tag = kUntagged) : tag_(tag) {}
 
