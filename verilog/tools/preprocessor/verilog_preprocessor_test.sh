@@ -257,7 +257,6 @@ status="$?"
 echo "=== Test multiple-compilation-unit: on a source file with conditionals"
 
 cat > "$MY_INPUT_FILE" <<EOF
-\`include "file.sv"
 module m();
   wire x = 1;
 \`ifdef A
@@ -272,8 +271,6 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#259: "\`include")
-(#313: ""file.sv"")
 (#359: "module")
 (#293: "m")
 (#40: "(")

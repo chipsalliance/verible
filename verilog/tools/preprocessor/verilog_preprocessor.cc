@@ -115,7 +115,6 @@ static absl::Status PreprocessSingleFile(
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << *u << '\n';
   for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
-
   return absl::OkStatus();
 }
 

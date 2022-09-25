@@ -613,13 +613,12 @@ absl::Status VerilogPreprocess::HandleInclude(
   verilog::VerilogPreprocess child_preprocessor(config_);
   // TODO(karimtera): share the macros defined with child pp.
   // TODO(karimtera): limit number of nested pps.
-  absl::string_view source_contents_view = source_contents;
-  preprocess_data_.child_included_content.emplace_back(std::make_unique<verible::TextStructure>(source_contents_view));
+  preprocess_data_.child_included_content.emplace_back(std::make_unique<verible::TextStructure>(source_contents));
   verible::TextStructure& included_structure = *preprocess_data_.child_included_content.back();
   verible::TokenSequence& included_sequence = included_structure.MutableData().MutableTokenStream();
   verible::TokenStreamView& included_view = included_structure.MutableData().MutableTokenStreamView();
 
-  verilog::VerilogLexer lexer(source_contents);
+  verilog::VerilogLexer lexer(included_structure.Data().Contents());
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
     // For now we will store the syntax tree tokens only, ignoring all the
@@ -634,14 +633,9 @@ absl::Status VerilogPreprocess::HandleInclude(
   // Initializing the lexed token stream view.
   InitTokenStreamView(included_sequence, &lexed_streamview);
   verilog::VerilogPreprocessData child_preprocessed_data = child_preprocessor.ScanStream(lexed_streamview);
-  auto& child_preprocessed_stream = child_preprocessed_data.preprocessed_token_stream;
+  included_view = child_preprocessed_data.preprocessed_token_stream;
 
-  included_view = child_preprocessed_stream;
-  auto iter_generator = verible::MakeConstIteratorStreamer(included_view);
-  const auto it_end = included_view.end();
-  for (auto it = iter_generator(); it != it_end; it++) {
-    preprocess_data_.preprocessed_token_stream.push_back(*it);
-  }
+  for(const auto& u:included_view) preprocess_data_.preprocessed_token_stream.push_back(u);
   return absl::OkStatus();
 }
 
@@ -671,8 +665,9 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
     return HandleMacroIdentifier(iter, generator);
   }
 
-  if (config_.include_files && (*iter)->token_enum() == PP_include)
+  if (config_.include_files && (*iter)->token_enum() == PP_include){
     return HandleInclude(iter, generator);
+  }
     
   // If not return'ed above, any other tokens are passed through unmodified
   // unless filtered by a branch.
