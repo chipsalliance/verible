@@ -647,21 +647,13 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
 included1_content
 EOF
 
-
-cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
-(#293: "included1_content")
-(#293: "input_content")
-
-EOF
-
 "$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
-  exit 0
+  exit 1
 }
 
 ################################################################################
@@ -693,9 +685,9 @@ EOF
 
 status="$?"
 
-[[ $status == 0 ]] || {
+[[ $status == 1 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -757,21 +749,60 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
 included2_content
 EOF
 
-cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
-(#293: "included2_content")
-(#293: "included1_content")
-(#293: "input_content")
-
-EOF
-
 "$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +incdir+${MY_INCLUDED_FILE_PATH_1} > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including nested files, passing +define+"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
+input_content
+\`ifdef A
+A_TRUE
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_2}"
+included1_content
+\`ifdef A
+A_TRUE
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
+included2_content
+\`ifdef A
+A_TRUE
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "included2_content")
+(#293: "A_TRUE")
+(#293: "included1_content")
+(#293: "A_TRUE")
+(#293: "input_content")
+(#293: "A_TRUE")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
   exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
 }
 
 ################################################################################

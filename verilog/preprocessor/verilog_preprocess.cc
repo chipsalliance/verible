@@ -639,11 +639,26 @@ absl::Status VerilogPreprocess::HandleInclude(
   InitTokenStreamView(included_sequence, &lexed_streamview);
   verilog::VerilogPreprocessData child_preprocessed_data =
       child_preprocessor.ScanStream(lexed_streamview);
+
+  // Check for errors while preprocessing the included file.
+  if (!child_preprocessed_data.errors.empty()) {
+    preprocess_data_.errors.insert(preprocess_data_.errors.end(),
+                                   child_preprocessed_data.errors.begin(),
+                                   child_preprocessed_data.errors.end());
+    return absl::InvalidArgumentError(
+        "Error: the included file preprocessing has failed.");
+  }
+
   included_view = child_preprocessed_data.preprocessed_token_stream;
 
+  for (auto& u : child_preprocessed_data.included_text_structure) {
+    preprocess_data_.included_text_structure.push_back(std::move(u));
+  }
+
   // Forwarding the included preprocessed view.
-  for (const auto& u : included_view)
+  for (const auto& u : included_view) {
     preprocess_data_.preprocessed_token_stream.push_back(u);
+  }
 
   return absl::OkStatus();
 }

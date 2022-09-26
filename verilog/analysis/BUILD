@@ -381,25 +381,6 @@ cc_test(
 )
 
 cc_library(
-    name = "verilog_project_preprocessor",
-    srcs = ["verilog_project_preprocessor.cc"],
-    hdrs = ["verilog_project_preprocessor.h"],
-    deps = [
-        "//common/strings:string_memory_map",
-        "//common/text:text_structure",
-        "//common/util:file_util",
-        "//common/util:logging",
-        "//verilog/parser:verilog_lexer",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
-        "@com_google_absl//absl/types:optional",
-    ],
-)
-
-cc_library(
     name = "verilog_project",
     srcs = ["verilog_project.cc"],
     hdrs = ["verilog_project.h"],

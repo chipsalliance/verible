@@ -115,6 +115,8 @@ static absl::Status PreprocessSingleFile(
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << *u << '\n';
   for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
+  if (!preprocessed_data.errors.empty())
+    return absl::InvalidArgumentError("Error: The preprocessing has failed.");
   return absl::OkStatus();
 }
 
