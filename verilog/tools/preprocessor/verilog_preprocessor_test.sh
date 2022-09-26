@@ -685,9 +685,9 @@ EOF
 
 status="$?"
 
-[[ $status == 1 ]] || {
+[[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 1
+  exit 0
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -733,7 +733,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including nested files with relative paths with a missing incdir"
+echo "=== Test multiple-compilation-unit: including nested files with relative paths without incdir"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_RELATIVE_INCLUDED_FILE_1}"
@@ -749,7 +749,7 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
 included2_content
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +incdir+${MY_INCLUDED_FILE_PATH_1} > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 

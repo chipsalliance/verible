@@ -618,12 +618,9 @@ absl::Status VerilogPreprocess::HandleInclude(
   verible::TextStructure& included_structure =
       *preprocess_data_.included_text_structure.back();
 
-  // - "included_sequence" should contain the lexed token sequence.
-  // - "included_view" should contain the preprocessed TokenStreamView.
+  // "included_sequence" should contain the lexed token sequence.
   verible::TokenSequence& included_sequence =
       included_structure.MutableData().MutableTokenStream();
-  verible::TokenStreamView& included_view =
-      included_structure.MutableData().MutableTokenStreamView();
 
   // Lexing the included file content, and storing it in "included_sequence".
   verilog::VerilogLexer lexer(included_structure.Data().Contents());
@@ -633,8 +630,7 @@ absl::Status VerilogPreprocess::HandleInclude(
       included_sequence.push_back(lexer.GetLastToken());
   }
 
-  // Preprocessing the included file tokens, and saving the preprocessed view
-  // into "included_view".
+  // Preprocessing the included file tokens.
   verible::TokenStreamView lexed_streamview;
   InitTokenStreamView(included_sequence, &lexed_streamview);
   verilog::VerilogPreprocessData child_preprocessed_data =
@@ -649,14 +645,14 @@ absl::Status VerilogPreprocess::HandleInclude(
         "Error: the included file preprocessing has failed.");
   }
 
-  included_view = child_preprocessed_data.preprocessed_token_stream;
-
+  // Need to move the text structures of the child preprocessor to avoid
+  // destruction.
   for (auto& u : child_preprocessed_data.included_text_structure) {
     preprocess_data_.included_text_structure.push_back(std::move(u));
   }
 
   // Forwarding the included preprocessed view.
-  for (const auto& u : included_view) {
+  for (const auto& u : child_preprocessed_data.preprocessed_token_stream) {
     preprocess_data_.preprocessed_token_stream.push_back(u);
   }
 
