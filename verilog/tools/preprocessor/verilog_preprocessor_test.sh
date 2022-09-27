@@ -14,24 +14,15 @@
 # limitations under the License.
 
 # Find input files
-MY_RELATIVE_INCLUDED_FILE_1="myinclude_1.txt"
-readonly MY_RELATIVE_INCLUDED_FILE_1
-MY_ABSOLUTE_INCLUDED_FILE_1="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_1}"
-readonly MY_ABSOLUTE_INCLUDED_FILE_1
-MY_INCLUDED_FILE_PATH_1="${MY_ABSOLUTE_INCLUDED_FILE_1%$MY_RELATIVE_INCLUDED_FILE_1}"
-readonly MY_INCLUDED_FILE_PATH_1
-MY_RELATIVE_INCLUDED_FILE_2="myinclude_2.txt"
-readonly MY_RELATIVE_INCLUDED_FILE_2
-MY_ABSOLUTE_INCLUDED_FILE_2="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_2}"
-readonly MY_ABSOLUTE_INCLUDED_FILE_2
-MY_INCLUDED_FILE_PATH_2="${MY_ABSOLUTE_INCLUDED_FILE_2%$MY_RELATIVE_INCLUDED_FILE_2}"
-readonly MY_INCLUDED_FILE_PATH_2
-MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
-readonly MY_INPUT_FILE
-MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
-readonly MY_OUTPUT_FILE
-MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
-readonly MY_EXPECT_FILE
+readonly MY_RELATIVE_INCLUDED_FILE_1="myinclude_1.txt"
+readonly MY_ABSOLUTE_INCLUDED_FILE_1="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_1}"
+readonly MY_INCLUDED_FILE_PATH_1="${MY_ABSOLUTE_INCLUDED_FILE_1%$MY_RELATIVE_INCLUDED_FILE_1}"
+readonly MY_RELATIVE_INCLUDED_FILE_2="myinclude_2.txt"
+readonly MY_ABSOLUTE_INCLUDED_FILE_2="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_2}"
+readonly MY_INCLUDED_FILE_PATH_2="${MY_ABSOLUTE_INCLUDED_FILE_2%$MY_RELATIVE_INCLUDED_FILE_2}"
+readonly MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
+readonly MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
+readonly MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
 
 # Process script flags and arguments.
 [[ "$#" == 1 ]] || {
@@ -573,8 +564,9 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 echo "=== Test multiple-compilation-unit: including a file with an absolute path"
 
 cat > "$MY_INPUT_FILE" <<EOF
+input_content_0
 \`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
-input_content
+input_content_1
 EOF
 
 cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
@@ -584,8 +576,9 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
+(#293: "input_content_0")
 (#293: "included1_content")
-(#293: "input_content")
+(#293: "input_content_1")
 
 EOF
 
@@ -595,7 +588,7 @@ status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -628,7 +621,7 @@ status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -687,7 +680,7 @@ status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -725,7 +718,7 @@ status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -766,6 +759,7 @@ cat > "$MY_INPUT_FILE" <<EOF
 input_content
 \`ifdef A
 A_TRUE
+\`endif
 EOF
 
 cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
@@ -773,12 +767,14 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
 included1_content
 \`ifdef A
 A_TRUE
+\`endif
 EOF
 
 cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
 included2_content
 \`ifdef A
 A_TRUE
+\`endif
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
@@ -798,7 +794,7 @@ status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
