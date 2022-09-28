@@ -89,12 +89,14 @@ to get it started up on our Verilog/SystemVerilog projects.
 
 ### Neovim
 
-Make sure to have version `0.5.0` or newer and install the [nvim-lpsconfig](https://github.com/neovim/nvim-lspconfig/) plugin.
+Make sure to have version `0.5.0` or newer and install the [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig/) plugin.
 Enable the verible config:
 
 ```lua
 -- init.lua
-require'lspconfig'.verible.setup {}
+require'lspconfig'.verible.setup {
+root_dir = function() return vim.loop.cwd() end
+}
 ```
 
 See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#verible for configuration options.
