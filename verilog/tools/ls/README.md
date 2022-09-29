@@ -90,7 +90,15 @@ to get it started up on our Verilog/SystemVerilog projects.
 ### Neovim
 
 Make sure to have version `0.5.0` or newer and install the [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig/) plugin.
-Then enable the verible config by appending the following script to your ~/.config/nvim/init.nvim file:
+You can install it with the popular [vim-plug](https://github.com/junegunn/vim-plug) plugin manager by adding the following code to your ~/.config/nvim/init.vim file:
+```vim
+call plug#begin()
+Plug 'neovim/nvim-lspconfig'
+call plug#end()
+```
+Then to install it open neovim and type: ``` :PlugInstall ```
+
+After installing nvim-lspconfig, enable the verible config by appending the following script to your ~/.config/nvim/init.nvim file:
 
 ```lua
 lua << EOF
@@ -143,7 +151,7 @@ require'lspconfig'.verible.setup {
 }
 EOF
 ```
-This script initializes the verible language server in neovim and also enables shortcuts for functionalities such as auto-fix (<space> + a).
+This script initializes the verible language server in neovim and also enables shortcuts for functionalities such as auto-fix (space + a).
 See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#verible for configuration options.
 
 ### Sublime
