@@ -271,7 +271,7 @@ class KytheFactsExtractor {
   const VerilogSourceFile* const source_;
 
   // Output for produced Kythe facts. Not owned.
-  KytheOutput* facts_output_ = nullptr;
+  KytheOutput* const facts_output_;
 
   // Keeps track of VNames of ancestors as the visitor traverses the facts
   // tree.
@@ -279,7 +279,7 @@ class KytheFactsExtractor {
 
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.
-  ScopeResolver* scope_resolver_ = nullptr;
+  ScopeResolver* const scope_resolver_;
 
   // Location signature backing store.
   // Inside signatures, we record locations as string_views,
