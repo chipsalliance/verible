@@ -367,7 +367,7 @@ void KytheFactsExtractor::ExtractFile(const IndexingFactNode& root) {
 
 bool KytheFactsExtractor::IndexingFactNodeTagResolver(
     const IndexingFactNode& node) {
-  size_t extracted_facts_num = seen_kythe_hashes_.size();
+  const size_t previously_extracted_facts_num = seen_kythe_hashes_.size();
   const auto tag = node.Value().GetIndexingFactType();
 
   // Dispatch a node handler based on the node's tag.
@@ -487,7 +487,7 @@ bool KytheFactsExtractor::IndexingFactNodeTagResolver(
   CreateChildOfEdge(tag, vname);
   VisitAutoConstructScope(node, vname);
 
-  return seen_kythe_hashes_.size() > extracted_facts_num;
+  return seen_kythe_hashes_.size() > previously_extracted_facts_num;
 }
 
 void KytheFactsExtractor::AddDefinitionToCurrentScope(IndexingFactType tag,
