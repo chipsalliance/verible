@@ -35,6 +35,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/mem-block.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_stream_view.h"
@@ -234,6 +235,9 @@ class TextStructureView {
 // the same owned memory can be used for multiple analysis views.
 class TextStructure {
  public:
+  explicit TextStructure(std::unique_ptr<MemBlock> contents);
+
+  // Convenience constructor in case our input is a string.
   explicit TextStructure(absl::string_view contents);
 
   TextStructure(const TextStructure&) = delete;
@@ -259,9 +263,7 @@ class TextStructure {
  protected:
   // This string owns the memory referenced by all substring string_views
   // in this object.
-  // TODO(hzeller): avoid local copy and just require that the string-view
-  // we are called with outlives this object?
-  const std::string owned_contents_;
+  std::unique_ptr<MemBlock> owned_contents_;
 
   // The data_ object's string_views are owned by owned_contents_.
   TextStructureView data_;
