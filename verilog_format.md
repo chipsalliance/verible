@@ -124,4 +124,4 @@ path.
 
 ## Version
 
-Generated on 2022-10-05 09:52:03 -0700 from [94c5085b](https://github.com/google/verible/commit/94c5085b5af5a9115297d3ed811312e7323009d4)
+Generated on 2022-10-05 10:24:19 -0700 from [0966fa27](https://github.com/google/verible/commit/0966fa273bb13cefd62d3792c46f7f67efcc01b7)
