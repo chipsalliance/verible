@@ -102,8 +102,8 @@ absl::Status FileAnalyzer::Parse(Parser* parser) {
   // because the partial tree can still be useful to analyze.
   MutableData().MutableSyntaxTree() = parser->TakeRoot();
   if (status.ok()) {
-    CHECK(SyntaxTree().get()) << "Expected syntax tree from parsing \""
-                              << filename_ << "\", but got none.";
+    CHECK(Data().SyntaxTree().get()) << "Expected syntax tree from parsing \""
+                                     << filename_ << "\", but got none.";
   } else {
     for (const auto& token : parser->RejectedTokens()) {
       rejected_tokens_.push_back(RejectedToken{

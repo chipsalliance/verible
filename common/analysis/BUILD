@@ -153,6 +153,7 @@ cc_library(
         "//common/text:token_info",
         "//common/text:token_stream_view",
         "//common/util:spacer",
+        "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

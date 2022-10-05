@@ -229,12 +229,12 @@ VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(absl::string_view text,
 }
 
 void VerilogAnalyzer::FilterTokensForSyntaxTree() {
-  data_.FilterTokens(&VerilogLexer::KeepSyntaxTreeTokens);
+  MutableData().FilterTokens(&VerilogLexer::KeepSyntaxTreeTokens);
 }
 
 void VerilogAnalyzer::ContextualizeTokens() {
   LexicalContext context;
-  context.TransformVerilogSymbols(data_.MakeTokenStreamReferenceView());
+  context.TransformVerilogSymbols(MutableData().MakeTokenStreamReferenceView());
 }
 
 // Analyzes Verilog code: lexer, filter, parser.
@@ -291,7 +291,7 @@ absl::Status VerilogAnalyzer::Analyze() {
   max_used_stack_size_ = parser.MaxUsedStackSize();
 
   // Expand macro arguments that are parseable as expressions.
-  if (parse_status_.ok() && SyntaxTree() != nullptr) {
+  if (parse_status_.ok() && Data().SyntaxTree() != nullptr) {
     ExpandMacroCallArgExpressions();
   }
 
@@ -356,7 +356,8 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         CHECK(analysis_slot.subanalysis.get() == nullptr)
             << "Cannot expand the same location twice.  Token: " << token;
         analysis_slot.expansion_point = leaf_owner;
-        analysis_slot.subanalysis = std::move(expr_analyzer);
+        analysis_slot.subanalysis =
+            std::move(expr_analyzer->ReleaseTextStructure());
       } else {
         // Ignore parse failures.
         VLOG(3) << "Ignoring parsing failure: " << token;
@@ -391,7 +392,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
 void VerilogAnalyzer::ExpandMacroCallArgExpressions() {
   VLOG(2) << __FUNCTION__;
   MacroCallArgExpander expander(Data().Contents(), preprocess_config_);
-  ABSL_DIE_IF_NULL(SyntaxTree())
+  ABSL_DIE_IF_NULL(Data().SyntaxTree())
       ->Accept(&expander, &MutableData().MutableSyntaxTree());
   expander.ExpandSubtrees(this);
   VLOG(2) << "end of " << __FUNCTION__;

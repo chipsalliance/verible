@@ -49,6 +49,7 @@
 #include "common/parser/parse.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/util/logging.h"
 
 namespace verible {
 
@@ -84,12 +85,13 @@ struct RejectedToken {
 std::ostream& operator<<(std::ostream&, const RejectedToken&);
 
 // FileAnalyzer holds the results of lexing and parsing.
-class FileAnalyzer : public TextStructure {
+class FileAnalyzer {
  public:
   explicit FileAnalyzer(absl::string_view contents, absl::string_view filename)
-      : TextStructure(contents), filename_(filename) {}
+      : text_structure_(std::make_unique<TextStructure>(contents)),
+        filename_(filename) {}
 
-  ~FileAnalyzer() override {}
+  ~FileAnalyzer() {}
 
   virtual absl::Status Tokenize() = 0;
 
@@ -144,7 +146,27 @@ class FileAnalyzer : public TextStructure {
     return rejected_tokens_;
   }
 
+  // Convenience methods to access text structure view.
+  const ConcreteSyntaxTree& SyntaxTree() const {
+    return ABSL_DIE_IF_NULL(text_structure_)->SyntaxTree();
+  }
+  const TextStructureView& Data() const {
+    return ABSL_DIE_IF_NULL(text_structure_)->Data();
+  }
+  TextStructureView& MutableData() {
+    return ABSL_DIE_IF_NULL(text_structure_)->MutableData();
+  }
+
+  // Return text structure used in this analysis.
+  // This FileAnalyzer object must be considered invalid afterwards.
+  // TODO(hzeller): drive decomposition further so that we don't need this wart.
+  std::unique_ptr<TextStructure> ReleaseTextStructure() {
+    return std::move(text_structure_);
+  }
+
  protected:
+  std::unique_ptr<TextStructure> text_structure_;
+
   // Name of file being analyzed (optional).
   const std::string filename_;
 
