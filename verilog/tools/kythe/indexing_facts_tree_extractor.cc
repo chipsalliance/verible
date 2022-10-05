@@ -74,9 +74,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
                              const VerilogSourceFile& source_file,
                              VerilogExtractionState* extraction_state)
-      : context_(
-            TokenInfo::Context(source_file.GetTextStructure()->Contents())),
-        file_list_facts_tree_(file_list_facts_tree),
+      : file_list_facts_tree_(file_list_facts_tree),
         source_file_(source_file),
         extraction_state_(extraction_state) {
     const absl::string_view base = source_file_.GetTextStructure()->Contents();
@@ -284,10 +282,6 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  private:  // data members
   // The Root of the constructed facts tree.
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
-
-  // Used for getting token offsets in code text.
-  // TODO(fangism): if a string_view is enough, get it from source_file_.
-  TokenInfo::Context context_;
 
   // Keeps track of indexing facts tree ancestors as the visitor traverses CST.
   IndexingFactsTreeContext facts_tree_context_;
