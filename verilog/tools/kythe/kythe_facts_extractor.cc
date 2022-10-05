@@ -25,6 +25,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_set.h"
+#include "absl/hash/hash.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
@@ -76,15 +77,6 @@ std::vector<absl::string_view> ConcatenateReferences(
 
 }  // namespace
 
-// Extracted Kythe indexing facts and edges.
-struct KytheIndexingData {
-  // Extracted Kythe indexing facts.
-  absl::flat_hash_set<Fact> facts;
-
-  // Extracted Kythe edges.
-  absl::flat_hash_set<Edge> edges;
-};
-
 // KytheFactsExtractor processes indexing facts for a single file.
 // Responsible for traversing IndexingFactsTree and processing its different
 // nodes to produce kythe indexing facts.
@@ -93,8 +85,11 @@ struct KytheIndexingData {
 class KytheFactsExtractor {
  public:
   KytheFactsExtractor(const VerilogSourceFile& source,
+                      KytheOutput* facts_output,
                       ScopeResolver* previous_files_scopes)
-      : source_(&source), scope_resolver_(previous_files_scopes) {}
+      : source_(&source),
+        facts_output_(facts_output),
+        scope_resolver_(previous_files_scopes) {}
 
  private:
   // Container with a stack of VNames to hold context of VNames during traversal
@@ -129,13 +124,15 @@ class KytheFactsExtractor {
   absl::string_view SourceText() const;
 
  public:
-  // Extracts kythe facts from the given IndexingFactsTree root.
-  KytheIndexingData ExtractFile(const IndexingFactNode&);
+  // Extracts kythe facts from the given IndexingFactsTree root. The result is
+  // written to Kythe output.
+  void ExtractFile(const IndexingFactNode&);
 
  private:
   // Resolves the tag of the given node and directs the flow to the appropriate
-  // function to extract kythe facts for that node.
-  void IndexingFactNodeTagResolver(const IndexingFactNode&);
+  // function to extract kythe facts for that node. Returns true if any Kythe
+  // fact was created.
+  bool IndexingFactNodeTagResolver(const IndexingFactNode&);
 
   // Determines whether to create a scope for this node or not and visits the
   // children.
@@ -268,20 +265,21 @@ class KytheFactsExtractor {
   void CreateEdge(const VName& source, absl::string_view name,
                   const VName& target);
 
+  // Holds the hashes of the output Kythe facts and edges (for deduplication).
+  absl::flat_hash_set<int64_t> seen_kythe_hashes_;
   // The verilog source file from which facts are extracted.
   const VerilogSourceFile* const source_;
 
- private:  // data
+  // Output for produced Kythe facts. Not owned.
+  KytheOutput* const facts_output_;
+
   // Keeps track of VNames of ancestors as the visitor traverses the facts
   // tree.
   VNameContext vnames_context_;
 
   // Keeps track and saves the explored scopes with a <key, value> and maps
   // every signature to its scope.
-  ScopeResolver* scope_resolver_;
-
-  // Contains resulting kythe facts and edges to output.
-  KytheIndexingData kythe_data_;
+  ScopeResolver* const scope_resolver_;
 
   // Location signature backing store.
   // Inside signatures, we record locations as string_views,
@@ -340,12 +338,11 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
     if (source == nullptr) continue;
 
     // Create facts and edges.
-    KytheFactsExtractor kythe_extractor(*source, scope_resolvers.back().get());
+    KytheFactsExtractor kythe_extractor(*source, kythe_output,
+                                        scope_resolvers.back().get());
 
-    // Collect facts and edges.
-    const auto indexing_data = kythe_extractor.ExtractFile(root);
-    for (const Fact& fact : indexing_data.facts) kythe_output->Emit(fact);
-    for (const Edge& edge : indexing_data.edges) kythe_output->Emit(edge);
+    // Output facts and edges.
+    kythe_extractor.ExtractFile(root);
     LOG(INFO) << "Extracted Kythe facts of " << source->ResolvedPath() << " in "
               << absl::ToInt64Milliseconds(absl::Now() - extraction_start)
               << "ms";
@@ -358,28 +355,19 @@ absl::string_view KytheFactsExtractor::SourceText() const {
   return source_->GetTextStructure()->Contents();
 }
 
-KytheIndexingData KytheFactsExtractor::ExtractFile(
-    const IndexingFactNode& root) {
+void KytheFactsExtractor::ExtractFile(const IndexingFactNode& root) {
   // root corresponds to the indexing tree for a single file.
 
   // Fixed-point analysis: Repeat fact extraction until no new facts are found.
   // This approach handles cases where symbols can be defined later in the file
   // than their uses, e.g. class member declarations and references.
-  // TODO(fangism): do this in two phases: 1) collect definition points,
-  //   2) collect references.
-  // TODO(hzeller): Store less in the first phase, then start streaming out
-  //   right away without first storing in set; no need to keep all the
-  //   facts and edges in memory.
-  std::size_t number_of_extracted_facts = 0;
-  do {
-    number_of_extracted_facts = kythe_data_.facts.size();
-    IndexingFactNodeTagResolver(root);
-  } while (number_of_extracted_facts != kythe_data_.facts.size());
-  return std::move(kythe_data_);
+  while (IndexingFactNodeTagResolver(root)) {
+  }
 }
 
-void KytheFactsExtractor::IndexingFactNodeTagResolver(
+bool KytheFactsExtractor::IndexingFactNodeTagResolver(
     const IndexingFactNode& node) {
+  size_t extracted_facts_num = seen_kythe_hashes_.size();
   const auto tag = node.Value().GetIndexingFactType();
 
   // Dispatch a node handler based on the node's tag.
@@ -498,6 +486,8 @@ void KytheFactsExtractor::IndexingFactNodeTagResolver(
   AddDefinitionToCurrentScope(tag, vname);
   CreateChildOfEdge(tag, vname);
   VisitAutoConstructScope(node, vname);
+
+  return seen_kythe_hashes_.size() > extracted_facts_num;
 }
 
 void KytheFactsExtractor::AddDefinitionToCurrentScope(IndexingFactType tag,
@@ -1304,13 +1294,23 @@ Signature KytheFactsExtractor::CreateScopeRelativeSignature(
 void KytheFactsExtractor::CreateFact(const VName& vname,
                                      absl::string_view fact_name,
                                      absl::string_view fact_value) {
-  kythe_data_.facts.emplace(vname, fact_name, fact_value);
+  Fact fact(vname, fact_name, fact_value);
+  auto hash = absl::HashOf(fact);
+  if (!seen_kythe_hashes_.contains(hash)) {
+    facts_output_->Emit(fact);
+    seen_kythe_hashes_.insert(hash);
+  }
 }
 
 void KytheFactsExtractor::CreateEdge(const VName& source_node,
                                      absl::string_view edge_name,
                                      const VName& target_node) {
-  kythe_data_.edges.emplace(source_node, edge_name, target_node);
+  Edge edge(source_node, edge_name, target_node);
+  auto hash = absl::HashOf(edge);
+  if (!seen_kythe_hashes_.contains(hash)) {
+    facts_output_->Emit(edge);
+    seen_kythe_hashes_.insert(hash);
+  }
 }
 
 std::ostream& KytheFactsPrinter::PrintJsonStream(std::ostream& stream) const {
