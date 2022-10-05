@@ -114,6 +114,14 @@ cc_test(
 )
 
 cc_library(
+    name = "mem_block",
+    hdrs = ["mem-block.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "naming_utils",
     srcs = ["naming_utils.cc"],
     hdrs = ["naming_utils.h"],

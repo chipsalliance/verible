@@ -248,6 +248,7 @@ cc_library(
         ":token_stream_view",
         ":tree_utils",
         "//common/strings:line_column_map",
+        "//common/strings:mem_block",
         "//common/util:iterator_range",
         "//common/util:logging",
         "//common/util:range",

@@ -494,12 +494,16 @@ void TextStructureView::ConsumeDeferredExpansion(
   ++*next_token_view_iter;
 }
 
-TextStructure::TextStructure(absl::string_view contents)
-    : owned_contents_(contents), data_(owned_contents_) {
+TextStructure::TextStructure(std::unique_ptr<MemBlock> contents)
+    : owned_contents_(std::move(contents)),
+      data_(owned_contents_->AsStringView()) {
   // Internal string_view must point to memory owned by owned_contents_.
   const absl::Status status = InternalConsistencyCheck();
   CHECK(status.ok()) << status.message() << " (in ctor)";
 }
+
+TextStructure::TextStructure(absl::string_view contents)
+    : TextStructure(std::make_unique<StringMemBlock>(contents)) {}
 
 TextStructure::~TextStructure() {
   const absl::Status status = StringViewConsistencyCheck();
@@ -544,7 +548,7 @@ void TextStructureView::ExpandSubtrees(NodeExpansionMap* expansions) {
 absl::Status TextStructure::StringViewConsistencyCheck() const {
   const absl::string_view contents = data_.Contents();
   if (!contents.empty() &&
-      !IsSubRange(contents, absl::string_view(owned_contents_))) {
+      !IsSubRange(contents, owned_contents_->AsStringView())) {
     return absl::InternalError(
         "string_view contents_ is not a substring of owned_contents_, "
         "contents_ might reference deallocated memory!");
