@@ -161,6 +161,22 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
   return absl::OkStatus();
 }
 
+absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
+    absl::string_view filename) {
+#ifndef _WIN32
+  // TODO(hzeller): Use mmap() if file permits on regular operating systems.
+#else
+  // Windows probably also has the concept of mem-mapping.
+#endif
+  // Still here ? Well, let's try the traditional way
+  auto mem_block = std::make_unique<StringMemBlock>();
+  if (auto status = GetContents(filename, mem_block->mutable_content());
+      !status.ok()) {
+    return status;
+  }
+  return mem_block;
+}
+
 absl::Status SetContents(absl::string_view filename,
                          absl::string_view content) {
   VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;

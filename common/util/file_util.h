@@ -23,6 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/mem-block.h"
 
 namespace verible {
 namespace file {
@@ -64,6 +65,10 @@ absl::Status FileExists(const std::string& filename);
 
 // Read file "filename" and store its content in "content"
 absl::Status GetContents(absl::string_view filename, std::string* content);
+
+// Read file "filename" and store its content in MemBlock.
+absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
+    absl::string_view filename);
 
 // Create file "filename" and store given content in it.
 absl::Status SetContents(absl::string_view filename, absl::string_view content);

@@ -40,7 +40,7 @@ class MemBlock {
 };
 
 // An implementation of MemBlock backed by a std::string
-class StringMemBlock : public MemBlock {
+class StringMemBlock final : public MemBlock {
  public:
   StringMemBlock() {}
   StringMemBlock(absl::string_view copy_from)

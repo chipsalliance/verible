@@ -78,6 +78,20 @@ static std::string PlatformPath(const std::string& path) {
   return std::filesystem::path(path).lexically_normal().string();
 }
 
+TEST(FileUtil, GetContentAsMemBlock) {
+  auto result = file::GetContentAsMemBlock("non-existing-file");
+  EXPECT_FALSE(result.status().ok());
+
+  const std::string test_file = file::JoinPath(testing::TempDir(), "blockfile");
+  const absl::string_view test_content = "Some file content";
+  EXPECT_OK(file::SetContents(test_file, test_content));
+
+  result = file::GetContentAsMemBlock(test_file);
+  EXPECT_OK(result.status());
+  auto& block = *result;
+  EXPECT_EQ(block->AsStringView(), test_content);
+}
+
 TEST(FileUtil, JoinPath) {
   EXPECT_EQ(file::JoinPath("foo", ""), PlatformPath("foo/"));
   EXPECT_EQ(file::JoinPath("", "bar"), "bar");

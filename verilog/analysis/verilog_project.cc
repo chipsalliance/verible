@@ -49,12 +49,11 @@ absl::Status VerilogSourceFile::Open() {
   if (state_ != State::kInitialized) return status_;
 
   // Load file contents.
-  std::string content;
-  status_ = verible::file::GetContents(ResolvedPath(), &content);
+  auto content_status = verible::file::GetContentAsMemBlock(ResolvedPath());
+  status_ = content_status.status();
   if (!status_.ok()) return status_;
 
-  // TODO(hzeller): have a file::GetContents() that returns a MemBlock directly
-  content_ = std::make_shared<verible::StringMemBlock>(content);
+  content_ = std::move(*content_status);
   state_ = State::kOpened;
 
   return status_;  // status_ is Ok here.
