@@ -33,8 +33,6 @@ using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
 
-using ::testing::ElementsAre;
-
 class TempDirFile : public ScopedTestFile {
  public:
   TempDirFile(absl::string_view content)
