@@ -19,252 +19,252 @@ env:
 jobs:
 
 
-  VerifyFormatting:
-    runs-on: ubuntu-20.04
+  # VerifyFormatting:
+  #   runs-on: ubuntu-20.04
 
-    steps:
+  #   steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
+  #   - name: Cancel previous
+  #     uses: styfle/cancel-workflow-action@0.8.0
+  #     with:
+  #       access_token: ${{ github.token }}
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #       fetch-depth: 0
 
-    - name: Install Dependencies
-      run: |
-        sudo apt -qq -y install clang-format
-        clang-format --version
+  #   - name: Install Dependencies
+  #     run: |
+  #       sudo apt -qq -y install clang-format
+  #       clang-format --version
 
-    - name: Run formatting style check
-      run: ./.github/bin/run-clang-format.sh
+  #   - name: Run formatting style check
+  #     run: ./.github/bin/run-clang-format.sh
 
-  ClangTidy:
-    runs-on: ubuntu-20.04
+  # ClangTidy:
+  #   runs-on: ubuntu-20.04
 
-    steps:
+  #   steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
+  #   - name: Cancel previous
+  #     uses: styfle/cancel-workflow-action@0.8.0
+  #     with:
+  #       access_token: ${{ github.token }}
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #       fetch-depth: 0
 
-    - name: Install Dependencies
-      run: |
-        sudo apt -qq -y install clang-tidy-11
-        echo "TMPDIR=/tmp" >> $GITHUB_ENV
+  #   - name: Install Dependencies
+  #     run: |
+  #       sudo apt -qq -y install clang-tidy-11
+  #       echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
-    - name: Create Cache Timestamp
-      id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
-      with:
-        format: 'YYYY-MM-DD-HH-mm-ss'
+  #   - name: Create Cache Timestamp
+  #     id: cache_timestamp
+  #     uses: nanzm/get-time-action@v1.1
+  #     with:
+  #       format: 'YYYY-MM-DD-HH-mm-ss'
 
-    - name: Retrieve cached results
-      uses: actions/cache@v2
-      with:
-        path: |
-          /tmp/clang-tidy-hashes.cache
-          /home/runner/.cache/bazel
-        key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clang-tidy-
+  #   - name: Retrieve cached results
+  #     uses: actions/cache@v2
+  #     with:
+  #       path: |
+  #         /tmp/clang-tidy-hashes.cache
+  #         /home/runner/.cache/bazel
+  #       key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
+  #       restore-keys: clang-tidy-
 
-    - name: Run clang tidy
-      run: ./.github/bin/run-clang-tidy.sh
-
-
-  Check:
-    # Running the checks on slightly older ubuntu will find if there
-    # are issues with older versions. Oldest supported: 18.04
-    runs-on: ubuntu-18.04
-    strategy:
-      fail-fast: false
-      matrix:
-        mode:
-        - test
-        - smoke-test
-        - asan
-        - asan-clang
-        - compile
-        - compile-clang
-        - coverage
-        - clean
-    env:
-      MODE: ${{ matrix.mode }}
-    name: ${{ matrix.mode }}
-
-    steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
-
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
-
-    - name: Create Cache Timestamp
-      id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
-      with:
-        format: 'YYYY-MM-DD-HH-mm-ss'
-
-    - name: Mount bazel cache
-      uses: actions/cache@v2
-      if: matrix.mode != 'clean' && matrix.mode != 'coverage'
-      with:
-        path: "/home/runner/.cache/bazel"
-        key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_${{ matrix.mode }}_
-
-    - name: Install Dependencies
-      run: |
-        set -x
-        source ./.github/settings.sh
-        sudo apt -qq -y install clang-10
-        ./.github/bin/set-compiler.sh 9
-        ./.github/bin/install-bazel.sh
-        ./.github/bin/install-python.sh
-
-    - name: ${{ matrix.mode }} Verible
-      run: ./.github/bin/build-and-test.sh
-
-    - name: Set up things for GitHub Pages deployment
-      if: matrix.mode == 'compile'
-      run: ./.github/bin/github-pages-setup.sh
-
-    - name: Upload coverage
-      # will show up under https://app.codecov.io/gh/chipsalliance/verible
-      if: matrix.mode == 'coverage'
-      uses: codecov/codecov-action@v2
-      with:
-        files: bazel-out/_coverage/_coverage_report.dat
-        fail_ci_if_error: true
-        verbose: true
-
-    - name: Deployment
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
-      uses: JamesIves/github-pages-deploy-action@3.7.1
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: /tmp/pages
-        CLEAN: true
+  #   - name: Run clang tidy
+  #     run: ./.github/bin/run-clang-tidy.sh
 
 
-  Kythe:
-    runs-on: ubuntu-20.04
-    if: false   # Currently disabled, need to investigate failure.
+  # Check:
+  #   # Running the checks on slightly older ubuntu will find if there
+  #   # are issues with older versions. Oldest supported: 18.04
+  #   runs-on: ubuntu-18.04
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       mode:
+  #       - test
+  #       - smoke-test
+  #       - asan
+  #       - asan-clang
+  #       - compile
+  #       - compile-clang
+  #       - coverage
+  #       - clean
+  #   env:
+  #     MODE: ${{ matrix.mode }}
+  #   name: ${{ matrix.mode }}
 
-    steps:
+  #   steps:
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
+  #   - name: Cancel previous
+  #     uses: styfle/cancel-workflow-action@0.8.0
+  #     with:
+  #       access_token: ${{ github.token }}
 
-    - name: Install Dependencies
-      run: |
-        source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 9
-        ./.github/bin/install-bazel.sh
-        ./.github/bin/install-kythe.sh
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #      # Download complete repository + tags
+  #      fetch-depth: 0
 
-    - name: Run Kythe
-      run: |
-        source ./.github/settings.sh
-        ./.github/bin/verify-kythe-extraction.sh
-        ./.github/bin/run-kythe.sh
+  #   - name: Create Cache Timestamp
+  #     id: cache_timestamp
+  #     uses: nanzm/get-time-action@v1.1
+  #     with:
+  #       format: 'YYYY-MM-DD-HH-mm-ss'
 
-    - name: 📤 Upload Kythe output
-      uses: actions/upload-artifact@v2
-      with:
-        path: kythe_output/*.kzip
+  #   - name: Mount bazel cache
+  #     uses: actions/cache@v2
+  #     if: matrix.mode != 'clean' && matrix.mode != 'coverage'
+  #     with:
+  #       path: "/home/runner/.cache/bazel"
+  #       key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+  #       restore-keys: bazelcache_${{ matrix.mode }}_
+
+  #   - name: Install Dependencies
+  #     run: |
+  #       set -x
+  #       source ./.github/settings.sh
+  #       sudo apt -qq -y install clang-10
+  #       ./.github/bin/set-compiler.sh 9
+  #       ./.github/bin/install-bazel.sh
+  #       ./.github/bin/install-python.sh
+
+  #   - name: ${{ matrix.mode }} Verible
+  #     run: ./.github/bin/build-and-test.sh
+
+  #   - name: Set up things for GitHub Pages deployment
+  #     if: matrix.mode == 'compile'
+  #     run: ./.github/bin/github-pages-setup.sh
+
+  #   - name: Upload coverage
+  #     # will show up under https://app.codecov.io/gh/chipsalliance/verible
+  #     if: matrix.mode == 'coverage'
+  #     uses: codecov/codecov-action@v2
+  #     with:
+  #       files: bazel-out/_coverage/_coverage_report.dat
+  #       fail_ci_if_error: true
+  #       verbose: true
+
+  #   - name: Deployment
+  #     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
+  #     uses: JamesIves/github-pages-deploy-action@3.7.1
+  #     with:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       BRANCH: gh-pages
+  #       FOLDER: /tmp/pages
+  #       CLEAN: true
 
 
-  Matrix:
-    runs-on: ubuntu-latest
-    name: Generate Build matrix
-    outputs:
-      matrix: ${{ steps.generate.outputs.matrix }}
+  # Kythe:
+  #   runs-on: ubuntu-20.04
+  #   if: false   # Currently disabled, need to investigate failure.
 
-    steps:
+  #   steps:
 
-    - uses: actions/checkout@v2
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #      # Download complete repository + tags
+  #      fetch-depth: 0
 
-    - id: generate
-      run: ./.github/bin/generate-matrix.py
+  #   - name: Install Dependencies
+  #     run: |
+  #       source ./.github/settings.sh
+  #       ./.github/bin/set-compiler.sh 9
+  #       ./.github/bin/install-bazel.sh
+  #       ./.github/bin/install-kythe.sh
+
+  #   - name: Run Kythe
+  #     run: |
+  #       source ./.github/settings.sh
+  #       ./.github/bin/verify-kythe-extraction.sh
+  #       ./.github/bin/run-kythe.sh
+
+  #   - name: 📤 Upload Kythe output
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       path: kythe_output/*.kzip
 
 
-  Build:
-    needs: Matrix
-    runs-on: ubuntu-20.04
-    # Github actions resources are limited; don't build artifacts for all
-    # platforms on every pull request, only on push.
-    if: ${{github.event_name == 'push'}}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    env:
-      MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
-    name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
+  # Matrix:
+  #   runs-on: ubuntu-latest
+  #   name: Generate Build matrix
+  #   outputs:
+  #     matrix: ${{ steps.generate.outputs.matrix }}
 
-    steps:
+  #   steps:
 
-    - uses: actions/checkout@v2
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
+  #   - uses: actions/checkout@v2
 
-    - run: docker pull $MATRIX_OS
+  #   - id: generate
+  #     run: ./.github/bin/generate-matrix.py
 
-    - name: Main script
-      run: |
-        set -x
-        source ./.github/settings.sh
-        ./releasing/docker-run.sh $MATRIX_OS
 
-    - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        path: releasing/out/verible-*.tar.gz
+  # Build:
+  #   needs: Matrix
+  #   runs-on: ubuntu-20.04
+  #   # Github actions resources are limited; don't build artifacts for all
+  #   # platforms on every pull request, only on push.
+  #   if: ${{github.event_name == 'push'}}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
+  #   env:
+  #     MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+  #   name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
 
-  MacOsBuild:
-    runs-on: macos-latest
-    steps:
+  #   steps:
 
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+  #   - uses: actions/checkout@v2
+  #     with:
+  #      # Download complete repository + tags
+  #      fetch-depth: 0
 
-    - name: Create Cache Timestamp
-      id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
-      with:
-        format: 'YYYY-MM-DD-HH-mm-ss'
+  #   - run: docker pull $MATRIX_OS
 
-    - name: Mount bazel cache
-      uses: actions/cache@v2
-      with:
-        path: "/private/var/tmp/_bazel_runner"
-        key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_macos_
+  #   - name: Main script
+  #     run: |
+  #       set -x
+  #       source ./.github/settings.sh
+  #       ./releasing/docker-run.sh $MATRIX_OS
 
-    - name: Tests
-      run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
+  #   - name: 📤 Upload artifact
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       path: releasing/out/verible-*.tar.gz
+
+  # MacOsBuild:
+  #   runs-on: macos-latest
+  #   steps:
+
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       fetch-depth: 0
+
+  #   - name: Create Cache Timestamp
+  #     id: cache_timestamp
+  #     uses: nanzm/get-time-action@v1.1
+  #     with:
+  #       format: 'YYYY-MM-DD-HH-mm-ss'
+
+  #   - name: Mount bazel cache
+  #     uses: actions/cache@v2
+  #     with:
+  #       path: "/private/var/tmp/_bazel_runner"
+  #       key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
+  #       restore-keys: bazelcache_macos_
+
+  #   - name: Tests
+  #     run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
 
   WindowsBuild:
@@ -322,40 +322,40 @@ jobs:
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
 
 
-  Release:
-    needs: [ Check, Build, WindowsBuild ]
-    runs-on: ubuntu-20.04
-    name: 📦 Release
-    if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
+  # Release:
+  #   needs: [ Check, Build, WindowsBuild ]
+  #   runs-on: ubuntu-20.04
+  #   name: 📦 Release
+  #   if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
 
-    steps:
+  #   steps:
 
-    - uses: actions/checkout@v2
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
+  #   - uses: actions/checkout@v2
+  #     with:
+  #      # Download complete repository + tags
+  #      fetch-depth: 0
 
-    - name: 📥 Download artifacts
-      uses: actions/download-artifact@v2
+  #   - name: 📥 Download artifacts
+  #     uses: actions/download-artifact@v2
 
-    - name: Generate and apply TAG
-      run: |
-        git config --local user.name "$BOT_USER"
-        git config --local user.email "$BOT_EMAIL"
+  #   - name: Generate and apply TAG
+  #     run: |
+  #       git config --local user.name "$BOT_USER"
+  #       git config --local user.email "$BOT_EMAIL"
 
-        # Create a tag of form v0.0-183-gdf2b162-20191112132344
-        TAG="${TAG:-$(git describe --match=v*)}"
+  #       # Create a tag of form v0.0-183-gdf2b162-20191112132344
+  #       TAG="${TAG:-$(git describe --match=v*)}"
 
-        git tag "$TAG" || true
-        echo "TAG=$TAG" >> $GITHUB_ENV
+  #       git tag "$TAG" || true
+  #       echo "TAG=$TAG" >> $GITHUB_ENV
 
-        ls -lah artifact
+  #       ls -lah artifact
 
-    - name: Deploy release and assets
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible-*.{tar.gz,zip}
-        tag: ${{ env.TAG }}
-        overwrite: true
-        file_glob: true
+  #   - name: Deploy release and assets
+  #     uses: svenstaro/upload-release-action@v2
+  #     with:
+  #       repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #       file: artifact/verible-*.{tar.gz,zip}
+  #       tag: ${{ env.TAG }}
+  #       overwrite: true
+  #       file_glob: true
