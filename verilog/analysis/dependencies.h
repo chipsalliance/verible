@@ -42,27 +42,8 @@ struct FileDependencies {
   // A set of strings, whose memory is owned outside of this data structure.
   using SymbolNameSet = std::set<absl::string_view, verible::StringViewCompare>;
 
-  // Comparator for ordering files for internal storage.
-  // Known limitation: this comparator won't work if you have multiple files
-  // with the same name referenced without a distinguishing path prefix.
-  struct FileCompare {
-    using is_transparent = void;  // hetergenous compare
-
-    static absl::string_view to_string_view(absl::string_view s) { return s; }
-    static absl::string_view to_string_view(const VerilogSourceFile& f) {
-      return f.ReferencedPath();
-    }
-    static absl::string_view to_string_view(const VerilogSourceFile* f) {
-      return f->ReferencedPath();
-    }
-
-    // T1/T2 could be any combination of:
-    // {const VerilogSourceFile&, absl::string_view}.
-    template <typename T1, typename T2>
-    bool operator()(T1 left, T2 right) const {
-      return to_string_view(left) < to_string_view(right);
-    }
-  };
+  // Sort by referenced file name.
+  using FileCompare = VerilogSourceFile::Less;
 
   // The outer key is a referencing file [R].
   // The inner key is a defining file [D].
