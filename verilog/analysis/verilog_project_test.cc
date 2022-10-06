@@ -227,18 +227,11 @@ TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
   EXPECT_EQ(&text_structure->SyntaxTree(), tree);
 }
 
-TEST(VerilogProjectTest, Initialization) {
-  const auto tempdir = ::testing::TempDir();
-  VerilogProject project(tempdir, {tempdir});
-  EXPECT_TRUE(project.GetErrorStatuses().empty());
-}
-
 TEST(VerilogProjectTest, NonexistentTranslationUnit) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
   const auto status_or_file = project.OpenTranslationUnit("never-there.v");
   EXPECT_FALSE(status_or_file.ok());
-  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
 TEST(VerilogProjectTest, NonexistentIncludeFile) {
@@ -246,7 +239,6 @@ TEST(VerilogProjectTest, NonexistentIncludeFile) {
   VerilogProject project(tempdir, {tempdir});
   const auto status_or_file = project.OpenIncludedFile("nope.svh");
   EXPECT_FALSE(status_or_file.ok());
-  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
 TEST(VerilogProjectTest, NonexistentFileLookup) {
@@ -255,7 +247,6 @@ TEST(VerilogProjectTest, NonexistentFileLookup) {
   {  // non-const-lookup overload
     VerilogSourceFile* file = project.LookupRegisteredFile("never-there.v");
     EXPECT_EQ(file, nullptr);
-    EXPECT_TRUE(project.GetErrorStatuses().empty());
   }
   {
     // const-lookup overload
@@ -263,7 +254,6 @@ TEST(VerilogProjectTest, NonexistentFileLookup) {
     const VerilogSourceFile* file =
         cproject.LookupRegisteredFile("never-there.v");
     EXPECT_EQ(file, nullptr);
-    EXPECT_TRUE(cproject.GetErrorStatuses().empty());
   }
 }
 
@@ -372,7 +362,6 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
     EXPECT_EQ(cproject.LookupFileOrigin(text_structure.Contents().substr(2, 4)),
               verilog_source_file);
   }
-  EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   EXPECT_TRUE(verilog_source_file->Parse().ok());
   const auto* tree = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
@@ -425,7 +414,6 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
     EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
               verilog_source_file);
   }
-  EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   // Re-opening same file, changes nothing
   {
@@ -471,7 +459,6 @@ TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
     const VerilogProject& cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(basename), verilog_source_file);
   }
-  EXPECT_TRUE(project.GetErrorStatuses().empty());
 
   // Re-opening same file, changes nothing
   {
@@ -513,13 +500,6 @@ TEST(VerilogProjectTest, TranslationUnitNotFound) {
         project.OpenTranslationUnit(Basename(tf.filename()));
     EXPECT_FALSE(status_or_file.ok());
   }
-  {
-    const auto statuses = project.GetErrorStatuses();
-    EXPECT_EQ(statuses.size(), 1);
-    for (const auto& status : statuses) {
-      EXPECT_FALSE(status.ok());
-    }
-  }
 }
 
 TEST(VerilogProjectTest, IncludeFileNotFound) {
@@ -543,7 +523,6 @@ TEST(VerilogProjectTest, IncludeFileNotFound) {
         project.OpenIncludedFile(Basename(tf.filename()));
     EXPECT_FALSE(status_or_file.ok());
   }
-  EXPECT_EQ(project.GetErrorStatuses().size(), 1);
 }
 
 TEST(VerilogProjectTest, AddVirtualFile) {

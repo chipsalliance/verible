@@ -255,14 +255,15 @@ class VerilogProject {
   void AddVirtualFile(absl::string_view resolved_filename,
                       absl::string_view content);
 
-  // Returns a collection of non-ok diagnostics for the entire project.
-  std::vector<absl::Status> GetErrorStatuses() const;
-
   // Returns a previously referenced file, or else nullptr.
   VerilogSourceFile* LookupRegisteredFile(
       absl::string_view referenced_filename) {
     return LookupRegisteredFileInternal(referenced_filename);
   }
+
+  // Removes the file from project and releases the resources. Returns true if
+  // the file was removed.
+  bool RemoveRegisteredFile(absl::string_view referenced_filename);
 
   // Non-modifying variant of lookup.
   const VerilogSourceFile* LookupRegisteredFile(

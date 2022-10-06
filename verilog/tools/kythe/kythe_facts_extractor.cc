@@ -84,10 +84,11 @@ std::vector<absl::string_view> ConcatenateReferences(
 // the last iteration.
 class KytheFactsExtractor {
  public:
-  KytheFactsExtractor(const VerilogSourceFile& source,
+  KytheFactsExtractor(absl::string_view file_path, absl::string_view corpus,
                       KytheOutput* facts_output,
                       ScopeResolver* previous_files_scopes)
-      : source_(&source),
+      : file_path_(file_path),
+        corpus_(corpus),
         facts_output_(facts_output),
         scope_resolver_(previous_files_scopes) {}
 
@@ -115,13 +116,10 @@ class KytheFactsExtractor {
   };
 
   // Returns the full path of the current source file.
-  absl::string_view FilePath() { return source_->ResolvedPath(); }
+  absl::string_view FilePath() { return file_path_; }
 
-  // Returns the corpus to which this file belongs;
-  absl::string_view Corpus() const { return source_->Corpus(); }
-
-  // Returns the string_view that spans the source file's entire text.
-  absl::string_view SourceText() const;
+  // Returns the corpus to which this file belongs.
+  absl::string_view Corpus() const { return corpus_; }
 
  public:
   // Extracts kythe facts from the given IndexingFactsTree root. The result is
@@ -267,8 +265,12 @@ class KytheFactsExtractor {
 
   // Holds the hashes of the output Kythe facts and edges (for deduplication).
   absl::flat_hash_set<int64_t> seen_kythe_hashes_;
-  // The verilog source file from which facts are extracted.
-  const VerilogSourceFile* const source_;
+
+  // The full path of the current source file.
+  absl::string_view file_path_;
+
+  // The corpus to which this file belongs.
+  absl::string_view corpus_;
 
   // Output for produced Kythe facts. Not owned.
   KytheOutput* const facts_output_;
@@ -306,18 +308,6 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
   // TODO(fangism): infer dependency ordering automatically based on
   // the symbols defined in each file.
 
-  // Create a reverse map from resolved path to referenced path.
-  // All string_views reference memory owned inside 'project'.
-  absl::btree_map<absl::string_view, absl::string_view,
-                  verible::StringViewCompare>
-      file_path_reverse_map;
-  for (const auto& file_entry : project) {
-    const VerilogSourceFile& source(*file_entry.second);
-    if (source.Status().ok()) {
-      file_path_reverse_map[source.ResolvedPath()] = file_entry.first;
-    }
-  }
-
   // Process each file in the original listed order.
   for (const IndexingFactNode& root : file_list.Children()) {
     const absl::Time extraction_start = absl::Now();
@@ -328,31 +318,19 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
     scope_resolvers.push_back(absl::make_unique<ScopeResolver>(
         CreateGlobalSignature(file_path), scope_resolvers.back().get()));
 
-    // Lookup registered file by its referenced path.
-    const auto found = file_path_reverse_map.find(file_path);
-    if (found == file_path_reverse_map.end()) continue;
-    const absl::string_view referenced_path(found->second);
-    VLOG(1) << "child file referenced path: " << referenced_path;
-    const VerilogSourceFile* source =
-        project.LookupRegisteredFile(referenced_path);
-    if (source == nullptr) continue;
-
     // Create facts and edges.
-    KytheFactsExtractor kythe_extractor(*source, kythe_output,
+    KytheFactsExtractor kythe_extractor(file_path, project.Corpus(),
+                                        kythe_output,
                                         scope_resolvers.back().get());
 
     // Output facts and edges.
     kythe_extractor.ExtractFile(root);
-    LOG(INFO) << "Extracted Kythe facts of " << source->ResolvedPath() << " in "
+    LOG(INFO) << "Extracted Kythe facts of " << file_path << " in "
               << absl::ToInt64Milliseconds(absl::Now() - extraction_start)
               << "ms";
   }
 
   VLOG(1) << "end of " << __FUNCTION__;
-}
-
-absl::string_view KytheFactsExtractor::SourceText() const {
-  return source_->GetTextStructure()->Contents();
 }
 
 void KytheFactsExtractor::ExtractFile(const IndexingFactNode& root) {
@@ -1265,10 +1243,10 @@ void KytheFactsExtractor::CreateAnchorReferences(
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
-  const absl::string_view source_text = SourceText();
-  const int start_location =
-      std::distance(source_text.begin(), anchor.Text().begin());
-  const int end_location = start_location + anchor.Text().length();
+  const int start_location = anchor.StartLocation();
+  const int end_location = start_location + anchor.ContentLength();
+  CHECK(start_location != end_location)
+      << "Zero-sized Anchor! File: " << FilePath();
   const auto [location_str, _] = signature_locations_.emplace(
       absl::StrCat("@", start_location, ":", end_location));
   VName anchor_vname = {.path = FilePath(),

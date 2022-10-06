@@ -156,6 +156,23 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   return &file;
 }
 
+bool VerilogProject::RemoveRegisteredFile(
+    absl::string_view referenced_filename) {
+  if (files_.erase(std::string(referenced_filename)) == 1) {
+    LOG(INFO) << "Removed " << referenced_filename << " from the project.";
+    return true;
+  }
+  for (const auto& include_path : include_paths_) {
+    const std::string resolved_filename =
+        verible::file::JoinPath(include_path, referenced_filename);
+    if (files_.erase(resolved_filename) == 1) {
+      LOG(INFO) << "Removed " << resolved_filename << " from the project.";
+      return true;
+    }
+  }
+  return false;
+}
+
 VerilogSourceFile* VerilogProject::LookupRegisteredFileInternal(
     absl::string_view referenced_filename) const {
   const auto opened_file = FindOpenedFile(referenced_filename);
@@ -270,24 +287,6 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
       resolved_filename, absl::make_unique<InMemoryVerilogSourceFile>(
                              resolved_filename, content, /*corpus=*/""));
   CHECK(inserted.second);
-}
-
-std::vector<absl::Status> VerilogProject::GetErrorStatuses() const {
-  std::vector<absl::Status> statuses;
-  for (const auto& file : files_) {
-    const auto status = file.second->Status();
-    if (!status.ok()) {
-      // If we have details, encode these as status, otherwise use the generic.
-      const auto& message_details = file.second->ErrorMessages();
-      if (message_details.empty()) {
-        statuses.push_back(status);
-      }
-      for (const std::string& err : message_details) {
-        statuses.push_back(absl::InvalidArgumentError(err));
-      }
-    }
-  }
-  return statuses;
 }
 
 const VerilogSourceFile* VerilogProject::LookupFileOrigin(

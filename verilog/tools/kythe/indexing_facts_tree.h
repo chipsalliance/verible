@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 
 #include <cstddef>
-#include <iosfwd>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,44 +30,34 @@
 namespace verilog {
 namespace kythe {
 
+// Position of the Anchor in the original text.
+struct AnchorOffset {
+  const int begin;
+  const int length;
+
+  AnchorOffset(int b, int l) : begin(b), length(l) {}
+};
+
 // Anchor class represents the location and value of some token.
 class Anchor {
-  // Disable implicit conversions when passing values to overloaded
-  // function/constructor.  This work by virtue of the language only allowing
-  // one implicit conversion at most.
-  // e.g. some_function(DisableConversion<absl::string_view>)
-  // accepts only string_views, while disabling string_view's implicit
-  // conversion from std::string (and others).
-  template <class T>
-  struct DisableConversion {
-    /* implicit */ DisableConversion(T v) : value(v) {}  // NOLINT
-
-    operator T() const { return value; }  // NOLINT
-
-    T value;
-  };
-
  public:
-  // Constructor based on string_view text that is a subtring of memory owned
-  // elsewhere.  Disable implicit conversions from std::string (and others) to
-  // absl::string_view to reduce the chances of accidentally holding onto memory
-  // owned by a temporary/unnamed std::string that is destroyed immediately
-  // after use. This construction should be used the vast majority of the time.
-  // Alternatively, explicitly delete constructors from converted types:
-  //   explicit Anchor(std::string&&) = delete;
-  //   explicit Anchor(const std::string&&) = delete;
-  explicit Anchor(DisableConversion<absl::string_view> value) : view_(value) {}
+  explicit Anchor(absl::string_view value) : content_(value) {}
+
+  explicit Anchor(absl::string_view value, int begin, int length)
+      : content_(value) {
+    source_text_offset_.emplace(begin, length);
+  }
 
   // Delegates construction to use only the string_view spanned by a TokenInfo.
   // Recall the TokenInfo's string point to substrings of memory owned
   // elsewhere.
-  explicit Anchor(const verible::TokenInfo& token) : Anchor(token.text()) {}
-
-  // This constructor assumes ownership over the passed in string (which shall
-  // not be nullptr).  This is suitable for rare occasions that warrant a
-  // locally generated string that does not point to already owned memory.
-  explicit Anchor(std::unique_ptr<std::string> owned_string)
-      : owned_string_(std::move(owned_string)), view_(*owned_string_) {}
+  explicit Anchor(const verible::TokenInfo& token,
+                  absl::string_view source_content)
+      : content_(token.text()) {
+    const int token_left = token.left(source_content);
+    const int token_right = token.right(source_content);
+    source_text_offset_.emplace(token_left, token_right - token_left);
+  }
 
   Anchor(const Anchor&);  // TODO(fangism): delete, move-only
   Anchor(Anchor&&) = default;
@@ -79,35 +69,22 @@ class Anchor {
   // 'base' is the superstring of which Anchor's text is a substring.
   std::string DebugString(absl::string_view base) const;
 
-  absl::string_view Text() const { return view_; }
+  absl::string_view Text() const { return content_; }
 
-  // Redirects all non-owned string_view to point into a different copy of the
-  // same text, located 'delta' away.  This is useful for testing, when source
-  // text is copied to a different location. For owned strings (if
-  // this->OwnsMemory()), this does nothing.
-  void RebaseStringViewForTesting(std::ptrdiff_t delta);
+  // Returns the location of the Anchor's content in the original string.
+  int StartLocation() const { return source_text_offset_->begin; }
+
+  // Returns the size of the Anchor's content.
+  int ContentLength() const { return source_text_offset_->length; }
 
   bool operator==(const Anchor&) const;
   bool operator!=(const Anchor& other) const { return !(*this == other); }
 
- protected:
-  // Returns true if the text represented is owned by this object.
-  bool OwnsMemory() const { return owned_string_ != nullptr; }
-
  private:
-  // The majority of times, this is null when 'view_' points to text that is
-  // owned elsewhere (and outlives these objects).
-  // This pointer should only be used in rare circumstances that require a newly
-  // constructed string (e.g. generated name).
-  // Size: 1 pointer
-  std::unique_ptr<std::string> owned_string_;
+  // Substring of the original text that corresponds to this Anchor.
+  std::string content_;
 
-  // Most of the time, points to a substring of text that belongs to a file's
-  // contents, without actually copying text.
-  // In rare circumstances, this points to generated text belonging to
-  // 'owned_string_'.
-  // Size: 2 pointers (range bounds)
-  absl::string_view view_;
+  std::optional<AnchorOffset> source_text_offset_;
 };
 
 std::ostream& operator<<(std::ostream&, const Anchor&);

@@ -35,81 +35,11 @@ class TestAnchor : public Anchor {
   // Forward all constructors
   template <typename... Args>
   TestAnchor(Args&&... args) : Anchor(std::forward<Args>(args)...) {}
-
-  // For testing purposes only, allow direct access to this method:
-  using Anchor::OwnsMemory;
 };
-
-TEST(AnchorTest, ConstructFromStringView) {
-  constexpr absl::string_view text("text");
-  const TestAnchor anchor(text);
-  EXPECT_FALSE(anchor.OwnsMemory());
-  ASSERT_EQ(anchor.Text(), text);
-  EXPECT_TRUE(verible::BoundsEqual(anchor.Text(), text));
-}
-
-TEST(AnchorTest, ConstructFromTokenInfo) {
-  constexpr absl::string_view text("text");
-  const TokenInfo token(1, text);
-  const TestAnchor anchor(token);
-  EXPECT_FALSE(anchor.OwnsMemory());
-  ASSERT_EQ(anchor.Text(), token.text());
-  ASSERT_EQ(anchor.Text(), text);
-  EXPECT_TRUE(verible::BoundsEqual(anchor.Text(), text));
-}
-
-TEST(AnchorTest, MoveConstructFromStringView) {
-  constexpr absl::string_view text("text");
-  TestAnchor anchor(text);
-  const TestAnchor anchor2(std::move(anchor));
-  EXPECT_FALSE(anchor2.OwnsMemory());
-  ASSERT_EQ(anchor2.Text(), text);
-  EXPECT_TRUE(verible::BoundsEqual(anchor2.Text(), text));
-}
-
-TEST(AnchorTest, ConstructFromUniquePtrString) {
-  const TestAnchor anchor(absl::make_unique<std::string>("PWNED!"));
-  EXPECT_TRUE(anchor.OwnsMemory());
-  EXPECT_EQ(anchor.Text(), "PWNED!");
-}
-
-TEST(AnchorTest, MoveConstructFromUniquePtrString) {
-  auto str_ptr = absl::make_unique<std::string>("PWNED!");
-  const absl::string_view range(*str_ptr);
-  TestAnchor anchor(std::move(str_ptr));
-  const TestAnchor anchor2(std::move(anchor));
-  EXPECT_TRUE(anchor2.OwnsMemory());
-  EXPECT_EQ(anchor2.Text(), "PWNED!");
-  // guaranteed move, address stable
-  // moving unique_ptr circumvents any short-string-optimization effects
-  EXPECT_TRUE(verible::BoundsEqual(anchor2.Text(), range));
-}
-
-TEST(AnchorTest, CopyStringViewBacked) {
-  // Note: eventually copying will be disabled
-  const absl::string_view text("zoned");
-  TestAnchor anchor(text);
-  const TestAnchor anchor2(anchor);
-  EXPECT_FALSE(anchor.OwnsMemory());
-  EXPECT_FALSE(anchor2.OwnsMemory());
-  EXPECT_EQ(anchor, anchor2);
-  EXPECT_TRUE(verible::BoundsEqual(anchor2.Text(), anchor.Text()));
-}
-
-TEST(AnchorTest, CopyUniquePtrString) {
-  // Note: eventually copying will be disabled
-  auto str_ptr = absl::make_unique<std::string>("loaned");
-  TestAnchor anchor(std::move(str_ptr));
-  const TestAnchor anchor2(anchor);
-  EXPECT_TRUE(anchor.OwnsMemory());
-  EXPECT_TRUE(anchor2.OwnsMemory());
-  EXPECT_EQ(anchor, anchor2);
-  EXPECT_FALSE(verible::BoundsEqual(anchor2.Text(), anchor.Text()));
-}
 
 TEST(AnchorTest, DebugStringUsingOffsets) {
   constexpr absl::string_view text("abcdefghij");
-  const Anchor anchor(text.substr(4, 3));
+  const Anchor anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3);
   const std::string debug_string(anchor.DebugString(text));
   EXPECT_EQ(debug_string, "{efg @4-7}");
 }
@@ -122,25 +52,6 @@ TEST(AnchorTest, DebugStringUsingAddresses) {
   EXPECT_TRUE(absl::StrContains(stream.str(), "{defg @"));
 }
 
-TEST(AnchorTest, RebaseStringView) {
-  constexpr absl::string_view text1("abcdefghij");
-  constexpr absl::string_view text2("defg");
-  Anchor anchor(text1.substr(3, 4));  // "defg"
-  anchor.RebaseStringViewForTesting(
-      std::distance(anchor.Text().begin(), text2.begin()));
-  EXPECT_EQ(anchor.Text(), text2);
-  EXPECT_TRUE(verible::BoundsEqual(anchor.Text(), text2));
-}
-
-TEST(AnchorTest, RebaseStringViewFail) {
-  constexpr absl::string_view text1("abcdefghij");
-  constexpr absl::string_view text2("DEFG");
-  Anchor anchor(text1.substr(3, 4));  // "defg"
-  EXPECT_DEATH(anchor.RebaseStringViewForTesting(
-                   std::distance(anchor.Text().begin(), text2.begin())),
-               "Rebased string contents must match");
-}
-
 TEST(AnchorTest, EqualityNotOwned) {
   constexpr absl::string_view text1("abcd");
   constexpr absl::string_view text2("defg");
@@ -151,14 +62,14 @@ TEST(AnchorTest, EqualityNotOwned) {
 }
 
 TEST(AnchorTest, EqualityOwned) {
-  const Anchor anchor1(absl::make_unique<std::string>("PWNED"));
-  const Anchor anchor2(absl::make_unique<std::string>("zoned"));
+  const Anchor anchor1("PWNED");
+  const Anchor anchor2("zoned");
   EXPECT_EQ(anchor1, anchor1);
   EXPECT_EQ(anchor2, anchor2);
   EXPECT_NE(anchor1, anchor2);
   EXPECT_NE(anchor2, anchor1);
 
-  const Anchor anchor3(absl::make_unique<std::string>("PWNED"));
+  const Anchor anchor3("PWNED");
   EXPECT_FALSE(verible::BoundsEqual(anchor1.Text(), anchor3.Text()));
   EXPECT_EQ(anchor1, anchor3);
   EXPECT_EQ(anchor3, anchor1);
@@ -167,12 +78,12 @@ TEST(AnchorTest, EqualityOwned) {
 }
 
 TEST(AnchorTest, EqualityMixed) {
-  const Anchor anchor1(absl::make_unique<std::string>("PWNED"));
+  const Anchor anchor1("PWNED");
   const Anchor anchor2(absl::string_view("PWNED"));
   EXPECT_EQ(anchor1, anchor2);
   EXPECT_EQ(anchor2, anchor1);
 
-  const Anchor anchor3(absl::make_unique<std::string>("stoned"));
+  const Anchor anchor3("stoned");
   const Anchor anchor4(absl::string_view("STONED"));
   EXPECT_NE(anchor1, anchor3);
   EXPECT_NE(anchor3, anchor1);
@@ -198,16 +109,15 @@ TEST(IndexingNodeDataTest, ConstructionVariadicAnchors) {
                                          Anchor(text1));
     EXPECT_EQ(indexing_data.GetIndexingFactType(), IndexingFactType::kFile);
     ASSERT_EQ(indexing_data.Anchors().size(), 1);
-    EXPECT_TRUE(
-        verible::BoundsEqual(indexing_data.Anchors().front().Text(), text1));
+    EXPECT_EQ(indexing_data.Anchors().front().Text(), text1);
   }
   {
     const IndexingNodeData indexing_data(IndexingFactType::kFile, Anchor(text1),
                                          Anchor(text2));
     EXPECT_EQ(indexing_data.GetIndexingFactType(), IndexingFactType::kFile);
     ASSERT_EQ(indexing_data.Anchors().size(), 2);
-    EXPECT_TRUE(verible::BoundsEqual(indexing_data.Anchors()[0].Text(), text1));
-    EXPECT_TRUE(verible::BoundsEqual(indexing_data.Anchors()[1].Text(), text2));
+    EXPECT_EQ(indexing_data.Anchors()[0].Text(), text1);
+    EXPECT_EQ(indexing_data.Anchors()[1].Text(), text2);
   }
 }
 
@@ -219,23 +129,8 @@ TEST(IndexingNodeDataTest, SwapAnchors) {
   indexing_data1.SwapAnchors(&indexing_data2);
   ASSERT_EQ(indexing_data1.Anchors().size(), 1);
   ASSERT_EQ(indexing_data2.Anchors().size(), 1);
-  EXPECT_TRUE(
-      verible::BoundsEqual(indexing_data1.Anchors().front().Text(), text2));
-  EXPECT_TRUE(
-      verible::BoundsEqual(indexing_data2.Anchors().front().Text(), text1));
-}
-
-TEST(IndexingNodeDataTest, RebaseStringViews) {
-  constexpr absl::string_view src("abcdefghij");
-  constexpr absl::string_view dest("abcdefghijkl");
-  IndexingNodeData indexing_data(IndexingFactType::kClass,
-                                 Anchor(src.substr(1, 3)),
-                                 Anchor(src.substr(5, 4)));
-  indexing_data.RebaseStringViewsForTesting(
-      std::distance(src.begin(), dest.begin()));
-  const auto& anchors(indexing_data.Anchors());
-  EXPECT_TRUE(verible::BoundsEqual(anchors[0].Text(), dest.substr(1, 3)));
-  EXPECT_TRUE(verible::BoundsEqual(anchors[1].Text(), dest.substr(5, 4)));
+  EXPECT_EQ(indexing_data1.Anchors().front().Text(), text2);
+  EXPECT_EQ(indexing_data2.Anchors().front().Text(), text1);
 }
 
 TEST(IndexingNodeDataTest, Equality) {
@@ -264,9 +159,10 @@ TEST(IndexingNodeDataTest, Equality) {
 
 TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
   constexpr absl::string_view text("abcdefghij");
-  const IndexingNodeData data(IndexingFactType::kClass,
-                              Anchor(text.substr(1, 2)),
-                              Anchor(text.substr(4, 3)));
+  const IndexingNodeData data(
+      IndexingFactType::kClass,
+      Anchor(text.substr(1, 2), /*begin=*/1, /*length=*/2),
+      Anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3));
   constexpr absl::string_view expected("kClass: [{bc @1-3}, {efg @4-7}]");
   {
     std::ostringstream stream;
@@ -295,10 +191,12 @@ TEST(IndexingFactNodeTest, StreamPrint) {
   constexpr absl::string_view text("abcdefghij");
   typedef IndexingFactNode Node;
   const Node node(
-      IndexingNodeData(IndexingFactType::kClass, Anchor(text.substr(1, 2)),
-                       Anchor(text.substr(4, 3))),
-      Node(IndexingNodeData(IndexingFactType::kClass,
-                            Anchor(text.substr(3, 5)))));
+      IndexingNodeData(IndexingFactType::kClass,
+                       Anchor(text.substr(1, 2), /*begin=*/1, /*length=*/2),
+                       Anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3)),
+      Node(IndexingNodeData(
+          IndexingFactType::kClass,
+          Anchor(text.substr(3, 5), /*begin=*/3, /*length=*/5))));
   constexpr absl::string_view expected(
       "{ (kClass: [{bc @1-3}, {efg @4-7}])\n"
       "  { (kClass: [{defgh @3-8}]) }\n"

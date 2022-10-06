@@ -73,10 +73,12 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
   IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
                              const VerilogSourceFile& source_file,
-                             VerilogExtractionState* extraction_state)
+                             VerilogExtractionState* extraction_state,
+                             std::vector<absl::Status>* errors)
       : file_list_facts_tree_(file_list_facts_tree),
         source_file_(source_file),
-        extraction_state_(extraction_state) {
+        extraction_state_(extraction_state),
+        errors_(errors) {
     const absl::string_view base = source_file_.GetTextStructure()->Contents();
     root_.Value().AppendAnchor(
         // Create the Anchor for file path node.
@@ -279,6 +281,10 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // extracted node.
   void MoveAndDeleteLastExtractedNode(IndexingFactNode& new_node);
 
+  absl::string_view FileContent() {
+    return source_file_.GetTextStructure()->Contents();
+  }
+
  private:  // data members
   // The Root of the constructed facts tree.
   IndexingFactNode root_{IndexingNodeData(IndexingFactType::kFile)};
@@ -298,6 +304,9 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // The project configuration used to find included files.
   VerilogExtractionState* const extraction_state_;
 
+  // Processing errors.
+  std::vector<absl::Status>* errors_;
+
   // Counter used as an id for the anonymous scopes.
   int next_anonymous_id = 0;
 };
@@ -307,10 +316,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 IndexingFactNode BuildIndexingFactsTree(
     IndexingFactNode& file_list_facts_tree,
     const VerilogSourceFile& source_file,
-    VerilogExtractionState* extraction_state) {
+    VerilogExtractionState* extraction_state,
+    std::vector<absl::Status>* errors) {
   VLOG(1) << __FUNCTION__ << ": file: " << source_file;
   IndexingFactsTreeExtractor visitor(file_list_facts_tree, source_file,
-                                     extraction_state);
+                                     extraction_state, errors);
 
   if (source_file.Status().ok()) {
     const auto& syntax_tree = source_file.GetTextStructure()->SyntaxTree();
@@ -329,11 +339,20 @@ IndexingFactNode BuildIndexingFactsTree(
 
 IndexingFactNode ExtractFiles(absl::string_view file_list_path,
                               VerilogProject* project,
-                              const std::vector<std::string>& file_names) {
+                              const std::vector<std::string>& file_names,
+                              std::vector<absl::Status>* errors) {
   VLOG(1) << __FUNCTION__;
   // Open all of the translation units.
-  for (const auto& file_name : file_names) {
+  for (absl::string_view file_name : file_names) {
     const auto status_or_file = project->OpenTranslationUnit(file_name);
+    if (!status_or_file.ok()) {
+      if (errors != nullptr) {
+        errors->push_back(status_or_file.status());
+      } else {
+        LOG(ERROR) << "Failed to open file " << file_name << ": "
+                   << status_or_file.status();
+      }
+    }
     // For now, collect all diagnostics at the end.
     // TODO(fangism): offer a mode to exit-early if there are file-not-found
     // or read-permission issues (fail-fast, alert-user).
@@ -345,32 +364,28 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
       IndexingNodeData(IndexingFactType::kFileList, Anchor(file_list_path),
                        Anchor(project->TranslationUnitRoot())));
 
-  // Snapshot the initial list of files as translation units, because the map of
-  // files could grow as it iterates due to encountering include files, even
-  // though the iterators remain stable.  Preserve the original file list
-  // ordering for extracting files one-by-one.
-  // TODO(#574): automate ordering based on discovered dependencies.
-  std::vector<VerilogSourceFile*> translation_units;
-  translation_units.reserve(file_names.size());
-  for (const auto& file_name : file_names) {
-    translation_units.push_back(project->LookupRegisteredFile(file_name));
-  }
-
   VerilogExtractionState project_extraction_state{project};
 
   // pre-allocate file nodes with the number of translation units
-  file_list_facts_tree.Children().reserve(translation_units.size());
-  for (auto* translation_unit : translation_units) {
+  file_list_facts_tree.Children().reserve(file_names.size());
+  for (absl::string_view file_name : file_names) {
+    auto* translation_unit = project->LookupRegisteredFile(file_name);
     if (translation_unit == nullptr) continue;
     const auto parse_status = translation_unit->Parse();
     // status is also stored in translation_unit for later retrieval.
     if (parse_status.ok()) {
-      file_list_facts_tree.Children().push_back(BuildIndexingFactsTree(
-          file_list_facts_tree, *translation_unit, &project_extraction_state));
+      file_list_facts_tree.Children().push_back(
+          BuildIndexingFactsTree(file_list_facts_tree, *translation_unit,
+                                 &project_extraction_state, errors));
     } else {
-      // Tolerate parse errors.
-      LOG(INFO) << parse_status.message();
+      if (errors != nullptr) {
+        errors->push_back(parse_status);
+      } else {
+        LOG(WARNING) << "Failed to parse file " << file_name << ": "
+                     << parse_status;
+      }
     }
+    project->RemoveRegisteredFile(file_name);
   }
   VLOG(1) << "end of " << __FUNCTION__;
   return file_list_facts_tree;
@@ -549,8 +564,9 @@ void IndexingFactsTreeExtractor::Visit(const SyntaxTreeLeaf& leaf) {
 
 void IndexingFactsTreeExtractor::ExtractSymbolIdentifier(
     const SyntaxTreeLeaf& symbol_identifier) {
-  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-      IndexingFactType::kVariableReference, Anchor(symbol_identifier.get())));
+  facts_tree_context_.top().Children().emplace_back(
+      IndexingNodeData(IndexingFactType::kVariableReference,
+                       Anchor(symbol_identifier.get(), FileContent())));
 }
 
 void IndexingFactsTreeExtractor::ExtractDataDeclaration(
@@ -683,7 +699,7 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramHeader(
       GetModuleName(module_declaration_node);
   if (!module_name_leaf) return;
   facts_tree_context_.top().Value().AppendAnchor(
-      Anchor(module_name_leaf->get()));
+      Anchor(module_name_leaf->get(), FileContent()));
 
   // Extract parameters if exist.
   const SyntaxTreeNode* param_declaration_list =
@@ -740,8 +756,9 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         GetIdentifierFromModulePortDeclaration(module_port_node);
     if (!leaf) return;
 
-    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-        IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
+    facts_tree_context_.top().Children().emplace_back(
+        IndexingNodeData(IndexingFactType::kVariableDefinition,
+                         Anchor(leaf->get(), FileContent())));
   } else if (tag == NodeEnum::kPortReference) {
     // For extracting Non-ANSI style ports:
     // module m(a, b);
@@ -760,18 +777,20 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
                   .GetIndexingFactType() !=
               IndexingFactType::kDataTypeReference) {
         // Append this as a variable definition.
-        facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-            IndexingFactType::kVariableDefinition, Anchor(leaf->get())));
+        facts_tree_context_.top().Children().emplace_back(
+            IndexingNodeData(IndexingFactType::kVariableDefinition,
+                             Anchor(leaf->get(), FileContent())));
       } else {
         // Append this as a child to previous kDataTypeReference.
         facts_tree_context_.top().Children().back().Children().emplace_back(
             IndexingNodeData(IndexingFactType::kVariableDefinition,
-                             Anchor(leaf->get())));
+                             Anchor(leaf->get(), FileContent())));
       }
     } else {
       // In case no preceeded data type.
-      facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-          IndexingFactType::kVariableReference, Anchor(leaf->get())));
+      facts_tree_context_.top().Children().emplace_back(
+          IndexingNodeData(IndexingFactType::kVariableReference,
+                           Anchor(leaf->get(), FileContent())));
     }
   }
 
@@ -812,8 +831,9 @@ void IndexingFactsTreeExtractor::ExtractModuleNamedPort(
     const SyntaxTreeNode& actual_named_port) {
   const SyntaxTreeLeaf* named_port = GetActualNamedPortName(actual_named_port);
   if (!named_port) return;
-  IndexingFactNode actual_port_node(IndexingNodeData(
-      IndexingFactType::kModuleNamedPort, Anchor(named_port->get())));
+  IndexingFactNode actual_port_node(
+      IndexingNodeData(IndexingFactType::kModuleNamedPort,
+                       Anchor(named_port->get(), FileContent())));
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
                                               &actual_port_node);
@@ -834,8 +854,9 @@ void IndexingFactsTreeExtractor::ExtractInputOutputDeclaration(
           identifier_unpacked_dimension);
 
   if (port_name_leaf) {
-    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-        IndexingFactType::kVariableDefinition, Anchor(port_name_leaf->get())));
+    facts_tree_context_.top().Children().emplace_back(
+        IndexingNodeData(IndexingFactType::kVariableDefinition,
+                         Anchor(port_name_leaf->get(), FileContent())));
   }
 }
 
@@ -845,7 +866,8 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramEnd(
       GetModuleEndLabel(module_declaration_node);
 
   if (module_name != nullptr) {
-    facts_tree_context_.top().Value().AppendAnchor(Anchor(module_name->get()));
+    facts_tree_context_.top().Value().AppendAnchor(
+        Anchor(module_name->get(), FileContent()));
   }
 }
 
@@ -878,7 +900,8 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const TokenInfo* variable_name =
         GetModuleInstanceNameTokenInfoFromGateInstance(*instance.match);
     if (variable_name) {
-      module_instance_node.Value().AppendAnchor(Anchor(*variable_name));
+      module_instance_node.Value().AppendAnchor(
+          Anchor(*variable_name, FileContent()));
     }
 
     {
@@ -906,8 +929,9 @@ void IndexingFactsTreeExtractor::ExtractNetDeclaration(
   // Loop through each instance and associate each declared id with the same
   // type.
   for (const TokenInfo* wire_token_info : identifiers) {
-    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-        IndexingFactType::kVariableDefinition, Anchor(*wire_token_info)));
+    facts_tree_context_.top().Children().emplace_back(
+        IndexingNodeData(IndexingFactType::kVariableDefinition,
+                         Anchor(*wire_token_info, FileContent())));
   }
 }
 
@@ -921,7 +945,8 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
     // Extract package name.
     const SyntaxTreeLeaf* pname = GetPackageNameLeaf(package_declaration_node);
     if (pname) {
-      facts_tree_context_.top().Value().AppendAnchor(Anchor(pname->get()));
+      facts_tree_context_.top().Value().AppendAnchor(
+          Anchor(pname->get(), FileContent()));
     }
 
     // Extract package name after endpackage if exists.
@@ -930,7 +955,7 @@ void IndexingFactsTreeExtractor::ExtractPackageDeclaration(
 
     if (package_end_name != nullptr) {
       facts_tree_context_.top().Value().AppendAnchor(
-          Anchor(package_end_name->get()));
+          Anchor(package_end_name->get(), FileContent()));
     }
 
     // Visit package body it exists.
@@ -948,8 +973,8 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
     const SyntaxTreeNode& preprocessor_definition) {
   const SyntaxTreeLeaf* macro_name = GetMacroName(preprocessor_definition);
   if (!macro_name) return;
-  IndexingFactNode macro_node(
-      IndexingNodeData(IndexingFactType::kMacro, Anchor(macro_name->get())));
+  IndexingFactNode macro_node(IndexingNodeData(
+      IndexingFactType::kMacro, Anchor(macro_name->get(), FileContent())));
 
   // TODO(fangism): access directly, instead of searching.
   const std::vector<TreeSearchMatch> args =
@@ -960,30 +985,32 @@ void IndexingFactsTreeExtractor::ExtractMacroDefinition(
     if (macro_arg_name) {
       macro_node.Children().emplace_back(
           IndexingNodeData(IndexingFactType::kVariableDefinition,
-                           Anchor(macro_arg_name->get())));
+                           Anchor(macro_arg_name->get(), FileContent())));
     }
   }
 
   facts_tree_context_.top().Children().push_back(std::move(macro_node));
 }
 
-Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info) {
+Anchor GetMacroAnchorFromTokenInfo(const TokenInfo& macro_token_info,
+                                   absl::string_view file_content) {
   // Strip the prefix "`".
   // e.g.
   // `define TEN 0
   // `TEN --> removes the `
   const absl::string_view macro_name =
       absl::StripPrefix(macro_token_info.text(), "`");
-  return Anchor(macro_name);
+  int begin = std::distance(file_content.begin(), macro_name.begin());
+  return Anchor(macro_name, begin, macro_name.size());
 }
 
 void IndexingFactsTreeExtractor::ExtractMacroCall(
     const SyntaxTreeNode& macro_call) {
   const TokenInfo* macro_call_name_token = GetMacroCallId(macro_call);
   if (!macro_call_name_token) return;
-  IndexingFactNode macro_node(
-      IndexingNodeData(IndexingFactType::kMacroCall,
-                       GetMacroAnchorFromTokenInfo(*macro_call_name_token)));
+  IndexingFactNode macro_node(IndexingNodeData(
+      IndexingFactType::kMacroCall,
+      GetMacroAnchorFromTokenInfo(*macro_call_name_token, FileContent())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -998,9 +1025,9 @@ void IndexingFactsTreeExtractor::ExtractMacroCall(
 
 void IndexingFactsTreeExtractor::ExtractMacroReference(
     const SyntaxTreeLeaf& macro_identifier) {
-  facts_tree_context_.top().Children().emplace_back(
-      IndexingNodeData(IndexingFactType::kMacroCall,
-                       GetMacroAnchorFromTokenInfo(macro_identifier.get())));
+  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
+      IndexingFactType::kMacroCall,
+      GetMacroAnchorFromTokenInfo(macro_identifier.get(), FileContent())));
 }
 
 void IndexingFactsTreeExtractor::ExtractClassConstructor(
@@ -1008,8 +1035,9 @@ void IndexingFactsTreeExtractor::ExtractClassConstructor(
   const SyntaxTreeLeaf* new_keyword =
       GetNewKeywordFromClassConstructor(class_constructor);
   if (!new_keyword) return;
-  IndexingFactNode constructor_node(IndexingNodeData(
-      IndexingFactType::kConstructor, Anchor(new_keyword->get())));
+  IndexingFactNode constructor_node(
+      IndexingNodeData(IndexingFactType::kConstructor,
+                       Anchor(new_keyword->get(), FileContent())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1145,7 +1173,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       // variable identifier node.
       IndexingFactNode variable_node(
           IndexingNodeData(IndexingFactType::kVariableDefinition,
-                           Anchor(port_identifier->get())));
+                           Anchor(port_identifier->get(), FileContent())));
 
       // if this port has struct/union/enum data type.
       const SyntaxTreeNode* struct_type =
@@ -1200,7 +1228,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
 
       type_node.Children().emplace_back(
           IndexingNodeData(IndexingFactType::kVariableDefinition,
-                           Anchor(port_identifier->get())));
+                           Anchor(port_identifier->get(), FileContent())));
 
       {
         const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1276,7 +1304,8 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
     const SyntaxTreeLeaf* fun_call =
         GetFunctionCallNameFromCallExtension(call_extension_node);
     if (fun_call) {
-      function_node.Value().AppendAnchor(Anchor(fun_call->get()));
+      function_node.Value().AppendAnchor(
+          Anchor(fun_call->get(), FileContent()));
     }
   }
 
@@ -1306,7 +1335,8 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
         GetUnqualifiedIdFromHierarchyExtension(hierarchy_extension_node);
     // member name
     if (unqualified) {
-      member_node.Value().AppendAnchor(Anchor(unqualified->get()));
+      member_node.Value().AppendAnchor(
+          Anchor(unqualified->get(), FileContent()));
     }
   }
 
@@ -1323,7 +1353,8 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
     // Extract class name.
     const SyntaxTreeLeaf* class_name = GetClassName(class_declaration);
     if (class_name) {
-      facts_tree_context_.top().Value().AppendAnchor(Anchor(class_name->get()));
+      facts_tree_context_.top().Value().AppendAnchor(
+          Anchor(class_name->get(), FileContent()));
     }
 
     // Extract class name after endclass.
@@ -1331,7 +1362,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 
     if (class_end_name != nullptr) {
       facts_tree_context_.top().Value().AppendAnchor(
-          Anchor(class_end_name->get()));
+          Anchor(class_end_name->get(), FileContent()));
     }
 
     const SyntaxTreeNode* param_list =
@@ -1347,8 +1378,8 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
 
       // In case of => class X extends Y.
       if (NodeEnum(extended_class->Tag().tag) == NodeEnum::kUnqualifiedId) {
-        extends_node.Value().AppendAnchor(
-            Anchor(AutoUnwrapIdentifier(*extended_class)->get()));
+        extends_node.Value().AppendAnchor(Anchor(
+            AutoUnwrapIdentifier(*extended_class)->get(), FileContent()));
       } else {
         // In case of => class X extends pkg1::Y.
         ExtractQualifiedId(*extended_class);
@@ -1412,8 +1443,9 @@ void IndexingFactsTreeExtractor::ExtractRegisterVariable(
       GetInstanceNameTokenInfoFromRegisterVariable(register_variable);
   if (!instance_name) return;
 
-  IndexingFactNode variable_node(IndexingNodeData(
-      IndexingFactType::kVariableDefinition, Anchor(*instance_name)));
+  IndexingFactNode variable_node(
+      IndexingNodeData(IndexingFactType::kVariableDefinition,
+                       Anchor(*instance_name, FileContent())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1441,8 +1473,9 @@ void IndexingFactsTreeExtractor::ExtractVariableDeclarationAssignment(
       GetUnqualifiedIdFromVariableDeclarationAssignment(
           variable_declaration_assignment);
   if (!unqualified_id) return;
-  IndexingFactNode variable_node(IndexingNodeData(
-      IndexingFactType::kVariableDefinition, Anchor(unqualified_id->get())));
+  IndexingFactNode variable_node(
+      IndexingNodeData(IndexingFactType::kVariableDefinition,
+                       Anchor(unqualified_id->get(), FileContent())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1514,7 +1547,8 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
   if (type_assignment != nullptr) {
     param_node.Value().AppendAnchor(Anchor(
         ABSL_DIE_IF_NULL(GetIdentifierLeafFromTypeAssignment(*type_assignment))
-            ->get()));
+            ->get(),
+        FileContent()));
 
     const SyntaxTreeNode* expression =
         GetExpressionFromTypeAssignment(*type_assignment);
@@ -1528,7 +1562,7 @@ void IndexingFactsTreeExtractor::ExtractParamDeclaration(
     // Extract Param name.
     const TokenInfo* parameter_name = GetParameterNameToken(param_declaration);
     if (!parameter_name) return;
-    param_node.Value().AppendAnchor(Anchor(*parameter_name));
+    param_node.Value().AppendAnchor(Anchor(*parameter_name, FileContent()));
 
     {
       const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1553,8 +1587,9 @@ void IndexingFactsTreeExtractor::ExtractParamByName(
   const verible::SyntaxTreeLeaf* named_param =
       GetNamedParamFromActualParam(param_by_name);
   if (!named_param) return;
-  IndexingFactNode named_param_node(IndexingNodeData(
-      IndexingFactType::kNamedParam, Anchor(named_param->get())));
+  IndexingFactNode named_param_node(
+      IndexingNodeData(IndexingFactType::kNamedParam,
+                       Anchor(named_param->get(), FileContent())));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
@@ -1574,8 +1609,9 @@ void IndexingFactsTreeExtractor::ExtractPackageImport(
   const SyntaxTreeLeaf* package_name =
       GetImportedPackageName(package_import_item);
   if (!package_name) return;
-  IndexingNodeData package_import_data(IndexingFactType::kPackageImport,
-                                       Anchor(package_name->get()));
+  IndexingNodeData package_import_data(
+      IndexingFactType::kPackageImport,
+      Anchor(package_name->get(), FileContent()));
 
   // Get the name of the imported item (if exists).
   // e.g pkg::var1 ==> return var1.
@@ -1583,7 +1619,8 @@ void IndexingFactsTreeExtractor::ExtractPackageImport(
   const SyntaxTreeLeaf* imported_item =
       GeImportedItemNameFromPackageImportItem(package_import_item);
   if (imported_item != nullptr) {
-    package_import_data.AppendAnchor(Anchor(imported_item->get()));
+    package_import_data.AppendAnchor(
+        Anchor(imported_item->get(), FileContent()));
   }
 
   facts_tree_context_.top().Children().emplace_back(
@@ -1614,7 +1651,7 @@ void IndexingFactsTreeExtractor::ExtractQualifiedId(
       continue;
     }
     member_reference_data.AppendAnchor(
-        Anchor(AutoUnwrapIdentifier(*child)->get()));
+        Anchor(AutoUnwrapIdentifier(*child)->get(), FileContent()));
 
     const SyntaxTreeNode* param_list = GetParamListFromUnqualifiedId(*child);
     if (param_list != nullptr) {
@@ -1649,8 +1686,9 @@ void IndexingFactsTreeExtractor::ExtractForInitialization(
   const SyntaxTreeLeaf* variable_name =
       GetVariableNameFromForInitialization(for_initialization);
   if (variable_name) {
-    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-        IndexingFactType::kVariableDefinition, Anchor(variable_name->get())));
+    facts_tree_context_.top().Children().emplace_back(
+        IndexingNodeData(IndexingFactType::kVariableDefinition,
+                         Anchor(variable_name->get(), FileContent())));
   }
 
   // Extracts the data the in case it contains packed or unpacked dimension.
@@ -1694,8 +1732,13 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   // Open this file (could be first time, or previously opened).
   const auto status_or_file = project->OpenIncludedFile(filename_unquoted);
   if (!status_or_file.ok()) {
-    VLOG(1) << status_or_file.status().message();
-    // Tolerate file errors.  Errors can be retrieved from 'project' later.
+    if (errors_ != nullptr) {
+      errors_->push_back(status_or_file.status());
+    } else {
+      LOG(ERROR) << "Failed to open the include file " << filename_unquoted
+                 << ": " << status_or_file.status();
+    }
+    // Skip
     return;
   }
 
@@ -1714,10 +1757,14 @@ void IndexingFactsTreeExtractor::ExtractInclude(
       const auto parse_status = included_file->Parse();
       if (parse_status.ok()) {
         file_list_facts_tree_.Children().push_back(BuildIndexingFactsTree(
-            file_list_facts_tree_, *included_file, extraction_state_));
+            file_list_facts_tree_, *included_file, extraction_state_, errors_));
       } else {
-        // Tolerate parse errors.
-        LOG(INFO) << parse_status.message() << std::endl;
+        if (errors_ != nullptr) {
+          errors_->push_back(parse_status);
+        } else {
+          LOG(WARNING) << "Failed to parse the include file "
+                       << filename_unquoted << ": " << parse_status;
+        }
       }
     }
   }
@@ -1725,17 +1772,19 @@ void IndexingFactsTreeExtractor::ExtractInclude(
   // Create a node for include statement with two Anchors:
   // 1st one holds the actual text in the include statement.
   // 2nd one holds the path of the included file relative to the file list.
-  facts_tree_context_.top().Children().emplace_back(
-      IndexingNodeData(IndexingFactType::kInclude, Anchor(filename_text),
-                       Anchor(included_file->ResolvedPath())));
+  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
+      IndexingFactType::kInclude,
+      Anchor(filename_text, included_filename->get().left(FileContent()),
+             filename_text.size()),
+      Anchor(included_file->ResolvedPath())));
 }
 
 void IndexingFactsTreeExtractor::ExtractEnumName(
     const SyntaxTreeNode& enum_name) {
   const SyntaxTreeLeaf* symbol_id = GetSymbolIdentifierFromEnumName(enum_name);
   if (!symbol_id) return;
-  IndexingFactNode enum_node(
-      IndexingNodeData(IndexingFactType::kConstant, Anchor(symbol_id->get())));
+  IndexingFactNode enum_node(IndexingNodeData(
+      IndexingFactType::kConstant, Anchor(symbol_id->get(), FileContent())));
 
   // Iterate over the children and traverse them to extract facts from inner
   // nodes and ignore the leaves.
@@ -1759,8 +1808,9 @@ void IndexingFactsTreeExtractor::ExtractEnumTypeDeclaration(
   const SyntaxTreeLeaf* enum_type_name =
       GetIdentifierFromTypeDeclaration(enum_type_declaration);
   if (!enum_type_name) return;
-  facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-      IndexingFactType::kVariableDefinition, Anchor(enum_type_name->get())));
+  facts_tree_context_.top().Children().emplace_back(
+      IndexingNodeData(IndexingFactType::kVariableDefinition,
+                       Anchor(enum_type_name->get(), FileContent())));
 
   // Explore the children of this enum type to extract.
   for (const auto& child : enum_type_declaration.children()) {
@@ -1777,7 +1827,8 @@ void IndexingFactsTreeExtractor::ExtractStructUnionTypeDeclaration(
       IndexingFactType::kStructOrUnion,
       Anchor(
           ABSL_DIE_IF_NULL(GetIdentifierFromTypeDeclaration(type_declaration))
-              ->get())));
+              ->get(),
+          FileContent())));
 
   // Explore the children of this enum type to extract.
   {
@@ -1849,7 +1900,7 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 
   IndexingFactNode variable_node(
       IndexingNodeData(IndexingFactType::kVariableDefinition,
-                       Anchor(variable_name.first->get())));
+                       Anchor(variable_name.first->get(), FileContent())));
 
   if (variable_name.second == 1) {
     const SyntaxTreeLeaf* type_identifier =
@@ -1858,8 +1909,9 @@ void IndexingFactsTreeExtractor::ExtractDataTypeImplicitIdDimensions(
 
     if (type_identifier == nullptr) return;
 
-    IndexingFactNode type_node(IndexingNodeData(
-        IndexingFactType::kDataTypeReference, Anchor(type_identifier->get())));
+    IndexingFactNode type_node(
+        IndexingNodeData(IndexingFactType::kDataTypeReference,
+                         Anchor(type_identifier->get(), FileContent())));
 
     type_node.Children().push_back(std::move(variable_node));
     facts_tree_context_.top().Children().push_back(std::move(type_node));
@@ -1897,8 +1949,9 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
         GetIdentifierFromTypeDeclaration(type_declaration);
     if (type_name == nullptr) return;
 
-    facts_tree_context_.top().Children().emplace_back(IndexingNodeData(
-        IndexingFactType::kTypeDeclaration, Anchor(type_name->get())));
+    facts_tree_context_.top().Children().emplace_back(
+        IndexingNodeData(IndexingFactType::kTypeDeclaration,
+                         Anchor(type_name->get(), FileContent())));
     return;
   }
 
@@ -1923,11 +1976,10 @@ void IndexingFactsTreeExtractor::ExtractTypeDeclaration(
 
 void IndexingFactsTreeExtractor::ExtractAnonymousScope(
     const SyntaxTreeNode& node) {
-  IndexingFactNode temp_scope_node(
-      IndexingNodeData(IndexingFactType::kAnonymousScope,
-                       // Generate unique id for this scope.
-                       Anchor(absl::make_unique<std::string>(absl::StrCat(
-                           "anonymous-scope-", next_anonymous_id++)))));
+  IndexingFactNode temp_scope_node(IndexingNodeData(
+      IndexingFactType::kAnonymousScope,
+      // Generate unique id for this scope.
+      Anchor(absl::StrCat("anonymous-scope-", next_anonymous_id++))));
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,

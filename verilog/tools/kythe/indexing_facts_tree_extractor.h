@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
@@ -31,7 +32,8 @@ namespace kythe {
 // original ordering from the file list.
 IndexingFactNode ExtractFiles(absl::string_view file_list_path,
                               VerilogProject* project,
-                              const std::vector<std::string>& file_names);
+                              const std::vector<std::string>& file_names,
+                              std::vector<absl::Status>* errors = nullptr);
 
 }  // namespace kythe
 }  // namespace verilog
