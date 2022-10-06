@@ -28,40 +28,35 @@ namespace verilog {
 namespace kythe {
 
 Anchor::Anchor(const Anchor& other)
-    : owned_string_(other.owned_string_
-                        ? absl::make_unique<std::string>(*other.owned_string_)
-                        : nullptr),
-      view_(owned_string_ ? *owned_string_ : other.view_) {}
+    : content_(other.content_),
+      source_text_offset_(other.source_text_offset_) {}
 
 std::string Anchor::DebugString(absl::string_view base) const {
-  const std::ptrdiff_t start_location =
-      std::distance(base.begin(), Text().begin());
-  const std::ptrdiff_t end_location = std::distance(base.begin(), Text().end());
-  return absl::StrCat("{", Text(), " @", start_location, "-", end_location,
-                      "}");
+  if (source_text_offset_) {
+    return absl::StrCat(
+        "{", Text(), " @", source_text_offset_->begin, "-",
+        source_text_offset_->begin + source_text_offset_->length, "}");
+  }
+  return absl::StrCat("{", Text(), "}");
 }
 
 std::ostream& operator<<(std::ostream& stream, const Anchor& anchor) {
-  const absl::string_view text(anchor.Text());
-  return stream << "{" << text << " @" << static_cast<const void*>(text.data())
-                << "+" << text.length() << "}";
-}
-
-void Anchor::RebaseStringViewForTesting(std::ptrdiff_t delta) {
-  if (OwnsMemory()) {
-    return;  // owned memory should never be rebased
-  }
-
-  const absl::string_view rebased(view_.data() + delta, view_.length());
-  CHECK_EQ(rebased, view_) << "Rebased string contents must match the source.";
-  view_ = rebased;
+  return stream << "{" << anchor.Text() << " @" << anchor.StartLocation() << "+"
+                << anchor.ContentLength() << "}";
 }
 
 bool Anchor::operator==(const Anchor& rhs) const {
-  // If either strings are owned, compare their contents only, not their ranges.
-  if (OwnsMemory() || rhs.OwnsMemory()) return Text() == rhs.Text();
-  // Otherwise, ranges must be exactly equal.
-  return verible::BoundsEqual(Text(), rhs.Text());
+  if (source_text_offset_) {
+    if (!rhs.source_text_offset_) {
+      return false;
+    }
+    if (std::tie(source_text_offset_->begin, source_text_offset_->length) !=
+        std::tie(rhs.source_text_offset_->begin,
+                 rhs.source_text_offset_->length)) {
+      return false;
+    }
+  }
+  return Text() == rhs.Text();
 }
 
 std::ostream& IndexingNodeData::DebugString(std::ostream* stream,
@@ -81,25 +76,6 @@ std::ostream& operator<<(std::ostream& stream, const IndexingNodeData& data) {
                 << absl::StrJoin(anchors.begin(), anchors.end(), ", ",
                                  absl::StreamFormatter())
                 << ']';
-}
-
-void IndexingNodeData::RebaseStringViewsForTesting(std::ptrdiff_t delta) {
-  VLOG(3) << __FUNCTION__;
-  switch (indexing_fact_type_) {
-    // The following types have string memory that belongs outside of source
-    // code, and should never be rebased.
-    case IndexingFactType::kFile:
-    case IndexingFactType::kFileList:
-      VLOG(3) << "end of " << __FUNCTION__ << " (skipped)";
-      return;
-    default:
-      break;
-  }
-
-  for (auto& anchor : anchors_) {
-    anchor.RebaseStringViewForTesting(delta);
-  }
-  VLOG(3) << "end of " << __FUNCTION__;
 }
 
 bool IndexingNodeData::operator==(const IndexingNodeData& rhs) const {

@@ -132,8 +132,10 @@ static void KytheFactsNullPrinter(const IndexingFactNode& file_list_facts_tree,
 static std::vector<absl::Status> ExtractTranslationUnits(
     absl::string_view file_list_path, VerilogProject* project,
     const std::vector<std::string>& file_names) {
+  std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
-      verilog::kythe::ExtractFiles(file_list_path, project, file_names));
+      verilog::kythe::ExtractFiles(file_list_path, project, file_names,
+                                   &errors));
 
   // check for printextraction flag, and print extraction if on
   if (absl::GetFlag(FLAGS_printextraction)) {
@@ -161,7 +163,7 @@ static std::vector<absl::Status> ExtractTranslationUnits(
       break;
   }
 
-  return project->GetErrorStatuses();
+  return errors;
 }
 
 }  // namespace kythe

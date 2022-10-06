@@ -15,6 +15,7 @@
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
 #include <functional>
+#include <string>
 
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -54,11 +55,7 @@ class TempDir {
 
 // Groups information for a single temporary source file together.
 struct TestFileEntry {
-  // This is a view of the original source code of the translation as it was
-  // passed in through the constructor.  VerilogProject::ExtractFiles() works
-  // with an internal copy of this code as SourceText().
-  // This copy is useful for rebasing the expected finding tokens into that of
-  // the internal buffer.
+  // The original source code of the translation.
   const absl::string_view origin_text;
 
   // One file in project, will be given randomly generated name.
@@ -90,22 +87,6 @@ struct TestFileEntry {
         Anchor(SourceText()),
     };
   }
-
-  // Transform a tree so that the string_views point to the copy of the source
-  // code that lives inside 'source_file', and not the 'origin_text' it came
-  // from.
-  T RebaseFileTree(T original_tree) const {
-    VLOG(3) << __FUNCTION__;
-    // This is the pointer difference between two copies of the same text.
-    const std::ptrdiff_t delta =
-        std::distance(origin_text.begin(), SourceText().begin());
-    // mutate in-place, pre vs. post order doesn't matter here
-    ApplyPreOrder(original_tree, [delta](T::value_type& data) {
-      data.RebaseStringViewsForTesting(delta);
-    });
-    VLOG(3) << "end of " << __FUNCTION__;
-    return original_tree;  // move
-  }
 };
 
 // SimpleTestProject create a single-file project for testing.
@@ -117,6 +98,7 @@ class SimpleTestProject : public TempDir, public VerilogProject {
                              const std::vector<std::string>& include_paths = {})
       : TempDir(),
         VerilogProject(temp_dir_, include_paths),
+        code_text_(code_text),
         translation_unit_(code_text, temp_dir_,
                           [this](absl::string_view full_file_name)
                               -> const VerilogSourceFile* {
@@ -137,7 +119,7 @@ class SimpleTestProject : public TempDir, public VerilogProject {
         /* file_list_path= */ temp_dir_,  // == Dirname(OnlyFileName()),
         /* project= */ this,
         /* file_names= */
-        {std::string(verible::file::Basename(OnlyFileName()))});
+        {std::string(verible::file::Basename(OnlyFileName()))}, &errors_);
   }
 
   T::value_type ExpectedFileListData() const {
@@ -151,20 +133,21 @@ class SimpleTestProject : public TempDir, public VerilogProject {
     };
   }
 
-  absl::string_view TranslationUnitSourceText() const {
-    return translation_unit_.SourceText();
-  }
+  std::vector<absl::Status>& Errors() { return errors_; }
 
   // This printer only works well for tests cases with one translation unit.
   PrintableIndexingFactNode TreePrinter(const IndexingFactNode& n) const {
-    return PrintableIndexingFactNode(n, TranslationUnitSourceText());
+    return PrintableIndexingFactNode(n, code_text_);
   }
 
-  using VerilogProject::GetErrorStatuses;
-
  private:
+  std::string code_text_;
+
   // The one and only translation unit under test.
   TestFileEntry translation_unit_;
+
+  // Processing errors.
+  std::vector<absl::Status> errors_;
 };
 
 // Test project with one source translation unit, one included file.
@@ -186,9 +169,9 @@ class IncludeTestProject : protected SimpleTestProject {
             },
             include_file_basename) {}
 
+  using SimpleTestProject::Errors;
   using SimpleTestProject::ExpectedFileListData;
   using SimpleTestProject::Extract;
-  using SimpleTestProject::GetErrorStatuses;
   using SimpleTestProject::XUnit;
 
   const TestFileEntry& IncludeFile() const { return include_file_; }
@@ -292,7 +275,7 @@ TEST(FactsTreeExtractor, ParseErrorTest) {
   for (const auto& code_text : code_texts) {
     SimpleTestProject project(code_text);
     const auto facts_tree = project.Extract();
-    const std::vector<absl::Status> errors(project.GetErrorStatuses());
+    const std::vector<absl::Status> errors(project.Errors());
     EXPECT_FALSE(errors.empty()) << "code\n" << code_text;
   }
 }
@@ -306,14 +289,13 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(D{
-                IndexingFactType::kModule,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(D{
+            IndexingFactType::kModule,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -341,30 +323,29 @@ TEST(FactsTreeExtractor, PropagatedUserDefinedTypeInModulePort) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to My_type.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to My_type.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to y.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to y.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -393,26 +374,25 @@ TEST(FactsTreeExtractor, OneLocalNetTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module bar.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to w.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to `x
-                // TODO(minatoma): suppress declarations that use macro
-                // identifiers because they evaluate to something unknown.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module bar.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to w.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to `x
+            // TODO(minatoma): suppress declarations that use macro
+            // identifiers because they evaluate to something unknown.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -441,32 +421,31 @@ TEST(FactsTreeExtractor, OneModuleInstanceTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module bar.
-            T(D{
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module bar.
+        T(D{
+            IndexingFactType::kModule,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        }),
+        // refers to module foo.
+        T(
+            D{
                 IndexingFactType::kModule,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }),
-            // refers to module foo.
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[5]),
-                    Anchor(kTestCase.expected_tokens[11]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to bar b1().
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    }))))));
+                // refers to bar b1().
+                T(D{
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -499,43 +478,42 @@ TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module bar.
-            T(D{
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module bar.
+        T(D{
+            IndexingFactType::kModule,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        }),
+        // refers to module foo.
+        T(
+            D{
                 IndexingFactType::kModule,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }),
-            // refers to module foo.
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[5]),
-                    Anchor(kTestCase.expected_tokens[15]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to bar b1().
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    })),
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    },
-                    // refers to bar b2().
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[13]),
-                    }))))));
+                // refers to bar b1().
+                T(D{
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                })),
+            // refers to bar.
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                },
+                // refers to bar b2().
+                T(D{
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -566,37 +544,36 @@ TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module bar.
-            T(D{
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module bar.
+        T(D{
+            IndexingFactType::kModule,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        }),
+        // refers to module foo.
+        T(
+            D{
                 IndexingFactType::kModule,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }),
-            // refers to module foo.
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[5]),
-                    Anchor(kTestCase.expected_tokens[13]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to b1().
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    }),
-                    // refers to bar b2().
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }))))));
+                // refers to b1().
+                T(D{
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                }),
+                // refers to bar b2().
+                T(D{
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -621,25 +598,24 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[7]),
-                },
-                // refers to input a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to output b.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // refers to input a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to output b.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -673,45 +649,44 @@ TEST(FactsTreeExtractor, ModuleDimensionTypePortsTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to input a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to output b.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                }),
-                // refers to input x.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to input y.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to input a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to output b.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }),
+            // refers to input x.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to input y.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
 
-                // refers to input x.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[11]),
-                }),
-                // refers to input y.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[13]),
-                })))));
+            // refers to input x.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            }),
+            // refers to input y.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -744,35 +719,34 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[11]),
-                },
-                // refers to  a.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to  b.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to input z.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to h.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            },
+            // refers to  a.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to  b.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to input z.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to h.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -798,24 +772,23 @@ TEST(FactsTreeExtractor, ClassParams) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class my_class.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to parameter x
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to y
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class my_class.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to parameter x
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to y
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -848,38 +821,37 @@ TEST(FactsTreeExtractor, QualifiedVariableType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to pkg::X
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to pkg::X
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to y
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    })),
-                // refers to pkg::H
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                        Anchor(kTestCase.expected_tokens[11]),
-                    },
-                    // refers to j
-                    T(D{
-                        IndexingFactType::kClassInstance,
-                        Anchor(kTestCase.expected_tokens[13]),
-                    }))))));
+                // refers to y
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })),
+            // refers to pkg::H
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                },
+                // refers to j
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -905,24 +877,23 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class my_class.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to parameter x
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to y
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class my_class.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to parameter x
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to y
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -982,111 +953,116 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            },
+            // refers to  a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to  b.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to input z.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to h.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            })),
+        // refers to module bar.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            },
+            // refers to input a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            // refers to b.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            }),
+            // refers to c.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            }),
+            // refers to h.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+            }),
+            // refers to foo.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[11]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[23], kTestCase.code),
                 },
-                // refers to  a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to  b.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to input z.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to h.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                })),
-            // refers to module bar.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[13]),
-                },
-                // refers to input a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[15]),
-                }),
-                // refers to b.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[17]),
-                }),
-                // refers to c.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[19]),
-                }),
-                // refers to h.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[21]),
-                }),
-                // refers to foo.
+                // refers to f1(.a(a), .b(b), .z(c), .h).
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[23]),
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[25], kTestCase.code),
                     },
-                    // refers to f1(.a(a), .b(b), .z(c), .h).
+                    // refers to .a
                     T(
                         D{
-                            IndexingFactType::kModuleInstance,
-                            Anchor(kTestCase.expected_tokens[25]),
-                        },
-                        // refers to .a
-                        T(
-                            D{
-                                IndexingFactType::kModuleNamedPort,
-                                Anchor(kTestCase.expected_tokens[27]),
-                            },
-                            // refers to a
-                            T(D{
-                                IndexingFactType::kVariableReference,
-                                Anchor(kTestCase.expected_tokens[29]),
-                            })),
-                        // refers to .b
-                        T(
-                            D{
-                                IndexingFactType::kModuleNamedPort,
-                                Anchor(kTestCase.expected_tokens[31]),
-                            },
-                            // refers to b
-                            T(D{
-                                IndexingFactType::kVariableReference,
-                                Anchor(kTestCase.expected_tokens[33]),
-                            })),
-                        // refers to .z
-                        T(
-                            D{
-                                IndexingFactType::kModuleNamedPort,
-                                Anchor(kTestCase.expected_tokens[35]),
-                            },
-                            // refers to c
-                            T(D{
-                                IndexingFactType::kVariableReference,
-                                Anchor(kTestCase.expected_tokens[37]),
-                            })),
-                        // refers to .h
-                        T(D{
                             IndexingFactType::kModuleNamedPort,
-                            Anchor(kTestCase.expected_tokens[39]),
-                        })))))));
+                            Anchor(kTestCase.expected_tokens[27],
+                                   kTestCase.code),
+                        },
+                        // refers to a
+                        T(D{
+                            IndexingFactType::kVariableReference,
+                            Anchor(kTestCase.expected_tokens[29],
+                                   kTestCase.code),
+                        })),
+                    // refers to .b
+                    T(
+                        D{
+                            IndexingFactType::kModuleNamedPort,
+                            Anchor(kTestCase.expected_tokens[31],
+                                   kTestCase.code),
+                        },
+                        // refers to b
+                        T(D{
+                            IndexingFactType::kVariableReference,
+                            Anchor(kTestCase.expected_tokens[33],
+                                   kTestCase.code),
+                        })),
+                    // refers to .z
+                    T(
+                        D{
+                            IndexingFactType::kModuleNamedPort,
+                            Anchor(kTestCase.expected_tokens[35],
+                                   kTestCase.code),
+                        },
+                        // refers to c
+                        T(D{
+                            IndexingFactType::kVariableReference,
+                            Anchor(kTestCase.expected_tokens[37],
+                                   kTestCase.code),
+                        })),
+                    // refers to .h
+                    T(D{
+                        IndexingFactType::kModuleNamedPort,
+                        Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -1120,42 +1096,41 @@ TEST(FactsTreeExtractor, ModuleInstanceWitStarExpandedPorts) {
   SimpleTestProject project(kTestCase.code);
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to  a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })),
+        // refers to module bar.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+            },
+            // refers to input a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+            }),
+            // refers to foo.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[10], kTestCase.code),
                 },
-                // refers to  a.
+                // refers to f1(.*)
                 T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })),
-            // refers to module bar.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[6]),
-                },
-                // refers to input a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[8]),
-                }),
-                // refers to foo.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[10]),
-                    },
-                    // refers to f1(.*)
-                    T(D{
-                        IndexingFactType::kModuleInstance,
-                        Anchor(kTestCase.expected_tokens[12]),
-                    }  // The .* is not recorded as named module port.
-                      ))))));
+                    IndexingFactType::kModuleInstance,
+                    Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+                }  // The .* is not recorded as named module port.
+                  )))));
 
   const auto facts_tree = project.Extract();
 
@@ -1188,35 +1163,34 @@ TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[11]),
-                },
-                // refers to  a.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to  b.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to input z.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to h.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            },
+            // refers to  a.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to  b.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to input z.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to h.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1298,169 +1272,167 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(
-          T(
-              project.XUnit().ExpectedFileData(),
-              // refers to package pkg.
-              T(
-                  D{
-                      IndexingFactType::kPackage,
-                      Anchor(kTestCase.expected_tokens[1]),
-                  },
-                  // refers to x;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[3]),
-                  }),
-                  // refers to y;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[5]),
-                  }),
-                  // refers to l1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[7]),
-                  }),
-                  // refers to l2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[9]),
-                  }),
-                  // refers to b1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[11]),
-                  }),
-                  // refers to b2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[13]),
-                  }),
-                  // refers to s1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[15]),
-                  }),
-                  // refers to s2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[17]),
-                  })),
-              // refers to class cla.
-              T(
-                  D{
-                      IndexingFactType::kClass,
-                      Anchor(kTestCase.expected_tokens[19]),
-                  },
-                  // refers to x;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[21]),
-                  }),
-                  // refers to y;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[23]),
-                  }),
-                  // refers to l1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[25]),
-                  }),
-                  // refers to l2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[27]),
-                  }),
-                  // refers to b1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[29]),
-                  }),
-                  // refers to b2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[31]),
-                  }),
-                  // refers to s1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[33]),
-                  }),
-                  // refers to s2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[35]),
-                  })),
-              // refers to function fun.
-              T(
-                  D{
-                      IndexingFactType::kFunctionOrTask,
-                      Anchor(kTestCase.expected_tokens[37]),
-                  },
-                  // refers to x;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[39]),
-                  }),
-                  // refers to y;
-                  T(
-                      D{
-                          IndexingFactType::kVariableDefinition,
-                          Anchor(kTestCase.expected_tokens[41]),
-                      },
-                      // refers to my_fun;
-                      T(
-                          D{
-                              IndexingFactType::kFunctionCall,
-                              Anchor(kTestCase.expected_tokens[43]),
-                          },
-                          // refers to o;
-                          T(D{
-                              IndexingFactType::kVariableReference,
-                              Anchor(kTestCase.expected_tokens[45]),
-                          }),
-                          // refers to l;
-                          T(D{
-                              IndexingFactType::kVariableReference,
-                              Anchor(kTestCase.expected_tokens[47]),
-                          }))),
-                  // refers to l1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[49]),
-                  }),
-                  // refers to l2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[51]),
-                  }),
-                  // refers to b1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[53]),
-                  }),
-                  // refers to b2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[55]),
-                  }),
-                  // refers to s1;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[57]),
-                  }),
-                  // refers to s2;
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[59]),
-                  }),
-                  // refers to return x;
-                  T(D{
-                      IndexingFactType::kVariableReference,
-                      Anchor(kTestCase.expected_tokens[61]),
-                  })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to x;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to y;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to l1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to l2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }),
+            // refers to b1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            }),
+            // refers to b2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            }),
+            // refers to s1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            // refers to s2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            })),
+        // refers to class cla.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            },
+            // refers to x;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+            }),
+            // refers to y;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+            }),
+            // refers to l1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[25], kTestCase.code),
+            }),
+            // refers to l2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+            }),
+            // refers to b1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+            }),
+            // refers to b2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[31], kTestCase.code),
+            }),
+            // refers to s1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[33], kTestCase.code),
+            }),
+            // refers to s2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+            })),
+        // refers to function fun.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+            },
+            // refers to x;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+            }),
+            // refers to y;
+            T(
+                D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[41], kTestCase.code),
+                },
+                // refers to my_fun;
+                T(
+                    D{
+                        IndexingFactType::kFunctionCall,
+                        Anchor(kTestCase.expected_tokens[43], kTestCase.code),
+                    },
+                    // refers to o;
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[45], kTestCase.code),
+                    }),
+                    // refers to l;
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[47], kTestCase.code),
+                    }))),
+            // refers to l1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[49], kTestCase.code),
+            }),
+            // refers to l2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[51], kTestCase.code),
+            }),
+            // refers to b1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[53], kTestCase.code),
+            }),
+            // refers to b2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[55], kTestCase.code),
+            }),
+            // refers to s1;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[57], kTestCase.code),
+            }),
+            // refers to s2;
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[59], kTestCase.code),
+            }),
+            // refers to return x;
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[61], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1491,35 +1463,34 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[13]),
-                },
-                // refers to input in.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[4]),
-                }),
-                // refers to output x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to output y
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                }),
-                // refers to output z.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[11]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            },
+            // refers to input in.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[4], kTestCase.code),
+            }),
+            // refers to output x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to output y
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }),
+            // refers to output z.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1560,64 +1531,63 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module bar.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module bar.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // refers to input x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to output y.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            })),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+            },
+            // refers to input x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            }),
+            // refers to output y.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            }),
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[7]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[15], kTestCase.code),
                 },
-                // refers to input x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to output y.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[9]),
-                    Anchor(kTestCase.expected_tokens[23]),
-                },
-                // refers to input x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[11]),
-                }),
-                // refers to output y.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[13]),
-                }),
-                // refers to bar.
+                // refers to b1(x, y).
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[15]),
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[17], kTestCase.code),
                     },
-                    // refers to b1(x, y).
-                    T(
-                        D{
-                            IndexingFactType::kModuleInstance,
-                            Anchor(kTestCase.expected_tokens[17]),
-                        },
-                        // refers to x
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[19]),
-                        }),
-                        // refers to y
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[21]),
-                        })))))));
+                    // refers to x
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                    }),
+                    // refers to y
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -1640,20 +1610,19 @@ TEST(FactsTreeExtractor, WireTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[5]),
-                },
-                // refers to "wire a"
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to "wire a"
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1672,14 +1641,13 @@ TEST(FactsTreeExtractor, ClassTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class foo
-            T(D{
-                IndexingFactType::kClass,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class foo
+        T(D{
+            IndexingFactType::kClass,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -1704,21 +1672,20 @@ TEST(FactsTreeExtractor, CLassWithinModuleTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module foo
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[7]),
-                },
-                // refers to "class foo"
-                T(D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[3]),
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module foo
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // refers to "class foo"
+            T(D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1745,21 +1712,20 @@ TEST(FactsTreeExtractor, NestedClassTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class foo
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                    Anchor(kTestCase.expected_tokens[7]),
-                },
-                // refers to class bar
-                T(D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[3]),
-                    Anchor(kTestCase.expected_tokens[5]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class foo
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // refers to class bar
+            T(D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -1794,48 +1760,47 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class bar.
-            T(D{
-                IndexingFactType::kClass,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }),
-            // refers to module foo.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class bar.
+        T(D{
+            IndexingFactType::kClass,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        }),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[5]),
-                    Anchor(kTestCase.expected_tokens[17]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to bar.
+                // refers to b1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                }),
+                // refers to b2.
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to b1.
-                    T(D{
                         IndexingFactType::kClassInstance,
-                        Anchor(kTestCase.expected_tokens[9]),
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                    },
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[13], kTestCase.code),
                     }),
-                    // refers to b2.
-                    T(
-                        D{
-                            IndexingFactType::kClassInstance,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        },
-                        // refers to x.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[13]),
-                        }),
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[15]),
-                        })))))));
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -1868,69 +1833,67 @@ TEST(FactsTreeExtractor, ClassMemberAccess) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class inner.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class inner.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to int x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })),
+        // refers to class bar.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+            },
+            // refers to inner in1.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[8], kTestCase.code),
                 },
-                // refers to int x.
+                // refers to in1.
                 T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+                }))),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[14], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[26], kTestCase.code),
+            },
+            // refers to bar.
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+                },
+                // refers to b1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[18], kTestCase.code),
                 })),
-            // refers to class bar.
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[6]),
-                    Anchor(kTestCase.expected_tokens[12]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // refers to inner in1.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[8]),
-                    },
-                    // refers to in1.
-                    T(D{
-                        IndexingFactType::kClassInstance,
-                        Anchor(kTestCase.expected_tokens[10]),
-                    }))),
-            // refers to module foo.
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[14]),
-                    Anchor(kTestCase.expected_tokens[26]),
-                },
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[16]),
-                    },
-                    // refers to b1.
-                    T(D{
-                        IndexingFactType::kClassInstance,
-                        Anchor(kTestCase.expected_tokens[18]),
-                    })),
-                // anonymous scope for initial.
-                T(
-                    D{
-                        IndexingFactType::kAnonymousScope,
-                        Anchor(absl::make_unique<std::string>(
-                            "anonymous-scope-0")),
-                    },
-                    // refers to bar::in::x.
-                    T(D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[20]),
-                        Anchor(kTestCase.expected_tokens[22]),
-                        Anchor(kTestCase.expected_tokens[24]),
-                    }))))));
+                // refers to bar::in::x.
+                T(D{
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[20], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[22], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -1957,18 +1920,17 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationNoArgs) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function foo
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[1]),
-            }),
-            // refers to task bar
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[5]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function foo
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+        }),
+        // refers to task bar
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -1993,52 +1955,51 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function foo
-            T(
-                D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                })),
-            // refers to task bar
-            T(
-                D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[13]),
-                },
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[15]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[17]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[19]),
-                }),
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[21]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function foo
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            })),
+        // refers to task bar
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            },
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            }),
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -2070,34 +2031,32 @@ TEST(FactsTreeExtractor, ClassMember) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module m
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module m
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // anonymous scope for initial.
-                T(
-                    D{
-                        IndexingFactType::kAnonymousScope,
-                        Anchor(absl::make_unique<std::string>(
-                            "anonymous-scope-0")),
-                    },
-                    // refers to my_class.x
-                    T(D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to my_class.instance1.x
-                    T(D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                        Anchor(kTestCase.expected_tokens[9]),
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }))))));
+                // refers to my_class.x
+                T(D{
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to my_class.instance1.x
+                T(D{
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -2132,39 +2091,37 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function foo
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[1]),
-            }),
-            // refers to task bar
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[5]),
-            }),
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function foo
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+        }),
+        // refers to task bar
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+        }),
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            },
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[9]),
-                    Anchor(kTestCase.expected_tokens[15]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // anonymous scope for initial.
-                T(
-                    D{
-                        IndexingFactType::kAnonymousScope,
-                        Anchor(absl::make_unique<std::string>(
-                            "anonymous-scope-0")),
-                    },
-                    T(D{
-                        IndexingFactType::kFunctionCall,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }),
-                    T(D{
-                        IndexingFactType::kFunctionCall,
-                        Anchor(kTestCase.expected_tokens[13]),
-                    }))))));
+                T(D{
+                    IndexingFactType::kFunctionCall,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                }),
+                T(D{
+                    IndexingFactType::kFunctionCall,
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -2241,154 +2198,149 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(
-          T(
-              project.XUnit().ExpectedFileData(),
-              // refers to class inner.
-              T(
-                  D{
-                      IndexingFactType::kClass,
-                      Anchor(kTestCase.expected_tokens[1]),
-                  },
-                  // refers to function my_fun.
-                  T(D{
-                      IndexingFactType::kFunctionOrTask,
-                      Anchor(kTestCase.expected_tokens[3]),
-                  }),
-                  // refers to function fun_2.
-                  T(
-                      D{
-                          IndexingFactType::kFunctionOrTask,
-                          Anchor(kTestCase.expected_tokens[5]),
-                      },
-                      // refers to x arg in fun_2.
-                      T(D{
-                          IndexingFactType::kVariableDefinition,
-                          Anchor(kTestCase.expected_tokens[7]),
-                      }),
-                      // refers to y arg in fun_2.
-                      T(D{
-                          IndexingFactType::kVariableDefinition,
-                          Anchor(kTestCase.expected_tokens[9]),
-                      }),
-                      // refers to x.
-                      T(D{
-                          IndexingFactType::kVariableReference,
-                          Anchor(kTestCase.expected_tokens[11]),
-                      }),
-                      // refers to x.
-                      T(D{
-                          IndexingFactType::kVariableReference,
-                          Anchor(kTestCase.expected_tokens[13]),
-                      }))),
-              // refers to class bar.
-              T(
-                  D{
-                      IndexingFactType::kClass,
-                      Anchor(kTestCase.expected_tokens[16]),
-                      Anchor(kTestCase.expected_tokens[22]),
-                  },
-                  // refers to inner in1.
-                  T(
-                      D{
-                          IndexingFactType::kDataTypeReference,
-                          Anchor(kTestCase.expected_tokens[18]),
-                      },
-                      // refers to in1.
-                      T(D{
-                          IndexingFactType::kClassInstance,
-                          Anchor(kTestCase.expected_tokens[20]),
-                      }))),
-              // refers to module foo.
-              T(
-                  D{
-                      IndexingFactType::kModule,
-                      Anchor(kTestCase.expected_tokens[24]),
-                  },
-                  // refers to bar.
-                  T(
-                      D{
-                          IndexingFactType::kDataTypeReference,
-                          Anchor(kTestCase.expected_tokens[26]),
-                      },
-                      // refers to b1.
-                      T(D{
-                          IndexingFactType::kClassInstance,
-                          Anchor(kTestCase.expected_tokens[28]),
-                      })),
-                  // anonymous scope for initial.
-                  T(
-                      D{
-                          IndexingFactType::kAnonymousScope,
-                          Anchor(absl::make_unique<std::string>(
-                              "anonymous-scope-0")),
-                      },
-                      // refers to bar::in::my_fun().
-                      T(D{
-                          IndexingFactType::kFunctionCall,
-                          Anchor(kTestCase.expected_tokens[30]),
-                          Anchor(kTestCase.expected_tokens[32]),
-                          Anchor(kTestCase.expected_tokens[34]),
-                      })),
-                  // anonymous scope for initial.
-                  T(
-                      D{
-                          IndexingFactType::kAnonymousScope,
-                          Anchor(absl::make_unique<std::string>(
-                              "anonymous-scope-1")),
-                      },
-                      // refers to bar::in.my_fun().
-                      T(D{
-                          IndexingFactType::kFunctionCall,
-                          Anchor(kTestCase.expected_tokens[36]),
-                          Anchor(kTestCase.expected_tokens[38]),
-                          Anchor(kTestCase.expected_tokens[40]),
-                      })),
-                  // refers to inner in1.
-                  T(
-                      D{
-                          IndexingFactType::kDataTypeReference,
-                          Anchor(kTestCase.expected_tokens[42]),
-                      },
-                      // refers to in1.
-                      T(D{
-                          IndexingFactType::kClassInstance,
-                          Anchor(kTestCase.expected_tokens[44]),
-                      })),
-                  // refers to int x.
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[46]),
-                  }),
-                  // refers to int y.
-                  T(D{
-                      IndexingFactType::kVariableDefinition,
-                      Anchor(kTestCase.expected_tokens[48]),
-                  }),
-                  // anonymous scope for initial.
-                  T(
-                      D{
-                          IndexingFactType::kAnonymousScope,
-                          Anchor(absl::make_unique<std::string>(
-                              "anonymous-scope-2")),
-                      },
-                      // refers to in1.my_fun().
-                      T(
-                          D{
-                              IndexingFactType::kFunctionCall,
-                              Anchor(kTestCase.expected_tokens[50]),
-                              Anchor(kTestCase.expected_tokens[52]),
-                          },
-                          // refers to x.
-                          T(D{
-                              IndexingFactType::kVariableReference,
-                              Anchor(kTestCase.expected_tokens[54]),
-                          }),
-                          // refers to y.
-                          T(D{
-                              IndexingFactType::kVariableReference,
-                              Anchor(kTestCase.expected_tokens[56]),
-                          })))))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class inner.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to function my_fun.
+            T(D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to function fun_2.
+            T(
+                D{
+                    IndexingFactType::kFunctionOrTask,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                },
+                // refers to x arg in fun_2.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                }),
+                // refers to y arg in fun_2.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                }),
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                }),
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                }))),
+        // refers to class bar.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[22], kTestCase.code),
+            },
+            // refers to inner in1.
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[18], kTestCase.code),
+                },
+                // refers to in1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[20], kTestCase.code),
+                }))),
+        // refers to module foo.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+            },
+            // refers to bar.
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[26], kTestCase.code),
+                },
+                // refers to b1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[28], kTestCase.code),
+                })),
+            // anonymous scope for initial.
+            T(
+                D{
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
+                },
+                // refers to bar::in::my_fun().
+                T(D{
+                    IndexingFactType::kFunctionCall,
+                    Anchor(kTestCase.expected_tokens[30], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                })),
+            // anonymous scope for initial.
+            T(
+                D{
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-1"),
+                },
+                // refers to bar::in.my_fun().
+                T(D{
+                    IndexingFactType::kFunctionCall,
+                    Anchor(kTestCase.expected_tokens[36], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[38], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[40], kTestCase.code),
+                })),
+            // refers to inner in1.
+            T(
+                D{
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[42], kTestCase.code),
+                },
+                // refers to in1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[44], kTestCase.code),
+                })),
+            // refers to int x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[46], kTestCase.code),
+            }),
+            // refers to int y.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[48], kTestCase.code),
+            }),
+            // anonymous scope for initial.
+            T(
+                D{
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-2"),
+                },
+                // refers to in1.my_fun().
+                T(
+                    D{
+                        IndexingFactType::kFunctionCall,
+                        Anchor(kTestCase.expected_tokens[50], kTestCase.code),
+                        Anchor(kTestCase.expected_tokens[52], kTestCase.code),
+                    },
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[54], kTestCase.code),
+                    }),
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[56], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -2414,13 +2366,12 @@ TEST(FactsTreeExtractor, ThisAsFunctionCall) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to r.
-            T(D{
-                IndexingFactType::kVariableDefinition,
-                Anchor(kTestCase.expected_tokens[0]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to r.
+        T(D{
+            IndexingFactType::kVariableDefinition,
+            Anchor(kTestCase.expected_tokens[0], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -2462,45 +2413,44 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to macro PRINT_STRING.
-            T(
-                D{
-                    IndexingFactType::kMacro,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to str1 arg in PRINT_STRING.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })),
-            // refers to macro PRINT_3_STRING.
-            T(
-                D{
-                    IndexingFactType::kMacro,
-                    Anchor(kTestCase.expected_tokens[6]),
-                },
-                // refers to str1 arg in PRINT_3_STRING.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[8]),
-                }),
-                // refers to str2 arg in PRINT_3_STRING.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[10]),
-                }),
-                // refers to str3 arg in PRINT_3_STRING.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[12]),
-                })),
-            // refers to macro TEN.
-            T(D{
+      T(project.XUnit().ExpectedFileData(),
+        // refers to macro PRINT_STRING.
+        T(
+            D{
                 IndexingFactType::kMacro,
-                Anchor(kTestCase.expected_tokens[16]),
-            }))));
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to str1 arg in PRINT_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })),
+        // refers to macro PRINT_3_STRING.
+        T(
+            D{
+                IndexingFactType::kMacro,
+                Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+            },
+            // refers to str1 arg in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+            }),
+            // refers to str2 arg in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+            }),
+            // refers to str3 arg in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+            })),
+        // refers to macro TEN.
+        T(D{
+            IndexingFactType::kMacro,
+            Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -2564,100 +2514,98 @@ TEST(FactsTreeExtractor, MacroCallTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(T(
-          project.XUnit().ExpectedFileData(),
-          // refers to macro PRINT_STRING.
-          T(
-              D{
-                  IndexingFactType::kMacro,
-                  Anchor(kTestCase.expected_tokens[1]),
-              },
-              // refers to str1 in PRINT_STRING.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase.expected_tokens[3]),
-              })),
-          // refers to macro PRINT_3_STRING.
-          T(
-              D{
-                  IndexingFactType::kMacro,
-                  Anchor(kTestCase.expected_tokens[6]),
-              },
-              // refers to str1 in PRINT_3_STRING.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase.expected_tokens[8]),
-              }),
-              // refers to str2 in PRINT_3_STRING.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase.expected_tokens[10]),
-              }),
-              // refers to str3 in PRINT_3_STRING.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase.expected_tokens[12]),
-              })),
-          // refers to macro TEN.
-          T(D{
-              IndexingFactType::kMacro,
-              Anchor(kTestCase.expected_tokens[16]),
-          }),
-          // refers to macro NUM.
-          T(
-              D{
-                  IndexingFactType::kMacro,
-                  Anchor(kTestCase.expected_tokens[19]),
-              },
-              // refers to i in macro NUM.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase.expected_tokens[21]),
-              })),
-          // refers to module macro.
-          T(
-              D{
-                  IndexingFactType::kModule,
-                  Anchor(kTestCase.expected_tokens[24]),
-              },
-              // anonymous scope for initial.
-              T(
-                  D{
-                      IndexingFactType::kAnonymousScope,
-                      Anchor(
-                          absl::make_unique<std::string>("anonymous-scope-0")),
-                  },
-                  // refers to macro call PRINT_3_STRINGS.
-                  T(D{
-                      IndexingFactType::kMacroCall,
-                      Anchor(kTestCase.expected_tokens[26]),
-                  }),
-                  // refers to macro call TEN.
-                  T(D{
-                      IndexingFactType::kMacroCall,
-                      Anchor(kTestCase.expected_tokens[29]),
-                  }),
-                  // refers to macro call NUM.
-                  T(
-                      D{
-                          IndexingFactType::kMacroCall,
-                          Anchor(kTestCase.expected_tokens[32]),
-                      },  // refers to macro call TEN.
-                      T(D{
-                          IndexingFactType::kMacroCall,
-                          Anchor(kTestCase.expected_tokens[34]),
-                      })),
-                  // refers to parm x
-                  T(
-                      D{
-                          IndexingFactType::kParamDeclaration,
-                          Anchor(kTestCase.expected_tokens[37]),
-                      },
-                      // refers to macro call TEN.
-                      T(D{
-                          IndexingFactType::kMacroCall,
-                          Anchor(kTestCase.expected_tokens[39]),
-                      })))))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to macro PRINT_STRING.
+        T(
+            D{
+                IndexingFactType::kMacro,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to str1 in PRINT_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })),
+        // refers to macro PRINT_3_STRING.
+        T(
+            D{
+                IndexingFactType::kMacro,
+                Anchor(kTestCase.expected_tokens[6], kTestCase.code),
+            },
+            // refers to str1 in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[8], kTestCase.code),
+            }),
+            // refers to str2 in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+            }),
+            // refers to str3 in PRINT_3_STRING.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+            })),
+        // refers to macro TEN.
+        T(D{
+            IndexingFactType::kMacro,
+            Anchor(kTestCase.expected_tokens[16], kTestCase.code),
+        }),
+        // refers to macro NUM.
+        T(
+            D{
+                IndexingFactType::kMacro,
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            },
+            // refers to i in macro NUM.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+            })),
+        // refers to module macro.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[24], kTestCase.code),
+            },
+            // anonymous scope for initial.
+            T(
+                D{
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
+                },
+                // refers to macro call PRINT_3_STRINGS.
+                T(D{
+                    IndexingFactType::kMacroCall,
+                    Anchor(kTestCase.expected_tokens[26], kTestCase.code),
+                }),
+                // refers to macro call TEN.
+                T(D{
+                    IndexingFactType::kMacroCall,
+                    Anchor(kTestCase.expected_tokens[29], kTestCase.code),
+                }),
+                // refers to macro call NUM.
+                T(
+                    D{
+                        IndexingFactType::kMacroCall,
+                        Anchor(kTestCase.expected_tokens[32], kTestCase.code),
+                    },  // refers to macro call TEN.
+                    T(D{
+                        IndexingFactType::kMacroCall,
+                        Anchor(kTestCase.expected_tokens[34], kTestCase.code),
+                    })),
+                // refers to parm x
+                T(
+                    D{
+                        IndexingFactType::kParamDeclaration,
+                        Anchor(kTestCase.expected_tokens[37], kTestCase.code),
+                    },
+                    // refers to macro call TEN.
+                    T(D{
+                        IndexingFactType::kMacroCall,
+                        Anchor(kTestCase.expected_tokens[39], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -2697,52 +2645,51 @@ TEST(PackageImportTest, PackageAndImportedItemName) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg1.
-            T(D{
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg1.
+        T(D{
+            IndexingFactType::kPackage,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+        }),
+        // refers to package pkg.
+        T(
+            D{
                 IndexingFactType::kPackage,
-                Anchor(kTestCase.expected_tokens[1]),
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            },
+            // refers to class my_class.
+            T(D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
             }),
-            // refers to package pkg.
-            T(
-                D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[3]),
-                },
-                // refers to class my_class.
-                T(D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to function my_function.
-                T(D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[7]),
-                })),
-            // refers to module m..
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[9]),
-                },
-                // refers to import pkg1::*.
-                T(D{
-                    IndexingFactType::kPackageImport,
-                    Anchor(kTestCase.expected_tokens[11]),
-                }),
-                // refers to import pkg::my_function.
-                T(D{
-                    IndexingFactType::kPackageImport,
-                    Anchor(kTestCase.expected_tokens[13]),
-                    Anchor(kTestCase.expected_tokens[15]),
-                }),
-                // refers to import pkg::my_class.
-                T(D{
-                    IndexingFactType::kPackageImport,
-                    Anchor(kTestCase.expected_tokens[17]),
-                    Anchor(kTestCase.expected_tokens[19]),
-                })))));
+            // refers to function my_function.
+            T(D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            })),
+        // refers to module m..
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            },
+            // refers to import pkg1::*.
+            T(D{
+                IndexingFactType::kPackageImport,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            }),
+            // refers to import pkg::my_function.
+            T(D{
+                IndexingFactType::kPackageImport,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            // refers to import pkg::my_class.
+            T(D{
+                IndexingFactType::kPackageImport,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -2776,43 +2723,41 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to class my_class.
+            T(D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to wire x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            })),
+        // refers to module m..
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // refers to class my_class.
+                // refers to $display(pkg::x).
                 T(D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to wire x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                })),
-            // refers to module m..
-            T(
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[7]),
-                },
-                // anonymous scope for initial.
-                T(
-                    D{
-                        IndexingFactType::kAnonymousScope,
-                        Anchor(absl::make_unique<std::string>(
-                            "anonymous-scope-0")),
-                    },
-                    // refers to $display(pkg::x).
-                    T(D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[10]),
-                        Anchor(kTestCase.expected_tokens[12]),
-                    }))))));
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[10], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[12], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -2858,78 +2803,77 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function m.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers foo(.A, .B).
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers foo(.A, .B).
+                // refers A.
                 T(
                     D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[3]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
-                    // refers A.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[5]),
-                        },
-                        // refers var1.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[7]),
-                        })),
-                    // refers B.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[9]),
-                        },
-                        // refers var2.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        }))),
-                // refers barc(.X, .W).
+                    // refers var1.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                    })),
+                // refers B.
                 T(
                     D{
-                        IndexingFactType::kMemberReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                        Anchor(kTestCase.expected_tokens[13]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                     },
-                    // refers X.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[15]),
-                        },
-                        // refers var1.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[17]),
-                        })),
-                    // refers W.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[19]),
-                        },
-                        // refers var2.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[21]),
-                        }))),
-                // refers var2.
-                T(D{
-                    IndexingFactType::kFunctionCall,
-                    Anchor(kTestCase.expected_tokens[3]),
-                    Anchor(kTestCase.expected_tokens[13]),
-                    Anchor(kTestCase.expected_tokens[23]),
-                })))));
+                    // refers var2.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                    }))),
+            // refers barc(.X, .W).
+            T(
+                D{
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                },
+                // refers X.
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                    },
+                    // refers var1.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                    })),
+                // refers W.
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                    },
+                    // refers var2.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                    }))),
+            // refers var2.
+            T(D{
+                IndexingFactType::kFunctionCall,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -2953,19 +2897,18 @@ TEST(PackageImportTest, UserDefinedType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class stack.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to some_type.
-                T(D{
-                    IndexingFactType::kTypeDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class stack.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to some_type.
+            T(D{
+                IndexingFactType::kTypeDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -2995,29 +2938,28 @@ TEST(PackageImportTest, SelectVariableDimension) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to task t.
-            T(
-                D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to y.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to x.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to y.
-                T(D{
-                    IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[7]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to task t.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to y.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to x.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to y.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -3041,19 +2983,18 @@ TEST(PackageImportTest, ClassParameterType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class stack.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to T.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class stack.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to T.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -3083,30 +3024,29 @@ TEST(PackageImportTest, ClassInstanceWithParams) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to clt#(x) v1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to clt#(x) v1.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to v1.
-                    T(D{
-                        IndexingFactType::kClassInstance,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to v1.
+                T(D{
+                    IndexingFactType::kClassInstance,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -3131,14 +3071,13 @@ TEST(PackageImportTest, PackageTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
-            T(D{
-                IndexingFactType::kPackage,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(D{
+            IndexingFactType::kPackage,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -3180,71 +3119,69 @@ TEST(FactsTreeExtractor, ForLoopInitializations) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function foo
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function foo
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // anonymous scope for initial.
-                T(
-                    D{
-                        IndexingFactType::kAnonymousScope,
-                        Anchor(absl::make_unique<std::string>(
-                            "anonymous-scope-0")),
-                    },
-                    // refers to i
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }),
-                    // refers to j
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to tm
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }),
-                    // refers to l
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    }),
-                    // refers to r
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    }),
-                    // refers to i
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[13]),
-                    }),
-                    // refers to i
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[15]),
-                    }),
-                    // refers to x
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[17]),
-                    }),
-                    // refers to i
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[19]),
-                    })),
+                // refers to i
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                }),
+                // refers to j
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to tm
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                }),
+                // refers to l
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                }),
+                // refers to r
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                }),
+                // refers to i
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                }),
+                // refers to i
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                }),
                 // refers to x
                 T(D{
                     IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[21]),
-                })))));
+                    Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                }),
+                // refers to i
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                })),
+            // refers to x
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -3274,31 +3211,30 @@ TEST(FactsTreeExtractor, ClassExtends) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class X.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
-                },
-                // refers to Y.
-                T(D{
-                    IndexingFactType::kExtends,
-                    Anchor(kTestCase.expected_tokens[3]),
-                })),
-            // refers to H.
-            T(
-                D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[5]),
-                },
-                // refers to G::K.
-                T(D{
-                    IndexingFactType::kExtends,
-                    Anchor(kTestCase.expected_tokens[7]),
-                    Anchor(kTestCase.expected_tokens[9]),
-                })))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class X.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to Y.
+            T(D{
+                IndexingFactType::kExtends,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })),
+        // refers to H.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to G::K.
+            T(D{
+                IndexingFactType::kExtends,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }))));
 
   const auto facts_tree = project.Extract();
 
@@ -3340,68 +3276,67 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to module parameter x.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to class parameter y.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to class input x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
-                // refers to module parameter x.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to class parameter y.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to class input x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to bar.
+                // refers to .p1(x).
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
-                    // refers to .p1(x).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        },
-                        // refers to x.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[13]),
-                        })),
-                    // refers to .p2(y).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[15]),
-                        },
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[17]),
-                        })),
-                    // refers to b1.
-                    T(
-                        D{
-                            IndexingFactType::kModuleInstance,
-                            Anchor(kTestCase.expected_tokens[19]),
-                        },
-                        // refers to z.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[21]),
-                        })))))));
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                    })),
+                // refers to .p2(y).
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                    },
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                    })),
+                // refers to b1.
+                T(
+                    D{
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                    },
+                    // refers to z.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -3443,68 +3378,67 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to interface m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to interface m.
+        T(
+            D{
+                IndexingFactType::kInterface,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to module parameter x.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to class parameter y.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to class input x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kInterface,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
-                // refers to module parameter x.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to class parameter y.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to class input x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to bar.
+                // refers to .p1(x).
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
-                    // refers to .p1(x).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        },
-                        // refers to x.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[13]),
-                        })),
-                    // refers to .p2(y).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[15]),
-                        },
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[17]),
-                        })),
-                    // refers to b1.
-                    T(
-                        D{
-                            IndexingFactType::kModuleInstance,
-                            Anchor(kTestCase.expected_tokens[19]),
-                        },
-                        // refers to z.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[21]),
-                        })))))));
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                    })),
+                // refers to .p2(y).
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                    },
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                    })),
+                // refers to b1.
+                T(
+                    D{
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                    },
+                    // refers to z.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -3530,25 +3464,24 @@ TEST(FactsTreeExtractor, ClassAsPort) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to class_type.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to class_type.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -3590,68 +3523,67 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to program m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to program m.
+        T(
+            D{
+                IndexingFactType::kProgram,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to module parameter x.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to class parameter y.
+            T(D{
+                IndexingFactType::kParamDeclaration,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to class input x.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            }),
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kProgram,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
-                // refers to module parameter x.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to class parameter y.
-                T(D{
-                    IndexingFactType::kParamDeclaration,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to class input x.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[7]),
-                }),
-                // refers to bar.
+                // refers to .p1(x).
                 T(
                     D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
                     },
-                    // refers to .p1(x).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        },
-                        // refers to x.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[13]),
-                        })),
-                    // refers to .p2(y).
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[15]),
-                        },
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[17]),
-                        })),
-                    // refers to b1.
-                    T(
-                        D{
-                            IndexingFactType::kModuleInstance,
-                            Anchor(kTestCase.expected_tokens[19]),
-                        },
-                        // refers to z.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[21]),
-                        })))))));
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+                    })),
+                // refers to .p2(y).
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+                    },
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+                    })),
+                // refers to b1.
+                T(
+                    D{
+                        IndexingFactType::kModuleInstance,
+                        Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+                    },
+                    // refers to z.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[21], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -3695,72 +3627,71 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to k.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to y.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to x.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to k.
+                // refers to l.
                 T(D{
                     IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[3]),
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 }),
-                // refers to y.
+                // refers to r.
                 T(D{
                     IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to x.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to l.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    }),
-                    // refers to r.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }))),
-            // refers to module m.
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                }))),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            },
+            // refers to j.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            // refers to o.
+            T(D{
+                IndexingFactType::kVariableReference,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            }),
+            // refers to v.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[13]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[19], kTestCase.code),
                 },
-                // refers to j.
+                // refers to e.
                 T(D{
                     IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[15]),
+                    Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                 }),
-                // refers to o.
+                // refers to t.
                 T(D{
                     IndexingFactType::kVariableReference,
-                    Anchor(kTestCase.expected_tokens[17]),
-                }),
-                // refers to v.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[19]),
-                    },
-                    // refers to e.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[21]),
-                    }),
-                    // refers to t.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[23]),
-                    }))))));
+                    Anchor(kTestCase.expected_tokens[23], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -3803,47 +3734,43 @@ TEST(FactsTreeExtractor, FileIncludes) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.IncludeFile().RebaseFileTree(
-          T(project.IncludeFile().ExpectedFileData(),
-            // refers to class my_class.
+      T(project.IncludeFile().ExpectedFileData(),
+        // refers to class my_class.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase0.expected_tokens[1], kTestCase0.code),
+            },
+            // refers to int var5.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase0.expected_tokens[3], kTestCase0.code),
+            }))),
+      T(project.XUnit().ExpectedFileData(),
+        // refers to include.
+        T(D{
+            IndexingFactType::kInclude,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(project.IncludeFile().source_file->ResolvedPath()),
+        }),
+        // refers to module my_module.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            },
+            // anonymous scope for initial.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase0.expected_tokens[1]),
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
                 },
-                // refers to int var5.
+                // refers to $display(my_class::var5).
                 T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase0.expected_tokens[3]),
-                })))),
-      project.XUnit().RebaseFileTree(T(
-          project.XUnit().ExpectedFileData(),
-          // refers to include.
-          T(D{
-              IndexingFactType::kInclude,
-              Anchor(kTestCase.expected_tokens[1]),
-              Anchor(absl::make_unique<std::string>(
-                  project.IncludeFile().source_file->ResolvedPath())),
-          }),
-          // refers to module my_module.
-          T(
-              D{
-                  IndexingFactType::kModule,
-                  Anchor(kTestCase.expected_tokens[3]),
-              },
-              // anonymous scope for initial.
-              T(
-                  D{
-                      IndexingFactType::kAnonymousScope,
-                      Anchor(
-                          absl::make_unique<std::string>("anonymous-scope-0")),
-                  },
-                  // refers to $display(my_class::var5).
-                  T(D{
-                      IndexingFactType::kMemberReference,
-                      Anchor(kTestCase.expected_tokens[5]),
-                      Anchor(kTestCase.expected_tokens[7]),
-                  }))))));
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -3878,25 +3805,23 @@ TEST(FactsTreeExtractor, IncludedFileContainsParseError) {
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
       // No subtree from project.IncludeFile(), due to parse error.
-      project.XUnit().RebaseFileTree(
-          T(project.XUnit().ExpectedFileData(),
-            // refers to include.
-            T(D{
-                IndexingFactType::kInclude,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(absl::make_unique<std::string>(
-                    project.IncludeFile().source_file->ResolvedPath())),
-            }),
-            // refers to module my_module.
-            T(D{
-                IndexingFactType::kModule,
-                Anchor(kTestCase.expected_tokens[3]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to include.
+        T(D{
+            IndexingFactType::kInclude,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(project.IncludeFile().source_file->ResolvedPath()),
+        }),
+        // refers to module my_module.
+        T(D{
+            IndexingFactType::kModule,
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
   // Check that a parse error was recorded.
-  const auto statuses(project.GetErrorStatuses());
+  const auto statuses(project.Errors());
   ASSERT_EQ(statuses.size(), 1);
   EXPECT_EQ(statuses.front().code(), absl::StatusCode::kInvalidArgument);
 
@@ -3929,20 +3854,19 @@ TEST(FactsTreeExtractor, IncludedFileNotFound) {
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
       // included file was not found, and ignored
-      project.XUnit().RebaseFileTree(
-          T(project.XUnit().ExpectedFileData(),
-            // No include node created.
-            T(
-                // refers to module my_module.
-                D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }))));
+      T(project.XUnit().ExpectedFileData(),
+        // No include node created.
+        T(
+            // refers to module my_module.
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            })));
 
   const auto facts_tree = project.Extract();
 
   // Confirm that we have an error status.
-  const auto statuses(project.GetErrorStatuses());
+  const auto statuses(project.Errors());
   ASSERT_EQ(statuses.size(), 1);
   EXPECT_EQ(statuses.front().code(), absl::StatusCode::kNotFound);
 
@@ -3985,56 +3909,51 @@ TEST(FactsTreeExtractor, FileIncludeSameFileTwice) {
   IncludeTestProject project(kTestCase.code, included_file_basename,
                              kTestCase0.code, {::testing::TempDir()});
 
-  const IndexingFactNode expected(  //
-      project.ExpectedFileListData(),
-      project.IncludeFile().RebaseFileTree(T(  //
-          project.IncludeFile().ExpectedFileData(),
-          // refers to class my_class.
-          T(
-              D{
-                  IndexingFactType::kClass,
-                  Anchor(kTestCase0.expected_tokens[1]),
-              },
-              // refers to int var5.
-              T(D{
-                  IndexingFactType::kVariableDefinition,
-                  Anchor(kTestCase0.expected_tokens[3]),
-              })))),
-      project.XUnit().RebaseFileTree(T(  //
-          project.XUnit().ExpectedFileData(),
-          // refers to include.
-          T(D{
-              IndexingFactType::kInclude,
-              Anchor(kTestCase.expected_tokens[1]),
-              Anchor(absl::make_unique<std::string>(
-                  project.IncludeFile().source_file->ResolvedPath())),
-          }),
-          // refers to include (duplicate).
-          T(D{
-              IndexingFactType::kInclude,
-              Anchor(kTestCase.expected_tokens[3]),
-              Anchor(absl::make_unique<std::string>(
-                  project.IncludeFile().source_file->ResolvedPath())),
-          }),
-          // refers to module my_module.
-          T(
-              D{
-                  IndexingFactType::kModule,
-                  Anchor(kTestCase.expected_tokens[5]),
-              },
-              // anonymous scope for initial.
-              T(
-                  D{
-                      IndexingFactType::kAnonymousScope,
-                      Anchor(
-                          absl::make_unique<std::string>("anonymous-scope-0")),
-                  },
-                  // refers to $display(my_class::var5).
-                  T(D{
-                      IndexingFactType::kMemberReference,
-                      Anchor(kTestCase.expected_tokens[7]),
-                      Anchor(kTestCase.expected_tokens[9]),
-                  }))))));
+  const IndexingFactNode expected(                 //
+      project.ExpectedFileListData(),              //
+      T(project.IncludeFile().ExpectedFileData(),  //
+                                                   // refers to class my_class.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase0.expected_tokens[1], kTestCase0.code),
+            },
+            // refers to int var5.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase0.expected_tokens[3], kTestCase0.code),
+            }))),
+      T(project.XUnit().ExpectedFileData(),  //
+                                             // refers to include.
+        T(D{
+            IndexingFactType::kInclude,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(project.IncludeFile().source_file->ResolvedPath()),
+        }),
+        // refers to include (duplicate).
+        T(D{
+            IndexingFactType::kInclude,
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            Anchor(project.IncludeFile().source_file->ResolvedPath()),
+        }),
+        // refers to module my_module.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // anonymous scope for initial.
+            T(
+                D{
+                    IndexingFactType::kAnonymousScope,
+                    Anchor("anonymous-scope-0"),
+                },
+                // refers to $display(my_class::var5).
+                T(D{
+                    IndexingFactType::kMemberReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4091,102 +4010,101 @@ TEST(FactsTreeExtractor, EnumTest) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to AA.
+            T(D{
+                IndexingFactType::kConstant,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to enum m_var.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            }),
+            // refers to enum var.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+            }),
+            // refers to BB.
+            T(D{
+                IndexingFactType::kConstant,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            })),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+            },
+            // refers to CC.
+            T(D{
+                IndexingFactType::kConstant,
+                Anchor(kTestCase.expected_tokens[13], kTestCase.code),
+            }),
+            // refers to enum m_var.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[15], kTestCase.code),
+            }),
+            // refers to enum var2.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[19], kTestCase.code),
+            }),
+            // refers to DD.
+            T(D{
+                IndexingFactType::kConstant,
+                Anchor(kTestCase.expected_tokens[17], kTestCase.code),
+            }),
+            // refers to GG.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kConstant,
+                    Anchor(kTestCase.expected_tokens[21], kTestCase.code),
                 },
-                // refers to AA.
+                // refers to y.
                 T(D{
-                    IndexingFactType::kConstant,
-                    Anchor(kTestCase.expected_tokens[3]),
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[23], kTestCase.code),
                 }),
-                // refers to enum m_var.
+                // refers to idx.
                 T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
-                }),
-                // refers to enum var.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[9]),
-                }),
-                // refers to BB.
-                T(D{
-                    IndexingFactType::kConstant,
-                    Anchor(kTestCase.expected_tokens[7]),
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[25], kTestCase.code),
                 })),
-            // refers to module m.
+            // refers to enum var3.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[27], kTestCase.code),
+            }),
+            // refers to enum var5.
+            T(D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[35], kTestCase.code),
+            }),
+            // refers to HH.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[11]),
+                    IndexingFactType::kConstant,
+                    Anchor(kTestCase.expected_tokens[29], kTestCase.code),
                 },
-                // refers to CC.
+                // refers to yh.
                 T(D{
-                    IndexingFactType::kConstant,
-                    Anchor(kTestCase.expected_tokens[13]),
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[31], kTestCase.code),
                 }),
-                // refers to enum m_var.
+                // refers to idx2.
                 T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[15]),
-                }),
-                // refers to enum var2.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[19]),
-                }),
-                // refers to DD.
-                T(D{
-                    IndexingFactType::kConstant,
-                    Anchor(kTestCase.expected_tokens[17]),
-                }),
-                // refers to GG.
-                T(
-                    D{
-                        IndexingFactType::kConstant,
-                        Anchor(kTestCase.expected_tokens[21]),
-                    },
-                    // refers to y.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[23]),
-                    }),
-                    // refers to idx.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[25]),
-                    })),
-                // refers to enum var3.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[27]),
-                }),
-                // refers to enum var5.
-                T(D{
-                    IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[35]),
-                }),
-                // refers to HH.
-                T(
-                    D{
-                        IndexingFactType::kConstant,
-                        Anchor(kTestCase.expected_tokens[29]),
-                    },
-                    // refers to yh.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[31]),
-                    }),
-                    // refers to idx2.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[33]),
-                    }))))));
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[33], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4213,25 +4131,24 @@ TEST(FactsTreeExtractor, NonLiteralIncludeSafeFail) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module pkg.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4257,25 +4174,24 @@ TEST(FactsTreeExtractor, StructInModule) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module pkg.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4303,30 +4219,29 @@ TEST(FactsTreeExtractor, ClassConstructor) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class my_class.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class my_class.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to new.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kConstructor,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to new.
-                T(
-                    D{
-                        IndexingFactType::kConstructor,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4352,25 +4267,24 @@ TEST(FactsTreeExtractor, StructInPackage) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4396,25 +4310,24 @@ TEST(FactsTreeExtractor, UnionInModule) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module pkg.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4440,25 +4353,24 @@ TEST(FactsTreeExtractor, UnionInPackage) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4484,25 +4396,24 @@ TEST(FactsTreeExtractor, UnionTypeInPackage) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kStructOrUnion,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kStructOrUnion,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4528,25 +4439,24 @@ TEST(FactsTreeExtractor, UnionTypenModule) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module pkg.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kStructOrUnion,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kStructOrUnion,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4572,25 +4482,24 @@ TEST(FactsTreeExtractor, StructTypeInPackage) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package pkg.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kStructOrUnion,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kStructOrUnion,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4616,25 +4525,24 @@ TEST(FactsTreeExtractor, StructTypedefModule) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to module pkg.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to module pkg.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to var1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kStructOrUnion,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to var1.
-                T(
-                    D{
-                        IndexingFactType::kStructOrUnion,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4660,25 +4568,24 @@ TEST(FactsTreeExtractor, DataTypeReferenceInUnionType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to struct var1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to struct var1.
+        T(
+            D{
+                IndexingFactType::kStructOrUnion,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to some_type var1.
             T(
                 D{
-                    IndexingFactType::kStructOrUnion,
-                    Anchor(kTestCase.expected_tokens[5]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[1], kTestCase.code),
                 },
-                // refers to some_type var1.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[1]),
-                    },
-                    // refers to var1.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to var1.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4704,25 +4611,24 @@ TEST(FactsTreeExtractor, StructInUnionType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to union var1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to union var1.
+        T(
+            D{
+                IndexingFactType::kStructOrUnion,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to struct var2.
             T(
                 D{
-                    IndexingFactType::kStructOrUnion,
-                    Anchor(kTestCase.expected_tokens[5]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to struct var2.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[1]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4748,25 +4654,24 @@ TEST(FactsTreeExtractor, StructInUnion) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to union var1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to union var1.
+        T(
+            D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to struct var2.
             T(
                 D{
                     IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to struct var2.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[1]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4792,25 +4697,24 @@ TEST(FactsTreeExtractor, UnionInStructType) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to union var1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to union var1.
+        T(
+            D{
+                IndexingFactType::kStructOrUnion,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to struct var2.
             T(
                 D{
-                    IndexingFactType::kStructOrUnion,
-                    Anchor(kTestCase.expected_tokens[5]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to struct var2.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[1]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4836,25 +4740,24 @@ TEST(FactsTreeExtractor, UnionInStruct) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to union var1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to union var1.
+        T(
+            D{
+                IndexingFactType::kVariableDefinition,
+                Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            },
+            // refers to struct var2.
             T(
                 D{
                     IndexingFactType::kVariableDefinition,
-                    Anchor(kTestCase.expected_tokens[5]),
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to struct var2.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[1]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4888,42 +4791,41 @@ TEST(FactsTreeExtractor, TypedVariable) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to package m.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to package m.
+        T(
+            D{
+                IndexingFactType::kPackage,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to some_type.
             T(
                 D{
-                    IndexingFactType::kPackage,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to some_type.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to var1.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))),
-            // refers to module m.
+                // refers to var1.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }))),
+        // refers to module m.
+        T(
+            D{
+                IndexingFactType::kModule,
+                Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+            },
+            // refers to some_type1.
             T(
                 D{
-                    IndexingFactType::kModule,
-                    Anchor(kTestCase.expected_tokens[7]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
                 },
-                // refers to some_type1.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    },
-                    // refers to var2.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }))))));
+                // refers to var2.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -4953,20 +4855,19 @@ TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function pkg::f.
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[1]),
-                Anchor(kTestCase.expected_tokens[3]),
-            }),
-            // refers to task pkg::t.
-            T(D{
-                IndexingFactType::kFunctionOrTask,
-                Anchor(kTestCase.expected_tokens[5]),
-                Anchor(kTestCase.expected_tokens[7]),
-            }))));
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function pkg::f.
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+        }),
+        // refers to task pkg::t.
+        T(D{
+            IndexingFactType::kFunctionOrTask,
+            Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+            Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+        })));
 
   const auto facts_tree = project.Extract();
 
@@ -4992,25 +4893,24 @@ TEST(FactsTreeExtractor, PureVirtualFunction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class env.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class env.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to function mod_if.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kFunctionOrTaskForwardDeclaration,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to function mod_if.
-                T(
-                    D{
-                        IndexingFactType::kFunctionOrTaskForwardDeclaration,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5036,25 +4936,24 @@ TEST(FactsTreeExtractor, ExternFunction) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class env.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class env.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to function mod_if.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kFunctionOrTaskForwardDeclaration,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to function mod_if.
-                T(
-                    D{
-                        IndexingFactType::kFunctionOrTaskForwardDeclaration,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5080,25 +4979,24 @@ TEST(FactsTreeExtractor, ExternTask) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class env.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class env.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to function mod_if.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kFunctionOrTaskForwardDeclaration,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to function mod_if.
-                T(
-                    D{
-                        IndexingFactType::kFunctionOrTaskForwardDeclaration,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5124,25 +5022,24 @@ TEST(FactsTreeExtractor, PureVirtualTask) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class env.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class env.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to task mod_if.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kFunctionOrTaskForwardDeclaration,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to task mod_if.
-                T(
-                    D{
-                        IndexingFactType::kFunctionOrTaskForwardDeclaration,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5170,30 +5067,29 @@ TEST(FactsTreeExtractor, VirtualDataDeclaration) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to class env.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to class env.
+        T(
+            D{
+                IndexingFactType::kClass,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to extends uvm_env.
+            T(D{
+                IndexingFactType::kExtends,
+                Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+            }),
+            // refers to mod_if.
             T(
                 D{
-                    IndexingFactType::kClass,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to extends uvm_env.
+                // refers to m_if.
                 T(D{
-                    IndexingFactType::kExtends,
-                    Anchor(kTestCase.expected_tokens[3]),
-                }),
-                // refers to mod_if.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to m_if.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    }))))));
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5227,42 +5123,41 @@ TEST(FactsTreeExtractor, FunctionNamedArgument) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function f1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function f1.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to f2.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kFunctionCall,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to f2.
+                // refers to a.
                 T(
                     D{
-                        IndexingFactType::kFunctionCall,
-                        Anchor(kTestCase.expected_tokens[3]),
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
-                    // refers to a.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[5]),
-                        },
-                        // refers to x.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[7]),
-                        })),
-                    // refers to b.
-                    T(
-                        D{
-                            IndexingFactType::kNamedParam,
-                            Anchor(kTestCase.expected_tokens[9]),
-                        },
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableReference,
-                            Anchor(kTestCase.expected_tokens[11]),
-                        })))))));
+                    // refers to x.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[7], kTestCase.code),
+                    })),
+                // refers to b.
+                T(
+                    D{
+                        IndexingFactType::kNamedParam,
+                        Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                    },
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableReference,
+                        Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
@@ -5296,40 +5191,39 @@ TEST(FactsTreeExtractor, FunctionPortPackedAndUnpackedDimsensions) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function f1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function f1.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to t.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to t.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
-                    },
-                    // refers to x.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }),
-                    // refers to y.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }),
-                    // refers to l.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[9]),
-                    }),
-                    // refers to r.
-                    T(D{
-                        IndexingFactType::kVariableReference,
-                        Anchor(kTestCase.expected_tokens[11]),
-                    }))))));
+                // refers to x.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                }),
+                // refers to y.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                }),
+                // refers to l.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[9], kTestCase.code),
+                }),
+                // refers to r.
+                T(D{
+                    IndexingFactType::kVariableReference,
+                    Anchor(kTestCase.expected_tokens[11], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5357,25 +5251,24 @@ TEST(FactsTreeExtractor, UserDefinedTypeFunctionPort) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function f1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function f1.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to foo.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kDataTypeReference,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
                 },
-                // refers to foo.
-                T(
-                    D{
-                        IndexingFactType::kDataTypeReference,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    },
-                    // refers to bar.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    }))))));
+                // refers to bar.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5403,25 +5296,24 @@ TEST(FactsTreeExtractor, StructFunctionPort) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function f1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function f1.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                 },
-                // refers to bar.
-                T(
-                    D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[5]),
-                    },
-                    // refers to foo.
-                    T(D{
-                        IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[3]),
-                    }))))));
+                // refers to foo.
+                T(D{
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                })))));
 
   const auto facts_tree = project.Extract();
 
@@ -5451,31 +5343,30 @@ TEST(FactsTreeExtractor, NestedStructFunctionPort) {
 
   const IndexingFactNode expected(  //
       project.ExpectedFileListData(),
-      project.XUnit().RebaseFileTree(  //
-          T(project.XUnit().ExpectedFileData(),
-            // refers to function f1.
+      T(project.XUnit().ExpectedFileData(),
+        // refers to function f1.
+        T(
+            D{
+                IndexingFactType::kFunctionOrTask,
+                Anchor(kTestCase.expected_tokens[1], kTestCase.code),
+            },
+            // refers to bar.
             T(
                 D{
-                    IndexingFactType::kFunctionOrTask,
-                    Anchor(kTestCase.expected_tokens[1]),
+                    IndexingFactType::kVariableDefinition,
+                    Anchor(kTestCase.expected_tokens[7], kTestCase.code),
                 },
-                // refers to bar.
+                // refers to foo.
                 T(
                     D{
                         IndexingFactType::kVariableDefinition,
-                        Anchor(kTestCase.expected_tokens[7]),
+                        Anchor(kTestCase.expected_tokens[5], kTestCase.code),
                     },
-                    // refers to foo.
-                    T(
-                        D{
-                            IndexingFactType::kVariableDefinition,
-                            Anchor(kTestCase.expected_tokens[5]),
-                        },
-                        // refers to y.
-                        T(D{
-                            IndexingFactType::kVariableDefinition,
-                            Anchor(kTestCase.expected_tokens[3]),
-                        })))))));
+                    // refers to y.
+                    T(D{
+                        IndexingFactType::kVariableDefinition,
+                        Anchor(kTestCase.expected_tokens[3], kTestCase.code),
+                    }))))));
 
   const auto facts_tree = project.Extract();
 
