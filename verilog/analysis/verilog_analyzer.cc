@@ -356,8 +356,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         CHECK(analysis_slot.subanalysis.get() == nullptr)
             << "Cannot expand the same location twice.  Token: " << token;
         analysis_slot.expansion_point = leaf_owner;
-        analysis_slot.subanalysis =
-            std::move(expr_analyzer->ReleaseTextStructure());
+        analysis_slot.subanalysis = expr_analyzer->ReleaseTextStructure();
       } else {
         // Ignore parse failures.
         VLOG(3) << "Ignoring parsing failure: " << token;
