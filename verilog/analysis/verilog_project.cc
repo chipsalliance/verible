@@ -158,7 +158,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
 
 bool VerilogProject::RemoveRegisteredFile(
     absl::string_view referenced_filename) {
-  if (files_.erase(std::string(referenced_filename)) == 1) {
+  if (files_.erase(referenced_filename) == 1) {
     LOG(INFO) << "Removed " << referenced_filename << " from the project.";
     return true;
   }

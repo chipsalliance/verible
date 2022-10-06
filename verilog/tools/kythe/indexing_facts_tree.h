@@ -30,12 +30,14 @@
 namespace verilog {
 namespace kythe {
 
-// Position of the Anchor in the original text.
-struct AnchorOffset {
-  const int begin;
-  const int length;
+// Position of the Anchor in the original text. Required to be able to reference
+// Anchor's content in the original string (as Anchor is owning its content --
+// string_view is not applicable).
+struct AnchorRange {
+  const size_t begin;
+  const size_t length;
 
-  AnchorOffset(int b, int l) : begin(b), length(l) {}
+  AnchorRange(size_t b, size_t l) : begin(b), length(l) {}
 };
 
 // Anchor class represents the location and value of some token.
@@ -84,7 +86,7 @@ class Anchor {
   // Substring of the original text that corresponds to this Anchor.
   std::string content_;
 
-  std::optional<AnchorOffset> source_text_offset_;
+  std::optional<AnchorRange> source_text_offset_;
 };
 
 std::ostream& operator<<(std::ostream&, const Anchor&);
