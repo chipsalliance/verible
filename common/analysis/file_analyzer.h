@@ -91,7 +91,7 @@ class FileAnalyzer {
       : text_structure_(std::make_unique<TextStructure>(contents)),
         filename_(filename) {}
 
-  ~FileAnalyzer() {}
+  virtual ~FileAnalyzer() {}
 
   virtual absl::Status Tokenize() = 0;
 
