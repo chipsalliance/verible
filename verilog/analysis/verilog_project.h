@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -86,6 +85,28 @@ class VerilogSourceFile {
 
   // Returns a (possibly more qualified) path to the file.
   absl::string_view ResolvedPath() const { return resolved_path_; }
+
+  // Comparator for ordering files for internal storage.
+  // Known limitation: this comparator won't work if you have multiple files
+  // with the same name referenced without a distinguishing path prefix.
+  struct Less {
+    using is_transparent = void;  // hetergenous compare
+
+    static absl::string_view to_string_view(absl::string_view s) { return s; }
+    static absl::string_view to_string_view(const VerilogSourceFile& f) {
+      return f.ReferencedPath();
+    }
+    static absl::string_view to_string_view(const VerilogSourceFile* f) {
+      return f->ReferencedPath();
+    }
+
+    // T1/T2 could be any combination of:
+    // {const VerilogSourceFile&, absl::string_view}.
+    template <typename T1, typename T2>
+    bool operator()(T1 left, T2 right) const {
+      return to_string_view(left) < to_string_view(right);
+    }
+  };
 
  private:
   friend class VerilogProject;
@@ -186,7 +207,8 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
 class VerilogProject {
   // Collection of per-file metadata and analyzer objects
   // key: referenced file name (as opposed to resolved filename)
-  typedef absl::flat_hash_map<std::string, std::unique_ptr<VerilogSourceFile>>
+  typedef std::map<std::string, std::unique_ptr<VerilogSourceFile>,
+                   VerilogSourceFile::Less>
       file_set_type;
 
  public:

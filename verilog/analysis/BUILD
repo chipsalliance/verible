@@ -362,8 +362,8 @@ cc_library(
     srcs = ["verilog_filelist.cc"],
     hdrs = ["verilog_filelist.h"],
     deps = [
-        "//common/util:file_util",
         "//common/util:iterator_range",
+        "//common/util:file_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -391,7 +391,6 @@ cc_library(
         "//common/text:text_structure",
         "//common/util:file_util",
         "//common/util:logging",
-        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
