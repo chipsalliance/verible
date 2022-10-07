@@ -587,13 +587,6 @@ EOF
 status="$?"
 
 [[ $status == 0 ]] || {
-  echo MY_INPUT_FILE
-  cat "$MY_INPUT_FILE"
-  echo MY_ABSOLUTE_INCLUDED_FILE_1
-  echo "$MY_ABSOLUTE_INCLUDED_FILE_1"
-  cat "$MY_ABSOLUTE_INCLUDED_FILE_1"
-  echo MY_OUTPUT_FILE
-  cat "$MY_OUTPUT_FILE"
   "Expected exit code 0, but got $status"
   exit 1
 }
