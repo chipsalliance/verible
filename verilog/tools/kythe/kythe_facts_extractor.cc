@@ -1245,8 +1245,9 @@ void KytheFactsExtractor::CreateAnchorReferences(
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
   const int start_location = anchor.StartLocation();
   const int end_location = start_location + anchor.ContentLength();
-  CHECK(start_location != end_location)
-      << "Zero-sized Anchor! File: " << FilePath();
+  if (start_location == end_location) {
+    LOG(ERROR) << "Zero-sized Anchor! File: " << FilePath();
+  }
   const auto [location_str, _] = signature_locations_.emplace(
       absl::StrCat("@", start_location, ":", end_location));
   VName anchor_vname = {.path = FilePath(),
