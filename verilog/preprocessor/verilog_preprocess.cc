@@ -616,7 +616,9 @@ absl::Status VerilogPreprocess::HandleInclude(
 
   // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
   preprocess_data_.included_text_structure.emplace_back(
-      std::make_unique<verible::TextStructure>(source_contents));
+      new verible::TextStructure(source_contents));
+  /* preprocess_data_.included_text_structure.emplace_back( */
+  /*     std::make_unique<verible::TextStructure>(source_contents)); */
   verible::TextStructure& included_structure =
       *preprocess_data_.included_text_structure.back();
 

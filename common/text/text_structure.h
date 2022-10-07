@@ -41,6 +41,10 @@
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
 
+namespace verilog {
+class VerilogPreprocess;
+}  // namespace verilog
+
 namespace verible {
 
 class TextStructure;
@@ -259,6 +263,7 @@ class TextStructure {
   friend class TextStructureTokenized;
   friend class TextStructureViewPublicTest_ExpandSubtreesOneLeaf_Test;
   friend class TextStructureViewPublicTest_ExpandSubtreesMultipleLeaves_Test;
+  friend class verilog::VerilogPreprocess;
 
   explicit TextStructure(std::unique_ptr<MemBlock> contents);
 
