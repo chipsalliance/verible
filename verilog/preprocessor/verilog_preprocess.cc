@@ -14,6 +14,7 @@
 
 #include "verilog/preprocessor/verilog_preprocess.h"
 
+#include <filesystem>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -568,16 +569,17 @@ absl::Status VerilogPreprocess::HandleInclude(
   }
   // Currently the file path looks like "path", we need to remove "".
   const auto& token_text = file_token_iter->text();
-  absl::string_view file_path(token_text.begin() + 1, token_text.size() - 2);
 
-  bool is_relative = file_path.find_first_of("/");
+  std::filesystem::path file_path =
+      std::string(token_text.substr(1, token_text.size() - 2));
 
-  std::string file_path_to_search = std::string(file_path);
+  std::string file_path_to_search = file_path.string();
 
-  if (is_relative) {
+  if (file_path.is_relative()) {
     bool found = false;
     for (const auto& base_dir : preprocess_info_.include_dirs) {
-      file_path_to_search = absl::StrCat(base_dir, "/", file_path);
+      file_path_to_search =
+          verible::file::JoinPath(base_dir, file_path.string());
       auto search_status = verible::file::FileExists(file_path_to_search);
       if (search_status.ok()) {
         found = true;
