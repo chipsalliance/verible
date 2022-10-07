@@ -44,7 +44,6 @@
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())
 
 namespace verible {
-namespace {
 
 using ::testing::IsEmpty;
 using ::testing::IsNull;
@@ -476,7 +475,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   const int divide = 3;
   const int new_node_tag = 7;
   std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
-  auto subanalysis = absl::make_unique<TextStructure>(subtext);
+  std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
   FakeParseToken(&subanalysis->MutableData(), divide, new_node_tag);
   auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
                                ->mutable_children()
@@ -510,7 +509,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
   {
     // Expand the "hello" token into ("hel", "lo").
     std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
-    auto subanalysis = absl::make_unique<TextStructure>(subtext);
+    std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide1, new_node_tag1);
     auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
                                  ->mutable_children()
@@ -522,7 +521,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
   {
     // Expand the "world" token into ("wo", "rld").
     std::string subtext(tokens_[3].text().data(), tokens_[3].text().length());
-    auto subanalysis = absl::make_unique<TextStructure>(subtext);
+    std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide2, new_node_tag2);
     auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
                                  ->mutable_children()
@@ -670,5 +669,4 @@ TEST_F(TextStructureViewInternalsTest, LineTokenMapWrongEnd) {
   EXPECT_FALSE(InternalConsistencyCheck().ok());
 }
 
-}  // namespace
 }  // namespace verible

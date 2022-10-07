@@ -46,8 +46,11 @@ namespace verible {
 class TextStructure;
 
 // TextStructureView contains sequences of tokens and a tree, but all
-// string_views in this structure rely on string memory owned elsewhere,
-// for example in TextStructure.
+// string_views in this structure rely on string memory owned elsewhere.
+//
+// TODO(hzeller): This is a kitchen sink and should be split into multiple
+// aspects; tokens, concrete syntax tree or line number mapping are different
+// aspects not needed everywhere.
 class TextStructureView {
  public:
   // Deferred in-place expansion of the syntax tree.
@@ -230,16 +233,39 @@ class TextStructureView {
   absl::Status SyntaxTreeConsistencyCheck() const;
 };
 
-// TextStructure holds the results of lexing and parsing.
-// This contains rather than inherits from TextStructureView because
-// the same owned memory can be used for multiple analysis views.
+// TextStructure holds the text and the results of lexing, parsing, and other
+// analysis in the corresponding TextStructureView.
+//
+// This class is not providing much benefit as ownership of memory and the
+// parse result are only slightly related; but combining them here makes it
+// harder to actually handle memory ownership and views independently. For
+// instance the FileAnalyzer should keep track of the file content itself and
+// then choose to generate a view (or multiple) on top of that (e.g for
+// fallback parsing). Similar for VerilogSourceFile.
+// The language server already has an in-memory representation which is
+// unnecessarily copied into a TextStructure just to do the rest of the
+// analysis, etc.. Long story short: it is beneficial to separate ownership and
+// views.
+//
+// So: this class is eventually to be removed. For now, make all the
+// constructors private and add explicitly mention all uses as friend classes,
+// so a future refactoring is easier.
+// (If, in the meantime, more TextStructure use is needed in other classes,
+// not to worry: just add them here as friend class. This is merely
+// documentation of use currently).
 class TextStructure {
- public:
+ private:
+  friend class FileAnalyzer;
+  friend class TextStructureTokenized;
+  friend class TextStructureViewPublicTest_ExpandSubtreesOneLeaf_Test;
+  friend class TextStructureViewPublicTest_ExpandSubtreesMultipleLeaves_Test;
+
   explicit TextStructure(std::unique_ptr<MemBlock> contents);
 
   // Convenience constructor in case our input is a string.
   explicit TextStructure(absl::string_view contents);
 
+ public:
   TextStructure(const TextStructure&) = delete;
   TextStructure& operator=(const TextStructure&) = delete;
   TextStructure(TextStructure&&) = delete;
