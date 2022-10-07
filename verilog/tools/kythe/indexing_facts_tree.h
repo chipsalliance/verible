@@ -34,10 +34,10 @@ namespace kythe {
 // Anchor's content in the original string (as Anchor is owning its content --
 // string_view is not applicable).
 struct AnchorRange {
-  const int begin;
-  const int length;
+  const size_t begin;
+  const size_t length;
 
-  AnchorRange(int b, int l) : begin(b), length(l) {}
+  AnchorRange(size_t b, size_t l) : begin(b), length(l) {}
 };
 
 // Anchor class represents the location and value of some token.
@@ -45,7 +45,7 @@ class Anchor {
  public:
   explicit Anchor(absl::string_view value) : content_(value) {}
 
-  explicit Anchor(absl::string_view value, int begin, int length)
+  explicit Anchor(absl::string_view value, size_t begin, size_t length)
       : content_(value) {
     source_text_offset_.emplace(begin, length);
   }
@@ -74,10 +74,10 @@ class Anchor {
   absl::string_view Text() const { return content_; }
 
   // Returns the location of the Anchor's content in the original string.
-  int StartLocation() const { return source_text_offset_->begin; }
+  size_t StartLocation() const { return source_text_offset_->begin; }
 
   // Returns the size of the Anchor's content.
-  int ContentLength() const { return source_text_offset_->length; }
+  size_t ContentLength() const { return source_text_offset_->length; }
 
   bool operator==(const Anchor&) const;
   bool operator!=(const Anchor& other) const { return !(*this == other); }
