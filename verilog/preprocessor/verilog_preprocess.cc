@@ -18,6 +18,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -587,13 +588,16 @@ absl::Status VerilogPreprocess::HandleInclude(
       }
     }
     if (!found) {
-      preprocess_data_.errors.push_back({**token_iter, "no such file found."});
+      preprocess_data_.errors.push_back(
+          {**token_iter,
+           absl::StrCat(file_path_to_search, ": no such file found.")});
       return absl::InvalidArgumentError("ERROR: included file can't be found.");
     }
   } else {
     if (auto status = verible::file::FileExists(file_path_to_search);
         !status.ok()) {
-      preprocess_data_.errors.push_back({**token_iter, "no such file found."});
+      preprocess_data_.errors.push_back(
+          {**token_iter, std::string(status.message())});
       return absl::InvalidArgumentError("ERROR: included file can't be found.");
     }
   }
@@ -604,7 +608,7 @@ absl::Status VerilogPreprocess::HandleInclude(
           verible::file::GetContents(file_path_to_search, &source_contents);
       !status.ok()) {
     preprocess_data_.errors.push_back(
-        {**token_iter, "ERROR: passed file can't be open"});
+        {**token_iter, std::string(status.message())});
     return absl::InvalidArgumentError("ERROR: passed file can't be open.");
   }
 
@@ -617,8 +621,6 @@ absl::Status VerilogPreprocess::HandleInclude(
   // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
   preprocess_data_.included_text_structure.emplace_back(
       new verible::TextStructure(source_contents));
-  /* preprocess_data_.included_text_structure.emplace_back( */
-  /*     std::make_unique<verible::TextStructure>(source_contents)); */
   verible::TextStructure& included_structure =
       *preprocess_data_.included_text_structure.back();
 

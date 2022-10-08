@@ -43,6 +43,7 @@ cc_test(
         "//common/util:container_util",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
+        "//verilog/parser:verilog_lexer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
