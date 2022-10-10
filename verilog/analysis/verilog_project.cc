@@ -142,22 +142,29 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   const absl::Status status = file.Open();
   if (!status.ok()) return status;
 
-  const absl::string_view contents(file.GetTextStructure()->Contents());
+  // NOTE: string view maps don't support removal operation. The following block
+  // is valid only if files won't be removed from the project.
+  if (populate_string_maps_) {
+    const absl::string_view contents(file.GetTextStructure()->Contents());
 
-  // Register the file's contents range in string_view_map_.
-  string_view_map_.must_emplace(contents);
+    // Register the file's contents range in string_view_map_.
+    string_view_map_.must_emplace(contents);
 
-  // Map the start of the file's contents to its corresponding owner
-  // VerilogSourceFile.
-  const auto map_inserted =
-      buffer_to_analyzer_map_.emplace(contents.begin(), file_iter);
-  CHECK(map_inserted.second);
+    // Map the start of the file's contents to its corresponding owner
+    // VerilogSourceFile.
+    const auto map_inserted =
+        buffer_to_analyzer_map_.emplace(contents.begin(), file_iter);
+    CHECK(map_inserted.second);
+  }
 
   return &file;
 }
 
 bool VerilogProject::RemoveRegisteredFile(
     absl::string_view referenced_filename) {
+  CHECK(!populate_string_maps_)
+      << "Removing of files added to string maps is not supported! Disable "
+         "populating string maps.";
   if (files_.erase(std::string(referenced_filename)) == 1) {
     LOG(INFO) << "Removed " << referenced_filename << " from the project.";
     return true;
@@ -291,6 +298,8 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
 
 const VerilogSourceFile* VerilogProject::LookupFileOrigin(
     absl::string_view content_substring) const {
+  CHECK(populate_string_maps_)
+      << "Populating string maps must be enabled for LookupFileOrigin!";
   // Look for corresponding source text (superstring) buffer start.
   const auto found_superstring = string_view_map_.find(content_substring);
   if (found_superstring == string_view_map_.end()) return nullptr;

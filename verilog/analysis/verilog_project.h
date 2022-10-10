@@ -215,12 +215,17 @@ class VerilogProject {
   typedef file_set_type::iterator iterator;
   typedef file_set_type::const_iterator const_iterator;
 
+  // Constructor. Note that `populate_string_maps` (populating internal string
+  // view maps) fragments the class's usage. Enabling it prevents removing files
+  // from the project (which is required for Kythe facts extraction).
   VerilogProject(absl::string_view root,
                  const std::vector<std::string>& include_paths,
-                 absl::string_view corpus = "")
+                 absl::string_view corpus = "",
+                 bool populate_string_maps = true)
       : translation_unit_root_(root),
         include_paths_(include_paths),
-        corpus_(corpus) {}
+        corpus_(corpus),
+        populate_string_maps_(populate_string_maps) {}
 
   VerilogProject(const VerilogProject&) = delete;
   VerilogProject(VerilogProject&&) = delete;
@@ -306,6 +311,12 @@ class VerilogProject {
   // The corpus to which this project belongs (e.g.,
   // 'github.com/chipsalliance/verible').
   const std::string corpus_;
+
+  // If true, opening a file will add its contents to string_view_map_ and
+  // buffer_to_analyzer_map_. NOTE: string view maps don't support removal
+  // operation. Setting this option prevents removing of the files from the
+  // project (removing the files leads to undefined behavior).
+  const bool populate_string_maps_;
 
   // Set of opened files, keyed by referenced (not resolved) filename.
   file_set_type files_;
