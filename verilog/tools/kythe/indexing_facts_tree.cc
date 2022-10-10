@@ -28,43 +28,40 @@ namespace verilog {
 namespace kythe {
 
 Anchor::Anchor(const Anchor& other)
-    : content_(other.content_),
-      source_text_offset_(other.source_text_offset_) {}
+    : content_(other.content_), source_text_range_(other.source_text_range_) {}
 
-std::string Anchor::DebugString(absl::string_view base) const {
-  if (source_text_offset_) {
-    return absl::StrCat(
-        "{", Text(), " @", source_text_offset_->begin, "-",
-        source_text_offset_->begin + source_text_offset_->length, "}");
+std::string Anchor::DebugString() const {
+  if (source_text_range_) {
+    return absl::StrCat("{", Text(), " @", source_text_range_->begin, "-",
+                        source_text_range_->begin + source_text_range_->length,
+                        "}");
   }
   return absl::StrCat("{", Text(), "}");
 }
 
 std::ostream& operator<<(std::ostream& stream, const Anchor& anchor) {
-  return stream << "{" << anchor.Text() << " @" << anchor.StartLocation() << "+"
-                << anchor.ContentLength() << "}";
+  return stream << anchor.DebugString();
 }
 
 bool Anchor::operator==(const Anchor& rhs) const {
-  if (source_text_offset_) {
-    if (!rhs.source_text_offset_) {
+  if (source_text_range_) {
+    if (!rhs.source_text_range_) {
       return false;
     }
-    if (std::tie(source_text_offset_->begin, source_text_offset_->length) !=
-        std::tie(rhs.source_text_offset_->begin,
-                 rhs.source_text_offset_->length)) {
+    if (std::tie(source_text_range_->begin, source_text_range_->length) !=
+        std::tie(rhs.source_text_range_->begin,
+                 rhs.source_text_range_->length)) {
       return false;
     }
   }
   return Text() == rhs.Text();
 }
 
-std::ostream& IndexingNodeData::DebugString(std::ostream* stream,
-                                            absl::string_view base) const {
+std::ostream& IndexingNodeData::DebugString(std::ostream* stream) const {
   *stream << indexing_fact_type_ << ": ["
           << absl::StrJoin(anchors_.begin(), anchors_.end(), ", ",
-                           [&base](std::string* out, const Anchor& anchor) {
-                             absl::StrAppend(out, anchor.DebugString(base));
+                           [](std::string* out, const Anchor& anchor) {
+                             absl::StrAppend(out, anchor.DebugString());
                            })
           << ']';
   return *stream;
@@ -86,7 +83,7 @@ bool IndexingNodeData::operator==(const IndexingNodeData& rhs) const {
 
 std::ostream& operator<<(std::ostream& stream,
                          const PrintableIndexingNodeData& printable_node) {
-  return printable_node.data.DebugString(&stream, printable_node.base);
+  return printable_node.data.DebugString(&stream);
 }
 
 std::ostream& operator<<(std::ostream& stream,
