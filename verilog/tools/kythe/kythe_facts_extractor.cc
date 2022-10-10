@@ -1243,10 +1243,19 @@ void KytheFactsExtractor::CreateAnchorReferences(
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {
-  const int start_location = anchor.StartLocation();
-  const int end_location = start_location + anchor.ContentLength();
+  const auto& anchor_range = anchor.SourceTextRange();
+  if (!anchor_range) {
+    LOG(ERROR) << "Anchor not set! This is a bug. Skipping this Anchor. File: "
+               << FilePath() << " Anchor text: " << anchor.Text();
+    return VName();
+  }
+  const int start_location = anchor_range->begin;
+  const int end_location = start_location + anchor_range->length;
   if (start_location == end_location) {
-    LOG(ERROR) << "Zero-sized Anchor! File: " << FilePath();
+    LOG(ERROR)
+        << "Zero-sized Anchor! This is a bug. Skipping this Anchor. File: "
+        << FilePath() << " Anchor text: " << anchor.Text();
+    return VName();
   }
   const auto [location_str, _] = signature_locations_.emplace(
       absl::StrCat("@", start_location, ":", end_location));

@@ -40,16 +40,8 @@ class TestAnchor : public Anchor {
 TEST(AnchorTest, DebugStringUsingOffsets) {
   constexpr absl::string_view text("abcdefghij");
   const Anchor anchor(text.substr(4, 3), /*begin=*/4, /*length=*/3);
-  const std::string debug_string(anchor.DebugString(text));
+  const std::string debug_string(anchor.DebugString());
   EXPECT_EQ(debug_string, "{efg @4-7}");
-}
-
-TEST(AnchorTest, DebugStringUsingAddresses) {
-  constexpr absl::string_view text("abcdefghij");
-  const Anchor anchor(text.substr(3, 4));
-  std::ostringstream stream;
-  stream << anchor;
-  EXPECT_TRUE(absl::StrContains(stream.str(), "{defg @"));
 }
 
 TEST(AnchorTest, EqualityNotOwned) {
@@ -166,7 +158,7 @@ TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
   constexpr absl::string_view expected("kClass: [{bc @1-3}, {efg @4-7}]");
   {
     std::ostringstream stream;
-    data.DebugString(&stream, text);
+    data.DebugString(&stream);
     EXPECT_EQ(stream.str(), expected);
   }
   {
@@ -174,17 +166,6 @@ TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
     stream << PrintableIndexingNodeData(data, text);
     EXPECT_EQ(stream.str(), expected);
   }
-}
-
-TEST(IndexingNodeDataTest, DebugStringUsingAddresses) {
-  constexpr absl::string_view text("abcdefghij");
-  const IndexingNodeData data(IndexingFactType::kFile,
-                              Anchor(text.substr(1, 2)),
-                              Anchor(text.substr(4, 3)));
-  std::ostringstream stream;
-  stream << data;
-  EXPECT_TRUE(absl::StrContains(stream.str(), "kFile: [{bc @"));
-  EXPECT_TRUE(absl::StrContains(stream.str(), "efg @"));
 }
 
 TEST(IndexingFactNodeTest, StreamPrint) {

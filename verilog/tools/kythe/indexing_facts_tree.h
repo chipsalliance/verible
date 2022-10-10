@@ -47,7 +47,7 @@ class Anchor {
 
   explicit Anchor(absl::string_view value, size_t begin, size_t length)
       : content_(value) {
-    source_text_offset_.emplace(begin, length);
+    source_text_range_.emplace(begin, length);
   }
 
   // Delegates construction to use only the string_view spanned by a TokenInfo.
@@ -58,7 +58,7 @@ class Anchor {
       : content_(token.text()) {
     const int token_left = token.left(source_content);
     const int token_right = token.right(source_content);
-    source_text_offset_.emplace(token_left, token_right - token_left);
+    source_text_range_.emplace(token_left, token_right - token_left);
   }
 
   Anchor(const Anchor&);  // TODO(fangism): delete, move-only
@@ -66,18 +66,15 @@ class Anchor {
   Anchor& operator=(const Anchor&) = delete;
   Anchor& operator=(Anchor&&) = delete;
 
-  // This function is for debugging only and isn't intended to be a textual
-  // representation of this class.
-  // 'base' is the superstring of which Anchor's text is a substring.
-  std::string DebugString(absl::string_view base) const;
+  // Returns human readable view of this Anchor.
+  std::string DebugString() const;
 
   absl::string_view Text() const { return content_; }
 
   // Returns the location of the Anchor's content in the original string.
-  size_t StartLocation() const { return source_text_offset_->begin; }
-
-  // Returns the size of the Anchor's content.
-  size_t ContentLength() const { return source_text_offset_->length; }
+  const std::optional<AnchorRange>& SourceTextRange() const {
+    return source_text_range_;
+  }
 
   bool operator==(const Anchor&) const;
   bool operator!=(const Anchor& other) const { return !(*this == other); }
@@ -86,7 +83,7 @@ class Anchor {
   // Substring of the original text that corresponds to this Anchor.
   std::string content_;
 
-  std::optional<AnchorRange> source_text_offset_;
+  std::optional<AnchorRange> source_text_range_;
 };
 
 std::ostream& operator<<(std::ostream&, const Anchor&);
@@ -122,9 +119,8 @@ class IndexingNodeData {
   // Swaps the anchors with the given IndexingNodeData.
   void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->anchors_); }
 
-  // This function is for debugging only and isn't intended to be textual
-  // representation of this class.
-  std::ostream& DebugString(std::ostream* stream, absl::string_view base) const;
+  // Returns human readable view of this node.
+  std::ostream& DebugString(std::ostream* stream) const;
 
   const std::vector<Anchor>& Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
