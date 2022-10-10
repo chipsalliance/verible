@@ -106,6 +106,9 @@ e.g --include_dir_paths directory1,directory2
 if "A.sv" exists in both "directory1" and "directory2" the one in "directory1" is the one we will use.
 )");
 
+ABSL_FLAG(std::string, verilog_project_name, "",
+          "Verilog project name to use as Kythe corpus. Optional");
+
 namespace verilog {
 namespace kythe {
 
@@ -204,7 +207,9 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
   include_dir_paths.insert(include_dir_paths.end(),
                            file_list.preprocessing.include_dirs.begin(),
                            file_list.preprocessing.include_dirs.end());
-  verilog::VerilogProject project(file_list_root, include_dir_paths);
+  verilog::VerilogProject project(file_list_root, include_dir_paths,
+                                  absl::GetFlag(FLAGS_verilog_project_name),
+                                  /*populate_string_maps=*/false);
 
   const std::vector<absl::Status> errors(
       verilog::kythe::ExtractTranslationUnits(file_list_path, &project,

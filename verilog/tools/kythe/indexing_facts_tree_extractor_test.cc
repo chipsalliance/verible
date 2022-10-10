@@ -97,7 +97,8 @@ class SimpleTestProject : public TempDir, public VerilogProject {
   explicit SimpleTestProject(absl::string_view code_text,
                              const std::vector<std::string>& include_paths = {})
       : TempDir(),
-        VerilogProject(temp_dir_, include_paths),
+        VerilogProject(temp_dir_, include_paths, /*corpus=*/"unittest",
+                       /*populate_string_maps=*/false),
         code_text_(code_text),
         translation_unit_(code_text, temp_dir_,
                           [this](absl::string_view full_file_name)
