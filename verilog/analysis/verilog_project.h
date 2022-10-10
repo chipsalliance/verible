@@ -215,6 +215,9 @@ class VerilogProject {
   typedef file_set_type::iterator iterator;
   typedef file_set_type::const_iterator const_iterator;
 
+  // Constructor. Note that `populate_string_maps` (populating internal string
+  // view maps) fragments the class's usage. Enabling it prevents removing files
+  // from the project (which is required for Kythe facts extraction).
   VerilogProject(absl::string_view root,
                  const std::vector<std::string>& include_paths,
                  absl::string_view corpus = "",
