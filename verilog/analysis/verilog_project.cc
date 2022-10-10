@@ -298,6 +298,8 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
 
 const VerilogSourceFile* VerilogProject::LookupFileOrigin(
     absl::string_view content_substring) const {
+  CHECK(populate_string_maps_)
+      << "Populating string maps must be enabled for LookupFileOrigin!";
   // Look for corresponding source text (superstring) buffer start.
   const auto found_superstring = string_view_map_.find(content_substring);
   if (found_superstring == string_view_map_.end()) return nullptr;
