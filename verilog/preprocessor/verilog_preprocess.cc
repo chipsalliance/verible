@@ -564,7 +564,7 @@ absl::Status VerilogPreprocess::HandleEndif(
 // that I think need to be done first:
 //    1- Add a member "VerilogProject project_" to "VerilogPreprocess".
 //    2- Add a constructor to "VerilogPreprocess" to construct "project_"
-//    correctly (as a VerilogProject can't be assigned, copied, or moved). 
+//    correctly (as a VerilogProject can't be assigned, copied, or moved).
 //    3- Modify "VerilogPreprocess::ScanStream()" or replace it with
 //    "VerilogPreprocess::ScanProject()", which should scan all
 //    "project_.files_" files.
