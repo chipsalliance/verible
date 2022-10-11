@@ -14,12 +14,15 @@
 # limitations under the License.
 
 # Find input files
-MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
-readonly MY_INPUT_FILE
-MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
-readonly MY_OUTPUT_FILE
-MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
-readonly MY_EXPECT_FILE
+readonly MY_RELATIVE_INCLUDED_FILE_1="myinclude_1.txt"
+readonly MY_ABSOLUTE_INCLUDED_FILE_1="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_1}"
+readonly MY_INCLUDED_FILE_PATH_1="${MY_ABSOLUTE_INCLUDED_FILE_1%$MY_RELATIVE_INCLUDED_FILE_1}"
+readonly MY_RELATIVE_INCLUDED_FILE_2="myinclude_2.txt"
+readonly MY_ABSOLUTE_INCLUDED_FILE_2="${TEST_TMPDIR}/${MY_RELATIVE_INCLUDED_FILE_2}"
+readonly MY_INCLUDED_FILE_PATH_2="${MY_ABSOLUTE_INCLUDED_FILE_2%$MY_RELATIVE_INCLUDED_FILE_2}"
+readonly MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
+readonly MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
+readonly MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
 
 # Process script flags and arguments.
 [[ "$#" == 1 ]] || {
@@ -257,7 +260,6 @@ status="$?"
 echo "=== Test multiple-compilation-unit: on a source file with conditionals"
 
 cat > "$MY_INPUT_FILE" <<EOF
-\`include "file.sv"
 module m();
   wire x = 1;
 \`ifdef A
@@ -272,8 +274,6 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#259: "\`include")
-(#313: ""file.sv"")
 (#359: "module")
 (#293: "m")
 (#40: "(")
@@ -554,6 +554,247 @@ status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
   exit 0
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including a file with an absolute path"
+
+cat > "$MY_INPUT_FILE" <<EOF
+input_content_0
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
+input_content_1
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+included1_content
+EOF
+
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "input_content_0")
+(#293: "included1_content")
+(#293: "input_content_1")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including a file with a relative path with the correct incdir"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_1}"
+input_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+included1_content
+EOF
+
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "included1_content")
+(#293: "input_content")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit +incdir+${MY_INCLUDED_FILE_PATH_1} "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including a file with a relative path without incdir"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_1}"
+input_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+included1_content
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including nested files with absolute paths"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
+input_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_2}"
+included1_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
+included2_content
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "included2_content")
+(#293: "included1_content")
+(#293: "input_content")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including nested files with relative paths with the correct incdirs"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_1}"
+input_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_2}"
+included1_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
+included2_content
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "included2_content")
+(#293: "included1_content")
+(#293: "input_content")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +incdir+${MY_INCLUDED_FILE_PATH_1}+${MY_INCLUDED_FILE_PATH_2} > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
+}
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including nested files with relative paths without incdir"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_1}"
+input_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+\`include "${MY_RELATIVE_INCLUDED_FILE_2}"
+included1_content
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
+included2_content
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+################################################################################
+echo "=== Test multiple-compilation-unit: including nested files, passing +define+"
+
+cat > "$MY_INPUT_FILE" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
+input_content
+\`ifdef A
+A_TRUE
+\`endif
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
+\`include "${MY_ABSOLUTE_INCLUDED_FILE_2}"
+included1_content
+\`ifdef A
+A_TRUE
+\`endif
+EOF
+
+cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
+included2_content
+\`ifdef A
+A_TRUE
+\`endif
+EOF
+
+cat > "$MY_EXPECT_FILE" <<EOF
+${MY_INPUT_FILE}:
+(#293: "included2_content")
+(#293: "A_TRUE")
+(#293: "included1_content")
+(#293: "A_TRUE")
+(#293: "input_content")
+(#293: "A_TRUE")
+
+EOF
+
+"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+
+[[ $status == 0 ]] || {
+  "Expected exit code 0, but got $status"
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {

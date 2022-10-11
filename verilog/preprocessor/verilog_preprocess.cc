@@ -14,9 +14,11 @@
 
 #include "verilog/preprocessor/verilog_preprocess.h"
 
+#include <filesystem>
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -30,6 +32,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
+#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
@@ -552,6 +555,130 @@ absl::Status VerilogPreprocess::HandleEndif(
   return absl::OkStatus();
 }
 
+// Handle `include directives.
+// TODO(karimtera):  An important future work would be to utilize
+// "VerilogProject::OpenIncludedFile()", which has more advantages over the way
+// we open included files in "VerilogPreprocess::HandleInclude()", such as
+// avoiding to open the same file multiple times, and have a more clear
+// definition of a compilation unit. It could be done, but here are some changes
+// that I think need to be done first:
+//    1- Add a member "VerilogProject project_" to "VerilogPreprocess".
+//    2- Add a constructor to "VerilogPreprocess" to construct "project_"
+//    correctly (as a VerilogProject can't be assigned, copied, or moved).
+//    3- Modify "VerilogPreprocess::ScanStream()" or replace it with
+//    "VerilogPreprocess::ScanProject()", which should scan all
+//    "project_.files_" files.
+
+absl::Status VerilogPreprocess::HandleInclude(
+    TokenStreamView::const_iterator iter,
+    const StreamIteratorGenerator& generator) {
+  // TODO(karimtera): Support inclduing <file>,
+  // which should look for files defined by language standard in a compiler
+  // dependent path.
+  TokenStreamView::const_iterator token_iter = generator();
+  auto file_token_iter = *token_iter;
+  if (file_token_iter->token_enum() != TK_StringLiteral) {
+    preprocess_data_.errors.push_back(
+        {**token_iter, "Expected a path to a SV file."});
+    return absl::InvalidArgumentError("Expected a path to a SV file.");
+  }
+  // Currently the file path looks like "path", we need to remove "".
+  const auto& token_text = file_token_iter->text();
+
+  std::filesystem::path file_path =
+      std::string(token_text.substr(1, token_text.size() - 2));
+
+  std::string file_path_to_search = file_path.string();
+
+  if (file_path.is_relative()) {
+    bool found = false;
+    for (const auto& base_dir : preprocess_info_.include_dirs) {
+      file_path_to_search =
+          verible::file::JoinPath(base_dir, file_path.string());
+      auto search_status = verible::file::FileExists(file_path_to_search);
+      if (search_status.ok()) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      preprocess_data_.errors.push_back(
+          {**token_iter,
+           absl::StrCat(file_path_to_search, ": no such file found.")});
+      return absl::InvalidArgumentError("ERROR: included file can't be found.");
+    }
+  } else {
+    if (auto status = verible::file::FileExists(file_path_to_search);
+        !status.ok()) {
+      preprocess_data_.errors.push_back(
+          {**token_iter, std::string(status.message())});
+      return status;
+    }
+  }
+
+  // Actually open the file.
+  std::string source_contents;
+  if (auto status =
+          verible::file::GetContents(file_path_to_search, &source_contents);
+      !status.ok()) {
+    preprocess_data_.errors.push_back(
+        {**token_iter, std::string(status.message())});
+    return status;
+  }
+
+  // Creating a new "VerilogPreprocess" object for the included file,
+  // With the same configuration and preprocessing info (defines, incdirs) as
+  // the main one.
+  verilog::VerilogPreprocess child_preprocessor(config_);
+  child_preprocessor.setPreprocessingInfo(preprocess_info_);
+
+  // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
+  preprocess_data_.included_text_structure.emplace_back(
+      new verible::TextStructure(source_contents));
+  verible::TextStructure& included_structure =
+      *preprocess_data_.included_text_structure.back();
+
+  // "included_sequence" should contain the lexed token sequence.
+  verible::TokenSequence& included_sequence =
+      included_structure.MutableData().MutableTokenStream();
+
+  // Lexing the included file content, and storing it in "included_sequence".
+  verilog::VerilogLexer lexer(included_structure.Data().Contents());
+  for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
+       lexer.DoNextToken()) {
+    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
+      included_sequence.push_back(lexer.GetLastToken());
+  }
+
+  // Preprocessing the included file tokens.
+  verible::TokenStreamView lexed_streamview;
+  InitTokenStreamView(included_sequence, &lexed_streamview);
+  verilog::VerilogPreprocessData child_preprocessed_data =
+      child_preprocessor.ScanStream(lexed_streamview);
+
+  // Check for errors while preprocessing the included file.
+  if (!child_preprocessed_data.errors.empty()) {
+    preprocess_data_.errors.insert(preprocess_data_.errors.end(),
+                                   child_preprocessed_data.errors.begin(),
+                                   child_preprocessed_data.errors.end());
+    return absl::InvalidArgumentError(
+        "Error: the included file preprocessing has failed.");
+  }
+
+  // Need to move the text structures of the child preprocessor to avoid
+  // destruction.
+  for (auto& u : child_preprocessed_data.included_text_structure) {
+    preprocess_data_.included_text_structure.push_back(std::move(u));
+  }
+
+  // Forwarding the included preprocessed view.
+  for (const auto& u : child_preprocessed_data.preprocessed_token_stream) {
+    preprocess_data_.preprocessed_token_stream.push_back(u);
+  }
+
+  return absl::OkStatus();
+}
+
 // Interprets preprocessor tokens as directives that act on this preprocessor
 // object and possibly transform the input token stream.
 absl::Status VerilogPreprocess::HandleTokenIterator(
@@ -576,6 +703,10 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
                                 (*iter)->token_enum() == MacroIdItem ||
                                 (*iter)->token_enum() == MacroCallId)) {
     return HandleMacroIdentifier(iter, generator);
+  }
+
+  if (config_.include_files && (*iter)->token_enum() == PP_include) {
+    return HandleInclude(iter, generator);
   }
 
   // If not return'ed above, any other tokens are passed through unmodified

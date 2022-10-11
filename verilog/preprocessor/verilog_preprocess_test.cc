@@ -23,9 +23,11 @@
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
+#include "common/util/file_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -34,8 +36,30 @@ namespace {
 using testing::ElementsAre;
 using testing::Pair;
 using testing::StartsWith;
-
 using verible::container::FindOrNull;
+using verible::file::CreateDir;
+using verible::file::JoinPath;
+using verible::file::testing::ScopedTestFile;
+
+class LexerTester {
+ public:
+  LexerTester(absl::string_view text) : lexer_(text) {
+    for (lexer_.DoNextToken(); !lexer_.GetLastToken().isEOF();
+         lexer_.DoNextToken()) {
+      if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer_.GetLastToken())) {
+        lexed_sequence_.push_back(lexer_.GetLastToken());
+      }
+    }
+    InitTokenStreamView(lexed_sequence_, &stream_view_);
+  }
+
+  verible::TokenStreamView GetTokenStreamView() const { return stream_view_; }
+
+ private:
+  VerilogLexer lexer_;
+  verible::TokenSequence lexed_sequence_;
+  verible::TokenStreamView stream_view_;
+};
 
 class PreprocessorTester {
  public:
@@ -850,6 +874,129 @@ TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
   EXPECT_THAT(errors.size(), 1);
   EXPECT_THAT(errors.front().error_message,
               StartsWith("Error expanding macro identifier"));
+}
+
+TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
+  const auto tempdir = testing::TempDir();
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  constexpr absl::string_view included_content(
+      "module included_file(); endmodule\n");
+  const absl::string_view included_filename = "included_file.sv";
+  const std::string included_absolute_path =
+      JoinPath(includes_dir, included_filename);
+  const ScopedTestFile tf(includes_dir, included_content, included_filename);
+
+  const std::string src_content = absl::StrCat(
+      "`include \"", included_absolute_path, "\"\nmodule src(); endmodule\n");
+  const std::string equivalent_content =
+      "module included_file(); endmodule\nmodule src(); endmodule\n";
+
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  VerilogPreprocess equivalent(
+      VerilogPreprocess::Config({.include_files = true}));
+
+  LexerTester src_lexer(src_content);
+  LexerTester equivalent_lexer(equivalent_content);
+  const auto& tester_pp_data =
+      tester.ScanStream(src_lexer.GetTokenStreamView());
+  const auto& equivalent_pp_data =
+      equivalent.ScanStream(equivalent_lexer.GetTokenStreamView());
+
+  EXPECT_TRUE(tester_pp_data.errors.empty());
+  EXPECT_TRUE(equivalent_pp_data.errors.empty());
+
+  const auto& tester_stream = tester_pp_data.preprocessed_token_stream;
+  const auto& equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
+  EXPECT_FALSE(tester_stream.empty());
+  EXPECT_EQ(tester_stream.size(), equivalent_stream.size());
+
+  auto tester_it = tester_stream.begin();
+  auto equivalent_it = equivalent_stream.begin();
+  while (tester_it != tester_stream.end() &&
+         equivalent_it != equivalent_stream.end()) {
+    EXPECT_EQ((*tester_it)->text(), (*equivalent_it)->text());
+    EXPECT_EQ((*tester_it)->token_enum(), (*equivalent_it)->token_enum());
+    ++tester_it;
+    ++equivalent_it;
+  }
+}
+
+TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
+  const auto tempdir = testing::TempDir();
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  constexpr absl::string_view included_content(
+      "module included_file(); endmodule\n");
+  const absl::string_view included_filename = "included_file.sv";
+  const std::string included_absolute_path =
+      JoinPath(includes_dir, included_filename);
+  const ScopedTestFile tf(includes_dir, included_content, included_filename);
+
+  const std::string src_content = absl::StrCat("`include \"", included_filename,
+                                               "\"\nmodule src(); endmodule\n");
+  const std::string equivalent_content =
+      "module included_file(); endmodule\nmodule src(); endmodule\n";
+
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  VerilogPreprocess equivalent(
+      VerilogPreprocess::Config({.include_files = true}));
+
+  // for relative path test, add the essential PreprocessingInfo.
+  verilog::FileList file_list;
+  file_list.preprocessing.include_dirs.push_back(includes_dir);
+  tester.setPreprocessingInfo(file_list.preprocessing);
+
+  LexerTester src_lexer(src_content);
+  LexerTester equivalent_lexer(equivalent_content);
+  const auto& tester_pp_data =
+      tester.ScanStream(src_lexer.GetTokenStreamView());
+  const auto& equivalent_pp_data =
+      equivalent.ScanStream(equivalent_lexer.GetTokenStreamView());
+
+  EXPECT_TRUE(tester_pp_data.errors.empty());
+  EXPECT_TRUE(equivalent_pp_data.errors.empty());
+
+  const auto& tester_stream = tester_pp_data.preprocessed_token_stream;
+  const auto& equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
+  EXPECT_FALSE(tester_stream.empty());
+  EXPECT_EQ(tester_stream.size(), equivalent_stream.size());
+
+  auto tester_it = tester_stream.begin();
+  auto equivalent_it = equivalent_stream.begin();
+  while (tester_it != tester_stream.end() &&
+         equivalent_it != equivalent_stream.end()) {
+    EXPECT_EQ((*tester_it)->text(), (*equivalent_it)->text());
+    EXPECT_EQ((*tester_it)->token_enum(), (*equivalent_it)->token_enum());
+    ++tester_it;
+    ++equivalent_it;
+  }
+}
+
+TEST(VerilogPreprocessTest,
+     IncludingFileWithRelativePathWithoutPreprocessingInfo) {
+  const auto tempdir = testing::TempDir();
+  const std::string includes_dir = JoinPath(tempdir, "includes");
+  EXPECT_TRUE(CreateDir(includes_dir).ok());
+  constexpr absl::string_view included_content(
+      "module included_file(); endmodule\n");
+  const absl::string_view included_filename = "included_file.sv";
+  const std::string included_absolute_path =
+      JoinPath(includes_dir, included_filename);
+  const ScopedTestFile tf(includes_dir, included_content, included_filename);
+
+  const std::string src_content = absl::StrCat("`include \"", included_filename,
+                                               "\"\nmodule src(); endmodule\n");
+
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+
+  LexerTester src_lexer(src_content);
+  const auto& tester_pp_data =
+      tester.ScanStream(src_lexer.GetTokenStreamView());
+
+  EXPECT_EQ(tester_pp_data.errors.size(), 1);
+  const auto& error = tester_pp_data.errors.front();
+  EXPECT_THAT(error.error_message, StartsWith(included_filename));
 }
 
 }  // namespace
