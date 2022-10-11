@@ -556,11 +556,25 @@ absl::Status VerilogPreprocess::HandleEndif(
 }
 
 // Handle `include directives.
+// TODO(karimtera):  An important future work would be to utilize
+// "VerilogProject::OpenIncludedFile()", which has more advantages over the way
+// we open included files in "VerilogPreprocess::HandleInclude()", such as
+// avoiding to open the same file multiple times, and have a more clear
+// definition of a compilation unit. It could be done, but here are some changes
+// that I think need to be done first:
+//    1- Add a member "VerilogProject project_" to "VerilogPreprocess".
+//    2- Add a constructor to "VerilogPreprocess" to construct "project_"
+//    correctly (as a VerilogProject can't be assigned, copied, or moved). 
+//    3- Modify "VerilogPreprocess::ScanStream()" or replace it with
+//    "VerilogPreprocess::ScanProject()", which should scan all
+//    "project_.files_" files.
+
 absl::Status VerilogPreprocess::HandleInclude(
     TokenStreamView::const_iterator iter,
     const StreamIteratorGenerator& generator) {
-  // TODO(karimtera): how to differentiate between <file> and "file"?? both are
-  // the same token, need to edit the lexer.
+  // TODO(karimtera): Support inclduing <file>,
+  // which should look for files defined by language standard in a compiler
+  // dependent path.
   TokenStreamView::const_iterator token_iter = generator();
   auto file_token_iter = *token_iter;
   if (file_token_iter->token_enum() != TK_StringLiteral) {
@@ -598,7 +612,7 @@ absl::Status VerilogPreprocess::HandleInclude(
         !status.ok()) {
       preprocess_data_.errors.push_back(
           {**token_iter, std::string(status.message())});
-      return absl::InvalidArgumentError("ERROR: included file can't be found.");
+      return status;
     }
   }
 
@@ -609,7 +623,7 @@ absl::Status VerilogPreprocess::HandleInclude(
       !status.ok()) {
     preprocess_data_.errors.push_back(
         {**token_iter, std::string(status.message())});
-    return absl::InvalidArgumentError("ERROR: passed file can't be open.");
+    return status;
   }
 
   // Creating a new "VerilogPreprocess" object for the included file,
