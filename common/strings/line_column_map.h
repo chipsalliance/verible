@@ -66,15 +66,21 @@ struct LineColumnRange {
 
 std::ostream& operator<<(std::ostream&, const LineColumnRange&);
 
+// Fast mapping of substring position to human-useful line/column
 class LineColumnMap {
  public:
-  explicit LineColumnMap(absl::string_view);
-
+  // Build line column map from pre-split contiguous blob of content.
+  // The distance between consecutive string_views is expected to have
+  // a gap of one character (the splitting '\n' character).
   explicit LineColumnMap(const std::vector<absl::string_view>& lines);
 
-  void Clear() { beginning_of_line_offsets_.clear(); }
+  // This constructor is only used in LintStatusFormatter and
+  // LintWaiverBuilder.
+  // TODO: If these already have access to pre-split lines, then this
+  // constructor is not needed.
+  explicit LineColumnMap(absl::string_view);
 
-  bool Empty() const { return beginning_of_line_offsets_.empty(); }
+  bool empty() const { return beginning_of_line_offsets_.empty(); }
 
   // Returns byte offset corresponding to the 0-based line number.
   // If lineno exceeds number of lines, return the final byte offset.
@@ -102,8 +108,7 @@ class LineColumnMap {
 
   // Byte-offset of start of last line after last newline in file.
   int LastLineOffset() const {
-    if (Empty()) return 0;
-    return beginning_of_line_offsets_.back();
+    return empty() ? 0 : beginning_of_line_offsets_.back();
   }
 
  private:
