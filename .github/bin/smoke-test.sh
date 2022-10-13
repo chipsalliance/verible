@@ -47,7 +47,7 @@ readonly TERM_RESET=$'\033[0m'
 # TODO: Consider running with
 #  * address sanitizer (best result with libc++). CAVE: slow
 #  * running with -D_GLIBCXX_DEBUG (also see #1056)
-bazel build :install-binaries
+bazel build -c opt :install-binaries
 
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
 
