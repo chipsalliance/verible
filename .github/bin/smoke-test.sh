@@ -43,12 +43,6 @@ readonly TERM_RED=$'\033[1;31m'
 readonly TERM_BOLD=$'\033[1m'
 readonly TERM_RESET=$'\033[0m'
 
-# Build all the installable binaries that we're going to use below.
-# TODO: Consider running with
-#  * address sanitizer (best result with libc++). CAVE: slow
-#  * running with -D_GLIBCXX_DEBUG (also see #1056)
-bazel build -c opt :install-binaries
-
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
 
 # In case the binaries are run with ASAN:
@@ -302,10 +296,30 @@ trap 'rm -rf -- "$BASE_TEST_DIR"' EXIT
 
 status_sum=0
 
+#-- Prepare stuff in parallel
+#  - build the binaries
+#  - git fetch the projects.
+
+# Build all the installable binaries that we're going to use below.
+# TODO: Consider running with
+#  * address sanitizer (best result with libc++). CAVE: slow
+#  * running with -D_GLIBCXX_DEBUG (also see #1056)
+bazel build -c opt :install-binaries &
+
+# While compiling, run potentially slow network ops
 for git_project in ${TEST_GIT_PROJECTS} ; do
   PROJECT_NAME=$(basename $git_project)
   PROJECT_DIR=${BASE_TEST_DIR}/${PROJECT_NAME}
-  git clone -q ${git_project} ${PROJECT_DIR} 2>/dev/null
+  git clone ${git_project} ${PROJECT_DIR} 2>/dev/null &
+done
+
+echo "Waiting... for compilation and project download finished"
+wait
+
+for git_project in ${TEST_GIT_PROJECTS} ; do
+  PROJECT_NAME=$(basename $git_project)
+  PROJECT_DIR=${BASE_TEST_DIR}/${PROJECT_NAME}
+  # Already cloned above
 
   # Just collect everything that looks like Verilog/SystemVerilog
   FILELIST=${PROJECT_DIR}/verible.filelist
