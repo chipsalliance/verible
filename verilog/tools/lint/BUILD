@@ -224,6 +224,7 @@ verilog_syntax.test(
 cc_binary(
     name = "verible-verilog-lint",
     srcs = ["verilog_lint.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         "//common/analysis:violation_handler",

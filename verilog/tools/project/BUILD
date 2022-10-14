@@ -8,6 +8,7 @@ load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 cc_binary(
     name = "verible-verilog-project",
     srcs = ["project_tool.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:file_util",

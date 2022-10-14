@@ -11,6 +11,7 @@ exports_files([
 cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//:__subpackages__"],
     deps = [
         "//common/strings:patch",

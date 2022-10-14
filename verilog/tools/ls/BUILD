@@ -65,6 +65,7 @@ cc_library(
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         ":lsp-parse-buffer",

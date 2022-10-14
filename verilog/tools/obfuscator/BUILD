@@ -8,6 +8,7 @@ load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 cc_binary(
     name = "verible-verilog-obfuscate",
     srcs = ["verilog_obfuscate.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         "//common/strings:obfuscator",

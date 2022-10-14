@@ -8,6 +8,7 @@ licenses(["notice"])
 cc_binary(
     name = "verible-verilog-format",
     srcs = ["verilog_format.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
         "//common/formatting:align",

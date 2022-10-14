@@ -42,6 +42,25 @@ http_archive(
 )
 
 http_archive(
+    name = "com_google_tcmalloc",
+    strip_prefix = "tcmalloc-335f826a4e8a15d4ffe1b1521559710841df86d6",
+    sha256 = "8a41a0ad364de4911d36f4f627ea5fcba68441901053a56445055f33fa889ce4",
+    urls = ["https://github.com/google/tcmalloc/archive/335f826a4e8a15d4ffe1b1521559710841df86d6.zip"], # 2022-10-14
+)
+
+# A dependency of tcmalloc
+http_archive(
+    name = "rules_fuzzing",
+    sha256 = "a5734cb42b1b69395c57e0bbd32ade394d5c3d6afbfe782b24816a96da24660d",
+    strip_prefix = "rules_fuzzing-0.1.1",
+    urls = ["https://github.com/bazelbuild/rules_fuzzing/archive/v0.1.1.zip"],
+)
+load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
+rules_fuzzing_dependencies()
+load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
+rules_fuzzing_init()
+
+http_archive(
     name = "rules_cc",
     sha256 = "69fb4b965c538509324960817965791761d57010f42bf12ce9769c4259c7d018",
     strip_prefix = "rules_cc-e7c97c3af74e279a5db516a19f642e862ff58548",

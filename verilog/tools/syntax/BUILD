@@ -7,6 +7,7 @@ load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 cc_binary(
     name = "verible-verilog-syntax",
     srcs = ["verilog_syntax.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
         "//common/strings:compare",

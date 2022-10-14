@@ -8,6 +8,7 @@ licenses(["notice"])
 cc_binary(
     name = "verible-verilog-diff",
     srcs = ["verilog_diff.cc"],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         "//common/strings:obfuscator",

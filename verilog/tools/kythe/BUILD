@@ -220,6 +220,7 @@ cc_binary(
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
         "verilog_kythe_extractor.cc",
     ],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         ":indexing_facts_tree_extractor",
@@ -283,6 +284,7 @@ cc_binary(
     srcs = [
         "verilog_kythe_kzip_writer.cc",
     ],
+    malloc = "@com_google_tcmalloc//tcmalloc",
     visibility = ["//visibility:public"],
     deps = [
         ":kzip_creator",
