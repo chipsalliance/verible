@@ -215,7 +215,6 @@ cc_test(
         "//common/text:token_stream_view",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

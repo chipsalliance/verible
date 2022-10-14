@@ -96,7 +96,6 @@ cc_test(
         "//common/util:tree_operations",
         "//common/util:vector_tree",
         "//verilog/analysis:verilog_analyzer",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
