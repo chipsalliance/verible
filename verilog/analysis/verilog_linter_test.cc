@@ -29,7 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
@@ -199,7 +198,7 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
   std::pair<absl::Status, std::string> LintAnalyzeText(
       absl::string_view filename, absl::string_view content) const {
     // Run the analyzer to produce a syntax tree from source code.
-    const auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename);
+    const auto analyzer = std::make_unique<VerilogAnalyzer>(content, filename);
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
     std::ostringstream diagnostics;
     if (!status.ok()) {
@@ -456,7 +455,7 @@ class ViolationFixerTest : public testing::Test {
 
     // Run the analyzer to produce a syntax tree from source code.
     const auto analyzer =
-        absl::make_unique<VerilogAnalyzer>(content, temp_file.filename());
+        std::make_unique<VerilogAnalyzer>(content, temp_file.filename());
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
 
     const auto& text_structure = analyzer->Data();

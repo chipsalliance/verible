@@ -26,7 +26,6 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/hash/hash.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
@@ -315,7 +314,7 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
     // 'file_path' is path-resolved.
     const absl::string_view file_path(GetFilePathFromRoot(root));
     VLOG(1) << "child file resolved path: " << file_path;
-    scope_resolvers.push_back(absl::make_unique<ScopeResolver>(
+    scope_resolvers.push_back(std::make_unique<ScopeResolver>(
         CreateGlobalSignature(file_path), scope_resolvers.back().get()));
 
     // Create facts and edges.

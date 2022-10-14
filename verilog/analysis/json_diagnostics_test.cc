@@ -14,7 +14,8 @@
 
 #include "verilog/analysis/json_diagnostics.h"
 
-#include "absl/memory/memory.h"
+#include <memory>
+
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
@@ -34,7 +35,7 @@ static void CheckJsonErrorItem(const nlohmann::json& json, const char* phase,
 }
 
 TEST(JsonDiagnosticsTest, LexError) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
+  const auto analyzer_ptr = std::make_unique<VerilogAnalyzer>(
       "module 321foo;\nendmodule\n", "<noname>");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Tokenize();
   EXPECT_FALSE(status.ok());
@@ -46,7 +47,7 @@ TEST(JsonDiagnosticsTest, LexError) {
 }
 
 TEST(JsonDiagnosticsTest, ParseError) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
+  const auto analyzer_ptr = std::make_unique<VerilogAnalyzer>(
       "module 1;endmodule\n"
       "module 2;endmodule\n",
       "<noname>");

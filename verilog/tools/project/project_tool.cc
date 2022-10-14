@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include "absl/flags/flag.h"
@@ -105,7 +106,7 @@ struct ProjectSymbols {
     VLOG(1) << __FUNCTION__;
     // Load all source files first.
     // Error-out early if any files failed to open.
-    project = absl::make_unique<verilog::VerilogProject>(
+    project = std::make_unique<verilog::VerilogProject>(
         config.file_list_root, config.file_list.preprocessing.include_dirs);
     for (const auto& file : config.file_list.file_paths) {
       const auto open_status = project->OpenTranslationUnit(file);
@@ -113,7 +114,7 @@ struct ProjectSymbols {
     }
 
     // Initialize symbol table (empty).
-    symbol_table = absl::make_unique<verilog::SymbolTable>(project.get());
+    symbol_table = std::make_unique<verilog::SymbolTable>(project.get());
     return absl::OkStatus();
   }
 

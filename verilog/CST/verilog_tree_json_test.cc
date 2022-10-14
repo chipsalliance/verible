@@ -28,7 +28,7 @@ namespace {
 using nlohmann::json;
 
 TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
+  const auto analyzer_ptr = std::make_unique<VerilogAnalyzer>(
       "module foo;\nendmodule\n", "fake_file.sv");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
   EXPECT_TRUE(status.ok()) << status.message();

@@ -17,11 +17,11 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <vector>
 
 #include "absl/base/attributes.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
@@ -246,7 +246,7 @@ TEST(DependentReferencesTest, PrintEmpty) {
 
 TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
   const DependentReferences dep_refs{
-      .components = absl::make_unique<ReferenceComponentNode>(
+      .components = std::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "foo",
                              .ref_type = ReferenceType::kUnqualified,
                              .required_metatype = SymbolMetaType::kUnspecified,
@@ -273,7 +273,7 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
 
   // Construct references already resolved to above nodes.
   const DependentReferences dep_refs{
-      .components = absl::make_unique<ReferenceComponentNode>(
+      .components = std::make_unique<ReferenceComponentNode>(
           ReferenceComponent{.identifier = "p_pkg",
                              .ref_type = ReferenceType::kUnqualified,
                              .required_metatype = SymbolMetaType::kPackage,
@@ -399,7 +399,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     // pointer to symbol_table_1.
     root2.Value().local_references_to_bind.push_back(DependentReferences{
         .components =
-            absl::make_unique<ReferenceComponentNode>(ReferenceComponent{
+            std::make_unique<ReferenceComponentNode>(ReferenceComponent{
                 .identifier = "foo",
                 .ref_type = ReferenceType::kUnqualified,
                 .required_metatype = SymbolMetaType::kUnspecified,
@@ -422,7 +422,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     // pointer to symbol_table_1.
     root1.Value().local_references_to_bind.push_back(DependentReferences{
         .components =
-            absl::make_unique<ReferenceComponentNode>(ReferenceComponent{
+            std::make_unique<ReferenceComponentNode>(ReferenceComponent{
                 .identifier = "foo",
                 .ref_type = ReferenceType::kUnqualified,
                 .required_metatype = SymbolMetaType::kUnspecified,

@@ -73,7 +73,7 @@ TextStructureTokenized::TextStructureTokenized(
 
 std::unique_ptr<TextStructureView> MakeTextStructureViewHelloWorld() {
   auto text_structure_view =
-      absl::make_unique<TextStructureView>("hello, world");
+      std::make_unique<TextStructureView>("hello, world");
   TokenSequence& tokens = text_structure_view->MutableTokenStream();
   const absl::string_view text_view = text_structure_view->Contents();
   tokens.push_back(TokenInfo(0, text_view.substr(0, 5)));  // "hello"
@@ -93,7 +93,7 @@ std::unique_ptr<TextStructureView> MakeTextStructureViewHelloWorld() {
 
 // Return a text structure view with an empty string, and no tokens or tree
 std::unique_ptr<TextStructureView> MakeTextStructureViewWithNoLeaves() {
-  auto text_structure_view = absl::make_unique<TextStructureView>("");
+  auto text_structure_view = std::make_unique<TextStructureView>("");
   SymbolPtr syntax_tree = Node(Node(), Node(), Node(Node(), Node()));
   ConcreteSyntaxTree& mutable_tree = text_structure_view->MutableSyntaxTree();
   mutable_tree = std::move(syntax_tree);

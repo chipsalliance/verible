@@ -30,7 +30,7 @@ namespace {
 TEST(VerilogTreePrintTest, Prints) {
   const char input[] = "module foo;\nendmodule\n";
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(input, "fake_file.sv");
+      std::make_unique<VerilogAnalyzer>(input, "fake_file.sv");
   const auto status = analyzer->Analyze();
   EXPECT_TRUE(status.ok());
   std::ostringstream stream;
