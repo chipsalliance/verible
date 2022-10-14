@@ -14,11 +14,11 @@
 
 #include "common/util/interval_map.h"
 
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"
@@ -43,7 +43,7 @@ TEST(DisjointIntervalMapTest, FindEmpty) {
 
 TEST(DisjointIntervalMapTest, EmplaceOne) {
   IntIntervalMap imap;
-  const auto p = imap.emplace({3, 4}, absl::make_unique<int>(5));
+  const auto p = imap.emplace({3, 4}, std::make_unique<int>(5));
   EXPECT_TRUE(p.second);
   EXPECT_EQ(p.first->first, std::make_pair(3, 4));
   EXPECT_EQ(*p.first->second, 5);
@@ -52,7 +52,7 @@ TEST(DisjointIntervalMapTest, EmplaceOne) {
 
 TEST(DisjointIntervalMapTest, EmplaceOneEnsureMove) {
   StringIntervalMap imap;
-  auto s = absl::make_unique<std::string>("Gruetzi!");
+  auto s = std::make_unique<std::string>("Gruetzi!");
   const absl::string_view sv(*s);
   const auto p = imap.emplace({3, 7}, std::move(s));
   EXPECT_TRUE(p.second);
@@ -65,17 +65,17 @@ TEST(DisjointIntervalMapTest, EmplaceOneEnsureMove) {
 TEST(DisjointIntervalMapTest, EmplaceNonoverlappingAbutting) {
   IntIntervalMap imap;
   {
-    const auto p = imap.emplace({3, 4}, absl::make_unique<int>(5));
+    const auto p = imap.emplace({3, 4}, std::make_unique<int>(5));
     EXPECT_TRUE(p.second);
   }
   {
     // insert new leftmost range
-    const auto p = imap.emplace({1, 3}, absl::make_unique<int>(9));
+    const auto p = imap.emplace({1, 3}, std::make_unique<int>(9));
     EXPECT_TRUE(p.second);
   }
   {
     // insert new rightmost range
-    const auto p = imap.emplace({4, 7}, absl::make_unique<int>(2));
+    const auto p = imap.emplace({4, 7}, std::make_unique<int>(2));
     EXPECT_TRUE(p.second);
   }
 
@@ -101,17 +101,17 @@ TEST(DisjointIntervalMapTest, EmplaceNonoverlappingAbutting) {
 TEST(DisjointIntervalMapTest, EmplaceNonoverlappingWithGaps) {
   IntIntervalMap imap;
   {
-    const auto p = imap.emplace({20, 25}, absl::make_unique<int>(4));
+    const auto p = imap.emplace({20, 25}, std::make_unique<int>(4));
     EXPECT_TRUE(p.second);
   }
   {
     // insert new rightmost range
-    const auto p = imap.emplace({30, 40}, absl::make_unique<int>(2));
+    const auto p = imap.emplace({30, 40}, std::make_unique<int>(2));
     EXPECT_TRUE(p.second);
   }
   {
     // insert new leftmost range
-    const auto p = imap.emplace({10, 15}, absl::make_unique<int>(8));
+    const auto p = imap.emplace({10, 15}, std::make_unique<int>(8));
     EXPECT_TRUE(p.second);
   }
 
@@ -143,7 +143,7 @@ TEST(DisjointIntervalMapTest, EmplaceNonoverlappingWithGaps) {
 
   {
     // fill a gap completely
-    const auto p = imap.emplace({15, 20}, absl::make_unique<int>(77));
+    const auto p = imap.emplace({15, 20}, std::make_unique<int>(77));
     EXPECT_TRUE(p.second);
     EXPECT_EQ(*imap.find(14)->second, 8);
     for (int i = 15; i < 20; ++i) {
@@ -156,7 +156,7 @@ TEST(DisjointIntervalMapTest, EmplaceNonoverlappingWithGaps) {
 
   {
     // fill a gap partially
-    const auto p = imap.emplace({27, 29}, absl::make_unique<int>(44));
+    const auto p = imap.emplace({27, 29}, std::make_unique<int>(44));
     EXPECT_TRUE(p.second);
     for (int i = 25; i < 27; ++i) {
       EXPECT_EQ(imap.find(i), imap.end());
@@ -174,7 +174,7 @@ TEST(DisjointIntervalMapTest, EmplaceNonoverlappingWithGaps) {
 
 TEST(DisjointIntervalMapTest, EmplaceBackwardsRange) {
   IntIntervalMap imap;
-  EXPECT_DEATH(imap.emplace({4, 3}, absl::make_unique<int>(5)), "");
+  EXPECT_DEATH(imap.emplace({4, 3}, std::make_unique<int>(5)), "");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceSuccess) {
@@ -184,7 +184,7 @@ TEST(DisjointIntervalMapTest, MustEmplaceSuccess) {
   };
   for (const auto& t : kTestValues) {
     const auto iter = imap.must_emplace({std::get<0>(t), std::get<1>(t)},
-                                        absl::make_unique<int>(std::get<2>(t)));
+                                        std::make_unique<int>(std::get<2>(t)));
     // Ensure that inserted value is the expected key and value.
     EXPECT_EQ(iter->first.first, std::get<0>(t));
     EXPECT_EQ(iter->first.second, std::get<1>(t));
@@ -194,59 +194,59 @@ TEST(DisjointIntervalMapTest, MustEmplaceSuccess) {
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapLeft) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({20, 31}, absl::make_unique<int>(9)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({20, 31}, std::make_unique<int>(9)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapRight) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({39, 45}, absl::make_unique<int>(22)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({39, 45}, std::make_unique<int>(22)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapInterior) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({31, 39}, absl::make_unique<int>(12)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({31, 39}, std::make_unique<int>(12)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapEnveloped) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({29, 40}, absl::make_unique<int>(29)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({29, 40}, std::make_unique<int>(29)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceSpanningTwo) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  imap.must_emplace({50, 60}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({35, 55}, absl::make_unique<int>(99)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  imap.must_emplace({50, 60}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({35, 55}, std::make_unique<int>(99)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapsLower) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  imap.must_emplace({50, 60}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({35, 45}, absl::make_unique<int>(55)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  imap.must_emplace({50, 60}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({35, 45}, std::make_unique<int>(55)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, MustEmplaceOverlapsUpper) {
   IntIntervalMap imap;
-  imap.must_emplace({30, 40}, absl::make_unique<int>(5));
-  imap.must_emplace({50, 60}, absl::make_unique<int>(5));
-  EXPECT_DEATH(imap.must_emplace({45, 55}, absl::make_unique<int>(66)),
+  imap.must_emplace({30, 40}, std::make_unique<int>(5));
+  imap.must_emplace({50, 60}, std::make_unique<int>(5));
+  EXPECT_DEATH(imap.must_emplace({45, 55}, std::make_unique<int>(66)),
                "Failed to emplace");
 }
 
 TEST(DisjointIntervalMapTest, FindInterval) {
   IntIntervalMap imap;
-  imap.must_emplace({20, 25}, absl::make_unique<int>(1));
+  imap.must_emplace({20, 25}, std::make_unique<int>(1));
   for (int i = 19; i < 26; ++i) {
     for (int j = i + 1; j < 26; ++j) {
       const auto found = imap.find({i, j});
@@ -265,9 +265,9 @@ TEST(DisjointIntervalMapTest, FindInterval) {
 TEST(DisjointIntervalMapTest, BeginEndRangeConstIterators) {
   IntIntervalMap imap;
   // values chosen to be == interval size
-  imap.must_emplace({50, 60}, absl::make_unique<int>(10));
-  imap.must_emplace({30, 35}, absl::make_unique<int>(5));
-  imap.must_emplace({39, 46}, absl::make_unique<int>(7));
+  imap.must_emplace({50, 60}, std::make_unique<int>(10));
+  imap.must_emplace({30, 35}, std::make_unique<int>(5));
+  imap.must_emplace({39, 46}, std::make_unique<int>(7));
   for (const auto& pair : imap) {
     EXPECT_EQ(pair.first.second - pair.first.first, *pair.second);
   }

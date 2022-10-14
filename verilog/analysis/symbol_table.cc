@@ -15,6 +15,7 @@
 #include "verilog/analysis/symbol_table.h"
 
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stack>
 
@@ -1540,7 +1541,7 @@ ReferenceComponentNode* DependentReferences::PushReferenceComponent(
   VLOG(3) << __FUNCTION__ << ", id: " << component.identifier;
   ReferenceComponentNode* new_child;
   if (Empty()) {
-    components = absl::make_unique<ReferenceComponentNode>(component);  // copy
+    components = std::make_unique<ReferenceComponentNode>(component);  // copy
     new_child = components.get();
   } else {
     // Find the last node from which references can be grown.
@@ -1900,7 +1901,7 @@ void DeclarationTypeInfo::VerifySymbolTableRoot(
 
 absl::string_view SymbolInfo::CreateAnonymousScope(absl::string_view base) {
   const size_t n = anonymous_scope_names.size();
-  anonymous_scope_names.emplace_back(absl::make_unique<const std::string>(
+  anonymous_scope_names.emplace_back(std::make_unique<const std::string>(
       // Starting with a non-alpha character guarantees it cannot collide with
       // any user-given identifier.
       absl::StrCat("%", "anon-", base, "-", n)));

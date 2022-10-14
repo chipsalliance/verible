@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
@@ -49,8 +48,8 @@ static std::unique_ptr<VerilogAnalyzer> AnalyzeVerilogConstruct(
   const std::string analyze_text = absl::StrCat(prolog, text, epilog);
   // Disable parser directive comments because a specific parser
   // is already being selected.
-  auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(analyze_text, filename,
-                                                         preprocess_config);
+  auto analyzer_ptr = std::make_unique<VerilogAnalyzer>(analyze_text, filename,
+                                                        preprocess_config);
 
   if (!ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze().ok()) {
     VLOG(2) << __FUNCTION__ << ": Analyze() failed.  code:\n" << analyze_text;

@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -233,7 +232,7 @@ class TreeUnwrapperTest : public ::testing::Test {
   // VerilogAnalyzer which holds a concrete syntax tree and token stream view
   // of the file.
   void MakeTree(absl::string_view content) {
-    analyzer_ = absl::make_unique<VerilogAnalyzer>(content, "TEST_FILE");
+    analyzer_ = std::make_unique<VerilogAnalyzer>(content, "TEST_FILE");
     absl::Status status = ABSL_DIE_IF_NULL(analyzer_)->Analyze();
     EXPECT_OK(status) << "Rejected code: " << std::endl << content;
 
@@ -255,9 +254,9 @@ class TreeUnwrapperTest : public ::testing::Test {
     MakeTree(source_code);
     const verible::TextStructureView& text_structure_view = analyzer_->Data();
     unwrapper_data_ =
-        absl::make_unique<UnwrapperData>(text_structure_view.TokenStream());
+        std::make_unique<UnwrapperData>(text_structure_view.TokenStream());
 
-    return absl::make_unique<TreeUnwrapper>(
+    return std::make_unique<TreeUnwrapper>(
         text_structure_view, style_, unwrapper_data_->preformatted_tokens);
   }
 

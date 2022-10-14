@@ -25,7 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -135,7 +134,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
     const VerilogPreprocess::Config& preprocess_config) {
   VLOG(2) << __FUNCTION__;
   auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(text, name, preprocess_config);
+      std::make_unique<VerilogAnalyzer>(text, name, preprocess_config);
   if (analyzer == nullptr) return analyzer;
   const absl::string_view text_base = analyzer->Data().Contents();
   // If there is any lexical error, stop right away.

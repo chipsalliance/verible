@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -114,7 +113,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
   auto token_iter = **token_scan;
   // Extract macro name.
   if (token_iter->token_enum() != PP_Identifier) {
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat("expected identifier for macro parameter, but got: ",
                      token_iter->ToString()));
@@ -124,18 +123,18 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
   // Check for separator or default text.
   token_iter = advance(token_scan);
   if (token_iter->isEOF()) {
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter, "unexpected EOF while parsing macro parameter");
   }
   if (token_iter->token_enum() == '=') {
     token_iter = advance(token_scan);
     if (token_iter->isEOF()) {
-      return absl::make_unique<VerilogPreprocessError>(
+      return std::make_unique<VerilogPreprocessError>(
           *token_iter,
           "unexpected EOF where macro parameter default text is expected");
     }
     if (token_iter->token_enum() != PP_default_text) {
-      return absl::make_unique<VerilogPreprocessError>(
+      return std::make_unique<VerilogPreprocessError>(
           *token_iter,
           absl::StrCat("expected macro parameter default text, but got: ",
                        token_iter->ToString()));
@@ -145,7 +144,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
     token_iter = advance(token_scan);
   }
   if (token_iter->isEOF()) {
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter,
         "unexpected EOF where expecting macro parameter separator");
   }
@@ -155,7 +154,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroParameter(
     // Do not advance.
   } else {
     // This case covers an unexpected EOF token.
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat(
             "expecting macro parameter separator ',', or terminator ')', "
@@ -187,7 +186,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
   }
   // The macro definition body follows.
   if (token_iter->token_enum() != PP_define_body) {
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat("expected macro definition body text, but got: ",
                      token_iter->ToString()));
@@ -196,7 +195,7 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
   ++token_scan;
   if (token_scan != define_tokens.end()) {
     token_iter = *token_scan;
-    return absl::make_unique<VerilogPreprocessError>(
+    return std::make_unique<VerilogPreprocessError>(
         *token_iter,
         absl::StrCat("expected no more tokens from macro definition, but got: ",
                      token_iter->ToString()));

@@ -14,7 +14,8 @@
 
 #include "verilog/analysis/verilog_project.h"
 
-#include "absl/memory/memory.h"
+#include <memory>
+
 #include "absl/strings/match.h"
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
@@ -200,7 +201,7 @@ TEST(InMemoryVerilogSourceFileTest, ParseInvalidFile) {
 TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
   constexpr absl::string_view text("localparam int p = 1;\n");
   std::unique_ptr<VerilogAnalyzer> analyzed_structure =
-      absl::make_unique<VerilogAnalyzer>(text, "internal");
+      std::make_unique<VerilogAnalyzer>(text, "internal");
   absl::Status status = analyzed_structure->Analyze();
   EXPECT_TRUE(status.ok());
   const TextStructureView& input_text_structure = analyzed_structure->Data();
@@ -317,7 +318,7 @@ TEST(VerilogProjectTest, LookupFileOriginTestMoreFiles) {
   std::vector<const VerilogSourceFile*> sources;
   for (int i = 0; i < N; ++i) {
     // Write files, need not be parse-able.
-    test_files.emplace_back(absl::make_unique<ScopedTestFile>(
+    test_files.emplace_back(std::make_unique<ScopedTestFile>(
         sources_dir, "sa89*(98<Na! 89 89891231!@#ajk jasoij(*&^ asaissd0afd "));
     const auto status_or_file =
         project.OpenTranslationUnit(Basename(test_files.back()->filename()));

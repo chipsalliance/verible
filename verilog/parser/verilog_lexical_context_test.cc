@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
@@ -315,7 +314,7 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleFinalSemicolon) {
 struct StateMachineTestBase : public ::testing::Test {
   // Lexes code and initializes token_iter to point to the first token.
   void Tokenize(const std::string& code) {
-    analyzer = absl::make_unique<VerilogAnalyzer>(code, "");
+    analyzer = std::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer->Tokenize());
     analyzer->FilterTokensForSyntaxTree();
     token_iter = analyzer->Data().GetTokenStreamView().cbegin();
@@ -1213,7 +1212,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
 
   // Lexes code and initializes token_iter to point to the first token.
   void Tokenize(const std::string& code) {
-    analyzer_ = absl::make_unique<VerilogAnalyzer>(code, "");
+    analyzer_ = std::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer_->Tokenize());
     analyzer_->FilterTokensForSyntaxTree();
     token_refs_ = analyzer_->MutableData().MakeTokenStreamReferenceView();

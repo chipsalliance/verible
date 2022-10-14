@@ -127,8 +127,8 @@ static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
       return VerilogAnalyzer::AnalyzeAutomaticMode(content, filename,
                                                    preprocess_config);
     case LanguageMode::kSystemVerilog: {
-      auto analyzer = absl::make_unique<VerilogAnalyzer>(content, filename,
-                                                         preprocess_config);
+      auto analyzer = std::make_unique<VerilogAnalyzer>(content, filename,
+                                                        preprocess_config);
       const auto status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
       if (!status.ok()) std::cerr << status.message() << std::endl;
       return analyzer;

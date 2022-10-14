@@ -51,16 +51,16 @@ struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
 
   void Initialize(int d, const std::vector<TokenInfo>& tokens) {
     CreateTokenInfos(tokens);
-    uwline = absl::make_unique<UnwrappedLine>(d * style.indentation_spaces,
-                                              pre_format_tokens_.begin());
+    uwline = std::make_unique<UnwrappedLine>(d * style.indentation_spaces,
+                                             pre_format_tokens_.begin());
     AddFormatTokens(uwline.get());
   }
 
   void InitializeExternalTextBuffer(int d,
                                     const std::vector<TokenInfo>& tokens) {
     CreateTokenInfosExternalStringBuffer(tokens);
-    uwline = absl::make_unique<UnwrappedLine>(d * style.indentation_spaces,
-                                              pre_format_tokens_.begin());
+    uwline = std::make_unique<UnwrappedLine>(d * style.indentation_spaces,
+                                             pre_format_tokens_.begin());
     AddFormatTokens(uwline.get());
   }
 

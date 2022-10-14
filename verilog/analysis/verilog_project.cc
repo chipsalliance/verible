@@ -15,10 +15,10 @@
 #include "verilog/analysis/verilog_project.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
@@ -132,7 +132,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename, absl::string_view resolved_filename,
     absl::string_view corpus) {
   const auto inserted = files_.emplace(
-      referenced_filename, absl::make_unique<VerilogSourceFile>(
+      referenced_filename, std::make_unique<VerilogSourceFile>(
                                referenced_filename, resolved_filename, corpus));
   CHECK(inserted.second);  // otherwise, would have already returned above
   const auto file_iter = inserted.first;
@@ -282,7 +282,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
   // Not found in any path.  Cache this status.
   const auto inserted = files_.emplace(
       referenced_filename,
-      absl::make_unique<VerilogSourceFile>(
+      std::make_unique<VerilogSourceFile>(
           referenced_filename, IncludeFileNotFoundError(referenced_filename)));
   CHECK(inserted.second) << "Not-found file should have been recorded as such.";
   return inserted.first->second->Status();
@@ -291,7 +291,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
 void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
                                     absl::string_view content) {
   const auto inserted = files_.emplace(
-      resolved_filename, absl::make_unique<InMemoryVerilogSourceFile>(
+      resolved_filename, std::make_unique<InMemoryVerilogSourceFile>(
                              resolved_filename, content, /*corpus=*/""));
   CHECK(inserted.second);
 }

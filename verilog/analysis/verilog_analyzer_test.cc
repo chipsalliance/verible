@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "absl/base/casts.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -89,7 +88,7 @@ void DiagnosticMessagesContainFilename(const VerilogAnalyzer& analyzer,
 // More extensive tests are in verilog_parser_unittest.cc.
 
 TEST(AnalyzeVerilogTest, EmptyText) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>("", "<noname>");
+  const auto analyzer_ptr = std::make_unique<VerilogAnalyzer>("", "<noname>");
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze());
 }
 
@@ -97,7 +96,7 @@ TEST(AnalyzeVerilogTest, EmptyText) {
 
 // Tests that invalid symbol identifier is rejected.
 TEST(AnalyzeVerilogLexerTest, RejectsBadId) {
-  const auto analyzer_ptr = absl::make_unique<VerilogAnalyzer>(
+  const auto analyzer_ptr = std::make_unique<VerilogAnalyzer>(
       "module 321foo;\nendmodule\n", "<noname>");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Tokenize();
   EXPECT_FALSE(status.ok());
@@ -112,7 +111,7 @@ TEST(AnalyzeVerilogLexerTest, RejectsBadId) {
 // Tests that invalid macro identifier is rejected.
 TEST(AnalyzeVerilogLexerTest, RejectsMacroBadId) {
   const auto analyzer_ptr =
-      absl::make_unique<VerilogAnalyzer>("`321foo(a, b, c)\n", "<noname>");
+      std::make_unique<VerilogAnalyzer>("`321foo(a, b, c)\n", "<noname>");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Tokenize();
   EXPECT_FALSE(status.ok());
   EXPECT_FALSE(analyzer_ptr->LexStatus().ok());
@@ -571,7 +570,7 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyModeFarthestFirstError) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, NoArg) {
   const TokenInfoTestData test = {{MacroCallId, "`FOOBAR"}, "()\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -584,7 +583,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, NoArg) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, SpaceArg) {
   const TokenInfoTestData test = {"  ", {MacroCallId, "`FOOBAR"}, "(      )\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -597,7 +596,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, SpaceArg) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, CommaSeparatedBlankArg) {
   const TokenInfoTestData test = {"`FOOBAR( ", ',', " )\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -612,7 +611,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, NonExprArg) {
   // when it does not parse as an expression.
   const TokenInfoTestData test = {"`FOOBAR(", {MacroArg, "module"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -625,7 +624,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, NonExprArg) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, IntegerArg) {
   const TokenInfoTestData test = {"`FOO(", {TK_DecNumber, "123"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -638,7 +637,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, IntegerArg) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, IdentifierArg) {
   const TokenInfoTestData test = {"`FOO(", {SymbolIdentifier, "bar"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -651,7 +650,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, IdentifierArg) {
 TEST(VerilogAnalyzerExpandsMacroArgsTest, MacroIdentifierArg) {
   const TokenInfoTestData test = {"`FOO(", {MacroIdentifier, "`bar"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -665,7 +664,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, StringArg) {
   const TokenInfoTestData test = {
       "`FOO(", {TK_StringLiteral, "\"hello\""}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -679,7 +678,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, EvalStringArg) {
   const TokenInfoTestData test = {
       "`FOO(", {TK_EvalStringLiteral, "`\"`hello(world)`\""}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -693,7 +692,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, BinaryExprArg) {
   const TokenInfoTestData test = {
       "`FOO(", {TK_DecNumber, "1"}, '+', {TK_DecNumber, "3"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -710,7 +709,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, FunctionCallArg) {
                                   '(',     {TK_DecNumber, "0"},
                                   ')',     ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -726,7 +725,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, MultipleExpressions) {
   const TokenInfoTestData test = {
       "`FOO(", {TK_DecNumber, "9"}, ",", {SymbolIdentifier, "aa"}, ")\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -742,7 +741,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, MacroCall) {
   const TokenInfoTestData test = {
       "`FOO(", {MacroCallId, "`BAR"}, "(", {SymbolIdentifier, "abc"}, "))\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -759,7 +758,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, MacroCallNested) {
       "`FOO(", {MacroCallId, "`BAR"},     "(",    {MacroCallId, "`BAZ"},
       "(",     {SymbolIdentifier, "abc"}, ")))\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =
@@ -779,7 +778,7 @@ TEST(VerilogAnalyzerExpandsMacroArgsTest, MultipleMacroCalls) {
                                   "(",     {SymbolIdentifier, "abc"},
                                   "))\n"};
   const auto analyzer =
-      absl::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
+      std::make_unique<VerilogAnalyzer>(test.code, "<<inline>>");
   EXPECT_OK(analyzer->Analyze());
   const ConcreteSyntaxTree& tree = analyzer->SyntaxTree();
   const auto search_tokens =

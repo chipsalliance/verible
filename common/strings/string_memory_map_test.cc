@@ -121,7 +121,7 @@ TEST(StringMemoryMapTest, EmptyOwnsNothing) {
 
 static absl::string_view InsertStringCopy(StringSet* sset, const char* text) {
   const auto new_iter =
-      sset->insert(absl::make_unique<std::string>(text));  // copy
+      sset->insert(std::make_unique<std::string>(text));  // copy
   return make_string_view_range(new_iter->first.first, new_iter->first.second);
 }
 
