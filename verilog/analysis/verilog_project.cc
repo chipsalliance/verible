@@ -15,6 +15,7 @@
 #include "verilog/analysis/verilog_project.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -29,16 +30,15 @@
 #include "common/text/text_structure.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
-#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 
 // All files we process with the verilog project, essentially applications that
 // build a symbol table (project-tool, kythe-indexer) only benefit from
 // processing the same sequence of tokens a synthesis tool sees.
-static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{
-    .filter_branches = true,
-};
+/* static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{ */
+/*     .filter_branches = true, */
+/* }; */
 
 VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
                                      const absl::Status& status)
@@ -53,42 +53,50 @@ absl::Status VerilogSourceFile::Open() {
   status_ = verible::file::GetContents(ResolvedPath(), &content);
   if (!status_.ok()) return status_;
 
+  memory_ = std::make_unique<verible::StringMemBlock>(content);
+
   // TODO(fangism): std::move or memory-map to avoid a short-term copy.
-  analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
-      content, ResolvedPath(), kPreprocessConfig);
+  /* analyzed_structure_ = std::make_unique<VerilogAnalyzer>( */
+  /*     content, ResolvedPath(), kPreprocessConfig); */
   state_ = State::kOpened;
   // status_ is Ok here.
   return status_;
 }
 
-absl::Status VerilogSourceFile::Parse() {
-  // Parsed state is cached.
-  if (state_ == State::kParsed) return status_;
+/* absl::Status VerilogSourceFile::Parse() { */
+/*   // Parsed state is cached. */
+/*   if (state_ == State::kParsed) return status_; */
 
-  // Open file and load contents if not already done.
-  status_ = Open();
-  if (!status_.ok()) return status_;
+/*   // Open file and load contents if not already done. */
+/*   status_ = Open(); */
+/*   if (!status_.ok()) return status_; */
 
-  // Lex, parse, populate underlying TextStructureView.
-  const absl::Time analyze_start = absl::Now();
-  status_ = analyzed_structure_->Analyze();
-  LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
-            << absl::ToInt64Milliseconds(absl::Now() - analyze_start) << "ms";
-  state_ = State::kParsed;
-  return status_;
+/*   // Lex, parse, populate underlying TextStructureView. */
+/*   const absl::Time analyze_start = absl::Now(); */
+/*   status_ = analyzed_structure_->Analyze(); */
+/*   LOG(INFO) << "Analyzed " << ResolvedPath() << " in " */
+/*             << absl::ToInt64Milliseconds(absl::Now() - analyze_start) <<
+ * "ms"; */
+/*   state_ = State::kParsed; */
+/*   return status_; */
+/* } */
+
+absl::string_view VerilogSourceFile::GetStringView() const {
+  return memory_->AsStringView();
 }
 
-const verible::TextStructureView* VerilogSourceFile::GetTextStructure() const {
-  if (analyzed_structure_ == nullptr) return nullptr;
-  return &analyzed_structure_->Data();
-}
+/* const verible::TextStructureView* VerilogSourceFile::GetTextStructure() const
+ * { */
+/*   if (analyzed_structure_ == nullptr) return nullptr; */
+/*   return &analyzed_structure_->Data(); */
+/* } */
 
-std::vector<std::string> VerilogSourceFile::ErrorMessages() const {
-  std::vector<std::string> result;
-  if (!analyzed_structure_) return result;
-  result = analyzed_structure_->LinterTokenErrorMessages(false);
-  return result;
-}
+/* std::vector<std::string> VerilogSourceFile::ErrorMessages() const { */
+/*   std::vector<std::string> result; */
+/*   if (!analyzed_structure_) return result; */
+/*   result = analyzed_structure_->LinterTokenErrorMessages(false); */
+/*   return result; */
+/* } */
 
 std::ostream& operator<<(std::ostream& stream,
                          const VerilogSourceFile& source) {
@@ -97,36 +105,36 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "corpus: " << source.Corpus() << std::endl;
   const auto status = source.Status();
   stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
-  const auto* text_structure = source.GetTextStructure();
-  stream << "have text structure? "
-         << ((text_structure != nullptr) ? "yes" : "no") << std::endl;
+  /* const auto* text_structure = source.GetTextStructure(); */
+  /* stream << "have text structure? " */
+  /*        << ((text_structure != nullptr) ? "yes" : "no") << std::endl; */
   return stream;
 }
 
 absl::Status InMemoryVerilogSourceFile::Open() {
-  analyzed_structure_ = ABSL_DIE_IF_NULL(std::make_unique<VerilogAnalyzer>(
-      contents_for_open_, ResolvedPath(), kPreprocessConfig));
+  memory_ = std::make_unique<verible::StringMemBlock>(contents_for_open_);
   state_ = State::kOpened;
   status_ = absl::OkStatus();
   return status_;
 }
 
-absl::Status ParsedVerilogSourceFile::Open() {
-  state_ = State::kOpened;
-  status_ = absl::OkStatus();
-  return status_;
-}
+/* absl::Status ParsedVerilogSourceFile::Open() { */
+/*   state_ = State::kOpened; */
+/*   status_ = absl::OkStatus(); */
+/*   return status_; */
+/* } */
 
-absl::Status ParsedVerilogSourceFile::Parse() {
-  state_ = State::kParsed;
-  status_ = absl::OkStatus();
-  return status_;
-}
+/* absl::Status ParsedVerilogSourceFile::Parse() { */
+/*   state_ = State::kParsed; */
+/*   status_ = absl::OkStatus(); */
+/*   return status_; */
+/* } */
 
-const verible::TextStructureView* ParsedVerilogSourceFile::GetTextStructure()
-    const {
-  return text_structure_;
-}
+/* const verible::TextStructureView* ParsedVerilogSourceFile::GetTextStructure()
+ */
+/*     const { */
+/*   return text_structure_; */
+/* } */
 
 absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
     absl::string_view referenced_filename, absl::string_view resolved_filename,
@@ -145,7 +153,8 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   // NOTE: string view maps don't support removal operation. The following block
   // is valid only if files won't be removed from the project.
   if (populate_string_maps_) {
-    const absl::string_view contents(file.GetTextStructure()->Contents());
+    /* const absl::string_view contents(file.GetTextStructure()->Contents()); */
+    const absl::string_view contents = file.memory_->AsStringView();
 
     // Register the file's contents range in string_view_map_.
     string_view_map_.must_emplace(contents);

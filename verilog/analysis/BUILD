@@ -385,8 +385,8 @@ cc_library(
     srcs = ["verilog_project.cc"],
     hdrs = ["verilog_project.h"],
     deps = [
-        ":verilog_analyzer",
         ":verilog_filelist",
+        "//common/strings:mem_block",
         "//common/strings:string_memory_map",
         "//common/text:text_structure",
         "//common/util:file_util",
@@ -405,11 +405,9 @@ cc_test(
     srcs = ["verilog_project_test.cc"],
     deps = [
         ":verilog_project",
-        "//common/text:text_structure",
         "//common/util:file_util",
         "//common/util:logging",
         "//common/util:range",
-        "//verilog/CST:module",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

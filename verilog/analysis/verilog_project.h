@@ -24,9 +24,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "common/strings/mem-block.h"
 #include "common/strings/string_memory_map.h"
-#include "common/text/text_structure.h"
-#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_filelist.h"
 
 namespace verilog {
@@ -63,18 +62,19 @@ class VerilogSourceFile {
   // Attempts to lex and parse the file.
   // Will Open() if the file is not already opened.
   // Depending on context, not all files are suitable for standalone parsing.
-  virtual absl::Status Parse();
+  /* virtual absl::Status Parse(); */
 
   // After Open(), the underlying text structure contains at least the file's
   // contents.  After Parse(), it may contain other analyzed structural forms.
   // Before Open(), this returns nullptr.
-  virtual const verible::TextStructureView* GetTextStructure() const;
+  /* virtual const verible::TextStructureView* GetTextStructure() const; */
+  virtual absl::string_view GetStringView() const;
 
   // Returns the first non-Ok status if there is one, else OkStatus().
   absl::Status Status() const { return status_; }
 
   // Return human readable error messages if available.
-  std::vector<std::string> ErrorMessages() const;
+  /* std::vector<std::string> ErrorMessages() const; */
 
   // Returns the name used to reference the file.
   absl::string_view ReferencedPath() const { return referenced_path_; }
@@ -148,7 +148,9 @@ class VerilogSourceFile {
 
   // Holds the file's string contents in owned memory, along with other forms
   // like token streams and syntax tree.
-  std::unique_ptr<VerilogAnalyzer> analyzed_structure_;
+  /* std::unique_ptr<VerilogAnalyzer> analyzed_structure_; */
+
+  std::unique_ptr<verible::MemBlock> memory_;
 };
 
 // Printable representation for debugging.
@@ -174,31 +176,32 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
 
 // Source file that was already parsed and got its own TextStructure.
 // Doesn't require file-system access, nor create temporary files.
-class ParsedVerilogSourceFile final : public VerilogSourceFile {
- public:
-  // filename can be fake, it is not used to open any file.
-  // text_structure is a pointer to a TextStructureView object of
-  //     already parsed file. Current implementation does _not_ make a
-  //     copy of it and expects it will be available for the lifetime of
-  //     object of this class.
-  ParsedVerilogSourceFile(absl::string_view filename,
-                          const verible::TextStructureView* text_structure,
-                          absl::string_view corpus = "")
-      : VerilogSourceFile(filename, filename, corpus),
-        text_structure_(text_structure) {}
+/* class ParsedVerilogSourceFile final : public VerilogSourceFile { */
+/*  public: */
+/*   // filename can be fake, it is not used to open any file. */
+/*   // text_structure is a pointer to a TextStructureView object of */
+/*   //     already parsed file. Current implementation does _not_ make a */
+/*   //     copy of it and expects it will be available for the lifetime of */
+/*   //     object of this class. */
+/*   ParsedVerilogSourceFile(absl::string_view filename, */
+/*                           const verible::TextStructureView* text_structure,
+ */
+/*                           absl::string_view corpus = "") */
+/*       : VerilogSourceFile(filename, filename, corpus), */
+/*         text_structure_(text_structure) {} */
 
-  // Do nothing (file contents already loaded)
-  absl::Status Open() final;
+/*   // Do nothing (file contents already loaded) */
+/*   absl::Status Open() final; */
 
-  // Do nothing (contents already parsed)
-  absl::Status Parse() final;
+/*   // Do nothing (contents already parsed) */
+/*   absl::Status Parse() final; */
 
-  // Return TextStructureView provided previously in constructor
-  const verible::TextStructureView* GetTextStructure() const final;
+/*   // Return TextStructureView provided previously in constructor */
+/*   const verible::TextStructureView* GetTextStructure() const final; */
 
- private:
-  const verible::TextStructureView* text_structure_;
-};
+/*  private: */
+/*   const verible::TextStructureView* text_structure_; */
+/* }; */
 
 // VerilogProject represents a set of files as a cohesive unit of compilation.
 // Files can include top-level translation units and preprocessor included
