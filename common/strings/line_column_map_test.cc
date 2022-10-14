@@ -100,14 +100,6 @@ TEST(LineColumnTextTest, PrintLineColumnRange) {
   }
 }
 
-// Test that Clear resets the map.
-TEST(LineColumnMapTest, ClearEmpty) {
-  LineColumnMap line_map("hello\nworld\n");
-  EXPECT_FALSE(line_map.Empty());
-  line_map.Clear();
-  EXPECT_TRUE(line_map.Empty());
-}
-
 // Test offset lookup values by line number.
 TEST(LineColumnMapTest, OffsetAtLine) {
   LineColumnMap line_map("hello\n\nworld\n");

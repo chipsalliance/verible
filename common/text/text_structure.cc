@@ -277,7 +277,7 @@ const TextStructureView::LinesInfo& TextStructureView::LinesInfo::Get(
   if (valid) return *this;
 
   lines = absl::StrSplit(contents, '\n');
-  line_column_map.reset(new LineColumnMap(contents));
+  line_column_map.reset(new LineColumnMap(lines));
   valid = true;
 
   return *this;
