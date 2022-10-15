@@ -892,7 +892,11 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // Adding "/" in include dirs is a hacky solution for now.
+  VerilogProject project(".", {"/"});
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           &project);
   VerilogPreprocess equivalent(
       VerilogPreprocess::Config({.include_files = true}));
 
@@ -938,7 +942,11 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // Adding "/" in include dirs is a hacky solution for now.
+  VerilogProject project(".", {"/", includes_dir});
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           &project);
   VerilogPreprocess equivalent(
       VerilogPreprocess::Config({.include_files = true}));
 
@@ -988,7 +996,11 @@ TEST(VerilogPreprocessTest,
   const std::string src_content = absl::StrCat("`include \"", included_filename,
                                                "\"\nmodule src(); endmodule\n");
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // Adding "/" in include dirs is a hacky solution for now.
+  VerilogProject project(".", {"/"});
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           &project);
 
   LexerTester src_lexer(src_content);
   const auto& tester_pp_data =
@@ -996,7 +1008,7 @@ TEST(VerilogPreprocessTest,
 
   EXPECT_EQ(tester_pp_data.errors.size(), 1);
   const auto& error = tester_pp_data.errors.front();
-  EXPECT_THAT(error.error_message, StartsWith(included_filename));
+  EXPECT_THAT(error.error_message, StartsWith("Unable to find"));
 }
 
 }  // namespace

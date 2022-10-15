@@ -28,6 +28,7 @@
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
@@ -91,12 +92,17 @@ static absl::Status PreprocessSingleFile(
   config.filter_branches = true;
   config.include_files = true;
   // config.expand_macros=1;
-  verilog::VerilogPreprocess preprocessor(config);
+
+  verilog::VerilogProject project(".", preprocessing_info.include_dirs);
+  const auto status_or_file = project.OpenTranslationUnit(source_file);
+  if (!status_or_file.ok()) return status_or_file.status();
+  const auto opened_file_contents = (*status_or_file)->GetStringView();
+  verilog::VerilogPreprocess preprocessor(config, &project);
 
   // Setting the preprocessing info (defines, and incdirs) in the preprocessor.
   preprocessor.setPreprocessingInfo(preprocessing_info);
 
-  verilog::VerilogLexer lexer(source_contents);
+  verilog::VerilogLexer lexer(opened_file_contents);
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
@@ -114,7 +120,8 @@ static absl::Status PreprocessSingleFile(
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << *u << '\n';
-  for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
+  for (auto& u : preprocessed_data.errors)
+    message_stream << u.error_message << '\n';
   if (!preprocessed_data.errors.empty())
     return absl::InvalidArgumentError("Error: The preprocessing has failed.");
   return absl::OkStatus();
@@ -129,7 +136,11 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
   const auto& files = file_list.file_paths;
-  const auto& preprocessing_info = file_list.preprocessing;
+  auto& preprocessing_info = file_list.preprocessing;
+
+  // TODO(karimtera): allow including files with absolute paths.
+  // This is a hacky solution for now.
+  preprocessing_info.include_dirs.push_back("/");
 
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");

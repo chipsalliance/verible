@@ -16,6 +16,7 @@ cc_binary(
         "//common/util:subcommand",
         "//verilog/analysis:flow_tree",
         "//verilog/analysis:verilog_filelist",
+        "//verilog/analysis:verilog_project",
         "//verilog/parser:verilog_lexer",
         "//verilog/preprocessor:verilog_preprocess",
         "//verilog/transform:strip_comments",

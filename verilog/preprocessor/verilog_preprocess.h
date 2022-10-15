@@ -50,6 +50,7 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/analysis/verilog_project.h"
 
 namespace verilog {
 
@@ -117,6 +118,7 @@ class VerilogPreprocess {
   };
 
   explicit VerilogPreprocess(const Config& config);
+  VerilogPreprocess(const Config& config, VerilogProject* project);
 
   // Initialize preprocessing with safe default options
   // TODO(hzeller): remove this constructor once all places using the
@@ -242,6 +244,10 @@ class VerilogPreprocess {
 
   // Defines and incdirs Information passed externally.
   FileList::PreprocessingInfo preprocess_info_;
+
+  // A pointer to the VerilogProject which owns files contents.
+  // This is needed for opening new files while handling includes.
+  VerilogProject* const project_ = nullptr;
 };
 
 }  // namespace verilog
