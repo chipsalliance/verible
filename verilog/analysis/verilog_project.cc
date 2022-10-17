@@ -55,13 +55,13 @@ absl::Status VerilogSourceFile::Open() {
 
   // TODO(hzeller): have a file::GetContents() that returns a MemBlock directly
   content_ = std::make_shared<verible::StringMemBlock>(content);
-
-  // TODO(hzeller): populate this analyzed structure lazily.
-  analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
-      content_, ResolvedPath(), kPreprocessConfig);
   state_ = State::kOpened;
 
   return status_;  // status_ is Ok here.
+}
+
+const verible::MemBlock* VerilogSourceFile::GetContent() const {
+  return content_.get();
 }
 
 absl::Status VerilogSourceFile::Parse() {
@@ -73,6 +73,9 @@ absl::Status VerilogSourceFile::Parse() {
   if (!status_.ok()) return status_;
 
   // Lex, parse, populate underlying TextStructureView.
+  analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
+      content_, ResolvedPath(), kPreprocessConfig);
+
   const absl::Time analyze_start = absl::Now();
   status_ = analyzed_structure_->Analyze();
   LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
@@ -100,15 +103,15 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "corpus: " << source.Corpus() << std::endl;
   const auto status = source.Status();
   stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
+  const auto* content = source.GetContent();
+  stream << "have content? " << (content ? "yes" : "no") << std::endl;
   const auto* text_structure = source.GetTextStructure();
-  stream << "have text structure? "
-         << ((text_structure != nullptr) ? "yes" : "no") << std::endl;
+  stream << "have text structure? " << (text_structure ? "yes" : "no")
+         << std::endl;
   return stream;
 }
 
 absl::Status InMemoryVerilogSourceFile::Open() {
-  analyzed_structure_ = ABSL_DIE_IF_NULL(std::make_unique<VerilogAnalyzer>(
-      contents_for_open_, ResolvedPath(), kPreprocessConfig));
   state_ = State::kOpened;
   status_ = absl::OkStatus();
   return status_;
@@ -148,7 +151,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   // NOTE: string view maps don't support removal operation. The following block
   // is valid only if files won't be removed from the project.
   if (populate_string_maps_) {
-    const absl::string_view contents(file.GetTextStructure()->Contents());
+    const absl::string_view contents(file.GetContent()->AsStringView());
 
     // Register the file's contents range in string_view_map_.
     string_view_map_.must_emplace(contents);
