@@ -23,6 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
+#include "common/strings/mem-block.h"
 #include "common/text/token_stream_view.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 
@@ -31,6 +32,13 @@ namespace verilog {
 // VerilogAnalyzer analyzes Verilog and SystemVerilog code syntax.
 class VerilogAnalyzer : public verible::FileAnalyzer {
  public:
+  VerilogAnalyzer(std::shared_ptr<verible::MemBlock> text,
+                  absl::string_view name,
+                  const VerilogPreprocess::Config& preprocess_config)
+      : verible::FileAnalyzer(std::move(text), name),
+        preprocess_config_(preprocess_config) {}
+
+  // Legacy constructor.
   VerilogAnalyzer(absl::string_view text, absl::string_view name,
                   const VerilogPreprocess::Config& preprocess_config)
       : verible::FileAnalyzer(text, name),

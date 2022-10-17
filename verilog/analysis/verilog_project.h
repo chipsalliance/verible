@@ -24,6 +24,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "common/strings/mem-block.h"
 #include "common/strings/string_memory_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -60,14 +61,16 @@ class VerilogSourceFile {
   // This does not attempt to parse/analyze the contents.
   virtual absl::Status Open();
 
+  // After successful Open(), the content is filled; nullptr otherwise.
+  const verible::MemBlock* GetContent() const;
+
   // Attempts to lex and parse the file.
   // Will Open() if the file is not already opened.
   // Depending on context, not all files are suitable for standalone parsing.
   virtual absl::Status Parse();
 
-  // After Open(), the underlying text structure contains at least the file's
-  // contents.  After Parse(), it may contain other analyzed structural forms.
-  // Before Open(), this returns nullptr.
+  // After Parse(), text structure may contain other analyzed structural forms.
+  // Before successful Parse(), this is not initialized and returns nullptr.
   virtual const verible::TextStructureView* GetTextStructure() const;
 
   // Returns the first non-Ok status if there is one, else OkStatus().
@@ -146,8 +149,10 @@ class VerilogSourceFile {
   // Holds any diagostics for problems encountered finding/reading this file.
   absl::Status status_;
 
-  // Holds the file's string contents in owned memory, along with other forms
-  // like token streams and syntax tree.
+  // MemBock holding the file content so that it can be used in other contexts.
+  std::shared_ptr<verible::MemBlock> content_;
+
+  // Contains token streams and syntax tree after Parse().
   std::unique_ptr<VerilogAnalyzer> analyzed_structure_;
 };
 
@@ -159,17 +164,16 @@ std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
 class InMemoryVerilogSourceFile final : public VerilogSourceFile {
  public:
   // filename can be fake, it is not used to open any file.
+  // TODO(hzeller): directly initialize from MemBlock content.
   InMemoryVerilogSourceFile(absl::string_view filename,
                             absl::string_view contents,
                             absl::string_view corpus = "")
-      : VerilogSourceFile(filename, filename, corpus),
-        contents_for_open_(contents) {}
+      : VerilogSourceFile(filename, filename, corpus) {
+    content_ = std::make_shared<verible::StringMemBlock>(contents);
+  }
 
   // Load text into analyzer structure without actually opening a file.
   absl::Status Open() final;
-
- private:
-  const absl::string_view contents_for_open_;
 };
 
 // Source file that was already parsed and got its own TextStructure.

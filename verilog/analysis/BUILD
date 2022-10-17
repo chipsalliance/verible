@@ -166,6 +166,7 @@ cc_library(
         "//common/analysis:file_analyzer",
         "//common/lexer:token_stream_adapter",
         "//common/strings:comment_utils",
+        "//common/strings:mem_block",
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
@@ -358,8 +359,8 @@ cc_library(
     srcs = ["verilog_filelist.cc"],
     hdrs = ["verilog_filelist.h"],
     deps = [
-        "//common/util:iterator_range",
         "//common/util:file_util",
+        "//common/util:iterator_range",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -383,6 +384,7 @@ cc_library(
     deps = [
         ":verilog_analyzer",
         ":verilog_filelist",
+        "//common/strings:mem_block",
         "//common/strings:string_memory_map",
         "//common/text:text_structure",
         "//common/util:file_util",
