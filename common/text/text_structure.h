@@ -265,7 +265,7 @@ class TextStructure {
   friend class TextStructureViewPublicTest_ExpandSubtreesMultipleLeaves_Test;
   friend class verilog::VerilogPreprocess;
 
-  explicit TextStructure(std::unique_ptr<MemBlock> contents);
+  explicit TextStructure(std::shared_ptr<MemBlock> contents);
 
   // Convenience constructor in case our input is a string.
   explicit TextStructure(absl::string_view contents);
@@ -292,9 +292,11 @@ class TextStructure {
   absl::Status InternalConsistencyCheck() const;
 
  protected:
-  // This string owns the memory referenced by all substring string_views
-  // in this object.
-  std::unique_ptr<MemBlock> owned_contents_;
+  // The content of this memblock is referenced in the TextStructureView.
+  // The data itself might be shared between multiple entitites
+  // (using a heavy shared_ptr might very well intermediate while refactoring
+  // the details. https://github.com/chipsalliance/verible/issues/1502 )
+  std::shared_ptr<MemBlock> contents_;
 
   // The data_ object's string_views are owned by owned_contents_.
   TextStructureView data_;

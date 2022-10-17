@@ -53,12 +53,15 @@ absl::Status VerilogSourceFile::Open() {
   status_ = verible::file::GetContents(ResolvedPath(), &content);
   if (!status_.ok()) return status_;
 
-  // TODO(fangism): std::move or memory-map to avoid a short-term copy.
+  // TODO(hzeller): have a file::GetContents() that returns a MemBlock directly
+  content_ = std::make_shared<verible::StringMemBlock>(content);
+
+  // TODO(hzeller): populate this analyzed structure lazily.
   analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
-      content, ResolvedPath(), kPreprocessConfig);
+      content_, ResolvedPath(), kPreprocessConfig);
   state_ = State::kOpened;
-  // status_ is Ok here.
-  return status_;
+
+  return status_;  // status_ is Ok here.
 }
 
 absl::Status VerilogSourceFile::Parse() {

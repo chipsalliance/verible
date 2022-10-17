@@ -87,7 +87,12 @@ std::ostream& operator<<(std::ostream&, const RejectedToken&);
 // FileAnalyzer holds the results of lexing and parsing.
 class FileAnalyzer {
  public:
-  explicit FileAnalyzer(absl::string_view contents, absl::string_view filename)
+  FileAnalyzer(std::shared_ptr<MemBlock> contents, absl::string_view filename)
+      : text_structure_(new TextStructure(std::move(contents))),
+        filename_(filename) {}
+
+  // Legacy constructor.
+  FileAnalyzer(absl::string_view contents, absl::string_view filename)
       : text_structure_(new TextStructure(contents)), filename_(filename) {}
 
   virtual ~FileAnalyzer() {}

@@ -24,6 +24,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
+#include "common/strings/mem-block.h"
 #include "common/strings/string_memory_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -145,6 +146,9 @@ class VerilogSourceFile {
 
   // Holds any diagostics for problems encountered finding/reading this file.
   absl::Status status_;
+
+  // MemBock holding the file content so that it can be used in other contexts.
+  std::shared_ptr<verible::MemBlock> content_;
 
   // Holds the file's string contents in owned memory, along with other forms
   // like token streams and syntax tree.
