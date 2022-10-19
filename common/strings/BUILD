@@ -115,7 +115,7 @@ cc_test(
 
 cc_library(
     name = "mem_block",
-    hdrs = ["mem-block.h"],
+    hdrs = ["mem_block.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],

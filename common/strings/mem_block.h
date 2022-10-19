@@ -55,5 +55,8 @@ class StringMemBlock final : public MemBlock {
  private:
   std::string content_;
 };
+
+// FYI common/util:file_util provides a memory mapping implementation.
+
 }  // namespace verible
 #endif  // COMMON_STRINGS_MEM_BLOCK_H
