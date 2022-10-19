@@ -23,7 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/file_analyzer.h"
-#include "common/strings/mem-block.h"
+#include "common/strings/mem_block.h"
 #include "common/text/token_stream_view.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 

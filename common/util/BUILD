@@ -59,6 +59,7 @@ cc_library(
     hdrs = ["file_util.h"],
     deps = [
         ":logging",
+        "//common/strings:mem_block",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

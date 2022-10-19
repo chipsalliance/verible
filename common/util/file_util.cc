@@ -34,6 +34,12 @@
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 
+#ifndef _WIN32
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace verible {
@@ -159,6 +165,62 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
   // Allow stdin to be reopened for more input.
   if (use_stdin && std::cin.eof()) std::cin.clear();
   return absl::OkStatus();
+}
+
+static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
+    absl::string_view filename) {
+#ifndef _WIN32
+  class MemMapBlock final : public MemBlock {
+   public:
+    MemMapBlock(char *buffer, size_t size) : buffer_(buffer), size_(size) {}
+    ~MemMapBlock() final { DCHECK_EQ(munmap(buffer_, size_), 0); }
+    absl::string_view AsStringView() const final { return {buffer_, size_}; }
+
+   private:
+    char *const buffer_;
+    const size_t size_;
+  };
+
+  const std::string nul_terminated_filename(filename);
+  const int fd = open(nul_terminated_filename.c_str(), O_RDONLY);
+  if (fd < 0) {
+    return CreateErrorStatusFromErrno("Can't open file");
+  }
+
+  struct stat s;
+  if (fstat(fd, &s) < 0) {
+    close(fd);
+    return CreateErrorStatusFromErrno("can't stat");
+  }
+
+  const size_t file_size = s.st_size;
+  void *const buffer = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
+  close(fd);
+  if (buffer == MAP_FAILED) {
+    return CreateErrorStatusFromErrno("Can't mmap file");
+  }
+
+  return std::make_unique<MemMapBlock>((char *)buffer, file_size);
+#else
+  // TODO: implement some memory mapping on Windows.
+  return absl::UnimplementedError("No windows mmap implementation yet.");
+#endif
+}
+
+absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
+    absl::string_view filename) {
+  auto mmap_result = AttemptMemMapFile(filename);
+  if (mmap_result.status().ok()) {
+    return mmap_result;
+  }
+
+  // Still here ? Well, let's try the traditional way
+  auto mem_block = std::make_unique<StringMemBlock>();
+  if (auto status = GetContents(filename, mem_block->mutable_content());
+      !status.ok()) {
+    return status;
+  }
+  return mem_block;
 }
 
 absl::Status SetContents(absl::string_view filename,
