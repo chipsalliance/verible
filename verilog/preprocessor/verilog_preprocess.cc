@@ -36,6 +36,7 @@
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/analysis/verilog_project.h"
 
 namespace verilog {
 
@@ -52,6 +53,19 @@ VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
   conditional_block_.push(
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
+
+VerilogPreprocess::VerilogPreprocess(const Config& config,
+                                     VerilogProject* project)
+    : config_(config), project_(project) {
+  // To avoid having to check at every place if the stack is empty, we always
+  // place a toplevel 'conditional' that is always selected.
+  // Thus we only need to test in `else and `endif to see if we underrun due
+  // to unbalanced statements.
+  conditional_block_.push(
+      BranchBlock(true, true, verible::TokenInfo::EOFToken()));
+}
+
+
 
 absl::StatusOr<TokenStreamView::const_iterator>
 VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
@@ -587,48 +601,18 @@ absl::Status VerilogPreprocess::HandleInclude(
   std::filesystem::path file_path =
       std::string(token_text.substr(1, token_text.size() - 2));
 
-  std::string file_path_to_search = file_path.string();
-
-  if (file_path.is_relative()) {
-    bool found = false;
-    for (const auto& base_dir : preprocess_info_.include_dirs) {
-      file_path_to_search =
-          verible::file::JoinPath(base_dir, file_path.string());
-      auto search_status = verible::file::FileExists(file_path_to_search);
-      if (search_status.ok()) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      preprocess_data_.errors.push_back(
-          {**token_iter,
-           absl::StrCat(file_path_to_search, ": no such file found.")});
-      return absl::InvalidArgumentError("ERROR: included file can't be found.");
-    }
-  } else {
-    if (auto status = verible::file::FileExists(file_path_to_search);
-        !status.ok()) {
-      preprocess_data_.errors.push_back(
-          {**token_iter, std::string(status.message())});
-      return status;
-    }
-  }
-
-  // Actually open the file.
-  std::string source_contents;
-  if (auto status =
-          verible::file::GetContents(file_path_to_search, &source_contents);
-      !status.ok()) {
+  const auto status_or_file = project_->OpenIncludedFile(file_path.string());
+  if (!status_or_file.ok()) {
     preprocess_data_.errors.push_back(
-        {**token_iter, std::string(status.message())});
-    return status;
+        {**token_iter, std::string(status_or_file.status().message())});
+    return status_or_file.status();
   }
+  const auto source_contents = (*status_or_file)->GetContent()->AsStringView();
 
   // Creating a new "VerilogPreprocess" object for the included file,
   // With the same configuration and preprocessing info (defines, incdirs) as
   // the main one.
-  verilog::VerilogPreprocess child_preprocessor(config_);
+  verilog::VerilogPreprocess child_preprocessor(config_, project_);
   child_preprocessor.setPreprocessingInfo(preprocess_info_);
 
   // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
