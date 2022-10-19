@@ -76,9 +76,7 @@ struct TestFileEntry {
         source_file(file_opener(temp_file.filename())) {}
 
   // Returns the string_view of text owned by this->source_file.
-  absl::string_view SourceText() const {
-    return source_file->GetContent()->AsStringView();
-  }
+  absl::string_view SourceText() const { return source_file->GetContent(); }
 
   T::value_type ExpectedFileData() const {
     return {

@@ -59,8 +59,8 @@ absl::Status VerilogSourceFile::Open() {
   return status_;  // status_ is Ok here.
 }
 
-const verible::MemBlock* VerilogSourceFile::GetContent() const {
-  return content_.get();
+absl::string_view VerilogSourceFile::GetContent() const {
+  return content_ ? content_->AsStringView() : "";
 }
 
 absl::Status VerilogSourceFile::Parse() {
@@ -102,8 +102,8 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "corpus: " << source.Corpus() << std::endl;
   const auto status = source.Status();
   stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
-  const auto* content = source.GetContent();
-  stream << "have content? " << (content ? "yes" : "no") << std::endl;
+  const auto content = source.GetContent();
+  stream << "have content? " << (!content.empty() ? "yes" : "no") << std::endl;
   const auto* text_structure = source.GetTextStructure();
   stream << "have text structure? " << (text_structure ? "yes" : "no")
          << std::endl;
@@ -150,7 +150,7 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   // NOTE: string view maps don't support removal operation. The following block
   // is valid only if files won't be removed from the project.
   if (populate_string_maps_) {
-    const absl::string_view contents(file.GetContent()->AsStringView());
+    const absl::string_view contents(file.GetContent());
 
     // Register the file's contents range in string_view_map_.
     string_view_map_.must_emplace(contents);
@@ -296,8 +296,10 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenIncludedFile(
 void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
                                     absl::string_view content) {
   const auto inserted = files_.emplace(
-      resolved_filename, std::make_unique<InMemoryVerilogSourceFile>(
-                             resolved_filename, content, /*corpus=*/""));
+      resolved_filename,
+      std::make_unique<InMemoryVerilogSourceFile>(
+          resolved_filename, std::make_shared<verible::StringMemBlock>(content),
+          /*corpus=*/""));
   CHECK(inserted.second);
 }
 
