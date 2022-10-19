@@ -58,16 +58,13 @@ TEST(VerilogSourceFileTest, OpenExistingFile) {
   EXPECT_TRUE(file.Status().ok());
   EXPECT_EQ(file.ReferencedPath(), basename);
   EXPECT_EQ(file.ResolvedPath(), tf.filename());
-  const verible::MemBlock* content = ABSL_DIE_IF_NULL(file.GetContent());
-  const absl::string_view owned_string_range(content->AsStringView());
+  const absl::string_view owned_string_range(file.GetContent());
   EXPECT_EQ(owned_string_range, text);
 
   // Re-opening doesn't change anything
   EXPECT_TRUE(file.Open().ok());
   EXPECT_TRUE(file.Status().ok());
-  EXPECT_EQ(file.GetContent(), content);
-  EXPECT_TRUE(verible::BoundsEqual(file.GetContent()->AsStringView(),
-                                   owned_string_range));
+  EXPECT_TRUE(verible::BoundsEqual(file.GetContent(), owned_string_range));
 }
 
 TEST(VerilogSourceFileTest, NonExistingFile) {
@@ -283,8 +280,7 @@ TEST(VerilogProjectTest, LookupFileOriginTest) {
   const auto status_or_file =
       project.OpenTranslationUnit(Basename(tf.filename()));
   VerilogSourceFile* verilog_source_file = *status_or_file;
-  const absl::string_view content1(
-      verilog_source_file->GetContent()->AsStringView());
+  const absl::string_view content1(verilog_source_file->GetContent());
 
   {
     constexpr absl::string_view foreign_text("still not from any file");
@@ -300,8 +296,7 @@ TEST(VerilogProjectTest, LookupFileOriginTest) {
   const auto status_or_file2 =
       project.OpenTranslationUnit(Basename(tf2.filename()));
   VerilogSourceFile* verilog_source_file2 = *status_or_file2;
-  const absl::string_view content2(
-      verilog_source_file2->GetContent()->AsStringView());
+  const absl::string_view content2(verilog_source_file2->GetContent());
 
   // Pick substrings known to come from those files.
   EXPECT_EQ(project.LookupFileOrigin(content1.substr(5, 5)),
@@ -336,8 +331,7 @@ TEST(VerilogProjectTest, LookupFileOriginTestMoreFiles) {
 
     for (const auto& source : sources) {
       // Pick substrings known to come from those files.
-      EXPECT_EQ(project.LookupFileOrigin(
-                    source->GetContent()->AsStringView().substr(15, 12)),
+      EXPECT_EQ(project.LookupFileOrigin(source->GetContent().substr(15, 12)),
                 source);
     }
     EXPECT_EQ(project.LookupFileOrigin(foreign_text), nullptr);
@@ -362,8 +356,7 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
   EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
             verilog_source_file);
-  const absl::string_view content(
-      verilog_source_file->GetContent()->AsStringView());
+  const absl::string_view content(verilog_source_file->GetContent());
   {  // const-lookup overload
     const VerilogProject& cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
@@ -436,11 +429,11 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
 
   // includes aren't required to be parse-able, so just open
   EXPECT_TRUE(verilog_source_file->Open().ok());
-  EXPECT_NE(verilog_source_file->GetContent(), nullptr);
+  EXPECT_FALSE(verilog_source_file->GetContent().empty());
 
   // re-opening the file changes nothing
   EXPECT_TRUE(verilog_source_file->Open().ok());
-  EXPECT_NE(verilog_source_file->GetContent(), nullptr);
+  EXPECT_FALSE(verilog_source_file->GetContent().empty());
 }
 
 TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
@@ -479,11 +472,11 @@ TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
 
   // includes aren't required to be parse-able, so just open
   EXPECT_TRUE(verilog_source_file->Open().ok());
-  EXPECT_NE(verilog_source_file->GetContent(), nullptr);
+  EXPECT_FALSE(verilog_source_file->GetContent().empty());
 
   // re-opening the file changes nothing
   EXPECT_TRUE(verilog_source_file->Open().ok());
-  EXPECT_NE(verilog_source_file->GetContent(), nullptr);
+  EXPECT_FALSE(verilog_source_file->GetContent().empty());
 }
 
 TEST(VerilogProjectTest, TranslationUnitNotFound) {
@@ -548,8 +541,7 @@ TEST(VerilogProjectTest, AddVirtualFile) {
   ASSERT_NE(stored_file, nullptr);
   EXPECT_TRUE(stored_file->Open().ok());
   EXPECT_TRUE(stored_file->Status().ok());
-  ASSERT_NE(stored_file->GetContent(), nullptr);
-  EXPECT_EQ(stored_file->GetContent()->AsStringView(), file_content);
+  EXPECT_EQ(stored_file->GetContent(), file_content);
 }
 
 }  // namespace

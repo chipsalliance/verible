@@ -61,8 +61,8 @@ class VerilogSourceFile {
   // This does not attempt to parse/analyze the contents.
   virtual absl::Status Open();
 
-  // After successful Open(), the content is filled; nullptr otherwise.
-  const verible::MemBlock* GetContent() const;
+  // After successful Open(), the content is filled; empty otherwise.
+  virtual absl::string_view GetContent() const;
 
   // Attempts to lex and parse the file.
   // Will Open() if the file is not already opened.
@@ -164,13 +164,20 @@ std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
 class InMemoryVerilogSourceFile final : public VerilogSourceFile {
  public:
   // filename can be fake, it is not used to open any file.
-  // TODO(hzeller): directly initialize from MemBlock content.
+  InMemoryVerilogSourceFile(absl::string_view filename,
+                            std::shared_ptr<verible::MemBlock> content,
+                            absl::string_view corpus = "")
+      : VerilogSourceFile(filename, filename, corpus) {
+    content_ = std::move(content);
+  }
+
+  // Legacy
   InMemoryVerilogSourceFile(absl::string_view filename,
                             absl::string_view contents,
                             absl::string_view corpus = "")
-      : VerilogSourceFile(filename, filename, corpus) {
-    content_ = std::make_shared<verible::StringMemBlock>(contents);
-  }
+      : InMemoryVerilogSourceFile(
+            filename, std::make_shared<verible::StringMemBlock>(contents),
+            corpus) {}
 
   // Load text into analyzer structure without actually opening a file.
   absl::Status Open() final;
@@ -199,6 +206,10 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
 
   // Return TextStructureView provided previously in constructor
   const verible::TextStructureView* GetTextStructure() const final;
+
+  absl::string_view GetContent() const final {
+    return text_structure_->Contents();
+  }
 
  private:
   const verible::TextStructureView* text_structure_;
@@ -261,6 +272,7 @@ class VerilogProject {
       absl::string_view referenced_filename);
 
   // Adds an already opened file by directly passing its content.
+  // TODO(refactor): is this needed ?
   void AddVirtualFile(absl::string_view resolved_filename,
                       absl::string_view content);
 
