@@ -167,7 +167,7 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
+static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
     absl::string_view filename) {
 #ifndef _WIN32
   class MemMapBlock final : public MemBlock {

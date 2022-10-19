@@ -66,10 +66,6 @@ absl::Status FileExists(const std::string& filename);
 // Read file "filename" and store its content in "content"
 absl::Status GetContents(absl::string_view filename, std::string* content);
 
-// Attempt to memory map file and return as MemBlock it it is possible.
-absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
-    absl::string_view filename);
-
 // Read file "filename" and store its content in MemBlock. Attempts to MemMap
 // first; if that fails, reads file regularly.
 absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(

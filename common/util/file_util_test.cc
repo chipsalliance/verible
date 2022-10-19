@@ -78,17 +78,6 @@ static std::string PlatformPath(const std::string& path) {
   return std::filesystem::path(path).lexically_normal().string();
 }
 
-TEST(FileUtil, AttemptMemMapFile) {
-  // These are failure cases that should fail universally: on Unix for
-  // actual issues with the file and Windows for non-implementation.
-
-  auto result = file::AttemptMemMapFile("non-existing-file");
-  EXPECT_FALSE(result.status().ok());
-
-  result = file::AttemptMemMapFile("/dev/stdin");  // a stream not a file.
-  EXPECT_FALSE(result.status().ok());
-}
-
 TEST(FileUtil, GetContentAsMemBlock) {
   auto result = file::GetContentAsMemBlock("non-existing-file");
   EXPECT_FALSE(result.status().ok());
