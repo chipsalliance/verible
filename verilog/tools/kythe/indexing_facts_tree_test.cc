@@ -28,8 +28,6 @@ namespace verilog {
 namespace kythe {
 namespace {
 
-using verible::TokenInfo;
-
 class TestAnchor : public Anchor {
  public:
   // Forward all constructors
