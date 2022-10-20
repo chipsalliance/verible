@@ -96,6 +96,35 @@ status="$?"
 }
 
 ################################################################################
+echo "=== Test reading file"
+
+cat > "$MY_INPUT_FILE" <<EOF
+module 1;
+endmodule
+module 2;
+endmodule
+EOF
+
+"$syntax_checker" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 1 ]] || {
+  "Expected exit code 1, but got $status"
+  exit 1
+}
+
+strip_error < "$MY_OUTPUT_FILE" > "$MY_OUTPUT_FILE".filtered
+
+cat > "$MY_EXPECT_FILE" <<EOF
+$MY_INPUT_FILE:1:8: syntax error at token "1"
+$MY_INPUT_FILE:2:1-9: syntax error at token "endmodule"
+$MY_INPUT_FILE:4:1-9: syntax error at token "endmodule"
+EOF
+
+diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE".filtered || \
+  { echo "stderr differs." ; exit 1 ;}
+
+################################################################################
 echo "=== Test reading stdin"
 
 "$syntax_checker" - > "$MY_OUTPUT_FILE" 2>&1 <<EOF

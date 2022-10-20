@@ -33,6 +33,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"  // for MakeArraySlice
 #include "common/strings/compare.h"
+#include "common/strings/mem_block.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/text_structure.h"
@@ -120,7 +121,8 @@ using verible::TextStructureView;
 using verilog::VerilogAnalyzer;
 
 static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
-    absl::string_view content, absl::string_view filename,
+    const std::shared_ptr<verible::MemBlock>& content,
+    absl::string_view filename,
     const verilog::VerilogPreprocess::Config& preprocess_config) {
   switch (absl::GetFlag(FLAGS_lang)) {
     case LanguageMode::kAutoDetect:
@@ -134,8 +136,8 @@ static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
       return analyzer;
     }
     case LanguageMode::kVerilogLibraryMap:
-      return verilog::AnalyzeVerilogLibraryMap(content, filename,
-                                               preprocess_config);
+      return verilog::AnalyzeVerilogLibraryMap(content->AsStringView(),
+                                               filename, preprocess_config);
   }
   return nullptr;
 }
@@ -171,7 +173,8 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
 }
 
 static int AnalyzeOneFile(
-    absl::string_view content, absl::string_view filename,
+    const std::shared_ptr<verible::MemBlock>& content,
+    absl::string_view filename,
     const verilog::VerilogPreprocess::Config& preprocess_config,
     json* json_out) {
   int exit_status = 0;
@@ -292,11 +295,12 @@ int main(int argc, char** argv) {
   // All positional arguments are file names.  Exclude program name.
   for (absl::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
-    std::string content;
-    if (!verible::file::GetContents(filename, &content).ok()) {
+    auto content_status = verible::file::GetContentAsMemBlock(filename);
+    if (!content_status.status().ok()) {
       exit_status = 1;
       continue;
     }
+    std::shared_ptr<verible::MemBlock> content = std::move(*content_status);
 
     // TODO(hzeller): is there ever a situation in which we do not want
     // to use the preprocessor ?
