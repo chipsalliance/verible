@@ -10,6 +10,7 @@ cc_binary(
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
         "//common/strings:compare",
+        "//common/strings:mem_block",
         "//common/text:concrete_syntax_tree",
         "//common/text:parser_verifier",
         "//common/text:text_structure",
@@ -22,9 +23,9 @@ cc_binary(
         "//common/util:logging",
         "//verilog/CST:verilog_tree_json",
         "//verilog/CST:verilog_tree_print",
+        "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/analysis:json_diagnostics",
         "//verilog/analysis:verilog_analyzer",
-        "//verilog/analysis/checkers:verilog_lint_rules",
         "//verilog/parser:verilog_parser",
         "//verilog/parser:verilog_token",
         "//verilog/parser:verilog_token_classifications",

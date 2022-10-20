@@ -28,6 +28,16 @@
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
+// TODO(hzeller): All these are constructing strings with prefix and postfix.
+// And often, these constructs are used in fallback situations in which we
+// couldn't parse something and try again in a different setting. That means
+// it generates a new string copy and forces full lexing again.
+//
+// Investigate if we can just take the original token stream and add tokens
+// in front and back (should work if these tokens don't bring the lexer into
+// a specific state)
+// https://github.com/chipsalliance/verible/issues/1519
+
 namespace verilog {
 
 using verible::container::FindOrNull;

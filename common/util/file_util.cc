@@ -173,7 +173,7 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
   class MemMapBlock final : public MemBlock {
    public:
     MemMapBlock(char *buffer, size_t size) : buffer_(buffer), size_(size) {}
-    ~MemMapBlock() final { DCHECK_EQ(munmap(buffer_, size_), 0); }
+    ~MemMapBlock() final { munmap(buffer_, size_); }
     absl::string_view AsStringView() const final { return {buffer_, size_}; }
 
    private:

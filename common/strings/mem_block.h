@@ -43,7 +43,7 @@ class MemBlock {
 class StringMemBlock final : public MemBlock {
  public:
   StringMemBlock() {}
-  StringMemBlock(absl::string_view copy_from)
+  explicit StringMemBlock(absl::string_view copy_from)
       : content_(copy_from.begin(), copy_from.end()) {}
 
   // Assign/modify content. Use sparingly, ideally only in initialization

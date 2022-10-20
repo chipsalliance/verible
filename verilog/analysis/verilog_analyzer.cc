@@ -130,7 +130,7 @@ static absl::string_view FailingTokenKeywordToParsingMode(
 }
 
 std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
-    absl::string_view text, absl::string_view name,
+    const std::shared_ptr<verible::MemBlock>& text, absl::string_view name,
     const VerilogPreprocess::Config& preprocess_config) {
   VLOG(2) << __FUNCTION__;
   auto analyzer =
@@ -145,10 +145,10 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
   if (!parse_mode.empty()) {
     // Invoke alternate parser, and use its results.
     // Slightly inefficient to lex text all over again, but this is
-    // acceptable for an exceptional code path.
+    // acceptable for an exceptional code path (also see: #1519)
     VLOG(1) << "Analyzing using parse mode directive: " << parse_mode;
-    auto mode_analyzer =
-        AnalyzeVerilogWithMode(text, name, parse_mode, preprocess_config);
+    auto mode_analyzer = AnalyzeVerilogWithMode(text->AsStringView(), name,
+                                                parse_mode, preprocess_config);
     if (mode_analyzer != nullptr) return mode_analyzer;
     // Silently ignore any unknown parsing modes.
   }
@@ -170,7 +170,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
       VLOG(1) << "Retrying parsing in mode: \"" << retry_parse_mode << "\".";
       if (!retry_parse_mode.empty()) {
         auto retry_analyzer = AnalyzeVerilogWithMode(
-            text, name, retry_parse_mode, preprocess_config);
+            text->AsStringView(), name, retry_parse_mode, preprocess_config);
         const absl::string_view retry_text_base =
             retry_analyzer->Data().Contents();
         VLOG(1) << "Retrying to parse:\n" << retry_text_base;
@@ -202,6 +202,13 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
   // TODO(fangism): also return the inferred or detected parsing mode
   VLOG(2) << "end of " << __FUNCTION__;
   return analyzer;
+}
+
+std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
+    absl::string_view text, absl::string_view name,
+    const VerilogPreprocess::Config& preprocess_config) {
+  return AnalyzeAutomaticMode(std::make_shared<verible::StringMemBlock>(text),
+                              name, preprocess_config);
 }
 
 std::unique_ptr<VerilogAnalyzer>
