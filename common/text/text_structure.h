@@ -119,9 +119,7 @@ class TextStructureView {
   // of Contents(), return the range it covers.
   LineColumnRange GetRangeForText(absl::string_view text) const;
 
-  const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const {
-    return line_token_map_;
-  }
+  const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const;
 
   // Given line/column, find token that is available there. If this is out of
   // range, returns EOF.
@@ -130,9 +128,8 @@ class TextStructureView {
   // Create the EOF token given the contents.
   TokenInfo EOFToken() const;
 
-  // Compute the token stream iterators that start each line.
-  // This populates the line_token_map_ array with token iterators.
-  void CalculateFirstTokensPerLine();
+  // Trigger line token map re-calculation on next request.
+  void CalculateFirstTokensPerLine() { lazy_line_token_map_.clear(); }
 
   // Returns iterator range of tokens that span the given file offsets.
   // The second iterator points 1-past-the-end of the range.
@@ -181,6 +178,8 @@ class TextStructureView {
   // TokenInfo::right() to calculate byte offsets, useful for diagnostics.
   absl::string_view contents_;
 
+  // TODO(hzeller): These lazily generated elements are good candidates
+  // for breaking out into their own abstraction.
   struct LinesInfo {
     bool valid = false;
 
@@ -203,7 +202,8 @@ class TextStructureView {
   TokenStreamView tokens_view_;
 
   // Index of token iterators that mark the beginnings of each line.
-  std::vector<TokenSequence::const_iterator> line_token_map_;
+  // Lazily calculated on request.
+  mutable std::vector<TokenSequence::const_iterator> lazy_line_token_map_;
 
   // Tree representation of file contents.
   ConcreteSyntaxTree syntax_tree_;

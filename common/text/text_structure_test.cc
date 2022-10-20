@@ -653,8 +653,8 @@ TEST_F(TextStructureViewInternalsTest,
 // the per-line token map.
 TEST_F(TextStructureViewInternalsTest, LineTokenMapWrongBegin) {
   EXPECT_FALSE(tokens_.empty());
-  ASSERT_FALSE(line_token_map_.empty());
-  ++line_token_map_.front();
+  ASSERT_FALSE(GetLineTokenMap().empty());
+  ++lazy_line_token_map_.front();
   EXPECT_FALSE(FastTokenRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
 }
@@ -663,8 +663,8 @@ TEST_F(TextStructureViewInternalsTest, LineTokenMapWrongBegin) {
 // the per-line token map.
 TEST_F(TextStructureViewInternalsTest, LineTokenMapWrongEnd) {
   EXPECT_FALSE(tokens_.empty());
-  ASSERT_FALSE(line_token_map_.empty());
-  --line_token_map_.back();
+  ASSERT_FALSE(GetLineTokenMap().empty());
+  --lazy_line_token_map_.back();
   EXPECT_FALSE(FastTokenRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
 }
