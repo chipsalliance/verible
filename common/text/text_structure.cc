@@ -64,7 +64,7 @@ TextStructureView::~TextStructureView() {
 void TextStructureView::Clear() {
   syntax_tree_ = nullptr;
   lazy_lines_info_.valid = false;
-  line_token_map_.clear();
+  lazy_line_token_map_.clear();
   tokens_view_.clear();
   tokens_.clear();
   contents_ = contents_.substr(0, 0);  // clear
@@ -94,21 +94,26 @@ TokenStreamReferenceView TextStructureView::MakeTokenStreamReferenceView() {
   return _CopyWriteableIterators(tokens_, tokens_view_);
 }
 
-void TextStructureView::CalculateFirstTokensPerLine() {
-  line_token_map_.clear();
-  auto token_iter = tokens_.cbegin();
-  const auto& offset_map = GetLineColumnMap().GetBeginningOfLineOffsets();
-  for (const auto offset : offset_map) {
-    // TODO(fangism): linear search might be as competitive as binary search
-    token_iter =
-        std::lower_bound(token_iter, tokens_.cend(),
-                         Contents().begin() + offset, &TokenLocationLess);
-    line_token_map_.push_back(token_iter);
+const std::vector<TokenSequence::const_iterator>&
+TextStructureView::GetLineTokenMap() const {
+  // Lazily calculate the map. It is mutable, so we can modify it here.
+  if (lazy_line_token_map_.empty()) {
+    auto token_iter = tokens_.cbegin();
+    const auto& offset_map = GetLineColumnMap().GetBeginningOfLineOffsets();
+    for (const auto offset : offset_map) {
+      // TODO(fangism): linear search might be as competitive as binary search
+      token_iter =
+          std::lower_bound(token_iter, tokens_.cend(),
+                           Contents().begin() + offset, &TokenLocationLess);
+      lazy_line_token_map_.push_back(token_iter);
+    }
+    // Add an end() iterator so map has N+1 entries.
+    // When there is no newline on the last line, this value will be different
+    // from the previous iterator's index.
+    lazy_line_token_map_.push_back(tokens_.cend());
   }
-  // Add an end() iterator so map has N+1 entries.
-  // When there is no newline on the last line, this value will be different
-  // from the previous iterator's index.
-  line_token_map_.push_back(tokens_.cend());
+
+  return lazy_line_token_map_;
 }
 
 TokenRange TextStructureView::TokenRangeSpanningOffsets(size_t lower,
@@ -150,8 +155,9 @@ LineColumnRange TextStructureView::GetRangeForText(
 }
 
 TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
-  if (lineno + 1 < line_token_map_.size()) {
-    return make_range(line_token_map_[lineno], line_token_map_[lineno + 1]);
+  const auto& line_token_map = GetLineTokenMap();
+  if (lineno + 1 < line_token_map.size()) {
+    return make_range(line_token_map[lineno], line_token_map[lineno + 1]);
   } else {
     return make_range(tokens_.cend(), tokens_.cend());
   }
@@ -356,13 +362,13 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
             "Last token iterator points past end of array.");
       }
     }
-    if (!line_token_map_.empty()) {
-      if (line_token_map_.front() != tokens_.begin()) {
+    if (!lazy_line_token_map_.empty()) {
+      if (lazy_line_token_map_.front() != tokens_.begin()) {
         return absl::InternalError(
             "Per-line token iterator map does not start with the beginning of "
             "the token sequence.");
       }
-      if (line_token_map_.back() != tokens_.end()) {
+      if (lazy_line_token_map_.back() != tokens_.end()) {
         return absl::InternalError(
             "Per-line token iterator map does not end with to the end of the "
             "token sequence.");
