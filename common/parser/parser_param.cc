@@ -66,8 +66,8 @@ void ParserParam::ResizeStacksInternal(bison_state_int_type** state_stack,
   (*size) *= 2;
   state_stack_.resize(*size);
   value_stack_.resize(*size);
-  *state_stack = &(state_stack_[0]);
-  *value_stack = &(value_stack_[0]);
+  *state_stack = state_stack_.data();
+  *value_stack = value_stack_.data();
   max_used_stack_size_ = *size;
 }
 

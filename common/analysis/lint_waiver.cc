@@ -68,7 +68,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
     for (const auto* re : rule.second) {
       for (std::cregex_iterator i(contents.begin(), contents.end(), *re);
            i != std::cregex_iterator(); i++) {
-        std::cmatch match = *i;
+        const std::cmatch& match = *i;
         WaiveOneLine(rule.first, line_map.LineAtOffset(match.position()));
       }
     }

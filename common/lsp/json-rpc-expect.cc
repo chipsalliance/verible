@@ -117,7 +117,7 @@ static bool CheckExpectedMatch(const json &expected, const json &received) {
     std::cerr << "'json_contains' key missing " << expected << std::endl;
     return false;
   }
-  json partial_data = *json_contains;
+  const json &partial_data = *json_contains;
   return CheckNested(partial_data, received);
 }
 
@@ -149,8 +149,8 @@ int main(int argc, char *argv[]) {
       [&expect_data, &expect_pos, &first_error](absl::string_view,
                                                 absl::string_view body) {
         std::cerr << "Got: " << body << std::endl;
-        json received = json::parse(body);
-        json expected = expect_data[expect_pos];
+        const json received = json::parse(body);
+        const json &expected = expect_data[expect_pos];
         if (!CheckExpectedMatch(expected, received)) {
           if (first_error < 0) first_error = expect_pos;
         }
