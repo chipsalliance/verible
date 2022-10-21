@@ -903,7 +903,7 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
           absl::string_view filename) -> absl::StatusOr<absl::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
-    return (*result)->GetContent()->AsStringView();
+    return (*result)->GetContent();
   };
   VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
                            file_opener);
@@ -960,7 +960,7 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
           absl::string_view filename) -> absl::StatusOr<absl::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
-    return (*result)->GetContent()->AsStringView();
+    return (*result)->GetContent();
   };
   VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
                            file_opener);
@@ -1015,7 +1015,7 @@ TEST(VerilogPreprocessTest,
           absl::string_view filename) -> absl::StatusOr<absl::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
-    return (*result)->GetContent()->AsStringView();
+    return (*result)->GetContent();
   };
   VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
                            file_opener);

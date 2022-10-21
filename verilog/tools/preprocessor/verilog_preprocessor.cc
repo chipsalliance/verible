@@ -102,7 +102,7 @@ static absl::Status PreprocessSingleFile(
           absl::string_view filename) -> absl::StatusOr<absl::string_view> {
     auto result = project.OpenIncludedFile(filename);
     if (!result.status().ok()) return result.status();
-    return (*result)->GetContent()->AsStringView();
+    return (*result)->GetContent();
   };
   verilog::VerilogPreprocess preprocessor(config, file_opener);
 
