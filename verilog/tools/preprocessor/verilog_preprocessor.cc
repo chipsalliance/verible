@@ -28,12 +28,15 @@
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/strip_comments.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
+using FileOpener =
+    std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
 
 // TODO(karimtera): Add a boolean flag to configure the macro expansion.
 ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");
@@ -91,7 +94,17 @@ static absl::Status PreprocessSingleFile(
   config.filter_branches = true;
   config.include_files = true;
   // config.expand_macros=1;
-  verilog::VerilogPreprocess preprocessor(config);
+
+  verilog::VerilogProject project(".", preprocessing_info.include_dirs);
+
+  FileOpener file_opener =
+      [&project](
+          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+    auto result = project.OpenIncludedFile(filename);
+    if (!result.status().ok()) return result.status();
+    return (*result)->GetContent()->AsStringView();
+  };
+  verilog::VerilogPreprocess preprocessor(config, file_opener);
 
   // Setting the preprocessing info (defines, and incdirs) in the preprocessor.
   preprocessor.setPreprocessingInfo(preprocessing_info);
@@ -129,7 +142,11 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
   RETURN_IF_ERROR(
       verilog::AppendFileListFromCommandline(cmdline_args, &file_list));
   const auto& files = file_list.file_paths;
-  const auto& preprocessing_info = file_list.preprocessing;
+  auto& preprocessing_info = file_list.preprocessing;
+
+  // TODO(karimtera): allow including files with absolute paths.
+  // This is a hacky solution for now.
+  preprocessing_info.include_dirs.push_back("/");
 
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");

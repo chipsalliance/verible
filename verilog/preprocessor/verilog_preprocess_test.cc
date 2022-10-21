@@ -27,6 +27,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -40,6 +41,8 @@ using verible::container::FindOrNull;
 using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
+using FileOpener =
+    std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
 
 class LexerTester {
  public:
@@ -892,7 +895,18 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // This is a hacky solution for now.
+  verilog::VerilogProject project(".", {"/"});
+  FileOpener file_opener =
+      [&project](
+          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+    auto result = project.OpenIncludedFile(filename);
+    if (!result.status().ok()) return result.status();
+    return (*result)->GetContent()->AsStringView();
+  };
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           file_opener);
   VerilogPreprocess equivalent(
       VerilogPreprocess::Config({.include_files = true}));
 
@@ -938,14 +952,20 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // This is a hacky solution for now.
+  verilog::VerilogProject project(".", {"/", includes_dir});
+  FileOpener file_opener =
+      [&project](
+          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+    auto result = project.OpenIncludedFile(filename);
+    if (!result.status().ok()) return result.status();
+    return (*result)->GetContent()->AsStringView();
+  };
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           file_opener);
   VerilogPreprocess equivalent(
       VerilogPreprocess::Config({.include_files = true}));
-
-  // for relative path test, add the essential PreprocessingInfo.
-  verilog::FileList file_list;
-  file_list.preprocessing.include_dirs.push_back(includes_dir);
-  tester.setPreprocessingInfo(file_list.preprocessing);
 
   LexerTester src_lexer(src_content);
   LexerTester equivalent_lexer(equivalent_content);
@@ -984,11 +1004,21 @@ TEST(VerilogPreprocessTest,
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);
   const ScopedTestFile tf(includes_dir, included_content, included_filename);
-
   const std::string src_content = absl::StrCat("`include \"", included_filename,
                                                "\"\nmodule src(); endmodule\n");
 
-  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}));
+  // TODO(karimtera): allow including files with absolute paths.
+  // This is a hacky solution for now.
+  verilog::VerilogProject project(".", {"/"});
+  FileOpener file_opener =
+      [&project](
+          absl::string_view filename) -> absl::StatusOr<absl::string_view> {
+    auto result = project.OpenIncludedFile(filename);
+    if (!result.status().ok()) return result.status();
+    return (*result)->GetContent()->AsStringView();
+  };
+  VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
+                           file_opener);
 
   LexerTester src_lexer(src_content);
   const auto& tester_pp_data =
@@ -996,7 +1026,7 @@ TEST(VerilogPreprocessTest,
 
   EXPECT_EQ(tester_pp_data.errors.size(), 1);
   const auto& error = tester_pp_data.errors.front();
-  EXPECT_THAT(error.error_message, StartsWith(included_filename));
+  EXPECT_THAT(error.error_message, StartsWith("Unable to find"));
 }
 
 }  // namespace

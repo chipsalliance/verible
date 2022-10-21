@@ -51,7 +51,6 @@
 #include "common/text/token_stream_view.h"
 #include "verilog/analysis/verilog_filelist.h"
 
-
 namespace verilog {
 
 class VerilogProject;
@@ -98,6 +97,8 @@ class VerilogPreprocess {
   using TokenStreamView = verible::TokenStreamView;
   using MacroDefinition = verible::MacroDefinition;
   using MacroParameterInfo = verible::MacroParameterInfo;
+  using FileOpener =
+      std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
 
  public:
   struct Config {
@@ -120,7 +121,7 @@ class VerilogPreprocess {
   };
 
   explicit VerilogPreprocess(const Config& config);
-  VerilogPreprocess(const Config& config, VerilogProject* project);
+  VerilogPreprocess(const Config& config, FileOpener opener);
 
   // Initialize preprocessing with safe default options
   // TODO(hzeller): remove this constructor once all places using the
@@ -246,10 +247,10 @@ class VerilogPreprocess {
 
   // Defines and incdirs Information passed externally.
   FileList::PreprocessingInfo preprocess_info_;
-  
-  // A pointer to the VerilogProject which owns files contents.
+
+  // A pointer to a file opener function.
   // This is needed for opening new files while handling includes.
-  VerilogProject* const project_ = nullptr;
+  FileOpener const file_opener_ = nullptr;
 };
 
 }  // namespace verilog

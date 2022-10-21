@@ -14,6 +14,7 @@
 
 #include "verilog/preprocessor/verilog_preprocess.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <functional>
 #include <iterator>
@@ -36,7 +37,6 @@
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
-#include "verilog/analysis/verilog_project.h"
 
 namespace verilog {
 
@@ -54,9 +54,8 @@ VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
 
-VerilogPreprocess::VerilogPreprocess(const Config& config,
-                                     VerilogProject* project)
-    : config_(config), project_(project) {
+VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
+    : config_(config), file_opener_(std::move(opener)) {
   // To avoid having to check at every place if the stack is empty, we always
   // place a toplevel 'conditional' that is always selected.
   // Thus we only need to test in `else and `endif to see if we underrun due
@@ -64,8 +63,6 @@ VerilogPreprocess::VerilogPreprocess(const Config& config,
   conditional_block_.push(
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
-
-
 
 absl::StatusOr<TokenStreamView::const_iterator>
 VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
@@ -601,18 +598,19 @@ absl::Status VerilogPreprocess::HandleInclude(
   std::filesystem::path file_path =
       std::string(token_text.substr(1, token_text.size() - 2));
 
-  const auto status_or_file = project_->OpenIncludedFile(file_path.string());
+  // Use the provided FileOpener to open the included file.
+  const auto status_or_file = file_opener_(file_path.string());
   if (!status_or_file.ok()) {
     preprocess_data_.errors.push_back(
         {**token_iter, std::string(status_or_file.status().message())});
     return status_or_file.status();
   }
-  const auto source_contents = (*status_or_file)->GetContent()->AsStringView();
+  const auto source_contents = *status_or_file;
 
   // Creating a new "VerilogPreprocess" object for the included file,
   // With the same configuration and preprocessing info (defines, incdirs) as
   // the main one.
-  verilog::VerilogPreprocess child_preprocessor(config_, project_);
+  verilog::VerilogPreprocess child_preprocessor(config_, file_opener_);
   child_preprocessor.setPreprocessingInfo(preprocess_info_);
 
   // TODO(karimtera): limit number of nested includes, detect cycles? maybe.
