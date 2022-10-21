@@ -35,6 +35,8 @@ exec 2>/dev/null
 
 set -u   # Be strict: only allow using a variable after it is assigned
 
+BAZEL_BUILD_OPTIONS="-c opt"
+
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
 
@@ -58,6 +60,8 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 
 # A few projects that can be fetched from git and represent a good
 # cross-section of different styles.
+# Always in search for more Open Source github Verilog and SystemVerilog
+# projects to add here.
 #
 # We run all Verible tools on these.
 #
@@ -77,6 +81,11 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/SymbiFlow/XilinxUnisimLibrary \
          https://github.com/black-parrot/black-parrot
          https://github.com/steveicarus/ivtest \
+         https://github.com/krevanth/ZAP \
+         https://github.com/trivialmips/nontrivial-mips \
+         https://github.com/pulp-platform/axi \
+         https://github.com/rsd-devel/rsd \
+         https://github.com/syntacore/scr1 \
          https://github.com/bespoke-silicon-group/basejump_stl"
 
 ##
@@ -98,10 +107,16 @@ KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_mod
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]=1146
 
-#--- Basejump
-# These mostly crash for all the same reason except the first.
+#--- nontrivial-mips
+KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/decode/decoder.sv]=984
+KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/exec/multi_cycle_exec.sv]=984
 
-#--- Blackparrot
+#--- rsd
+KnownIssue[formatter:$BASE_TEST_DIR/rsd/Processor/Src/Privileged/CSR_Unit.sv]=984
+
+#--- scr1
+KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/core/scr1_tapc.sv]=1015
+KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/tb/scr1_memory_tb_ahb.sv]=1015
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
@@ -119,16 +134,16 @@ ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=185
 
-ExpectedFailCount[syntax:opentitan]=32
-ExpectedFailCount[lint:opentitan]=32
+ExpectedFailCount[syntax:opentitan]=33
+ExpectedFailCount[lint:opentitan]=33
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=706
+ExpectedFailCount[project:opentitan]=710
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
-ExpectedFailCount[project:cva6]=23
+ExpectedFailCount[project:cva6]=24
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -153,9 +168,26 @@ ExpectedFailCount[lint:ivtest]=188
 ExpectedFailCount[formatter:ivtest]=2
 ExpectedFailCount[project:ivtest]=217
 
-ExpectedFailCount[syntax:basejump_stl]=456
-ExpectedFailCount[lint:basejump_stl]=452
-ExpectedFailCount[project:basejump_stl]=562
+ExpectedFailCount[project:ZAP]=30
+
+ExpectedFailCount[syntax:nontrivial-mips]=2
+ExpectedFailCount[lint:nontrivial-mips]=2
+ExpectedFailCount[formatter:nontrivial-mips]=2
+ExpectedFailCount[project:nontrivial-mips]=81
+
+ExpectedFailCount[project:axi]=65
+
+ExpectedFailCount[syntax:rsd]=1
+ExpectedFailCount[lint:rsd]=1
+ExpectedFailCount[formatter:rsd]=1
+ExpectedFailCount[project:rsd]=43
+
+ExpectedFailCount[formatter:scr1]=2
+ExpectedFailCount[project:scr1]=45
+
+ExpectedFailCount[syntax:basejump_stl]=460
+ExpectedFailCount[lint:basejump_stl]=456
+ExpectedFailCount[project:basejump_stl]=566
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
@@ -304,7 +336,7 @@ status_sum=0
 # TODO: Consider running with
 #  * address sanitizer (best result with libc++). CAVE: slow
 #  * running with -D_GLIBCXX_DEBUG (also see #1056)
-bazel build -c opt :install-binaries &
+bazel build ${BAZEL_BUILD_OPTIONS} :install-binaries &
 
 # While compiling, run potentially slow network ops
 for git_project in ${TEST_GIT_PROJECTS} ; do
