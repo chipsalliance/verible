@@ -45,14 +45,8 @@ using verible::TokenStreamView;
 using verible::container::FindOrNull;
 using verible::container::InsertOrUpdate;
 
-VerilogPreprocess::VerilogPreprocess(const Config& config) : config_(config) {
-  // To avoid having to check at every place if the stack is empty, we always
-  // place a toplevel 'conditional' that is always selected.
-  // Thus we only need to test in `else and `endif to see if we underrun due
-  // to unbalanced statements.
-  conditional_block_.push(
-      BranchBlock(true, true, verible::TokenInfo::EOFToken()));
-}
+VerilogPreprocess::VerilogPreprocess(const Config& config)
+    : VerilogPreprocess(config, nullptr) {}
 
 VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
     : config_(config), file_opener_(std::move(opener)) {
@@ -582,6 +576,9 @@ absl::Status VerilogPreprocess::HandleEndif(
 absl::Status VerilogPreprocess::HandleInclude(
     TokenStreamView::const_iterator iter,
     const StreamIteratorGenerator& generator) {
+  if (!file_opener_)
+    return absl::FailedPreconditionError("file_opener_ is not defined");
+
   // TODO(karimtera): Support inclduing <file>,
   // which should look for files defined by language standard in a compiler
   // dependent path.
@@ -605,11 +602,13 @@ absl::Status VerilogPreprocess::HandleInclude(
         {**token_iter, std::string(status_or_file.status().message())});
     return status_or_file.status();
   }
-  const auto source_contents = *status_or_file;
+  const absl::string_view source_contents = *status_or_file;
 
   // Creating a new "VerilogPreprocess" object for the included file,
   // With the same configuration and preprocessing info (defines, incdirs) as
   // the main one.
+  // TODO(karimtera): Ideally modify the FileOpener to return
+  // absl::StatusOr<MemBlock> to avoid doing a second copy inside TextStructure.
   verilog::VerilogPreprocess child_preprocessor(config_, file_opener_);
   child_preprocessor.setPreprocessingInfo(preprocess_info_);
 

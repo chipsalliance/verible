@@ -35,8 +35,7 @@
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
-using FileOpener =
-    std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
+using FileOpener = verilog::VerilogPreprocess::FileOpener;
 
 // TODO(karimtera): Add a boolean flag to configure the macro expansion.
 ABSL_FLAG(int, limit_variants, 20, "Maximum number of variants printed");

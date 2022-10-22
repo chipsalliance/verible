@@ -41,8 +41,7 @@ using verible::container::FindOrNull;
 using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
-using FileOpener =
-    std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
+using FileOpener = VerilogPreprocess::FileOpener;
 
 class LexerTester {
  public:
@@ -882,28 +881,22 @@ TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
 TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
-  EXPECT_TRUE(CreateDir(includes_dir).ok());
   constexpr absl::string_view included_content(
       "module included_file(); endmodule\n");
   const absl::string_view included_filename = "included_file.sv";
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);
-  const ScopedTestFile tf(includes_dir, included_content, included_filename);
 
   const std::string src_content = absl::StrCat(
       "`include \"", included_absolute_path, "\"\nmodule src(); endmodule\n");
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
-  // TODO(karimtera): allow including files with absolute paths.
-  // This is a hacky solution for now.
-  verilog::VerilogProject project(".", {"/"});
   FileOpener file_opener =
-      [&project](
+      [included_absolute_path, included_content](
           absl::string_view filename) -> absl::StatusOr<absl::string_view> {
-    auto result = project.OpenIncludedFile(filename);
-    if (!result.status().ok()) return result.status();
-    return (*result)->GetContent();
+    if (filename == included_absolute_path) return included_content;
+    return absl::NotFoundError(absl::StrCat(filename, " is not found"));
   };
   VerilogPreprocess tester(VerilogPreprocess::Config({.include_files = true}),
                            file_opener);

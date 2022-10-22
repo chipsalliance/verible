@@ -53,8 +53,6 @@
 
 namespace verilog {
 
-class VerilogProject;
-
 // TODO(fangism): configuration policy enums.
 
 // VerilogPreprocessError contains preprocessor error information.
@@ -97,10 +95,10 @@ class VerilogPreprocess {
   using TokenStreamView = verible::TokenStreamView;
   using MacroDefinition = verible::MacroDefinition;
   using MacroParameterInfo = verible::MacroParameterInfo;
-  using FileOpener =
-      std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
 
  public:
+  using FileOpener =
+      std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
   struct Config {
     // Filter out non-matching `ifdef and `ifndef branches depending on
     // which defines are set.
@@ -250,7 +248,7 @@ class VerilogPreprocess {
 
   // A pointer to a file opener function.
   // This is needed for opening new files while handling includes.
-  FileOpener const file_opener_ = nullptr;
+  const FileOpener file_opener_ = nullptr;
 };
 
 }  // namespace verilog
