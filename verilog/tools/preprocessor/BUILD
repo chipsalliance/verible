@@ -18,6 +18,7 @@ cc_binary(
         "//verilog/analysis:verilog_filelist",
         "//verilog/parser:verilog_lexer",
         "//verilog/preprocessor:verilog_preprocess",
+        "//verilog/analysis:verilog_project",
         "//verilog/transform:strip_comments",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",

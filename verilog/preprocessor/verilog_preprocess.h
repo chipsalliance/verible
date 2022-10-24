@@ -97,6 +97,8 @@ class VerilogPreprocess {
   using MacroParameterInfo = verible::MacroParameterInfo;
 
  public:
+  using FileOpener =
+      std::function<absl::StatusOr<absl::string_view>(absl::string_view)>;
   struct Config {
     // Filter out non-matching `ifdef and `ifndef branches depending on
     // which defines are set.
@@ -117,6 +119,7 @@ class VerilogPreprocess {
   };
 
   explicit VerilogPreprocess(const Config& config);
+  VerilogPreprocess(const Config& config, FileOpener opener);
 
   // Initialize preprocessing with safe default options
   // TODO(hzeller): remove this constructor once all places using the
@@ -242,6 +245,10 @@ class VerilogPreprocess {
 
   // Defines and incdirs Information passed externally.
   FileList::PreprocessingInfo preprocess_info_;
+
+  // A pointer to a file opener function.
+  // This is needed for opening new files while handling includes.
+  const FileOpener file_opener_ = nullptr;
 };
 
 }  // namespace verilog
