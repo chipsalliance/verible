@@ -80,7 +80,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     if (!absl::EndsWith(name, "_t")) {
       violations_.insert(
           LintViolation(*identifier_leaf,
-                        absl::StrCat(msg, " have to ends with _t"), context));
+                        absl::StrCat(msg, " have to end with _t"), context));
       return;
     }
     if (name[0] == '_') {
@@ -110,7 +110,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
       if (exceptions_.find(ns_substr) == exceptions_.end()) {
         violations_.insert(LintViolation(*identifier_leaf,
                                          "found digit followed by unit that is "
-                                         "not configured as allowed exception",
+                                         "not configured as an allowed exception",
                                          context));
         return;
       }
@@ -141,7 +141,7 @@ absl::Status StructUnionNameStyleRule::Configure(
       if (alpha == ex.end()) {
         return absl::Status(
             absl::StatusCode::kInvalidArgument,
-            "The exception have to contain at least one alphabetic character");
+            "The exception has to contain at least one alphabetic character");
       }
       const auto& digit = std::find_if(alpha, ex.end(), absl::ascii_isdigit);
       if (digit != ex.end()) {
