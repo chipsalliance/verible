@@ -274,22 +274,15 @@ endmodule
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#359: "module")
-(#293: "m")
-(#40: "(")
-(#41: ")")
-(#59: ";")
-(#417: "wire")
-(#293: "x")
-(#61: "=")
-(#300: "1")
-(#59: ";")
-(#379: "real")
-(#293: "is_defined")
-(#61: "=")
-(#300: "0")
-(#59: ";")
-(#336: "endmodule")
+module m();
+  wire x = 1;
+
+  real is_defined = 0;
+
+// pre-blank line
+
+// post-blank line
+endmodule
 
 EOF
 
@@ -473,9 +466,13 @@ EOF
 
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#293: "A_FALSE")
 
-(#293: "A_FALSE")
+  A_FALSE
+
+
+
+  A_FALSE
+
 
 EOF
 
@@ -510,8 +507,13 @@ EOF
 
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#293: "A_TRUE")
-(#293: "B_FALSE")
+
+  A_TRUE
+
+
+
+  B_FALSE
+
 
 EOF
 
@@ -529,8 +531,13 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 cat > "$MY_EXPECT_FILE" <<EOF
-(#293: "A_TRUE")
-(#293: "B_TRUE")
+
+  A_TRUE
+
+
+
+  B_TRUE
+
 
 EOF
 
@@ -576,9 +583,10 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
-(#293: "input_content_0")
-(#293: "included1_content")
-(#293: "input_content_1")
+input_content_0
+included1_content
+
+input_content_1
 
 EOF
 
@@ -610,8 +618,9 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
-(#293: "included1_content")
-(#293: "input_content")
+included1_content
+
+input_content
 
 EOF
 
@@ -668,9 +677,11 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
-(#293: "included2_content")
-(#293: "included1_content")
-(#293: "input_content")
+included2_content
+
+included1_content
+
+input_content
 
 EOF
 
@@ -706,9 +717,11 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
-(#293: "included2_content")
-(#293: "included1_content")
-(#293: "input_content")
+included2_content
+
+included1_content
+
+input_content
 
 EOF
 
@@ -779,12 +792,20 @@ EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
 ${MY_INPUT_FILE}:
-(#293: "included2_content")
-(#293: "A_TRUE")
-(#293: "included1_content")
-(#293: "A_TRUE")
-(#293: "input_content")
-(#293: "A_TRUE")
+included2_content
+
+A_TRUE
+
+
+included1_content
+
+A_TRUE
+
+
+input_content
+
+A_TRUE
+
 
 EOF
 

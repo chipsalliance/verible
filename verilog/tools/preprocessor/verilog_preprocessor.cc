@@ -92,7 +92,7 @@ static absl::Status PreprocessSingleFile(
   verilog::VerilogPreprocess::Config config;
   config.filter_branches = true;
   config.include_files = true;
-  // config.expand_macros=1;
+  config.expand_macros = 1;
 
   verilog::VerilogProject project(".", preprocessing_info.include_dirs);
 
@@ -115,9 +115,7 @@ static absl::Status PreprocessSingleFile(
     // For now we will store the syntax tree tokens only, ignoring all the
     // white-space characters. however that should be stored to output the
     // source code just like it was, but with conditionals filtered.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
-      lexed_sequence.push_back(lexer.GetLastToken());
-    }
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
   verible::TokenStreamView lexed_streamview;
   // Initializing the lexed token stream view.
@@ -125,7 +123,7 @@ static absl::Status PreprocessSingleFile(
   verilog::VerilogPreprocessData preprocessed_data =
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
-  for (auto u : preprocessed_stream) outs << *u << '\n';
+  for (auto u : preprocessed_stream) outs << u->text();
   for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
   if (!preprocessed_data.errors.empty())
     return absl::InvalidArgumentError("Error: The preprocessing has failed.");

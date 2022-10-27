@@ -186,6 +186,10 @@ class VerilogPreprocess {
   absl::Status HandleInclude(TokenStreamView::const_iterator,
                              const StreamIteratorGenerator&);
 
+  // Generate a const_iterator to a non-whitespace token.
+  static TokenStreamView::const_iterator GenerateBypassWhiteSpaces(
+      const StreamIteratorGenerator&);
+
   const Config config_;
 
   // State of a block that can have a sequence of sub-blocks with conditions
