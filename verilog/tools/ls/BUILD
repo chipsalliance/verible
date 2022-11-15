@@ -80,6 +80,16 @@ cc_library(
 )
 
 cc_library(
+    name = "symbol-table-handler",
+    srcs = ["symbol-table-handler.cc"],
+    hdrs = ["symbol-table-handler.h"],
+    deps = [
+        "//verilog/analysis:symbol_table",
+        "//common/lsp:lsp-protocol",
+    ],
+)
+
+cc_library(
     name = "verilog-language-server",
     srcs = ["verilog-language-server.cc"],
     hdrs = ["verilog-language-server.h"],
