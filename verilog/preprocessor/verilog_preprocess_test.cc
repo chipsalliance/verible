@@ -48,9 +48,7 @@ class LexerTester {
   LexerTester(absl::string_view text) : lexer_(text) {
     for (lexer_.DoNextToken(); !lexer_.GetLastToken().isEOF();
          lexer_.DoNextToken()) {
-      if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer_.GetLastToken())) {
-        lexed_sequence_.push_back(lexer_.GetLastToken());
-      }
+      lexed_sequence_.push_back(lexer_.GetLastToken());
     }
     InitTokenStreamView(lexed_sequence_, &stream_view_);
   }
@@ -882,7 +880,7 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
   constexpr absl::string_view included_content(
-      "module included_file(); endmodule\n");
+      "module included_file(); endmodule");
   const absl::string_view included_filename = "included_file.sv";
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);
@@ -934,7 +932,7 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   const std::string includes_dir = JoinPath(tempdir, "includes");
   EXPECT_TRUE(CreateDir(includes_dir).ok());
   constexpr absl::string_view included_content(
-      "module included_file(); endmodule\n");
+      "module included_file(); endmodule");
   const absl::string_view included_filename = "included_file.sv";
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);

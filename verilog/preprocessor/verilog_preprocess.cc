@@ -58,10 +58,21 @@ VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
 
+TokenStreamView::const_iterator VerilogPreprocess::GenerateBypassWhiteSpaces(
+    const StreamIteratorGenerator& generator) {
+  auto iterator =
+      generator();  // iterator should be pointing to a non-whitespace token;
+  while (verilog::VerilogLexer::KeepSyntaxTreeTokens(**iterator) == 0) {
+    iterator = generator();
+  }
+  return iterator;
+}
+
 absl::StatusOr<TokenStreamView::const_iterator>
 VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
   // Next token to expect is macro definition name.
-  TokenStreamView::const_iterator token_iter = generator();
+  TokenStreamView::const_iterator token_iter =
+      GenerateBypassWhiteSpaces(generator);
   if ((*token_iter)->isEOF()) {
     preprocess_data_.errors.push_back(
         {**token_iter, "unexpected EOF where expecting macro name"});
@@ -92,7 +103,7 @@ absl::Status VerilogPreprocess::ConsumeMacroDefinition(
   // Everything else covers macro parameters and the definition body.
   TokenStreamView::const_iterator token_iter;
   do {
-    token_iter = generator();
+    token_iter = GenerateBypassWhiteSpaces(generator);
     if ((*token_iter)->isEOF()) {
       // Diagnose unexpected EOF downstream instead of erroring here.
       // Other subroutines can give better context about the parsing state.
@@ -226,10 +237,11 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
   macro_call->has_parameters = 1;
 
   // Parsing parameters.
-  TokenStreamView::const_iterator token_iter = generator();
+  TokenStreamView::const_iterator token_iter =
+      GenerateBypassWhiteSpaces(generator);
   int parameters_size = macro_definition.Parameters().size();
   if ((*token_iter)->text() == "(") {
-    token_iter = generator();  // skip the "("
+    token_iter = GenerateBypassWhiteSpaces(generator);  // skip the "("
   } else {
     return absl::InvalidArgumentError(
         "Error it is illegal to call a callable macro without ().");
@@ -238,14 +250,15 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
   while (parameters_size > 0) {
     if ((*token_iter)->token_enum() == MacroArg) {
       macro_call->positional_arguments.emplace_back(**token_iter);
-      token_iter = generator();
-      if ((*token_iter)->text() == ",") token_iter = generator();
+      token_iter = GenerateBypassWhiteSpaces(generator);
+      if ((*token_iter)->text() == ",")
+        token_iter = GenerateBypassWhiteSpaces(generator);
       parameters_size--;
       continue;
     } else if ((*token_iter)->text() == ",") {
       macro_call->positional_arguments.emplace_back(
           verible::DefaultTokenInfo());
-      token_iter = generator();
+      token_iter = GenerateBypassWhiteSpaces(generator);
       parameters_size--;
       continue;
     } else if ((*token_iter)->text() == ")")
@@ -582,7 +595,8 @@ absl::Status VerilogPreprocess::HandleInclude(
   // TODO(karimtera): Support inclduing <file>,
   // which should look for files defined by language standard in a compiler
   // dependent path.
-  TokenStreamView::const_iterator token_iter = generator();
+  TokenStreamView::const_iterator token_iter =
+      GenerateBypassWhiteSpaces(generator);
   auto file_token_iter = *token_iter;
   if (file_token_iter->token_enum() != TK_StringLiteral) {
     preprocess_data_.errors.push_back(
@@ -626,8 +640,7 @@ absl::Status VerilogPreprocess::HandleInclude(
   verilog::VerilogLexer lexer(included_structure.Data().Contents());
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken()))
-      included_sequence.push_back(lexer.GetLastToken());
+    included_sequence.push_back(lexer.GetLastToken());
   }
 
   // Preprocessing the included file tokens.
