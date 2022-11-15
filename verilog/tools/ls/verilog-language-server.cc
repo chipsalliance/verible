@@ -89,6 +89,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
         return verilog::FormatRange(
             parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
+  dispatcher_.AddRequestHandler(  // go-to definition
+      "textDocument/definition",
+      [this](const verible::lsp::DefinitionParams &p) {
+        return symbol_table_handler_.findDefinition(p);
+      });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
     shutdown_requested_ = true;
@@ -151,6 +156,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
       {"documentRangeFormattingProvider", true},  // Format selection
       {"documentFormattingProvider", true},       // Full file format
       {"documentHighlightProvider", true},        // Highlight same symbol
+      {"definitionProvider", true},               // Provide going to definition
       {"diagnosticProvider",                      // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
