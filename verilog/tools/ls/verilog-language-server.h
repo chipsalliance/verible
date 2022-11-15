@@ -20,8 +20,13 @@
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
+#include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
+
+// TODO add support for changing workspace
+// TODO reset symbol table on workspace change?
 
 // Class implementing the Language Server for Verilog
 class VerilogLanguageServer {
@@ -47,7 +52,7 @@ class VerilogLanguageServer {
 
   // The "initialize" method requests server capabilities.
   verible::lsp::InitializeResult InitializeRequestHandler(
-      const nlohmann::json &params) const;
+      const verible::lsp::InitializeParams &params);
 
   // Publish a diagnostic sent to the server.
   void SendDiagnostics(const std::string &uri,
@@ -64,6 +69,9 @@ class VerilogLanguageServer {
 
   // Tracks changes in buffers from BufferCollection and parses their contents
   verilog::BufferTrackerContainer parsed_buffers_;
+
+  // Handles requests relying on the symbol table
+  verilog::SymbolTableHandler symbol_table_handler_;
 
   // A flag for indicating "shutdown" request
   bool shutdown_requested_ = false;

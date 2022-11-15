@@ -96,6 +96,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":lsp-parse-buffer",
+        ":symbol-table-handler",
         ":verible-lsp-adapter",
         "//common/lsp:json-rpc-dispatcher",
         "//common/lsp:lsp-protocol",

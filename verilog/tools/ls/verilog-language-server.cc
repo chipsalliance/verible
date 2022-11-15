@@ -124,9 +124,15 @@ void VerilogLanguageServer::PrintStatistics() const {
 }
 
 verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
-    const nlohmann::json &params) const {
-  // Ignore passed client capabilities from params right now,
-  // just announce what we do.
+    const verible::lsp::InitializeParams &p) {
+  // set VerilogProject for the symbol table, if possible
+  if (!p.rootUri.empty()) {
+    symbol_table_handler_.setProject(p.rootUri, {}, "");
+  } else if (!p.rootPath.empty()) {
+    symbol_table_handler_.setProject(p.rootPath, {}, "");
+  }
+
+  // send response with information what we do.
   verible::lsp::InitializeResult result;
   result.serverInfo = {
       .name = "Verible Verilog language server.",
