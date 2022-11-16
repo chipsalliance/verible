@@ -38,8 +38,9 @@ SubcommandRegistry::SubcommandRegistry()
           {"error",
            {[this](const SubcommandArgsRange& args, std::istream& ins,
                    std::ostream& outs, std::ostream& errs) {
-             const auto unused_status = Help({}, ins, outs, errs);
-             return absl::InvalidArgumentError("Unknown subcommand.");
+              // Call with empty arguments to just get the command listing.
+              const auto unused_status = Help({}, ins, outs, errs);
+              return absl::InvalidArgumentError("Unknown subcommand.");
             },
             "same as 'help', but exits non-zero to signal a wrong command.\n",
             false}},

@@ -92,26 +92,23 @@ TEST(SubcommandRegistryTest, RegisterCommandPublicOk) {
   EXPECT_EQ(outs.str(), "42");
 }
 
-TEST(SubcommandRegistryTest, ShowRegisteredCommandsInHelp) {
+TEST(SubcommandRegistryTest, ShowRegisteredCommandsOnWrongCommandRequest) {
   SubcommandRegistry registry;
   {
     const auto status = registry.RegisterCommand("fizz", fizz_func);
     EXPECT_TRUE(absl::StrContains(registry.ListCommands(), "fizz"));
   }
 
-  std::vector<absl::string_view> args;
-  const SubcommandArgsRange range(args.begin(), args.end());
-  const SubcommandEntry& help_entry(registry.GetSubcommandEntry("wrong_cmd"));
+  const SubcommandEntry& cmd(registry.GetSubcommandEntry("wrong_command"));
 
+  std::vector<absl::string_view> args{"foo", "bar"};
+  const SubcommandArgsRange range(args.begin(), args.end());
   std::istringstream ins;
   std::ostringstream outs, errs;
-  const auto status = help_entry.main(range, ins, outs, errs);
+  const auto status = cmd.main(range, ins, outs, errs);
   EXPECT_FALSE(status.ok()) << status.message();
-  std::cerr << status.message() << "\n";
-  std::cerr << outs.str() << "\n";
-  std::cerr << errs.str() << "\n";
+  EXPECT_TRUE(absl::StrContains(errs.str(), "available commands"));
   EXPECT_TRUE(absl::StrContains(errs.str(), "fizz"));
-  EXPECT_TRUE(absl::StrContains(errs.str(), "help"));
 }
 
 static const SubcommandEntry buzz_func{
