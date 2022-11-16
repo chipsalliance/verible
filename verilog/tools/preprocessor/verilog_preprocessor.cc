@@ -149,10 +149,8 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
     return absl::InvalidArgumentError("ERROR: Missing file argument.");
   }
   for (const absl::string_view source_file : files) {
-    message_stream << source_file << ":\n";
     RETURN_IF_ERROR(PreprocessSingleFile(source_file, preprocessing_info, outs,
                                          message_stream));
-    outs << '\n';
   }
   return absl::OkStatus();
 }
@@ -217,6 +215,21 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
 }
 
 static const std::pair<absl::string_view, SubcommandEntry> kCommands[] = {
+    {"preprocess",
+     {&MultipleCU,
+      R"(preprocess [define-include-flags] file [file...]
+Inputs:
+  Accepts one or more Verilog or SystemVerilog source files to preprocess.
+  Each one of them will be prepropcessed independently which means that
+  declaration scopes will end by the end of each file, and won't be seen from
+  other files (so multiple files will _not_ be treated as compilation unit).
+  The +define+ and +include+ directives on the commandline are honored by
+  the preprocessor.
+Output: (stdout)
+  The preprocessed files content (same contents with directives interpreted)
+  will be written to stdout, concatenated.
+)"}},
+
     {"strip-comments",
      {&StripComments,
       R"(strip-comments file [replacement-char]
@@ -232,17 +245,7 @@ Inputs:
 Output: (stdout)
   Contents of original file with // and /**/ comments removed.
 )"}},
-    {"multiple-compilation-unit",
-     {&MultipleCU,
-      R"(multiple-compilation-unit file [more_files]
-Inputs:
-  'file' is a Verilog or SystemVerilog source file.
-   There can be multiple SystemVerilog source files.
-   Each one of them will be prepropcessed separatly which means that declarations
-   scoopes will end by the end of each file, and won't be seen from other files.
-Output: (stdout)
-  The preprocessed files content (same contents with directives interpreted).
-)"}},
+
     {"generate-variants",
      {&GenerateVariants,
       R"(generate-variants file [-limit_variants number]
@@ -250,7 +253,8 @@ Inputs:
   'file' is a Verilog or SystemVerilog source file.
   '-limit_variants' flag limits variants to 'number' (20 by default).
 Output: (stdout)
-   Generates every possible variant considering the conditional directives.
+   Generates every possible variant of `ifdef blocks considering the
+   conditional directives.
 )"}},
     // TODO(karimtera): We can add another argument to `generate-variants`,
     // Which allows us to set some defines, as if we are only interested
