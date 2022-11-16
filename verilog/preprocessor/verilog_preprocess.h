@@ -41,6 +41,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <bitset>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -87,6 +88,10 @@ struct VerilogPreprocessData {
   // are two separate vectors.
   std::vector<VerilogPreprocessError> errors;
   std::vector<VerilogPreprocessError> warnings;
+
+  // An exit code of 4 bits is used to distinguish between errors met during 
+  // preprocessing.
+  std::bitset<4> exit_code;
 };
 
 // VerilogPreprocess transforms a TokenStreamView.
