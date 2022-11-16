@@ -32,7 +32,7 @@ readonly MY_EXPECT_FILE="${TEST_TMPDIR}/myexpect.txt"
 preprocessor="$(rlocation ${TEST_WORKSPACE}/$1)"
 
 ################################################################################
-echo "=== Test no command."
+echo "=== Line:${LINENO} Test no command."
 
 "$preprocessor" > "$MY_OUTPUT_FILE" 2>&1
 
@@ -43,7 +43,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test invalid command."
+echo "=== Line:${LINENO} Test invalid command."
 
 "$preprocessor" bad-subcommand > "$MY_OUTPUT_FILE" 2>&1
 
@@ -54,7 +54,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test the 'help' command."
+echo "=== Line:${LINENO} Test the 'help' command."
 
 "$preprocessor" help > "$MY_OUTPUT_FILE" 2>&1
 
@@ -71,7 +71,7 @@ grep -q "strip-comments" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test 'help' on a specific command."
+echo "=== Line:${LINENO} Test 'help' on a specific command."
 
 "$preprocessor" help help > "$MY_OUTPUT_FILE" 2>&1
 
@@ -82,7 +82,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test strip-comments: missing file argument."
+echo "=== Line:${LINENO} Test strip-comments: missing file argument."
 
 "$preprocessor" strip-comments > /dev/null
 
@@ -93,7 +93,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test strip-comments: white out comments"
+echo "=== Line:${LINENO} Test strip-comments: white out comments"
 
 cat > "$MY_INPUT_FILE" <<EOF
 // fake Verilog file.
@@ -146,7 +146,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test strip-comments: delete comments"
+echo "=== Line:${LINENO} Test strip-comments: delete comments"
 
 cat > "$MY_INPUT_FILE" <<EOF
 // fake Verilog file.
@@ -183,7 +183,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test strip-comments: replace comments"
+echo "=== Line:${LINENO} Test strip-comments: replace comments"
 
 cat > "$MY_INPUT_FILE" <<EOF
 // fake Verilog file.
@@ -223,7 +223,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 
 
 ################################################################################
-echo "=== Test strip-comments: on a lexically invalid source file"
+echo "=== Line:${LINENO} Test strip-comments: on a lexically invalid source file"
 
 cat > "$MY_INPUT_FILE" <<EOF
 module 1m; /* comment */ endmodule
@@ -238,7 +238,7 @@ EOF
 status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -257,7 +257,7 @@ status="$?"
   exit 1
 }
 ################################################################################
-echo "=== Test multiple-compilation-unit: on a source file with conditionals"
+echo "=== Line:${LINENO} Test preprocess: on a source file with conditionals"
 
 cat > "$MY_INPUT_FILE" <<EOF
 module m();
@@ -283,15 +283,14 @@ module m();
 
 // post-blank line
 endmodule
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
+"$preprocessor" preprocess "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE"
 
 status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -299,7 +298,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test generate-variants: on a source file with nested conditionals"
+echo "=== Line:${LINENO} Test generate-variants: on a source file with nested conditionals"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -337,7 +336,7 @@ EOF
 status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -345,7 +344,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test generate-variants: with limited variants"
+echo "=== Line:${LINENO} Test generate-variants: with limited variants"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -379,7 +378,7 @@ EOF
 status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -387,7 +386,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test generate-variants: with invalid conditionals"
+echo "=== Line:${LINENO} Test generate-variants: with invalid conditionals"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -401,11 +400,11 @@ EOF
 status="$?"
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
-  exit 0
+  exit 1
 }
 
 ################################################################################
-echo "=== Test generate-variants: with multiple files"
+echo "=== Line:${LINENO} Test generate-variants: with multiple files"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -420,22 +419,22 @@ EOF
 status="$?"
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
-  exit 0
+  exit 1
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: with missing files"
+echo "=== Line:${LINENO} Test preprocess: with missing files"
 
-"$preprocessor" multiple-compilation-unit > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
-  exit 0
+  exit 1
 }
 
 ################################################################################
-echo "=== Test generate-variants: with multiple files"
+echo "=== Line:${LINENO} Test generate-variants: with multiple files"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -450,11 +449,11 @@ EOF
 status="$?"
 [[ $status == 1 ]] || {
   "Expected exit code 1, but got $status"
-  exit 0
+  exit 1
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: with multiple files"
+echo "=== Line:${LINENO} Test preprocess: with multiple files"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -470,18 +469,16 @@ cat > "$MY_EXPECT_FILE" <<EOF
   A_FALSE
 
 
-
   A_FALSE
-
 
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 
+"$preprocessor" preprocess "$MY_INPUT_FILE" "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 
 
 status="$?"
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -489,7 +486,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: passing defines"
+echo "=== Line:${LINENO} Test preprocess: passing defines"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`ifdef A
@@ -514,16 +511,15 @@ cat > "$MY_EXPECT_FILE" <<EOF
 
   B_FALSE
 
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 
+"$preprocessor" preprocess "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 
 
 status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -538,29 +534,28 @@ cat > "$MY_EXPECT_FILE" <<EOF
 
   B_TRUE
 
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A=a_value+B=b_value > "$MY_OUTPUT_FILE" 
+"$preprocessor" preprocess "$MY_INPUT_FILE" +define+A=a_value+B=b_value > "$MY_OUTPUT_FILE" 
 
 status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
   exit 1
 }
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A +define+B > "$MY_OUTPUT_FILE" 
+"$preprocessor" preprocess "$MY_INPUT_FILE" +define+A +define+B > "$MY_OUTPUT_FILE" 
 
 status="$?"
 
 [[ $status == 0 ]] || {
   "Expected exit code 0, but got $status"
-  exit 0
+  exit 1
 }
 
 diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
@@ -568,7 +563,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including a file with an absolute path"
+echo "=== Line:${LINENO} Test preprocess: including a file with an absolute path"
 
 cat > "$MY_INPUT_FILE" <<EOF
 input_content_0
@@ -582,15 +577,13 @@ EOF
 
 
 cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
 input_content_0
 included1_content
 
 input_content_1
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -604,7 +597,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including a file with a relative path with the correct incdir"
+echo "=== Line:${LINENO} Test preprocess: including a file with a relative path with the correct incdir"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_RELATIVE_INCLUDED_FILE_1}"
@@ -617,14 +610,12 @@ EOF
 
 
 cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
 included1_content
 
 input_content
-
 EOF
 
-"$preprocessor" multiple-compilation-unit +incdir+${MY_INCLUDED_FILE_PATH_1} "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess +incdir+${MY_INCLUDED_FILE_PATH_1} "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -638,7 +629,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including a file with a relative path without incdir"
+echo "=== Line:${LINENO} Test preprocess: including a file with a relative path without incdir"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_RELATIVE_INCLUDED_FILE_1}"
@@ -649,7 +640,7 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_1" <<EOF
 included1_content
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -659,7 +650,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including nested files with absolute paths"
+echo "=== Line:${LINENO} Test preprocess: including nested files with absolute paths"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
@@ -676,16 +667,14 @@ included2_content
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
 included2_content
 
 included1_content
 
 input_content
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -699,7 +688,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including nested files with relative paths with the correct incdirs"
+echo "=== Line:${LINENO} Test preprocess: including nested files with relative paths with the correct incdirs"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_RELATIVE_INCLUDED_FILE_1}"
@@ -716,16 +705,14 @@ included2_content
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
 included2_content
 
 included1_content
 
 input_content
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +incdir+${MY_INCLUDED_FILE_PATH_1}+${MY_INCLUDED_FILE_PATH_2} > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" +incdir+${MY_INCLUDED_FILE_PATH_1}+${MY_INCLUDED_FILE_PATH_2} > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -739,7 +726,7 @@ diff --strip-trailing-cr -u "$MY_EXPECT_FILE" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including nested files with relative paths without incdir"
+echo "=== Line:${LINENO} Test preprocess: including nested files with relative paths without incdir"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_RELATIVE_INCLUDED_FILE_1}"
@@ -755,7 +742,7 @@ cat > "$MY_ABSOLUTE_INCLUDED_FILE_2" <<EOF
 included2_content
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
@@ -765,7 +752,7 @@ status="$?"
 }
 
 ################################################################################
-echo "=== Test multiple-compilation-unit: including nested files, passing +define+"
+echo "=== Line:${LINENO} Test preprocess: including nested files, passing +define+"
 
 cat > "$MY_INPUT_FILE" <<EOF
 \`include "${MY_ABSOLUTE_INCLUDED_FILE_1}"
@@ -791,7 +778,6 @@ A_TRUE
 EOF
 
 cat > "$MY_EXPECT_FILE" <<EOF
-${MY_INPUT_FILE}:
 included2_content
 
 A_TRUE
@@ -806,10 +792,9 @@ input_content
 
 A_TRUE
 
-
 EOF
 
-"$preprocessor" multiple-compilation-unit "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 2>&1
+"$preprocessor" preprocess "$MY_INPUT_FILE" +define+A > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 
