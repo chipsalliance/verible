@@ -132,18 +132,18 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=185
+ExpectedFailCount[project:ibex]=189
 
-ExpectedFailCount[syntax:opentitan]=33
-ExpectedFailCount[lint:opentitan]=33
+ExpectedFailCount[syntax:opentitan]=35
+ExpectedFailCount[lint:opentitan]=35
 ExpectedFailCount[formatter:opentitan]=1
-ExpectedFailCount[project:opentitan]=710
+ExpectedFailCount[project:opentitan]=722
 
 ExpectedFailCount[project:Cores-SweRV]=21
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
-ExpectedFailCount[project:cva6]=24
+ExpectedFailCount[project:cva6]=25
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -175,7 +175,7 @@ ExpectedFailCount[lint:nontrivial-mips]=2
 ExpectedFailCount[formatter:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
 
-ExpectedFailCount[project:axi]=65
+ExpectedFailCount[project:axi]=69
 
 ExpectedFailCount[syntax:rsd]=1
 ExpectedFailCount[lint:rsd]=1
@@ -186,7 +186,7 @@ ExpectedFailCount[formatter:scr1]=2
 ExpectedFailCount[project:scr1]=45
 
 ExpectedFailCount[syntax:basejump_stl]=460
-ExpectedFailCount[lint:basejump_stl]=456
+ExpectedFailCount[lint:basejump_stl]=460
 ExpectedFailCount[project:basejump_stl]=566
 
 # Ideally, we expect all tools to process all files with a zero exit code.
