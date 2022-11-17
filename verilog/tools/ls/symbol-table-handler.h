@@ -59,12 +59,13 @@ class SymbolTableHandler {
       const verible::lsp::DefinitionParams &params);
 
  private:
-  std::shared_ptr<VerilogProject> currproject =
-      nullptr;  // current VerilogProject for which the symbol table is created
-  std::shared_ptr<SymbolTable> symboltable = nullptr;  // symbol table structure
   std::unordered_set<std::string>
       checkedfiles;  // set of checked files to prevent unnecessary calls for
                      // creating a symbol table for already seen files
+  // current VerilogProject for which the symbol table is created
+  std::unique_ptr<VerilogProject> currproject;
+  // symbol table structure
+  std::unique_ptr<SymbolTable> symboltable;
 };
 
 };  // namespace verilog

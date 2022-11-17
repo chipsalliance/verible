@@ -20,13 +20,13 @@ namespace verilog {
 void SymbolTableHandler::setProject(
     absl::string_view root, const std::vector<std::string> &include_paths,
     absl::string_view corpus) {
-  currproject = std::make_shared<VerilogProject>(root, include_paths, corpus);
+  currproject = std::make_unique<VerilogProject>(root, include_paths, corpus);
   resetSymbolTable();
 }
 
 void SymbolTableHandler::resetSymbolTable() {
   checkedfiles.clear();
-  symboltable = std::make_shared<SymbolTable>(currproject.get());
+  symboltable = std::make_unique<SymbolTable>(currproject.get());
 }
 
 void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
