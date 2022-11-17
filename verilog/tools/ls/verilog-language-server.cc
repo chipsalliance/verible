@@ -132,7 +132,13 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     const verible::lsp::InitializeParams &p) {
   // set VerilogProject for the symbol table, if possible
   if (!p.rootUri.empty()) {
-    symbol_table_handler_.setProject(p.rootUri, {}, "");
+    std::string path;
+    if (!verilog::LSPUriToPath(p.rootUri, path)) {
+      LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
+                 << std::endl;
+      path = p.rootUri;
+    }
+    symbol_table_handler_.setProject(path, {}, "");
   } else if (!p.rootPath.empty()) {
     symbol_table_handler_.setProject(p.rootPath, {}, "");
   }
