@@ -37,7 +37,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-format
+        apt -qq -y install clang-format
         clang-format --version
 
     - name: Run formatting style check
@@ -61,7 +61,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-tidy-11
+        apt -qq -y install clang-tidy-11
         echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
     - name: Create Cache Timestamp
@@ -133,7 +133,7 @@ jobs:
       run: |
         set -x
         source ./.github/settings.sh
-        sudo apt -qq -y install clang-10
+        apt -qq -y install clang-10
         ./.github/bin/set-compiler.sh 9
         ./.github/bin/install-bazel.sh
 

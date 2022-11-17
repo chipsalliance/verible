@@ -18,6 +18,6 @@ if [ -z "${BAZEL_VERSION}" ]; then
         exit 1
 fi
 wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-x86_64.deb" -O /tmp/bazel.deb
-sudo dpkg -i /tmp/bazel.deb || true
-sudo apt-get -f install
+dpkg -i /tmp/bazel.deb || true
+apt-get -f install
 bazel --version
