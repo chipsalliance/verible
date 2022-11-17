@@ -92,6 +92,25 @@ TEST(SubcommandRegistryTest, RegisterCommandPublicOk) {
   EXPECT_EQ(outs.str(), "42");
 }
 
+TEST(SubcommandRegistryTest, ShowRegisteredCommandsOnWrongCommandRequest) {
+  SubcommandRegistry registry;
+  {
+    const auto status = registry.RegisterCommand("fizz", fizz_func);
+    EXPECT_TRUE(absl::StrContains(registry.ListCommands(), "fizz"));
+  }
+
+  const SubcommandEntry& cmd(registry.GetSubcommandEntry("wrong_command"));
+
+  std::vector<absl::string_view> args{"foo", "bar"};
+  const SubcommandArgsRange range(args.begin(), args.end());
+  std::istringstream ins;
+  std::ostringstream outs, errs;
+  const auto status = cmd.main(range, ins, outs, errs);
+  EXPECT_FALSE(status.ok()) << status.message();
+  EXPECT_TRUE(absl::StrContains(errs.str(), "available commands"));
+  EXPECT_TRUE(absl::StrContains(errs.str(), "fizz"));
+}
+
 static const SubcommandEntry buzz_func{
     [](const SubcommandArgsRange, std::istream&, std::ostream& outs,
        std::ostream&) {
