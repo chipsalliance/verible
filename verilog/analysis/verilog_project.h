@@ -297,6 +297,8 @@ class VerilogProject {
   const VerilogSourceFile* LookupFileOrigin(
       absl::string_view content_substring) const;
 
+  std::string GetRelativePathToSource(const std::string& absolute_filepath);
+
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,
