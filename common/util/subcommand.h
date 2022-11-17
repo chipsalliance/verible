@@ -92,6 +92,9 @@ class SubcommandRegistry {
 
   // The map of names to functions.
   SubcommandMap subcommand_map_;
+
+  // Sequence in which commands have been registered for display purposes.
+  std::vector<std::string> command_listing_;
 };  // class SubcommandRegistry
 
 }  // namespace verible
