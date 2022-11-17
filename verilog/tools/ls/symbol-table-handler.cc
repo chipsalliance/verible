@@ -17,6 +17,20 @@
 
 namespace verilog {
 
+bool LSPUriToPath(absl::string_view uri, std::string &path) {
+  static const std::string fileschemeprefix = "file://";
+  auto found = uri.find(fileschemeprefix);
+  if (found == std::string::npos) {
+    return false;
+  }
+  if (found != 0) {
+    return false;
+  }
+  std::string res{uri.substr(found + fileschemeprefix.size())};
+  path = res;
+  return true;
+}
+
 void SymbolTableHandler::setProject(
     absl::string_view root, const std::vector<std::string> &include_paths,
     absl::string_view corpus) {
