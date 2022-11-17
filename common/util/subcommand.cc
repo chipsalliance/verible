@@ -42,19 +42,15 @@ SubcommandRegistry::SubcommandRegistry()
               const auto unused_status = Help({}, ins, outs, errs);
               return absl::InvalidArgumentError("Unknown subcommand.");
             },
-            "same as 'help', but exits non-zero to signal a wrong command.\n",
-            false}},
-      } {}
+            "This is not a valid command.\n", false}},
+      } {
+  command_listing_.emplace_back("help");
+}
 
 const SubcommandEntry& SubcommandRegistry::GetSubcommandEntry(
     absl::string_view command) const {
   const SubcommandMap& commands(subcommand_map_);
-#if __cplusplus >= 201402L
-  const auto iter = commands.find(command);  // heterogenous lookup
-#else
-  // without heterogenous lookup
-  const auto iter = commands.find(std::string(command.begin(), command.end()));
-#endif
+  const auto iter = commands.find(command);
   if (iter == commands.end()) {
     // Command not found, print help and exit non-zero.
     return commands.find("error")->second;
@@ -64,16 +60,13 @@ const SubcommandEntry& SubcommandRegistry::GetSubcommandEntry(
 
 absl::Status SubcommandRegistry::RegisterCommand(
     absl::string_view name, const SubcommandEntry& command) {
-  const auto p = subcommand_map_.emplace(
-#if __cplusplus >= 201402L
-      name,  // heterogenous lookup
-#else
-      std::string(name.begin(), name.end()),  // without heterogenous lookup
-#endif
-      command);
+  const auto p = subcommand_map_.emplace(name, command);
   if (!p.second) {
     return absl::InvalidArgumentError(absl::StrCat(
         "A function named \"", name, "\" has already been registered."));
+  }
+  if (command.show_in_help) {
+    command_listing_.emplace_back(name);
   }
   return absl::OkStatus();
 }
@@ -92,15 +85,7 @@ absl::Status SubcommandRegistry::Help(const SubcommandArgsRange& args,
 }
 
 std::string SubcommandRegistry::ListCommands() const {
-  const SubcommandMap& commands(subcommand_map_);
-  std::vector<absl::string_view> public_commands;
-  for (const auto& command : commands) {
-    // List only public commands.
-    if (command.second.show_in_help) {
-      public_commands.emplace_back(command.first);
-    }
-  }
-  return absl::StrCat("  ", absl::StrJoin(public_commands, "\n  "), "\n");
+  return absl::StrCat("  ", absl::StrJoin(command_listing_, "\n  "), "\n");
 }
 
 }  // namespace verible
