@@ -20,7 +20,8 @@ jobs:
 
 
   VerifyFormatting:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
 
@@ -43,7 +44,8 @@ jobs:
       run: ./.github/bin/run-clang-format.sh
 
   ClangTidy:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
 
@@ -82,7 +84,8 @@ jobs:
 
 
   Check:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
     strategy:
       fail-fast: false
       matrix:
