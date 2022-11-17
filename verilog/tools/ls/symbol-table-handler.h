@@ -17,9 +17,9 @@
 #define VERILOG_TOOLS_LS_SYMBOL_TABLE_HANDLER_H
 
 #include <memory>
-#include <unordered_set>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
@@ -59,13 +59,13 @@ class SymbolTableHandler {
       const verible::lsp::DefinitionParams &params);
 
  private:
-  std::unordered_set<std::string>
-      checkedfiles;  // set of checked files to prevent unnecessary calls for
-                     // creating a symbol table for already seen files
   // current VerilogProject for which the symbol table is created
   std::unique_ptr<VerilogProject> currproject;
   // symbol table structure
   std::unique_ptr<SymbolTable> symboltable;
+  // set of checked files to prevent unnecessary calls for creating
+  // a symbol table for already seen files
+  absl::flat_hash_set<std::string> checkedfiles;
 };
 
 };  // namespace verilog
