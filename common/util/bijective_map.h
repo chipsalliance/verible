@@ -72,29 +72,15 @@ class BijectiveMap {
   // Lookup value given key.  Returns nullptr if not found.
   template <typename ConvertibleToKey>
   const V* find_forward(const ConvertibleToKey& k) const {
-    auto iter = forward_map.find(
-#if __cplusplus >= 201402L
-        k  // heterogeneous lookup enabled (C++14)
-#else
-        // copy temporary rvalue if necessary
-        ForwardReferenceElseConstruct<K>()(k)
-#endif
-    );
-    return iter == forward_map.end() ? nullptr : iter->second;
+    const auto found = forward_map.find(k);
+    return found == forward_map.end() ? nullptr : found->second;
   }
 
   // Lookup key given value.  Returns nullptr if not found.
   template <typename ConvertibleToValue>
   const K* find_reverse(const ConvertibleToValue& v) const {
-    auto iter = reverse_map.find(
-#if __cplusplus >= 201402L
-        v  // heterogeneous lookup enabled (C++14)
-#else
-        // copy temporary rvalue if necessary
-        ForwardReferenceElseConstruct<V>()(v)
-#endif
-    );
-    return iter == reverse_map.end() ? nullptr : iter->second;
+    const auto found = reverse_map.find(v);
+    return found == reverse_map.end() ? nullptr : found->second;
   }
 
   // Returns true if successfully inserted new pair.
