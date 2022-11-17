@@ -49,13 +49,21 @@ void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
 
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params) {
-  auto filepath = params.textDocument.uri;
-  if (checkedfiles.find(filepath) == checkedfiles.end()) {
+  std::string filepath;
+  if (!LSPUriToPath(params.textDocument.uri, filepath)) {
+    std::cerr << "Could not convert URI " << params.textDocument.uri
+              << " to filesystem path." << std::endl;
+    return {};
+  }
+  auto relativepath = currproject->GetRelativePathToSource(filepath);
+  // TODO add checking parsed buffers / raw buffers to get the newest state of
+  // files and fallback to reading files from filesystem only when necessary.
+  if (checkedfiles.find(relativepath) == checkedfiles.end()) {
     // File hasn't been tracked yet in the symbol table, add it
-    auto openedfile = currproject->OpenTranslationUnit(filepath);
+    auto openedfile = currproject->OpenTranslationUnit(relativepath);
     if (!openedfile.ok()) {
-      std::cerr << "Could not open " << filepath << " in project "
-                << currproject->TranslationUnitRoot() << std::endl;
+      LOG(WARNING) << "Could not open [" << filepath << "] in project ["
+                   << currproject->TranslationUnitRoot() << "]" << std::endl;
       return {};
     }
     auto buildstatus =
