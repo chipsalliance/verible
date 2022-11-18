@@ -59,11 +59,14 @@ VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
 }
 
 TokenStreamView::const_iterator VerilogPreprocess::GenerateBypassWhiteSpaces(
-    const StreamIteratorGenerator& generator) {
-  auto iterator =
-      generator();  // iterator should be pointing to a non-whitespace token;
+    const StreamIteratorGenerator& generator,
+    std::vector<TokenStreamView::const_iterator>* backup_view = nullptr) {
+  // iterator should be pointing to a non-whitespace token;
+  auto iterator = generator();
+  if (backup_view != nullptr) backup_view->push_back(iterator);
   while (verilog::VerilogLexer::KeepSyntaxTreeTokens(**iterator) == 0) {
     iterator = generator();
+    if (backup_view != nullptr) backup_view->push_back(iterator);
   }
   return iterator;
 }
@@ -223,7 +226,8 @@ std::unique_ptr<VerilogPreprocessError> VerilogPreprocess::ParseMacroDefinition(
 absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
     TokenStreamView::const_iterator iter,
     const StreamIteratorGenerator& generator, verible::MacroCall* macro_call,
-    const verible::MacroDefinition& macro_definition) {
+    const verible::MacroDefinition& macro_definition,
+    std::vector<TokenStreamView::const_iterator>& backup_view) {
   // Parsing the macro .
   const absl::string_view macro_name_str = (*iter)->text().substr(1);
   verible::TokenInfo macro_name_token(MacroCallId, macro_name_str);
@@ -238,10 +242,11 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
 
   // Parsing parameters.
   TokenStreamView::const_iterator token_iter =
-      GenerateBypassWhiteSpaces(generator);
+      GenerateBypassWhiteSpaces(generator, &backup_view);
   int parameters_size = macro_definition.Parameters().size();
   if ((*token_iter)->text() == "(") {
-    token_iter = GenerateBypassWhiteSpaces(generator);  // skip the "("
+    token_iter =
+        GenerateBypassWhiteSpaces(generator, &backup_view);  // skip the "("
   } else {
     return absl::InvalidArgumentError(
         "Error it is illegal to call a callable macro without ().");
@@ -250,15 +255,15 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
   while (parameters_size > 0) {
     if ((*token_iter)->token_enum() == MacroArg) {
       macro_call->positional_arguments.emplace_back(**token_iter);
-      token_iter = GenerateBypassWhiteSpaces(generator);
+      token_iter = GenerateBypassWhiteSpaces(generator, &backup_view);
       if ((*token_iter)->text() == ",")
-        token_iter = GenerateBypassWhiteSpaces(generator);
+        token_iter = GenerateBypassWhiteSpaces(generator, &backup_view);
       parameters_size--;
       continue;
     } else if ((*token_iter)->text() == ",") {
       macro_call->positional_arguments.emplace_back(
           verible::DefaultTokenInfo());
-      token_iter = GenerateBypassWhiteSpaces(generator);
+      token_iter = GenerateBypassWhiteSpaces(generator, &backup_view);
       parameters_size--;
       continue;
     } else if ((*token_iter)->text() == ")")
@@ -287,6 +292,12 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
   const auto* found =
       FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
   if (!found) {
+    // Outputs the macro call if it couldn't be expanded.
+    preprocess_data_.preprocessed_token_stream.push_back(*iter);
+
+    // Updates the exit code.
+    preprocess_data_.exit_code |= kMacroUseNotExpandedBit;
+
     preprocess_data_.errors.push_back(VerilogPreprocessError(
         **iter,
         "Error expanding macro identifier, might not be defined before."));
@@ -294,15 +305,27 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
         "Error expanding macro identifier, might not be defined before.");
   }
 
-  if (config_.expand_macros) {
-    verible::MacroCall macro_call;
-    if (auto status =
-            ConsumeAndParseMacroCall(iter, generator, &macro_call, *found);
-        !status.ok())
-      return status;
-    if (auto status = ExpandMacro(macro_call, found); !status.ok())
-      return status;
+  // Backup of const_iterators to push back into
+  // preprocessor_data_.preprocessed_token_stream in case we couldn't open the
+  // file.
+  std::vector<TokenStreamView::const_iterator> backup_view;
+  backup_view.push_back(iter);
+
+  verible::MacroCall macro_call;
+  if (auto status = ConsumeAndParseMacroCall(iter, generator, &macro_call,
+                                             *found, backup_view);
+      !status.ok()) {
+    // Outputs the macro call if it couldn't be expanded.
+    for (const auto& u : backup_view)
+      preprocess_data_.preprocessed_token_stream.push_back(*u);
+
+    // Updates the exit code.
+    preprocess_data_.exit_code |= kMacroUseNotExpandedBit;
+
+    return status;
   }
+  if (auto status = ExpandMacro(macro_call, found); !status.ok()) return status;
+
   auto& lexed = preprocess_data_.lexed_macros_backup.back();
   if (!forward) return absl::OkStatus();
   auto iter_generator = verible::MakeConstIteratorStreamer(lexed);
@@ -592,11 +615,17 @@ absl::Status VerilogPreprocess::HandleInclude(
   if (!file_opener_)
     return absl::FailedPreconditionError("file_opener_ is not defined");
 
+  // Backup of const_iterators to push back into
+  // preprocessor_data_.preprocessed_token_stream in case we couldn't open the
+  // file.
+  std::vector<TokenStreamView::const_iterator> backup_view;
+  backup_view.push_back(iter);
+
   // TODO(karimtera): Support inclduing <file>,
   // which should look for files defined by language standard in a compiler
   // dependent path.
   TokenStreamView::const_iterator token_iter =
-      GenerateBypassWhiteSpaces(generator);
+      GenerateBypassWhiteSpaces(generator, &backup_view);
   auto file_token_iter = *token_iter;
   if (file_token_iter->token_enum() != TK_StringLiteral) {
     preprocess_data_.errors.push_back(
@@ -614,6 +643,14 @@ absl::Status VerilogPreprocess::HandleInclude(
   if (!status_or_file.ok()) {
     preprocess_data_.errors.push_back(
         {**token_iter, std::string(status_or_file.status().message())});
+    // Outputs the `include directive as it is, in case we couldn't open the
+    // file.
+    for (const auto& u : backup_view)
+      preprocess_data_.preprocessed_token_stream.push_back(*u);
+
+    // Add this error to the exit code.
+    preprocess_data_.exit_code |= kIncludeFileNotFoundBit;
+
     return status_or_file.status();
   }
   const absl::string_view source_contents = *status_or_file;
@@ -740,7 +777,7 @@ VerilogPreprocessData VerilogPreprocess::ScanStream(
     const auto status = HandleTokenIterator(iter, iter_generator);
     if (!status.ok()) {
       // Detailed errors are already in preprocessor_data_.errors.
-      break;  // For now, stop after first error.
+      /* break;  // For now, stop after first error. */
     }
   }
 
