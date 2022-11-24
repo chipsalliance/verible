@@ -15,6 +15,8 @@
 
 #include "verilog/tools/ls/symbol-table-handler.h"
 
+#include "common/strings/line_column_map.h"
+
 namespace verilog {
 
 bool LSPUriToPath(absl::string_view uri, std::string &path) {
@@ -48,7 +50,8 @@ void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
 }
 
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
-    const verible::lsp::DefinitionParams &params) {
+    const verible::lsp::DefinitionParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
   std::string filepath;
   if (!LSPUriToPath(params.textDocument.uri, filepath)) {
     std::cerr << "Could not convert URI " << params.textDocument.uri
@@ -61,6 +64,8 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
   if (checkedfiles.find(relativepath) == checkedfiles.end()) {
     // File hasn't been tracked yet in the symbol table, add it
     auto openedfile = currproject->OpenTranslationUnit(relativepath);
+    // TODO check parse status
+    auto parsestatus = (*openedfile)->Parse();
     if (!openedfile.ok()) {
       LOG(WARNING) << "Could not open [" << filepath << "] in project ["
                    << currproject->TranslationUnitRoot() << "]" << std::endl;
@@ -72,6 +77,39 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     symboltable->PrintSymbolDefinitions(std::cerr);
     std::cerr << std::endl;
   }
+  auto parsedbuffer =
+      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri)
+          ->current();
+  if (!parsedbuffer) {
+    LOG(ERROR) << "Buffer not found among opened buffers:  "
+               << params.textDocument.uri << std::endl;
+    return {};
+  }
+  const verible::LineColumn cursor{params.position.line,
+                                   params.position.character};
+  const verible::TextStructureView &text = parsedbuffer->parser().Data();
+
+  const auto cursor_token = text.FindTokenAt(cursor);
+  auto symbol = cursor_token.text();
+  LOG(INFO) << "Checking definition for symbol:  " << symbol << std::endl;
+  auto reffile = currproject->LookupRegisteredFile(relativepath);
+  if (!reffile) {
+    LOG(ERROR) << "Unable to lookup " << params.textDocument.uri << std::endl;
+    return {};
+  }
+
+  auto &root = symboltable->Root();
+
+  auto found = root.Find(symbol);
+
+  if (found == root.end()) {
+    LOG(INFO) << "Symbol " << symbol << " not found in symbol table"
+              << std::endl;
+  }
+
+  // found->
+
+  // auto symbol = absl::StrSplit(reffile->GetContent(), '\n').
   return {};
 }
 

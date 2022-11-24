@@ -86,7 +86,8 @@ cc_library(
     deps = [
         "//verilog/analysis:symbol_table",
         "//common/lsp:lsp-protocol",
-        "@com_google_absl//absl/container:flat_hash_set"
+        "@com_google_absl//absl/container:flat_hash_set",
+        ":lsp-parse-buffer"
     ],
 )
 

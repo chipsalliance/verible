@@ -92,7 +92,7 @@ void VerilogLanguageServer::SetRequestHandlers() {
   dispatcher_.AddRequestHandler(  // go-to definition
       "textDocument/definition",
       [this](const verible::lsp::DefinitionParams &p) {
-        return symbol_table_handler_.findDefinition(p);
+        return symbol_table_handler_.findDefinition(p, parsed_buffers_);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {

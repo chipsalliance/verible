@@ -25,6 +25,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "verilog/analysis/symbol_table.h"
 #include "verilog/analysis/verilog_project.h"
+#include "verilog/tools/ls/lsp-parse-buffer.h"
 
 namespace verilog {
 
@@ -61,7 +62,8 @@ class SymbolTableHandler {
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
   std::vector<verible::lsp::Location> findDefinition(
-      const verible::lsp::DefinitionParams &params);
+      const verible::lsp::DefinitionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
 
  private:
   // current VerilogProject for which the symbol table is created
