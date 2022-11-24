@@ -12,7 +12,6 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_BUILDKIT: 1
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
 
@@ -215,7 +214,8 @@ jobs:
 
   Build:
     needs: Matrix
-    runs-on: ubuntu-20.04
+    container: debian:bullseye
+    runs-on: [self-hosted, Linux, X64]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
     if: ${{github.event_name == 'push'}}
@@ -225,6 +225,7 @@ jobs:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+      DOCKER_DATA_ROOT: "/root/.docker"
     name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
 
     steps:
@@ -234,11 +235,24 @@ jobs:
        # Download complete repository + tags
        fetch-depth: 0
 
-    - run: docker pull $MATRIX_OS
+    - name: Install and setup Docker
+      run: "apt -qqy update && apt -qqy --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates git && cgroupfs-mount"
 
     - name: Main script
       run: |
         set -x
+
+        mkdir -p "$DOCKER_DATA_ROOT"
+        dockerd \
+          -s fuse-overlayfs \
+          --add-runtime=crun=/usr/bin/crun \
+          --default-runtime=crun \
+          --config-file="" \
+          --data-root=$DOCKER_DATA_ROOT > /dev/null 2>&1 &
+        while ! test -S /var/run/docker.sock; do echo "Waiting for Docker..." && sleep 1; done; docker info
+        trap "kill $(cat /var/run/docker.pid)" EXIT
+
+        docker pull $MATRIX_OS
         source ./.github/settings.sh
         ./releasing/docker-run.sh $MATRIX_OS
 
