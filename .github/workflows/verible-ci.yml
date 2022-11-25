@@ -14,6 +14,7 @@ on:
 env:
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
+  GHA_MACHINE_TYPE: "n2-standard-8"
 
 jobs:
 
@@ -46,6 +47,9 @@ jobs:
   ClangTidy:
     container: ubuntu:20.04
     runs-on: [self-hosted, Linux, X64]
+
+    env:
+      GHA_MACHINE_TYPE: "n2-standard-4"
 
     steps:
 
@@ -226,6 +230,7 @@ jobs:
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
       DOCKER_DATA_ROOT: "/root/.docker"
+      GHA_MACHINE_TYPE: "n2-highcpu-8"
     name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
 
     steps:
