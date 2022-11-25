@@ -44,6 +44,13 @@ jobs:
     - name: Run formatting style check
       run: ./.github/bin/run-clang-format.sh
 
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
+
   ClangTidy:
     container: ubuntu:20.04
     runs-on: [self-hosted, Linux, X64]
@@ -88,6 +95,13 @@ jobs:
 
     - name: Run clang tidy
       run: ./.github/bin/run-clang-tidy.sh
+
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
 
 
   Check:
@@ -169,6 +183,13 @@ jobs:
         BRANCH: gh-pages
         FOLDER: /tmp/pages
         CLEAN: true
+
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
 
 
   Kythe:
@@ -265,6 +286,13 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         path: releasing/out/verible-*.tar.gz
+
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
 
   MacOsBuild:
     runs-on: macos-latest
