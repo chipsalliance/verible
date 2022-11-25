@@ -563,7 +563,7 @@ void TreeUnwrapper::InterChildNodeHook(const SyntaxTreeNode& node) {
     case NodeEnum::kPortDeclarationList:
     case NodeEnum::kActualParameterByNameList:
     case NodeEnum::kPortActualList:
-    // case NodeEnum::kPortList:  // TODO(fangism): for task/function ports
+    case NodeEnum::kPortList:
     case NodeEnum::kModuleItemList:
     case NodeEnum::kGenerateItemList:
     case NodeEnum::kClassItems:
