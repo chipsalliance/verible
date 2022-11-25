@@ -37,7 +37,8 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        apt -qq -y install clang-format
+        apt -qqy update
+        apt -qq -y install clang-format git
         clang-format --version
 
     - name: Run formatting style check
@@ -61,7 +62,10 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        apt -qq -y install clang-tidy-11
+        apt -qqy update
+        apt -qq -y install clang-tidy-11 build-essential git wget
+        source ./.github/settings.sh
+        ./.github/bin/install-bazel.sh
         echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
     - name: Create Cache Timestamp
@@ -132,8 +136,9 @@ jobs:
     - name: Install Dependencies
       run: |
         set -x
+        apt -qqy update
+        apt -qq -y install clang-10 build-essential wget git python3 python-is-python3
         source ./.github/settings.sh
-        apt -qq -y install clang-10
         ./.github/bin/set-compiler.sh 9
         ./.github/bin/install-bazel.sh
 
