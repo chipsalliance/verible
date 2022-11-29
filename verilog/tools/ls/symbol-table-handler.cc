@@ -15,8 +15,9 @@
 
 #include "verilog/tools/ls/symbol-table-handler.h"
 
-#include "common/strings/line_column_map.h"
 #include <filesystem>
+
+#include "common/strings/line_column_map.h"
 
 namespace verilog {
 
@@ -57,21 +58,17 @@ void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
   auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
 }
 
-const SymbolTableNode* SymbolTableHandler::ScanSymbolTreeForDefinition(const SymbolTableNode* context, absl::string_view symbol)
-{
-  if (!context)
-  {
+const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
+    const SymbolTableNode *context, absl::string_view symbol) {
+  if (!context) {
     return nullptr;
   }
-  if (context->Key() && *context->Key() == symbol)
-  {
+  if (context->Key() && *context->Key() == symbol) {
     return context;
   }
-  for (const auto &child : context->Children())
-  {
+  for (const auto &child : context->Children()) {
     auto res = ScanSymbolTreeForDefinition(&child.second, symbol);
-    if (res)
-    {
+    if (res) {
       return res;
     }
   }
@@ -97,21 +94,18 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     auto parsestatus = (*openedfile)->Parse();
     if (!openedfile.ok()) {
       LOG(WARNING) << "Could not open [" << filepath << "] in project ["
-                   << currproject->TranslationUnitRoot() << "]" << std::endl;
+                   << currproject->TranslationUnitRoot() << "]";
       return {};
     }
     auto buildstatus =
         BuildSymbolTable(**openedfile, symboltable.get(), currproject.get());
-    std::cerr << "Symbol definitions:" << std::endl << std::endl;
-    symboltable->PrintSymbolDefinitions(std::cerr);
-    std::cerr << std::endl;
   }
   auto parsedbuffer =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri)
           ->current();
   if (!parsedbuffer) {
     LOG(ERROR) << "Buffer not found among opened buffers:  "
-               << params.textDocument.uri << std::endl;
+               << params.textDocument.uri;
     return {};
   }
   const verible::LineColumn cursor{params.position.line,
@@ -120,26 +114,38 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
 
   const auto cursor_token = text.FindTokenAt(cursor);
   auto symbol = cursor_token.text();
-  LOG(INFO) << "Checking definition for symbol:  " << symbol << std::endl;
   auto reffile = currproject->LookupRegisteredFile(relativepath);
   if (!reffile) {
-    LOG(ERROR) << "Unable to lookup " << params.textDocument.uri << std::endl;
+    LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
     return {};
   }
 
   auto &root = symboltable->Root();
 
-  auto found = root.Find(symbol);
-
-  if (found == root.end()) {
-    LOG(INFO) << "Symbol " << symbol << " not found in symbol table"
-              << std::endl;
+  auto node = ScanSymbolTreeForDefinition(&root, symbol);
+  if (!node) {
+    LOG(INFO) << "Symbol " << symbol << " not found in symbol table:  " << node;
+    return {};
   }
-
-  // found->
-
-  // auto symbol = absl::StrSplit(reffile->GetContent(), '\n').
-  return {};
+  // TODO add iterating over multiple definitions?
+  verible::lsp::Location location;
+  auto &symbolinfo = node->Value();
+  if (!symbolinfo.file_origin) {
+    LOG(ERROR) << "Origin file not available";
+    return {};
+  }
+  PathToLSPUri(symbolinfo.file_origin->ResolvedPath(), location.uri);
+  auto *textstructure = symbolinfo.file_origin->GetTextStructure();
+  if (!textstructure) {
+    LOG(ERROR) << "Origin file's text structure is not parsed";
+    return {};
+  }
+  auto symbollocation = textstructure->GetRangeForText(*node->Key());
+  location.range.start = {.line = symbollocation.start.line,
+                          .character = symbollocation.start.column};
+  location.range.end = {.line = symbollocation.end.line,
+                        .character = symbollocation.end.column};
+  return {location};
 }
 
 };  // namespace verilog
