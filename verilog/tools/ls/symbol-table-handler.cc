@@ -16,11 +16,13 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 #include "common/strings/line_column_map.h"
+#include <filesystem>
 
 namespace verilog {
 
+static const std::string fileschemeprefix = "file://";
+
 bool LSPUriToPath(absl::string_view uri, std::string &path) {
-  static const std::string fileschemeprefix = "file://";
   auto found = uri.find(fileschemeprefix);
   if (found == std::string::npos) {
     return false;
@@ -30,6 +32,12 @@ bool LSPUriToPath(absl::string_view uri, std::string &path) {
   }
   std::string res{uri.substr(found + fileschemeprefix.size())};
   path = res;
+  return true;
+}
+
+bool PathToLSPUri(absl::string_view path, std::string &uri) {
+  std::filesystem::path p = std::string(path);
+  uri = fileschemeprefix + std::filesystem::absolute(p).string();
   return true;
 }
 
