@@ -57,6 +57,27 @@ void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
   auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
 }
 
+const SymbolTableNode* SymbolTableHandler::ScanSymbolTreeForDefinition(const SymbolTableNode* context, absl::string_view symbol)
+{
+  if (!context)
+  {
+    return nullptr;
+  }
+  if (context->Key() && *context->Key() == symbol)
+  {
+    return context;
+  }
+  for (const auto &child : context->Children())
+  {
+    auto res = ScanSymbolTreeForDefinition(&child.second, symbol);
+    if (res)
+    {
+      return res;
+    }
+  }
+  return nullptr;
+}
+
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {

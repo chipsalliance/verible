@@ -73,6 +73,10 @@ class SymbolTableHandler {
   // set of checked files to prevent unnecessary calls for creating
   // a symbol table for already seen files
   absl::flat_hash_set<std::string> checkedfiles;
+
+  // Scans the symbol table tree to find a given symbol.
+  // When succeds, returns the pointer to table node with the symbol, otherwise returns false.
+  const SymbolTableNode* ScanSymbolTreeForDefinition(const SymbolTableNode *context, absl::string_view symbol);
 };
 
 };  // namespace verilog
