@@ -34,7 +34,7 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
   // Whenever there is a new parse result ready, use that as an opportunity
   // to send diagnostics to the client.
   buffers_.SetChangeListener(parsed_buffers_.GetSubscriptionCallback());
-  parsed_buffers_.SetChangeListener(
+  parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
              const verilog::BufferTracker &buffer_tracker) {
         SendDiagnostics(uri, buffer_tracker);
