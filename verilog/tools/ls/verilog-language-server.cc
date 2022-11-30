@@ -143,6 +143,12 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     symbol_table_handler_.setProject(p.rootPath, {}, "");
   }
 
+  parsed_buffers_.AddChangeListener(
+      [this](const std::string &uri,
+             const verilog::BufferTracker &buffer_tracker) {
+        UpdateEditedFileInProject(uri, buffer_tracker);
+      });
+
   // send response with information what we do.
   verible::lsp::InitializeResult result;
   result.serverInfo = {
@@ -189,6 +195,25 @@ void VerilogLanguageServer::SendDiagnostics(
   params.diagnostics =
       verilog::CreateDiagnostics(buffer_tracker, kDiagnosticLimit);
   dispatcher_.SendNotification("textDocument/publishDiagnostics", params);
+}
+
+void VerilogLanguageServer::UpdateEditedFileInProject(
+    const std::string &uri, const verilog::BufferTracker &buffer_tracker) {
+  auto project = symbol_table_handler_.getProject();
+  if (!project) {
+    return;
+  }
+  std::string path;
+  if (!verilog::LSPUriToPath(uri, path)) {
+    LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
+  }
+  absl::Status status = project->updateFileContents(
+      path, &buffer_tracker.last_good()->parser().Data());
+  if (!status.ok()) {
+    LOG(ERROR) << "Could not update the file " << path
+               << " tracked by VerilogProject";
+  }
+  LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
 }
 
 };  // namespace verilog

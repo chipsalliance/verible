@@ -58,6 +58,10 @@ class VerilogLanguageServer {
   void SendDiagnostics(const std::string &uri,
                        const verilog::BufferTracker &buffer_tracker);
 
+  // Updates file contents in the project on change in Language Server Client
+  void UpdateEditedFileInProject(const std::string &uri,
+                                 const verilog::BufferTracker &buffer_tracker);
+
   // Stream splitter splits the input stream into messages (header/body).
   verible::lsp::MessageStreamSplitter stream_splitter_;
 
