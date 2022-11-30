@@ -297,7 +297,12 @@ class VerilogProject {
   const VerilogSourceFile* LookupFileOrigin(
       absl::string_view content_substring) const;
 
+  // Returns relative path to the VerilogProject
   std::string GetRelativePathToSource(const std::string& absolute_filepath);
+
+  // Updates file from external source, e.g. Language Server
+  absl::Status updateFileContents(
+      absl::string_view path, const verible::TextStructureView* updatedtext);
 
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
