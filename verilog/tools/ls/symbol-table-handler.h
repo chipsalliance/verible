@@ -51,6 +51,9 @@ class SymbolTableHandler {
                   const std::vector<std::string> &include_paths,
                   absl::string_view corpus);
 
+  // Returns the current project.
+  std::shared_ptr<VerilogProject> getProject() { return currproject; }
+
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void resetSymbolTable();
@@ -67,7 +70,7 @@ class SymbolTableHandler {
 
  private:
   // current VerilogProject for which the symbol table is created
-  std::unique_ptr<VerilogProject> currproject;
+  std::shared_ptr<VerilogProject> currproject;
   // symbol table structure
   std::unique_ptr<SymbolTable> symboltable;
   // set of checked files to prevent unnecessary calls for creating
