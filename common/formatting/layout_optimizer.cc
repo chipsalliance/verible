@@ -570,10 +570,14 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
           }
         }
       }
+      // std::max(hanging_indentation, 0) serves to resolve a case where
+      // the subsequent nodes will try to be indented below zero following
+      // a less-indented token eg. a macro
       const int hanging_indentation =
           (node.Children().size() > 1)
-              ? (node.Children()[1].Value().IndentationSpaces() -
-                 node.Value().IndentationSpaces())
+              ? std::max(node.Children()[1].Value().IndentationSpaces() -
+                             node.Value().IndentationSpaces(),
+                         0)
               : 0;
 
       return factory_.Wrap(layouts.begin(), layouts.end(), false,
