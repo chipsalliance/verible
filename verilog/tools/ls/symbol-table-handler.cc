@@ -23,22 +23,25 @@ namespace verilog {
 
 static const std::string fileschemeprefix = "file://";
 
-bool LSPUriToPath(absl::string_view uri, std::string &path) {
-  auto found = uri.find(fileschemeprefix);
-  if (found == std::string::npos) {
+bool LSPUriToPath(absl::string_view uri, std::string *path) {
+  auto isfileuri = absl::StartsWith(uri, fileschemeprefix);
+  if (!isfileuri) {
     return false;
   }
-  if (found != 0) {
+  if (!path) {
     return false;
   }
-  std::string res{uri.substr(found + fileschemeprefix.size())};
-  path = res;
+  std::string res{uri.substr(fileschemeprefix.size())};
+  *path = res;
   return true;
 }
 
-bool PathToLSPUri(absl::string_view path, std::string &uri) {
+bool PathToLSPUri(absl::string_view path, std::string *uri) {
+  if (!uri) {
+    return false;
+  }
   std::filesystem::path p = std::string(path);
-  uri = fileschemeprefix + std::filesystem::absolute(p).string();
+  *uri = fileschemeprefix + std::filesystem::absolute(p).string();
   return true;
 }
 
@@ -100,7 +103,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   std::string filepath;
-  if (!LSPUriToPath(params.textDocument.uri, filepath)) {
+  if (!LSPUriToPath(params.textDocument.uri, &filepath)) {
     std::cerr << "Could not convert URI " << params.textDocument.uri
               << " to filesystem path." << std::endl;
     return {};
@@ -155,7 +158,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     LOG(ERROR) << "Origin file not available";
     return {};
   }
-  PathToLSPUri(symbolinfo.file_origin->ResolvedPath(), location.uri);
+  PathToLSPUri(symbolinfo.file_origin->ResolvedPath(), &location.uri);
   auto *textstructure = symbolinfo.file_origin->GetTextStructure();
   if (!textstructure) {
     LOG(ERROR) << "Origin file's text structure is not parsed";

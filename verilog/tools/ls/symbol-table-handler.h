@@ -32,7 +32,10 @@ namespace verilog {
 // Converts file:// scheme entries to actual system paths.
 // If other scheme is provided, method returns false.
 // TODO move to other header?
-bool LSPUriToPath(absl::string_view uri, std::string &path);
+bool LSPUriToPath(absl::string_view uri, std::string *path);
+
+// Converts filesystem paths to file:// scheme entries.
+bool PathToLSPUri(absl::string_view path, std::string *uri);
 
 // A class interfacing the SymbolTable with the LSP messages.
 // It manages the SymbolTable and its necessary components,
