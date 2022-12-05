@@ -187,20 +187,30 @@ bool VerilogProject::RemoveRegisteredFile(
 }
 
 std::string VerilogProject::GetRelativePathToSource(
-    const std::string& absolute_filepath) {
+    const absl::string_view absolute_filepath) {
   // TODO add check if the absolute_filepath is out of the VerilogProject
-  std::filesystem::path absolutepath{absolute_filepath};
-  std::filesystem::path projectpath{std::string{TranslationUnitRoot()}};
+  std::filesystem::path absolutepath{absolute_filepath.begin(),
+                                     absolute_filepath.end()};
+  auto root = TranslationUnitRoot();
+  std::filesystem::path projectpath{root.begin(), root.end()};
   auto relative = std::filesystem::relative(absolutepath, projectpath);
   return relative.string();
 }
 
 absl::Status VerilogProject::updateFileContents(
     absl::string_view path, const verible::TextStructureView* updatedtext) {
-  auto projectpath = GetRelativePathToSource(static_cast<std::string>(path));
-  files_[projectpath] =
-      std::make_unique<ParsedVerilogSourceFile>(projectpath, updatedtext,
-                                                /*corpus=*/"");
+  std::string projectpath = GetRelativePathToSource(path);
+  auto fileptr = files_.find(projectpath);
+  if (fileptr == files_.end()) {
+    files_.insert(std::make_pair(
+        projectpath,
+        std::make_unique<ParsedVerilogSourceFile>(projectpath, updatedtext,
+                                                  /*corpus=*/"")));
+  } else {
+    fileptr->second =
+        std::make_unique<ParsedVerilogSourceFile>(projectpath, updatedtext,
+                                                  /*corpus=*/"");
+  }
   return absl::OkStatus();
 }
 

@@ -298,7 +298,7 @@ class VerilogProject {
       absl::string_view content_substring) const;
 
   // Returns relative path to the VerilogProject
-  std::string GetRelativePathToSource(const std::string& absolute_filepath);
+  std::string GetRelativePathToSource(absl::string_view absolute_filepath);
 
   // Updates file from external source, e.g. Language Server
   absl::Status updateFileContents(
