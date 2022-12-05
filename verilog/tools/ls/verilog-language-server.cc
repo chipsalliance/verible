@@ -214,6 +214,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
                << " tracked by VerilogProject";
   }
   LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
+  symbol_table_handler_.buildProjectSymbolTable();
 }
 
 };  // namespace verilog

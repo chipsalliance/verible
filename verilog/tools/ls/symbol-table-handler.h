@@ -61,6 +61,9 @@ class SymbolTableHandler {
   // Fills the symbol table for a given verilog source file.
   void buildSymbolTableFor(VerilogSourceFile &file);
 
+  // Creates a symbol table for entire project
+  void buildProjectSymbolTable();
+
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.

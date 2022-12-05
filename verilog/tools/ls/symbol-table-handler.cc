@@ -58,6 +58,27 @@ void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
   auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
 }
 
+void SymbolTableHandler::buildProjectSymbolTable() {
+  resetSymbolTable();
+  if (!currproject) {
+    return;
+  }
+  LOG(INFO) << "Parsing project files...";
+  for (const auto &file : *currproject) {
+    auto status = file.second->Parse();
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to parse file:  " << file.second->ReferencedPath();
+      return;
+    }
+    LOG(INFO) << "Successfully parsed:  " << file.second->ReferencedPath();
+    auto result =
+        BuildSymbolTable(*file.second, symboltable.get(), currproject.get());
+  }
+  LOG(INFO) << "Parsed project files";
+  LOG(INFO) << "Symbol table for the project";
+  symboltable->PrintSymbolDefinitions(std::cerr);
+}
+
 const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
     const SymbolTableNode *context, absl::string_view symbol) {
   if (!context) {
