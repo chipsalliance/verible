@@ -98,6 +98,11 @@ case "$MODE" in
     bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
 
+  compile20)
+    # Compile with C++ 20 to make sure to be compatible with the next version.
+    bazel build --keep_going $BAZEL_OPTS --cxxopt=-std=c++20 :install-binaries
+    ;;
+
   smoke-test)
     $(dirname $0)/smoke-test.sh
     ;;
