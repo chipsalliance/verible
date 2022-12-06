@@ -180,6 +180,9 @@ struct DependentReferences {
 
  public:
   DependentReferences() = default;
+  explicit DependentReferences(
+      std::unique_ptr<ReferenceComponentNode> components)
+      : components(std::move(components)) {}
   // move-only
   DependentReferences(const DependentReferences&) = delete;
   DependentReferences(DependentReferences&&) = default;
@@ -251,14 +254,6 @@ struct DeclarationTypeInfo {
   bool implicit = false;
 
  public:
-  DeclarationTypeInfo() = default;
-
-  // copy-able, move-able, assignable
-  DeclarationTypeInfo(const DeclarationTypeInfo&) = default;
-  DeclarationTypeInfo(DeclarationTypeInfo&&) = default;
-  DeclarationTypeInfo& operator=(const DeclarationTypeInfo&) = default;
-  DeclarationTypeInfo& operator=(DeclarationTypeInfo&&) = default;
-
   // Structural consistency check.
   void VerifySymbolTableRoot(const SymbolTableNode* root) const;
 };
@@ -328,6 +323,13 @@ struct SymbolInfo {
 
  public:  // methods
   SymbolInfo() = default;
+  SymbolInfo(SymbolMetaType metatype, const VerilogSourceFile* file_origin = {},
+             const verible::Symbol* syntax_origin = {},
+             DeclarationTypeInfo declared_type = {})
+      : metatype(metatype),
+        file_origin(file_origin),
+        syntax_origin(syntax_origin),
+        declared_type(declared_type) {}
 
   // move-only
   SymbolInfo(const SymbolInfo&) = delete;
@@ -422,7 +424,7 @@ class SymbolTable {
   // and string memory, otherwise string memory is owned by 'project'.
   explicit SymbolTable(VerilogProject* project)
       : project_(project),
-        symbol_table_root_(SymbolInfo{.metatype = SymbolMetaType::kRoot}) {}
+        symbol_table_root_(SymbolInfo{SymbolMetaType::kRoot}) {}
 
   // can become move-able when needed
   SymbolTable(const SymbolTable&) = delete;
