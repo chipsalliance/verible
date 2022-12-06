@@ -909,12 +909,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode* EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
                                                 SymbolMetaType metatype) {
-    const auto p =
-        current_scope_->TryEmplace(name, SymbolInfo{
-                                             .metatype = metatype,
-                                             .file_origin = source_,
-                                             .syntax_origin = &element,
-                                         });
+    const auto p = current_scope_->TryEmplace(
+        name, SymbolInfo{metatype, source_, &element});
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
@@ -931,14 +927,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
     VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
-        name,
-        SymbolInfo{
-            .metatype = metatype,
-            .file_origin = source_,
-            .syntax_origin = &element,
-            // associate this instance with its declared type
-            .declared_type = *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
-        });
+        name, SymbolInfo{
+                  metatype, source_, &element,
+                  // associate this instance with its declared type
+                  *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
+              });
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->first);
     }
@@ -1253,11 +1246,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const absl::string_view inner_key = inner_ref.identifier;
 
     const auto p = outer_scope->TryEmplace(
-        inner_key, SymbolInfo{
-                       .metatype = metatype,
-                       .file_origin = source_,
-                       .syntax_origin = definition_syntax,
-                   });
+        inner_key, SymbolInfo{metatype, source_, definition_syntax});
     SymbolTableNode* inner_symbol = &p.first->second;
     if (p.second) {
       // If injection succeeded, then the outer_scope did not already contain a
