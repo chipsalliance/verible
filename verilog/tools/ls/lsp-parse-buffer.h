@@ -93,7 +93,7 @@ class BufferTrackerContainer {
   // Add a change listener for clients of ours interested in updated fresly
   // parsed content.
   void AddChangeListener(const ChangeCallback &cb) {
-    change_listeners_.push_back(cb);
+    change_listeners_.push_back(ABSL_DIE_IF_NULL(cb));
   }
 
   // Given the URI, find the associated parse buffer if it exists.
