@@ -245,12 +245,11 @@ TEST(DependentReferencesTest, PrintEmpty) {
 }
 
 TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
-  const DependentReferences dep_refs{
-      .components = std::make_unique<ReferenceComponentNode>(
-          ReferenceComponent{.identifier = "foo",
-                             .ref_type = ReferenceType::kUnqualified,
-                             .required_metatype = SymbolMetaType::kUnspecified,
-                             .resolved_symbol = nullptr})};
+  const DependentReferences dep_refs{std::make_unique<ReferenceComponentNode>(
+      ReferenceComponent{.identifier = "foo",
+                         .ref_type = ReferenceType::kUnqualified,
+                         .required_metatype = SymbolMetaType::kUnspecified,
+                         .resolved_symbol = nullptr})};
   std::ostringstream stream;
   stream << dep_refs;
   EXPECT_EQ(stream.str(), "{ (@foo -> <unresolved>) }");
@@ -260,29 +259,27 @@ TEST(DependentReferencesTest, PrintNonRootResolved) {
   // Synthesize a symbol table.
   typedef SymbolTableNode::key_value_type KV;
   SymbolTableNode root(
-      SymbolInfo{.metatype = SymbolMetaType::kRoot},
+      SymbolInfo{SymbolMetaType::kRoot},
       KV{"p_pkg",
-         SymbolTableNode(
-             SymbolInfo{.metatype = SymbolMetaType::kPackage},
-             KV{"c_class", SymbolTableNode(SymbolInfo{
-                               .metatype = SymbolMetaType::kClass})})});
+         SymbolTableNode(SymbolInfo{SymbolMetaType::kPackage},
+                         KV{"c_class", SymbolTableNode(SymbolInfo{
+                                           SymbolMetaType::kClass})})});
 
   // Bookmark symbol table nodes.
   MUST_ASSIGN_LOOKUP_SYMBOL(p_pkg, root, "p_pkg");
   MUST_ASSIGN_LOOKUP_SYMBOL(c_class, p_pkg, "c_class");
 
   // Construct references already resolved to above nodes.
-  const DependentReferences dep_refs{
-      .components = std::make_unique<ReferenceComponentNode>(
-          ReferenceComponent{.identifier = "p_pkg",
-                             .ref_type = ReferenceType::kUnqualified,
-                             .required_metatype = SymbolMetaType::kPackage,
-                             .resolved_symbol = &p_pkg},
-          ReferenceComponentNode(
-              ReferenceComponent{.identifier = "c_class",
-                                 .ref_type = ReferenceType::kDirectMember,
-                                 .required_metatype = SymbolMetaType::kClass,
-                                 .resolved_symbol = &c_class}))};
+  const DependentReferences dep_refs{std::make_unique<ReferenceComponentNode>(
+      ReferenceComponent{.identifier = "p_pkg",
+                         .ref_type = ReferenceType::kUnqualified,
+                         .required_metatype = SymbolMetaType::kPackage,
+                         .resolved_symbol = &p_pkg},
+      ReferenceComponentNode(
+          ReferenceComponent{.identifier = "c_class",
+                             .ref_type = ReferenceType::kDirectMember,
+                             .required_metatype = SymbolMetaType::kClass,
+                             .resolved_symbol = &c_class}))};
 
   // Print and compare.
   std::ostringstream stream;
@@ -398,12 +395,11 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
     root2.Value().local_references_to_bind.push_back(DependentReferences{
-        .components =
-            std::make_unique<ReferenceComponentNode>(ReferenceComponent{
-                .identifier = "foo",
-                .ref_type = ReferenceType::kUnqualified,
-                .required_metatype = SymbolMetaType::kUnspecified,
-                .resolved_symbol = &root1})});
+        std::make_unique<ReferenceComponentNode>(ReferenceComponent{
+            .identifier = "foo",
+            .ref_type = ReferenceType::kUnqualified,
+            .required_metatype = SymbolMetaType::kUnspecified,
+            .resolved_symbol = &root1})});
     // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
   EXPECT_DEATH(test_func(),
@@ -421,12 +417,11 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
     root1.Value().local_references_to_bind.push_back(DependentReferences{
-        .components =
-            std::make_unique<ReferenceComponentNode>(ReferenceComponent{
-                .identifier = "foo",
-                .ref_type = ReferenceType::kUnqualified,
-                .required_metatype = SymbolMetaType::kUnspecified,
-                .resolved_symbol = &root1})});
+        std::make_unique<ReferenceComponentNode>(ReferenceComponent{
+            .identifier = "foo",
+            .ref_type = ReferenceType::kUnqualified,
+            .required_metatype = SymbolMetaType::kUnspecified,
+            .resolved_symbol = &root1})});
     root2.Value().declared_type.user_defined_type =
         root1.Value().local_references_to_bind.front().components.get();
     // CheckIntegrity() will fail on destruction of symbol_table_2.
