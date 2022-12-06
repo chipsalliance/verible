@@ -3426,13 +3426,22 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  input  bit [7:0]       data_i   [],\n"
      "  output bit [7:0]       data_o   []\n"
      ");\n"},
-    {// module with system task call
+    {// module with system task call w or w/o parentheses
      "module m; initial begin #10 $display(\"foo\"); $display(\"bar\");"
      "end endmodule",
      "module m;\n"
      "  initial begin\n"
      "    #10 $display(\"foo\");\n"
      "    $display(\"bar\");\n"
+     "  end\n"
+     "endmodule\n"},
+    {// module with system task call
+     "module m; initial begin #10 $display; $display;"
+     "end endmodule",
+     "module m;\n"
+     "  initial begin\n"
+     "    #10 $display;\n"
+     "    $display;\n"
      "  end\n"
      "endmodule\n"},
 

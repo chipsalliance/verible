@@ -2060,8 +2060,9 @@ class MacroCallReshaper {
 
     paren_group_ = FindDirectChild(main_node_,
                                    OriginTagIs{NodeTag(NodeEnum::kParenGroup)});
+
+    // Macro can be used without parentheses
     if (!paren_group_) {
-      LOG_PARTITION_BUG("paren_group not found.");
       return false;
     }
 
