@@ -21,18 +21,11 @@
 
 namespace verilog {
 
-static const std::string fileschemeprefix = "file://";
+static constexpr absl::string_view fileschemeprefix = "file://";
 
-bool LSPUriToPath(absl::string_view uri, std::string *path) {
-  auto isfileuri = absl::StartsWith(uri, fileschemeprefix);
-  if (!isfileuri) {
-    return false;
-  }
-  if (!path) {
-    return false;
-  }
-  std::string res{uri.substr(fileschemeprefix.size())};
-  *path = res;
+bool LSPUriToPath(absl::string_view uri, absl::string_view path) {
+  if (!absl::StartsWith(uri, fileschemeprefix)) return false;
+  path = uri.substr(fileschemeprefix.size());
   return true;
 }
 
@@ -41,7 +34,7 @@ bool PathToLSPUri(absl::string_view path, std::string *uri) {
     return false;
   }
   std::filesystem::path p = std::string(path);
-  *uri = fileschemeprefix + std::filesystem::absolute(p).string();
+  *uri = absl::StrCat(fileschemeprefix, std::filesystem::absolute(p).string());
   return true;
 }
 
@@ -102,13 +95,13 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  std::string filepath;
-  if (!LSPUriToPath(params.textDocument.uri, &filepath)) {
+  absl::string_view filepath;
+  if (!LSPUriToPath(params.textDocument.uri, filepath)) {
     std::cerr << "Could not convert URI " << params.textDocument.uri
               << " to filesystem path." << std::endl;
     return {};
   }
-  auto relativepath = currproject->GetRelativePathToSource(filepath);
+  std::string relativepath = currproject->GetRelativePathToSource(filepath);
   // TODO add checking parsed buffers / raw buffers to get the newest state of
   // files and fallback to reading files from filesystem only when necessary.
   if (checkedfiles.find(relativepath) == checkedfiles.end()) {
@@ -121,10 +114,10 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
                    << currproject->TranslationUnitRoot() << "]";
       return {};
     }
-    auto buildstatus =
+    std::vector<absl::Status> buildstatus =
         BuildSymbolTable(**openedfile, symboltable.get(), currproject.get());
   }
-  auto parsedbuffer =
+  const verilog::ParsedBuffer *parsedbuffer =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri)
           ->current();
   if (!parsedbuffer) {
@@ -136,7 +129,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
                                    params.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
-  const auto cursor_token = text.FindTokenAt(cursor);
+  const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
   auto symbol = cursor_token.text();
   auto reffile = currproject->LookupRegisteredFile(relativepath);
   if (!reffile) {

@@ -132,8 +132,8 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     const verible::lsp::InitializeParams &p) {
   // set VerilogProject for the symbol table, if possible
   if (!p.rootUri.empty()) {
-    std::string path;
-    if (!verilog::LSPUriToPath(p.rootUri, &path)) {
+    absl::string_view path;
+    if (!verilog::LSPUriToPath(p.rootUri, path)) {
       LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
                  << std::endl;
       path = p.rootUri;
@@ -203,8 +203,8 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
   if (!project) {
     return;
   }
-  std::string path;
-  if (!verilog::LSPUriToPath(uri, &path)) {
+  absl::string_view path;
+  if (!verilog::LSPUriToPath(uri, path)) {
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
   }
   absl::Status status = project->updateFileContents(
