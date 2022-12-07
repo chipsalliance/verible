@@ -434,6 +434,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "             aaaa     == zzz;\n"
      "             ggg      == vv::w;,\n"
      "             \"Failed to ..........\")\n"},
+    {// macro call nested with function call containing an ifdef
+     "`J(D(`ifdef e))\n",
+     "`J(D(\n"
+     "   `ifdef e))\n"},
 
     // `uvm macros indenting
     {
