@@ -132,7 +132,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     const verible::lsp::InitializeParams &p) {
   // set VerilogProject for the symbol table, if possible
   if (!p.rootUri.empty()) {
-    absl::string_view path = verilog::LSPUriToPath(p.rootUri) ;
+    absl::string_view path = verilog::LSPUriToPath(p.rootUri);
     if (path.empty()) {
       LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
                  << std::endl;
@@ -207,14 +207,16 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
   if (path.empty()) {
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
   }
-  absl::Status status = project->updateFileContents(
-      path, &buffer_tracker.last_good()->parser().Data());
-  if (!status.ok()) {
-    LOG(ERROR) << "Could not update the file " << path
-               << " tracked by VerilogProject";
+  if (buffer_tracker.last_good()) {
+    absl::Status status = project->updateFileContents(
+        path, &buffer_tracker.last_good()->parser().Data());
+    if (!status.ok()) {
+      LOG(ERROR) << "Could not update the file " << path
+                 << " tracked by VerilogProject";
+    }
+    LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
+    symbol_table_handler_.buildProjectSymbolTable();
   }
-  LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
-  symbol_table_handler_.buildProjectSymbolTable();
 }
 
 };  // namespace verilog
