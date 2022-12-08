@@ -23,19 +23,14 @@ namespace verilog {
 
 static constexpr absl::string_view fileschemeprefix = "file://";
 
-bool LSPUriToPath(absl::string_view uri, absl::string_view path) {
-  if (!absl::StartsWith(uri, fileschemeprefix)) return false;
-  path = uri.substr(fileschemeprefix.size());
-  return true;
+absl::string_view LSPUriToPath(absl::string_view uri) {
+  if (!absl::StartsWith(uri, fileschemeprefix)) return "";
+  return uri.substr(fileschemeprefix.size());
 }
 
-bool PathToLSPUri(absl::string_view path, std::string *uri) {
-  if (!uri) {
-    return false;
-  }
-  std::filesystem::path p = std::string(path);
-  *uri = absl::StrCat(fileschemeprefix, std::filesystem::absolute(p).string());
-  return true;
+std::string PathToLSPUri(absl::string_view path) {
+  std::filesystem::path p(path.begin(), path.end());
+  return absl::StrCat(fileschemeprefix, std::filesystem::absolute(p).string());
 }
 
 void SymbolTableHandler::setProject(
@@ -95,8 +90,8 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  absl::string_view filepath;
-  if (!LSPUriToPath(params.textDocument.uri, filepath)) {
+  absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
+  if (filepath.empty()) {
     std::cerr << "Could not convert URI " << params.textDocument.uri
               << " to filesystem path." << std::endl;
     return {};
@@ -146,18 +141,19 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
   }
   // TODO add iterating over multiple definitions?
   verible::lsp::Location location;
-  auto &symbolinfo = node->Value();
+  const verilog::SymbolInfo &symbolinfo = node->Value();
   if (!symbolinfo.file_origin) {
     LOG(ERROR) << "Origin file not available";
     return {};
   }
-  PathToLSPUri(symbolinfo.file_origin->ResolvedPath(), &location.uri);
+  location.uri = PathToLSPUri(symbolinfo.file_origin->ResolvedPath());
   auto *textstructure = symbolinfo.file_origin->GetTextStructure();
   if (!textstructure) {
     LOG(ERROR) << "Origin file's text structure is not parsed";
     return {};
   }
-  auto symbollocation = textstructure->GetRangeForText(*node->Key());
+  verible::LineColumnRange symbollocation =
+      textstructure->GetRangeForText(*node->Key());
   location.range.start = {.line = symbollocation.start.line,
                           .character = symbollocation.start.column};
   location.range.end = {.line = symbollocation.end.line,
