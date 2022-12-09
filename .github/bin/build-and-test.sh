@@ -83,6 +83,10 @@ case "$MODE" in
     ;;
 
   asan|asan-clang)
+    if [[ "${MODE}" == "asan" ]]; then
+      # Some gcc 12 issue with regexp it seems.
+      BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-maybe-uninitialized"
+    fi
     bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild ${CHOSEN_TARGETS}
     ;;
 
