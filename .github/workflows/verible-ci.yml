@@ -172,8 +172,8 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         files: bazel-out/_coverage/_coverage_report.dat
-        fail_ci_if_error: true
         verbose: true
+      continue-on-error: true
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
