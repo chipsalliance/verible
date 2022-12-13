@@ -17,8 +17,10 @@
 # ---------------
 # Generate the GitHub Releases to deploy
 
+set -ex
+
 RELEASE_DIR=${1:-/tmp/releases}
-rm -rf $RELEASE_DIR
+rm -rf "$RELEASE_DIR/*"
 
 GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
 
@@ -36,7 +38,7 @@ bazel run :install ${BAZEL_OPTS} -c opt -- $PREFIX_BIN
 for BIN in $PREFIX_BIN/*; do
     ls -l $BIN
     file $BIN
-    ldd $BIN
+    ldd $BIN || true # ignore the potential 'not a dynamic executable' errors for non-binaries
 done
 
 # Documentation
