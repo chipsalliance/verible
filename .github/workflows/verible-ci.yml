@@ -12,15 +12,16 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_BUILDKIT: 1
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
+  GHA_MACHINE_TYPE: "n2-standard-8"
 
 jobs:
 
 
   VerifyFormatting:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
 
@@ -36,14 +37,26 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-format
+        apt -qqy update
+        apt -qq -y install clang-format git
         clang-format --version
 
     - name: Run formatting style check
       run: ./.github/bin/run-clang-format.sh
 
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
+
   ClangTidy:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
+
+    env:
+      GHA_MACHINE_TYPE: "n2-standard-4"
 
     steps:
 
@@ -59,7 +72,10 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        sudo apt -qq -y install clang-tidy-11
+        apt -qqy update
+        apt -qq -y install clang-tidy-11 build-essential git wget
+        source ./.github/settings.sh
+        ./.github/bin/install-bazel.sh
         echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
     - name: Create Cache Timestamp
@@ -69,20 +85,28 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Retrieve cached results
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           /tmp/clang-tidy-hashes.cache
-          /home/runner/.cache/bazel
+          /root/.cache/bazel
         key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy-
 
     - name: Run clang tidy
       run: ./.github/bin/run-clang-tidy.sh
 
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
+
 
   Check:
-    runs-on: ubuntu-20.04
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
     strategy:
       fail-fast: false
       matrix:
@@ -119,19 +143,20 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
-        path: "/home/runner/.cache/bazel"
+        path: "/root/.cache/bazel"
         key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
         restore-keys: bazelcache_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
         set -x
+        apt -qqy update
+        apt -qq -y install clang-10 build-essential wget git python3 python-is-python3 gcc-10 g++-10
         source ./.github/settings.sh
-        sudo apt -qq -y install clang-10
-        ./.github/bin/set-compiler.sh 9
+        ./.github/bin/set-compiler.sh 10
         ./.github/bin/install-bazel.sh
 
     - name: ${{ matrix.mode }} Verible
@@ -147,8 +172,8 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         files: bazel-out/_coverage/_coverage_report.dat
-        fail_ci_if_error: true
         verbose: true
+      continue-on-error: true
 
     - name: Deployment
       if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
@@ -158,6 +183,13 @@ jobs:
         BRANCH: gh-pages
         FOLDER: /tmp/pages
         CLEAN: true
+
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
 
 
   Kythe:
@@ -207,7 +239,8 @@ jobs:
 
   Build:
     needs: Matrix
-    runs-on: ubuntu-20.04
+    container: debian:bullseye
+    runs-on: [self-hosted, Linux, X64]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
     if: ${{github.event_name == 'push'}}
@@ -217,6 +250,8 @@ jobs:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+      DOCKER_DATA_ROOT: "/root/.docker"
+      GHA_MACHINE_TYPE: "n2-highcpu-8"
     name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
 
     steps:
@@ -226,11 +261,24 @@ jobs:
        # Download complete repository + tags
        fetch-depth: 0
 
-    - run: docker pull $MATRIX_OS
+    - name: Install and setup Docker
+      run: "apt -qqy update && apt -qqy --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates git && cgroupfs-mount"
 
     - name: Main script
       run: |
         set -x
+
+        mkdir -p "$DOCKER_DATA_ROOT"
+        dockerd \
+          -s fuse-overlayfs \
+          --add-runtime=crun=/usr/bin/crun \
+          --default-runtime=crun \
+          --config-file="" \
+          --data-root=$DOCKER_DATA_ROOT > /dev/null 2>&1 &
+        while ! test -S /var/run/docker.sock; do echo "Waiting for Docker..." && sleep 1; done; docker info
+        trap "kill $(cat /var/run/docker.pid)" EXIT
+
+        docker pull $MATRIX_OS
         source ./.github/settings.sh
         ./releasing/docker-run.sh $MATRIX_OS
 
@@ -238,6 +286,13 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         path: releasing/out/verible-*.tar.gz
+
+    - name: 📤 Upload performance graphs
+      uses: actions/upload-artifact@v2
+      if: success() || failure() 
+      with:
+        name: "diag"
+        path: "**/plot_*.svg"
 
   MacOsBuild:
     runs-on: macos-latest
