@@ -74,9 +74,9 @@ load("//bazel:win_flex_bison.bzl", "win_flex_configure")
 
 win_flex_configure(
     name = "win_flex_bison",
-    sha256 = "095cf65cb3f12ee5888022f93109acbe6264e5f18f6ffce0bda77feb31b65bd8",
-    # bison 3.3.2, flex 2.6.4
-    url = "https://github.com/lexxmark/winflexbison/releases/download/v2.5.18/win_flex_bison-2.5.18.zip",
+    sha256 = "8d324b62be33604b2c45ad1dd34ab93d722534448f55a16ca7292de32b6ac135",
+    # bison 3.8.2, flex 2.6.4
+    url = "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip",
 )
 
 http_archive(
