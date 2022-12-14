@@ -100,7 +100,7 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 declare -A KnownIssue
 
 #--- Opentitan
-KnownIssue[formatter:$BASE_TEST_DIR/opentitan/hw/ip/aes/dv/aes_model_dpi/aes_model_dpi_pkg.sv]=1006
+# Original issue - 1006 has been resolved
 # There is also bug 1008 which only shows up if compiled with asan
 
 #--- ivtest
