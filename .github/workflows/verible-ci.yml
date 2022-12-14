@@ -16,6 +16,7 @@ env:
   BOT_EMAIL: "verible-dev@googlegroups.com"
   GHA_MACHINE_TYPE: "n2-standard-8"
   DEBIAN_FRONTEND: "noninteractive"
+  VERIBLE_BINDIR: "/tmp/verible-bin"
 
 jobs:
 
@@ -163,10 +164,6 @@ jobs:
     - name: ${{ matrix.mode }} Verible
       run: ./.github/bin/build-and-test.sh
 
-    - name: Set up things for GitHub Pages deployment
-      if: matrix.mode == 'compile'
-      run: ./.github/bin/github-pages-setup.sh
-
     - name: Upload coverage
       # will show up under https://app.codecov.io/gh/chipsalliance/verible
       if: matrix.mode == 'coverage'
@@ -176,14 +173,17 @@ jobs:
         verbose: true
       continue-on-error: true
 
-    - name: Deployment
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
-      uses: JamesIves/github-pages-deploy-action@3.7.1
+    - name: Gather and pack binaries
+      if: matrix.mode == 'compile'
+      run: bazel run :install -c fastbuild -- $VERIBLE_BINDIR && tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
+
+    - name: Upload bazel-bin 
+      if: matrix.mode == 'compile'
+      uses: actions/upload-artifact@v2
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: /tmp/pages
-        CLEAN: true
+        name: verible-bin
+        path: verible-bin.tar
+
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
@@ -412,3 +412,29 @@ jobs:
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
+
+  GhPages:
+    name: Build and deploy GitHub pages
+    needs: [Check]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: verible-bin
+
+      - name: Extract Verible binaries
+        run: mkdir -p $VERIBLE_BINDIR && tar xvf verible-bin.tar -C $VERIBLE_BINDIR
+
+      - name: Set up things for GitHub Pages deployment
+        run: ./.github/bin/github-pages-setup.sh $VERIBLE_BINDIR
+
+      - name: Deployment
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: /tmp/pages
+          CLEAN: true

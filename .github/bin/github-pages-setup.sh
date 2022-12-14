@@ -17,10 +17,20 @@
 # ---------------
 # Generate the GitHub pages to deploy
 
+set -eux
+
+BINDIR=${1:-/usr/bin}
 REPO_SLUG=${REPO_SLUG:-${GITHUB_REPOSITORY_SLUG:-google/verible}}
 GIT_DATE=${GIT_DATE:-$(git show -s --format=%ci)}
 GIT_HASH=${GIT_HASH:-$(git rev-parse HEAD)}
 GIT_VERSION=${GIT_VERSION:-$(git rev-parse --short "$GITHUB_SHA")}
+
+# Check if a file exists and is executable before running it.
+# Useful for running commands which return a non-zero exit code 
+# despite providing meaningful output, e.g. Verible binaries with the "-helpfull" param.
+check_and_run() {
+    test -x "$1" && ($@ || true)
+}
 
 echo "Git date:    $GIT_DATE"
 echo "Git hash:    $GIT_HASH"
@@ -77,7 +87,7 @@ wget https://raw.githubusercontent.com/IQAndreas/markdown-licenses/master/apache
 
 # Generate lint rules documentation
 # --------------------------------
-bazel-bin/verilog/tools/lint/verible-verilog-lint -generate_markdown > $PAGES_DIR/lint.md
+${BINDIR}/verible-verilog-lint -generate_markdown > $PAGES_DIR/lint.md
 cat >> $PAGES_DIR/lint.md <<EOF
 
 ## Version
@@ -97,7 +107,7 @@ Verible tool suite.
 ## Command line arguments
 \`\`\`
 EOF
-bazel-bin/verilog/tools/syntax/verible-verilog-syntax -helpfull >> $SYNTAX_DOC
+check_and_run ${BINDIR}/verible-verilog-syntax -helpfull >> $SYNTAX_DOC
 cat >> $SYNTAX_DOC <<EOF
 \`\`\`
 
@@ -120,14 +130,14 @@ suite.
 
 \`\`\`
 EOF
-bazel-bin/verilog/tools/lint/verible-verilog-lint -helpfull >> $LINT_DOC
+check_and_run ${BINDIR}/verible-verilog-lint -helpfull >> $LINT_DOC
 cat >> $LINT_DOC <<'EOF'
 ```
 
 ## Lint Rules
 
 EOF
-bazel-bin/verilog/tools/lint/verible-verilog-lint -generate_markdown >> $LINT_DOC
+${BINDIR}/verible-verilog-lint -generate_markdown >> $LINT_DOC
 cat >> $LINT_DOC <<EOF
 
 ## Version
@@ -147,7 +157,7 @@ suite.
 ## Command line arguments
 \`\`\`
 EOF
-bazel-bin/verilog/tools/formatter/verible-verilog-format -helpfull >> $FORMAT_DOC
+check_and_run ${BINDIR}/verible-verilog-format -helpfull >> $FORMAT_DOC
 cat >> $FORMAT_DOC <<EOF
 \`\`\`
 
