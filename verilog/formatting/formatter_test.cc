@@ -4299,6 +4299,21 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    endfunction\n"
      "  endclass\n"
      "endpackage\n"},
+    {"package fedex;\n"
+     "  import \"asdf\" context function void bar(\n"
+     "    input bit              [2:1] aaaa,   // EOL COMMENT\n"
+     "                                          // another\n"
+     "    input bit foo\n"
+     "  );\n"
+     "endpackage\n",
+     "package fedex;\n"
+     "  import \"asdf\" context\n"
+     "      function void bar(\n"
+     "    input\n        bit [2:1] aaaa,  // EOL COMMENT\n"
+     "                         // another\n"
+     "    input bit foo\n"
+     "  );\n"
+     "endpackage\n"},
 
     // function test cases
     {"function f ;endfunction", "function f;\nendfunction\n"},
