@@ -46,7 +46,7 @@ jobs:
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
-      if: success() || failure() 
+      if: success() || failure()
       with:
         name: "diag"
         path: "**/plot_*.svg"
@@ -98,7 +98,7 @@ jobs:
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
-      if: success() || failure() 
+      if: success() || failure()
       with:
         name: "diag"
         path: "**/plot_*.svg"
@@ -186,7 +186,7 @@ jobs:
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
-      if: success() || failure() 
+      if: success() || failure()
       with:
         name: "diag"
         path: "**/plot_*.svg"
@@ -289,7 +289,7 @@ jobs:
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
-      if: success() || failure() 
+      if: success() || failure()
       with:
         name: "diag"
         path: "**/plot_*.svg"
@@ -309,7 +309,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: "/private/var/tmp/_bazel_runner"
         key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
@@ -334,7 +334,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
         key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
