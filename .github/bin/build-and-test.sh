@@ -94,7 +94,6 @@ case "$MODE" in
     bazel coverage \
           --combined_report=lcov \
           --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
-          --java_runtime_version=remotejdk_11 \
           ${CHOSEN_TARGETS}
     # output will be in bazel-out/_coverage/_coverage_report.dat
     ;;
