@@ -304,6 +304,11 @@ class VerilogProject {
   absl::Status updateFileContents(
       absl::string_view path, const verible::TextStructureView* updatedtext);
 
+  // Adds include directory to the project
+  void addIncludePath(const std::string& includepath) {
+    include_paths_.push_back(includepath);
+  }
+
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,
@@ -329,7 +334,7 @@ class VerilogProject {
 
   // The sequence of directories from which to search for `included files.
   // These can be absolute, or relative to the process's working directory.
-  const std::vector<std::string> include_paths_;
+  std::vector<std::string> include_paths_;
 
   // The corpus to which this project belongs (e.g.,
   // 'github.com/chipsalliance/verible').

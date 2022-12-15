@@ -18,10 +18,12 @@
 #include <filesystem>
 
 #include "common/strings/line_column_map.h"
+#include "verilog/analysis/verilog_filelist.h"
 
 namespace verilog {
 
 static constexpr absl::string_view fileschemeprefix = "file://";
+static const std::string filelistname = "verible.filelist";
 
 absl::string_view LSPUriToPath(absl::string_view uri) {
   if (!absl::StartsWith(uri, fileschemeprefix)) return "";
@@ -55,19 +57,54 @@ void SymbolTableHandler::buildProjectSymbolTable() {
     return;
   }
   LOG(INFO) << "Parsing project files...";
-  for (const auto &file : *currproject) {
-    auto status = file.second->Parse();
-    if (!status.ok()) {
-      LOG(ERROR) << "Failed to parse file:  " << file.second->ReferencedPath();
+  std::vector<absl::Status> buildstatus;
+  symboltable->Build(&buildstatus);
+  LOG(INFO) << "Parsed project files";
+}
+
+void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
+  LOG(INFO) << __FUNCTION__;
+  if (!currproject) return;
+  // search for FileList file up the directory hierarchy
+  std::filesystem::path currentdirpath{current_dir.begin(), current_dir.end()};
+  std::filesystem::path projectpath = currentdirpath / filelistname;
+  FileList filelist;
+  while (true) {
+    projectpath = currentdirpath / filelistname;
+    // file found
+    LOG(INFO) << "Checking existence of " << projectpath;
+    if (std::filesystem::exists(projectpath)) break;
+    // file not found, reached root directory
+    if (currentdirpath.parent_path() == currentdirpath) {
+      LOG(INFO) << filelistname << " not found";
       return;
     }
-    LOG(INFO) << "Successfully parsed:  " << file.second->ReferencedPath();
-    auto result =
-        BuildSymbolTable(*file.second, symboltable.get(), currproject.get());
+    currentdirpath = currentdirpath.parent_path();
   }
-  LOG(INFO) << "Parsed project files";
-  LOG(INFO) << "Symbol table for the project";
-  symboltable->PrintSymbolDefinitions(std::cerr);
+  LOG(INFO) << "Found file list under " << projectpath;
+  // fill the FileList object
+  absl::Status status = AppendFileListFromFile(projectpath.string(), &filelist);
+  // if failed to parse
+  if (!status.ok()) {
+    LOG(WARNING) << "Failed to parse file list in " << projectpath.string();
+    return;
+  }
+  // update include directories in project
+  for (auto &incdir : filelist.preprocessing.include_dirs) {
+    LOG(INFO) << "Adding include path:  " << incdir;
+    currproject->addIncludePath(incdir);
+  }
+  // add files from file list to the project
+  for (auto &incfile : filelist.file_paths) {
+    auto incsource = currproject->OpenIncludedFile(incfile);
+    if (!incsource.ok()) {
+      LOG(WARNING) << "File included in " << projectpath
+                   << " not found:  " << incfile;
+      continue;
+    }
+    LOG(INFO) << "Creating symbol table for:  " << incfile;
+    buildSymbolTableFor(*incsource.value());
+  }
 }
 
 const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
@@ -90,6 +127,7 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
+  buildProjectSymbolTable();
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {
     std::cerr << "Could not convert URI " << params.textDocument.uri
@@ -97,21 +135,6 @@ std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     return {};
   }
   std::string relativepath = currproject->GetRelativePathToSource(filepath);
-  // TODO add checking parsed buffers / raw buffers to get the newest state of
-  // files and fallback to reading files from filesystem only when necessary.
-  if (checkedfiles.find(relativepath) == checkedfiles.end()) {
-    // File hasn't been tracked yet in the symbol table, add it
-    auto openedfile = currproject->OpenTranslationUnit(relativepath);
-    // TODO check parse status
-    auto parsestatus = (*openedfile)->Parse();
-    if (!openedfile.ok()) {
-      LOG(WARNING) << "Could not open [" << filepath << "] in project ["
-                   << currproject->TranslationUnitRoot() << "]";
-      return {};
-    }
-    std::vector<absl::Status> buildstatus =
-        BuildSymbolTable(**openedfile, symboltable.get(), currproject.get());
-  }
   const verilog::ParsedBuffer *parsedbuffer =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri)
           ->current();

@@ -139,8 +139,10 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
       path = p.rootUri;
     }
     symbol_table_handler_.setProject(path, {}, "");
+    symbol_table_handler_.loadProjectFileList(path);
   } else if (!p.rootPath.empty()) {
     symbol_table_handler_.setProject(p.rootPath, {}, "");
+    symbol_table_handler_.loadProjectFileList(p.rootPath);
   }
 
   parsed_buffers_.AddChangeListener(
@@ -215,7 +217,6 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
                  << " tracked by VerilogProject";
     }
     LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
-    symbol_table_handler_.buildProjectSymbolTable();
   }
 }
 

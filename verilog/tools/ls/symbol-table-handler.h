@@ -31,6 +31,8 @@ namespace verilog {
 
 // Converts file:// scheme entries to actual system paths.
 // If other scheme is provided, method returns empty string_view.
+// TODO (glatosinski) current resolving of LSP URIs is very naive
+// and supports only narrow use cases of file:// specifier.
 absl::string_view LSPUriToPath(absl::string_view uri);
 
 // Converts filesystem paths to file:// scheme entries.
@@ -65,6 +67,10 @@ class SymbolTableHandler {
 
   // Creates a symbol table for entire project
   void buildProjectSymbolTable();
+
+  // Looks for verible.filelist file down in directory structure and loads data
+  // to project.
+  void loadProjectFileList(absl::string_view current_dir);
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
