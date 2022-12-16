@@ -31,7 +31,7 @@
 #endif
 
 static void FormatHeaderBodyReply(absl::string_view reply) {
-  // Output formatting as header/body chunk as required by LSP spec.
+  // Output formatting as header/body chunk as required by LSP spec to stdout.
   std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
   std::cout << reply << std::flush;
 }
@@ -42,18 +42,20 @@ int main(int argc, char *argv[]) {
   std::cerr << "Verible Alpha Language Server "
             << verilog::VerilogLanguageServer::GetVersionNumber() << std::endl;
 
-  // Input and output is stdin and stdout
-  constexpr int in_fd = 0;  // STDIN_FILENO
-
 #ifdef _WIN32
+  // Windows messes with newlines by default. Fix this here.
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
+  // Input and output is stdin and stdout
+  constexpr int kInputFD = 0;  // STDIN_FILENO, but Win does not have that macro
+
   verilog::VerilogLanguageServer server(FormatHeaderBodyReply);
 
-  absl::Status status = server.Run(
-      [](char *buf, int size) -> int { return read(in_fd, buf, size); });
+  absl::Status status = server.Run([](char *buf, int size) -> int {  //
+    return read(kInputFD, buf, size);
+  });
 
   std::cerr << status.message() << std::endl;
 
