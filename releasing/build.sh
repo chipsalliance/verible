@@ -18,5 +18,4 @@ set -e
 
 cd $(dirname "$0")/..
 
-./.github/bin/github-pages-setup.sh
 ./.github/bin/github-releases-setup.sh /out
