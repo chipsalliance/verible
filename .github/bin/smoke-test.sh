@@ -72,7 +72,7 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 # array below, mapping them to Verible issue tracker numbers.
 readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/lowRISC/opentitan \
-         https://github.com/chipsalliance/Cores-SweRV \
+         https://github.com/chipsalliance/Cores-VeeR-EH2 \
          https://github.com/openhwgroup/cva6 \
          https://github.com/SymbiFlow/uvm \
          https://github.com/taichi-ishitani/tnoc \
@@ -136,10 +136,11 @@ ExpectedFailCount[project:ibex]=192
 
 ExpectedFailCount[syntax:opentitan]=36
 ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[formatter:opentitan]=1
 ExpectedFailCount[project:opentitan]=727
 
-ExpectedFailCount[project:Cores-SweRV]=21
+ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
+ExpectedFailCount[lint:Cores-VeeR-EH2]=2
+ExpectedFailCount[project:Cores-VeeR-EH2]=42
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
