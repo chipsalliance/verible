@@ -469,7 +469,8 @@ void TreeUnwrapper::LookAheadBeyondCurrentLeaf() {
   while (!NextUnfilteredToken()->isEOF()) {
     EatSpaces();
     VLOG(4) << "lookahead token: " << VerboseToken(*NextUnfilteredToken());
-    if (IsComment(verilog_tokentype(NextUnfilteredToken()->token_enum()))) {
+    if (auto next_tok = verilog_tokentype(NextUnfilteredToken()->token_enum());
+        IsComment(next_tok) || next_tok == verilog_tokentype::TK_LINE_CONT) {
       // TODO(fangism): or IsAttribute().  Basically, any token that is not
       // in the syntax tree and not a space.
       AdvanceLastVisitedLeaf();
