@@ -19,6 +19,7 @@
 
 set -ex
 
+SCRIPT_DIR=$(dirname $0)
 RELEASE_DIR=${1:-/tmp/releases}
 rm -rf "$RELEASE_DIR/*"
 
@@ -40,6 +41,8 @@ for BIN in $PREFIX_BIN/*; do
     file $BIN
     ldd $BIN || true # ignore the potential 'not a dynamic executable' errors for non-binaries
 done
+
+${SCRIPT_DIR}/github-pages-setup.sh $PREFIX_BIN
 
 # Documentation
 cp -a /tmp/pages/* $PREFIX_DOC
