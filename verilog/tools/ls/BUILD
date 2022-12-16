@@ -62,16 +62,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "verilog-language-server",
+    srcs = ["verilog-language-server.cc"],
+    hdrs = ["verilog-language-server.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":verible-lsp-adapter",
+        "//common/lsp:message-stream-splitter",
+    ],
+)
+
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":lsp-parse-buffer",
-        ":verible-lsp-adapter",
-        "//common/lsp:json-rpc-dispatcher",
-        "//common/lsp:lsp-protocol",
-        "//common/lsp:message-stream-splitter",
+        ":verilog-language-server",
         "//common/util:init_command_line",
     ],
 )
