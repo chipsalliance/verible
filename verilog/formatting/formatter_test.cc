@@ -5616,6 +5616,13 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    .rst  (rst),\n"
      "    .value(value)\n"
      ");\n"},
+    {"bind foo bar baz(\\\n"
+     "`undef d\\\n"
+     "`undef d);",
+     "bind foo bar baz (\\\n"
+     "    `undef d\\\n"
+     "    `undef d\n"
+     ");\n"},
     {
         "bind expaaaaaaaaaaand_meeee looooooooong_name# ("
         ".W(W_CONST), .H(H_CONST), .D(D_CONST)  )"
