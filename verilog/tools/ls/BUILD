@@ -68,8 +68,14 @@ cc_library(
     hdrs = ["verilog-language-server.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":lsp-parse-buffer",
         ":verible-lsp-adapter",
+        "//common/lsp:json-rpc-dispatcher",
+        "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-text-buffer",
         "//common/lsp:message-stream-splitter",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 

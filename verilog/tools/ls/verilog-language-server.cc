@@ -14,6 +14,12 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include <functional>
+
+#include "absl/strings/string_view.h"
+#include "common/lsp/lsp-protocol.h"
+#include "verilog/tools/ls/verible-lsp-adapter.h"
+
 namespace verilog {
 
 VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
