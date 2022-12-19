@@ -54,6 +54,14 @@ class VerilogLanguageServer {
   verible::lsp::InitializeResult InitializeRequestHandler(
       const verible::lsp::InitializeParams &params);
 
+  // Returns language server capabilities in textDocument/initialize response
+  // format
+  verible::lsp::InitializeResult GetCapabilities();
+
+  // sets up the VerilogProject structure for symbol table, sets listeners for
+  // updating VerilogProject views for edited files
+  void ConfigureProject(absl::string_view project_root);
+
   // Publish a diagnostic sent to the server.
   void SendDiagnostics(const std::string &uri,
                        const verilog::BufferTracker &buffer_tracker);

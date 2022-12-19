@@ -42,6 +42,37 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
   SetRequestHandlers();
 }
 
+verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
+  // send response with information what we do.
+  verible::lsp::InitializeResult result;
+  result.serverInfo = {
+      .name = "Verible Verilog language server.",
+      .version = verible::GetRepositoryVersion(),
+  };
+  result.capabilities = {
+      {
+          "textDocumentSync",
+          {
+              {"openClose", true},  // Want open/close events
+              {"change", 2},        // Incremental updates
+          },
+      },
+      {"codeActionProvider", true},               // Autofixes for lint errors
+      {"documentSymbolProvider", true},           // Symbol-outline of file
+      {"documentRangeFormattingProvider", true},  // Format selection
+      {"documentFormattingProvider", true},       // Full file format
+      {"documentHighlightProvider", true},        // Highlight same symbol
+      {"definitionProvider", true},               // Provide going to definition
+      {"diagnosticProvider",                      // Pull model of diagnostics.
+       {
+           {"interFileDependencies", false},
+           {"workspaceDiagnostics", false},
+       }},
+  };
+
+  return result;
+}
+
 void VerilogLanguageServer::SetRequestHandlers() {
   // Exchange of capabilities.
   dispatcher_.AddRequestHandler("initialize",
@@ -138,47 +169,22 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
                  << std::endl;
       path = p.rootUri;
     }
-    symbol_table_handler_.setProject(path, {}, "");
-    symbol_table_handler_.loadProjectFileList(path);
+    ConfigureProject(path);
   } else if (!p.rootPath.empty()) {
-    symbol_table_handler_.setProject(p.rootPath, {}, "");
-    symbol_table_handler_.loadProjectFileList(p.rootPath);
+    ConfigureProject(p.rootPath);
   }
+  return GetCapabilities();
+}
+
+void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
+  symbol_table_handler_.setProject(project_root, {}, "");
+  symbol_table_handler_.loadProjectFileList(project_root);
 
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
              const verilog::BufferTracker &buffer_tracker) {
         UpdateEditedFileInProject(uri, buffer_tracker);
       });
-
-  // send response with information what we do.
-  verible::lsp::InitializeResult result;
-  result.serverInfo = {
-      .name = "Verible Verilog language server.",
-      .version = verible::GetRepositoryVersion(),
-  };
-  result.capabilities = {
-      {
-          "textDocumentSync",
-          {
-              {"openClose", true},  // Want open/close events
-              {"change", 2},        // Incremental updates
-          },
-      },
-      {"codeActionProvider", true},               // Autofixes for lint errors
-      {"documentSymbolProvider", true},           // Symbol-outline of file
-      {"documentRangeFormattingProvider", true},  // Format selection
-      {"documentFormattingProvider", true},       // Full file format
-      {"documentHighlightProvider", true},        // Highlight same symbol
-      {"definitionProvider", true},               // Provide going to definition
-      {"diagnosticProvider",                      // Pull model of diagnostics.
-       {
-           {"interFileDependencies", false},
-           {"workspaceDiagnostics", false},
-       }},
-  };
-
-  return result;
 }
 
 void VerilogLanguageServer::SendDiagnostics(
