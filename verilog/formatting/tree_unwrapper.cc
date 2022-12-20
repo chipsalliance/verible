@@ -971,9 +971,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       // Single statements directly inside a flow-control construct
       // should be properly indented one level.
-      const int indent = ShouldIndentRelativeToDirectParent(Context())
-                             ? style_.indentation_spaces
-                             : 0;
+      const int indent = Context().IsInside(NodeEnum::kBlockItemStatementList)
+                             ? 0
+                             : ShouldIndentRelativeToDirectParent(Context())
+                                   ? style_.indentation_spaces
+                                   : 0;
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
