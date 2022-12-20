@@ -2874,7 +2874,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // RHS may have been further partitioned, e.g. a macro call.
       auto& children = partition.Children();
       if (children.size() == 2 &&
-          verible::is_leaf(children.front()) /* left side */) {
+          verible::is_leaf(children.front()) /* left side */ &&
+          !PartitionIsForcedIntoNewLine(children.back())) {
         verible::MergeLeafIntoNextLeaf(&children.front());
         VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
       }
