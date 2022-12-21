@@ -5503,6 +5503,43 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  );\n"
      "endmodule\n"},
 
+    {// comment following a delay in next line
+     "module t;\n"
+     "reg x;\n"
+     "initial begin\n"
+     "#20\n"
+     "//comment\n"
+     "x = 1;\n"
+     "x = 2;\n"
+     "end\n"
+     "endmodule\n",
+     "module t;\n"
+     "  reg x;\n"
+     "  initial begin\n"
+     "    #20\n"
+     "    //comment\n"
+     "    x = 1;\n"
+     "    x = 2;\n"
+     "  end\n"
+     "endmodule\n"},
+    {// comment following a delay in the same line
+     "module t;\n"
+     "reg x;\n"
+     "initial begin\n"
+     "#20 //comment\n"
+     "x = 1;\n"
+     "x = 2;\n"
+     "end\n"
+     "endmodule\n",
+     "module t;\n"
+     "  reg x;\n"
+     "  initial begin\n"
+     "    #20  //comment\n"
+     "    x = 1;\n"
+     "    x = 2;\n"
+     "  end\n"
+     "endmodule\n"},
+
     {
         // test that alternate top-syntax mode works
         "// verilog_syntax: parse-as-module-body\n"
