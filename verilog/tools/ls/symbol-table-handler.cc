@@ -59,7 +59,14 @@ void SymbolTableHandler::buildProjectSymbolTable() {
   LOG(INFO) << "Parsing project files...";
   std::vector<absl::Status> buildstatus;
   symboltable->Build(&buildstatus);
-  LOG(INFO) << "Parsed project files";
+  for (const auto &diagnostic : buildstatus) {
+    LOG(WARNING) << diagnostic.message();
+  }
+  std::vector<absl::Status> resolvestatus;
+  symboltable->Resolve(&resolvestatus);
+  for (const auto &diagnostic : resolvestatus) {
+    LOG(WARNING) << diagnostic.message();
+  }
 }
 
 void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
