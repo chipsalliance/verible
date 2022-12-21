@@ -67,6 +67,7 @@ void SymbolTableHandler::buildProjectSymbolTable() {
   for (const auto &diagnostic : resolvestatus) {
     LOG(WARNING) << diagnostic.message();
   }
+  files_dirty_ = false;
 }
 
 void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
@@ -134,7 +135,9 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  buildProjectSymbolTable();
+  if (files_dirty_) {
+    buildProjectSymbolTable();
+  }
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {
     std::cerr << "Could not convert URI " << params.textDocument.uri

@@ -216,6 +216,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
   }
   if (buffer_tracker.last_good()) {
+    symbol_table_handler_.files_dirty_ = true;
     absl::Status status = project->updateFileContents(
         path, &buffer_tracker.last_good()->parser().Data());
     if (!status.ok()) {

@@ -79,6 +79,8 @@ class SymbolTableHandler {
       const verible::lsp::DefinitionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
+  bool files_dirty_ = true;
+
  private:
   // current VerilogProject for which the symbol table is created
   std::shared_ptr<VerilogProject> currproject;
