@@ -823,6 +823,15 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
     VLOG(2) << __FUNCTION__ << ", node: " << tag << " at "
             << TreePathFormatter(Path());
     switch (tag) {
+      case NodeEnum::kDeclarationDimensions: {
+        if (current_path_ == SyntaxTreePath{1, 0, 0, 3, 0}) {
+          SyntaxTreePath new_path{1, 0, 0, 3};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          TreeContextPathVisitor::Visit(node);
+          return;
+        }
+        break;
+      }
       case NodeEnum::kDataDeclaration:
       case NodeEnum::kVariableDeclarationAssignment: {
         // Don't wait for the type node, just start the first column right away.
