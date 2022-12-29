@@ -15218,6 +15218,48 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "   // c2\n"
      "   // c3\n"},
 
+    {"class C; T1 b; logic [$] a; T1 [$] c; endclass\n",
+     "class C;\n"
+     "  T1        b;\n"
+     "  logic [$] a;\n"
+     "  T1    [$] c;\n"
+     "endclass\n"},
+    {"class C;\n"
+     "  T1 b; //test\n"
+     "  logic [$] a; //test\n"
+     "  T1    [$] c; //test\n"
+     "endclass\n",
+     "class C;\n"
+     "  T1        b;  //test\n"
+     "  logic [$] a;  //test\n"
+     "  T1    [$] c;  //test\n"
+     "endclass\n"},
+    {"class C;\n"
+     "  T1\n"
+     "  b;\n"
+     "  logic\n"
+     "  [$]\n"
+     "  a;\n"
+     "  T1\n"
+     "  [$]\n"
+     "  c;\n"
+     "endclass\n",
+     "class C;\n"
+     "  T1        b;\n"
+     "  logic [$] a;\n"
+     "  T1    [$] c;\n"
+     "endclass\n"},
+    {"class C;\n"
+     "  logic/*t*/ [0 : 1] /*t*/\n"
+     "  a;/*t*/\n"
+     "  T1/*t*/[0 : 1]/*t*/\n"
+     "  c;/*t*/\n"
+     "endclass\n",
+     "class C;\n"
+     "  logic/*t*/ [0 : 1]  /*t*/ a;  /*t*/\n"
+     "  T1/*t*/    [0 : 1]  /*t*/ c;  /*t*/\n"
+     "endclass\n"},
+
     // -----------------------------------------------------------------
 };
 
