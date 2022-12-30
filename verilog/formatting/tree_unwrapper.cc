@@ -2596,8 +2596,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       //   [function ... ] (task header/prototype)
       // Push the "import..." down.
       {
-        verible::MergeLeafIntoNextLeaf(&partition.Children().front());
-        AttachTrailingSemicolonToPreviousPartition(&partition);
+        if (partition.Children().size() > 1) {
+          verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+          AttachTrailingSemicolonToPreviousPartition(&partition);
+        }
         break;
       }
     case NodeEnum::kBindDirective: {

@@ -3425,6 +3425,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  // c3+\n"
      "  input bit second\n"
      ");\n"},
+    {"export \"\" t;\n", "export \"\" t;\n"},
     {"import \"DPI-C\" context function void func(input bit impl_i,"
      "input bit op_i,"
      "input bit [5:0] mode_i,"
