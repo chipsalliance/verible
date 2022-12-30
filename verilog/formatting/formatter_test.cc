@@ -15217,6 +15217,18 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      ";  // c1\n"
      "   // c2\n"
      "   // c3\n"},
+    {"module indent();\n"
+     "   reg     a;\n"
+     "   reg [32:0] b;\n"
+     "   wire    c;\n"
+     "   wire    d = e ? kFoo : kBar;\n"
+     "endmodule\n",
+     "module indent ();\n"
+     "  reg         a;\n"
+     "  reg  [32:0] b;\n"
+     "  wire        c;\n"
+     "  wire        d = e ? kFoo : kBar;\n"
+     "endmodule\n"},
 
     // -----------------------------------------------------------------
 };
