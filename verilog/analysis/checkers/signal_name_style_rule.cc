@@ -79,8 +79,7 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                        const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
-    const auto* identifier_leaf =
-        GetIdentifierFromModulePortDeclaration(symbol);
+    const auto* identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     if (!verible::IsLowerSnakeCaseWithDigits(name))
       violations_.insert(

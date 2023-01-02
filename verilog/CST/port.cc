@@ -32,7 +32,7 @@ namespace verilog {
 using verible::Symbol;
 using verible::SyntaxTreeLeaf;
 
-std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
+std::vector<verible::TreeSearchMatch> FindAllPortDeclarations(
     const Symbol& root) {
   return SearchSyntaxTree(root, NodekPortDeclaration());
 }
@@ -52,18 +52,45 @@ std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
   return SearchSyntaxTree(root, NodekPortItem());
 }
 
-const SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
-    const Symbol& symbol) {
+const SyntaxTreeLeaf* GetIdentifierFromPortDeclaration(const Symbol& symbol) {
   const auto* identifier_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 3);
   if (!identifier_symbol) return nullptr;
   return AutoUnwrapIdentifier(*identifier_symbol);
 }
 
-const SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
-    const Symbol& symbol) {
+const SyntaxTreeLeaf* GetDirectionFromPortDeclaration(const Symbol& symbol) {
   if (const auto* dir_symbol =
           GetSubtreeAsSymbol(symbol, NodeEnum::kPortDeclaration, 0)) {
+    return &SymbolCastToLeaf(*dir_symbol);
+  }
+  return nullptr;
+}
+
+std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
+    const verible::Symbol& root) {
+  return SearchSyntaxTree(root, NodekModulePortDeclaration());
+}
+
+const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
+    const verible::Symbol& symbol) {
+  auto& node = SymbolCastToNode(symbol);
+  if (!MatchNodeEnumOrNull(node, NodeEnum::kModulePortDeclaration))
+    return nullptr;
+  auto id_unpacked_dims = FindAllIdentifierUnpackedDimensions(symbol);
+  if (id_unpacked_dims.empty()) return nullptr;
+  if (id_unpacked_dims.size() > 1) {
+    LOG(ERROR) << "Expected one identifier node in port declaration, but got "
+               << id_unpacked_dims.size();
+  }
+  return GetSymbolIdentifierFromIdentifierUnpackedDimensions(
+      *id_unpacked_dims.front().match);
+}
+
+const verible::SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
+    const verible::Symbol& symbol) {
+  if (const auto* dir_symbol =
+          GetSubtreeAsSymbol(symbol, NodeEnum::kModulePortDeclaration, 0)) {
     return &SymbolCastToLeaf(*dir_symbol);
   }
   return nullptr;

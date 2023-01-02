@@ -103,9 +103,8 @@ void PortNameSuffixRule::HandleSymbol(const Symbol& symbol,
   constexpr absl::string_view implicit_direction = "input";
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
-    const auto* identifier_leaf =
-        GetIdentifierFromModulePortDeclaration(symbol);
-    const auto* direction_leaf = GetDirectionFromModulePortDeclaration(symbol);
+    const auto* identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
+    const auto* direction_leaf = GetDirectionFromPortDeclaration(symbol);
     const auto token = identifier_leaf->get();
     const auto direction =
         direction_leaf ? direction_leaf->get().text() : implicit_direction;

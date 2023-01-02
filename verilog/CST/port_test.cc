@@ -55,6 +55,135 @@ using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 // Tests that no ports are found from an empty source.
+TEST(FindAllPortDeclarationsTest, EmptySource) {
+  VerilogAnalyzer analyzer("", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto port_declarations =
+      FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(port_declarations.empty());
+}
+
+// Tests that no ports are found in port-less module.
+TEST(FindAllPortDeclarationsTest, NonPort) {
+  VerilogAnalyzer analyzer("module foo; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto port_declarations =
+      FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(port_declarations.empty());
+}
+
+// Tests that a package-item net declaration is not a port.
+TEST(FindAllPortDeclarationsTest, OneWire) {
+  VerilogAnalyzer analyzer("wire w;", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto port_declarations =
+      FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(port_declarations.empty());
+}
+
+// Tests that a local wire inside a module is not a port.
+TEST(FindAllPortDeclarationsTest, OneWireInModule) {
+  VerilogAnalyzer analyzer("module m; wire w; endmodule", "");
+  ASSERT_OK(analyzer.Analyze());
+  const auto& root = analyzer.Data().SyntaxTree();
+  const auto port_declarations =
+      FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+  EXPECT_TRUE(port_declarations.empty());
+}
+
+// Tests that a port wire inside a module is found.
+TEST(FindAllPortDeclarationsTest, OnePortInModule) {
+  const char* kTestCases[] = {
+      "logic l",
+      "wire w",
+      "input w",
+      "input [1:0] w",
+      "input w [0:1]",
+      "input w [6]",
+      "input [7:0] w [6]",
+      "input wire w",
+      "reg r",
+      "output r",
+      "output reg r",
+      "output reg [1:0] r",
+      "output reg r [0:3]",
+      "output reg [1:0] r [0:3]",
+  };
+  for (auto test : kTestCases) {
+    VerilogAnalyzer analyzer(absl::StrCat("module m(", test, "); endmodule"),
+                             "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto& root = analyzer.Data().SyntaxTree();
+    const auto port_declarations =
+        FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+    EXPECT_EQ(port_declarations.size(), 1);
+    const auto& decl = port_declarations.front();
+    EXPECT_TRUE(decl.context.IsInside(NodeEnum::kModuleDeclaration));
+  }
+}
+
+TEST(GetIdentifierFromPortDeclarationTest, VariousPorts) {
+  constexpr int kTag = 1;  // don't care
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module foo(input ", {kTag, "bar"}, "); endmodule"},
+      {"module foo(input logic ", {kTag, "b_a_r"}, "); endmodule"},
+      {"module foo(input wire ", {kTag, "hello_world"}, " = 1); endmodule"},
+      {"module foo(wire ", {kTag, "hello_world1"}, " = 1); endmodule"},
+      {"module foo(input logic [3:0] ", {kTag, "bar2"}, "); endmodule"},
+      {"module foo(input logic ", {kTag, "b_a_r"}, " [3:0]); endmodule"},
+      {"module foo(input logic ", {kTag, "bar"}, " [4]); endmodule"},
+      // multiple ports
+      {"module foo(input ",
+       {kTag, "bar"},
+       ", output ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       ", input wire ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       ", output ",
+       {kTag, "bar2"},
+       "); endmodule"},
+      {"module foo(wire ",
+       {kTag, "bar"},
+       ", wire ",
+       {kTag, "bar2"},
+       " = 1); endmodule"},
+      {"module foo(input logic [3:0] ",
+       {kTag, "bar"},
+       ", input logic ",
+       {kTag, "bar2"},
+       " [4]); endmodule"},
+      {"module foo(input logic ",
+       {kTag, "bar"},
+       " [3:0], input logic [3:0] ",
+       {kTag, "bar2"},
+       "); endmodule"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto port_declarations = FindAllPortDeclarations(*root);
+          std::vector<TreeSearchMatch> ids;
+          for (const auto& port : port_declarations) {
+            const auto* identifier_leaf =
+                GetIdentifierFromPortDeclaration(*port.match);
+            ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
+          }
+          return ids;
+        });
+  }
+}
+
+// Tests that no ports are found from an empty source.
 TEST(FindAllModulePortDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
@@ -97,23 +226,12 @@ TEST(FindAllModulePortDeclarationsTest, OneWireInModule) {
 // Tests that a port wire inside a module is found.
 TEST(FindAllModulePortDeclarationsTest, OnePortInModule) {
   const char* kTestCases[] = {
-      "logic l",
-      "wire w",
-      "input w",
-      "input [1:0] w",
-      "input w [0:1]",
-      "input w [6]",
-      "input [7:0] w [6]",
-      "input wire w",
-      "reg r",
-      "output r",
-      "output reg r",
-      "output reg [1:0] r",
-      "output reg r [0:3]",
-      "output reg [1:0] r [0:3]",
+      "input p",     "input [1:0] p",     "input p [0:1]",
+      "input p [6]", "input [7:0] p [6]", "input wire p",
+      "output p",    "output reg p",      "output reg [1:0] p",
   };
   for (auto test : kTestCases) {
-    VerilogAnalyzer analyzer(absl::StrCat("module m(", test, "); endmodule"),
+    VerilogAnalyzer analyzer(absl::StrCat("module m(p); ", test, "; endmodule"),
                              "");
     ASSERT_OK(analyzer.Analyze());
     const auto& root = analyzer.Data().SyntaxTree();
@@ -128,44 +246,37 @@ TEST(FindAllModulePortDeclarationsTest, OnePortInModule) {
 TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
   constexpr int kTag = 1;  // don't care
   const SyntaxTreeSearchTestCase kTestCases[] = {
-      {"module foo(input ", {kTag, "bar"}, "); endmodule"},
-      {"module foo(input logic ", {kTag, "b_a_r"}, "); endmodule"},
-      {"module foo(input wire ", {kTag, "hello_world"}, " = 1); endmodule"},
-      {"module foo(wire ", {kTag, "hello_world1"}, " = 1); endmodule"},
-      {"module foo(input logic [3:0] ", {kTag, "bar2"}, "); endmodule"},
-      {"module foo(input logic ", {kTag, "b_a_r"}, " [3:0]); endmodule"},
-      {"module foo(input logic ", {kTag, "bar"}, " [4]); endmodule"},
+      {"module foo(bar); input ", {kTag, "bar"}, "; endmodule"},
+      {"module foo(b_a_r); input logic ", {kTag, "b_a_r"}, "; endmodule"},
+      {"module foo(bar2); input logic [3:0] ", {kTag, "bar2"}, "; endmodule"},
+      {"module foo(b_a_r); input logic ", {kTag, "b_a_r"}, " [3:0]; endmodule"},
+      {"module foo(bar); input logic ", {kTag, "bar"}, " [4]; endmodule"},
       // multiple ports
-      {"module foo(input ",
+      {"module foo(bar, bar2); input ",
        {kTag, "bar"},
-       ", output ",
+       "; output ",
        {kTag, "bar2"},
-       "); endmodule"},
-      {"module foo(input logic ",
+       "; endmodule"},
+      {"module foo(bar, bar2); input logic ",
        {kTag, "bar"},
-       ", input wire ",
+       "; input wire ",
        {kTag, "bar2"},
-       "); endmodule"},
-      {"module foo(input logic ",
+       "; endmodule"},
+      {"module foo(bar, bar2); input logic ",
        {kTag, "bar"},
-       ", output ",
+       "; output ",
        {kTag, "bar2"},
-       "); endmodule"},
-      {"module foo(wire ",
+       "; endmodule"},
+      {"module foo(bar, bar2); input logic [3:0] ",
        {kTag, "bar"},
-       ", wire ",
+       "; input logic ",
        {kTag, "bar2"},
-       " = 1); endmodule"},
-      {"module foo(input logic [3:0] ",
+       " [4]; endmodule"},
+      {"module foo(bar, bar2); input logic ",
        {kTag, "bar"},
-       ", input logic ",
+       " [3:0]; input logic [3:0] ",
        {kTag, "bar2"},
-       " [4]); endmodule"},
-      {"module foo(input logic ",
-       {kTag, "bar"},
-       " [3:0], input logic [3:0] ",
-       {kTag, "bar2"},
-       "); endmodule"},
+       "; endmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
@@ -422,13 +533,12 @@ TEST(FunctionPort, GetDirection) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto& ports =
-              FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
+          const auto& ports = FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> directions;
           for (const auto& port : ports) {
             const auto* direction =
-                GetDirectionFromModulePortDeclaration(*port.match);
+                GetDirectionFromPortDeclaration(*port.match);
             directions.emplace_back(
                 TreeSearchMatch{(const verible::Symbol*)direction, {}});
           }

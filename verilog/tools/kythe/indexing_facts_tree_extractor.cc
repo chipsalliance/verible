@@ -753,7 +753,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
   // module m(input a, input b);
   if (tag == NodeEnum::kPortDeclaration) {
     const SyntaxTreeLeaf* leaf =
-        GetIdentifierFromModulePortDeclaration(module_port_node);
+        GetIdentifierFromPortDeclaration(module_port_node);
     if (!leaf) return;
 
     facts_tree_context_.top().Children().emplace_back(

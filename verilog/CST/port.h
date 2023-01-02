@@ -29,8 +29,8 @@
 
 namespace verilog {
 
-// Find all individual module port declarations.
-std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
+// Find all individual port declarations.
+std::vector<verible::TreeSearchMatch> FindAllPortDeclarations(
     const verible::Symbol&);
 
 // Find all nodes tagged with kPort.
@@ -41,12 +41,24 @@ std::vector<verible::TreeSearchMatch> FindAllPortReferences(
 std::vector<verible::TreeSearchMatch> FindAllActualNamedPort(
     const verible::Symbol&);
 
-// Extract the name of the module port identifier from a port declaration.
-const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
+// Extract the name of the port identifier from a port declaration.
+const verible::SyntaxTreeLeaf* GetIdentifierFromPortDeclaration(
     const verible::Symbol&);
 
 // Extract the direction from a port declaration.
 // Can return nullptr if the direction is not explicitly specified.
+const verible::SyntaxTreeLeaf* GetDirectionFromPortDeclaration(
+    const verible::Symbol&);
+
+// Find all individual module port declarations.
+std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
+    const verible::Symbol&);
+
+// Extract the name of the module port identifier from a port declaration.
+const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
+    const verible::Symbol&);
+
+// Extract the direction from a module port declaration.
 const verible::SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
     const verible::Symbol&);
 
