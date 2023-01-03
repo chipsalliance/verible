@@ -8084,6 +8084,19 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  generic_type_name_t third  // c\n"
      ";\n"
      "} type_t;\n"},
+    {"struct {logic test1; // c\n"
+     "logic test2;} test3;\n",
+     "struct {\n"
+     "  logic test1;  // c\n"
+     "  logic test2;\n"
+     "} test3;\n"},
+    {"struct {\n"
+     "  /* t */ logic test1; /* t */\n"
+     "/* t */ logic test2; }test3;\n",
+     "struct {\n"
+     "  /* t */ logic test1;  /* t */\n"
+     "  /* t */ logic test2;\n"
+     "} test3;\n"},
     // Continuation comment alignment
     {"`define BAR 1 // A\n"
      "module foo(); // B\n"
