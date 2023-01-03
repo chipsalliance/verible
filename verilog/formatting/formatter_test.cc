@@ -3411,6 +3411,20 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "  );\n"
         "endmodule\n",
     },
+    {// Two consecutive EOL comments in kDPIImportItem
+     "import \"DPI-C\" context function void foo(\n"
+     "  input bit first,\n"
+     "  // c3\n"
+     "  // c3+\n"
+     "  input bit second\n"
+     ");\n",
+     "import \"DPI-C\" context\n"
+     "    function void foo(\n"
+     "  input bit first,\n"
+     "  // c3\n"
+     "  // c3+\n"
+     "  input bit second\n"
+     ");\n"},
     {"import \"DPI-C\" context function void func(input bit impl_i,"
      "input bit op_i,"
      "input bit [5:0] mode_i,"
