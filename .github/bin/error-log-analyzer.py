@@ -28,17 +28,19 @@
 # - Related to slang: Errors that occured after a slang error; if there was a
 #                     syntax error, a lot of later tokens will not fit
 #                     causing additional errors.
-# - Define: Errors that occured because of a macro call in a module
+# - Define in module: Errors that occured because of a macro call in a module
 #           parameter list. Those usually also contain the line delimiters
 #           of which the parser will be unaware causing syntax errors.
-# - Define caused: Syntax errors that occur after a missing define.
+# - Define-in-module caused: Syntax errors that occur after a missing define.
 #                  Analogous to related to slang, those are syntax errors
 #                  caused by earlier "missing" tokens.
 # - Unresolved macro: Errors that occured because of an unresolved macro call
-# - Test designed to fail: Errors that are intentional, present in ivtest
+# - Test designed to fail: Errors that are intentional, present in e.g. ivtest
 # - Misc preprocessor: Errors that are not related to the above categories
-#                      but are related to the preprocessor
-# - Related to misc preprocessor: Errors that are related to the above
+#                      but are related to preprocessor keywords
+# - Related to misc preprocessor: Other errors that may have appeared because
+#                                 there was a preprocessor problem earlier.
+#                                 eg. a syntax error after an unresolved macro
 # - Standalone header: Errors that occured while parsing a header file, that
 #                      really should not be parsed outside of its context where
 #                      it is included
@@ -51,13 +53,25 @@ import re
 from collections import defaultdict
 from copy import deepcopy
 import argparse
-from pathlib import Path
+from enum import Enum
+
+
+SLANG_DEBUG_OUT = False
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
+parser.add_argument("verible_project_root_path")
 args = parser.parse_args()
 root = args.path
+verible_project_root_path = args.verible_project_root_path
+
+
+class State(Enum):
+    NORMAL = 0,
+    MODULE_DEFINE = 1,
+    SLANG_VERIFIED = 2,
+    MISC_PREPROCESSOR = 3
 
 
 # structure that contains the information about a particular error
@@ -89,7 +103,7 @@ class ErrorContainer:
  full text:{self.error}"
 
 
-# root path where the nonzero data is unpacked/created
+# error_dirs holds all the *-nonzeros directories in the provided root
 error_dirs = glob.glob(root+'/*-nonzeros')
 project_urls = sorted([
             "https://github.com/lowRISC/ibex",
@@ -152,7 +166,7 @@ def error_classifier(src, line, state, project):
     # (inside of the parameter declaration) of a module -
     # it causes a chain of syntax errors later so change
     # the state to another value
-    if state == 2:
+    if state == State.SLANG_VERIFIED:
         err.category = 'related-to-slang-validated-error'
     if err.source_path[-4:] == '.svh' and re.search(
             r'syntax error at token "(?:(?!include|define|undef|ifdef|ifndef).)+',  # noqa: E501
@@ -164,27 +178,27 @@ def error_classifier(src, line, state, project):
         if re.search(
                 "module",
                 '\n'.join(src[max(err.line_number-30, 0):err.line_number])):
-            state = 1
+            state = State.MODULE_DEFINE
             err.category = 'define-in-module'
         else:
-            state = 3
+            state = State.MISC_PREPROCESSOR
             err.category = 'misc-preprocessor'
-    elif state == 3 and re.search(
+    elif state == State.MISC_PREPROCESSOR and re.search(
             "syntax error at token",
             line):
         err.category = 'misc-preprocessor-related'
     # if the state is 1 (define-in-module error), then every subsequent syntax
     # error should be marked as related to it
-    elif state == 1 and re.search(
+    elif state == State.MODULE_DEFINE and re.search(
             "syntax error at token",
             line):
         err.category = 'caused-by-define-in-module'
     # usually the syntax error related to the define-in-module problem end at
     # an endmodule token - change the state back to default when it is detected
-    if state == 1 and re.search(
+    if state == State.MODULE_DEFINE and re.search(
             "syntax error at token \"endmodule\"",
             line):
-        state = 0
+        state = State.NORMAL
     # see if in ivtest - a project with some files having intentional
     # errors for testing purposes - the presence of an error is indicated
     # in the file name
@@ -207,12 +221,15 @@ def get_slang_output(srcpath):
     return slang_output
 
 
-# function that given an array of strings joins them until
-# a regex matches:
-def join_until_regex(src, regex):
+# function that given an array of strings joins them up until
+# a next regex match is detected. If there are no matches,
+# the enitre strings array will get concatenated.
+# It is meant to be used with slang output
+# to join multiline errors and their notes together:
+def join_until_regex(strings, regex):
     new_src = []
     joined = ''
-    for line in src:
+    for line in strings:
         if not re.search(regex, line):
             joined += line
         elif joined != '':
@@ -240,6 +257,8 @@ def validate_slang(src, line, state, project, srcpath, err):
     # extract the error line number and column from the
     # slang errors
     for line in errors:
+        # regex that matches the :line:character: pattern
+        # present in slang error messages
         error_pos = re.search(
                 r":[0-9]+:[0-9]+:",
                 line
@@ -257,18 +276,13 @@ def validate_slang(src, line, state, project, srcpath, err):
                 abs(start_char - err.start_char) <= 3 and \
                 is_slang_line_important(line):
             err.category = 'slang-verified-error'
-            state = 2
+            state = State.SLANG_VERIFIED
     return err.category, state
-
-
-def list_factory():
-    return []
 
 
 # load files and get the metadata from them
 for i, (url, project_name) in zip(error_dirs, urls_with_names):
     assert ("-".join(i.split('/')[-1].split('-')[:-1]) == project_name)
-    # for tempdirname in ['/tmp/testing-area']:
     with tempfile.TemporaryDirectory() as tempdirname:
         # keeps the indented block for
         # swapping with the `with` statement
@@ -284,7 +298,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                 recursive=True
         )
         verible_error_files = glob.glob('**', root_dir=i, recursive=True)
-        project_errors = defaultdict(list_factory)
+        project_errors = defaultdict(list)
         for file in verible_error_files:
             file_with_tool = ':'.join(file.split('-')[1:])
             exit_code = int(file.split('-')[0])
@@ -325,7 +339,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                     continue
                 with open(tempdirname+'/'+project_name+'/'+source_path) as s:
                     src = s.readlines()
-                    state = 0
+                    state = State.NORMAL
                     with open(i+'/'+file, 'r') as f:
                         for line in f:
                             err, state = error_classifier(
@@ -346,10 +360,11 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                                         srcpath,
                                         err
                                 )
-                            # if err.category == 'slang-verified-error':
-                            #     print(err, "state: ", state)
-                            # if 'slang' in err.category:
-                            #     print("\n".join(err.slang_output))
+                            if SLANG_DEBUG_OUT:
+                                if err.category == 'slang-verified-error':
+                                    print(err, "state: ", state)
+                                if 'slang' in err.category:
+                                    print("\n".join(err.slang_output))
                             project_errors[project_name].append(deepcopy(err))
     # Per-project stats
     all = len(project_errors[project_name])
@@ -389,4 +404,12 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         error_types['slang-verified-error'] > 0
     assert error_types['misc-preprocessor-related'] == 0 or \
         error_types['misc-preprocessor-related'] > 0
-    # break
+
+# Output the slang version string to the log
+proc = subprocess.run(
+        ["slang", '--version'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+)
+slang_output = proc.stdout.decode('utf-8').split('\n')
+print(slang_output[0])
