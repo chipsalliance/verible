@@ -353,58 +353,40 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                             project_errors[project_name].append(deepcopy(err))
     # Per-project stats
     all = len(project_errors[project_name])
-    undefined, slang_err, define, define_caused, unresolved_macro, \
-        ivtest, slang_valid, misc_pre, misc_pre_related, standalone, \
-        = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    error_types = defaultdict(int)
     for error in project_errors[project_name]:
-        if error.category == 'undefined':
-            undefined += 1
-        elif error.category == 'slang-verified-error':
-            slang_err += 1
-        elif error.category == 'define-in-module':
-            define += 1
-        elif error.category == 'caused-by-define-in-module':
-            define_caused += 1
-        elif error.category == 'unresolved-macro':
-            unresolved_macro += 1
-        elif error.category == 'ivtest-designed-to-fail':
-            ivtest += 1
-        elif error.category == 'related-to-slang-validated-error':
-            slang_valid += 1
-        elif error.category == 'misc-preprocessor':
-            misc_pre += 1
-        elif error.category == 'misc-preprocessor-related':
-            misc_pre_related += 1
-        elif error.category == 'standalone-header':
-            standalone += 1
+        error_types[error.category] += 1
     print(
         "Project: ", project_name,
-        "\n  -All:", all,
-        "\n  -Undefined:", undefined,
-        "\n  -Slang:", slang_err,
-        "\n  -Related to slang:", slang_valid,
-        "\n  -Define:", define,
-        "\n  -Define caused:", define_caused,
-        "\n  -Unresolved macro:", unresolved_macro,
-        "\n  -Test designed to fail:", ivtest,
-        "\n  -Misc. preporcesor: ", misc_pre,
-        '\n  -Related to misc. preprocessor: ', misc_pre_related,
-        '\n  -Standalone header: ', standalone
+        "\n  -All:",
+        all,
+        "\n  -Undefined:",
+        error_types['undefined'],
+        "\n  -Slang:",
+        error_types['slang-verified-error'],
+        "\n  -Related to slang:",
+        error_types['related-to-slang-validated-error'],
+        "\n  -Define in module:",
+        error_types['define-in-module'],
+        "\n  -Define-in-module caused:",
+        error_types['caused-by-define-in-module'],
+        "\n  -Unresolved macro:",
+        error_types['unresolved-macro'],
+        "\n  -Test designed to fail:",
+        error_types['ivtest-designed-to-fail'],
+        "\n  -Misc. preporcesor: ",
+        error_types['misc-preprocessor'],
+        '\n  -Related to misc. preprocessor: ',
+        error_types['misc-preprocessor-related'],
+        '\n  -Standalone header: ',
+        error_types['standalone-header']
     )
     # check if the output is sane
-    assert sum([
-            undefined,
-            slang_err,
-            define,
-            define_caused,
-            unresolved_macro,
-            ivtest,
-            slang_valid,
-            misc_pre,
-            misc_pre_related,
-            standalone
-        ]) == all
-    assert define_caused == 0 or define > 0
-    assert slang_valid == 0 or slang_err > 0
-    assert misc_pre_related == 0 or misc_pre > 0
+    assert sum([error_types[i] for i in error_types.keys()]) == all
+    assert error_types['define-in-module'] == 0 or \
+        error_types['define-in-module'] > 0
+    assert error_types['related-to-slang-validated-error'] == 0 or \
+        error_types['slang-verified-error'] > 0
+    assert error_types['misc-preprocessor-related'] == 0 or \
+        error_types['misc-preprocessor-related'] > 0
     # break
