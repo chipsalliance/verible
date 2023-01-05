@@ -33,12 +33,22 @@
 # Comment out to see syntax errors in bash while working on script.
 exec 2>/dev/null
 
+# SMOKE_LOGGING_DIR is designed to be either empty or
+# contain a path to a directory where the log files should be
+# generated. If empty, the logs are not generated.
+readonly SMOKE_LOGGING_DIR=$SMOKE_LOGGING_DIR
+
 set -u   # Be strict: only allow using a variable after it is assigned
 
 BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
+
+# Make the directory for the logs if logs will be saved
+if [ $SMOKE_LOGGING_DIR ]; then
+  mkdir -p $SMOKE_LOGGING_DIR
+fi
 
 # Some terminal codes to highlight
 readonly TERM_RED=$'\033[1;31m'
@@ -274,15 +284,35 @@ function run_smoke_test() {
         EXTRA_PARAM=""
         file_param=${single_file}
       fi
+      local EXIT_CODE
+      if [ $SMOKE_LOGGING_DIR ]; then
+        local TNAME=$(basename ${tool})
+        local FNAME=$(basename ${file_param})
+        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} 2>&1
+        EXIT_CODE=$?
+      else
+        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
+        EXIT_CODE=$?
+      fi
 
-      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
-      local EXIT_CODE=$?
+      local logging_nonzero_flag=0
 
       # Even though we don't fail globally, let's at least count how many times
       # our tools exit with non-zero. Long term, we'd like to have them succeed
       # on all files
       if [ $EXIT_CODE -ne 0 ]; then
         non_zero_exit_code=$[non_zero_exit_code + 1]
+        logging_nonzero_flag=1
+      fi
+      if [ $SMOKE_LOGGING_DIR ]; then
+        if [ $logging_nonzero_flag -ne 1 ]; then
+          rm $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME}
+        fi
+        if [ $logging_nonzero_flag -ne 0 ]; then
+          mkdir -p $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros
+          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/
+          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${EXIT_CODE}-${FNAME}_${TNAME}
+        fi
       fi
 
       # A regular error exit code we accept as normal operation of the tool if
