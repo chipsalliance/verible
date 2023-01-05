@@ -61,10 +61,14 @@ SLANG_DEBUG_OUT = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
-parser.add_argument("verible_project_root_path")
+parser.add_argument(
+        "--verible-path",
+        type=str,
+        required=False,
+        help="Verible project source root path"
+)
 args = parser.parse_args()
 root = args.path
-verible_project_root_path = args.verible_project_root_path
 
 
 class State(Enum):
@@ -404,7 +408,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         error_types['slang-verified-error'] > 0
     assert error_types['misc-preprocessor-related'] == 0 or \
         error_types['misc-preprocessor-related'] > 0
-
+    break
 # Output the slang version string to the log
 proc = subprocess.run(
         ["slang", '--version'],
@@ -413,3 +417,18 @@ proc = subprocess.run(
 )
 slang_output = proc.stdout.decode('utf-8').split('\n')
 print(slang_output[0])
+if args.verible_path:
+    # Give version string for verible
+    proc = subprocess.run(
+            [args.verible_path +
+                "bazel-bin/verilog/tools/syntax/verible-verilog-syntax",
+                '--version'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+    )
+    verible_out = proc.stdout.decode('utf-8').split('\n')
+    print("Verible version string:\n"+"\n".join(verible_out), end='')
+else:
+    print("Verible path not specified, omitting version string")
+    print("Please provide --verible-path path argument pointing to the root")
+    print("of the verible repository")
