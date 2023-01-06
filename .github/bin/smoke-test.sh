@@ -134,8 +134,8 @@ ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=192
 
-ExpectedFailCount[syntax:opentitan]=36
-ExpectedFailCount[lint:opentitan]=36
+ExpectedFailCount[syntax:opentitan]=35
+ExpectedFailCount[lint:opentitan]=35
 ExpectedFailCount[project:opentitan]=727
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
@@ -169,7 +169,7 @@ ExpectedFailCount[lint:ivtest]=188
 ExpectedFailCount[formatter:ivtest]=2
 ExpectedFailCount[project:ivtest]=217
 
-ExpectedFailCount[project:ZAP]=30
+ExpectedFailCount[project:ZAP]=29
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
@@ -186,9 +186,9 @@ ExpectedFailCount[project:rsd]=43
 ExpectedFailCount[formatter:scr1]=2
 ExpectedFailCount[project:scr1]=45
 
-ExpectedFailCount[syntax:basejump_stl]=461
-ExpectedFailCount[lint:basejump_stl]=461
-ExpectedFailCount[project:basejump_stl]=567
+ExpectedFailCount[syntax:basejump_stl]=462
+ExpectedFailCount[lint:basejump_stl]=462
+ExpectedFailCount[project:basejump_stl]=569
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
