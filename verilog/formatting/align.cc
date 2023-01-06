@@ -733,6 +733,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         ReserveNewColumn(node, FlushLeft);
         break;
       }
+      case NodeEnum::kNetDeclarationAssignment:
       case NodeEnum::kNetVariable: {
         // at path [2,0] in kNetDeclaration
         // contains the declared id
