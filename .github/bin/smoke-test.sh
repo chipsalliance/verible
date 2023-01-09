@@ -105,7 +105,6 @@ declare -A KnownIssue
 
 #--- ivtest
 KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/packed_dims_invalid_class.v]=1146
 
 #--- nontrivial-mips
 KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/decode/decoder.sv]=984
