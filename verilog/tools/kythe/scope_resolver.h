@@ -16,242 +16,138 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_SCOPE_RESOLVER_H_
 
 #include <map>
+#include <optional>
 #include <set>
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/string_view.h"
-#include "common/util/auto_pop_stack.h"
-#include "common/util/iterator_range.h"
 #include "verilog/tools/kythe/kythe_facts.h"
 
 namespace verilog {
 namespace kythe {
 
-// Used to wrap whatever needs to be recorded in a scope item.
-// Right now, this is just a VName, if it will be more, make this a struct.
-using ScopeMemberItem = VName;
-
-// Represents some scope in SystemVerilog code like class or module.
-class Scope {
- public:
-  Scope() = default;
-  explicit Scope(const Signature& signature) : signature_(signature) {}
-
-  Scope(const Scope&) = default;
-  Scope(Scope&&) = default;
-  Scope& operator=(const Scope&) = default;
-  Scope& operator=(Scope&&) = default;
-
-  // Appends the given scope item to the members of this scope.
-  void AddMemberItem(const ScopeMemberItem& member_item);
-
-  // Appends the member of the given scope to the current scope.
-  void AppendScope(const Scope& scope);
-
-  using MemberMap = absl::node_hash_map<absl::string_view, ScopeMemberItem>;
-  const MemberMap& Members() const { return members_; }
-  const Signature& GetSignature() const { return signature_; }
-
-  // Searches for the given reference_name in the current scope and returns its
-  // VName or nullptr if not found.
-  const VName* SearchForDefinition(absl::string_view name) const;
-
-  // Removes the given VName from the members.
-  void RemoveMember(const ScopeMemberItem& member);
-
- private:
-  // Signature of the owner of this scope.
-  Signature signature_;
-
-  // list of the members inside this scope.
-  MemberMap members_;
+// VName tied to the Scopes where it's defined and instantiated.
+struct ScopedVname {
+  // Where this type was defined.
+  SignatureDigest type_scope;
+  // Where the variable of this type was instantiated (or equal to the
+  // type_scope in case this VName is a type definition).
+  SignatureDigest instantiation_scope;
+  VName vname;
+  bool operator==(const ScopedVname& other) const {
+    return type_scope == other.type_scope &&
+           instantiation_scope == other.instantiation_scope &&
+           vname == other.vname;
+  }
 };
+template <typename H>
+H AbslHashValue(H state, const ScopedVname& v) {
+  return H::combine(std::move(state), v.type_scope, v.instantiation_scope,
+                    v.vname.signature.Digest());
+}
 
-// Container with a stack of Scopes to hold the accessible scopes during
-// traversing an Indexing Facts Tree.
-// This is used to get the definitions of some reference.
+// ScopeResolver enables resolving a symbol to its definition (to make it
+// possible to distinguish one variable or type declaration from another). This
+// is done by tracking the program scopes -- syntax elements like function,
+// modules and loops create scopes which can contain variables. Multiple
+// variables of equal name can co-exist in different scopes.
 //
-// This is modified during tree traversal because in case of entering new
-// scope the new scope is resolved first and after that it's added to the
-// containing scope and the next scope is being analyzed.
-// e.g
-// package pkg;
-//    int x;
-//    function int my_fun();
-//      return x;
+// The resolver keeps track of the active scope. Each scope encodes the whole
+// hierarcy. In the following example
+//
+//  package my_pkg;
+//
+//  class my_class;
+//    int my_var;
+//    virtual function int my_function();
+//      return my_var;
 //    endfunction
-// endpackage
+//  endclass
 //
-// Scope stack when extracting my_fun:
-// The Global Scope
-// {
-//    "pkg"
-// }
-// Pkg Scope
-// {
-//   pkg#x
-// }
-// when trying to find a definition for "x" in "return x" ScopeContext
-// try to find the first matching definition starting from the innermost/nearest
-// scope or returns a nullptr if not found.
-class ScopeContext : public verible::AutoPopStack<Scope*> {
- public:
-  typedef verible::AutoPopStack<Scope*> base_type;
-
-  ScopeContext() = default;
-
-  ScopeContext(const ScopeContext&) = delete;
-  ScopeContext(ScopeContext&&) = delete;
-  ScopeContext& operator=(const ScopeContext&) = delete;
-  ScopeContext& operator=(ScopeContext&&) = delete;
-
-  // member class to handle push and pop of stack safely
-  using AutoPop = base_type::AutoPop;
-
-  // returns the top VName of the stack
-  Scope& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
-  const Scope& top() const { return *ABSL_DIE_IF_NULL(base_type::top()); }
-
-  // TODO(minatoma): improve performance and memory for this function.
-  //
-  // This function uses string matching to find the definition of some
-  // variable in reverse order of the current scopes.
-  //
-  // Improvement can be replacing the string matching to comparison based on
-  // integers or enums.
-  //
-  // Search function to get the VName of a definitions of some reference.
-  // It loops over the scopes in reverse order and loops over members of every
-  // scope in reverse order to find a definition for the variable with given
-  // prefix signature.
-  // e.g
-  // {
-  //    bar#module,
-  //    foo#module,
-  // }
-  // {
-  //    other scope,
-  // }
-  // Given bar#module it return the whole VName of that definition.
-  // And if more than one match is found the first would be returned.
-  const VName* SearchForDefinition(absl::string_view name) const;
-};
-
-// Keeps track and saves the explored scopes with a <key, value> and maps every
-// signature to its scope.
+//  endpackage : my_pkg
 //
-// ScopeResolver saves the scopes generated while traversing the
-// IndexingFactsTree so that they can be use to find some definition.
-// Here the scopes are saved in a flattened manner instead of tree like
-// hierarchy (in a structure which looks like symbol tables).
-// e.g
-// class m;
-//    int x;
-//    function int my_fun();
-//        int x;
-//        return x;
-//    endfunction
-// endclass
-//
-// The generated scope would be:
-// {
-//    "m": {
-//      m#x,
-//      m#my_fun
-//    },
-//    "my_fun": {
-//      m#my_fun#x
-//    }
-// }
-// this way definitions can be found using the signatures.
+// We have the following scopes:
+// /my_pkg
+// /my_pkg/my_class
+// /my_pkg/my_class/my_function
+// Scope resolver marks `my_var` as the member of /my_pkg/my_class and is able
+// to resolve its reference inside `my_function` (by exploring the scopes bottom
+// up and comparing the substrings).
 class ScopeResolver {
  public:
-  ScopeResolver(const Signature& global_scope_signature,
-                const ScopeResolver* previous_file_scope_resolver)
-      : previous_file_scope_resolver_(previous_file_scope_resolver),
-        global_scope_signature_(global_scope_signature) {}
+  ScopeResolver(const Signature& top_scope) { SetCurrentScope(top_scope); }
 
   ScopeResolver(const ScopeResolver&) = delete;
   ScopeResolver(ScopeResolver&&) = delete;
   ScopeResolver& operator=(const ScopeResolver&) = delete;
   ScopeResolver& operator=(ScopeResolver&&) = delete;
 
-  // Searches for the definitions of the given references' names.
-  std::vector<std::pair<const VName*, const Scope*>> SearchForDefinitions(
-      const std::vector<absl::string_view>& names) const;
+  void SetCurrentScope(const Signature& scope);
 
-  // Searches for definition of the given reference's name in the current
-  // scope (the top of scope_context).
-  const VName* SearchForDefinitionInCurrentScope(absl::string_view name) const;
+  const Signature& CurrentScope() { return current_scope_; }
 
-  // Removes the given VName from the current scope (the top of scope_context).
+  // Returns the scope and definition of the symbol under the given name. The
+  // search is restricted to the current scope.
+  std::optional<ScopedVname> FindScopeAndDefinition(absl::string_view name);
+
+  // Returns the scope and definition of the symbol under the given name. The
+  // search is restricted to the provided scope.
+  std::optional<ScopedVname> FindScopeAndDefinition(absl::string_view name,
+                                                    SignatureDigest scope);
+
+  static SignatureDigest GlobalScope() { return Signature("").Digest(); }
+
+  // Adds the members of the given scope to the current scope.
+  void AppendScopeToCurrentScope(SignatureDigest source_scope);
+
+  // Adds the members of the source scope to the destination scope.
+  void AppendScopeToScope(SignatureDigest source_scope,
+                          SignatureDigest destination_scope);
+
+  // Removes the given VName from the current scope.
   void RemoveDefinitionFromCurrentScope(const VName& vname);
 
-  // Adds the members of the given scope to the current scope (the top of
-  // scope_context).
-  void AppendScopeToCurrentScope(const Scope& scope);
+  // Adds a definition & its type to the current scope.
+  void AddDefinitionToCurrentScope(const VName& new_member,
+                                   SignatureDigest type_scope);
 
-  // Adds a ScopeMemberItem to the current scope (the top of scope_context).
-  void AddDefinitionToCurrentScope(const ScopeMemberItem& new_member);
+  // Adds a definition without external type to the current scope.
+  void AddDefinitionToCurrentScope(const VName& new_member);
 
-  // Searches for a scope with the given signature in the scopes.
-  const Scope* SearchForScope(const Signature& signature) const;
+  const absl::flat_hash_set<VName>& ListScopeMembers(
+      SignatureDigest scope_digest) const;
 
-  // Maps the given signature to the given scope.
-  void MapSignatureToScope(const Signature& signature, const Scope& scope);
+  // Returns human readable description of the scope.
+  std::string ScopeDebug(SignatureDigest scope) const;
 
-  ScopeContext& GetMutableScopeContext() { return scope_context_; }
+  const SignatureDigest& CurrentScopeDigest() const {
+    return current_scope_digest_;
+  }
+
+  // When set, the scope resolver will collect human readable descriptions of
+  // the scope for easier debugging.
+  void EnableDebug() { enable_debug_ = true; }
 
  private:
-  // Searches for a definition with the given name in the scope context (returns
-  // nullptr if a definitions is not found).
-  const VName* SearchForDefinitionInScopeContext(absl::string_view name) const;
+  // Mapping from the symbol name to all scopes where it's present.
+  absl::flat_hash_map<std::string, absl::flat_hash_set<ScopedVname>>
+      variable_to_scoped_vname_;
 
-  // Searches for a definition with the given name in the global scope of this
-  // ScopeResolver.
-  const VName* SearchForDefinitionInGlobalScope(absl::string_view name) const;
+  // Mapping from scope to all its members.
+  absl::flat_hash_map<SignatureDigest, absl::flat_hash_set<VName>>
+      scope_to_vnames_;
 
-  // Searches for a definition with the given name in the scope with the given
-  // signature.
-  const VName* SearchForDefinitionInScope(const Signature& signature,
-                                          absl::string_view name) const;
+  // Maps the scope to the human readable description. Available only when debug
+  // is enabled.
+  absl::flat_hash_map<SignatureDigest, std::string> scope_to_string_debug_;
 
-  // Keeps track of scopes and definitions inside the scopes of ancestors as
-  // the visitor traverses the facts tree.
-  ScopeContext scope_context_;
-
-  // Saves signatures alongside with their inner members (scope).
-  // This is used for resolving references to some variables after using
-  // import pkg::*. or other member access like class_Type::my_var.
-  // e.g
-  // package pkg1;
-  //   function my_fun(); endfunction
-  //   class my_class; endclass
-  // endpackage
-  //
-  // package pkg2;
-  //   function my_fun(); endfunction
-  //   class my_class; endclass
-  // endpackage
-  //
-  // Creates the following:
-  // {
-  //   "pkg1": ["my_fun", "my_class"],
-  //   "pkg2": ["my_fun", "my_class"]
-  // }
-  // NB: we internally work with pointers of scopes stored in the
-  // value, so we can't use flat_hash_map that moves around Scope.
-  absl::node_hash_map<Signature, Scope> scopes_;
-
-  // Pointer to the previous file's discovered scopes (if a previous file
-  // exists). This is used for definition finding in cross-file referencing.
-  // This forms a null-terminated singly-linked list across files.
-  const ScopeResolver* previous_file_scope_resolver_;
-
-  // The signature of the global scope of this ScopeResolver.
-  const Signature global_scope_signature_;
+  SignatureDigest current_scope_digest_;
+  Signature current_scope_;
+  bool enable_debug_ = false;
 };
 
 }  // namespace kythe

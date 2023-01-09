@@ -19,13 +19,52 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <utility>
 
+#include "absl/hash/hash.h"
+#include "absl/log/check.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "common/util/spacer.h"
 
 namespace verilog {
 namespace kythe {
+namespace {
+
+// Returns a hash value produced by merging two hash values.
+size_t CombineHash(size_t existing, size_t addition) {
+  // Taken from boost::hash_combine. Maybe replace with AbslHashValue::combine.
+  return existing ^ (addition + 0x9e3779b9 + (existing << 6) + (existing >> 2));
+}
+
+// Returns a rolling hash (https://en.wikipedia.org/wiki/Rolling_hash) of the
+// signature names. NOTE: the first name (the file) is skipped and replaced with
+// 0.
+//
+// The rolling hash of a vector produces a vector of an equal size where each
+// element is a combined hash of all previous elements.
+// res[0] = hash(name[0])
+// res[1] = hash(name[0], name[1])
+// ...
+// res[N] = hash(name[0], name[1], ..., name[N])
+std::vector<size_t> RollingHash(const std::vector<absl::string_view>& names) {
+  if (names.size() <= 1) {
+    return {0};  // Global scope
+  }
+
+  std::vector<size_t> hashes = {0};  // Prefix with the global scope
+  hashes.reserve(names.size());
+  size_t previous = 0;
+  // Start from 2nd element --> skip the filename.
+  for (size_t i = 1; i < names.size(); ++i) {
+    previous = CombineHash(previous, absl::HashOf(names[i]));
+    hashes.push_back(previous);
+  }
+  CHECK_EQ(hashes.size(), names.size());
+  return hashes;
+}
+
+}  // namespace
 
 std::string Signature::ToString() const {
   std::string signature;
@@ -38,6 +77,10 @@ std::string Signature::ToString() const {
 
 std::string Signature::ToBase64() const {
   return absl::Base64Escape(ToString());
+}
+
+SignatureDigest Signature::Digest() const {
+  return SignatureDigest{.rolling_hash = RollingHash(Names())};
 }
 
 bool VName::operator==(const VName& other) const {

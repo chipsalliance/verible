@@ -14,148 +14,170 @@
 
 #include "verilog/tools/kythe/scope_resolver.h"
 
+#include <optional>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/util/logging.h"
+#include "verilog/tools/kythe/kythe_facts.h"
 
 namespace verilog {
 namespace kythe {
 
-void Scope::AddMemberItem(const ScopeMemberItem& member_item) {
-  members_.insert({member_item.signature.Names().back(), member_item});
-}
-
-void Scope::AppendScope(const Scope& scope) {
-  for (const auto& item : scope.Members()) {
-    members_.insert(item);
+void ScopeResolver::SetCurrentScope(const Signature& scope) {
+  if (current_scope_ == scope && !current_scope_digest_.rolling_hash.empty()) {
+    return;
   }
-}
-
-const VName* Scope::SearchForDefinition(absl::string_view name) const {
-  const auto& found = members_.find(name);
-  return found == members_.end() ? nullptr : &found->second;
-}
-
-void Scope::RemoveMember(const ScopeMemberItem& member) {
-  members_.erase(member.signature.Names().back());
-}
-
-const VName* ScopeContext::SearchForDefinition(absl::string_view name) const {
-  for (const Scope* scope : verible::make_range(rbegin(), rend())) {
-    const VName* result = scope->SearchForDefinition(name);
-    if (result != nullptr) {
-      return result;
-    }
+  current_scope_digest_ = scope.Digest();
+  current_scope_ = scope;
+  if (enable_debug_) {
+    scope_to_string_debug_.emplace(scope.Digest(), scope.ToString());
   }
-  return nullptr;
+  VLOG(2) << "Set scope to: " << ScopeDebug(scope.Digest());
 }
 
 void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
-  scope_context_.top().RemoveMember(vname);
-}
-
-void ScopeResolver::MapSignatureToScope(const Signature& signature,
-                                        const Scope& scope) {
-  scopes_[signature] = scope;  // copy-assign
-}
-
-void ScopeResolver::AppendScopeToCurrentScope(const Scope& scope) {
-  scope_context_.top().AppendScope(scope);
-}
-
-void ScopeResolver::AddDefinitionToCurrentScope(
-    const ScopeMemberItem& new_member) {
-  scope_context_.top().AddMemberItem(new_member);
-}
-
-const VName* ScopeResolver::SearchForDefinitionInGlobalScope(
-    absl::string_view reference_name) const {
-  const VName* definition =
-      SearchForDefinitionInScope(global_scope_signature_, reference_name);
-  if (definition != nullptr) {
-    return definition;
+  absl::string_view name = vname.signature.Names().back();
+  auto scopes = variable_to_scoped_vname_.find(name);
+  if (scopes == variable_to_scoped_vname_.end()) {
+    VLOG(1) << "No definition for '" << name << "'. Nothing to remove.";
+    return;
   }
-  if (previous_file_scope_resolver_ != nullptr) {
-    return previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
-        reference_name);
-  }
-  return nullptr;
-}
-
-const VName* ScopeResolver::SearchForDefinitionInScopeContext(
-    absl::string_view reference_name) const {
-  return scope_context_.SearchForDefinition(reference_name);
-}
-
-const VName* ScopeResolver::SearchForDefinitionInCurrentScope(
-    absl::string_view name) const {
-  return scope_context_.top().SearchForDefinition(name);
-}
-
-std::vector<std::pair<const VName*, const Scope*>>
-ScopeResolver::SearchForDefinitions(
-    const std::vector<absl::string_view>& names) const {
-  std::vector<std::pair<const VName*, const Scope*>> definitions;
-  if (names.empty()) {
-    return definitions;
-  }
-
-  // Try to find the definition in the scopes of the current file.
-  const VName* definition = SearchForDefinitionInScopeContext(names[0]);
-
-  // Try to find the definition in the previous files' scopes.
-  if (definition == nullptr && previous_file_scope_resolver_ != nullptr) {
-    // This is a linear-time search over files.
-    definition =
-        previous_file_scope_resolver_->SearchForDefinitionInGlobalScope(
-            names[0]);
-  }
-
-  if (definition == nullptr) {
-    return definitions;
-  }
-
-  const Scope* current_scope = SearchForScope(definition->signature);
-  definitions.push_back({definition, current_scope});
-
-  // Iterate over the names and try to find the definition in the current scope.
-  for (const auto& name : verible::make_range(names.begin() + 1, names.end())) {
-    if (current_scope == nullptr) {
+  SignatureDigest current_scope_digest = CurrentScopeDigest();
+  VLOG(2) << "Remove " << name << " from " << ScopeDebug(current_scope_digest);
+  for (auto iter = scopes->second.begin(); iter != scopes->second.end();
+       ++iter) {
+    if (iter->instantiation_scope == current_scope_digest) {
+      scopes->second.erase(iter);
       break;
     }
-    const VName* definition = current_scope->SearchForDefinition(name);
-    if (definition == nullptr) {
+  }
+
+  auto current_scope_names = scope_to_vnames_.find(current_scope_digest);
+  if (current_scope_names == scope_to_vnames_.end()) {
+    return;
+  }
+  auto& vnames = current_scope_names->second;
+  for (auto iter = vnames.begin(); iter != vnames.end(); ++iter) {
+    if (*iter == vname) {
+      vnames.erase(iter);
       break;
     }
-    current_scope = SearchForScope(definition->signature);
-    definitions.push_back({definition, current_scope});
   }
-
-  return definitions;
 }
 
-const Scope* ScopeResolver::SearchForScope(const Signature& signature) const {
-  const auto scope = scopes_.find(signature);
-  if (scope != scopes_.end()) {
-    return &scope->second;
-  }
-
-  // Try to find the definition in the previous files' scopes.
-  // This is a linear-time search over files.
-  if (previous_file_scope_resolver_ != nullptr) {
-    return previous_file_scope_resolver_->SearchForScope(signature);
-  }
-
-  return nullptr;
+void ScopeResolver::AppendScopeToCurrentScope(SignatureDigest source_scope) {
+  AppendScopeToScope(source_scope, CurrentScopeDigest());
 }
 
-const VName* ScopeResolver::SearchForDefinitionInScope(
-    const Signature& signature, absl::string_view name) const {
-  const Scope* scope = SearchForScope(signature);
-  if (scope == nullptr) {
-    return nullptr;
+void ScopeResolver::AppendScopeToScope(SignatureDigest source_scope,
+                                       SignatureDigest destination_scope) {
+  auto scope_vnames = scope_to_vnames_.find(source_scope);
+  if (scope_vnames == scope_to_vnames_.end()) {
+    VLOG(2) << "Can't find scope " << ScopeDebug(source_scope)
+            << " to append it to the current scope";
+    return;
   }
-  return scope->SearchForDefinition(name);
+  if (source_scope == destination_scope) {
+    // The source and destination scope are equal. Nothing to add.
+    return;
+  }
+
+  for (const auto& vn : scope_vnames->second) {
+    const std::optional<ScopedVname> vn_type =
+        FindScopeAndDefinition(vn.signature.Names().back(), source_scope);
+    if (!vn_type) {
+      continue;
+    }
+    variable_to_scoped_vname_[vn.signature.Names().back()].insert(
+        ScopedVname{.type_scope = vn_type->type_scope,
+                    .instantiation_scope = destination_scope,
+                    .vname = vn});
+    scope_to_vnames_[destination_scope].insert(vn);
+  }
+}
+
+void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member) {
+  AddDefinitionToCurrentScope(new_member, new_member.signature.Digest());
+}
+
+void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member,
+                                                SignatureDigest type_scope) {
+  // Remove the existing definition -- overwrite it with the new which has
+  // updated information about types.
+  RemoveDefinitionFromCurrentScope(new_member);
+
+  auto current_scope_digest = CurrentScopeDigest();
+  variable_to_scoped_vname_[new_member.signature.Names().back()].insert(
+      ScopedVname{.type_scope = type_scope,
+                  .instantiation_scope = current_scope_digest,
+                  .vname = new_member});
+  scope_to_vnames_[current_scope_digest].insert(new_member);
+}
+
+std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
+    absl::string_view name, SignatureDigest scope_focus) {
+  VLOG(2) << "Find definition for '" << name << "' within scope "
+          << ScopeDebug(scope_focus);
+  auto scope = variable_to_scoped_vname_.find(name);
+  if (scope == variable_to_scoped_vname_.end()) {
+    VLOG(2) << "Failed to find definition for '" << name << "' within scope "
+            << ScopeDebug(scope_focus) << " (unregistered name)";
+    return {};
+  }
+  const ScopedVname* match = nullptr;
+  for (auto& scope_member : scope->second) {
+    SignatureDigest digest = scope_member.instantiation_scope;
+    if (scope_focus.rolling_hash.size() < digest.rolling_hash.size() ||
+        (match != nullptr &&
+         digest.rolling_hash.size() <
+             match->instantiation_scope.rolling_hash.size())) {
+      // Mismatch, or not interesting (worse match).
+      VLOG(2) << "Scope resolution mismatch for '" << name << "' at scope "
+              << ScopeDebug(digest);
+      continue;
+    }
+    if (scope_focus.rolling_hash[digest.rolling_hash.size() - 1] ==
+        digest.Hash()) {
+      match = &scope_member;
+    }
+  }
+  if (match != nullptr) {
+    VLOG(2) << "Found definition for '" << name << "' within scope "
+            << ScopeDebug(scope_focus);
+    return *match;
+  }
+  VLOG(2) << "Failed to find definition for '" << name << "' within scope "
+          << ScopeDebug(scope_focus);
+  return {};
+}
+
+std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
+    absl::string_view name) {
+  return FindScopeAndDefinition(name, CurrentScopeDigest());
+}
+
+const absl::flat_hash_set<VName>& ScopeResolver::ListScopeMembers(
+    SignatureDigest scope_digest) const {
+  const static absl::flat_hash_set<VName> kEmptyMemberList;
+  auto scope = scope_to_vnames_.find(scope_digest);
+  if (scope == scope_to_vnames_.end()) {
+    return kEmptyMemberList;
+  }
+  return scope->second;
+}
+
+std::string ScopeResolver::ScopeDebug(SignatureDigest scope) const {
+  if (!enable_debug_) {
+    return "UNKNOWN (debug off)";
+  }
+  const auto s = scope_to_string_debug_.find(scope);
+  if (s == scope_to_string_debug_.end()) {
+    return absl::StrCat("UNKNOWN ", scope.Hash());
+  }
+  return absl::StrCat(s->second, " H: ", scope.Hash());
 }
 
 }  // namespace kythe
