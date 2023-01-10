@@ -115,13 +115,38 @@ void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
   }
 }
 
+bool IsStringViewContained(absl::string_view origin, absl::string_view substr) {
+  const int from = std::distance(origin.begin(), substr.begin());
+  const int to = std::distance(origin.begin(), substr.end());
+  if (from < 0) return false;
+  if (to > static_cast<int>(origin.length())) return false;
+  return true;
+}
+
+const SymbolTableNode *ScanReferenceComponents(
+    const ReferenceComponentNode *ref, absl::string_view symbol) {
+  if (IsStringViewContained(ref->Value().identifier, symbol))
+    return ref->Value().resolved_symbol;
+  for (const auto &childref : ref->Children()) {
+    const SymbolTableNode *resolved =
+        ScanReferenceComponents(&childref, symbol);
+    if (resolved) return resolved;
+  }
+  return nullptr;
+}
+
 const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
     const SymbolTableNode *context, absl::string_view symbol) {
   if (!context) {
     return nullptr;
   }
-  if (context->Key() && *context->Key() == symbol) {
-    return context;
+  // TODO (glatosinski): reduce searched scope by utilizing information from
+  // syntax tree?
+  for (const auto &ref : context->Value().local_references_to_bind) {
+    if (ref.Empty()) continue;
+    const SymbolTableNode *resolved =
+        ScanReferenceComponents(ref.components.get(), symbol);
+    if (resolved) return resolved;
   }
   for (const auto &child : context->Children()) {
     auto res = ScanSymbolTreeForDefinition(&child.second, symbol);
