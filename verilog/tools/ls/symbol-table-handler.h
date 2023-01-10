@@ -51,37 +51,40 @@ class SymbolTableHandler {
   // VerilogProject requires root, include_paths and corpus to
   // create a base of files that may contain definitions for symbols.
   // Once the project's root is set, a new SymbolTable is created.
-  void setProject(absl::string_view root,
+  void SetProject(absl::string_view root,
                   const std::vector<std::string> &include_paths,
                   absl::string_view corpus);
 
   // Returns the current project.
-  std::shared_ptr<VerilogProject> getProject() { return currproject; }
+  std::shared_ptr<VerilogProject> GetProject() { return currproject; }
 
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
-  void resetSymbolTable();
+  void ResetSymbolTable();
 
   // Fills the symbol table for a given verilog source file.
-  void buildSymbolTableFor(VerilogSourceFile &file);
+  void BuildSymbolTableFor(VerilogSourceFile &file);
 
   // Creates a symbol table for entire project
-  void buildProjectSymbolTable();
+  void BuildProjectSymbolTable();
 
   // Looks for verible.filelist file down in directory structure and loads data
   // to project.
-  void loadProjectFileList(absl::string_view current_dir);
+  void LoadProjectFileList(absl::string_view current_dir);
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
-  std::vector<verible::lsp::Location> findDefinition(
+  std::vector<verible::lsp::Location> FindDefinition(
       const verible::lsp::DefinitionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  bool files_dirty_ = true;
+  // Marks current symbol table as outdated
+  void RequestTableUpdate() { files_dirty_ = true; }
 
  private:
+  // tells that symbol table should be rebuilt due to changes in files
+  bool files_dirty_ = true;
   // current VerilogProject for which the symbol table is created
   std::shared_ptr<VerilogProject> currproject;
   // symbol table structure

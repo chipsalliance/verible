@@ -35,24 +35,24 @@ std::string PathToLSPUri(absl::string_view path) {
   return absl::StrCat(fileschemeprefix, std::filesystem::absolute(p).string());
 }
 
-void SymbolTableHandler::setProject(
+void SymbolTableHandler::SetProject(
     absl::string_view root, const std::vector<std::string> &include_paths,
     absl::string_view corpus) {
   currproject = std::make_unique<VerilogProject>(root, include_paths, corpus);
-  resetSymbolTable();
+  ResetSymbolTable();
 }
 
-void SymbolTableHandler::resetSymbolTable() {
+void SymbolTableHandler::ResetSymbolTable() {
   checkedfiles.clear();
   symboltable = std::make_unique<SymbolTable>(currproject.get());
 }
 
-void SymbolTableHandler::buildSymbolTableFor(VerilogSourceFile &file) {
+void SymbolTableHandler::BuildSymbolTableFor(VerilogSourceFile &file) {
   auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
 }
 
-void SymbolTableHandler::buildProjectSymbolTable() {
-  resetSymbolTable();
+void SymbolTableHandler::BuildProjectSymbolTable() {
+  ResetSymbolTable();
   if (!currproject) {
     return;
   }
@@ -70,7 +70,7 @@ void SymbolTableHandler::buildProjectSymbolTable() {
   files_dirty_ = false;
 }
 
-void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
+void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   LOG(INFO) << __FUNCTION__;
   if (!currproject) return;
   // search for FileList file up the directory hierarchy
@@ -111,7 +111,7 @@ void SymbolTableHandler::loadProjectFileList(absl::string_view current_dir) {
       continue;
     }
     LOG(INFO) << "Creating symbol table for:  " << incfile;
-    buildSymbolTableFor(*incsource.value());
+    BuildSymbolTableFor(*incsource.value());
   }
 }
 
@@ -157,12 +157,12 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   return nullptr;
 }
 
-std::vector<verible::lsp::Location> SymbolTableHandler::findDefinition(
+std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const absl::Time finddefinition_start = absl::Now();
   if (files_dirty_) {
-    buildProjectSymbolTable();
+    BuildProjectSymbolTable();
   }
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {

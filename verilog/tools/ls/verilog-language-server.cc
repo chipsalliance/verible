@@ -123,7 +123,7 @@ void VerilogLanguageServer::SetRequestHandlers() {
   dispatcher_.AddRequestHandler(  // go-to definition
       "textDocument/definition",
       [this](const verible::lsp::DefinitionParams &p) {
-        return symbol_table_handler_.findDefinition(p, parsed_buffers_);
+        return symbol_table_handler_.FindDefinition(p, parsed_buffers_);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
@@ -177,8 +177,8 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
 }
 
 void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
-  symbol_table_handler_.setProject(project_root, {}, "");
-  symbol_table_handler_.loadProjectFileList(project_root);
+  symbol_table_handler_.SetProject(project_root, {}, "");
+  symbol_table_handler_.LoadProjectFileList(project_root);
 
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
@@ -207,7 +207,7 @@ void VerilogLanguageServer::SendDiagnostics(
 
 void VerilogLanguageServer::UpdateEditedFileInProject(
     const std::string &uri, const verilog::BufferTracker &buffer_tracker) {
-  auto project = symbol_table_handler_.getProject();
+  auto project = symbol_table_handler_.GetProject();
   if (!project) {
     return;
   }
@@ -216,7 +216,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
   }
   if (buffer_tracker.last_good()) {
-    symbol_table_handler_.files_dirty_ = true;
+    symbol_table_handler_.RequestTableUpdate();
     absl::Status status = project->updateFileContents(
         path, &buffer_tracker.last_good()->parser().Data());
     if (!status.ok()) {
