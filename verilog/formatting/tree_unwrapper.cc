@@ -971,9 +971,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     {
       // Single statements directly inside a flow-control construct
       // should be properly indented one level.
-      const int indent = ShouldIndentRelativeToDirectParent(Context())
-                             ? style_.indentation_spaces
-                             : 0;
+      const int indent = Context().IsInside(NodeEnum::kBlockItemStatementList)
+                             ? 0
+                             : ShouldIndentRelativeToDirectParent(Context())
+                                   ? style_.indentation_spaces
+                                   : 0;
       VisitIndentedSection(node, indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
@@ -2874,7 +2876,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // RHS may have been further partitioned, e.g. a macro call.
       auto& children = partition.Children();
       if (children.size() == 2 &&
-          verible::is_leaf(children.front()) /* left side */) {
+          verible::is_leaf(children.front()) /* left side */ &&
+          !PartitionIsForcedIntoNewLine(children.back())) {
         verible::MergeLeafIntoNextLeaf(&children.front());
         VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
       }
