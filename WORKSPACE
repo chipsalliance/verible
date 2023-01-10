@@ -126,10 +126,10 @@ bison_register_toolchains()
 # A version slightly beyond 21.5 as it fixes a warning
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "efcd93bb1a228d08b4b0fcda00e710592fdf17ce6d0f5c8a239c2db0ba268a3f",
-    strip_prefix = "protobuf-4efbcc44605731dc31507b94f0b81d2bd5ec169b",
+    sha256 = "6a31b662deaeb0ac35e6287bda2f3369b19836e6c9f8828d4da444346f420298",
+    strip_prefix = "protobuf-21.12",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/archive/4efbcc44605731dc31507b94f0b81d2bd5ec169b.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v21.12.zip",
     ],
 )
 
