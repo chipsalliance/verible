@@ -111,6 +111,11 @@ case "$MODE" in
     $(dirname $0)/smoke-test.sh
     ;;
 
+  smoke-test-analyzer)
+    SMOKE_LOGGING_DIR=/tmp/error-logs/ $(dirname $0)/smoke-test.sh
+    python3 $(dirname $0)/error-log-analyzer.py /tmp/error-logs/ --verible-path $(dirname $0)/../../ >> $GITHUB_STEP_SUMMARY
+    ;;
+
   *)
     echo "$0: Unknown value in MODE environment variable: $MODE"
     exit 1

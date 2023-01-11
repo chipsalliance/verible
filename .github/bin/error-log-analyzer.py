@@ -54,6 +54,7 @@ from collections import defaultdict
 from copy import deepcopy
 import argparse
 from enum import Enum
+import os
 
 
 SLANG_DEBUG_OUT = False
@@ -132,6 +133,7 @@ urls_with_names = sorted(
         [(i, i.split('/')[-1]) for i in project_urls],
         key=lambda x: x[1].lower()
 )
+error_dirs = sorted(error_dirs, key=lambda x: x.lower())
 
 
 # method that classifies the errors depending on some categories
@@ -296,12 +298,15 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                 stdout=subprocess.PIPE, shell=True,
                 stderr=subprocess.DEVNULL
         )
+        main_path = os.getcwd()
+        os.chdir(tempdirname+'/'+project_name)
         project_files = glob.glob(
                 '**',
-                root_dir=tempdirname+'/'+project_name,
                 recursive=True
         )
-        verible_error_files = glob.glob('**', root_dir=i, recursive=True)
+        os.chdir(i)
+        verible_error_files = glob.glob('**', recursive=True)
+        os.chdir(main_path)
         project_errors = defaultdict(list)
         for file in verible_error_files:
             file_with_tool = ':'.join(file.split('-')[1:])
@@ -408,7 +413,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         error_types['slang-verified-error'] > 0
     assert error_types['misc-preprocessor-related'] == 0 or \
         error_types['misc-preprocessor-related'] > 0
-    break
+
 # Output the slang version string to the log
 proc = subprocess.run(
         ["slang", '--version'],
@@ -421,7 +426,7 @@ if args.verible_path:
     # Give version string for verible
     proc = subprocess.run(
             [args.verible_path +
-                "bazel-bin/verilog/tools/syntax/verible-verilog-syntax",
+                "/bazel-bin/verilog/tools/syntax/verible-verilog-syntax",
                 '--version'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
