@@ -15,6 +15,7 @@
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <functional>
+#include <memory>
 
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
@@ -177,8 +178,9 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
 }
 
 void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
-  symbol_table_handler_.SetProject(project_root, {}, "");
-  symbol_table_handler_.LoadProjectFileList(project_root);
+  std::shared_ptr<VerilogProject> proj = std::make_shared<VerilogProject>(
+      project_root, std::vector<std::string>(), "");
+  symbol_table_handler_.SetProject(proj);
 
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
@@ -207,24 +209,20 @@ void VerilogLanguageServer::SendDiagnostics(
 
 void VerilogLanguageServer::UpdateEditedFileInProject(
     const std::string &uri, const verilog::BufferTracker &buffer_tracker) {
-  auto project = symbol_table_handler_.GetProject();
-  if (!project) {
-    return;
-  }
+  if (!buffer_tracker.last_good()) return;
   absl::string_view path = verilog::LSPUriToPath(uri);
   if (path.empty()) {
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
+    return;
   }
-  if (buffer_tracker.last_good()) {
-    symbol_table_handler_.RequestTableUpdate();
-    absl::Status status = project->updateFileContents(
-        path, &buffer_tracker.last_good()->parser().Data());
-    if (!status.ok()) {
-      LOG(ERROR) << "Could not update the file " << path
-                 << " tracked by VerilogProject";
-    }
-    LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
+  absl::Status status = symbol_table_handler_.UpdateFileContent(
+      path, &buffer_tracker.last_good()->parser().Data());
+  if (!status.ok()) {
+    LOG(ERROR) << "Could not update the file " << path
+               << " tracked by VerilogProject:  " << status;
+    return;
   }
+  LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
 }
 
 };  // namespace verilog

@@ -17,29 +17,33 @@
 
 #include <filesystem>
 
+#include "absl/flags/flag.h"
 #include "common/strings/line_column_map.h"
+#include "common/util/file_util.h"
 #include "verilog/analysis/verilog_filelist.h"
+
+ABSL_FLAG(std::string, file_list_path, "verible.filelist",
+          "Name of the file with Verible FileList for the project");
 
 namespace verilog {
 
-static constexpr absl::string_view fileschemeprefix = "file://";
-static const std::string filelistname = "verible.filelist";
+static constexpr absl::string_view kFileSchemePrefix = "file://";
 
 absl::string_view LSPUriToPath(absl::string_view uri) {
-  if (!absl::StartsWith(uri, fileschemeprefix)) return "";
-  return uri.substr(fileschemeprefix.size());
+  if (!absl::StartsWith(uri, kFileSchemePrefix)) return "";
+  return uri.substr(kFileSchemePrefix.size());
 }
 
 std::string PathToLSPUri(absl::string_view path) {
   std::filesystem::path p(path.begin(), path.end());
-  return absl::StrCat(fileschemeprefix, std::filesystem::absolute(p).string());
+  return absl::StrCat(kFileSchemePrefix, std::filesystem::absolute(p).string());
 }
 
 void SymbolTableHandler::SetProject(
-    absl::string_view root, const std::vector<std::string> &include_paths,
-    absl::string_view corpus) {
-  currproject = std::make_unique<VerilogProject>(root, include_paths, corpus);
+    const std::shared_ptr<VerilogProject> &project) {
+  currproject = project;
   ResetSymbolTable();
+  LoadProjectFileList(currproject->TranslationUnitRoot());
 }
 
 void SymbolTableHandler::ResetSymbolTable() {
@@ -47,7 +51,7 @@ void SymbolTableHandler::ResetSymbolTable() {
   symboltable = std::make_unique<SymbolTable>(currproject.get());
 }
 
-void SymbolTableHandler::BuildSymbolTableFor(VerilogSourceFile &file) {
+void SymbolTableHandler::BuildSymbolTableFor(const VerilogSourceFile &file) {
   auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
 }
 
@@ -74,40 +78,35 @@ void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   LOG(INFO) << __FUNCTION__;
   if (!currproject) return;
   // search for FileList file up the directory hierarchy
-  std::filesystem::path currentdirpath{current_dir.begin(), current_dir.end()};
-  std::filesystem::path projectpath = currentdirpath / filelistname;
   FileList filelist;
-  while (true) {
-    projectpath = currentdirpath / filelistname;
-    // file found
-    LOG(INFO) << "Checking existence of " << projectpath;
-    if (std::filesystem::exists(projectpath)) break;
-    // file not found, reached root directory
-    if (currentdirpath.parent_path() == currentdirpath) {
-      LOG(INFO) << filelistname << " not found";
-      return;
-    }
-    currentdirpath = currentdirpath.parent_path();
+  std::string projectpath;
+  if (auto status = verible::file::UpwardFileSearch(
+          current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
+      !status.ok()) {
+    LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
+                 << " file in the project:  " << status;
+    return;
   }
   LOG(INFO) << "Found file list under " << projectpath;
   // fill the FileList object
-  absl::Status status = AppendFileListFromFile(projectpath.string(), &filelist);
-  // if failed to parse
-  if (!status.ok()) {
-    LOG(WARNING) << "Failed to parse file list in " << projectpath.string();
+  if (absl::Status status = AppendFileListFromFile(projectpath, &filelist);
+      !status.ok()) {
+    // if failed to parse
+    LOG(WARNING) << "Failed to parse file list in " << projectpath << ":  "
+                 << status;
     return;
   }
   // update include directories in project
-  for (auto &incdir : filelist.preprocessing.include_dirs) {
+  for (const auto &incdir : filelist.preprocessing.include_dirs) {
     LOG(INFO) << "Adding include path:  " << incdir;
-    currproject->addIncludePath(incdir);
+    currproject->AddIncludePath(incdir);
   }
   // add files from file list to the project
   for (auto &incfile : filelist.file_paths) {
     auto incsource = currproject->OpenIncludedFile(incfile);
     if (!incsource.ok()) {
       LOG(WARNING) << "File included in " << projectpath
-                   << " not found:  " << incfile;
+                   << " not found:  " << incfile << ":  " << incsource.status();
       continue;
     }
     LOG(INFO) << "Creating symbol table for:  " << incfile;
@@ -239,6 +238,12 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
             << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
             << "ms";
   return {location};
+}
+
+absl::Status SymbolTableHandler::UpdateFileContent(
+    absl::string_view path, const verible::TextStructureView *content) {
+  files_dirty_ = true;
+  return currproject->UpdateFileContents(path, content);
 }
 
 };  // namespace verilog

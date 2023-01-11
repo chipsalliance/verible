@@ -51,26 +51,20 @@ class SymbolTableHandler {
   // VerilogProject requires root, include_paths and corpus to
   // create a base of files that may contain definitions for symbols.
   // Once the project's root is set, a new SymbolTable is created.
-  void SetProject(absl::string_view root,
-                  const std::vector<std::string> &include_paths,
-                  absl::string_view corpus);
+  void SetProject(const std::shared_ptr<VerilogProject> &project);
 
   // Returns the current project.
-  std::shared_ptr<VerilogProject> GetProject() { return currproject; }
+  std::shared_ptr<VerilogProject> mutable_project() { return currproject; }
 
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void ResetSymbolTable();
 
   // Fills the symbol table for a given verilog source file.
-  void BuildSymbolTableFor(VerilogSourceFile &file);
+  void BuildSymbolTableFor(const VerilogSourceFile &file);
 
   // Creates a symbol table for entire project
   void BuildProjectSymbolTable();
-
-  // Looks for verible.filelist file down in directory structure and loads data
-  // to project.
-  void LoadProjectFileList(absl::string_view current_dir);
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
@@ -79,8 +73,8 @@ class SymbolTableHandler {
       const verible::lsp::DefinitionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  // Marks current symbol table as outdated
-  void RequestTableUpdate() { files_dirty_ = true; }
+  absl::Status UpdateFileContent(absl::string_view path,
+                                 const verible::TextStructureView *content);
 
  private:
   // tells that symbol table should be rebuilt due to changes in files
@@ -98,6 +92,11 @@ class SymbolTableHandler {
   // returns false.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
       const SymbolTableNode *context, absl::string_view symbol);
+
+  // Looks for verible.filelist file down in directory structure and loads data
+  // to project.
+  // It is meant to be executed once per VerilogProject setup
+  void LoadProjectFileList(absl::string_view current_dir);
 };
 
 };  // namespace verilog
