@@ -126,7 +126,7 @@ class KytheFactsExtractor {
   // that `my_instance.method()` can be resolved as `method` exists in the
   // `my_class`s scope.
   std::optional<SignatureDigest> GetParentTypeScope(
-      const IndexingFactNode& node);
+      const IndexingFactNode& node) const;
 
   //=================================================================
   // Declare* methods create facts (some edges) and may introduce new scopes.
@@ -307,7 +307,7 @@ void KytheFactsExtractor::ExtractFile(const IndexingFactNode& root) {
 }
 
 std::optional<SignatureDigest> KytheFactsExtractor::GetParentTypeScope(
-    const IndexingFactNode& node) {
+    const IndexingFactNode& node) const {
   absl::string_view node_name = node.Value().Anchors()[0].Text();
   if (node.Parent() == nullptr) {
     return std::nullopt;
@@ -510,7 +510,7 @@ void KytheFactsExtractor::VisitAutoConstructScope(const IndexingFactNode& node,
                                                   const VName& vname) {
   const auto tag = node.Value().GetIndexingFactType();
 
-  // Must copy!
+  // Must be copied (as Visit() can change the current scope).
   const Signature current_scope = scope_resolver_->CurrentScope();
 
   // Determines whether to create a scope for this node or not.
@@ -551,6 +551,7 @@ void KytheFactsExtractor::VisitAutoConstructScope(const IndexingFactNode& node,
 void KytheFactsExtractor::VisitUsingVName(const IndexingFactNode& node,
                                           const VName& vname) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
+  // Must be copied (as Visit() can change the current scope).
   const Signature current_scope = scope_resolver_->CurrentScope();
   Visit(node);
   scope_resolver_->SetCurrentScope(current_scope);

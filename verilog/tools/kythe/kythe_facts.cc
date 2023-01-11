@@ -43,10 +43,11 @@ size_t CombineHash(size_t existing, size_t addition) {
 //
 // The rolling hash of a vector produces a vector of an equal size where each
 // element is a combined hash of all previous elements.
-// res[0] = hash(name[0])
-// res[1] = hash(name[0], name[1])
+// res[0] = 0  // Global scope hash
+// res[1] = hash(0, name[0])
+// res[2] = hash(0, name[0], name[1])
 // ...
-// res[N] = hash(name[0], name[1], ..., name[N])
+// res[N] = hash(0, name[0], name[1], ..., name[N])
 std::vector<size_t> RollingHash(const std::vector<absl::string_view>& names) {
   if (names.size() <= 1) {
     return {0};  // Global scope
