@@ -113,7 +113,8 @@ case "$MODE" in
 
   smoke-test-analyzer)
     SMOKE_LOGGING_DIR=/tmp/error-logs/ $(dirname $0)/smoke-test.sh
-    python3 $(dirname $0)/error-log-analyzer.py /tmp/error-logs/ --verible-path $(dirname $0)/../../ >> $GITHUB_STEP_SUMMARY
+    python3 $(dirname $0)/error-log-analyzer.py /tmp/error-logs/ --verible-path $(dirname $0)/../../ 
+    cat sta.md >> $GITHUB_STEP_SUMMARY
     ;;
 
   *)

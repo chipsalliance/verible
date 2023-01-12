@@ -55,6 +55,7 @@ from copy import deepcopy
 import argparse
 from enum import Enum
 import os
+from mdutils.mdutils import MdUtils
 
 
 SLANG_DEBUG_OUT = False
@@ -286,6 +287,9 @@ def validate_slang(src, line, state, project, srcpath, err):
     return err.category, state
 
 
+# create a markdown file that will contain the output of the script
+mdFile = MdUtils(file_name='sta', title='Smoke test result analysis')
+
 # load files and get the metadata from them
 for i, (url, project_name) in zip(error_dirs, urls_with_names):
     assert ("-".join(i.split('/')[-1].split('-')[:-1]) == project_name)
@@ -380,6 +384,21 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
     error_types = defaultdict(int)
     for error in project_errors[project_name]:
         error_types[error.category] += 1
+    mdFile.new_header(level=1, title=project_name)
+    mdFile.new_line()
+    md_table = ["Name", "Count", "All", str(all)]
+    if all > 0:
+        for key, value in error_types.items():
+            md_table.extend([str(key), str(value)])
+        mdFile.new_table(
+                columns=2,
+                rows=len(error_types)+2,
+                text=md_table,
+                text_align='left'
+        )
+    else:
+        mdFile.new_table(columns=2, rows=2, text=md_table, text_align='left')
+    mdFile.new_line()
     print(
         "Project: ", project_name,
         "\n  -All:",
@@ -405,6 +424,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         '\n  -Standalone header: ',
         error_types['standalone-header']
     )
+
     # check if the output is sane
     assert sum([error_types[i] for i in error_types.keys()]) == all
     assert error_types['define-in-module'] == 0 or \
@@ -414,6 +434,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
     assert error_types['misc-preprocessor-related'] == 0 or \
         error_types['misc-preprocessor-related'] > 0
 
+
 # Output the slang version string to the log
 proc = subprocess.run(
         ["slang", '--version'],
@@ -422,6 +443,10 @@ proc = subprocess.run(
 )
 slang_output = proc.stdout.decode('utf-8').split('\n')
 print(slang_output[0])
+mdFile.new_header(level=1, title="Version info")
+mdFile.new_header(level=2, title="Slang")
+mdFile.new_line(f"Slang version info:\n\n{slang_output[0]}")
+mdFile.new_header(level=2, title="Verible")
 if args.verible_path:
     # Give version string for verible
     proc = subprocess.run(
@@ -432,8 +457,16 @@ if args.verible_path:
             stderr=subprocess.PIPE
     )
     verible_out = proc.stdout.decode('utf-8').split('\n')
-    print("Verible version string:\n"+"\n".join(verible_out), end='')
+    print("Verible version string:\n\n"+"\n".join(verible_out), end='')
+    mdFile.new_line("Verible version string:\n"+"\n".join(verible_out))
 else:
     print("Verible path not specified, omitting version string")
+    mdFile.new_line("Verible path not specified, omitting version string")
     print("Please provide --verible-path path argument pointing to the root")
+    mdFile.new_line(
+            "Please provide --verible-path path argument pointing to the root"
+    )
     print("of the verible repository")
+    mdFile.new_line("of the verible repository")
+
+mdFile.create_md_file()
