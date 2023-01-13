@@ -11,7 +11,7 @@ on:
 env:
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
-  GHA_MACHINE_TYPE: "n2-standard-8"
+  GHA_MACHINE_TYPE: "t2a-standard-8"
   DEBIAN_FRONTEND: "noninteractive"
   VERIBLE_BINDIR: "/tmp/verible-bin"
 
