@@ -18,6 +18,6 @@ if [ -z "${BAZEL_VERSION}" ]; then
         exit 1
 fi
 mkdir bazel_dir
-wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel_${BAZEL_VERSION}-linux-arm64" -O bazel_dir/bazel
+wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-arm64" -O bazel_dir/bazel
 export PATH=${PWD}/bazel_dir/:${PATH}
 bazel --version
