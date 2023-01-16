@@ -18,7 +18,11 @@ if [ -z "${BAZEL_VERSION}" ]; then
         exit 1
 fi
 
+if [[ "${ARCH}" != "arm64" ]]; then
+    ARCH="x86_64"
+fi
+
 BAZEL_EXEC="/usr/bin/bazel"
-wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-arm64" -O ${BAZEL_EXEC}
+wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-"${ARCH} -O ${BAZEL_EXEC}
 chmod +x ${BAZEL_EXEC}
 bazel --version
