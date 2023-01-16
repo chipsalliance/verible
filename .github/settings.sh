@@ -38,3 +38,5 @@ export BAZEL_VERSION=4.0.0
 #   libraries/image (need: GLIBCXX_3.4.26, CXXABI_1.3.11, GLIBC_2.29).
 # KYTHE_VERSION=master
 export KYTHE_VERSION=v0.0.52
+
+export ARCH=arm64
