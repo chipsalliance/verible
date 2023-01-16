@@ -6,6 +6,7 @@ on:
     branches:
     - master
     - main
+    - arm64-test
   workflow_dispatch:
 
 env:
