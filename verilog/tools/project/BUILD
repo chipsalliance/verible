@@ -10,7 +10,6 @@ cc_binary(
     srcs = ["project_tool.cc"],
     visibility = ["//:__subpackages__"],
     deps = [
-        "//common/util:file_util",
         "//common/util:init_command_line",
         "//common/util:logging",
         "//common/util:subcommand",
