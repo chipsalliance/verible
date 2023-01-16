@@ -240,7 +240,7 @@ jobs:
         source ./.github/settings.sh
         ./.github/bin/run-kythe.sh
 
-    - name: 📤 Upload Kythe xRefs
+    - name: 📤 Upload Kythe xRefs to the action artifacts
       uses: actions/upload-artifact@v2
       with:
         path: kythe_output/*.kzip
