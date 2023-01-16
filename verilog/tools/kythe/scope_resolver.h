@@ -96,30 +96,30 @@ class ScopeResolver {
 
   // Returns the scope and definition of the symbol under the given name. The
   // search is restricted to the provided scope.
-  std::optional<ScopedVname> FindScopeAndDefinition(absl::string_view name,
-                                                    SignatureDigest scope);
+  std::optional<ScopedVname> FindScopeAndDefinition(
+      absl::string_view name, const SignatureDigest& scope);
 
   static SignatureDigest GlobalScope() { return Signature("").Digest(); }
 
   // Adds the members of the given scope to the current scope.
-  void AppendScopeToCurrentScope(SignatureDigest source_scope);
+  void AppendScopeToCurrentScope(const SignatureDigest& source_scope);
 
   // Adds the members of the source scope to the destination scope.
-  void AppendScopeToScope(SignatureDigest source_scope,
-                          SignatureDigest destination_scope);
+  void AppendScopeToScope(const SignatureDigest& source_scope,
+                          const SignatureDigest& destination_scope);
 
   // Removes the given VName from the current scope.
   void RemoveDefinitionFromCurrentScope(const VName& vname);
 
   // Adds a definition & its type to the current scope.
   void AddDefinitionToCurrentScope(const VName& new_member,
-                                   SignatureDigest type_scope);
+                                   const SignatureDigest& type_scope);
 
   // Adds a definition without external type to the current scope.
   void AddDefinitionToCurrentScope(const VName& new_member);
 
   const absl::flat_hash_set<VName>& ListScopeMembers(
-      SignatureDigest scope_digest) const;
+      const SignatureDigest& scope_digest) const;
 
   // Returns human readable description of the scope.
   std::string ScopeDebug(SignatureDigest scope) const;

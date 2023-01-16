@@ -68,12 +68,14 @@ void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
   }
 }
 
-void ScopeResolver::AppendScopeToCurrentScope(SignatureDigest source_scope) {
+void ScopeResolver::AppendScopeToCurrentScope(
+    const SignatureDigest& source_scope) {
   AppendScopeToScope(source_scope, CurrentScopeDigest());
 }
 
-void ScopeResolver::AppendScopeToScope(SignatureDigest source_scope,
-                                       SignatureDigest destination_scope) {
+void ScopeResolver::AppendScopeToScope(
+    const SignatureDigest& source_scope,
+    const SignatureDigest& destination_scope) {
   auto scope_vnames = scope_to_vnames_.find(source_scope);
   if (scope_vnames == scope_to_vnames_.end()) {
     VLOG(2) << "Can't find scope " << ScopeDebug(source_scope)
@@ -103,8 +105,8 @@ void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member) {
   AddDefinitionToCurrentScope(new_member, new_member.signature.Digest());
 }
 
-void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member,
-                                                SignatureDigest type_scope) {
+void ScopeResolver::AddDefinitionToCurrentScope(
+    const VName& new_member, const SignatureDigest& type_scope) {
   // Remove the existing definition -- overwrite it with the new which has
   // updated information about types.
   RemoveDefinitionFromCurrentScope(new_member);
@@ -118,7 +120,7 @@ void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member,
 }
 
 std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
-    absl::string_view name, SignatureDigest scope_focus) {
+    absl::string_view name, const SignatureDigest& scope_focus) {
   VLOG(2) << "Find definition for '" << name << "' within scope "
           << ScopeDebug(scope_focus);
   auto scope = variable_to_scoped_vname_.find(name);
@@ -160,7 +162,7 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
 }
 
 const absl::flat_hash_set<VName>& ScopeResolver::ListScopeMembers(
-    SignatureDigest scope_digest) const {
+    const SignatureDigest& scope_digest) const {
   const static absl::flat_hash_set<VName> kEmptyMemberList;
   auto scope = scope_to_vnames_.find(scope_digest);
   if (scope == scope_to_vnames_.end()) {
