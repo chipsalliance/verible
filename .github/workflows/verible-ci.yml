@@ -25,11 +25,6 @@ jobs:
 
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -59,11 +54,6 @@ jobs:
       GHA_MACHINE_TYPE: "n2-standard-4"
 
     steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v2
@@ -124,11 +114,6 @@ jobs:
     name: ${{ matrix.mode }}
 
     steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
-      with:
-        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v2
