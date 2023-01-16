@@ -18,6 +18,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,10 +27,9 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/hash/hash.h"
-#include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
-#include "common/strings/compare.h"
+#include "common/util/auto_pop_stack.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
@@ -38,7 +38,6 @@
 
 namespace verilog {
 namespace kythe {
-
 namespace {
 
 // Returns the file path of the file from the given indexing facts tree node
@@ -46,32 +45,6 @@ namespace {
 absl::string_view GetFilePathFromRoot(const IndexingFactNode& root) {
   CHECK_EQ(root.Value().GetIndexingFactType(), IndexingFactType::kFile);
   return root.Value().Anchors()[0].Text();
-}
-
-// Create the global signature for the given file.
-Signature CreateGlobalSignature(absl::string_view file_path) {
-  return Signature(file_path);
-}
-
-// From the given list of anchors returns the list of Anchor values.
-std::vector<absl::string_view> GetListOfReferencesfromListOfAnchor(
-    const std::vector<Anchor>& anchors) {
-  std::vector<absl::string_view> references;
-  references.reserve(anchors.size());
-  for (const auto& anchor : anchors) {
-    references.push_back(anchor.Text());
-  }
-  return references;
-}
-
-// Returns the list of references from the given anchors list and appends the
-// second Anchor to the end of the list.
-std::vector<absl::string_view> ConcatenateReferences(
-    const std::vector<Anchor>& anchors, const Anchor& anchor) {
-  std::vector<absl::string_view> references(
-      GetListOfReferencesfromListOfAnchor(anchors));
-  references.push_back(anchor.Text());
-  return references;
 }
 
 }  // namespace
@@ -139,20 +112,21 @@ class KytheFactsExtractor {
   // Add the given VName to vnames_context (to be used in scope relative
   // signatures) and visits the children of the given node creating a new scope
   // for the given node.
-  void VisitUsingVName(const IndexingFactNode& node, const VName&, Scope&);
+  void VisitUsingVName(const IndexingFactNode& node, const VName&);
 
   // Directs the flow to the children of the given node.
   void Visit(const IndexingFactNode& node);
 
-  // Determines whether or not to add the definition to the current scope.
-  void AddDefinitionToCurrentScope(IndexingFactType, const VName&);
-
-  // Appends the extracted children vnames to the scope of the current node.
-  void ConstructScope(const IndexingFactNode&, const VName&, Scope&);
-
   // Determines whether or not to create a child of edge between the current
   // node and the previous node.
   void CreateChildOfEdge(IndexingFactType, const VName&);
+
+  // Returns the scope of the parent's type. E.g. in case `my_class
+  // my_instance`, `my_instance` gets the definition scope from `my_class` so
+  // that `my_instance.method()` can be resolved as `method` exists in the
+  // `my_class`s scope.
+  std::optional<SignatureDigest> GetParentTypeScope(
+      const IndexingFactNode& node) const;
 
   //=================================================================
   // Declare* methods create facts (some edges) and may introduce new scopes.
@@ -237,11 +211,9 @@ class KytheFactsExtractor {
 
   //============ end of Declare*, Reference* methods ===================
 
-  // Create "ref" edges that point from the given anchors to the given
-  // definitions in order.
-  void CreateAnchorReferences(
-      const std::vector<Anchor>& anchors,
-      const std::vector<std::pair<const VName*, const Scope*>>& definitions);
+  // Create "ref" edges that point from the given anchor to the given
+  // definition.
+  void CreateAnchorReference(const Anchor& anchor, const VName& definition);
 
   // Generates an anchor VName for kythe.
   VName CreateAnchor(const Anchor&);
@@ -278,8 +250,8 @@ class KytheFactsExtractor {
   // tree.
   VNameContext vnames_context_;
 
-  // Keeps track and saves the explored scopes with a <key, value> and maps
-  // every signature to its scope.
+  // Keeps track and saves the explored scopes. Used to resolve symbols to their
+  // definition.
   ScopeResolver* const scope_resolver_;
 
   // Location signature backing store.
@@ -294,33 +266,25 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
                              const IndexingFactNode& file_list,
                              const VerilogProject& project) {
   VLOG(1) << __FUNCTION__;
-  // Create a new ScopeResolver and give the ownership to the scope_resolvers
-  // vector so that it can outlive KytheFactsExtractor.
-  // The ScopeResolver-s are created and linked together as a linked-list
-  // structure so that the current ScopeResolver can search for definitions in
-  // the previous files' scopes.
   // TODO(fangism): re-implement root-level symbol lookup with a proper
   // project-wide symbol table, for efficient lookup.
-  std::vector<std::unique_ptr<ScopeResolver>> scope_resolvers;
-  scope_resolvers.push_back(std::unique_ptr<ScopeResolver>(nullptr));
 
   // TODO(fangism): infer dependency ordering automatically based on
   // the symbols defined in each file.
 
   // Process each file in the original listed order.
+  ScopeResolver scope_resolver(Signature(""));
   for (const IndexingFactNode& root : file_list.Children()) {
+    scope_resolver.SetCurrentScope(Signature(""));
     const absl::Time extraction_start = absl::Now();
     // 'root' corresponds to the fact tree for a particular file.
     // 'file_path' is path-resolved.
     const absl::string_view file_path(GetFilePathFromRoot(root));
     VLOG(1) << "child file resolved path: " << file_path;
-    scope_resolvers.push_back(std::make_unique<ScopeResolver>(
-        CreateGlobalSignature(file_path), scope_resolvers.back().get()));
 
     // Create facts and edges.
     KytheFactsExtractor kythe_extractor(file_path, project.Corpus(),
-                                        kythe_output,
-                                        scope_resolvers.back().get());
+                                        kythe_output, &scope_resolver);
 
     // Output facts and edges.
     kythe_extractor.ExtractFile(root);
@@ -342,6 +306,37 @@ void KytheFactsExtractor::ExtractFile(const IndexingFactNode& root) {
   }
 }
 
+std::optional<SignatureDigest> KytheFactsExtractor::GetParentTypeScope(
+    const IndexingFactNode& node) const {
+  absl::string_view node_name = node.Value().Anchors()[0].Text();
+  if (node.Parent() == nullptr) {
+    return std::nullopt;
+  }
+  const auto& parent_anchors = node.Parent()->Value().Anchors();
+  if (parent_anchors.empty()) {
+    VLOG(2) << "GetParentTypeScope for " << node_name << " FAILED -- no parent";
+    return std::nullopt;
+  }
+
+  SignatureDigest focused_scope = scope_resolver_->CurrentScopeDigest();
+  std::optional<ScopedVname> parent_type = std::nullopt;
+  for (const auto& parent_anchor : parent_anchors) {
+    parent_type = scope_resolver_->FindScopeAndDefinition(parent_anchor.Text(),
+                                                          focused_scope);
+    if (!parent_type) {
+      VLOG(2) << "GetParentTypeScope for " << node_name
+              << " FAILED -- no parent type at " << parent_anchor.Text()
+              << " within scope " << scope_resolver_->ScopeDebug(focused_scope);
+      return std::nullopt;
+    }
+    focused_scope = parent_type->type_scope;
+  }
+
+  VLOG(2) << "GetParentTypeScope for " << node_name << " succeeded. Parent: "
+          << scope_resolver_->ScopeDebug(parent_type->type_scope);
+  return parent_type->type_scope;
+}
+
 bool KytheFactsExtractor::IndexingFactNodeTagResolver(
     const IndexingFactNode& node) {
   const size_t previously_extracted_facts_num = seen_kythe_hashes_.size();
@@ -352,55 +347,73 @@ bool KytheFactsExtractor::IndexingFactNodeTagResolver(
   // used in scopes, finding variable definitions and creating childof
   // relations.
   VName vname;
+  SignatureDigest current_scope = scope_resolver_->CurrentScopeDigest();
   switch (tag) {
-      // The following cases extract definitions:
     case IndexingFactType::kFile: {
       vname = DeclareFile(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kModule: {
       vname = DeclareModule(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kInterface: {
       vname = DeclareInterface(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kProgram: {
       vname = DeclareProgram(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
-    case IndexingFactType::kParamDeclaration:
-    case IndexingFactType::kModuleInstance:
     case IndexingFactType::kClassInstance:
+    case IndexingFactType::kModuleInstance:
+    case IndexingFactType::kParamDeclaration:
     case IndexingFactType::kVariableDefinition: {
       vname = DeclareVariable(node);
+      const auto parent_type = GetParentTypeScope(node);
+
+      if (parent_type) {
+        scope_resolver_->AddDefinitionToCurrentScope(vname, *parent_type);
+      } else {
+        scope_resolver_->AddDefinitionToCurrentScope(vname,
+                                                     vname.signature.Digest());
+      }
       break;
     }
     case IndexingFactType::kConstant: {
       vname = DeclareConstant(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname, current_scope);
       break;
     }
     case IndexingFactType::kMacro: {
       vname = DeclareMacroDefinition(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname, current_scope);
       break;
     }
     case IndexingFactType::kClass: {
       vname = DeclareClass(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kFunctionOrTaskForwardDeclaration:
     case IndexingFactType::kConstructor: {
       vname = DeclareFunctionOrTask(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kPackage: {
       vname = DeclarePackage(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kStructOrUnion: {
       vname = DeclareStructOrUnion(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
     case IndexingFactType::kAnonymousScope: {
@@ -409,6 +422,7 @@ bool KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
     case IndexingFactType::kTypeDeclaration: {
       vname = DeclareTypedef(node);
+      scope_resolver_->AddDefinitionToCurrentScope(vname);
       break;
     }
       // end of definition extraction cases.
@@ -460,39 +474,10 @@ bool KytheFactsExtractor::IndexingFactNodeTagResolver(
     }
   }
 
-  AddDefinitionToCurrentScope(tag, vname);
   CreateChildOfEdge(tag, vname);
   VisitAutoConstructScope(node, vname);
 
   return seen_kythe_hashes_.size() > previously_extracted_facts_num;
-}
-
-void KytheFactsExtractor::AddDefinitionToCurrentScope(IndexingFactType tag,
-                                                      const VName& vname) {
-  switch (tag) {
-    case IndexingFactType::kModule:
-    case IndexingFactType::kModuleInstance:
-    case IndexingFactType::kVariableDefinition:
-    case IndexingFactType::kMacro:
-    case IndexingFactType::kStructOrUnion:
-    case IndexingFactType::kClass:
-    case IndexingFactType::kClassInstance:
-    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
-    case IndexingFactType::kConstructor:
-    case IndexingFactType::kFunctionOrTask:
-    case IndexingFactType::kParamDeclaration:
-    case IndexingFactType::kPackage:
-    case IndexingFactType::kConstant:
-    case IndexingFactType::kTypeDeclaration:
-    case IndexingFactType::kInterface:
-    case IndexingFactType::kProgram: {
-      scope_resolver_->AddDefinitionToCurrentScope(vname);
-      break;
-    }
-    default: {
-      break;
-    }
-  }
 }
 
 void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
@@ -523,135 +508,53 @@ void KytheFactsExtractor::CreateChildOfEdge(IndexingFactType tag,
 
 void KytheFactsExtractor::VisitAutoConstructScope(const IndexingFactNode& node,
                                                   const VName& vname) {
-  Scope current_scope(vname.signature);
   const auto tag = node.Value().GetIndexingFactType();
+
+  // Must be copied (as Visit() can change the current scope).
+  const Signature current_scope = scope_resolver_->CurrentScope();
 
   // Determines whether to create a scope for this node or not.
   switch (tag) {
+    case IndexingFactType::kAnonymousScope:
+    case IndexingFactType::kClass:
+    case IndexingFactType::kConstructor:
     case IndexingFactType::kFile:
-    case IndexingFactType::kParamDeclaration:
-    case IndexingFactType::kModule:
-    case IndexingFactType::kStructOrUnion:
-    case IndexingFactType::kVariableDefinition:
     case IndexingFactType::kFunctionOrTask:
     case IndexingFactType::kFunctionOrTaskForwardDeclaration:
-    case IndexingFactType::kConstructor:
-    case IndexingFactType::kClass:
-    case IndexingFactType::kMacro:
-    case IndexingFactType::kPackage:
     case IndexingFactType::kInterface:
-    case IndexingFactType::kProgram: {
-      // Get the old scope of this node (if it was extracted in a previous
-      // iteration).
-      const Scope* old_scope = scope_resolver_->SearchForScope(vname.signature);
-      if (old_scope != nullptr) {
-        current_scope.AppendScope(*old_scope);
-      }
-
-      VisitUsingVName(node, vname, current_scope);
+    case IndexingFactType::kMacro:
+    case IndexingFactType::kModule:
+    case IndexingFactType::kPackage:
+    case IndexingFactType::kProgram:
+    case IndexingFactType::kParamDeclaration:
+    case IndexingFactType::kStructOrUnion: {
+      scope_resolver_->SetCurrentScope(vname.signature);
+      VisitUsingVName(node, vname);
       break;
     }
-    case IndexingFactType::kAnonymousScope: {
-      VisitUsingVName(node, vname, current_scope);
+    case IndexingFactType::kVariableDefinition: {
+      if (!node.Children().empty()) {
+        // Complex data type. Add it to the top of the signature.
+        VisitUsingVName(node, vname);
+      } else {
+        Visit(node);
+      }
       break;
     }
     default: {
       Visit(node);
     }
   }
-
-  ConstructScope(node, vname, current_scope);
-}
-
-void KytheFactsExtractor::ConstructScope(const IndexingFactNode& node,
-                                         const VName& vname,
-                                         Scope& current_scope) {
-  const auto tag = node.Value().GetIndexingFactType();
-
-  // Determines whether to add the current scope to the scope context or not.
-  switch (tag) {
-    case IndexingFactType::kFile:
-    case IndexingFactType::kModule:
-    case IndexingFactType::kStructOrUnion:
-    case IndexingFactType::kClass:
-    case IndexingFactType::kFunctionOrTask:
-    case IndexingFactType::kMacro:
-    case IndexingFactType::kPackage:
-    case IndexingFactType::kFunctionOrTaskForwardDeclaration:
-    case IndexingFactType::kConstructor:
-    case IndexingFactType::kInterface:
-    case IndexingFactType::kProgram: {
-      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
-      break;
-    }
-    case IndexingFactType::kVariableDefinition: {
-      // Break if this variable has no type.
-      if (node.Parent() == nullptr ||
-          node.Parent()->Value().GetIndexingFactType() !=
-              IndexingFactType::kDataTypeReference) {
-        scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
-        break;
-      }
-
-      // TODO(minatoma): refactor this and the below case into function.
-      // TODO(minatoma): move this case to below and make variable definitions
-      // scope-less.
-      // TODO(minatoma): use kAnonymousType and kAnonymousTypeReference to get
-      // rid of this case (if possible).
-      // TODO(minatoma): consider getting rid of kModuleInstance and
-      // kClassInstance and use kVariableDefinition if they don't provide
-      // anything new.
-      const auto& parent_anchors = node.Parent()->Value().Anchors();
-      const std::vector<std::pair<const VName*, const Scope*>> definitions =
-          scope_resolver_->SearchForDefinitions(
-              GetListOfReferencesfromListOfAnchor(parent_anchors));
-
-      if (!definitions.empty() && definitions.size() == parent_anchors.size() &&
-          definitions.back().second != nullptr) {
-        current_scope.AppendScope(*definitions.back().second);
-      }
-
-      scope_resolver_->MapSignatureToScope(vname.signature, current_scope);
-
-      break;
-    }
-    case IndexingFactType::kModuleInstance:
-    case IndexingFactType::kClassInstance: {
-      if (node.Parent() == nullptr ||
-          node.Parent()->Value().GetIndexingFactType() !=
-              IndexingFactType::kDataTypeReference) {
-        break;
-      }
-
-      // Find the scope of the parent data type and append the members of it to
-      // the scope of the current instance.
-      const auto& parent_anchors = node.Parent()->Value().Anchors();
-      const std::vector<std::pair<const VName*, const Scope*>> definitions =
-          scope_resolver_->SearchForDefinitions(
-              GetListOfReferencesfromListOfAnchor(parent_anchors));
-
-      if (definitions.empty() || definitions.size() != parent_anchors.size() ||
-          definitions.back().second == nullptr) {
-        break;
-      }
-
-      scope_resolver_->MapSignatureToScope(vname.signature,
-                                           *definitions.back().second);
-      break;
-    }
-    default: {
-      break;
-    }
-  }
+  scope_resolver_->SetCurrentScope(current_scope);
 }
 
 void KytheFactsExtractor::VisitUsingVName(const IndexingFactNode& node,
-                                          const VName& vname,
-                                          Scope& current_scope) {
+                                          const VName& vname) {
   const VNameContext::AutoPop vnames_auto_pop(&vnames_context_, &vname);
-  const ScopeContext::AutoPop scope_auto_pop(
-      &scope_resolver_->GetMutableScopeContext(), &current_scope);
+  // Must be copied (as Visit() can change the current scope).
+  const Signature current_scope = scope_resolver_->CurrentScope();
   Visit(node);
+  scope_resolver_->SetCurrentScope(current_scope);
 }
 
 void KytheFactsExtractor::Visit(const IndexingFactNode& node) {
@@ -676,7 +579,7 @@ VName KytheFactsExtractor::DeclareFile(const IndexingFactNode& file_fact_node) {
 
   // Update the signature of the file to be the global signature.
   // Used in scopes and makes signatures unique.
-  file_vname.signature = CreateGlobalSignature(FilePath());
+  file_vname.signature = Signature(FilePath());
   return file_vname;
 }
 
@@ -758,11 +661,16 @@ void KytheFactsExtractor::ReferenceDataType(
     const IndexingFactNode& data_type_reference) {
   const auto& anchors = data_type_reference.Value().Anchors();
 
-  const std::vector<std::pair<const VName*, const Scope*>> type_vnames =
-      scope_resolver_->SearchForDefinitions(
-          GetListOfReferencesfromListOfAnchor(anchors));
-
-  CreateAnchorReferences(anchors, type_vnames);
+  SignatureDigest focused_scope = scope_resolver_->CurrentScopeDigest();
+  for (const auto& anchor : anchors) {
+    const std::optional<ScopedVname> type =
+        scope_resolver_->FindScopeAndDefinition(anchor.Text(), focused_scope);
+    if (!type) {
+      return;
+    }
+    CreateAnchorReference(anchor, type->vname);
+    focused_scope = type->type_scope;
+  }
 }
 
 VName KytheFactsExtractor::DeclareTypedef(
@@ -784,54 +692,52 @@ void KytheFactsExtractor::ReferenceNamedParam(
     const IndexingFactNode& named_param_node) {
   // Get the anchors.
   const auto& param_name = named_param_node.Value().Anchors()[0];
+  std::optional<ScopedVname> param_name_type = std::nullopt;
+  const auto parent_type = GetParentTypeScope(named_param_node);
+  if (parent_type) {
+    param_name_type = scope_resolver_->FindScopeAndDefinition(param_name.Text(),
+                                                              *parent_type);
+  } else {
+    param_name_type =
+        scope_resolver_->FindScopeAndDefinition(param_name.Text());
+  }
 
-  // Search for the module or class that contains this parameter.
-  // Parent Node must be kDataTypeReference or kMemberReference or kExtends.
-  const std::vector<Anchor>& parent_data_type =
-      named_param_node.Parent()->Value().Anchors();
-
-  // Search inside the found module or class for the referenced parameter.
-  const std::vector<std::pair<const VName*, const Scope*>> param_vnames =
-      scope_resolver_->SearchForDefinitions(
-          ConcatenateReferences(parent_data_type, param_name));
-
-  // Check if all the references are found.
-  if (param_vnames.size() != parent_data_type.size() + 1) {
+  if (!param_name_type) {
+    // No definition. Skip.
     return;
   }
 
   // Create the facts for this parameter reference.
   const VName param_vname_anchor = CreateAnchor(param_name);
-  CreateEdge(param_vname_anchor, kEdgeRef, *param_vnames.back().first);
+  CreateEdge(param_vname_anchor, kEdgeRef, param_name_type->vname);
 }
 
 void KytheFactsExtractor::ReferenceModuleNamedPort(
     const IndexingFactNode& named_port_node) {
   const auto& port_name = named_port_node.Value().Anchors()[0];
 
-  // Parent Node must be kModuleInstance and the grand parent node must be
-  // kDataTypeReference.
-  const std::vector<Anchor>& module_type =
-      named_port_node.Parent()->Parent()->Value().Anchors();
-
-  const std::vector<std::pair<const VName*, const Scope*>> actual_port_vnames =
-      scope_resolver_->SearchForDefinitions(
-          ConcatenateReferences(module_type, port_name));
-
-  // Check if all the references are found.
-  if (actual_port_vnames.size() != module_type.size() + 1) {
+  std::optional<ScopedVname> port_name_type = std::nullopt;
+  const auto parent_type = GetParentTypeScope(named_port_node);
+  if (parent_type) {
+    port_name_type =
+        scope_resolver_->FindScopeAndDefinition(port_name.Text(), *parent_type);
+  }
+  if (!port_name_type) {
+    VLOG(2) << "Failed to find the port type";
+    // No definition. Skip.
     return;
   }
 
   const VName port_vname_anchor = CreateAnchor(port_name);
-  CreateEdge(port_vname_anchor, kEdgeRef, *actual_port_vnames.back().first);
+  CreateEdge(port_vname_anchor, kEdgeRef, port_name_type->vname);
 
+  // The case where '.z(z)' is shortened to '.z'
   if (is_leaf(named_port_node)) {
-    const std::vector<std::pair<const VName*, const Scope*>> definition_vnames =
-        scope_resolver_->SearchForDefinitions({port_name.Text()});
-
-    if (!definition_vnames.empty()) {
-      CreateEdge(port_vname_anchor, kEdgeRef, *definition_vnames[0].first);
+    // Search in the current scope, not the type's scope.
+    const auto port_name_ref =
+        scope_resolver_->FindScopeAndDefinition(port_name.Text());
+    if (port_name_ref) {
+      CreateEdge(port_vname_anchor, kEdgeRef, port_name_ref->vname);
     }
   }
 }
@@ -859,11 +765,16 @@ void KytheFactsExtractor::ReferenceVariable(
     const IndexingFactNode& variable_reference_node) {
   const auto& anchors = variable_reference_node.Value().Anchors();
 
-  const std::vector<std::pair<const VName*, const Scope*>>
-      variable_definition_vnames = scope_resolver_->SearchForDefinitions(
-          GetListOfReferencesfromListOfAnchor(anchors));
-
-  CreateAnchorReferences(anchors, variable_definition_vnames);
+  SignatureDigest focused_scope = scope_resolver_->CurrentScopeDigest();
+  for (const auto& anchor : anchors) {
+    const auto type =
+        scope_resolver_->FindScopeAndDefinition(anchor.Text(), focused_scope);
+    if (!type) {
+      return;
+    }
+    CreateAnchorReference(anchor, type->vname);
+    focused_scope = type->type_scope;
+  }
 }
 
 VName KytheFactsExtractor::DeclarePackage(
@@ -968,21 +879,22 @@ VName KytheFactsExtractor::DeclareFunctionOrTask(
 
   // Check if there is a function with the same name in the current scope and if
   // exists output "overrides" edge.
-  const VName* overridden_function_vname =
-      scope_resolver_->SearchForDefinitionInCurrentScope(function_name.Text());
-
+  const auto function_type =
+      scope_resolver_->FindScopeAndDefinition(function_name.Text());
   // TODO(minatoma): add a check to output this edge only if the parent is class
   // or interface.
   // TODO(minatoma): add a function like SyntaxTreeNode::MatchesTagAnyOf to
   // IndexingFactsTree.
-  if (overridden_function_vname != nullptr) {
-    CreateEdge(function_vname, kEdgeOverrides, *overridden_function_vname);
+  if (function_type && scope_resolver_->CurrentScopeDigest() ==
+                           function_type->instantiation_scope) {
+    const VName& overridden_function_vname = function_type->vname;
+    CreateEdge(function_vname, kEdgeOverrides, overridden_function_vname);
 
     // Delete the overriden base class function from the current scope so that
     // any reference would reference the current function and not the function
     // in the base class.
     scope_resolver_->RemoveDefinitionFromCurrentScope(
-        *overridden_function_vname);
+        overridden_function_vname);
   }
 
   return function_vname;
@@ -992,19 +904,24 @@ void KytheFactsExtractor::ReferenceFunctionOrTaskCall(
     const IndexingFactNode& function_call_fact_node) {
   const auto& anchors = function_call_fact_node.Value().Anchors();
 
-  // Search for member hierarchy in the scopes.
-  const std::vector<std::pair<const VName*, const Scope*>> definitions =
-      scope_resolver_->SearchForDefinitions(
-          GetListOfReferencesfromListOfAnchor(anchors));
+  std::optional<ScopedVname> last_type = std::nullopt;
+  for (const auto& anchor : anchors) {
+    const std::optional<ScopedVname> type =
+        last_type ? scope_resolver_->FindScopeAndDefinition(
+                        anchor.Text(), last_type->type_scope)
+                  : scope_resolver_->FindScopeAndDefinition(anchor.Text());
+    if (type) {
+      CreateAnchorReference(anchor, type->vname);
+      last_type = std::move(type);
+    } else {
+      // Failed to fully resolve the types.
+      return;
+    }
+  }
 
-  CreateAnchorReferences(anchors, definitions);
-
-  // creating ref/call edge.
-  // If the sizes aren't equal that means we couldn't find the function
-  // defintion.
-  if (!definitions.empty() && definitions.size() == anchors.size()) {
-    const VName current_anchor_vname = CreateAnchor(anchors.back());
-    CreateEdge(current_anchor_vname, kEdgeRefCall, *definitions.back().first);
+  if (last_type) {
+    // Create ref/call edge.
+    CreateEdge(CreateAnchor(anchors.back()), kEdgeRefCall, last_type->vname);
   }
 }
 
@@ -1037,37 +954,24 @@ void KytheFactsExtractor::ReferenceExtendsInheritance(
     const IndexingFactNode& extends_node) {
   const auto& anchors = extends_node.Value().Anchors();
 
-  // Search for member hierarchy in the scopes.
-  const std::vector<std::pair<const VName*, const Scope*>> definitions =
-      scope_resolver_->SearchForDefinitions(
-          GetListOfReferencesfromListOfAnchor(anchors));
-
-  CreateAnchorReferences(anchors, definitions);
-
-  // Check if all the definitions were found.
-  if (definitions.size() != anchors.size() || definitions.empty()) {
-    return;
+  std::optional<ScopedVname> last_type = std::nullopt;
+  for (const auto& anchor : anchors) {
+    const auto type = scope_resolver_->FindScopeAndDefinition(anchor.Text());
+    if (type) {
+      CreateAnchorReference(anchor, type->vname);
+      last_type = std::move(type);
+    }
   }
 
-  // TODO(hzeller): should this have been detected before ?
-  // NULL vname is not encountered, but NULL scope. Issue #1128
-  if (!definitions.back().first) {
-    LOG(ERROR) << "ReferenceExtendsInheritance: NULL vname";
-    return;
-  }
-  if (!definitions.back().second) {
-    LOG(ERROR) << "ReferenceExtendsInheritance: NULL scope for vname "
-               << *definitions.back().first;
-    return;
-  }
+  if (last_type) {
+    // Create kythe facts for extends.
+    const VName& derived_class_vname = vnames_context_.top();
+    CreateEdge(derived_class_vname, kEdgeExtends, last_type->vname);
 
-  // Create kythe facts for extends.
-  const VName& derived_class_vname = vnames_context_.top();
-  CreateEdge(derived_class_vname, kEdgeExtends, *definitions.back().first);
-
-  // Append the members of the parent class as members of the current class's
-  // scope.
-  scope_resolver_->AppendScopeToCurrentScope(*definitions.back().second);
+    // Append the members of the parent class as members of the current class's
+    // scope.
+    scope_resolver_->AppendScopeToCurrentScope(last_type->type_scope);
+  }
 }
 
 void KytheFactsExtractor::ReferencePackageImport(
@@ -1079,80 +983,62 @@ void KytheFactsExtractor::ReferencePackageImport(
   const auto& anchors = import_fact_node.Value().Anchors();
   const Anchor& package_name_anchor = anchors[0];
 
+  const std::optional<ScopedVname> package_name_anchor_type =
+      scope_resolver_->FindScopeAndDefinition(package_name_anchor.Text());
+  if (!package_name_anchor_type) {
+    LOG(WARNING) << "Failed to find a definition of "
+                 << package_name_anchor.Text() << " package.";
+    return;
+  }
+  CreateEdge(CreateAnchor(package_name_anchor), kEdgeRefImports,
+             package_name_anchor_type->vname);
+
   // case of import pkg::my_variable.
   if (anchors.size() > 1) {
     const Anchor& imported_item_name = anchors[1];
+    const auto imported_item_name_type =
+        scope_resolver_->FindScopeAndDefinition(
+            imported_item_name.Text(), package_name_anchor_type->type_scope);
+    if (imported_item_name_type) {
+      CreateEdge(CreateAnchor(imported_item_name), kEdgeRef,
+                 imported_item_name_type->vname);
 
-    // Search for member hierarchy in the scopes.
-    const std::vector<std::pair<const VName*, const Scope*>> definition_vnames =
-        scope_resolver_->SearchForDefinitions(
-            {package_name_anchor.Text(), imported_item_name.Text()});
-
-    // Loop over the found definitions and create kythe facts.
-    for (size_t i = 0; i < definition_vnames.size(); i++) {
-      const VName current_anchor = CreateAnchor(anchors[i]);
-      if (i == 0) {
-        CreateEdge(current_anchor, kEdgeRefImports,
-                   *definition_vnames[i].first);
-      } else {
-        CreateEdge(current_anchor, kEdgeRef, *definition_vnames[i].first);
-      }
+      // Add the found definition to the current scope as if it was declared in
+      // our scope so that it can be captured without "::".
+      scope_resolver_->AddDefinitionToCurrentScope(
+          imported_item_name_type->vname, package_name_anchor_type->type_scope);
     }
-
-    if (definition_vnames.size() != 2) {
-      return;
-    }
-
-    // Add the found definition to the current scope as if it was declared in
-    // our scope so that it can be captured without "::".
-    scope_resolver_->AddDefinitionToCurrentScope(*definition_vnames[1].first);
   } else {
     // case of import pkg::*.
+
     // Add all the definitions in that package to the current scope as if it was
     // declared in our scope so that it can be captured without "::".
-
-    // Search for member hierarchy in the scopes.
-    const std::vector<std::pair<const VName*, const Scope*>> definition_vnames =
-        scope_resolver_->SearchForDefinitions({package_name_anchor.Text()});
-    if (definition_vnames.empty()) {
-      return;
-    }
-
-    const VName current_anchor = CreateAnchor(package_name_anchor);
-    CreateEdge(current_anchor, kEdgeRefImports, *definition_vnames[0].first);
-
-    // TODO(hzeller): null check added. Underlying issue of nullptr
-    // scope needs more investigation; was encountered at
-    // https://chipsalliance.github.io/sv-tests-results/?v=veribleextractor+hdlconv_std2017+hdlconvertor_std2017_p600
-    if (const VName* vname = definition_vnames[0].first; vname) {
-      scope_resolver_->AddDefinitionToCurrentScope(*vname);
-    } else {
-      LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL vname";
-    }
-
-    if (const Scope* scope = definition_vnames[0].second; scope) {
-      scope_resolver_->AppendScopeToCurrentScope(*scope);
-    } else {
-      LOG(ERROR) << FilePath() << ": ReferencePackageImport: NULL scope";
-    }
+    scope_resolver_->AppendScopeToCurrentScope(
+        package_name_anchor_type->type_scope);
   }
 }
 
 void KytheFactsExtractor::ReferenceMember(
     const IndexingFactNode& member_reference_node) {
-  // TODO(fangism): [algorithm] For member references like "A::B::C::D",
-  // we currently construct member reference chains "A", "A,B", "A,B,C"...
-  // which is O(N^2), so "A" is being looked-up repeatedly, the result of
-  // previous lookups is not being re-used.  Re-structure and fix this.
-
+  // Resolve pkg::class::member case. `pkg` must be in scope, but `class` is in
+  // `pkg`s scope, while `member` is in `class`es scope.
   const auto& anchors = member_reference_node.Value().Anchors();
+  if (anchors.empty()) {
+    return;
+  }
 
-  // Search for member hierarchy in the scopes.
-  const std::vector<std::pair<const VName*, const Scope*>> definitions =
-      scope_resolver_->SearchForDefinitions(
-          GetListOfReferencesfromListOfAnchor(anchors));
+  SignatureDigest focused_scope = scope_resolver_->CurrentScopeDigest();
+  for (const auto& anchor : anchors) {
+    const std::optional<ScopedVname> type =
+        scope_resolver_->FindScopeAndDefinition(anchor.Text(), focused_scope);
+    if (!type) {
+      // No need to look further.
+      return;
+    }
+    CreateAnchorReference(anchor, type->vname);
 
-  CreateAnchorReferences(anchors, definitions);
+    focused_scope = type->type_scope;
+  }
 }
 
 void KytheFactsExtractor::ReferenceIncludeFile(
@@ -1171,21 +1057,20 @@ void KytheFactsExtractor::ReferenceIncludeFile(
 
   CreateEdge(file_anchor, kEdgeRefIncludes, file_vname);
 
-  const Scope* included_file_scope =
-      scope_resolver_->SearchForScope(Signature(file_path.Text()));
-  if (included_file_scope == nullptr) {
+  auto included_file_scope = scope_resolver_->FindScopeAndDefinition(
+      file_path.Text(), ScopeResolver::GlobalScope());
+  if (!included_file_scope) {
     LOG(INFO) << "File scope not found For file: " << file_path.Text();
     return;
   }
 
   // Create child of edge between the parent and the member of the included
   // file.
-  for (const auto& [_, member] : included_file_scope->Members()) {
-    CreateEdge(member, kEdgeChildOf, vnames_context_.top());
+  const auto& included_file_content =
+      scope_resolver_->ListScopeMembers(included_file_scope->type_scope);
+  for (const auto& ref : included_file_content) {
+    CreateEdge(ref, kEdgeChildOf, vnames_context_.top());
   }
-
-  // Append the scope of the included file to the current scope.
-  scope_resolver_->AppendScopeToCurrentScope(*included_file_scope);
 }
 
 VName KytheFactsExtractor::DeclareAnonymousScope(
@@ -1231,14 +1116,9 @@ VName KytheFactsExtractor::DeclareStructOrUnion(
   return struct_vname;
 }
 
-void KytheFactsExtractor::CreateAnchorReferences(
-    const std::vector<Anchor>& anchors,
-    const std::vector<std::pair<const VName*, const Scope*>>& definitions) {
-  // Loop over the definitions and create kythe facts.
-  for (size_t i = 0; i < definitions.size(); i++) {
-    const VName current_anchor_vname = CreateAnchor(anchors[i]);
-    CreateEdge(current_anchor_vname, kEdgeRef, *definitions[i].first);
-  }
+void KytheFactsExtractor::CreateAnchorReference(const Anchor& anchor,
+                                                const VName& definition) {
+  CreateEdge(CreateAnchor(anchor), kEdgeRef, definition);
 }
 
 VName KytheFactsExtractor::CreateAnchor(const Anchor& anchor) {

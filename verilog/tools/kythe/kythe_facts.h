@@ -15,7 +15,7 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 
-#include <iosfwd>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -26,6 +26,27 @@ namespace kythe {
 
 inline constexpr absl::string_view kDefaultKytheLanguage = "verilog";
 inline constexpr absl::string_view kEmptyKytheLanguage = "";
+
+// Hash-based form of signature for fast and lightweight comparision.
+struct SignatureDigest {
+  std::vector<size_t> rolling_hash;
+
+  size_t Hash() const { return rolling_hash.back(); }
+
+  bool operator==(const SignatureDigest& d) const {
+    return rolling_hash.size() == d.rolling_hash.size() &&
+           rolling_hash.back() == d.rolling_hash.back();
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const SignatureDigest& d) {
+    os << "{.Hash=" << d.Hash() << "}";
+    return os;
+  }
+};
+template <typename H>
+H AbslHashValue(H state, const SignatureDigest& d) {
+  return H::combine(std::move(state), d.rolling_hash);
+}
 
 // Unique identifier for Kythe facts.
 class Signature {
@@ -49,6 +70,9 @@ class Signature {
   std::string ToBase64() const;
 
   const std::vector<absl::string_view>& Names() const { return names_; }
+
+  // Returns signature's short form for fast and lightweight comparision.
+  SignatureDigest Digest() const;
 
  private:
   // List that uniquely determines this signature and differentiates it from any
