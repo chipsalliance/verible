@@ -1,0 +1,2 @@
+# Install help2man
+RUN yum install -y help2man

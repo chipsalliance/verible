@@ -66,20 +66,17 @@ case "$TARGET_OS" in
       BAZEL_OPTS="${BAZEL_OPTS} --//bazel:use_local_flex_bison"
       echo 'RUN apt-get install -y flex bison' >> ${OUT_DIR}/Dockerfile
     fi
-
-    # Bazel
-    cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
   centos)
     # Compiler
     cat ${TARGET_OS}/common/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
-    # Bazel
-    cat ${TARGET_OS}/common/bazel.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
 esac
 
-# gflags2man
-cat gflags2man.dockerstage >> ${OUT_DIR}/Dockerfile
+# Bazel
+cat bazel.dockerstage >> ${OUT_DIR}/Dockerfile
+# help2man
+cat ${TARGET_OS}/common/help2man.dockerstage >> ${OUT_DIR}/Dockerfile
 
 # ==================================================================
 
@@ -116,10 +113,15 @@ echo "::group::Docker file for $IMAGE"
 cat $TARGET/Dockerfile
 echo '::endgroup::'
 
+if [[ "${ARCH}" != "arm64" ]]; then
+    ARCH="x86_64"
+fi
+
 echo "::group::Docker build $IMAGE"
 docker build \
   --tag $IMAGE \
   --build-arg BAZEL_VERSION="$BAZEL_VERSION" \
+  --build-arg ARCH="${ARCH}" \
   --build-arg TARGET_VERSION="$TARGET_VERSION" \
   $TARGET
 echo '::endgroup::'

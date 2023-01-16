@@ -125,9 +125,21 @@ jobs:
         - compile-clang
         - coverage
         - clean
+        arch:
+        - x86_64
+        - arm64
+        exclude:
+          - mode: asan
+            arch: arm64
+          - mode: asan-clang
+            arch: arm64
+          - mode: coverage
+            arch: arm64
     env:
       MODE: ${{ matrix.mode }}
-    name: ${{ matrix.mode }}
+      ARCH: ${{ matrix.arch }}
+      GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-standard-8' }}"
+    name: ${{ matrix.arch }} ${{ matrix.mode }}
 
     steps:
 
@@ -153,8 +165,8 @@ jobs:
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/root/.cache/bazel"
-        key: bazelcache3_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache3_${{ matrix.mode }}_
+        key: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache3_${{ matrix.arch }}_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
@@ -167,7 +179,7 @@ jobs:
         source ./.github/settings.sh
         # Use newer compiler for c++2x compilation
         ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* ]] && echo 12 || echo 10)
-        ./.github/bin/install-bazel.sh
+        ARCH="$ARCH" ./.github/bin/install-bazel.sh
 
     - name: Build Slang
       if: matrix.mode == 'smoke-test-analyzer'
@@ -198,11 +210,11 @@ jobs:
       continue-on-error: true
 
     - name: Gather and pack binaries
-      if: matrix.mode == 'compile'
+      if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
       run: bazel run :install -c fastbuild -- $VERIBLE_BINDIR && tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
 
     - name: Upload bazel-bin
-      if: matrix.mode == 'compile'
+      if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
       uses: actions/upload-artifact@v2
       with:
         name: verible-bin
@@ -298,9 +310,10 @@ jobs:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+      ARCH: '${{ matrix.arch }}'
       DOCKER_DATA_ROOT: "/root/.docker"
-      GHA_MACHINE_TYPE: "n2-highcpu-8"
-    name: 'Build · ${{ matrix.os }}:${{ matrix.ver }}'
+      GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
+    name: 'Build ·${{ matrix.arch }}:${{ matrix.os }}:${{ matrix.ver }}'
 
     steps:
 
@@ -328,7 +341,7 @@ jobs:
 
         docker pull $MATRIX_OS
         source ./.github/settings.sh
-        ./releasing/docker-run.sh $MATRIX_OS
+        ARCH="$ARCH" ./releasing/docker-run.sh $MATRIX_OS
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2

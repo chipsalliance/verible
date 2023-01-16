@@ -1,0 +1,2 @@
+# Install help2man
+RUN apt install help2man -y
