@@ -17,6 +17,6 @@ set -e
 
 # Verify that Verilog Kythe indexer produces the expected Kythe indexing facts.
 # Note: verifier tool path assumes it came with the release pre-built.
-KYTHE_DIRNAME="kythe-${KYTHE_VERSION}"
-KYTHE_DIR_ABS="$(readlink -f "kythe-bin/${KYTHE_DIRNAME}")"
+KYTHE_DIRNAME="kythe-${KYTHE_TOOLS_VERSION}"
+KYTHE_DIR_ABS="$(readlink -f "kythe-tools-bin/${KYTHE_DIRNAME}")"
 bazel test --test_output=errors --test_arg="$KYTHE_DIR_ABS/tools/verifier" verilog/tools/kythe:verification_test
