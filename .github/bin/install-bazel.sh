@@ -17,7 +17,8 @@ if [ -z "${BAZEL_VERSION}" ]; then
         echo "Set \$BAZEL_VERSION"
         exit 1
 fi
-mkdir bazel_dir
-wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-arm64" -O bazel_dir/bazel
-export PATH=${PWD}/bazel_dir/:${PATH}
+
+BAZEL_EXEC="/usr/bin/bazel"
+wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-arm64" -O ${BAZEL_EXEC}
+chmod +x ${BAZEL_EXEC}
 bazel --version
