@@ -28,6 +28,8 @@ cc_library(
     hdrs = ["kythe_facts.h"],
     deps = [
         "//common/util:spacer",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -47,9 +49,11 @@ cc_library(
     hdrs = ["scope_resolver.h"],
     deps = [
         ":kythe_facts",
-        "//common/util:auto_pop_stack",
-        "//common/util:iterator_range",
+        "//common/util:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -60,6 +64,7 @@ cc_test(
     deps = [
         ":kythe_facts",
         ":scope_resolver",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
