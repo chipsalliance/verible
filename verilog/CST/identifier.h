@@ -27,6 +27,10 @@ namespace verilog {
 std::vector<verible::TreeSearchMatch> FindAllIdentifierUnpackedDimensions(
     const verible::Symbol&);
 
+// Returns all sub-nodes tagged with kPortIdentifier
+std::vector<verible::TreeSearchMatch> FindAllPortIdentifiers(
+    const verible::Symbol&);
+
 // Returns all sub-nodes tagged with kUnqualifiedId
 std::vector<verible::TreeSearchMatch> FindAllUnqualifiedIds(
     const verible::Symbol&);

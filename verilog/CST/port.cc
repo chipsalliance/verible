@@ -74,14 +74,22 @@ std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
 
 const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
     const verible::Symbol& symbol) {
+  static const char* const TOO_MANY_IDS_ERROR =
+      "Expected one identifier node in module port declaration, but got ";
   auto& node = SymbolCastToNode(symbol);
   if (!MatchNodeEnumOrNull(node, NodeEnum::kModulePortDeclaration))
     return nullptr;
   auto id_unpacked_dims = FindAllIdentifierUnpackedDimensions(symbol);
-  if (id_unpacked_dims.empty()) return nullptr;
+  if (id_unpacked_dims.empty()) {
+    auto port_ids = verible::SearchSyntaxTree(symbol, NodekPortIdentifier());
+    if (port_ids.size() > 1) {
+      LOG(ERROR) << TOO_MANY_IDS_ERROR << port_ids.size();
+    }
+    if (port_ids.empty()) return nullptr;
+    return GetIdentifier(*port_ids[0].match);
+  }
   if (id_unpacked_dims.size() > 1) {
-    LOG(ERROR) << "Expected one identifier node in port declaration, but got "
-               << id_unpacked_dims.size();
+    LOG(ERROR) << TOO_MANY_IDS_ERROR << id_unpacked_dims.size();
   }
   return GetSymbolIdentifierFromIdentifierUnpackedDimensions(
       *id_unpacked_dims.front().match);
