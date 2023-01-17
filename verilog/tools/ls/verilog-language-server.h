@@ -34,6 +34,9 @@ class VerilogLanguageServer {
   // Constructor preparing the callbacks for Language Server requests
   VerilogLanguageServer(const WriteFun &write_fun);
 
+  // Reads single request and responds to it
+  absl::Status Step(const ReadFun &read_fun);
+
   // Runs the Language Server
   absl::Status Run(const ReadFun &read_fun);
 

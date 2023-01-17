@@ -95,11 +95,15 @@ void VerilogLanguageServer::SetRequestHandlers() {
   });
 }
 
+absl::Status VerilogLanguageServer::Step(const ReadFun &read_fun) {
+  return stream_splitter_.PullFrom(read_fun);
+}
+
 absl::Status VerilogLanguageServer::Run(const ReadFun &read_fun) {
   shutdown_requested_ = false;
   absl::Status status = absl::OkStatus();
   while (status.ok() && !shutdown_requested_) {
-    status = stream_splitter_.PullFrom(read_fun);
+    status = Step(read_fun);
   }
   return status;
 }
