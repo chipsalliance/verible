@@ -11,7 +11,23 @@ package(
         "//:__subpackages__",
     ],
 )
-
+ 
+cc_library(
+    name = "autoexpand",
+    srcs = ["autoexpand.cc"],
+    hdrs = ["autoexpand.h"],
+    deps = [
+        ":lsp-parse-buffer",
+        "//common/lsp:lsp-protocol",
+        "//common/text:text_structure",
+        "//verilog/CST:identifier",
+        "//verilog/CST:module",
+        "//verilog/CST:port",
+        "//verilog/formatting:format_style_init",
+        "//verilog/formatting:formatter",
+    ],
+)
+ 
 cc_library(
     name = "lsp-parse-buffer",
     srcs = ["lsp-parse-buffer.cc"],
@@ -30,6 +46,7 @@ cc_library(
     srcs = ["verible-lsp-adapter.cc"],
     hdrs = ["verible-lsp-adapter.h"],
     deps = [
+        ":autoexpand",
         ":document-symbol-filler",
         ":lsp-parse-buffer",
         "//common/lsp:lsp-protocol",
@@ -102,4 +119,14 @@ sh_test_with_runfiles_lib(
         "//common/lsp:json-rpc-expect",
     ],
     deps = [],
+)
+
+cc_test(
+    name = "autoexpand_test",
+    srcs = ["autoexpand_test.cc"],
+    deps = [
+        ":autoexpand",
+        ":verible-lsp-adapter",
+        "@com_google_googletest//:gtest_main",
+    ],
 )

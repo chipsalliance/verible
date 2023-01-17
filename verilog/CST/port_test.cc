@@ -277,6 +277,11 @@ TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
        " [3:0]; input logic [3:0] ",
        {kTag, "bar2"},
        "; endmodule"},
+      {"module foo(bar, bar2); input logic ",
+       {kTag, "bar"},
+       " [3:0]; input reg [3:0] ",
+       {kTag, "bar2"},
+       "; endmodule"},
   };
   for (const auto& test : kTestCases) {
     TestVerilogSyntaxRangeMatches(

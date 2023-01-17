@@ -24,6 +24,7 @@
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/tools/ls/autoexpand.h"
 #include "verilog/tools/ls/document-symbol-filler.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
@@ -182,6 +183,23 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
       preferred_fix = false;  // only the first is preferred.
     }
   }
+  return result;
+}
+
+std::vector<verible::lsp::CodeAction> GenerateCodeActions(
+    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p) {
+  std::vector<verible::lsp::CodeAction> result;
+
+  if (!tracker) return result;
+  const ParsedBuffer *const current = tracker->current();
+  if (!current) return result;
+
+  result = GenerateLinterCodeActions(tracker, p);
+
+  auto auto_expand = GenerateAutoExpandCodeActions(tracker, p);
+  result.insert(result.end(), std::make_move_iterator(auto_expand.begin()),
+                make_move_iterator(auto_expand.end()));
+
   return result;
 }
 

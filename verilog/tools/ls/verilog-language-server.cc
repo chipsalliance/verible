@@ -58,7 +58,7 @@ void VerilogLanguageServer::SetRequestHandlers() {
   dispatcher_.AddRequestHandler(  // Provide autofixes
       "textDocument/codeAction",
       [this](const verible::lsp::CodeActionParams &p) {
-        return verilog::GenerateLinterCodeActions(
+        return verilog::GenerateCodeActions(
             parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
 

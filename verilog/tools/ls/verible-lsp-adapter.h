@@ -35,6 +35,10 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(const BufferTracker &,
 std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
     const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
 
+// Generate all available code actions.
+std::vector<verible::lsp::CodeAction> GenerateCodeActions(
+    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
+
 verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
     const BufferTracker *tracker,
     const verible::lsp::DocumentDiagnosticParams &p);
