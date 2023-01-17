@@ -53,7 +53,6 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -94,7 +93,7 @@ cc_library(
         ":kythe_schema_constants",
         ":scope_resolver",
         ":verilog_extractor_indexing_fact_type",
-        "//common/strings:compare",
+        "//common/util:auto_pop_stack",
         "//common/util:logging",
         "//common/util:tree_operations",
         "//verilog/analysis:verilog_project",
