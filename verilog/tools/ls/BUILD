@@ -127,6 +127,7 @@ cc_test(
     deps = [
         ":autoexpand",
         ":verible-lsp-adapter",
+        "//common/lsp:lsp-protocol",
         "@com_google_googletest//:gtest_main",
     ],
 )
