@@ -2970,7 +2970,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       // In these cases, merge the 'begin' partition of the statement block
       // with the preceding keyword or header partition.
-      if (NodeIsBeginEndBlock(
+      if (!verible::is_leaf(partition.Children().back()) &&
+          NodeIsBeginEndBlock(
               verible::SymbolCastToNode(*node.children().back()))) {
         auto& seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;
