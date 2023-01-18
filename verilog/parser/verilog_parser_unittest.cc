@@ -3138,6 +3138,9 @@ static const ParserTestCaseArray kModuleTests = {
     "`default_nettype tri\n"
     "module blank;\n"
     "endmodule",
+    "`default_nettype trireg\n"
+    "module blank;\n"
+    "endmodule",
     "`default_nettype supply0\n"
     "`default_nettype supply1\n"
     "`default_nettype tri0\n"

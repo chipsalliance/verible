@@ -3059,6 +3059,8 @@ misc_directive
 net_type_or_none
   : net_type
     { $$ = move($1); }
+  | TK_trireg    /* Would crate shift/reduce conflict if in net_type */
+    { $$ = move($1); }
   | GenericIdentifier
     { $$ = move($1); }
     /* $1 should be 'none', which is not a keyword. */
