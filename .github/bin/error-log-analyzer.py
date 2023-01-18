@@ -21,30 +21,6 @@
 # This script checks various conditions that classify each error based on
 # criteria and previous errors, such that a clear picture is generated
 # in the end of what is the main cause of non-zero exits in the smoke tests.
-#
-# Error categories:
-# - Undefined: Errors that not fit any criteria
-# - Slang: Errors that also are present in slang, verifying legitimacy of them
-# - Related to slang: Errors that occured after a slang error; if there was a
-#                     syntax error, a lot of later tokens will not fit
-#                     causing additional errors.
-# - Define in module: Errors that occured because of a macro call in a module
-#           parameter list. Those usually also contain the line delimiters
-#           of which the parser will be unaware causing syntax errors.
-# - Define-in-module caused: Syntax errors that occur after a missing define.
-#                  Analogous to related to slang, those are syntax errors
-#                  caused by earlier "missing" tokens.
-# - Unresolved macro: Errors that occured because of an unresolved macro call
-# - Test designed to fail: Errors that are intentional, present in e.g. ivtest
-# - Misc preprocessor: Errors that are not related to the above categories
-#                      but are related to preprocessor keywords
-# - Related to misc preprocessor: Other errors that may have appeared because
-#                                 there was a preprocessor problem earlier.
-#                                 eg. a syntax error after an unresolved macro
-# - Standalone header: Errors that occured while parsing a header file, that
-#                      really should not be parsed outside of its context where
-#                      it is included
-###
 
 import glob
 import tempfile
@@ -56,6 +32,39 @@ import argparse
 from enum import Enum
 import os
 from mdutils.mdutils import MdUtils
+
+CATEGORY_DESCRIPTIONS = """
+Each return code different than 0 in the smoke test triggered saving the stderr
+of that particular run to a file, and each line of those files
+(except project tool)
+contained a single error. This tool analyzes the error logs and classifies each
+error into a category to visualize what is the main cause of issues still
+present in the smoke tests.
+
+Error categories:
+ - `undefined`: Errors that do not fit any criteria
+ - `slang-verified-error`: Errors that also are present in slang, verifying
+the legitimacy of them
+ - `related-to-slang-validated-error`: Errors that occured after a slang error;
+if there was a syntax error, a lot of later tokens will not fit
+causing additional errors.
+- `macro-call-in-module-params`: Errors that occured because of a macro call
+in a module parameter list. Those usually also contain the line delimiters
+of which the parser will be unaware causing syntax errors.
+ - `caused-by-macro-call-in-module-params`: Syntax errors that occur after a
+missing define. Analogous to `related-to-slang-validated-error`,
+those are syntax errors caused by earlier "missing" tokens.
+ - `unresolved-macro`: Errors that occured because of an unresolved macro call
+ - `test-designed-to-fail`: Errors that are intentional, present in e.g. ivtest
+ - `misc-preprocessor`: Errors that are not related to the above categories
+but are related to preprocessor keywords
+ - `misc-preprocessor-related`: Other errors that may have appeared because
+there was a preprocessor problem earlier.
+eg. a syntax error after an unresolved macro
+ - `standalone-header`: Errors that occured while parsing a header file, that
+really should not be parsed outside of its context where
+it is included
+"""
 
 
 SLANG_DEBUG_OUT = False
@@ -186,7 +195,7 @@ def error_classifier(src, line, state, project):
                 "module",
                 '\n'.join(src[max(err.line_number-30, 0):err.line_number])):
             state = State.MODULE_DEFINE
-            err.category = 'define-in-module'
+            err.category = 'macro-call-in-module-params'
         else:
             state = State.MISC_PREPROCESSOR
             err.category = 'misc-preprocessor'
@@ -194,14 +203,15 @@ def error_classifier(src, line, state, project):
             "syntax error at token",
             line):
         err.category = 'misc-preprocessor-related'
-    # if the state is 1 (define-in-module error), then every subsequent syntax
-    # error should be marked as related to it
+    # if the state is 1 (macro-call-in-module-params error), then every
+    # subsequent syntax error should be marked as related to it
     elif state == State.MODULE_DEFINE and re.search(
             "syntax error at token",
             line):
-        err.category = 'caused-by-define-in-module'
-    # usually the syntax error related to the define-in-module problem end at
-    # an endmodule token - change the state back to default when it is detected
+        err.category = 'caused-by-macro-call-in-module-params'
+    # usually the syntax error related to the macro-call-in-module-params
+    # problem end at an endmodule token - change the state back to
+    # default when it is detected
     if state == State.MODULE_DEFINE and re.search(
             "syntax error at token \"endmodule\"",
             line):
@@ -212,7 +222,7 @@ def error_classifier(src, line, state, project):
     if 'ivtest' in project and re.search(
             r'ivtest\/(\w+\/)+.*(fail|error)\w*\.\w+',
             line):
-        err.category = 'ivtest-designed-to-fail'
+        err.category = 'test-designed-to-fail'
     return err, state
 
 
@@ -289,6 +299,7 @@ def validate_slang(src, line, state, project, srcpath, err):
 
 # create a markdown file that will contain the output of the script
 mdFile = MdUtils(file_name='sta', title='Smoke test result analysis')
+mdFile.new_paragraph(CATEGORY_DESCRIPTIONS)
 
 # load files and get the metadata from them
 for i, (url, project_name) in zip(error_dirs, urls_with_names):
@@ -409,14 +420,14 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         error_types['slang-verified-error'],
         "\n  -Related to slang:",
         error_types['related-to-slang-validated-error'],
-        "\n  -Define in module:",
-        error_types['define-in-module'],
-        "\n  -Define-in-module caused:",
-        error_types['caused-by-define-in-module'],
+        "\n  -Macro call in module params:",
+        error_types['macro-call-in-module-params'],
+        "\n  -Macro call in module params caused:",
+        error_types['caused-by-macro-call-in-module-params'],
         "\n  -Unresolved macro:",
         error_types['unresolved-macro'],
         "\n  -Test designed to fail:",
-        error_types['ivtest-designed-to-fail'],
+        error_types['test-designed-to-fail'],
         "\n  -Misc. preporcesor: ",
         error_types['misc-preprocessor'],
         '\n  -Related to misc. preprocessor: ',
@@ -427,8 +438,8 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
 
     # check if the output is sane
     assert sum([error_types[i] for i in error_types.keys()]) == all
-    assert error_types['define-in-module'] == 0 or \
-        error_types['define-in-module'] > 0
+    assert error_types['macro-call-in-module-params'] == 0 or \
+        error_types['macro-call-in-module-params'] > 0
     assert error_types['related-to-slang-validated-error'] == 0 or \
         error_types['slang-verified-error'] > 0
     assert error_types['misc-preprocessor-related'] == 0 or \
