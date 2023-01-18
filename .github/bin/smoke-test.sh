@@ -99,23 +99,7 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 # Goal: The following list shall be empty :)
 declare -A KnownIssue
 
-#--- Opentitan
-# Original issue - 1006 has been resolved
-# There is also bug 1008 which only shows up if compiled with asan
-
-#--- ivtest
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
-
-#--- nontrivial-mips
-KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/decode/decoder.sv]=984
-KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/exec/multi_cycle_exec.sv]=984
-
-#--- rsd
-KnownIssue[formatter:$BASE_TEST_DIR/rsd/Processor/Src/Privileged/CSR_Unit.sv]=984
-
-#--- scr1
-KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/core/scr1_tapc.sv]=1015
-KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/tb/scr1_memory_tb_ahb.sv]=1015
+# At the moment, the list is empty
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
