@@ -34,4 +34,4 @@ std::vector<verible::lsp::CodeAction> GenerateAutoExpandCodeActions(
     const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
 
 }  // namespace verilog
-#endif  // VERILOG_TOOLS_LS_VERIBLE_LSP_ADAPTER_H
+#endif  // VERILOG_TOOLS_LS_AUTOEXPAND_H
