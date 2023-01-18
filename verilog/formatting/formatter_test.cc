@@ -1070,6 +1070,10 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
         "   parameter  int  b={ << 4  {{ << 2 { a }  }} } ;",
         "parameter int b = {<<4{{<<2{a}}}};\n",
     },
+    {
+        "   parameter  int  b={ << {foo with [ 1 +: 4 ] } } ;",
+        "parameter int b = {<<{foo with [1+:4]}};\n",
+    },
 
     // basic module test cases
     {"module foo;endmodule:foo\n",
