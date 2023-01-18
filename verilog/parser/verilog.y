@@ -230,6 +230,8 @@ is not locally defined, so the grammar here uses only generic identifiers.
 // gen_tokenizer start STRING_LITERAL
 %token TK_StringLiteral         // STRING
 %token TK_EvalStringLiteral     // STRING
+%token TK_AngleBracketInclude   // STRING
+
 // gen_tokenizer stop
 
 // gen_tokenizer start KEYWORD
@@ -864,6 +866,8 @@ macro_formal_parameter
 
 preprocess_include_argument
   : string_literal
+    { $$ = move($1); }
+  | TK_AngleBracketInclude
     { $$ = move($1); }
   | MacroIdentifier
     { $$ = move($1); }
