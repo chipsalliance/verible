@@ -13,11 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -u  # only use variables once assigned
+
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
+
+CLANG_FORMAT_BINARY=clang-format
+
+${CLANG_FORMAT_BINARY} --version
 
 # Run on all files.
 find . -name "*.h" -o -name "*.cc" | grep -v 'third_party/|external_libs/' \
-  | xargs -P2 clang-format -i
+  | xargs -P2 ${CLANG_FORMAT_BINARY} -i
 
 # Check if we got any diff
 git diff > ${FORMAT_OUT}
