@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 namespace verilog {
@@ -83,6 +83,7 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
 
 // Parse positional parameters from command line and extract files,
 // +incdir+ and +define+ and appends to FileList.
+// TODO: Also support --file_list_path (and -f), --file_list_root
 absl::Status AppendFileListFromCommandline(
     const std::vector<absl::string_view>& cmdline, FileList* append_to);
 

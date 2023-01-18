@@ -62,20 +62,30 @@ struct VerilogProjectConfig {
   // See --file_list_root above.
   std::string file_list_root;
 
-  absl::Status LoadFromGlobalFlags() {
-    file_list.preprocessing.include_dirs =
-        absl::GetFlag(FLAGS_include_dir_paths);
+  absl::Status LoadFromCommandline(const SubcommandArgsRange& args) {
+    const std::vector<absl::string_view> cmdline{args.begin(), args.end()};
+    auto status = AppendFileListFromCommandline(cmdline, &file_list);
+    if (!status.ok()) return status;
 
-    file_list.file_list_path = absl::GetFlag(FLAGS_file_list_path);
-    if (file_list.file_list_path.empty()) {
-      return absl::InvalidArgumentError(
-          "--file_list_path is required but missing.");
-    }
+    // TODO(hzeller): phase out these flags but delegate things to
+    // AppendFileListFromCommandline()
+    auto include_paths = absl::GetFlag(FLAGS_include_dir_paths);
+    file_list.preprocessing.include_dirs.insert(
+        file_list.preprocessing.include_dirs.end(), include_paths.begin(),
+        include_paths.end());
 
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
+    file_list.file_list_path = absl::GetFlag(FLAGS_file_list_path);
+    if (!file_list.file_list_path.empty()) {
+      return verilog::AppendFileListFromFile(file_list.file_list_path,
+                                             &file_list);
+    }
 
-    return verilog::AppendFileListFromFile(file_list.file_list_path,
-                                           &file_list);
+    if (file_list.file_paths.empty()) {
+      status = absl::InvalidArgumentError(
+          "No files given or --file_list_path missing.");
+    }
+    return status;
   }
 };
 
@@ -150,7 +160,7 @@ static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
     return status;
   }
 
@@ -182,7 +192,7 @@ static absl::Status ResolveAndShowSymbolReferences(
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
     return status;
   }
 
@@ -217,7 +227,7 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromGlobalFlags(); !status.ok()) {
+  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
     return status;
   }
 
