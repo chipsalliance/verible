@@ -19,7 +19,9 @@
 #include <vector>
 
 #include "common/lsp/lsp-protocol.h"
+#include "verilog/analysis/symbol_table.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
 
 // Functions for Emacs' Verilog-Mode-style AUTO expansion.
 
@@ -27,11 +29,12 @@ namespace verilog {
 
 // Generate AUTO expansion text edits for the given buffer
 std::vector<verible::lsp::TextEdit> GenerateAutoExpandTextEdits(
-    const BufferTracker *tracker);
+    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker);
 
 // Generate AUTO expansion code actions for the given code action params
 std::vector<verible::lsp::CodeAction> GenerateAutoExpandCodeActions(
-    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
+    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker,
+    const verible::lsp::CodeActionParams &p);
 
 }  // namespace verilog
 #endif  // VERILOG_TOOLS_LS_AUTOEXPAND_H

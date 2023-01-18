@@ -21,6 +21,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "nlohmann/json.hpp"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
 
 // Adapter functions converting verible state into lsp objects.
 
@@ -37,7 +38,8 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
 
 // Generate all available code actions.
 std::vector<verible::lsp::CodeAction> GenerateCodeActions(
-    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p);
+    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker,
+    const verible::lsp::CodeActionParams &p);
 
 verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
     const BufferTracker *tracker,

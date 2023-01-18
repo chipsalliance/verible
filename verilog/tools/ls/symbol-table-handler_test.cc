@@ -206,7 +206,7 @@ TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
       nullptr);
 
   std::vector<verible::lsp::Location> location =
-      symbol_table_handler.FindDefinition(gotorequest, parsed_buffers);
+      symbol_table_handler.FindDefinitionLocation(gotorequest, parsed_buffers);
   EXPECT_EQ(location.size(), 0);
 }
 

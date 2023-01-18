@@ -187,7 +187,8 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
 }
 
 std::vector<verible::lsp::CodeAction> GenerateCodeActions(
-    const BufferTracker *tracker, const verible::lsp::CodeActionParams &p) {
+    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker,
+    const verible::lsp::CodeActionParams &p) {
   std::vector<verible::lsp::CodeAction> result;
 
   if (!tracker) return result;
@@ -196,7 +197,8 @@ std::vector<verible::lsp::CodeAction> GenerateCodeActions(
 
   result = GenerateLinterCodeActions(tracker, p);
 
-  auto auto_expand = GenerateAutoExpandCodeActions(tracker, p);
+  auto auto_expand =
+      GenerateAutoExpandCodeActions(symbol_table_handler, tracker, p);
   result.insert(result.end(), std::make_move_iterator(auto_expand.begin()),
                 make_move_iterator(auto_expand.end()));
 

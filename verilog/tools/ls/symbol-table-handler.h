@@ -70,12 +70,15 @@ class SymbolTableHandler {
   // Creates a symbol table for entire project
   std::vector<absl::Status> BuildProjectSymbolTable();
 
-  // Finds the definition for a symbol provided in the DefinitionParams
-  // message delivered i.e. in textDocument/definition message.
+  // Finds the location of the definition for a symbol provided in the
+  // DefinitionParams message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
-  std::vector<verible::lsp::Location> FindDefinition(
+  std::vector<verible::lsp::Location> FindDefinitionLocation(
       const verible::lsp::DefinitionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Finds the symbol of the definition for the given identifier.
+  const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
 
   void UpdateFileContent(absl::string_view path,
                          const verible::TextStructureView *content);
