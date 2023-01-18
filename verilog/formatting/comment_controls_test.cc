@@ -92,6 +92,7 @@ TEST(DisableFormattingRangesTest, FormatOnNoEffect) {
 TEST(DisableFormattingRangesTest, FormatOffDisableToEndEOLComment) {
   const DisableRangeTestData kTestCases[] = {
       {"xxx yyy;\n  // verilog_format: off\n"},  // range to EOF is empty
+      {"xxx yyy;\n  // verilog_format: off"},
       {"xxx yyy;\n  // verilog_format: off\n", {kOff, "\n"}},
       {"xxx yyy;\n  // verilog_format: off     \n", {kOff, "\n"}},
       {"xxx yyy;\n  // verilog_format: off\n", {kOff, "\n    "}},
