@@ -223,6 +223,10 @@ def error_classifier(src, line, state, project):
             r'ivtest\/(\w+\/)+.*(fail|error)\w*\.\w+',
             line):
         err.category = 'test-designed-to-fail'
+    if 'rsd' in project and re.search(
+            r'"Error!"',
+            line):
+        err.category = 'hit-preprocessor-failsafe'
     return err, state
 
 
@@ -433,7 +437,9 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         '\n  -Related to misc. preprocessor: ',
         error_types['misc-preprocessor-related'],
         '\n  -Standalone header: ',
-        error_types['standalone-header']
+        error_types['standalone-header'],
+        '\n  -Hit preprocessor failsafe condition:',
+        error_types['hit-preprocessor-failsafe']
     )
 
     # check if the output is sane
