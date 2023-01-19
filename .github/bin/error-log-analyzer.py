@@ -64,6 +64,14 @@ eg. a syntax error after an unresolved macro
  - `standalone-header`: Errors that occured while parsing a header file, that
 really should not be parsed outside of its context where
 it is included
+ - `hit-preprocessor-failsafe`: During parsing a preprocessor-based
+`ifdef/elseif/else` decision tree a branch was selected that fails on
+purpose (present in rsd)
+ - `likely-unhandled-macro-call`: Above the syntax error there was a macro call
+that likely contained additional needed tokens that are not present now
+and the syntax is technically invalid.
+- `related-to-likely-unhandled-macro-call`: Syntax errors that occur after an
+unhandled macro was present near a syntax error
 """
 
 
@@ -87,6 +95,7 @@ class State(Enum):
     MODULE_DEFINE = 1,
     SLANG_VERIFIED = 2,
     MISC_PREPROCESSOR = 3
+    MACRO_CALL_SYNTAX = 4
 
 
 # structure that contains the information about a particular error
@@ -209,6 +218,10 @@ def error_classifier(src, line, state, project):
             "syntax error at token",
             line):
         err.category = 'caused-by-macro-call-in-module-params'
+    elif state == State.MODULE_DEFINE and re.search(
+            "syntax error at token",
+            line):
+        err.category = 'caused-by-macro-call-in-module-params'
     # usually the syntax error related to the macro-call-in-module-params
     # problem end at an endmodule token - change the state back to
     # default when it is detected
@@ -216,6 +229,10 @@ def error_classifier(src, line, state, project):
             "syntax error at token \"endmodule\"",
             line):
         state = State.NORMAL
+    if state == State.MACRO_CALL_SYNTAX and re.search(
+            "syntax error at token",
+            line):
+        err.category = 'related-to-likely-unhandled-macro-call'
     # see if in ivtest - a project with some files having intentional
     # errors for testing purposes - the presence of an error is indicated
     # in the file name
@@ -227,6 +244,13 @@ def error_classifier(src, line, state, project):
             r'"Error!"',
             line):
         err.category = 'hit-preprocessor-failsafe'
+    if err.category == 'undefined' and \
+            re.search("syntax error at token", line) and \
+            re.search(
+                r'`(?:(?!include|define|undef|ifdef|ifndef).)+',
+                '\n'.join(src[max(err.line_number-2, 0):err.line_number])):
+        err.category = 'likely-unhandled-macro-call'
+        state = State.MACRO_CALL_SYNTAX
     return err, state
 
 
@@ -439,7 +463,11 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         '\n  -Standalone header: ',
         error_types['standalone-header'],
         '\n  -Hit preprocessor failsafe condition:',
-        error_types['hit-preprocessor-failsafe']
+        error_types['hit-preprocessor-failsafe'],
+        '\n  -Found a likely unhandled macro call:',
+        error_types['likely-unhandled-macro-call'],
+        '\n  -Related to likely unhandled macro call:',
+        error_types['related-to-likely-unhandled-macro-call'],
     )
 
     # check if the output is sane
@@ -450,6 +478,8 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
         error_types['slang-verified-error'] > 0
     assert error_types['misc-preprocessor-related'] == 0 or \
         error_types['misc-preprocessor-related'] > 0
+    assert error_types['related-to-likely-unhandled-macro-call'] == 0 or \
+        error_types['likely-unhandled-macro-call'] > 0
 
 
 # Output the slang version string to the log
