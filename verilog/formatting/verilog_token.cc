@@ -498,6 +498,7 @@ static const absl::node_hash_map<verilog_tokentype, FTT>& FormatTokenTypeMap() {
       // string_literal
       {verilog_tokentype::TK_StringLiteral, FTT::string_literal},
       {verilog_tokentype::TK_EvalStringLiteral, FTT::string_literal},
+      {verilog_tokentype::TK_AngleBracketInclude, FTT::string_literal},
       {verilog_tokentype::TK_FILEPATH, FTT::string_literal},
 
       // unary operators
