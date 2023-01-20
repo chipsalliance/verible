@@ -25,13 +25,6 @@ using namespace nlohmann;
 
 class VerilogLanguageServerTest : public ::testing::Test {
  public:
-  // Wraps request for the Language Server in RPC header
-  void SetRequest(absl::string_view request) {
-    request_stream_.clear();
-    request_stream_.str(
-        absl::StrCat("Content-Length: ", request.size(), "\r\n\r\n", request));
-  }
-
   // Sends initialize request from client mock to the Language Server.
   // It does not parse the response nor fetch it in any way (for other
   // tests to check e.g. server/client capabilities).
@@ -43,23 +36,12 @@ class VerilogLanguageServerTest : public ::testing::Test {
     return ServerStep();
   }
 
-  // Performs single VerilogLanguageServer step, fetching latest request
-  absl::Status ServerStep() {
-    return server_->Step([this](char *message, int size) -> int {
-      request_stream_.read(message, size);
-      return request_stream_.gcount();
-    });
-  }
-
   // Runs SetRequest and ServerStep, returning the status from the
   // Language Server
   absl::Status SendRequest(absl::string_view request) {
     SetRequest(request);
     return ServerStep();
   }
-
-  // Returns pointer to the VerilogLanguageServer
-  const VerilogLanguageServer *Server() { return server_.get(); }
 
   // Returns the latest responses from the Language Server
   std::string GetResponse() {
@@ -73,6 +55,21 @@ class VerilogLanguageServerTest : public ::testing::Test {
   std::string GetInitializeResponse() { return initialize_response_; }
 
  private:
+  // Wraps request for the Language Server in RPC header
+  void SetRequest(absl::string_view request) {
+    request_stream_.clear();
+    request_stream_.str(
+        absl::StrCat("Content-Length: ", request.size(), "\r\n\r\n", request));
+  }
+
+  // Performs single VerilogLanguageServer step, fetching latest request
+  absl::Status ServerStep() {
+    return server_->Step([this](char *message, int size) -> int {
+      request_stream_.read(message, size);
+      return request_stream_.gcount();
+    });
+  }
+
   // Sets up the testing environment - creates Language Server object and
   // sends textDocument/initialize request.
   // It stores the response in initialize_response field for further processing
