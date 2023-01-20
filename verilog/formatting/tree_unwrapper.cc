@@ -2256,8 +2256,9 @@ class MacroCallReshaper {
     l_paren_ = &paren_group_->Children().front();
     if (argument_list_) {
       argument_list_ = NextSibling(*l_paren_);
-      r_paren_ = r_paren_is_in_arg_list ? &argument_list_->Children().back()
-                                        : NextSibling(*argument_list_);
+      r_paren_ = r_paren_is_in_arg_list && !argument_list_->Children().empty()
+                     ? &argument_list_->Children().back()
+                     : NextSibling(*argument_list_);
     } else {
       r_paren_ = &paren_group_->Children().back();
     }
