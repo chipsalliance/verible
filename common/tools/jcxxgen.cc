@@ -290,7 +290,8 @@ void GenerateCode(const std::string &filename,
       std::string access_deref = access_call + ".";
       if (p.is_optional) {
         fprintf(out,
-                "%*sif (auto found = j.find(\"%s\"); found != j.end()) {\n",
+                "%*sif (auto found = j.find(\"%s\"); found != j.end() && "
+                "!found->is_null()) {\n",
                 indent, "", p.name.c_str());
         indent += 4;
         fprintf(out, "%*shas_%s = true;\n", indent, "", p.name.c_str());
