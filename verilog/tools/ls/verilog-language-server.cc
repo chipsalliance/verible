@@ -173,6 +173,8 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     ConfigureProject(path);
   } else if (!p.rootPath.empty()) {
     ConfigureProject(p.rootPath);
+  } else {
+    LOG(WARNING) << "Could not configure Verilog Project root";
   }
   return GetCapabilities();
 }

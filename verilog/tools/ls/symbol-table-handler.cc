@@ -187,8 +187,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     LOG(ERROR) << "Could not convert URI " << params.textDocument.uri
                << " to filesystem path." << std::endl;
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
@@ -197,8 +196,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   if (!tracker) {
     LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   const verilog::ParsedBuffer *parsedbuffer = tracker->current();
@@ -206,8 +204,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     LOG(ERROR) << "Buffer not found among opened buffers:  "
                << params.textDocument.uri;
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   const verible::LineColumn cursor{params.position.line,
@@ -220,8 +217,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   if (!reffile) {
     LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
 
@@ -231,8 +227,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   if (!node) {
     LOG(INFO) << "Symbol " << symbol << " not found in symbol table:  " << node;
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   // TODO add iterating over multiple definitions?
@@ -241,8 +236,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   if (!symbolinfo.file_origin) {
     LOG(ERROR) << "Origin file not available";
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   location.uri = PathToLSPUri(symbolinfo.file_origin->ResolvedPath());
@@ -250,8 +244,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   if (!textstructure) {
     LOG(ERROR) << "Origin file's text structure is not parsed";
     LOG(INFO) << "textDocument/definition processing time:  "
-              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-              << "ms";
+              << (absl::Now() - finddefinition_start);
     return {};
   }
   verible::LineColumnRange symbollocation =
@@ -261,8 +254,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   location.range.end = {.line = symbollocation.end.line,
                         .character = symbollocation.end.column};
   LOG(INFO) << "textDocument/definition processing time:  "
-            << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
-            << "ms";
+            << (absl::Now() - finddefinition_start);
   return {location};
 }
 
