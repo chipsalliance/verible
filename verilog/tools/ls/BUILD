@@ -84,10 +84,14 @@ cc_library(
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
     deps = [
-        "//verilog/analysis:symbol_table",
-        "//common/lsp:lsp-protocol",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "//common/lsp:lsp-protocol",
+        "//common/util:file_util",
+        "//verilog/analysis:symbol_table",
+        "//verilog/analysis:verilog_filelist",
+        "//verilog/analysis:verilog_project",
         ":lsp-parse-buffer"
     ],
 )
