@@ -41,42 +41,45 @@ std::string PathToLSPUri(absl::string_view path) {
 
 void SymbolTableHandler::SetProject(
     const std::shared_ptr<VerilogProject> &project) {
-  currproject = project;
+  curr_project_ = project;
   ResetSymbolTable();
-  LoadProjectFileList(currproject->TranslationUnitRoot());
+  if (curr_project_) LoadProjectFileList(curr_project_->TranslationUnitRoot());
 }
 
 void SymbolTableHandler::ResetSymbolTable() {
-  checkedfiles.clear();
-  symboltable = std::make_unique<SymbolTable>(currproject.get());
+  symbol_table_ = std::make_unique<SymbolTable>(curr_project_.get());
 }
 
-void SymbolTableHandler::BuildSymbolTableFor(const VerilogSourceFile &file) {
-  auto result = BuildSymbolTable(file, symboltable.get(), currproject.get());
+std::vector<absl::Status> SymbolTableHandler::BuildSymbolTableFor(
+    const VerilogSourceFile &file) {
+  return BuildSymbolTable(file, symbol_table_.get(), curr_project_.get());
 }
 
-void SymbolTableHandler::BuildProjectSymbolTable() {
+std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   ResetSymbolTable();
-  if (!currproject) {
-    return;
+  if (!curr_project_) {
+    return {absl::UnavailableError("VerilogProject is not set")};
   }
   LOG(INFO) << "Parsing project files...";
   std::vector<absl::Status> buildstatus;
-  symboltable->Build(&buildstatus);
+  symbol_table_->Build(&buildstatus);
   for (const auto &diagnostic : buildstatus) {
     LOG(WARNING) << diagnostic.message();
   }
   std::vector<absl::Status> resolvestatus;
-  symboltable->Resolve(&resolvestatus);
+  symbol_table_->Resolve(&resolvestatus);
   for (const auto &diagnostic : resolvestatus) {
     LOG(WARNING) << diagnostic.message();
   }
+  buildstatus.insert(buildstatus.end(), resolvestatus.begin(),
+                     resolvestatus.end());
   files_dirty_ = false;
+  return buildstatus;
 }
 
 void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   LOG(INFO) << __FUNCTION__;
-  if (!currproject) return;
+  if (!curr_project_) return;
   // search for FileList file up the directory hierarchy
   FileList filelist;
   std::string projectpath;
@@ -96,14 +99,18 @@ void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
                  << status;
     return;
   }
+  // add directory containing filelist to includes
+  // TODO (glatosinski): should we do this?
+  curr_project_->AddIncludePath(verible::file::Dirname(projectpath));
+  LOG(INFO) << "Adding \"" << projectpath << "\" to include directories";
   // update include directories in project
   for (const auto &incdir : filelist.preprocessing.include_dirs) {
     LOG(INFO) << "Adding include path:  " << incdir;
-    currproject->AddIncludePath(incdir);
+    curr_project_->AddIncludePath(incdir);
   }
   // add files from file list to the project
   for (auto &incfile : filelist.file_paths) {
-    auto incsource = currproject->OpenIncludedFile(incfile);
+    auto incsource = curr_project_->OpenIncludedFile(incfile);
     if (!incsource.ok()) {
       LOG(WARNING) << "File included in " << projectpath
                    << " not found:  " << incfile << ":  " << incsource.status();
@@ -172,10 +179,17 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
               << "ms";
     return {};
   }
-  std::string relativepath = currproject->GetRelativePathToSource(filepath);
-  const verilog::ParsedBuffer *parsedbuffer =
-      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri)
-          ->current();
+  std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
+  const verilog::BufferTracker *tracker =
+      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
+  if (!tracker) {
+    LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
+    LOG(INFO) << "textDocument/definition processing time:  "
+              << absl::ToInt64Milliseconds(absl::Now() - finddefinition_start)
+              << "ms";
+    return {};
+  }
+  const verilog::ParsedBuffer *parsedbuffer = tracker->current();
   if (!parsedbuffer) {
     LOG(ERROR) << "Buffer not found among opened buffers:  "
                << params.textDocument.uri;
@@ -190,7 +204,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
   auto symbol = cursor_token.text();
-  auto reffile = currproject->LookupRegisteredFile(relativepath);
+  auto reffile = curr_project_->LookupRegisteredFile(relativepath);
   if (!reffile) {
     LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
     LOG(INFO) << "textDocument/definition processing time:  "
@@ -199,7 +213,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     return {};
   }
 
-  auto &root = symboltable->Root();
+  auto &root = symbol_table_->Root();
 
   auto node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) {
@@ -243,7 +257,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
 absl::Status SymbolTableHandler::UpdateFileContent(
     absl::string_view path, const verible::TextStructureView *content) {
   files_dirty_ = true;
-  return currproject->UpdateFileContents(path, content);
+  return curr_project_->UpdateFileContents(path, content);
 }
 
 };  // namespace verilog

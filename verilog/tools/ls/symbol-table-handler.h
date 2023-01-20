@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
 #include "verilog/analysis/symbol_table.h"
@@ -54,17 +53,17 @@ class SymbolTableHandler {
   void SetProject(const std::shared_ptr<VerilogProject> &project);
 
   // Returns the current project.
-  std::shared_ptr<VerilogProject> mutable_project() { return currproject; }
+  std::shared_ptr<VerilogProject> mutable_project() { return curr_project_; }
 
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void ResetSymbolTable();
 
   // Fills the symbol table for a given verilog source file.
-  void BuildSymbolTableFor(const VerilogSourceFile &file);
+  std::vector<absl::Status> BuildSymbolTableFor(const VerilogSourceFile &file);
 
   // Creates a symbol table for entire project
-  void BuildProjectSymbolTable();
+  std::vector<absl::Status> BuildProjectSymbolTable();
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
@@ -80,12 +79,9 @@ class SymbolTableHandler {
   // tells that symbol table should be rebuilt due to changes in files
   bool files_dirty_ = true;
   // current VerilogProject for which the symbol table is created
-  std::shared_ptr<VerilogProject> currproject;
+  std::shared_ptr<VerilogProject> curr_project_;
   // symbol table structure
-  std::unique_ptr<SymbolTable> symboltable;
-  // set of checked files to prevent unnecessary calls for creating
-  // a symbol table for already seen files
-  absl::flat_hash_set<std::string> checkedfiles;
+  std::unique_ptr<SymbolTable> symbol_table_;
 
   // Scans the symbol table tree to find a given symbol.
   // When succeds, returns the pointer to table node with the symbol, otherwise
