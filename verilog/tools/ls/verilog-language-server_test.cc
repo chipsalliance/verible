@@ -14,6 +14,8 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include "common/lsp/lsp-protocol-enums.h"
+#include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
 
 #undef ASSERT_OK
@@ -210,33 +212,74 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   EXPECT_EQ(fix["params"]["diagnostics"].size(), 0);
 }
 
-// Tests textDocument/documentSymbol request support
+// Tests textDocument/documentSymbol request support; expect document outline.
 TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestTest) {
-  // Create file and make sure no diagnostic errors were reported
-  const std::string mini_module = DidOpenRequest("file://mini.sv", R"(
-module mini();
+  // Create file, absorb diagnostics
+  const std::string mini_module = DidOpenRequest("file://mini_pkg.sv", R"(
+package mini;
+
+function static void fun_foo();
+endfunction
+
+class some_class;
+   function void member();
+   endfunction
+endclass
+endpackage
+
+module mini(input clk);
+  always@(posedge clk) begin : labelled_block
+  end
 endmodule
 )");
+
   ASSERT_OK(SendRequest(mini_module));
 
+  // Expect to receive diagnostics right away. Ignore.
   const json diagnostics = json::parse(GetResponse());
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  EXPECT_EQ(diagnostics["params"]["uri"], "file://mini.sv")
-      << "Diagnostics for invalid file";
-  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
-      << "The test file has errors";
 
   // Request a document symbol
   const absl::string_view document_symbol_request =
-      R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
+      R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini_pkg.sv"}}})";
   ASSERT_OK(SendRequest(document_symbol_request));
 
+  // TODO: by default, the Kate workarounds are active, so
+  // Module -> Method and Namespace -> Class. Remove by default.
   const json document_symbol = json::parse(GetResponse());
   EXPECT_EQ(document_symbol["id"], 11);
-  EXPECT_EQ(document_symbol["result"].size(), 1);
-  EXPECT_EQ(document_symbol["result"][0]["kind"], 6);
-  EXPECT_EQ(document_symbol["result"][0]["name"], "mini");
+
+  std::vector<verible::lsp::DocumentSymbol> toplevel =
+      document_symbol["result"];
+  EXPECT_EQ(toplevel.size(), 2);
+
+  EXPECT_EQ(toplevel[0].kind, verible::lsp::SymbolKind::Package);
+  EXPECT_EQ(toplevel[0].name, "mini");
+
+  EXPECT_EQ(toplevel[1].kind, verible::lsp::SymbolKind::Method);  // module.
+  EXPECT_EQ(toplevel[1].name, "mini");
+
+  // Descend tree into package and look at expected nested symbols there.
+  std::vector<verible::lsp::DocumentSymbol> package = toplevel[0].children;
+  EXPECT_EQ(package.size(), 2);
+  EXPECT_EQ(package[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(package[0].name, "fun_foo");
+
+  EXPECT_EQ(package[1].kind, verible::lsp::SymbolKind::Class);
+  EXPECT_EQ(package[1].name, "some_class");
+
+  // Descend tree into class and find nested function.
+  std::vector<verible::lsp::DocumentSymbol> class_block = package[1].children;
+  EXPECT_EQ(class_block.size(), 1);
+  EXPECT_EQ(class_block[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(class_block[0].name, "member");
+
+  // Descent tree into module and find labelled block.
+  std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
+  EXPECT_EQ(module.size(), 1);
+  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::Class);  // namespace
+  EXPECT_EQ(module[0].name, "labelled_block");
 }
 
 // Tests closing of the file in the LS context and checks if the LS

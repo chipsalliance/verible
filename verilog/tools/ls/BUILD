@@ -11,7 +11,7 @@ package(
         "//:__subpackages__",
     ],
 )
- 
+
 cc_library(
     name = "autoexpand",
     srcs = ["autoexpand.cc"],
@@ -27,7 +27,7 @@ cc_library(
         "//verilog/formatting:formatter",
     ],
 )
- 
+
 cc_library(
     name = "lsp-parse-buffer",
     srcs = ["lsp-parse-buffer.cc"],
@@ -101,8 +101,10 @@ cc_test(
     srcs = ["verilog-language-server_test.cc"],
     deps = [
         ":verilog-language-server",
+        "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-protocol-enums",
         "@com_google_googletest//:gtest_main",
-    ]
+    ],
 )
 
 cc_binary(
