@@ -88,6 +88,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "//common/lsp:lsp-protocol",
+        "//common/strings:line_column_map",
         "//common/util:file_util",
         "//verilog/analysis:symbol_table",
         "//verilog/analysis:verilog_filelist",
