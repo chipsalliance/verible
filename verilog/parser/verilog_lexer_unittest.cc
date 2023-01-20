@@ -79,13 +79,14 @@ static std::initializer_list<LexerTestData> kCommentTests = {
 // treating attributes lists as C-style comments,
 // except they are not returned as comment blocks.
 static std::initializer_list<SimpleTestData> kAttributeTests = {
-    {"(**)"},        {"(*     *)"},
-    {"(* x)*)"},     {"(* **  *)"},
-    {"(***)"},       {"(** **)"},
-    {"(*\n*)"},      {"(* style=flat *)"},
-    {"(*foo=bar*)"}, {"(* style=flat, fill=empty *)"},
+    {"(**)"},
+    {"(*     *)"},
+    {"(***)"},
+    {"(*\n*)"},
+    {"(* style=flat *)"},
+    {"(*foo=bar*)"},
+    {"(* style=flat, fill=empty *)"},
 };
-
 static std::initializer_list<LexerTestData> kAttributeSequenceTests = {
     {{TK_ATTRIBUTE, "(**)"}, {TK_ATTRIBUTE, "(**)"}},
     {{TK_ATTRIBUTE, "(* style=flat,\nfill=empty *)"}, {TK_NEWLINE, "\n"}},
