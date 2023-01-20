@@ -168,7 +168,19 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const absl::Time finddefinition_start = absl::Now();
   if (files_dirty_) {
-    BuildProjectSymbolTable();
+    std::vector<absl::Status> diagnostics = BuildProjectSymbolTable();
+    bool success = true;
+    for (const auto &diagnostic : diagnostics) {
+      if (!diagnostic.ok())
+        LOG(ERROR) << "Error on textDocument/definition:  " << diagnostic;
+      success &= diagnostic.ok();
+    }
+    if (!success) {
+      LOG(ERROR) << "Could not find definition due to symbol table errors";
+      LOG(INFO) << "textDocument/definition processing time:  "
+                << (absl::Now() - finddefinition_start);
+      return {};
+    }
   }
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {
