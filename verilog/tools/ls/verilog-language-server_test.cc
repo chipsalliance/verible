@@ -19,75 +19,90 @@
 namespace verilog {
 namespace {
 
+// TODO (glatosinski) for JSON messages use types defined in lsp-protocol.h
+
 using namespace nlohmann;
 
 class VerilogLanguageServerTest : public ::testing::Test {
  public:
   // Wraps request for the Language Server in RPC header
-  void Request(absl::string_view request) {
-    requeststream.clear();
-    requeststream.str(
+  void SetRequest(absl::string_view request) {
+    request_stream_.clear();
+    request_stream_.str(
         absl::StrCat("Content-Length: ", request.size(), "\r\n\r\n", request));
   }
 
   // Sends initialize request from client mock to the Language Server.
   // It does not parse the response nor fetch it in any way (for other
   // tests to check e.g. server/client capabilities).
-  absl::Status InitializeCommunication(const VerilogLanguageServer *server) {
+  absl::Status InitializeCommunication() {
     const absl::string_view initialize =
         R"({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": null })";
 
-    Request(initialize);
+    SetRequest(initialize);
     return ServerStep();
   }
 
   // Performs single VerilogLanguageServer step, fetching latest request
   absl::Status ServerStep() {
-    return server->Step([this](char *message, int size) -> int {
-      requeststream.read(message, size);
-      return requeststream.gcount();
+    return server_->Step([this](char *message, int size) -> int {
+      request_stream_.read(message, size);
+      return request_stream_.gcount();
     });
   }
 
-  // Returns pointer to the VerilogLanguageServer
-  const VerilogLanguageServer *Server() { return server.get(); }
-
-  // Returns the latest responses from the Language Server
-  void Response(std::string *response) {
-    *response = responsestream.str();
-    responsestream.str("");
-    responsestream.clear();
+  // Runs SetRequest and ServerStep, returning the status from the
+  // Language Server
+  absl::Status SendRequest(absl::string_view request) {
+    SetRequest(request);
+    return ServerStep();
   }
 
+  // Returns pointer to the VerilogLanguageServer
+  const VerilogLanguageServer *Server() { return server_.get(); }
+
+  // Returns the latest responses from the Language Server
+  std::string GetResponse() {
+    std::string response = response_stream_.str();
+    response_stream_.str("");
+    response_stream_.clear();
+    return response;
+  }
+
+  // Returns response to textDocument/initialize request
+  std::string GetInitializeResponse() { return initialize_response_; }
+
+ private:
   // Sets up the testing environment - creates Language Server object and
   // sends textDocument/initialize request.
   // It stores the response in initialize_response field for further processing
   void SetUp() override {
-    server = std::make_unique<VerilogLanguageServer>(
-        [this](absl::string_view response) { responsestream << response; });
+    server_ = std::make_unique<VerilogLanguageServer>(
+        [this](absl::string_view response) { response_stream_ << response; });
 
-    absl::Status status = InitializeCommunication(Server());
+    absl::Status status = InitializeCommunication();
     EXPECT_TRUE(status.ok()) << "Failed to read request:  " << status;
-    Response(&initialize_response);
+    initialize_response_ = GetResponse();
   }
 
   // Currently tested instance of VerilogLanguageServer
-  std::unique_ptr<VerilogLanguageServer> server;
+  std::unique_ptr<VerilogLanguageServer> server_;
 
   // Response from textDocument/initialize request - left for checking e.g
   // server capabilities
-  std::string initialize_response;
+  std::string initialize_response_;
 
   // Stream for passing requests to the Language Server
-  std::stringstream requeststream;
+  std::stringstream request_stream_;
 
   // Stream for receiving responses from the Language Server
-  std::stringstream responsestream;
+  std::stringstream response_stream_;
 };
 
 // Verifies textDocument/initialize request handling
 TEST_F(VerilogLanguageServerTest, InitializeRequest) {
-  json response = json::parse(initialize_response);
+  std::string response_str = GetInitializeResponse();
+  json response = json::parse(response_str);
 
   ASSERT_EQ(response["id"], 1) << "Response message ID invalid";
   ASSERT_EQ(response["result"]["serverInfo"]["name"],
@@ -106,12 +121,10 @@ std::string DidOpenRequest(absl::string_view name, absl::string_view content) {
 TEST_F(VerilogLanguageServerTest, SyntaxError) {
   const std::string wrong_file =
       DidOpenRequest("file://syntaxerror.sv", R"(brokenfile\n)");
-  Request(wrong_file);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(wrong_file);
   ASSERT_TRUE(status.ok()) << "Failed to process file with syntax error:  "
                            << status;
-  std::string response;
-  Response(&response);
+  std::string response = GetResponse();
   json response_parsed = json::parse(response);
   ASSERT_EQ(response_parsed["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
@@ -131,12 +144,10 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
       }
     }
   )";
-  Request(diagnostic_request);
-  status = ServerStep();
+  status = SendRequest(diagnostic_request);
   ASSERT_TRUE(status.ok()) << "Failed to process file with syntax error:  "
                            << status;
-  std::string request_response;
-  Response(&request_response);
+  std::string request_response = GetResponse();
   response_parsed = json::parse(request_response);
   ASSERT_EQ(response_parsed["id"], 2) << "Invalid id";
   ASSERT_EQ(response_parsed["result"]["kind"], "full")
@@ -150,12 +161,10 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
 TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   const std::string lint_error =
       DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule)");
-  Request(lint_error);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(lint_error);
   ASSERT_TRUE(status.ok()) << "Failed to process file with linting error:  "
                            << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
   json diagnostics_parsed = json::parse(diagnostics);
 
   // Firstly, check correctness of diagnostics
@@ -177,11 +186,9 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   // Secondly, request a code action at the EOF error message position
   const absl::string_view action_request =
       R"({"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":1,"character":9},"end":{"line":1,"character":9}}}})";
-  Request(action_request);
-  status = ServerStep();
+  status = SendRequest(action_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string action_response;
-  Response(&action_response);
+  std::string action_response = GetResponse();
   json action_parsed = json::parse(action_response);
   ASSERT_EQ(action_parsed["id"], 10);
   ASSERT_EQ(action_parsed["result"][0]["edit"]["changes"]["file://mini.sv"][0]
@@ -190,11 +197,9 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   // Thirdly, apply change suggested by a code action and check diagnostics
   const absl::string_view fix_request =
       R"({"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}})";
-  Request(fix_request);
-  status = ServerStep();
+  status = SendRequest(fix_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string fix_diagnostics;
-  Response(&fix_diagnostics);
+  std::string fix_diagnostics = GetResponse();
   json fix_parsed = json::parse(fix_diagnostics);
   ASSERT_EQ(fix_parsed["method"], "textDocument/publishDiagnostics");
   ASSERT_EQ(fix_parsed["params"]["uri"], "file://mini.sv");
@@ -206,11 +211,9 @@ TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestTest) {
   // Create file and make sure no diagnostic errors were reported
   const std::string mini_module =
       DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   json diagnostics_parsed = json::parse(diagnostics);
 
@@ -223,11 +226,9 @@ TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestTest) {
   // Request a document symbol
   const absl::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
-  Request(document_symbol_request);
-  status = ServerStep();
+  status = SendRequest(document_symbol_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string document_symbol_response;
-  Response(&document_symbol_response);
+  std::string document_symbol_response = GetResponse();
 
   json document_symbol_parsed = json::parse(document_symbol_response);
 
@@ -244,11 +245,9 @@ TEST_F(VerilogLanguageServerTest,
        DocumentClosingFollowedByDocumentSymbolRequest) {
   const std::string mini_module =
       DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   // Close the file from the Language Server perspective
   const absl::string_view closing_request = R"(
@@ -261,19 +260,16 @@ TEST_F(VerilogLanguageServerTest,
         }
       }
     })";
-  Request(closing_request);
-  status = ServerStep();
+  status = SendRequest(closing_request);
   ASSERT_TRUE(status.ok()) << status;
 
   // Try to request document symbol for closed file (server should return empty
   // response gracefully)
   const absl::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":13, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
-  Request(document_symbol_request);
-  status = ServerStep();
+  status = SendRequest(document_symbol_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string document_symbol_response;
-  Response(&document_symbol_response);
+  std::string document_symbol_response = GetResponse();
 
   json document_symbol_parsed = json::parse(document_symbol_response);
 
@@ -286,11 +282,9 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
       "file://sym.sv", R"(module sym();\nassign a=1;assign b=a+1;endmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   json diagnostics_parsed = json::parse(diagnostics);
 
@@ -302,12 +296,10 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
       << "The test file has errors";
   const absl::string_view highlight_request1 =
       R"({"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}})";
-  Request(highlight_request1);
-  status = ServerStep();
+  status = SendRequest(highlight_request1);
   ASSERT_TRUE(status.ok()) << status;
 
-  std::string highlight_response1;
-  Response(&highlight_response1);
+  std::string highlight_response1 = GetResponse();
 
   json highlight_response1_parsed = json::parse(highlight_response1);
   ASSERT_EQ(highlight_response1_parsed["id"], 20);
@@ -323,12 +315,10 @@ TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
 
   const absl::string_view highlight_request2 =
       R"({"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}})";
-  Request(highlight_request2);
-  status = ServerStep();
+  status = SendRequest(highlight_request2);
   ASSERT_TRUE(status.ok()) << status;
 
-  std::string highlight_response2;
-  Response(&highlight_response2);
+  std::string highlight_response2 = GetResponse();
 
   json highlight_response2_parsed = json::parse(highlight_response2);
   ASSERT_EQ(highlight_response2_parsed["id"], 21);
@@ -392,11 +382,9 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
       "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   json diagnostics_parsed = json::parse(diagnostics);
 
@@ -415,11 +403,9 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
 
   for (const auto &params : formatting_params) {
     std::string request = FormattingRequest("file://fmt.sv", params);
-    Request(request);
-    status = ServerStep();
+    status = SendRequest(request);
     ASSERT_TRUE(status.ok()) << status;
-    std::string response;
-    Response(&response);
+    std::string response = GetResponse();
 
     json response_parsed = json::parse(response);
     ASSERT_EQ(response_parsed["id"], params.id) << "Invalid id";
@@ -448,11 +434,9 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
       "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   json diagnostics_parsed = json::parse(diagnostics);
 
@@ -466,11 +450,9 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
   const absl::string_view formatting_request =
       R"({"jsonrpc":"2.0", "id":34, "method":"textDocument/formatting","params":{"textDocument":{"uri":"file://fmt.sv"}}})";
 
-  Request(formatting_request);
-  status = ServerStep();
+  status = SendRequest(formatting_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string response;
-  Response(&response);
+  std::string response = GetResponse();
 
   json response_parsed = json::parse(response);
   ASSERT_EQ(response_parsed["id"], 34);
@@ -487,20 +469,16 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const std::string mini_module = DidOpenRequest(
       "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  Request(mini_module);
-  absl::Status status = ServerStep();
+  absl::Status status = SendRequest(mini_module);
   ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics;
-  Response(&diagnostics);
+  std::string diagnostics = GetResponse();
 
   const absl::string_view formatting_request =
       R"({"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}})";
 
-  Request(formatting_request);
-  status = ServerStep();
+  status = SendRequest(formatting_request);
   ASSERT_TRUE(status.ok()) << status;
-  std::string response;
-  Response(&response);
+  std::string response = GetResponse();
 
   json response_parsed = json::parse(response);
 
