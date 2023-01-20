@@ -96,6 +96,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "verilog-language-server_test",
+    srcs = ["verilog-language-server_test.cc"],
+    deps = [
+        ":verilog-language-server",
+        "@com_google_googletest//:gtest_main",
+    ]
+)
+
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
