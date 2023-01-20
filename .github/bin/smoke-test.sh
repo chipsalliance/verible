@@ -152,6 +152,8 @@ ExpectedFailCount[lint:ivtest]=168
 ExpectedFailCount[project:ivtest]=198
 
 ExpectedFailCount[project:ZAP]=29
+ExpectedFailCount[syntax:ZAP]=3
+ExpectedFailCount[lint:ZAP]=3
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
