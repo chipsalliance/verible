@@ -97,6 +97,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "symbol-table-handler_test",
+    srcs = ["symbol-table-handler_test.cc"],
+    deps = [
+        ":symbol-table-handler",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "verilog-language-server",
     srcs = ["verilog-language-server.cc"],
