@@ -93,7 +93,7 @@ void VerilogLanguageServer::SetRequestHandlers() {
       "textDocument/codeAction",
       [this](const verible::lsp::CodeActionParams &p) {
         return verilog::GenerateCodeActions(
-            symbol_table_handler_,
+            &symbol_table_handler_,
             parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
 

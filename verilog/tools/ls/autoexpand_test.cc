@@ -30,7 +30,7 @@ using verible::lsp::TextEdit;
 // Generate text edits using the given function and test if they had the desired
 // effect
 void TestTextEdits(const std::function<std::vector<TextEdit>(
-                       SymbolTableHandler&, BufferTracker*)>& edit_fun,
+                       SymbolTableHandler*, BufferTracker*)>& edit_fun,
                    const std::vector<absl::string_view>& project_file_contents,
                    const absl::string_view text_before,
                    const absl::string_view text_golden,
@@ -45,7 +45,7 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
       std::make_shared<VerilogProject>(".", std::vector<std::string>());
   size_t i = 0;
   for (const absl::string_view file_contents : project_file_contents) {
-    auto filename = absl::StrCat("<<project-file-", std::to_string(i), ">>");
+    auto filename = absl::StrCat("<<project-file-", i, ">>");
     proj->AddVirtualFile(filename, file_contents);
     i++;
   }
@@ -57,7 +57,7 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
                                          &tracker.current()->parser().Data());
   symbol_table_handler.BuildProjectSymbolTable();
   // Run the tested edit function
-  std::vector<TextEdit> edits = edit_fun(symbol_table_handler, &tracker);
+  std::vector<TextEdit> edits = edit_fun(&symbol_table_handler, &tracker);
   // Sort the TextEdits from the last one in the buffer to the first one. This
   // way we can apply them one by one and have the following ones still be
   // valid.
@@ -86,7 +86,7 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
 
 // Same as above, without the project file parameter
 void TestTextEdits(const std::function<std::vector<TextEdit>(
-                       SymbolTableHandler&, BufferTracker*)>& edit_fun,
+                       SymbolTableHandler*, BufferTracker*)>& edit_fun,
                    const absl::string_view text_before,
                    const absl::string_view text_golden,
                    const bool repeat = true) {
@@ -95,7 +95,7 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
 
 // Generate a specific code action and extract text edits from it
 std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
-    SymbolTableHandler& symbol_table_handler, BufferTracker* tracker,
+    SymbolTableHandler* symbol_table_handler, BufferTracker* tracker,
     Range range, absl::string_view title) {
   CodeActionParams p = {.textDocument = {tracker->current()->uri()},
                         .range = range};
@@ -377,6 +377,50 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTOINST_Missing) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module foo;
+  bar b(/*AUTOINST*/);
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOINST_Ambiguous) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+endmodule
+
+module bar(input i2, output o2);
+endmodule 
+
+module foo;
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+endmodule
+
+module bar(input i2, output o2);
+endmodule 
+
+module foo;
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    // Outputs
+    .o1(o1));
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTOINST_Chain) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
@@ -481,6 +525,313 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_TEMPLATE_Simple) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)
+     ); */
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+)",
+                R"(
+module foo;
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)
+     ); */
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(in_a),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(out_b));
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_SkipPreConnected) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)
+     ); */
+  bar b(.i1(input_1),
+    /*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+)",
+                R"(
+module foo;
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)
+     ); */
+  bar b(.i1(input_1),
+    /*AUTOINST*/
+    // Inputs
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(out_b));
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_MultipleMatches) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     quux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/);
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)",
+                R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     quux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/
+    // Inputs
+    .i1(in_a),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o2(out_b));
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(in_a),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(out_b));
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_Override) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/);
+
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(input_1),
+       .o2(output_2),
+       .i2(input_2),
+       .io(input_output),
+       .o1(output_1)); */
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)",
+                R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/
+    // Inputs
+    .i1(in_a),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o2(out_b));
+
+  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(input_1),
+       .o2(output_2),
+       .i2(input_2),
+       .io(input_output),
+       .o1(output_1)); */
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(input_1),
+    .i2(input_2),
+    // Inouts
+    .io(input_output),
+    // Outputs
+    .o1(output_1),
+    .o2(output_2));
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_Mismatch) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo;
+  /* quux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/);
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)",
+                R"(
+module foo;
+  /* quux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+       .i1(in_a),
+       .o2(out_b)); */
+  qux q(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o2(o2));
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(in_a),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(out_b));
+endmodule
+
+module bar;
+  input i1;
+  input i2;
+  inout io;
+  output o1;
+  output o2;
+endmodule
+
+module qux;
+  input i1;
+  inout io;
+  output o2;
+endmodule
+)");
+}
+
 TEST(Autoexpand, CodeActionExpandAll) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
@@ -537,19 +888,24 @@ endmodule
 
 TEST(Autoexpand, CodeActionExpandRange) {
   TestTextEdits(
-      [](SymbolTableHandler& symbol_table_handler, BufferTracker* tracker) {
+      [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
         return AutoExpandCodeActionToTextEdits(
             symbol_table_handler, tracker,
-            {.start = {.line = 0}, .end = {.line = 7}},
+            {.start = {.line = 0}, .end = {.line = 12}},
             "Expand all AUTOs in selected range");
       },
       R"(
 module foo(/*AUTOARG*/);
   input logic clk;
   input logic rst;
-  output logic o1;
-  output logic o2;
+  output logic out_a;
+  output logic out_b;
 
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE ".*" (
+       .o1(out_a),
+       .o2(out_b)
+     ); */
   bar b(/*AUTOINST*/);
 endmodule
 
@@ -565,20 +921,25 @@ module foo(/*AUTOARG*/
   // Inputs
   clk, rst,
   // Outputs
-  o1, o2
+  out_a, out_b
   );
   input logic clk;
   input logic rst;
-  output logic o1;
-  output logic o2;
+  output logic out_a;
+  output logic out_b;
 
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE ".*" (
+       .o1(out_a),
+       .o2(out_b)
+     ); */
   bar b(/*AUTOINST*/
     // Inputs
     .clk(clk),
     .rst(rst),
     // Outputs
-    .o1(o1),
-    .o2(o2));
+    .o1(out_a),
+    .o2(out_b));
 endmodule
 
 module bar(/*AUTOARG*/);

@@ -187,7 +187,7 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
 }
 
 std::vector<verible::lsp::CodeAction> GenerateCodeActions(
-    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker,
+    SymbolTableHandler *symbol_table_handler, const BufferTracker *tracker,
     const verible::lsp::CodeActionParams &p) {
   std::vector<verible::lsp::CodeAction> result;
 

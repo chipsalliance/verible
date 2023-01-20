@@ -16,8 +16,10 @@
 #include "verilog/tools/ls/autoexpand.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <regex>
 
+#include "absl/container/flat_hash_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/expression.h"
@@ -62,11 +64,26 @@ class AutoExpander {
     absl::string_view name;                   // Name of the port
   };
 
+  // Represents an AUTO_TEMPLATE
+  struct Template {
+    using Map = absl::flat_hash_map<absl::string_view, std::vector<Template>>;
+    using ConnectionMap =
+        absl::flat_hash_map<absl::string_view, absl::string_view>;
+
+    int64_t offset;  // Offset of the template in the source file
+    ConnectionMap
+        connections;  // Map of instance ports to connected module ports
+
+    // Retrieves the matching template from a typename -> template map
+    static const Template *from(const Map &templates, absl::string_view type_id,
+                                int64_t instance_offset);
+  };
+
   // Module information relevant to AUTO expansion
   class Module {
    public:
-    // Writes all port names to the output stream, under the specified heading
-    // comment
+    // Writes all port names that match the predicate to the output stream,
+    // under the specified heading comment
     void EmitPortDeclarations(
         std::ostream &output, absl::string_view indent,
         absl::string_view header,
@@ -74,10 +91,10 @@ class AutoExpander {
 
     // Writes port connections to all ports to the output stream, under the
     // specified heading comment
-    void EmitPortConnections(
-        std::ostream &output, absl::string_view indent,
-        absl::string_view header,
-        const std::function<bool(const Port &)> &pred) const;
+    void EmitPortConnections(std::ostream &output, absl::string_view indent,
+                             absl::string_view header,
+                             const std::function<bool(const Port &)> &pred,
+                             const Template *tmpl) const;
 
     // Gets ports from the header of the module
     void RetrieveModuleHeaderPorts(const Symbol &module);
@@ -94,11 +111,13 @@ class AutoExpander {
   };
 
   AutoExpander(const TextStructureView &text_structure,
-               SymbolTableHandler &symbol_table_handler)
+               SymbolTableHandler *symbol_table_handler)
       : text_structure_(text_structure),
         context_(text_structure.Contents()),
         symbol_table_handler(symbol_table_handler) {
     // Get the indentation from the format style
+    // TODO: Add a test that formats the file after AUTO expansion and checks
+    // that the output is the same
     FormatStyle format_style;
     InitializeFromFlags(&format_style);
     indent_ = std::string(format_style.indentation_spaces, ' ');
@@ -117,12 +136,16 @@ class AutoExpander {
   absl::flat_hash_set<absl::string_view> GetPortsConnectedBefore(
       const Symbol &instance, int offset) const;
 
+  // Gets all AUTO_TEMPLATEs from the given module
+  Template::Map GetAutoTemplates(const Symbol &module) const;
+
   // Expands AUTOARG for the given module
   std::optional<TextEdit> ExpandAutoarg(const Symbol &module) const;
 
   // Expands AUTOINST for the given module instance
   std::optional<TextEdit> ExpandAutoinst(const Symbol &instance,
-                                         absl::string_view type_id) const;
+                                         absl::string_view type_id,
+                                         const Template *tmpl) const;
 
   // Expands all AUTOs in the buffer
   std::vector<TextEdit> Expand() const;
@@ -135,7 +158,7 @@ class AutoExpander {
   const TokenInfo::Context context_;
 
   // Symbol table wrapper for the language server
-  SymbolTableHandler &symbol_table_handler;
+  SymbolTableHandler *symbol_table_handler;
 
   // String to add at the end of each generated line
   std::string indent_;
@@ -145,11 +168,57 @@ class AutoExpander {
 
   // Regex for finding AUTOINST comments
   static const std::regex autoinst_re_;
+
+  // Regexes for AUTO_TEMPLATE comments
+  static const std::regex autotemplate_detect_re_;
+  static const std::regex autotemplate_type_re_;
+  static const std::regex autotemplate_conn_re_;
 };
 
 const std::regex AutoExpander::autoarg_re_{R"(/\*\s*AUTOARG\s*\*/)"};
 
 const std::regex AutoExpander::autoinst_re_{R"(/\*\s*AUTOINST\s*\*/)"};
+
+// AUTO_TEMPLATE regex breakdown:
+// /\*                             – start of comment
+// (\s*\S+\s+AUTO_TEMPLATE\s*\n)*  – optional other AUTO_TEMPLATE types, end
+//                                   with newline
+// \s*\S+\s+AUTO_TEMPLATE          – at least one AUTO_TEMPLATE is required
+// \s*(".*")?                      – optional instance name regex
+// \s*\([\s\S]*?\);                – parens with port connections
+// \s*\*/                          – end of comment
+const std::regex AutoExpander::autotemplate_detect_re_{
+    R"(/\*(\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(".*")?\s*\([\s\S]*?\);\s*\*/)"};
+
+// AUTO_TEMPLATE type regex: the first capturing group is the instance type
+const std::regex AutoExpander::autotemplate_type_re_{
+    R"((\S+)\s+AUTO_TEMPLATE)"};
+
+// AUTO_TEMPLATE connection regex breakdown:
+// \.\s*      – starts with a dot
+// ([^\s(]+?) – first group, at least one character other than whitespace or
+//              opening paren
+// \s*\(\s*   – optional whitespace, opening paren, optional whitespace again
+// ([^\s(]+?) – second group, same as the first one
+// \s*\)*     – optional whitespace, closing paren
+const std::regex AutoExpander::autotemplate_conn_re_{
+    R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*\))"};
+
+const AutoExpander::Template *AutoExpander::Template::from(
+    const Map &templates, const absl::string_view type_id,
+    const int64_t instance_offset) {
+  const auto templates_it = templates.find(type_id);
+  const Template *matching_tmpl = nullptr;
+  if (templates_it != templates.end()) {
+    // Linear search for the matching template (there should be very few
+    // templates per type, often just one)
+    for (const auto &tmpl : templates_it->second) {
+      if (instance_offset < tmpl.offset) break;
+      matching_tmpl = &tmpl;
+    }
+  }
+  return matching_tmpl;
+}
 
 void AutoExpander::Module::EmitPortDeclarations(
     std::ostream &output, const absl::string_view indent,
@@ -172,7 +241,7 @@ void AutoExpander::Module::EmitPortDeclarations(
 void AutoExpander::Module::EmitPortConnections(
     std::ostream &output, const absl::string_view indent,
     const absl::string_view header,
-    const std::function<bool(const Port &)> &pred) const {
+    const std::function<bool(const Port &)> &pred, const Template *tmpl) const {
   bool first = true;
   for (const Port &port : ports_) {
     if (!pred(port)) continue;
@@ -183,24 +252,29 @@ void AutoExpander::Module::EmitPortConnections(
     } else {
       output << ',';
     }
-    output << '\n' << indent << '.' << port.name << '(' << port.name << ")";
+    auto connected_name = port.name;
+    if (tmpl) {
+      auto it = tmpl->connections.find(port.name);
+      if (it != tmpl->connections.end()) connected_name = it->second;
+    }
+    output << '\n'
+           << indent << '.' << port.name << '(' << connected_name << ")";
   }
 }
 
 void AutoExpander::Module::RetrieveModuleHeaderPorts(const Symbol &module) {
   const auto module_ports = GetModulePortDeclarationList(module);
-  if (module_ports) {
-    for (const SymbolPtr &port : module_ports->children()) {
-      if (port->Kind() == SymbolKind::kLeaf) continue;
-      const SyntaxTreeNode &port_node = SymbolCastToNode(*port);
-      const NodeEnum tag = NodeEnum(port_node.Tag().tag);
-      if (tag == NodeEnum::kPortDeclaration) {
-        const SyntaxTreeLeaf *const dir_leaf =
-            GetDirectionFromPortDeclaration(*port);
-        const SyntaxTreeLeaf *const id_leaf =
-            GetIdentifierFromPortDeclaration(*port);
-        PutPort(dir_leaf, id_leaf);
-      }
+  if (!module_ports) return;
+  for (const SymbolPtr &port : module_ports->children()) {
+    if (port->Kind() == SymbolKind::kLeaf) continue;
+    const SyntaxTreeNode &port_node = SymbolCastToNode(*port);
+    const NodeEnum tag = NodeEnum(port_node.Tag().tag);
+    if (tag == NodeEnum::kPortDeclaration) {
+      const SyntaxTreeLeaf *const dir_leaf =
+          GetDirectionFromPortDeclaration(*port);
+      const SyntaxTreeLeaf *const id_leaf =
+          GetIdentifierFromPortDeclaration(*port);
+      PutPort(dir_leaf, id_leaf);
     }
   }
 }
@@ -296,6 +370,43 @@ absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsConnectedBefore(
   return ports_before;
 }
 
+AutoExpander::Template::Map AutoExpander::GetAutoTemplates(
+    const Symbol &module) const {
+  absl::flat_hash_map<absl::string_view, std::vector<Template>> templates;
+  const absl::string_view module_span = StringSpanOfSymbol(module);
+  std::cmatch autotemplate_match;
+  auto autotemplate_begin = module_span.begin();
+  while (std::regex_search(autotemplate_begin, module_span.end(),
+                           autotemplate_match, autotemplate_detect_re_)) {
+    autotemplate_begin += autotemplate_match.position();
+    // The begin:end range will be searched for module types and connections
+    auto begin = autotemplate_begin;
+    const auto end = begin + autotemplate_match.length();
+    Template tmpl{.offset = std::distance(context_.base.begin(), begin)};
+    std::cmatch match;
+
+    while (std::regex_search(begin, end, match, autotemplate_conn_re_)) {
+      const absl::string_view instance_port_id{
+          begin + match.position(1), static_cast<size_t>(match.length(1))};
+      const absl::string_view module_port_id{
+          begin + match.position(2), static_cast<size_t>(match.length(2))};
+      tmpl.connections.insert(std::make_pair(instance_port_id, module_port_id));
+      begin += match.position() + match.length();
+    }
+
+    begin = autotemplate_begin;
+    while (std::regex_search(begin, end, match, autotemplate_type_re_)) {
+      const absl::string_view type_id{begin + match.position(1),
+                                      static_cast<size_t>(match.length(1))};
+      templates[type_id].push_back(tmpl);
+      begin += match.position() + match.length();
+    }
+
+    autotemplate_begin = end;
+  }
+  return templates;
+}
+
 std::optional<TextEdit> AutoExpander::ExpandAutoarg(
     const Symbol &module) const {
   const SyntaxTreeNode *const port_parens = GetModulePortParenGroup(module);
@@ -346,14 +457,14 @@ std::optional<TextEdit> AutoExpander::ExpandAutoarg(
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutoinst(
-    const Symbol &instance, absl::string_view type_id) const {
-  const SyntaxTreeNode *const parens =
-      GetParenGroupFromModuleInstantiation(instance);
+    const Symbol &instance, absl::string_view type_id,
+    const Template *tmpl) const {
+  auto parens = GetParenGroupFromModuleInstantiation(instance);
   const absl::string_view paren_span = StringSpanOfSymbol(*parens);
   const std::optional<Span> autoinst = FindInSpan(autoinst_re_, paren_span);
   if (!autoinst) return {};
   const Symbol *const type_def =
-      symbol_table_handler.FindDefinitionSymbol(type_id);
+      symbol_table_handler->FindDefinitionSymbol(type_id);
   if (!type_def) {
     LOG(ERROR) << "AUTOINST: No definition found for module type: " << type_id;
     return {};
@@ -370,20 +481,26 @@ std::optional<TextEdit> AutoExpander::ExpandAutoinst(
   std::ostringstream new_text;
   const std::string conn_indent = absl::StrCat(indent_, indent_);
   module_info.EmitPortConnections(
-      new_text, conn_indent, "Inputs", [&](const Port &port) {
+      new_text, conn_indent, "Inputs",
+      [&](const Port &port) {
         return port.direction == Port::INPUT &&
                !preconnected_ports.contains(port.name);
-      });
+      },
+      tmpl);
   module_info.EmitPortConnections(
-      new_text, conn_indent, "Inouts", [&](const Port &port) {
+      new_text, conn_indent, "Inouts",
+      [&](const Port &port) {
         return port.direction == Port::INOUT &&
                !preconnected_ports.contains(port.name);
-      });
+      },
+      tmpl);
   module_info.EmitPortConnections(
-      new_text, conn_indent, "Outputs", [&](const Port &port) {
+      new_text, conn_indent, "Outputs",
+      [&](const Port &port) {
         return port.direction == Port::OUTPUT &&
                !preconnected_ports.contains(port.name);
-      });
+      },
+      tmpl);
 
   const LineColumn start_linecol = autoinst.value().linecol;
   const LineColumn end_linecol =
@@ -408,14 +525,20 @@ std::vector<TextEdit> AutoExpander::Expand() const {
   const auto modules = FindAllModuleDeclarations(*text_structure_.SyntaxTree());
   for (const auto &module : modules) {
     // AUTOINST
+    const auto templates = GetAutoTemplates(*module.match);
     for (const auto &data : FindAllDataDeclarations(*module.match)) {
       const Symbol *const type_id_node =
           GetTypeIdentifierFromDataDeclaration(*data.match);
       // Some data declarations like 'reg' do not have a type id, ignore those
       if (!type_id_node) continue;
       const absl::string_view type_id = StringSpanOfSymbol(*type_id_node);
+      // Find an AUTO_TEMPLATE that matches this instance
+      int64_t instance_offset =
+          std::distance(context_.base.begin(), type_id.begin());
+      const Template *tmpl =
+          Template::from(templates, type_id, instance_offset);
       for (const auto &instance : FindAllGateInstances(*data.match)) {
-        if (const auto edit = ExpandAutoinst(*instance.match, type_id)) {
+        if (const auto edit = ExpandAutoinst(*instance.match, type_id, tmpl)) {
           edits.push_back(*edit);
         }
       }
@@ -431,7 +554,7 @@ std::vector<TextEdit> AutoExpander::Expand() const {
 }  // namespace
 
 std::vector<TextEdit> GenerateAutoExpandTextEdits(
-    SymbolTableHandler &symbol_table_handler,
+    SymbolTableHandler *symbol_table_handler,
     const BufferTracker *const tracker) {
   if (!tracker) return {};
   const ParsedBuffer *const current = tracker->current();
@@ -441,7 +564,7 @@ std::vector<TextEdit> GenerateAutoExpandTextEdits(
 }
 
 std::vector<CodeAction> GenerateAutoExpandCodeActions(
-    SymbolTableHandler &symbol_table_handler,
+    SymbolTableHandler *symbol_table_handler,
     const BufferTracker *const tracker, const CodeActionParams &p) {
   auto edits = GenerateAutoExpandTextEdits(symbol_table_handler, tracker);
   if (edits.empty()) return {};

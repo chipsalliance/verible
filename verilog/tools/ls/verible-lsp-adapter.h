@@ -38,7 +38,7 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
 
 // Generate all available code actions.
 std::vector<verible::lsp::CodeAction> GenerateCodeActions(
-    SymbolTableHandler &symbol_table_handler, const BufferTracker *tracker,
+    SymbolTableHandler *symbol_table_handler, const BufferTracker *tracker,
     const verible::lsp::CodeActionParams &p);
 
 verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
