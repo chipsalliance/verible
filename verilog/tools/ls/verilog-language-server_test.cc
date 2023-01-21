@@ -14,7 +14,16 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include "common/lsp/lsp-protocol-enums.h"
+#include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
+
+#undef ASSERT_OK
+#define ASSERT_OK(value)                      \
+  if (auto status__ = (value); status__.ok()) \
+    ;                                         \
+  else                                        \
+    EXPECT_TRUE(status__.ok()) << status__
 
 namespace verilog {
 namespace {
@@ -38,6 +47,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
 
   // Runs SetRequest and ServerStep, returning the status from the
   // Language Server
+  // TODO: accept nlohmann::json object directly ?
   absl::Status SendRequest(absl::string_view request) {
     SetRequest(request);
     return ServerStep();
@@ -52,7 +62,9 @@ class VerilogLanguageServerTest : public ::testing::Test {
   }
 
   // Returns response to textDocument/initialize request
-  std::string GetInitializeResponse() { return initialize_response_; }
+  const std::string &GetInitializeResponse() const {
+    return initialize_response_;
+  }
 
  private:
   // Wraps request for the Language Server in RPC header
@@ -101,34 +113,39 @@ TEST_F(VerilogLanguageServerTest, InitializeRequest) {
   std::string response_str = GetInitializeResponse();
   json response = json::parse(response_str);
 
-  ASSERT_EQ(response["id"], 1) << "Response message ID invalid";
-  ASSERT_EQ(response["result"]["serverInfo"]["name"],
+  EXPECT_EQ(response["id"], 1) << "Response message ID invalid";
+  EXPECT_EQ(response["result"]["serverInfo"]["name"],
             "Verible Verilog language server.")
       << "Invalid Language Server name";
 }
 
-std::string DidOpenRequest(absl::string_view name, absl::string_view content) {
-  return absl::StrCat(
-      R"({ "jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": {"uri": ")",
-      name, R"(", "text": ")", content, R"("}}})");
+static std::string DidOpenRequest(absl::string_view name,
+                                  absl::string_view content) {
+  return nlohmann::json{//
+                        {"jsonrpc", "2.0"},
+                        {"method", "textDocument/didOpen"},
+                        {"params",
+                         {{"textDocument",
+                           {
+                               {"uri", name},
+                               {"text", content},
+                           }}}}}
+      .dump();
 }
 
 // Checks automatic diagnostics for opened file and textDocument/diagnostic
 // request for file with invalid syntax
 TEST_F(VerilogLanguageServerTest, SyntaxError) {
   const std::string wrong_file =
-      DidOpenRequest("file://syntaxerror.sv", R"(brokenfile\n)");
-  absl::Status status = SendRequest(wrong_file);
-  ASSERT_TRUE(status.ok()) << "Failed to process file with syntax error:  "
-                           << status;
-  std::string response = GetResponse();
-  json response_parsed = json::parse(response);
-  ASSERT_EQ(response_parsed["method"], "textDocument/publishDiagnostics")
+      DidOpenRequest("file://syntaxerror.sv", "brokenfile");
+  ASSERT_OK(SendRequest(wrong_file)) << "process file with syntax error";
+  json response = json::parse(GetResponse());
+  EXPECT_EQ(response["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(response_parsed["params"]["uri"], "file://syntaxerror.sv")
+  EXPECT_EQ(response["params"]["uri"], "file://syntaxerror.sv")
       << "Diagnostics for invalid file";
-  ASSERT_TRUE(absl::StrContains(
-      response_parsed["params"]["diagnostics"][0]["message"], "syntax error"))
+  EXPECT_TRUE(absl::StrContains(response["params"]["diagnostics"][0]["message"],
+                                "syntax error"))
       << "No syntax error found";
 
   // query diagnostics explicitly
@@ -141,98 +158,128 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
       }
     }
   )";
-  status = SendRequest(diagnostic_request);
-  ASSERT_TRUE(status.ok()) << "Failed to process file with syntax error:  "
-                           << status;
-  std::string request_response = GetResponse();
-  response_parsed = json::parse(request_response);
-  ASSERT_EQ(response_parsed["id"], 2) << "Invalid id";
-  ASSERT_EQ(response_parsed["result"]["kind"], "full")
-      << "Diagnostics kind invalid";
-  ASSERT_TRUE(absl::StrContains(
-      response_parsed["result"]["items"][0]["message"], "syntax error"))
+  ASSERT_OK(SendRequest(diagnostic_request))
+      << "Failed to process file with syntax error";
+  response = json::parse(GetResponse());
+  EXPECT_EQ(response["id"], 2) << "Invalid id";
+  EXPECT_EQ(response["result"]["kind"], "full") << "Diagnostics kind invalid";
+  EXPECT_TRUE(absl::StrContains(response["result"]["items"][0]["message"],
+                                "syntax error"))
       << "No syntax error found";
 }
 
 // Tests diagnostics for file with linting error before and after fix
 TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
   const std::string lint_error =
-      DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule)");
-  absl::Status status = SendRequest(lint_error);
-  ASSERT_TRUE(status.ok()) << "Failed to process file with linting error:  "
-                           << status;
-  std::string diagnostics = GetResponse();
-  json diagnostics_parsed = json::parse(diagnostics);
+      DidOpenRequest("file://mini.sv", "module mini();\nendmodule");
+  ASSERT_OK(SendRequest(lint_error)) << "process file with linting error";
+
+  const json diagnostics = json::parse(GetResponse());
 
   // Firstly, check correctness of diagnostics
-  ASSERT_EQ(diagnostics_parsed["method"], "textDocument/publishDiagnostics")
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(diagnostics_parsed["params"]["uri"], "file://mini.sv")
+  EXPECT_EQ(diagnostics["params"]["uri"], "file://mini.sv")
       << "Diagnostics for invalid file";
-  ASSERT_TRUE(absl::StrContains(
-      diagnostics_parsed["params"]["diagnostics"][0]["message"],
-      "File must end with a newline."))
+  EXPECT_TRUE(
+      absl::StrContains(diagnostics["params"]["diagnostics"][0]["message"],
+                        "File must end with a newline."))
       << "No syntax error found";
-  ASSERT_EQ(
-      diagnostics_parsed["params"]["diagnostics"][0]["range"]["start"]["line"],
-      1);
-  ASSERT_EQ(diagnostics_parsed["params"]["diagnostics"][0]["range"]["start"]
-                              ["character"],
-            9);
+  EXPECT_EQ(diagnostics["params"]["diagnostics"][0]["range"]["start"]["line"],
+            1);
+  EXPECT_EQ(
+      diagnostics["params"]["diagnostics"][0]["range"]["start"]["character"],
+      9);
 
   // Secondly, request a code action at the EOF error message position
   const absl::string_view action_request =
       R"({"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":1,"character":9},"end":{"line":1,"character":9}}}})";
-  status = SendRequest(action_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string action_response = GetResponse();
-  json action_parsed = json::parse(action_response);
-  ASSERT_EQ(action_parsed["id"], 10);
-  ASSERT_EQ(action_parsed["result"][0]["edit"]["changes"]["file://mini.sv"][0]
-                         ["newText"],
-            "\n");
+  ASSERT_OK(SendRequest(action_request));
+
+  const json action = json::parse(GetResponse());
+  EXPECT_EQ(action["id"], 10);
+  EXPECT_EQ(
+      action["result"][0]["edit"]["changes"]["file://mini.sv"][0]["newText"],
+      "\n");
   // Thirdly, apply change suggested by a code action and check diagnostics
-  const absl::string_view fix_request =
+  const absl::string_view apply_fix =
       R"({"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}})";
-  status = SendRequest(fix_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string fix_diagnostics = GetResponse();
-  json fix_parsed = json::parse(fix_diagnostics);
-  ASSERT_EQ(fix_parsed["method"], "textDocument/publishDiagnostics");
-  ASSERT_EQ(fix_parsed["params"]["uri"], "file://mini.sv");
-  ASSERT_EQ(fix_parsed["params"]["diagnostics"].size(), 0);
+  ASSERT_OK(SendRequest(apply_fix));
+
+  const json diagnostic_of_fixed = json::parse(GetResponse());
+  EXPECT_EQ(diagnostic_of_fixed["method"], "textDocument/publishDiagnostics");
+  EXPECT_EQ(diagnostic_of_fixed["params"]["uri"], "file://mini.sv");
+  EXPECT_EQ(diagnostic_of_fixed["params"]["diagnostics"].size(), 0);
 }
 
-// Tests textDocument/documentSymbol request support
+// Tests textDocument/documentSymbol request support; expect document outline.
 TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestTest) {
-  // Create file and make sure no diagnostic errors were reported
-  const std::string mini_module =
-      DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
+  // Create file, absorb diagnostics
+  const std::string mini_module = DidOpenRequest("file://mini_pkg.sv", R"(
+package mini;
 
-  json diagnostics_parsed = json::parse(diagnostics);
+function static void fun_foo();
+endfunction
 
-  ASSERT_EQ(diagnostics_parsed["method"], "textDocument/publishDiagnostics")
+class some_class;
+   function void member();
+   endfunction
+endclass
+endpackage
+
+module mini(input clk);
+  always@(posedge clk) begin : labelled_block
+  end
+endmodule
+)");
+
+  ASSERT_OK(SendRequest(mini_module));
+
+  // Expect to receive diagnostics right away. Ignore.
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(diagnostics_parsed["params"]["uri"], "file://mini.sv")
-      << "Diagnostics for invalid file";
-  ASSERT_EQ(diagnostics_parsed["params"]["diagnostics"].size(), 0)
-      << "The test file has errors";
+
   // Request a document symbol
   const absl::string_view document_symbol_request =
-      R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
-  status = SendRequest(document_symbol_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string document_symbol_response = GetResponse();
+      R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini_pkg.sv"}}})";
+  ASSERT_OK(SendRequest(document_symbol_request));
 
-  json document_symbol_parsed = json::parse(document_symbol_response);
+  // TODO: by default, the Kate workarounds are active, so
+  // Module -> Method and Namespace -> Class. Remove by default.
+  const json document_symbol = json::parse(GetResponse());
+  EXPECT_EQ(document_symbol["id"], 11);
 
-  ASSERT_EQ(document_symbol_parsed["id"], 11);
-  ASSERT_EQ(document_symbol_parsed["result"].size(), 1);
-  ASSERT_EQ(document_symbol_parsed["result"][0]["kind"], 6);
-  ASSERT_EQ(document_symbol_parsed["result"][0]["name"], "mini");
+  std::vector<verible::lsp::DocumentSymbol> toplevel =
+      document_symbol["result"];
+  EXPECT_EQ(toplevel.size(), 2);
+
+  EXPECT_EQ(toplevel[0].kind, verible::lsp::SymbolKind::Package);
+  EXPECT_EQ(toplevel[0].name, "mini");
+
+  EXPECT_EQ(toplevel[1].kind, verible::lsp::SymbolKind::Method);  // module.
+  EXPECT_EQ(toplevel[1].name, "mini");
+
+  // Descend tree into package and look at expected nested symbols there.
+  std::vector<verible::lsp::DocumentSymbol> package = toplevel[0].children;
+  EXPECT_EQ(package.size(), 2);
+  EXPECT_EQ(package[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(package[0].name, "fun_foo");
+
+  EXPECT_EQ(package[1].kind, verible::lsp::SymbolKind::Class);
+  EXPECT_EQ(package[1].name, "some_class");
+
+  // Descend tree into class and find nested function.
+  std::vector<verible::lsp::DocumentSymbol> class_block = package[1].children;
+  EXPECT_EQ(class_block.size(), 1);
+  EXPECT_EQ(class_block[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(class_block[0].name, "member");
+
+  // Descent tree into module and find labelled block.
+  std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
+  EXPECT_EQ(module.size(), 1);
+  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::Class);  // namespace
+  EXPECT_EQ(module[0].name, "labelled_block");
 }
 
 // Tests closing of the file in the LS context and checks if the LS
@@ -241,10 +288,9 @@ TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestTest) {
 TEST_F(VerilogLanguageServerTest,
        DocumentClosingFollowedByDocumentSymbolRequest) {
   const std::string mini_module =
-      DidOpenRequest("file://mini.sv", R"(module mini();\nendmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
+      DidOpenRequest("file://mini.sv", "module mini();\nendmodule\n");
+  ASSERT_OK(SendRequest(mini_module));
+  std::string discard_diagnostics = GetResponse();
 
   // Close the file from the Language Server perspective
   const absl::string_view closing_request = R"(
@@ -257,69 +303,56 @@ TEST_F(VerilogLanguageServerTest,
         }
       }
     })";
-  status = SendRequest(closing_request);
-  ASSERT_TRUE(status.ok()) << status;
+  ASSERT_OK(SendRequest(closing_request));
 
   // Try to request document symbol for closed file (server should return empty
   // response gracefully)
   const absl::string_view document_symbol_request =
       R"({"jsonrpc":"2.0", "id":13, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}})";
-  status = SendRequest(document_symbol_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string document_symbol_response = GetResponse();
+  ASSERT_OK(SendRequest(document_symbol_request));
 
-  json document_symbol_parsed = json::parse(document_symbol_response);
-
-  ASSERT_EQ(document_symbol_parsed["id"], 13);
-  ASSERT_EQ(document_symbol_parsed["result"].size(), 0);
+  json document_symbol = json::parse(GetResponse());
+  EXPECT_EQ(document_symbol["id"], 13);
+  EXPECT_EQ(document_symbol["result"].size(), 0);
 }
 
 // Tests textDocument/documentHighlight request
 TEST_F(VerilogLanguageServerTest, SymbolHighlightingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
-      "file://sym.sv", R"(module sym();\nassign a=1;assign b=a+1;endmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
+      "file://sym.sv", "module sym();\nassign a=1;assign b=a+1;endmodule\n");
+  ASSERT_OK(SendRequest(mini_module));
 
-  json diagnostics_parsed = json::parse(diagnostics);
-
-  ASSERT_EQ(diagnostics_parsed["method"], "textDocument/publishDiagnostics")
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(diagnostics_parsed["params"]["uri"], "file://sym.sv")
+  EXPECT_EQ(diagnostics["params"]["uri"], "file://sym.sv")
       << "Diagnostics for invalid file";
-  ASSERT_EQ(diagnostics_parsed["params"]["diagnostics"].size(), 0)
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
   const absl::string_view highlight_request1 =
       R"({"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}})";
-  status = SendRequest(highlight_request1);
-  ASSERT_TRUE(status.ok()) << status;
+  ASSERT_OK(SendRequest(highlight_request1));
 
-  std::string highlight_response1 = GetResponse();
-
-  json highlight_response1_parsed = json::parse(highlight_response1);
-  ASSERT_EQ(highlight_response1_parsed["id"], 20);
-  ASSERT_EQ(highlight_response1_parsed["result"].size(), 2);
-  ASSERT_EQ(
-      highlight_response1_parsed["result"][0],
+  const json highlight_response1 = json::parse(GetResponse());
+  EXPECT_EQ(highlight_response1["id"], 20);
+  EXPECT_EQ(highlight_response1["result"].size(), 2);
+  EXPECT_EQ(
+      highlight_response1["result"][0],
       json::parse(
           R"({"range":{"start":{"line":1, "character": 7}, "end":{"line":1, "character": 8}}})"));
-  ASSERT_EQ(
-      highlight_response1_parsed["result"][1],
+  EXPECT_EQ(
+      highlight_response1["result"][1],
       json::parse(
           R"({"range":{"start":{"line":1, "character": 20}, "end":{"line":1, "character": 21}}})"));
 
   const absl::string_view highlight_request2 =
       R"({"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}})";
-  status = SendRequest(highlight_request2);
-  ASSERT_TRUE(status.ok()) << status;
+  ASSERT_OK(SendRequest(highlight_request2));
 
-  std::string highlight_response2 = GetResponse();
-
-  json highlight_response2_parsed = json::parse(highlight_response2);
-  ASSERT_EQ(highlight_response2_parsed["id"], 21);
-  ASSERT_EQ(highlight_response2_parsed["result"].size(), 0);
+  const json highlight_response2 = json::parse(GetResponse());
+  EXPECT_EQ(highlight_response2["id"], 21);
+  EXPECT_EQ(highlight_response2["result"].size(), 0);
 }
 
 // Tests structure holding data for test textDocument/rangeFormatting requests
@@ -378,18 +411,16 @@ std::string FormattingRequest(absl::string_view file,
 TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
-      "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
+      "file://fmt.sv", "module fmt();\nassign a=1;\nassign b=2;endmodule\n");
+  ASSERT_OK(SendRequest(mini_module));
 
-  json diagnostics_parsed = json::parse(diagnostics);
+  const json diagnostics = json::parse(GetResponse());
 
-  ASSERT_EQ(diagnostics_parsed["method"], "textDocument/publishDiagnostics")
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(diagnostics_parsed["params"]["uri"], "file://fmt.sv")
+  EXPECT_EQ(diagnostics["params"]["uri"], "file://fmt.sv")
       << "Diagnostics for invalid file";
-  ASSERT_EQ(diagnostics_parsed["params"]["diagnostics"].size(), 0)
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
   const std::vector<FormattingRequestParams> formatting_params{
       {30, 1, 0, 2, 0, "  assign a=1;\n", 1, 0, 2, 0},
@@ -400,27 +431,24 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
 
   for (const auto &params : formatting_params) {
     std::string request = FormattingRequest("file://fmt.sv", params);
-    status = SendRequest(request);
-    ASSERT_TRUE(status.ok()) << status;
-    std::string response = GetResponse();
+    ASSERT_OK(SendRequest(request));
 
-    json response_parsed = json::parse(response);
-    ASSERT_EQ(response_parsed["id"], params.id) << "Invalid id";
-    ASSERT_EQ(response_parsed["result"].size(), 1)
+    const json response = json::parse(GetResponse());
+    EXPECT_EQ(response["id"], params.id) << "Invalid id";
+    EXPECT_EQ(response["result"].size(), 1)
         << "Invalid result size for id:  " << params.id;
-    ASSERT_EQ(std::string(response_parsed["result"][0]["newText"]),
-              params.new_text)
+    EXPECT_EQ(std::string(response["result"][0]["newText"]), params.new_text)
         << "Invalid patch for id:  " << params.id;
-    ASSERT_EQ(response_parsed["result"][0]["range"]["start"]["line"],
+    EXPECT_EQ(response["result"][0]["range"]["start"]["line"],
               params.new_text_start_line)
         << "Invalid range for id:  " << params.id;
-    ASSERT_EQ(response_parsed["result"][0]["range"]["start"]["character"],
+    EXPECT_EQ(response["result"][0]["range"]["start"]["character"],
               params.new_text_start_character)
         << "Invalid range for id:  " << params.id;
-    ASSERT_EQ(response_parsed["result"][0]["range"]["end"]["line"],
+    EXPECT_EQ(response["result"][0]["range"]["end"]["line"],
               params.new_text_end_line)
         << "Invalid range for id:  " << params.id;
-    ASSERT_EQ(response_parsed["result"][0]["range"]["end"]["character"],
+    EXPECT_EQ(response["result"][0]["range"]["end"]["character"],
               params.new_text_end_character)
         << "Invalid range for id:  " << params.id;
   }
@@ -430,56 +458,43 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
 TEST_F(VerilogLanguageServerTest, FormattingTest) {
   // Create sample file and make sure diagnostics do not have errors
   const std::string mini_module = DidOpenRequest(
-      "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
+      "file://fmt.sv", "module fmt();\nassign a=1;\nassign b=2;endmodule\n");
+  ASSERT_OK(SendRequest(mini_module));
 
-  json diagnostics_parsed = json::parse(diagnostics);
+  const json diagnostics = json::parse(GetResponse());
 
-  ASSERT_EQ(diagnostics_parsed["method"], "textDocument/publishDiagnostics")
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  ASSERT_EQ(diagnostics_parsed["params"]["uri"], "file://fmt.sv")
+  EXPECT_EQ(diagnostics["params"]["uri"], "file://fmt.sv")
       << "Diagnostics for invalid file";
-  ASSERT_EQ(diagnostics_parsed["params"]["diagnostics"].size(), 0)
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
 
   const absl::string_view formatting_request =
       R"({"jsonrpc":"2.0", "id":34, "method":"textDocument/formatting","params":{"textDocument":{"uri":"file://fmt.sv"}}})";
 
-  status = SendRequest(formatting_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string response = GetResponse();
+  ASSERT_OK(SendRequest(formatting_request));
 
-  json response_parsed = json::parse(response);
-  ASSERT_EQ(response_parsed["id"], 34);
-  ASSERT_EQ(response_parsed["result"].size(), 1);
-  ASSERT_EQ(std::string(response_parsed["result"][0]["newText"]),
+  const json response = json::parse(GetResponse());
+  EXPECT_EQ(response["id"], 34);
+  EXPECT_EQ(response["result"].size(), 1);
+  EXPECT_EQ(std::string(response["result"][0]["newText"]),
             "module fmt ();\n  assign a = 1;\n  assign b = 2;\nendmodule\n");
-  ASSERT_EQ(
-      response_parsed["result"][0]["range"],
+  EXPECT_EQ(
+      response["result"][0]["range"],
       json::parse(
           R"({"start":{"line":0, "character": 0}, "end":{"line":3, "character": 0}})"));
 }
 
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
-  const std::string mini_module = DidOpenRequest(
-      "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  absl::Status status = SendRequest(mini_module);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string diagnostics = GetResponse();
-
-  const absl::string_view formatting_request =
+  const absl::string_view shutdown_request =
       R"({"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}})";
 
-  status = SendRequest(formatting_request);
-  ASSERT_TRUE(status.ok()) << status;
-  std::string response = GetResponse();
+  ASSERT_OK(SendRequest(shutdown_request));
 
-  json response_parsed = json::parse(response);
-
-  ASSERT_EQ(response_parsed["id"], 100);
+  const json response = json::parse(GetResponse());
+  EXPECT_EQ(response["id"], 100);
 }
 }  // namespace
 }  // namespace verilog
