@@ -202,14 +202,14 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
       action["result"][0]["edit"]["changes"]["file://mini.sv"][0]["newText"],
       "\n");
   // Thirdly, apply change suggested by a code action and check diagnostics
-  const absl::string_view fix_request =
+  const absl::string_view apply_fix =
       R"({"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}})";
-  ASSERT_OK(SendRequest(fix_request));
+  ASSERT_OK(SendRequest(apply_fix));
 
-  const json fix = json::parse(GetResponse());
-  EXPECT_EQ(fix["method"], "textDocument/publishDiagnostics");
-  EXPECT_EQ(fix["params"]["uri"], "file://mini.sv");
-  EXPECT_EQ(fix["params"]["diagnostics"].size(), 0);
+  const json diagnostic_of_fixed = json::parse(GetResponse());
+  EXPECT_EQ(diagnostic_of_fixed["method"], "textDocument/publishDiagnostics");
+  EXPECT_EQ(diagnostic_of_fixed["params"]["uri"], "file://mini.sv");
+  EXPECT_EQ(diagnostic_of_fixed["params"]["diagnostics"].size(), 0);
 }
 
 // Tests textDocument/documentSymbol request support; expect document outline.
@@ -488,18 +488,12 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
 
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
-  const std::string mini_module = DidOpenRequest(
-      "file://fmt.sv", R"(module fmt();\nassign a=1;\nassign b=2;endmodule\n)");
-  ASSERT_OK(SendRequest(mini_module));
-  std::string discard_diagnostics = GetResponse();
-
-  const absl::string_view formatting_request =
+  const absl::string_view shutdown_request =
       R"({"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}})";
 
-  ASSERT_OK(SendRequest(formatting_request));
+  ASSERT_OK(SendRequest(shutdown_request));
 
   const json response = json::parse(GetResponse());
-
   EXPECT_EQ(response["id"], 100);
 }
 }  // namespace
