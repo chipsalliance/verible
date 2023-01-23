@@ -79,13 +79,14 @@ static std::initializer_list<LexerTestData> kCommentTests = {
 // treating attributes lists as C-style comments,
 // except they are not returned as comment blocks.
 static std::initializer_list<SimpleTestData> kAttributeTests = {
-    {"(**)"},        {"(*     *)"},
-    {"(* x)*)"},     {"(* **  *)"},
-    {"(***)"},       {"(** **)"},
-    {"(*\n*)"},      {"(* style=flat *)"},
-    {"(*foo=bar*)"}, {"(* style=flat, fill=empty *)"},
+    {"(**)"},
+    {"(*     *)"},
+    {"(***)"},
+    {"(*\n*)"},
+    {"(* style=flat *)"},
+    {"(*foo=bar*)"},
+    {"(* style=flat, fill=empty *)"},
 };
-
 static std::initializer_list<LexerTestData> kAttributeSequenceTests = {
     {{TK_ATTRIBUTE, "(**)"}, {TK_ATTRIBUTE, "(**)"}},
     {{TK_ATTRIBUTE, "(* style=flat,\nfill=empty *)"}, {TK_NEWLINE, "\n"}},
@@ -1362,7 +1363,6 @@ static std::initializer_list<SimpleTestData> kEvalStringLiteralTests = {
 
 // tokens with special handling in lexer
 static std::initializer_list<LexerTestData> kTrickyTests = {
-    {{'*', "(*)"}},
     {{TK_COLON_DIV, ":/"}, {TK_SPACE, " "}},
     {{TK_COLON_DIV, ":/"}, {TK_DecNumber, "8"}},
     {':', {TK_EOL_COMMENT, "//"}, {TK_NEWLINE, "\n"}},
@@ -1426,9 +1426,6 @@ static std::initializer_list<LexerTestData> kSequenceTests = {
     {{MacroNumericWidth, "`WIDTH"},
      {TK_BinBase, "'b"},
      {MacroIdentifier, "`DIGITS"}},
-    {{'*', "(*)"}, {'*', "(*)"}},
-    {{'*', "(*)"}, " ", {'*', "(*)"}},
-    {{'*', "(* )"}, {'*', "(*  )"}},
 };
 
 static std::initializer_list<LexerTestData> kContextKeywordTests = {

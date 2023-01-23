@@ -511,13 +511,31 @@ TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
       {AlwaysStatementHasEventControlStar(),
        EmbedInModule("always @* begin a = b; end"), 1},
       {AlwaysStatementHasEventControlStar(),
-       EmbedInModule("always @(*) begin a = b; end"), 1},
-      {AlwaysStatementHasEventControlStar(),
        EmbedInModule("always @(posedge foo) begin a <= b; end"), 0},
       {AlwaysStatementHasEventControlStar(),
        EmbedInModule("always_ff begin a <= b; end\n"
                      "always_comb begin a = b; end"),
        0},
+  };
+  for (const auto& test : tests)
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+}
+
+// Tests for AlwaysStatementHaParenthesis matching
+TEST(VerilogMatchers, AlwaysStatementHasParenthesis) {
+  const RawMatcherTestCase tests[] = {
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @* begin a = b; end"), 0},
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @(*) begin a = b; end"), 1},
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @( *) begin a = b; end"), 1},
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @(* ) begin a = b; end"), 1},
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @( * ) begin a = b; end"), 1},
+      {AlwaysStatementHasParenthesis(),
+       EmbedInModule("always @(posedge foo) begin a <= b; end"), 1},
   };
   for (const auto& test : tests)
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);

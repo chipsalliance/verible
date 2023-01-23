@@ -15336,6 +15336,38 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  logic/*t*/ [0 : 1]  /*t*/ a;  /*t*/\n"
      "  T1/*t*/    [0 : 1]  /*t*/ c;  /*t*/\n"
      "endclass\n"},
+    {"always @(*/*t*/) begin\n"
+     "end\n",
+     "always @(*  /*t*/) begin\n"
+     "end\n"},
+    {"always @(/*t*/*) begin\n"
+     "end\n",
+     "always @(  /*t*/ *) begin\n"
+     "end\n"},
+    {"always @(/*t*/*/*t*/) begin\n"
+     "end\n",
+     "always @(  /*t*/ *  /*t*/) begin\n"
+     "end\n"},
+    {"always @(*) begin\n"
+     "end\n",
+     "always @(*) begin\n"
+     "end\n"},
+    {"always @(* ) begin\n"
+     "end\n",
+     "always @(*) begin\n"
+     "end\n"},
+    {"always @( *) begin\n"
+     "end\n",
+     "always @(*) begin\n"
+     "end\n"},
+    {"always @( * ) begin\n"
+     "end\n",
+     "always @(*) begin\n"
+     "end\n"},
+    {"always @(  /*t*/  *   /*t*/    ) begin\n"
+     "end\n",
+     "always @(  /*t*/ *  /*t*/) begin\n"
+     "end\n"},
 
     // -----------------------------------------------------------------
 };
