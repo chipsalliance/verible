@@ -269,8 +269,11 @@ void GenerateCode(const std::string &filename,
       } else {
         fprintf(out, "  %s %s", type.c_str(), p.name.c_str());
       }
-      if (!p.default_value.empty())
+      if (p.default_value.empty()) {
+        fprintf(out, "{}");
+      } else {
         fprintf(out, " = %s", p.default_value.c_str());
+      }
       fprintf(out, ";\n");
       if (p.is_optional) {
         fprintf(out, "  bool has_%s = false;  // optional property\n",
