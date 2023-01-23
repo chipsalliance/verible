@@ -14,6 +14,7 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include "absl/strings/match.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
