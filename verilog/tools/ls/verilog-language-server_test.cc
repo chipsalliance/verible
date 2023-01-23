@@ -145,8 +145,9 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
       << "textDocument/publishDiagnostics not received";
   EXPECT_EQ(response["params"]["uri"], "file://syntaxerror.sv")
       << "Diagnostics for invalid file";
-  EXPECT_TRUE(absl::StrContains(response["params"]["diagnostics"][0]["message"],
-                                "syntax error"))
+  EXPECT_TRUE(absl::StrContains(
+      response["params"]["diagnostics"][0]["message"].get<std::string>(),
+      "syntax error"))
       << "No syntax error found";
 
   // query diagnostics explicitly
@@ -164,8 +165,9 @@ TEST_F(VerilogLanguageServerTest, SyntaxError) {
   response = json::parse(GetResponse());
   EXPECT_EQ(response["id"], 2) << "Invalid id";
   EXPECT_EQ(response["result"]["kind"], "full") << "Diagnostics kind invalid";
-  EXPECT_TRUE(absl::StrContains(response["result"]["items"][0]["message"],
-                                "syntax error"))
+  EXPECT_TRUE(absl::StrContains(
+      response["result"]["items"][0]["message"].get<std::string>(),
+      "syntax error"))
       << "No syntax error found";
 }
 
@@ -182,9 +184,9 @@ TEST_F(VerilogLanguageServerTest, LintErrorDetection) {
       << "textDocument/publishDiagnostics not received";
   EXPECT_EQ(diagnostics["params"]["uri"], "file://mini.sv")
       << "Diagnostics for invalid file";
-  EXPECT_TRUE(
-      absl::StrContains(diagnostics["params"]["diagnostics"][0]["message"],
-                        "File must end with a newline."))
+  EXPECT_TRUE(absl::StrContains(
+      diagnostics["params"]["diagnostics"][0]["message"].get<std::string>(),
+      "File must end with a newline."))
       << "No syntax error found";
   EXPECT_EQ(diagnostics["params"]["diagnostics"][0]["range"]["start"]["line"],
             1);
