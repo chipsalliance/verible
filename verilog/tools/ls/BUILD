@@ -103,6 +103,7 @@ cc_test(
         ":verilog-language-server",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
