@@ -281,7 +281,7 @@ endmodule
   // Descent tree into module and find labelled block.
   std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
   EXPECT_EQ(module.size(), 1);
-  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::Class);  // namespace
+  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::Namespace);
   EXPECT_EQ(module[0].name, "labelled_block");
 }
 
