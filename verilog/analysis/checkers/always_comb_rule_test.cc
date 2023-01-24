@@ -39,6 +39,7 @@ TEST(AlwaysCombTest, FunctionFailures) {
       {"module m;\nendmodule\n"},
       {"module m;\ninitial begin end\nendmodule"},
       {"module m;\n", {kToken, "always"}, " @* begin end\nendmodule"},
+      {"module m;\n", {kToken, "always"}, " @(*) begin end\nendmodule"},
       {"module m;\nalways_ff begin a <= b; end\nendmodule"},
       {"module m;\nalways_comb begin a = b; end\nendmodule"},
   };
