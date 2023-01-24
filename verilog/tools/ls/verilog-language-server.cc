@@ -18,6 +18,7 @@
 
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
@@ -129,7 +130,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
   verible::lsp::InitializeResult result;
   result.serverInfo = {
       .name = "Verible Verilog language server.",
-      .version = GetVersionNumber(),
+      .version = verible::GetRepositoryVersion(),
   };
   result.capabilities = {
       {

@@ -31,6 +31,15 @@
 
 namespace verible {
 
+std::string GetRepositoryVersion() {
+#ifdef VERIBLE_GIT_DESCRIBE
+  return VERIBLE_GIT_DESCRIBE;
+#else
+  return "<unknown repository version>";
+#endif
+}
+
+// Long-form of build version, might contain multiple lines
 static std::string GetBuildVersion() {
   std::string result;
   // Build a version string with as much as possible info.

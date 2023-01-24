@@ -91,6 +91,7 @@ cc_library(
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-text-buffer",
         "//common/lsp:message-stream-splitter",
+        "//common/util:init_command_line",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
