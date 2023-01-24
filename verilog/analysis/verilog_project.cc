@@ -78,7 +78,7 @@ absl::Status VerilogSourceFile::Parse() {
   const absl::Time analyze_start = absl::Now();
   status_ = analyzed_structure_->Analyze();
   LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
-            << absl::ToInt64Milliseconds(absl::Now() - analyze_start) << "ms";
+            << (absl::Now() - analyze_start);
   state_ = State::kParsed;
   return status_;
 }
