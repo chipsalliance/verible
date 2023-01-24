@@ -4129,6 +4129,7 @@ event_control
     { $$ = MakeTaggedNode(N::kEventControl, $1, MakeParenGroup($2, $3, $4));}
   | '@' '*'
     { $$ = MakeTaggedNode(N::kEventControl, $1, $2);}
+    /* same as @ (*), which the lexer returns as just '*' */
   ;
 event_control_opt
   : event_control
