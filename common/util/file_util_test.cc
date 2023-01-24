@@ -98,14 +98,23 @@ TEST(FileUtil, JoinPath) {
   EXPECT_EQ(file::JoinPath("foo", "bar"), PlatformPath("foo/bar"));
 
   // Assemble an absolute path
-  EXPECT_EQ(file::JoinPath("", "bar"), "bar");
+  EXPECT_EQ(file::JoinPath("", "/bar"), PlatformPath("/bar"));
   EXPECT_EQ(file::JoinPath("/", "bar"), PlatformPath("/bar"));
+  EXPECT_EQ(file::JoinPath("/", "/bar"), PlatformPath("/bar"));
 
   // Lightly canonicalize multiple consecutive slashes
   EXPECT_EQ(file::JoinPath("foo/", "bar"), PlatformPath("foo/bar"));
   EXPECT_EQ(file::JoinPath("foo///", "bar"), PlatformPath("foo/bar"));
   EXPECT_EQ(file::JoinPath("foo/", "/bar"), PlatformPath("foo/bar"));
   EXPECT_EQ(file::JoinPath("foo/", "///bar"), PlatformPath("foo/bar"));
+
+  // Lightly canonicalize ./ and ../
+  EXPECT_EQ(file::JoinPath("", "./bar"), PlatformPath("bar"));
+  EXPECT_EQ(file::JoinPath("", "./bar/../bar"), PlatformPath("bar"));
+  EXPECT_EQ(file::JoinPath(".", "./bar"), PlatformPath("bar"));
+  EXPECT_EQ(file::JoinPath("foo/./", "./bar"), PlatformPath("foo/bar"));
+  EXPECT_EQ(file::JoinPath("/foo/./", "./bar"), PlatformPath("/foo/bar"));
+  EXPECT_EQ(file::JoinPath("/foo/baz/../", "./bar"), PlatformPath("/foo/bar"));
 
 #ifdef _WIN32
   EXPECT_EQ(file::JoinPath("C:\\foo", "bar"), "C:\\foo\\bar");
