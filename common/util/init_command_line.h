@@ -21,6 +21,9 @@
 
 namespace verible {
 
+// Get a one-line build version string that based on the repository version.
+std::string GetRepositoryVersion();
+
 // Initializes command-line tool, including parsing flags.
 // The recognized flags are initialized and their text removed from the
 // input command line, returning the remaining positional parameters.

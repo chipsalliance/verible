@@ -29,8 +29,6 @@ class VerilogLanguageServer {
   using ReadFun = verible::lsp::MessageStreamSplitter::ReadFun;
   using WriteFun = verible::lsp::JsonRpcDispatcher::WriteFun;
 
-  static std::string GetVersionNumber() { return "0.0 alpha"; }
-
   // Constructor preparing the callbacks for Language Server requests
   VerilogLanguageServer(const WriteFun &write_fun);
 

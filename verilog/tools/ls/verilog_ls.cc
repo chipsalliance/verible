@@ -39,14 +39,14 @@ static void FormatHeaderBodyReply(absl::string_view reply) {
 int main(int argc, char *argv[]) {
   verible::InitCommandLine(argv[0], &argc, &argv);
 
-  std::cerr << "Verible Alpha Language Server "
-            << verilog::VerilogLanguageServer::GetVersionNumber() << std::endl;
-
 #ifdef _WIN32
   // Windows messes with newlines by default. Fix this here.
   _setmode(_fileno(stdin), _O_BINARY);
   _setmode(_fileno(stdout), _O_BINARY);
 #endif
+
+  std::cerr << "Verible Verilog Language Server built at "
+            << verible::GetRepositoryVersion() << "\n";
 
   // Input and output is stdin and stdout
   constexpr int kInputFD = 0;  // STDIN_FILENO, but Win does not have that macro
