@@ -50,7 +50,7 @@ verible::lsp::FullDocumentDiagnosticReport GenerateDiagnosticReport(
 // boolean to make it visible what is needed.
 nlohmann::json CreateDocumentSymbolOutline(
     const BufferTracker *tracker, const verible::lsp::DocumentSymbolParams &p,
-    bool kate_compatible_tags = true);
+    bool kate_compatible_tags = false);
 
 // Given a position in a document, return ranges in the buffer that should
 // be highlighted.
