@@ -115,6 +115,7 @@ jobs:
         mode:
         - test
         - smoke-test
+        - smoke-test-analyzer 
         - asan
         - asan-clang
         - compile
@@ -156,10 +157,25 @@ jobs:
       run: |
         set -x
         apt -qqy update
-        apt -qq -y install clang-10 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk
+        apt -qq -y install clang-10 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk cmake python3-pip
         source ./.github/settings.sh
         ./.github/bin/set-compiler.sh 10
         ./.github/bin/install-bazel.sh
+    - name: Build Slang
+      if: matrix.mode == 'smoke-test-analyzer'
+      run: |
+        pushd .
+        git clone https://github.com/MikePopoloski/slang.git /tmp/slang
+        cd /tmp/slang
+        cmake -B build
+        cmake --build build
+        cmake --install build --strip
+        popd
+
+    - name: Install Python dependencies
+      if: matrix.mode == 'smoke-test-analyzer'
+      run: |
+        pip3 install mdutils
 
     - name: ${{ matrix.mode }} Verible
       run: ./.github/bin/build-and-test.sh
