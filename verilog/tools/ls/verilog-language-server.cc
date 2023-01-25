@@ -224,7 +224,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
                << " tracked by VerilogProject:  " << status;
     return;
   }
-  LOG(INFO) << "Updated file:  " << uri << "(" << path << ")";
+  LOG(INFO) << "Updated file:  " << uri << " (" << path << ")";
 }
 
 };  // namespace verilog

@@ -14,9 +14,12 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include <filesystem>
+
 #include "absl/strings/match.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/util/file_util.h"
 #include "gtest/gtest.h"
 
 #undef ASSERT_OK
@@ -33,12 +36,26 @@ namespace {
 
 using namespace nlohmann;
 
+constexpr absl::string_view  //
+    kSampleModuleA(
+        "module a;\n"
+        "  assign var1 = 1'b0;\n"
+        "  assign var2 = var1 | 1'b1;\n"
+        "endmodule\n"),
+    kSampleModuleB(
+        "module b;\n"
+        "  assign var1 = 1'b0;\n"
+        "  assign var2 = var1 | 1'b1;\n"
+        "  a vara;\n"
+        "  assign vara.var1 = 1'b1;\n"
+        "endmodule\n");
+
 class VerilogLanguageServerTest : public ::testing::Test {
  public:
   // Sends initialize request from client mock to the Language Server.
   // It does not parse the response nor fetch it in any way (for other
   // tests to check e.g. server/client capabilities).
-  absl::Status InitializeCommunication() {
+  virtual absl::Status InitializeCommunication() {
     const absl::string_view initialize =
         R"({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": null })";
 
@@ -67,7 +84,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
     return initialize_response_;
   }
 
- private:
+ protected:
   // Wraps request for the Language Server in RPC header
   void SetRequest(absl::string_view request) {
     request_stream_.clear();
@@ -107,6 +124,32 @@ class VerilogLanguageServerTest : public ::testing::Test {
 
   // Stream for receiving responses from the Language Server
   std::stringstream response_stream_;
+};
+
+class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
+ public:
+  absl::Status InitializeCommunication() override {
+    json initialize_request = {{"jsonrpc", "2.0"},
+                               {"id", 1},
+                               {"method", "initialize"},
+                               {"params", {{"rootUri", "file://" + root_dir}}}};
+    return SendRequest(initialize_request.dump());
+  }
+
+ protected:
+  void SetUp() override {
+    root_dir = verible::file::JoinPath(
+        ::testing::TempDir(),
+        ::testing::UnitTest::GetInstance()->current_test_info()->name());
+    absl::Status status = verible::file::CreateDir(root_dir);
+    ASSERT_OK(status) << status;
+    VerilogLanguageServerTest::SetUp();
+  }
+
+  void TearDown() override { std::filesystem::remove(root_dir); }
+
+  // path to the project
+  std::string root_dir;
 };
 
 // Verifies textDocument/initialize request handling
@@ -487,6 +530,60 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
       response["result"][0]["range"],
       json::parse(
           R"({"start":{"line":0, "character": 0}, "end":{"line":3, "character": 0}})"));
+}
+
+// Creates a textDocument/definition request
+std::string DefinitionRequest(absl::string_view file, int id, int line,
+                              int character) {
+  json formattingrequest = {
+      {"jsonrpc", "2.0"},
+      {"id", id},
+      {"method", "textDocument/definition"},
+      {"params",
+       {{"textDocument", {{"uri", file}}},
+        {"position", {{"line", line}, {"character", character}}}}}};
+  return formattingrequest.dump();
+}
+
+// Performs simple textDocument/definition request with no VerilogProject set
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
+  std::string definition_request = DefinitionRequest("file://b.sv", 2, 3, 18);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 0);
+}
+
+// Performs simple textDocument/definition request
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
+  absl::string_view filelist_content = "a.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
 }
 
 // Tests correctness of Language Server shutdown request
