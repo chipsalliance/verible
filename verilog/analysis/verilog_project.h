@@ -187,6 +187,15 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
 // Doesn't require file-system access, nor create temporary files.
 class ParsedVerilogSourceFile final : public VerilogSourceFile {
  public:
+  // this constructor is used for updating file contents in the language server
+  // it sets referenced_path and resolved_path based on URI from language server
+  ParsedVerilogSourceFile(absl::string_view referenced_path,
+                          absl::string_view resolved_path,
+                          const verible::TextStructureView* text_structure,
+                          absl::string_view corpus = "")
+      : VerilogSourceFile(referenced_path, resolved_path, corpus),
+        text_structure_(text_structure) {}
+
   // filename can be fake, it is not used to open any file.
   // text_structure is a pointer to a TextStructureView object of
   //     already parsed file. Current implementation does _not_ make a
