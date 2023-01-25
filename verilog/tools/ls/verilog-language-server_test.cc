@@ -584,6 +584,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
 }
 
 // Tests correctness of Language Server shutdown request
