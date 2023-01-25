@@ -206,5 +206,16 @@ TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
   EXPECT_EQ(location.size(), 0);
 }
 
+TEST(SymbolTableHandlerTest, MissingVerilogProject) {
+  SymbolTableHandler symbol_table_handler;
+  std::vector<absl::Status> diagnostics =
+      symbol_table_handler.BuildProjectSymbolTable();
+
+  ASSERT_EQ(diagnostics.size(), 1);
+  ASSERT_FALSE(diagnostics[0].ok());
+}
+
+TEST(SymbolTableHandlerTest, GoToDefinitionTest) {}
+
 }  // namespace
 }  // namespace verilog
