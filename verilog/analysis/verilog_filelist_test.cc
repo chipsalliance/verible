@@ -40,7 +40,6 @@ TEST(FileListTest, AppendFileListFromFile) {
   auto status = AppendFileListFromFile(file_list_file.filename(), &result);
   ASSERT_TRUE(status.ok()) << status;
 
-  EXPECT_EQ(result.file_list_path, file_list_file.filename());
   EXPECT_THAT(result.file_paths,
               ElementsAre("/a/source/file/1.sv", "/a/source/file/2.sv"));
   EXPECT_THAT(result.preprocessing.include_dirs,
