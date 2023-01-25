@@ -76,10 +76,9 @@ absl::Status SetContents(absl::string_view filename, absl::string_view content);
 
 // Join directory + filename and lightly canonicalize.
 // The canonicalization step unifies ./ and ../ path elements lexically
-// without touching the underlying file-system.
+// without looking at the underlying file-system.
 //
-// Even if "filename" already looks absolute, "base" is still prepended.
-// TODO(hzeller): Need something like JoinPathRespectAbsolute() ?
+// If "filename" is already absolute, "base" is not prepended.
 std::string JoinPath(absl::string_view base, absl::string_view name);
 
 // Create directory with given name, return success.

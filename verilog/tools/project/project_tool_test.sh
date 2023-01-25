@@ -233,6 +233,21 @@ grep -q "(@fooo -> \$root::fooo)" "$MY_OUTPUT_FILE" || {
 }
 
 ################################################################################
+echo "=== Same as above, but with absolute file on cmdline"
+
+"$project_tool" \
+  symbol-table-refs \
+  $MY_INPUT_FILE \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  cat "$MY_OUTPUT_FILE"
+  echo "$LINENO: Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
 echo "=== Load one file containing syntax error (build-and-resolve)."
 
 cat > "$MY_INPUT_FILE" <<EOF
