@@ -75,10 +75,8 @@ struct VerilogProjectConfig {
         include_paths.end());
 
     file_list_root = absl::GetFlag(FLAGS_file_list_root);
-    file_list.file_list_path = absl::GetFlag(FLAGS_file_list_path);
-    if (!file_list.file_list_path.empty()) {
-      return verilog::AppendFileListFromFile(file_list.file_list_path,
-                                             &file_list);
+    if (auto fl_path = absl::GetFlag(FLAGS_file_list_path); !fl_path.empty()) {
+      return verilog::AppendFileListFromFile(fl_path, &file_list);
     }
 
     if (file_list.file_paths.empty()) {
