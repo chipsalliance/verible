@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Copyright 2023 The Verible Authors.
 #
@@ -94,7 +94,7 @@ class State(Enum):
     NORMAL = 0,
     MODULE_DEFINE = 1,
     SLANG_VERIFIED = 2,
-    MISC_PREPROCESSOR = 3
+    MISC_PREPROCESSOR = 3,
     MACRO_CALL_SYNTAX = 4
 
 
