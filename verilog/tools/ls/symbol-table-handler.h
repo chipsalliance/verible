@@ -16,11 +16,13 @@
 #ifndef VERILOG_TOOLS_LS_SYMBOL_TABLE_HANDLER_H
 #define VERILOG_TOOLS_LS_SYMBOL_TABLE_HANDLER_H
 
+#include <filesystem>
 #include <memory>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 #include "common/lsp/lsp-protocol.h"
 #include "verilog/analysis/symbol_table.h"
 #include "verilog/analysis/verilog_project.h"
@@ -82,6 +84,11 @@ class SymbolTableHandler {
   std::shared_ptr<VerilogProject> curr_project_;
   // symbol table structure
   std::unique_ptr<SymbolTable> symbol_table_;
+  // path to the filelist file for the project
+  std::string filelist_path_;
+  // last timestamp of filelist file - used to check whether SymbolTable should
+  // be updated
+  absl::optional<std::filesystem::file_time_type> last_filelist_update_;
 
   // Scans the symbol table tree to find a given symbol.
   // When succeds, returns the pointer to table node with the symbol, otherwise
@@ -92,7 +99,7 @@ class SymbolTableHandler {
   // Looks for verible.filelist file down in directory structure and loads data
   // to project.
   // It is meant to be executed once per VerilogProject setup
-  void LoadProjectFileList(absl::string_view current_dir);
+  bool LoadProjectFileList(absl::string_view current_dir);
 };
 
 };  // namespace verilog

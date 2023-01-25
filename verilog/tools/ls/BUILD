@@ -93,7 +93,7 @@ cc_library(
         "//verilog/analysis:symbol_table",
         "//verilog/analysis:verilog_filelist",
         "//verilog/analysis:verilog_project",
-        ":lsp-parse-buffer"
+        ":lsp-parse-buffer",
     ],
 )
 
@@ -115,6 +115,7 @@ cc_library(
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
+        "//common/util:file_util",
         "//common/lsp:json-rpc-dispatcher",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-text-buffer",

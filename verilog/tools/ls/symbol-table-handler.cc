@@ -56,10 +56,10 @@ std::vector<absl::Status> SymbolTableHandler::BuildSymbolTableFor(
 }
 
 std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
-  ResetSymbolTable();
   if (!curr_project_) {
     return {absl::UnavailableError("VerilogProject is not set")};
   }
+  ResetSymbolTable();
   LOG(INFO) << "Parsing project files...";
   std::vector<absl::Status> buildstatus;
   symbol_table_->Build(&buildstatus);
@@ -77,32 +77,48 @@ std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   return buildstatus;
 }
 
-void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
+bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   LOG(INFO) << __FUNCTION__;
-  if (!curr_project_) return;
-  // search for FileList file up the directory hierarchy
-  FileList filelist;
-  std::string projectpath;
-  if (auto status = verible::file::UpwardFileSearch(
-          current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
-      !status.ok()) {
-    LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
-                 << " file in the project:  " << status;
-    return;
+  if (!curr_project_) return false;
+  if (filelist_path_.empty()) {
+    // search for FileList file up the directory hierarchy
+    std::string projectpath;
+    if (auto status = verible::file::UpwardFileSearch(
+            current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
+        !status.ok()) {
+      LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
+                   << " file in the project:  " << status;
+      filelist_path_ = "";
+      last_filelist_update_ = {};
+      return false;
+    }
+    LOG(INFO) << "Found file list under " << projectpath;
+    filelist_path_ = projectpath;
   }
-  LOG(INFO) << "Found file list under " << projectpath;
+  if (!last_filelist_update_) {
+    last_filelist_update_ = std::filesystem::last_write_time(filelist_path_);
+  } else if (*last_filelist_update_ ==
+             std::filesystem::last_write_time(filelist_path_)) {
+    // filelist file is unchanged, keeping it
+    return true;
+  }
+  LOG(INFO) << "Updating the filelist";
   // fill the FileList object
-  if (absl::Status status = AppendFileListFromFile(projectpath, &filelist);
+  FileList filelist;
+  if (absl::Status status = AppendFileListFromFile(filelist_path_, &filelist);
       !status.ok()) {
     // if failed to parse
-    LOG(WARNING) << "Failed to parse file list in " << projectpath << ":  "
+    LOG(WARNING) << "Failed to parse file list in " << filelist_path_ << ":  "
                  << status;
-    return;
+    filelist_path_ = "";
+    last_filelist_update_ = {};
+    return false;
   }
   // add directory containing filelist to includes
   // TODO (glatosinski): should we do this?
-  curr_project_->AddIncludePath(verible::file::Dirname(projectpath));
-  LOG(INFO) << "Adding \"" << projectpath << "\" to include directories";
+  const absl::string_view filelist_dir = verible::file::Dirname(filelist_path_);
+  curr_project_->AddIncludePath(filelist_dir);
+  LOG(INFO) << "Adding \"" << filelist_dir << "\" to include directories";
   // update include directories in project
   for (const auto &incdir : filelist.preprocessing.include_dirs) {
     LOG(INFO) << "Adding include path:  " << incdir;
@@ -112,13 +128,14 @@ void SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   for (auto &incfile : filelist.file_paths) {
     auto incsource = curr_project_->OpenIncludedFile(incfile);
     if (!incsource.ok()) {
-      LOG(WARNING) << "File included in " << projectpath
+      LOG(WARNING) << "File included in " << filelist_path_
                    << " not found:  " << incfile << ":  " << incsource.status();
       continue;
     }
     LOG(INFO) << "Creating symbol table for:  " << incfile;
     BuildSymbolTableFor(*incsource.value());
   }
+  return true;
 }
 
 bool IsStringViewContained(absl::string_view origin, absl::string_view substr) {
@@ -167,6 +184,9 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const absl::Time finddefinition_start = absl::Now();
+  bool filelist_loaded =
+      LoadProjectFileList(curr_project_->TranslationUnitRoot());
+  if (!filelist_loaded) return {};
   if (files_dirty_) {
     std::vector<absl::Status> diagnostics = BuildProjectSymbolTable();
     bool success = true;
@@ -213,6 +233,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
   auto symbol = cursor_token.text();
+  LOG(INFO) << "Looking for symbol:  " << symbol;
   auto reffile = curr_project_->LookupRegisteredFile(relativepath);
   if (!reffile) {
     LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
