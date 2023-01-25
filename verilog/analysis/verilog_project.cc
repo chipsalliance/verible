@@ -202,14 +202,14 @@ absl::Status VerilogProject::UpdateFileContents(
   std::string projectpath = GetRelativePathToSource(path);
   auto fileptr = files_.find(projectpath);
   if (fileptr == files_.end()) {
-    files_.insert(std::make_pair(
-        projectpath,
-        std::make_unique<ParsedVerilogSourceFile>(projectpath, updatedtext,
-                                                  /*corpus=*/"")));
+    files_.insert(
+        std::make_pair(projectpath, std::make_unique<ParsedVerilogSourceFile>(
+                                        projectpath, path, updatedtext,
+                                        /*corpus=*/"")));
   } else {
-    fileptr->second =
-        std::make_unique<ParsedVerilogSourceFile>(projectpath, updatedtext,
-                                                  /*corpus=*/"");
+    fileptr->second = std::make_unique<ParsedVerilogSourceFile>(
+        projectpath, path, updatedtext,
+        /*corpus=*/"");
   }
   return absl::OkStatus();
 }
