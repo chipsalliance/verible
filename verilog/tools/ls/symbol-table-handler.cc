@@ -125,15 +125,17 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     curr_project_->AddIncludePath(incdir);
   }
   // add files from file list to the project
-  for (auto &incfile : filelist.file_paths) {
-    auto incsource = curr_project_->OpenIncludedFile(incfile);
-    if (!incsource.ok()) {
+  for (const auto &file_in_project : filelist.file_paths) {
+    auto source = curr_project_->OpenTranslationUnit(file_in_project);
+    if (!source.ok()) source = curr_project_->OpenIncludedFile(file_in_project);
+    if (!source.ok()) {
       LOG(WARNING) << "File included in " << filelist_path_
-                   << " not found:  " << incfile << ":  " << incsource.status();
+                   << " not found:  " << file_in_project << ":  "
+                   << source.status();
       continue;
     }
-    LOG(INFO) << "Creating symbol table for:  " << incfile;
-    BuildSymbolTableFor(*incsource.value());
+    LOG(INFO) << "Creating symbol table for:  " << file_in_project;
+    BuildSymbolTableFor(*source.value());
   }
   return true;
 }
