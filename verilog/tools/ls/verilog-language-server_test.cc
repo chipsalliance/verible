@@ -36,6 +36,7 @@ namespace {
 
 using namespace nlohmann;
 
+// FIXME (glatosinski) use more plausible modules
 constexpr absl::string_view  //
     kSampleModuleA(
         "module a;\n"
@@ -571,7 +572,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   // obtain diagnostics
   GetResponse();
 
-  // find definition for "var1" variable in b.sv file
+  // find definition for "var1" variable in a.sv file
   std::string definition_request =
       DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
 
@@ -585,6 +586,99 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
   ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request when there are two symbols of the same
+// name (variable name), but in different modules
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestSameVariablesDifferentModules) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_b.filename());
+
+  // find definition for "var1" variable in a.sv file
+  definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 3, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_a = json::parse(GetResponse());
+
+  ASSERT_EQ(response_a["id"], 3);
+  ASSERT_EQ(response_a["result"].size(), 1);
+  ASSERT_EQ(response_a["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_a["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_a["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_a["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_a["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request where we want definition of a symbol
+// inside other module edited in buffer
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestSymbolFromDifferentOpenedModule) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
 }
 
 // Tests correctness of Language Server shutdown request
