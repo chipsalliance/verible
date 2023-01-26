@@ -681,6 +681,93 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
 }
 
+// Check textDocument/definition request where we want definition of a symbol
+// inside other module that is not edited in buffer
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestSymbolFromDifferentNotOpenedModule) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request where we want definition of a symbol
+// inside other module which was opened and closed
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestSymbolFromDifferentOpenedAndClosedModule) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // Close a.sv from the Language Server perspective
+  const std::string closing_request = json{
+      //
+      {"jsonrpc", "2.0"},
+      {"method", "textDocument/didClose"},
+      {"params",
+       {{"textDocument",
+         {
+             {"uri", "file://" + module_a.filename()},
+         }}}}}.dump();
+  ASSERT_OK(SendRequest(closing_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
