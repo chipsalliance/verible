@@ -192,5 +192,17 @@ There is also [neovim](#neovim).
 
 ### VSCode
 
-In the [vscode/](vscode/) subdirectory, you find instructions how to
-build and install an extension for VSCode.
+This is based on the VSCode [packaging extension](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#packaging-extensions) guide.
+
+First [install the verible tools](../../README.md#installation) and [vscode](https://code.visualstudio.com/Download).
+
+For the following, you need a recent version of both
+[nodejs](https://nodejs.org/) and [npm](https://www.npmjs.com/).
+
+Change into the [vscode/](./vscode) subdirectory and run the following:
+
+```bash
+npm install
+npm run vsix
+code --install-extension verible.vsix
+```

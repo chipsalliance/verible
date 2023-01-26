@@ -2,7 +2,7 @@
   "name": "verible",
   "displayName": "Verible",
   "description": "Verible Language Server",
-  "version": "0.0.2600",
+  "version": "0.0.2700",
   "publisher": "chipsalliance",
   "repository": {
     "type": "git",
