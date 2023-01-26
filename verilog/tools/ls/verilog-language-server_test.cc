@@ -34,7 +34,7 @@ namespace {
 
 // TODO (glatosinski) for JSON messages use types defined in lsp-protocol.h
 
-using namespace nlohmann;
+using nlohmann::json;
 
 // TODO (glatosinski) use better sample modules
 static constexpr absl::string_view  //
