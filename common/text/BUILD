@@ -179,7 +179,6 @@ cc_library(
         ":syntax_tree_context",
         ":visitors",
         "//common/strings:display_utils",
-        "//common/util:logging",
     ],
 )
 
