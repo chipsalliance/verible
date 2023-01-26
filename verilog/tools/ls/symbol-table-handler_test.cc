@@ -24,12 +24,14 @@
 namespace verilog {
 namespace {
 
-constexpr absl::string_view  //
+static constexpr absl::string_view  //
     kSampleModuleA(
         "module a;\n"
         "  assign var1 = 1'b0;\n"
         "  assign var2 = var1 | 1'b1;\n"
-        "endmodule\n"),
+        "endmodule\n");
+
+static constexpr absl::string_view  //
     kSampleModuleB(
         "module b;\n"
         "  assign var1 = 1'b0;\n"

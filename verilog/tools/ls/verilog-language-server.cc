@@ -19,9 +19,9 @@
 
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
-#include "common/util/file_util.h"
 
 namespace verilog {
 
@@ -186,9 +186,9 @@ void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
   if (proj_root.empty()) {
     proj_root = verible::file::Dirname(FindFileList(".")).data();
   }
-  if (proj_root.empty())
-    proj_root = ".";
-  proj_root = std::filesystem::absolute({proj_root.begin(), proj_root.end()}).string();
+  if (proj_root.empty()) proj_root = ".";
+  proj_root =
+      std::filesystem::absolute({proj_root.begin(), proj_root.end()}).string();
   std::shared_ptr<VerilogProject> proj = std::make_shared<VerilogProject>(
       proj_root, std::vector<std::string>(), "");
   symbol_table_handler_.SetProject(proj);

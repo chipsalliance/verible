@@ -46,7 +46,8 @@ std::string FindFileList(absl::string_view current_dir) {
           current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
       !status.ok()) {
     LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
-                 << " file in the project root (" << current_dir << "):  " << status;
+                 << " file in the project root (" << current_dir
+                 << "):  " << status;
     return "";
   }
   LOG(INFO) << "Found file list under " << projectpath;
@@ -136,15 +137,17 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   }
   // add files from file list to the project
   for (const auto &file_in_project : filelist.file_paths) {
-    auto source = curr_project_->OpenTranslationUnit(file_in_project);
-    if (!source.ok()) source = curr_project_->OpenIncludedFile(file_in_project);
+    const std::string canonicalized =
+        std::filesystem::path(file_in_project).lexically_normal().string();
+    auto source = curr_project_->OpenTranslationUnit(canonicalized);
+    if (!source.ok()) source = curr_project_->OpenIncludedFile(canonicalized);
     if (!source.ok()) {
       LOG(WARNING) << "File included in " << filelist_path_
-                   << " not found:  " << file_in_project << ":  "
+                   << " not found:  " << canonicalized << ":  "
                    << source.status();
       continue;
     }
-    LOG(INFO) << "Creating symbol table for:  " << file_in_project;
+    LOG(INFO) << "Creating symbol table for:  " << canonicalized;
     BuildSymbolTableFor(*source.value());
   }
   return true;
