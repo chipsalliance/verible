@@ -184,7 +184,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
 void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
   std::string proj_root = {project_root.begin(), project_root.end()};
   if (proj_root.empty()) {
-    proj_root = verible::file::Dirname(FindFileList(".")).data();
+    proj_root = std::string(verible::file::Dirname(FindFileList(".")));
   }
   if (proj_root.empty()) proj_root = ".";
   proj_root =
