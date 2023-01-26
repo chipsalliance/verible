@@ -219,7 +219,5 @@ TEST(SymbolTableHandlerTest, MissingVerilogProject) {
   ASSERT_FALSE(diagnostics[0].ok());
 }
 
-TEST(SymbolTableHandlerTest, GoToDefinitionTest) {}
-
 }  // namespace
 }  // namespace verilog

@@ -755,7 +755,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   // obtain diagnostics for both files
   GetResponse();
 
-  // find definition for "var1" variable in b.sv file
+  // find definition for "var1" variable of a module in b.sv file
   std::string definition_request =
       DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
 
@@ -769,6 +769,222 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
   ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+
+  // perform double check
+  ASSERT_OK(SendRequest(definition_request));
+  response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request where we want definition of a symbol
+// when there are incorrect files in the project
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestInvalidFileInWorkspace) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  static constexpr absl::string_view  //
+      sample_module_b_with_error(
+          R"(module b;
+  assign var1 = 1'b0;
+  assigne var2 = var1 | 1'b1;
+  a vara;
+  assign vara.var1 = 1'b1;
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(
+      root_dir, sample_module_b_with_error, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request where we want definition of a symbol
+// inside incorrect file
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestInInvalidFile) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  static constexpr absl::string_view  //
+      sample_module_b_with_error(
+          R"(module b;
+  assign var1 = 1'b0;
+  assigne var2 = var1 | 1'b1;
+  a vara;
+  assign vara.var1 = 1'b1;
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(
+      root_dir, sample_module_b_with_error, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable of a module in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 4, 15);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  // For now when the file is invalid we will not be able to obtain symbols
+  // from it if it was incorrect from the start
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 0);
+}
+
+// Check textDocument/definition request when URI is not supported
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
+  absl::string_view filelist_content = "a.sv";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("https://" + module_a.filename(), 2, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 0);
+}
+
+// Check textDocument/definition when the cursor points at definition
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestCursorAtDefinition) {
+  absl::string_view filelist_content = "a.sv";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 2, 1, 10);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition when the cursor points at nothing
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestCursorAtNoSymbol) {
+  absl::string_view filelist_content = "a.sv";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 2, 1, 0);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 0);
+}
+
+// Check textDocument/definition when the cursor points at nothing
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestCursorAtUnknownSymbol) {
+  absl::string_view filelist_content = "b.sv";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 3, 2);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 0);
 }
 
 // Tests correctness of Language Server shutdown request
@@ -781,5 +997,6 @@ TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const json response = json::parse(GetResponse());
   EXPECT_EQ(response["id"], 100);
 }
+
 }  // namespace
 }  // namespace verilog
