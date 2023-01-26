@@ -26,19 +26,21 @@ namespace {
 
 static constexpr absl::string_view  //
     kSampleModuleA(
-        "module a;\n"
-        "  assign var1 = 1'b0;\n"
-        "  assign var2 = var1 | 1'b1;\n"
-        "endmodule\n");
+        R"(module a;
+  assign var1 = 1'b0;
+  assign var2 = var1 | 1'b1;
+endmodule
+)");
 
 static constexpr absl::string_view  //
     kSampleModuleB(
-        "module b;\n"
-        "  assign var1 = 1'b0;\n"
-        "  assign var2 = var1 | 1'b1;\n"
-        "  a vara;\n"
-        "  assign vara.var1 = 1'b1;\n"
-        "endmodule\n");
+        R"(module b;
+  assign var1 = 1'b0;
+  assign var2 = var1 | 1'b1;
+  a vara;
+  assign vara.var1 = 1'b1;
+endmodule
+)");
 
 // Tests the behavior of SymbolTableHandler for not existing directory.
 TEST(SymbolTableHandlerTest, InitializationNoRoot) {

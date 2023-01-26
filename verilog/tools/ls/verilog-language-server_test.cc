@@ -36,20 +36,23 @@ namespace {
 
 using namespace nlohmann;
 
-// FIXME (glatosinski) use more plausible modules
-constexpr absl::string_view  //
+// TODO (glatosinski) use better sample modules
+static constexpr absl::string_view  //
     kSampleModuleA(
-        "module a;\n"
-        "  assign var1 = 1'b0;\n"
-        "  assign var2 = var1 | 1'b1;\n"
-        "endmodule\n"),
+        R"(module a;
+  assign var1 = 1'b0;
+  assign var2 = var1 | 1'b1;
+endmodule
+)");
+static constexpr absl::string_view  //
     kSampleModuleB(
-        "module b;\n"
-        "  assign var1 = 1'b0;\n"
-        "  assign var2 = var1 | 1'b1;\n"
-        "  a vara;\n"
-        "  assign vara.var1 = 1'b1;\n"
-        "endmodule\n");
+        R"(module b;
+  assign var1 = 1'b0;
+  assign var2 = var1 | 1'b1;
+  a vara;
+  assign vara.var1 = 1'b1;
+endmodule
+)");
 
 class VerilogLanguageServerTest : public ::testing::Test {
  public:
