@@ -68,10 +68,13 @@ BufferTrackerContainer::GetSubscriptionCallback() {
           const BufferTracker *tracker = Update(uri, *txt);
           // Now inform our listeners.
           for (const auto &change_listener : change_listeners_) {
-            change_listener(uri, *tracker);
+            change_listener(uri, tracker);
           }
         } else {
           Remove(uri);
+          for (const auto &change_listener : change_listeners_) {
+            change_listener(uri, nullptr);
+          }
         }
       };
 }

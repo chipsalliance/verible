@@ -88,7 +88,7 @@ class BufferTrackerContainer {
 
   // type for buffer change callback function
   using ChangeCallback =
-      std::function<void(const std::string &uri, const BufferTracker &tracker)>;
+      std::function<void(const std::string &uri, const BufferTracker *tracker)>;
 
   // Add a change listener for clients of ours interested in updated fresly
   // parsed content.

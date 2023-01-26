@@ -38,8 +38,8 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
   buffers_.SetChangeListener(parsed_buffers_.GetSubscriptionCallback());
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
-             const verilog::BufferTracker &buffer_tracker) {
-        SendDiagnostics(uri, buffer_tracker);
+             const verilog::BufferTracker *buffer_tracker) {
+        if (buffer_tracker) SendDiagnostics(uri, *buffer_tracker);
       });
   SetRequestHandlers();
 }
@@ -195,7 +195,7 @@ void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
 
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
-             const verilog::BufferTracker &buffer_tracker) {
+             const verilog::BufferTracker *buffer_tracker) {
         UpdateEditedFileInProject(uri, buffer_tracker);
       });
 }
@@ -219,15 +219,19 @@ void VerilogLanguageServer::SendDiagnostics(
 }
 
 void VerilogLanguageServer::UpdateEditedFileInProject(
-    const std::string &uri, const verilog::BufferTracker &buffer_tracker) {
-  if (!buffer_tracker.last_good()) return;
+    const std::string &uri, const verilog::BufferTracker *buffer_tracker) {
   absl::string_view path = verilog::LSPUriToPath(uri);
   if (path.empty()) {
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
     return;
   }
+  if (!buffer_tracker) {
+    symbol_table_handler_.UpdateFileContent(path, nullptr);
+    return;
+  }
+  if (!buffer_tracker->last_good()) return;
   symbol_table_handler_.UpdateFileContent(
-      path, &buffer_tracker.last_good()->parser().Data());
+      path, &buffer_tracker->last_good()->parser().Data());
   LOG(INFO) << "Updated file:  " << uri << " (" << path << ")";
 }
 

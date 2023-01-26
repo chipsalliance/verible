@@ -200,16 +200,17 @@ std::string VerilogProject::GetRelativePathToSource(
 void VerilogProject::UpdateFileContents(
     absl::string_view path, const verible::TextStructureView* updatedtext) {
   std::string projectpath = GetRelativePathToSource(path);
+  std::unique_ptr<VerilogSourceFile> contents = nullptr;
+  if (updatedtext)
+    contents = std::make_unique<ParsedVerilogSourceFile>(
+        projectpath, path, updatedtext, /*corpus=*/"");
+  else
+    contents = std::make_unique<VerilogSourceFile>(projectpath, path, "");
   auto fileptr = files_.find(projectpath);
   if (fileptr == files_.end()) {
-    files_.insert(
-        std::make_pair(projectpath, std::make_unique<ParsedVerilogSourceFile>(
-                                        projectpath, path, updatedtext,
-                                        /*corpus=*/"")));
+    files_.insert(std::make_pair(projectpath, std::move(contents)));
   } else {
-    fileptr->second = std::make_unique<ParsedVerilogSourceFile>(
-        projectpath, path, updatedtext,
-        /*corpus=*/"");
+    fileptr->second = std::move(contents);
   }
 }
 
