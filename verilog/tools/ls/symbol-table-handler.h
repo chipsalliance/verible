@@ -39,6 +39,9 @@ absl::string_view LSPUriToPath(absl::string_view uri);
 // Converts filesystem paths to file:// scheme entries.
 std::string PathToLSPUri(absl::string_view path);
 
+// Looks for FileList file for SymbolTableHandler
+std::string FindFileList(absl::string_view current_dir);
+
 // A class interfacing the SymbolTable with the LSP messages.
 // It manages the SymbolTable and its necessary components,
 // and provides such information as symbol definitions

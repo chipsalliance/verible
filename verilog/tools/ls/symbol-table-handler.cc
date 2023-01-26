@@ -39,6 +39,20 @@ std::string PathToLSPUri(absl::string_view path) {
   return absl::StrCat(kFileSchemePrefix, std::filesystem::absolute(p).string());
 }
 
+std::string FindFileList(absl::string_view current_dir) {
+  // search for FileList file up the directory hierarchy
+  std::string projectpath;
+  if (auto status = verible::file::UpwardFileSearch(
+          current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
+      !status.ok()) {
+    LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
+                 << " file in the project root (" << current_dir << "):  " << status;
+    return "";
+  }
+  LOG(INFO) << "Found file list under " << projectpath;
+  return projectpath;
+}
+
 void SymbolTableHandler::SetProject(
     const std::shared_ptr<VerilogProject> &project) {
   curr_project_ = project;
@@ -82,12 +96,8 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   if (!curr_project_) return false;
   if (filelist_path_.empty()) {
     // search for FileList file up the directory hierarchy
-    std::string projectpath;
-    if (auto status = verible::file::UpwardFileSearch(
-            current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
-        !status.ok()) {
-      LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
-                   << " file in the project:  " << status;
+    std::string projectpath = FindFileList(current_dir);
+    if (projectpath.empty()) {
       filelist_path_ = "";
       last_filelist_update_ = {};
       return false;
