@@ -21,6 +21,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
+#include "common/util/file_util.h"
 
 namespace verilog {
 
@@ -175,13 +176,21 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     ConfigureProject(p.rootPath);
   } else {
     LOG(WARNING) << "Could not configure Verilog Project root";
+    ConfigureProject();
   }
   return GetCapabilities();
 }
 
 void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
+  std::string proj_root = {project_root.begin(), project_root.end()};
+  if (proj_root.empty()) {
+    proj_root = verible::file::Dirname(FindFileList(".")).data();
+  }
+  if (proj_root.empty())
+    proj_root = ".";
+  proj_root = std::filesystem::absolute({proj_root.begin(), proj_root.end()}).string();
   std::shared_ptr<VerilogProject> proj = std::make_shared<VerilogProject>(
-      project_root, std::vector<std::string>(), "");
+      proj_root, std::vector<std::string>(), "");
   symbol_table_handler_.SetProject(proj);
 
   parsed_buffers_.AddChangeListener(

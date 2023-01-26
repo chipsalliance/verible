@@ -60,7 +60,9 @@ class VerilogLanguageServer {
 
   // sets up the VerilogProject structure for symbol table, sets listeners for
   // updating VerilogProject views for edited files
-  void ConfigureProject(absl::string_view project_root);
+  // if no project_root is provided, it is set to either current directory
+  // or directory containing verible.filelist
+  void ConfigureProject(absl::string_view project_root = "");
 
   // Publish a diagnostic sent to the server.
   void SendDiagnostics(const std::string &uri,
