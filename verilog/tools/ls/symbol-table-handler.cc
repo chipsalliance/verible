@@ -294,10 +294,10 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   return {location};
 }
 
-absl::Status SymbolTableHandler::UpdateFileContent(
+void SymbolTableHandler::UpdateFileContent(
     absl::string_view path, const verible::TextStructureView *content) {
   files_dirty_ = true;
-  return curr_project_->UpdateFileContents(path, content);
+  curr_project_->UpdateFileContents(path, content);
 }
 
 };  // namespace verilog

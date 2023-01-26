@@ -77,8 +77,8 @@ class SymbolTableHandler {
       const verible::lsp::DefinitionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  absl::Status UpdateFileContent(absl::string_view path,
-                                 const verible::TextStructureView *content);
+  void UpdateFileContent(absl::string_view path,
+                         const verible::TextStructureView *content);
 
  private:
   // tells that symbol table should be rebuilt due to changes in files

@@ -226,13 +226,8 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
     return;
   }
-  absl::Status status = symbol_table_handler_.UpdateFileContent(
+  symbol_table_handler_.UpdateFileContent(
       path, &buffer_tracker.last_good()->parser().Data());
-  if (!status.ok()) {
-    LOG(ERROR) << "Could not update the file " << path
-               << " tracked by VerilogProject:  " << status;
-    return;
-  }
   LOG(INFO) << "Updated file:  " << uri << " (" << path << ")";
 }
 

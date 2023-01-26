@@ -197,7 +197,7 @@ std::string VerilogProject::GetRelativePathToSource(
   return relative.string();
 }
 
-absl::Status VerilogProject::UpdateFileContents(
+void VerilogProject::UpdateFileContents(
     absl::string_view path, const verible::TextStructureView* updatedtext) {
   std::string projectpath = GetRelativePathToSource(path);
   auto fileptr = files_.find(projectpath);
@@ -211,7 +211,6 @@ absl::Status VerilogProject::UpdateFileContents(
         projectpath, path, updatedtext,
         /*corpus=*/"");
   }
-  return absl::OkStatus();
 }
 
 VerilogSourceFile* VerilogProject::LookupRegisteredFileInternal(

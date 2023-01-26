@@ -310,8 +310,8 @@ class VerilogProject {
   std::string GetRelativePathToSource(absl::string_view absolute_filepath);
 
   // Updates file from external source, e.g. Language Server
-  absl::Status UpdateFileContents(
-      absl::string_view path, const verible::TextStructureView* updatedtext);
+  void UpdateFileContents(absl::string_view path,
+                          const verible::TextStructureView* updatedtext);
 
   // Adds include directory to the project
   void AddIncludePath(absl::string_view includepath) {
