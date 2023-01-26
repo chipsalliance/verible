@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "common/text/syntax_tree_context.h"
-#include "common/util/logging.h"
 
 namespace verible {
 

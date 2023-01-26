@@ -61,7 +61,7 @@ int CompareSyntaxTreePath(const SyntaxTreePath& a, const SyntaxTreePath& b);
 // minimize heap allocations, because these are expected to be small.
 class SyntaxTreePath : public std::vector<int> {
  public:
-  using std::vector<int>::vector;
+  using std::vector<int>::vector;  // Import base class constructors
 
   bool operator==(const SyntaxTreePath& rhs) const {
     return CompareSyntaxTreePath(*this, rhs) == 0;
