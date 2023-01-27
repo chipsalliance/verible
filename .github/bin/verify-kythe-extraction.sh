@@ -14,7 +14,6 @@
 # limitations under the License.
 
 set -e
-set -x
 
 # Verify that Verilog Kythe indexer produces the expected Kythe indexing facts.
 # Note: verifier tool path assumes it came with the release pre-built.
