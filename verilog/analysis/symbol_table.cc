@@ -1768,11 +1768,19 @@ static void ResolveReferenceComponentNode(
           parent_scope->Value().declared_type;
       // Primitive types do not have members.
       if (type_info.user_defined_type == nullptr) {
-        diagnostics->push_back(absl::InvalidArgumentError(
-            absl::StrCat("Type of parent reference ",
-                         ReferenceNodeFullPathString(*node->Parent()), " (",
-                         verible::StringSpanOfSymbol(*type_info.syntax_origin),
-                         ") does not have any members.")));
+        if (type_info.syntax_origin == nullptr) {
+          diagnostics->push_back(absl::InvalidArgumentError(
+              absl::StrCat("Type of parent reference ",
+                           ReferenceNodeFullPathString(*node->Parent()),
+                           " does not have syntax origin.")));
+        }
+        diagnostics->push_back(absl::InvalidArgumentError(absl::StrCat(
+            "Type of parent reference ",
+            ReferenceNodeFullPathString(*node->Parent()), " (",
+            type_info.syntax_origin
+                ? verible::StringSpanOfSymbol(*type_info.syntax_origin)
+                : "nullptr",
+            ") does not have any members.")));
         return;
       }
 

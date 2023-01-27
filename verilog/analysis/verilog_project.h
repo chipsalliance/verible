@@ -187,6 +187,15 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
 // Doesn't require file-system access, nor create temporary files.
 class ParsedVerilogSourceFile final : public VerilogSourceFile {
  public:
+  // this constructor is used for updating file contents in the language server
+  // it sets referenced_path and resolved_path based on URI from language server
+  ParsedVerilogSourceFile(absl::string_view referenced_path,
+                          absl::string_view resolved_path,
+                          const verible::TextStructureView* text_structure,
+                          absl::string_view corpus = "")
+      : VerilogSourceFile(referenced_path, resolved_path, corpus),
+        text_structure_(text_structure) {}
+
   // filename can be fake, it is not used to open any file.
   // text_structure is a pointer to a TextStructureView object of
   //     already parsed file. Current implementation does _not_ make a
@@ -297,6 +306,21 @@ class VerilogProject {
   const VerilogSourceFile* LookupFileOrigin(
       absl::string_view content_substring) const;
 
+  // Returns relative path to the VerilogProject
+  std::string GetRelativePathToSource(absl::string_view absolute_filepath);
+
+  // Updates file from external source, e.g. Language Server
+  void UpdateFileContents(absl::string_view path,
+                          const verible::TextStructureView* updatedtext);
+
+  // Adds include directory to the project
+  void AddIncludePath(absl::string_view includepath) {
+    std::string path = {includepath.begin(), includepath.end()};
+    if (std::find(include_paths_.begin(), include_paths_.end(), path) ==
+        include_paths_.end())
+      include_paths_.push_back(path);
+  }
+
  private:
   absl::StatusOr<VerilogSourceFile*> OpenFile(
       absl::string_view referenced_filename,
@@ -322,7 +346,7 @@ class VerilogProject {
 
   // The sequence of directories from which to search for `included files.
   // These can be absolute, or relative to the process's working directory.
-  const std::vector<std::string> include_paths_;
+  std::vector<std::string> include_paths_;
 
   // The corpus to which this project belongs (e.g.,
   // 'github.com/chipsalliance/verible').

@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/verilog_project.h"
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -183,6 +184,34 @@ bool VerilogProject::RemoveRegisteredFile(
     }
   }
   return false;
+}
+
+std::string VerilogProject::GetRelativePathToSource(
+    const absl::string_view absolute_filepath) {
+  // TODO add check if the absolute_filepath is out of the VerilogProject
+  std::filesystem::path absolutepath{absolute_filepath.begin(),
+                                     absolute_filepath.end()};
+  auto root = TranslationUnitRoot();
+  std::filesystem::path projectpath{root.begin(), root.end()};
+  auto relative = std::filesystem::relative(absolutepath, projectpath);
+  return relative.string();
+}
+
+void VerilogProject::UpdateFileContents(
+    absl::string_view path, const verible::TextStructureView* updatedtext) {
+  std::string projectpath = GetRelativePathToSource(path);
+  std::unique_ptr<VerilogSourceFile> contents = nullptr;
+  if (updatedtext)
+    contents = std::make_unique<ParsedVerilogSourceFile>(
+        projectpath, path, updatedtext, /*corpus=*/"");
+  else
+    contents = std::make_unique<VerilogSourceFile>(projectpath, path, "");
+  auto fileptr = files_.find(projectpath);
+  if (fileptr == files_.end()) {
+    files_.insert(std::make_pair(projectpath, std::move(contents)));
+  } else {
+    fileptr->second = std::move(contents);
+  }
 }
 
 VerilogSourceFile* VerilogProject::LookupRegisteredFileInternal(

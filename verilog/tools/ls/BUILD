@@ -80,13 +80,42 @@ cc_library(
 )
 
 cc_library(
+    name = "symbol-table-handler",
+    srcs = ["symbol-table-handler.cc"],
+    hdrs = ["symbol-table-handler.h"],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "//common/lsp:lsp-protocol",
+        "//common/strings:line_column_map",
+        "//common/util:file_util",
+        "//verilog/analysis:symbol_table",
+        "//verilog/analysis:verilog_filelist",
+        "//verilog/analysis:verilog_project",
+        ":lsp-parse-buffer",
+    ],
+)
+
+cc_test(
+    name = "symbol-table-handler_test",
+    srcs = ["symbol-table-handler_test.cc"],
+    deps = [
+        ":symbol-table-handler",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "verilog-language-server",
     srcs = ["verilog-language-server.cc"],
     hdrs = ["verilog-language-server.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":lsp-parse-buffer",
+        ":symbol-table-handler",
         ":verible-lsp-adapter",
+        "//common/util:file_util",
         "//common/lsp:json-rpc-dispatcher",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-text-buffer",

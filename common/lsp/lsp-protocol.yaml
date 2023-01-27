@@ -26,6 +26,17 @@ ServerInfo:
   name: string
   version: string
 
+InitializeParams:
+  # processId
+  # clientInfo
+  # locale
+  rootPath?: string
+  rootUri?: string
+  # initializationOptions
+  # capabilities
+  # trace
+  # workspaceFolders
+
 InitializeResult:
   capabilities: object          # Lots. We output that directly as plain json.
   serverInfo: ServerInfo

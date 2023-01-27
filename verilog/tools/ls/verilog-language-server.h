@@ -20,8 +20,13 @@
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
+#include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
+
+// TODO add support for changing workspace
+// TODO reset symbol table on workspace change?
 
 // Class implementing the Language Server for Verilog
 class VerilogLanguageServer {
@@ -47,11 +52,25 @@ class VerilogLanguageServer {
 
   // The "initialize" method requests server capabilities.
   verible::lsp::InitializeResult InitializeRequestHandler(
-      const nlohmann::json &params) const;
+      const verible::lsp::InitializeParams &params);
+
+  // Returns language server capabilities in textDocument/initialize response
+  // format
+  verible::lsp::InitializeResult GetCapabilities();
+
+  // sets up the VerilogProject structure for symbol table, sets listeners for
+  // updating VerilogProject views for edited files
+  // if no project_root is provided, it is set to either current directory
+  // or directory containing verible.filelist
+  void ConfigureProject(absl::string_view project_root = "");
 
   // Publish a diagnostic sent to the server.
   void SendDiagnostics(const std::string &uri,
                        const verilog::BufferTracker &buffer_tracker);
+
+  // Updates file contents in the project on change in Language Server Client
+  void UpdateEditedFileInProject(const std::string &uri,
+                                 const verilog::BufferTracker *buffer_tracker);
 
   // Stream splitter splits the input stream into messages (header/body).
   verible::lsp::MessageStreamSplitter stream_splitter_;
@@ -64,6 +83,9 @@ class VerilogLanguageServer {
 
   // Tracks changes in buffers from BufferCollection and parses their contents
   verilog::BufferTrackerContainer parsed_buffers_;
+
+  // Handles requests relying on the symbol table
+  verilog::SymbolTableHandler symbol_table_handler_;
 
   // A flag for indicating "shutdown" request
   bool shutdown_requested_ = false;

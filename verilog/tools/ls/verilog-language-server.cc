@@ -15,9 +15,11 @@
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <functional>
+#include <memory>
 
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
@@ -34,12 +36,43 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
   // Whenever there is a new parse result ready, use that as an opportunity
   // to send diagnostics to the client.
   buffers_.SetChangeListener(parsed_buffers_.GetSubscriptionCallback());
-  parsed_buffers_.SetChangeListener(
+  parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
-             const verilog::BufferTracker &buffer_tracker) {
-        SendDiagnostics(uri, buffer_tracker);
+             const verilog::BufferTracker *buffer_tracker) {
+        if (buffer_tracker) SendDiagnostics(uri, *buffer_tracker);
       });
   SetRequestHandlers();
+}
+
+verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
+  // send response with information what we do.
+  verible::lsp::InitializeResult result;
+  result.serverInfo = {
+      .name = "Verible Verilog language server.",
+      .version = verible::GetRepositoryVersion(),
+  };
+  result.capabilities = {
+      {
+          "textDocumentSync",
+          {
+              {"openClose", true},  // Want open/close events
+              {"change", 2},        // Incremental updates
+          },
+      },
+      {"codeActionProvider", true},               // Autofixes for lint errors
+      {"documentSymbolProvider", true},           // Symbol-outline of file
+      {"documentRangeFormattingProvider", true},  // Format selection
+      {"documentFormattingProvider", true},       // Full file format
+      {"documentHighlightProvider", true},        // Highlight same symbol
+      {"definitionProvider", true},               // Provide going to definition
+      {"diagnosticProvider",                      // Pull model of diagnostics.
+       {
+           {"interFileDependencies", false},
+           {"workspaceDiagnostics", false},
+       }},
+  };
+
+  return result;
 }
 
 void VerilogLanguageServer::SetRequestHandlers() {
@@ -89,6 +122,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
         return verilog::FormatRange(
             parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p);
       });
+  dispatcher_.AddRequestHandler(  // go-to definition
+      "textDocument/definition",
+      [this](const verible::lsp::DefinitionParams &p) {
+        return symbol_table_handler_.FindDefinition(p, parsed_buffers_);
+      });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
     shutdown_requested_ = true;
@@ -124,35 +162,42 @@ void VerilogLanguageServer::PrintStatistics() const {
 }
 
 verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
-    const nlohmann::json &params) const {
-  // Ignore passed client capabilities from params right now,
-  // just announce what we do.
-  verible::lsp::InitializeResult result;
-  result.serverInfo = {
-      .name = "Verible Verilog language server.",
-      .version = verible::GetRepositoryVersion(),
-  };
-  result.capabilities = {
-      {
-          "textDocumentSync",
-          {
-              {"openClose", true},  // Want open/close events
-              {"change", 2},        // Incremental updates
-          },
-      },
-      {"codeActionProvider", true},               // Autofixes for lint errors
-      {"documentSymbolProvider", true},           // Symbol-outline of file
-      {"documentRangeFormattingProvider", true},  // Format selection
-      {"documentFormattingProvider", true},       // Full file format
-      {"documentHighlightProvider", true},        // Highlight same symbol
-      {"diagnosticProvider",                      // Pull model of diagnostics.
-       {
-           {"interFileDependencies", false},
-           {"workspaceDiagnostics", false},
-       }},
-  };
+    const verible::lsp::InitializeParams &p) {
+  // set VerilogProject for the symbol table, if possible
+  if (!p.rootUri.empty()) {
+    absl::string_view path = verilog::LSPUriToPath(p.rootUri);
+    if (path.empty()) {
+      LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
+                 << std::endl;
+      path = p.rootUri;
+    }
+    ConfigureProject(path);
+  } else if (!p.rootPath.empty()) {
+    ConfigureProject(p.rootPath);
+  } else {
+    LOG(WARNING) << "Could not configure Verilog Project root";
+    ConfigureProject();
+  }
+  return GetCapabilities();
+}
 
-  return result;
+void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
+  std::string proj_root = {project_root.begin(), project_root.end()};
+  if (proj_root.empty()) {
+    proj_root = std::string(verible::file::Dirname(FindFileList(".")));
+  }
+  if (proj_root.empty()) proj_root = ".";
+  proj_root =
+      std::filesystem::absolute({proj_root.begin(), proj_root.end()}).string();
+  std::shared_ptr<VerilogProject> proj = std::make_shared<VerilogProject>(
+      proj_root, std::vector<std::string>(), "");
+  symbol_table_handler_.SetProject(proj);
+
+  parsed_buffers_.AddChangeListener(
+      [this](const std::string &uri,
+             const verilog::BufferTracker *buffer_tracker) {
+        UpdateEditedFileInProject(uri, buffer_tracker);
+      });
 }
 
 void VerilogLanguageServer::SendDiagnostics(
@@ -171,6 +216,23 @@ void VerilogLanguageServer::SendDiagnostics(
   params.diagnostics =
       verilog::CreateDiagnostics(buffer_tracker, kDiagnosticLimit);
   dispatcher_.SendNotification("textDocument/publishDiagnostics", params);
+}
+
+void VerilogLanguageServer::UpdateEditedFileInProject(
+    const std::string &uri, const verilog::BufferTracker *buffer_tracker) {
+  absl::string_view path = verilog::LSPUriToPath(uri);
+  if (path.empty()) {
+    LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
+    return;
+  }
+  if (!buffer_tracker) {
+    symbol_table_handler_.UpdateFileContent(path, nullptr);
+    return;
+  }
+  if (!buffer_tracker->last_good()) return;
+  symbol_table_handler_.UpdateFileContent(
+      path, &buffer_tracker->last_good()->parser().Data());
+  LOG(INFO) << "Updated file:  " << uri << " (" << path << ")";
 }
 
 };  // namespace verilog
