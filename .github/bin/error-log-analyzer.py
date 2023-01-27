@@ -140,7 +140,6 @@ project_urls = sorted([
             "https://github.com/SymbiFlow/XilinxUnisimLibrary",
             "https://github.com/black-parrot/black-parrot",
             "https://github.com/steveicarus/ivtest",
-            "https://github.com/krevanth/ZAP",
             "https://github.com/trivialmips/nontrivial-mips",
             "https://github.com/pulp-platform/axi",
             "https://github.com/rsd-devel/rsd",

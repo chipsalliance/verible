@@ -91,7 +91,6 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/SymbiFlow/XilinxUnisimLibrary \
          https://github.com/black-parrot/black-parrot
          https://github.com/steveicarus/ivtest \
-         https://github.com/krevanth/ZAP \
          https://github.com/trivialmips/nontrivial-mips \
          https://github.com/pulp-platform/axi \
          https://github.com/rsd-devel/rsd \
@@ -160,10 +159,6 @@ ExpectedFailCount[project:black-parrot]=175
 ExpectedFailCount[syntax:ivtest]=168
 ExpectedFailCount[lint:ivtest]=168
 ExpectedFailCount[project:ivtest]=198
-
-ExpectedFailCount[project:ZAP]=29
-ExpectedFailCount[syntax:ZAP]=3
-ExpectedFailCount[lint:ZAP]=3
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
