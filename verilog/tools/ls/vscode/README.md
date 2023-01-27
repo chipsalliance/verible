@@ -1,18 +1,20 @@
-# VS Code Extension
+# Verible Language Server Extension
 
-## Installation
-Be sure your system as a recent version of both [nodejs](https://nodejs.org/)
-and [npm](https://www.npmjs.com/).
-From the directory of this Readme, run `npm install`.
+## Features
+The language server provides a couple of features from the [Verible SystemVerilog productivity suite](https://github.com/chipsalliance/verible) right in the editor.
 
-After [installing the verible tools](../../../README.md#installation),
-run `npm run vsix` to generate the extension file `verible.vsix`.
+ * **Linting**: Checks your code against a number of
+   [lint rules](https://chipsalliance.github.io/verible/lint.html) and provides
+   'wiggly lines' with diagnostic output and even offers auto-fixes when available.
+ * **Formatting**: Offers Format Document/Selection according to the Verible
+   formatting style. The 'look' can be configured if needed.
+ * **Outline**: Shows the high-level structure of your modules and functions in the
+   outline tree. Labelled begin/end blocks are also included.
+ * **Hover**: Highlight symbols related to the one under the cursor.
+ * **[&#x1F389; New]** **Go-To-Definition**: Jump to the definition of the symbol under the cursor.
+ * **[&#x1F389; New]** **AUTO**-expansion: Features known from
+   [emacs verilog mode](https://www.veripool.org/verilog-mode/). Currently
+   `AUTOARG` (`AUTO_INST`, `AUTO_TEMPLATE` [coming soon](https://github.com/chipsalliance/verible/issues/1557)).
 
-Finally, run `code --install-extension verible.vsix` to install the extension.
-
-# References
-- [Language server extension guide][vscode-lsp]
-- [Packaging the extension][packaging]
-
-[vscode-lsp]: https://code.visualstudio.com/api/language-extensions/language-server-extension-guide
-[packaging]: https://code.visualstudio.com/api/working-with-extensions/publishing-extension#packaging-extensions
+## Filing Issues
+File bugs on the public [github issue tracker](https://github.com/chipsalliance/verible/issues/new/choose). Provide (sanitized) code examples if needed to illustrate an issue.
