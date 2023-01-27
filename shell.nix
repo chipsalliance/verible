@@ -19,6 +19,9 @@ pkgs.mkShell {
       flex
       bison
 
+      # To build vscode vsix package
+      nodejs
+
       # Ease development
       clang-tools_11    # clang-format
       bazel-buildtools  # buildifier
