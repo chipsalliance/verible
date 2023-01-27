@@ -289,8 +289,7 @@ void StreamKytheFactsEntries(KytheOutput* kythe_output,
     // Output facts and edges.
     kythe_extractor.ExtractFile(root);
     LOG(INFO) << "Extracted Kythe facts of " << file_path << " in "
-              << absl::ToInt64Milliseconds(absl::Now() - extraction_start)
-              << "ms";
+              << (absl::Now() - extraction_start);
   }
 
   VLOG(1) << "end of " << __FUNCTION__;

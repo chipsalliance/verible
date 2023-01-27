@@ -233,13 +233,6 @@ absl::Status SetContents(absl::string_view filename,
 }
 
 std::string JoinPath(absl::string_view base, absl::string_view name) {
-  // Make sure the second element is not already absolute, otherwise
-  // the fs::path() uses this as toplevel path. This is only an issue with
-  // Unix paths. Windows paths will have a c:\ for explicit full-pathness
-  while (!name.empty() && name[0] == '/') {
-    name = name.substr(1);
-  }
-
   fs::path p = fs::path(std::string(base)) / fs::path(std::string(name));
   return p.lexically_normal().string();
 }

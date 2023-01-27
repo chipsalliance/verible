@@ -2256,8 +2256,9 @@ class MacroCallReshaper {
     l_paren_ = &paren_group_->Children().front();
     if (argument_list_) {
       argument_list_ = NextSibling(*l_paren_);
-      r_paren_ = r_paren_is_in_arg_list ? &argument_list_->Children().back()
-                                        : NextSibling(*argument_list_);
+      r_paren_ = r_paren_is_in_arg_list && !argument_list_->Children().empty()
+                     ? &argument_list_->Children().back()
+                     : NextSibling(*argument_list_);
     } else {
       r_paren_ = &paren_group_->Children().back();
     }
@@ -2970,7 +2971,8 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       // In these cases, merge the 'begin' partition of the statement block
       // with the preceding keyword or header partition.
-      if (NodeIsBeginEndBlock(
+      if (!verible::is_leaf(partition.Children().back()) &&
+          NodeIsBeginEndBlock(
               verible::SymbolCastToNode(*node.children().back()))) {
         auto& seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;

@@ -84,6 +84,7 @@
 %s PRIMITIVE
 %x PP_EXPECT_DEF_ID
 %x PP_EXPECT_IF_ID
+%x PP_EXPECT_INCLUDE_FILE
 %x PP_MACRO_FORMALS
 %x PP_MACRO_DEFAULT
 %x PP_BETWEEN_ID_AND_BODY
@@ -166,6 +167,7 @@ BadMacroIdentifier `{DecNumber}{BasicIdentifier}
 EscapeSequence "\\"{InputCharacter}
 
 /* String literal */
+/* TODO: make a sub-state for easier error reporting ? */
 StringContent  ([^\r\n"\\]|{EscapeSequence}|\\{LineTerminator})*
 UnterminatedStringLiteral  \"{StringContent}
 StringLiteral  {UnterminatedStringLiteral}\"
@@ -174,6 +176,10 @@ StringLiteral  {UnterminatedStringLiteral}\"
 EvalStringLiteralContent ([^`]|(`[^"]))*
 UnterminatedEvalStringLiteral `\"{EvalStringLiteralContent}
 EvalStringLiteral {UnterminatedEvalStringLiteral}`\"
+
+/* Preprocessor angle-bracket `include */
+UnterminatedAngleBracketString <{StringContent}
+AngleBracketInclude {UnterminatedAngleBracketString}>
 
 /* attribute lists, treated like comments */
 AttributesBegin "(*"
@@ -920,6 +926,21 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
   return TK_OTHER;
 }
 
+<PP_EXPECT_INCLUDE_FILE>{
+  {StringLiteral} {
+     UpdateLocation();
+     yy_pop_state();
+     return TK_StringLiteral;
+  }
+  {AngleBracketInclude} {
+    UpdateLocation();
+    yy_pop_state();
+    return TK_AngleBracketInclude;
+  }
+  {Space}+ { UpdateLocation(); return TK_SPACE; }
+  . { yyless(0); yy_pop_state(); }  /* anything else: back to default mode */
+}  /* <PP_EXPECT_INCLUDE_FILE> */
+
   /* The UDP Table is a unique lexical environment. These are most
      tokens that we can expect in a table. */
 <UDPTABLE>\(\?0\)    { UpdateLocation(); return '_'; }
@@ -1254,8 +1275,11 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 `endif { UpdateLocation(); return PP_endif; }
 `ifdef { UpdateLocation(); yy_push_state(PP_EXPECT_IF_ID); return PP_ifdef; }
 `ifndef { UpdateLocation(); yy_push_state(PP_EXPECT_IF_ID); return PP_ifndef; }
-`include { UpdateLocation(); return PP_include; }
 `undef { UpdateLocation(); yy_push_state(PP_EXPECT_IF_ID); return PP_undef; }
+`include { UpdateLocation();
+           yy_push_state(PP_EXPECT_INCLUDE_FILE);
+           return PP_include;
+}
 
 <PP_EXPECT_IF_ID>{
   {Space}+ { UpdateLocation(); return TK_SPACE; }

@@ -269,8 +269,11 @@ void GenerateCode(const std::string &filename,
       } else {
         fprintf(out, "  %s %s", type.c_str(), p.name.c_str());
       }
-      if (!p.default_value.empty())
+      if (p.default_value.empty()) {
+        fprintf(out, "{}");
+      } else {
         fprintf(out, " = %s", p.default_value.c_str());
+      }
       fprintf(out, ";\n");
       if (p.is_optional) {
         fprintf(out, "  bool has_%s = false;  // optional property\n",
@@ -290,7 +293,8 @@ void GenerateCode(const std::string &filename,
       std::string access_deref = access_call + ".";
       if (p.is_optional) {
         fprintf(out,
-                "%*sif (auto found = j.find(\"%s\"); found != j.end()) {\n",
+                "%*sif (auto found = j.find(\"%s\"); found != j.end() && "
+                "!found->is_null()) {\n",
                 indent, "", p.name.c_str());
         indent += 4;
         fprintf(out, "%*shas_%s = true;\n", indent, "", p.name.c_str());

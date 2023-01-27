@@ -598,12 +598,13 @@ absl::Status VerilogPreprocess::HandleInclude(
   TokenStreamView::const_iterator token_iter =
       GenerateBypassWhiteSpaces(generator);
   auto file_token_iter = *token_iter;
-  if (file_token_iter->token_enum() != TK_StringLiteral) {
+  if (file_token_iter->token_enum() != TK_StringLiteral &&
+      file_token_iter->token_enum() != TK_AngleBracketInclude) {
     preprocess_data_.errors.push_back(
         {**token_iter, "Expected a path to a SV file."});
     return absl::InvalidArgumentError("Expected a path to a SV file.");
   }
-  // Currently the file path looks like "path", we need to remove "".
+  // Currently the file path looks like "path", we need to remove "" or <>
   const auto& token_text = file_token_iter->text();
 
   std::filesystem::path file_path =

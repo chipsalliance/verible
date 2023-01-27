@@ -130,6 +130,29 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
   }
 }
 
+// Tests that all expected unqualified ids are found.
+TEST(GetIdentifierTest, PortIdentifiers) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module t; output reg ", {kTag, "o"}, "; endmodule"},
+  };
+  // Test GetIdentifier
+  for (const auto& test : kTestCases) {
+    VLOG(1) << "[GetIdentifier] code:\n" << test.code;
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto ids = FindAllPortIdentifiers(*root);
+          std::vector<verible::TreeSearchMatch> got_ids;
+          for (const auto& id : ids) {
+            const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+            got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
+          }
+          return got_ids;
+        });
+  }
+}
+
 TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {

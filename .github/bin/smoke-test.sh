@@ -33,12 +33,22 @@
 # Comment out to see syntax errors in bash while working on script.
 exec 2>/dev/null
 
+# SMOKE_LOGGING_DIR is designed to be either empty or
+# contain a path to a directory where the log files should be
+# generated. If empty, the logs are not generated.
+readonly SMOKE_LOGGING_DIR=$SMOKE_LOGGING_DIR
+
 set -u   # Be strict: only allow using a variable after it is assigned
 
 BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
+
+# Make the directory for the logs if logs will be saved
+if [ $SMOKE_LOGGING_DIR ]; then
+  mkdir -p $SMOKE_LOGGING_DIR
+fi
 
 # Some terminal codes to highlight
 readonly TERM_RED=$'\033[1;31m'
@@ -81,7 +91,6 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/SymbiFlow/XilinxUnisimLibrary \
          https://github.com/black-parrot/black-parrot
          https://github.com/steveicarus/ivtest \
-         https://github.com/krevanth/ZAP \
          https://github.com/trivialmips/nontrivial-mips \
          https://github.com/pulp-platform/axi \
          https://github.com/rsd-devel/rsd \
@@ -99,23 +108,7 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 # Goal: The following list shall be empty :)
 declare -A KnownIssue
 
-#--- Opentitan
-# Original issue - 1006 has been resolved
-# There is also bug 1008 which only shows up if compiled with asan
-
-#--- ivtest
-KnownIssue[formatter:$BASE_TEST_DIR/ivtest/ivltests/pr2202846c.v]=1015
-
-#--- nontrivial-mips
-KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/decode/decoder.sv]=984
-KnownIssue[formatter:$BASE_TEST_DIR/nontrivial-mips/src/cpu/exec/multi_cycle_exec.sv]=984
-
-#--- rsd
-KnownIssue[formatter:$BASE_TEST_DIR/rsd/Processor/Src/Privileged/CSR_Unit.sv]=984
-
-#--- scr1
-KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/core/scr1_tapc.sv]=1015
-KnownIssue[formatter:$BASE_TEST_DIR/scr1/src/tb/scr1_memory_tb_ahb.sv]=1015
+# At the moment, the list is empty
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 declare -A KnownProjectToolIssue
@@ -135,7 +128,7 @@ ExpectedFailCount[project:ibex]=192
 
 ExpectedFailCount[syntax:opentitan]=35
 ExpectedFailCount[lint:opentitan]=35
-ExpectedFailCount[project:opentitan]=727
+ExpectedFailCount[project:opentitan]=729
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -143,7 +136,7 @@ ExpectedFailCount[project:Cores-VeeR-EH2]=42
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
-ExpectedFailCount[project:cva6]=70
+ExpectedFailCount[project:cva6]=71
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -159,30 +152,24 @@ ExpectedFailCount[syntax:XilinxUnisimLibrary]=9
 ExpectedFailCount[lint:XilinxUnisimLibrary]=9
 ExpectedFailCount[project:XilinxUnisimLibrary]=27
 
-ExpectedFailCount[syntax:black-parrot]=165
-ExpectedFailCount[lint:black-parrot]=165
-ExpectedFailCount[project:black-parrot]=178
+ExpectedFailCount[syntax:black-parrot]=161
+ExpectedFailCount[lint:black-parrot]=161
+ExpectedFailCount[project:black-parrot]=175
 
-ExpectedFailCount[syntax:ivtest]=188
-ExpectedFailCount[lint:ivtest]=188
-ExpectedFailCount[formatter:ivtest]=2
-ExpectedFailCount[project:ivtest]=217
-
-ExpectedFailCount[project:ZAP]=29
+ExpectedFailCount[syntax:ivtest]=168
+ExpectedFailCount[lint:ivtest]=168
+ExpectedFailCount[project:ivtest]=198
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
-ExpectedFailCount[formatter:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
 
 ExpectedFailCount[project:axi]=69
 
 ExpectedFailCount[syntax:rsd]=1
 ExpectedFailCount[lint:rsd]=1
-ExpectedFailCount[formatter:rsd]=1
 ExpectedFailCount[project:rsd]=43
 
-ExpectedFailCount[formatter:scr1]=2
 ExpectedFailCount[project:scr1]=45
 
 ExpectedFailCount[syntax:basejump_stl]=462
@@ -273,15 +260,35 @@ function run_smoke_test() {
         EXTRA_PARAM=""
         file_param=${single_file}
       fi
+      local EXIT_CODE
+      if [ $SMOKE_LOGGING_DIR ]; then
+        local TNAME=$(basename ${tool})
+        local FNAME=$(basename ${file_param})
+        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} 2>&1
+        EXIT_CODE=$?
+      else
+        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
+        EXIT_CODE=$?
+      fi
 
-      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
-      local EXIT_CODE=$?
+      local logging_nonzero_flag=0
 
       # Even though we don't fail globally, let's at least count how many times
       # our tools exit with non-zero. Long term, we'd like to have them succeed
       # on all files
       if [ $EXIT_CODE -ne 0 ]; then
         non_zero_exit_code=$[non_zero_exit_code + 1]
+        logging_nonzero_flag=1
+      fi
+      if [ $SMOKE_LOGGING_DIR ]; then
+        if [ $logging_nonzero_flag -ne 1 ]; then
+          rm $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME}
+        fi
+        if [ $logging_nonzero_flag -ne 0 ]; then
+          mkdir -p $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros
+          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/
+          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${EXIT_CODE}-${FNAME}_${TNAME}
+        fi
       fi
 
       # A regular error exit code we accept as normal operation of the tool if

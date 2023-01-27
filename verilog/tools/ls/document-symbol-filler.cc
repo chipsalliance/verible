@@ -26,12 +26,23 @@
 // Magic value to hint that we have to fill out the start range.
 static constexpr int kUninitializedStartLine = -1;
 
+// verible::lsp::SymbolKind::Module is just shown as {} namespace symbol
+// in vscode. 'Method' looks slightly nicer as little block. So emit a
+// symbol in the document tree that has the nicer look.
+// TODO(hzeller): This is hacky. We already have a mapping for kate. Looks
+//  like it is a good idea to have some re-mapping per editor (which we then
+//  identify via the initialization script. So we pass in a mapping instead
+//  of a flag.
+//  Well _ideally_ the editors would just show proper icons.
+static constexpr verible::lsp::SymbolKind kVSCodeModule =
+    verible::lsp::SymbolKind::Method;
+
 namespace verilog {
 DocumentSymbolFiller::DocumentSymbolFiller(
     bool kate_workaround, const verible::TextStructureView &text,
     verible::lsp::DocumentSymbol *toplevel)
     : kModuleSymbolKind(kate_workaround ? verible::lsp::SymbolKind::Method
-                                        : verible::lsp::SymbolKind::Module),
+                                        : kVSCodeModule),
       kBlockSymbolKind(kate_workaround ? verible::lsp::SymbolKind::Class
                                        : verible::lsp::SymbolKind::Namespace),
       text_view_(text),

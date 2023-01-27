@@ -28,6 +28,8 @@ Functionality that relies directly on this structure should be isolated under
 //verilog/CST/... (concrete syntax tree) and unit-tested accordingly.
 **/
 
+#include <utility>
+
 #include "common/parser/bison_parser_common.h"
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
@@ -78,9 +80,6 @@ using N = NodeEnum;
 constexpr std::nullptr_t qualifier_placeholder = nullptr;
 constexpr std::nullptr_t expression_placeholder = nullptr;
 
-
-using std::move;
-
 static std::nullptr_t Recover() {
   // TODO(fangism): return a useful ErrorNode or ErrorToken, using the
   // most recent recovered error token in the ParserParam.
@@ -105,8 +104,8 @@ static SymbolPtr ExtendLastSublist(SymbolPtr& list, SymbolPtr& item) {
   auto& list_node = down_cast<SyntaxTreeNode&>(*list);
   auto& last_sublist = down_cast<SyntaxTreeNode&>(
       *list_node.mutable_children().back());
-  last_sublist.Append(move(item));
-  return move(list);
+  last_sublist.Append(std::move(item));
+  return std::move(list);
 }
 
 // Transforms:
@@ -120,8 +119,8 @@ static SymbolPtr ExtendLastSublistWithSeparator(
   auto& list_node = down_cast<SyntaxTreeNode&>(*list);
   auto& sublist_node = down_cast<SyntaxTreeNode&>(
       *list_node.mutable_children().back());
-  sublist_node.Append(move(separator), move(item));
-  return move(list);
+  sublist_node.Append(std::move(separator), std::move(item));
+  return std::move(list);
 }
 
 // (Below): These helper forwarding functions help ensure consistent structure,
@@ -230,6 +229,8 @@ is not locally defined, so the grammar here uses only generic identifiers.
 // gen_tokenizer start STRING_LITERAL
 %token TK_StringLiteral         // STRING
 %token TK_EvalStringLiteral     // STRING
+%token TK_AngleBracketInclude   // STRING
+
 // gen_tokenizer stop
 
 // gen_tokenizer start KEYWORD
@@ -738,20 +739,20 @@ is not locally defined, so the grammar here uses only generic identifiers.
 
 source_text
   : description_list
-    { param->SetRoot(move($1)); }
+    { param->SetRoot(std::move($1)); }
   | /* empty */
     { param->SetRoot(MakeNode()); }
   ;
 GenericIdentifier
   // TODO(fangism): re-tag these to look like GenericIdentifier
   : SymbolIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | EscapedIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | KeywordIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 KeywordIdentifier
@@ -763,22 +764,22 @@ KeywordIdentifier
  */
   /* Verilog-AMS: */
   : TK_access
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_exclude
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_flow
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_from
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_discrete
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TK_sample is in SystemVerilog coverage_event */
   | TK_sample
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_infinite
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_continuous
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 /* TODO(fangism): phase this out:
@@ -787,9 +788,9 @@ KeywordIdentifier
  */
 preprocessor_directive
   : preprocessor_control_flow
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 preprocessor_if_header
@@ -816,13 +817,13 @@ preprocessor_elsif_header
  */
 preprocessor_control_flow
   : preprocessor_if_header
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_elsif_header
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | PP_else
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | PP_endif
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 preprocessor_action
@@ -844,7 +845,7 @@ preprocessor_action
 
 macro_formals_list_opt
   : macro_formals_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$.reset(); }
   ;
@@ -864,18 +865,20 @@ macro_formal_parameter
 
 preprocess_include_argument
   : string_literal
-    { $$ = move($1); }
+    { $$ = std::move($1); }
+  | TK_AngleBracketInclude
+    { $$ = std::move($1); }
   | MacroIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroGenericItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroCall
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 MacroGenericItem
   : MacroCallItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroIdItem
     { $$ = MakeTaggedNode(N::kMacroGenericItem, $1); }
   ;
@@ -898,16 +901,16 @@ macro_args_opt
 macro_arg_opt
   : MacroArg
     /* un-lexed text */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 
 procedural_assertion_statement
   : concurrent_assertion_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | immediate_assertion_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism):
   | checker_instantiation
   */
@@ -915,9 +918,9 @@ procedural_assertion_statement
 
 assertion_item
   : concurrent_assertion_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | deferred_immediate_assertion_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 assignment_pattern
   : TK_LP expression_list_proper '}'
@@ -932,7 +935,7 @@ assignment_pattern
   ;
 assignment_pattern_expression
   : assignment_pattern
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | data_type_base assignment_pattern
     { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
   ;
@@ -952,18 +955,18 @@ structure_or_array_pattern_key
    * assignment_pattern_key : simple_type | TK_default
    */
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* $1 should be a constant expression or GenericIdentifier (member). */
   | simple_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_default
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 simple_type
   : integer_atom_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | integer_vector_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism): support package scope or class scope type here:
   | qualified_id
   */
@@ -987,7 +990,7 @@ interface_class_declaration
   ;
 declaration_extends_list_opt
   : declaration_extends_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -999,7 +1002,7 @@ declaration_extends_list
   ;
 implements_interface_list_opt
   : implements_interface_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1012,7 +1015,7 @@ implements_interface_list
 
 interface_class_item_list_opt
   : interface_class_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
   ;
 interface_class_item_list
@@ -1023,13 +1026,13 @@ interface_class_item_list
   ;
 interface_class_item
   : type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_param_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | interface_class_method
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | ';'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 interface_class_method
   : TK_pure TK_virtual method_prototype ';'
@@ -1038,9 +1041,9 @@ interface_class_method
 
 method_prototype
   : task_prototype
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | function_prototype
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 class_declaration
@@ -1057,9 +1060,9 @@ class_declaration
   ;
 class_constraint
   : constraint_prototype
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | constraint_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 class_declaration_extends_opt
   : TK_extends class_id
@@ -1103,13 +1106,13 @@ qualified_id
   ;
 class_id
   : qualified_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | unqualified_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 class_items_opt
   : class_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kClassItems);}
   ;
@@ -1152,12 +1155,12 @@ class_item
   /* originally: method_qualifier_list_opt class_constructor */
   : method_property_qualifier_list_not_starting_with_virtual class_constructor
     { SetChild($2, 0, $1);
-      $$ = move($2); }
+      $$ = std::move($2); }
   | class_constructor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_virtual method_qualifier_list_opt class_constructor
     { SetChild($3, 0, MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)));
-      $$ = move($3); }
+      $$ = std::move($3); }
 
   /* originally: property_qualifier_list_opt data_type list_of_variable_decl_assignments ';' */
   /* or: property_qualifier_list_opt data_declaration */
@@ -1185,39 +1188,39 @@ class_item
                           $5); }
   | interface_data_declaration
   /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | net_type_declaration
   /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* In the LRM, net_type_declaration is covered by data_declaration. */
   | package_import_declaration
   /* TODO(fangism): this should allow a property_qualifier_list_opt prefix */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* In the LRM, package_import_declaration is covered by data_declaration. */
 
   /* originally: method_qualifier_list_opt task_or_function_declaration */
   /* should qualifier be attached to function/task declaration? */
   | method_property_qualifier_list_not_starting_with_virtual task_declaration
     { SetChild(SymbolCastToNode(*$2)[0] /* kTaskHeader */, 0, $1);
-      $$ = move($2); }
+      $$ = std::move($2); }
   | task_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_virtual method_qualifier_list_opt task_declaration
     { SetChild(SymbolCastToNode(*$3)[0] /* kTaskHeader */, 0,
           MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)));
-      $$ = move($3); }
+      $$ = std::move($3); }
   /* TODO(fangism): Method qualifiers should be grouped together into one list,
    * rather than being split between virtual and method_qualifier list.
    */
   | method_property_qualifier_list_not_starting_with_virtual function_declaration
     { SetChild(SymbolCastToNode(*$2)[0] /* kFunctionHeader */, 0, $1);
-      $$ = move($2); }
+      $$ = std::move($2); }
   | function_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_virtual method_qualifier_list_opt function_declaration
     { SetChild(SymbolCastToNode(*$3)[0] /* kFunctionHeader */, 0,
           MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)));
-      $$ = move($3); }
+      $$ = std::move($3); }
   /* pure virtual method prototypes: */
   | TK_pure TK_virtual class_item_qualifier_list_opt method_prototype ';'
    { $$ = MakeTaggedNode(N::kForwardDeclaration,
@@ -1233,25 +1236,25 @@ class_item
                         MakeTaggedNode(N::kQualifierList, $1, ForwardChildren($2)),
                         ExtendNode($3, $4)); }
   | class_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | interface_class_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | class_constraint
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_param_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | covergroup_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | ';'
     { $$ = MakeTaggedNode(N::kNullDeclaration, $1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_class_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* error-recovery rules */
   | error ';'
     { yyerrok; $$ = Recover(); }
@@ -1285,7 +1288,7 @@ preprocessor_balanced_class_items
   ;
 preprocessor_elsif_class_items_opt
   : preprocessor_elsif_class_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1301,7 +1304,7 @@ preprocessor_elsif_class_item
   ;
 preprocessor_else_class_item_opt
   : preprocessor_else_class_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1312,7 +1315,7 @@ preprocessor_else_class_item
 
 macro_call_or_item
   : MacroGenericItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* lone macro on its own line */
   | MacroCall ';'
     { $$ = ExtendNode($1, $2); }
@@ -1320,15 +1323,15 @@ macro_call_or_item
 
 class_item_qualifier
   : TK_static
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_protected
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_local
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 class_item_qualifier_list_opt
   : class_item_qualifier_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1385,15 +1388,15 @@ concurrent_assertion_item
 concurrent_assertion_statement
   /* all end with ';' or '}' */
   : assert_property_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | assume_property_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | cover_property_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | cover_sequence_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | restrict_property_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 assert_property_statement
   : TK_assert TK_property '(' property_spec ')' action_block
@@ -1466,9 +1469,9 @@ deferred_immediate_assertion_item
   ;
 immediate_assertion_statement
   : simple_immediate_assertion_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | deferred_immediate_assertion_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 simple_immediate_assertion_statement
   : TK_assert '(' expression ')' action_block
@@ -1542,7 +1545,7 @@ deferred_immediate_assertion_statement
   ;
 final_or_zero
   : TK_final
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '#' TK_DecNumber
     { $$ = MakeTaggedNode(N::kPoundZero, $1, $2); }
     /* $2 must be 0 */
@@ -1554,13 +1557,13 @@ constraint_block
   ;
 constraint_block_item
   : constraint_expression_no_preprocessor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* The TK_solve rule has been moved into constraint_expression
    * to support an extension.
    */
   | preprocessor_balanced_constraint_block_item
     /* This also covers preprocessor_balanced_constraint_expressions. */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 constraint_primary_list
   : constraint_primary_list ',' constraint_primary
@@ -1576,7 +1579,7 @@ constraint_block_item_list
   ;
 constraint_block_item_list_opt
   : constraint_block_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     /* create empty list */
     { $$ = MakeTaggedNode(N::kConstraintBlockItemList); }
@@ -1592,7 +1595,7 @@ preprocessor_balanced_constraint_block_item
   ;
 preprocessor_elsif_constraint_block_items_opt
   : preprocessor_elsif_constraint_block_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1608,7 +1611,7 @@ preprocessor_elsif_constraint_block_item
   ;
 preprocessor_else_constraint_block_item_opt
   : preprocessor_else_constraint_block_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1665,13 +1668,13 @@ constraint_expression
      constraint_expression will avoid R/R conflicts.
    */
   : constraint_expression_no_preprocessor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_constraint_expressions
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 constraint_primary
   : reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* covers:
      * reference '[' part_select_range ']'
      *   where part_select_range
@@ -1693,7 +1696,7 @@ constraint_expression_list
   ;
 constraint_expression_list_opt
   : constraint_expression_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1709,7 +1712,7 @@ preprocessor_balanced_constraint_expressions
   ;
 preprocessor_elsif_constraint_expressions_opt
   : preprocessor_elsif_constraint_expressions
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1725,7 +1728,7 @@ preprocessor_elsif_constraint_expression
   ;
 preprocessor_else_constraint_expression_opt
   : preprocessor_else_constraint_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1740,7 +1743,7 @@ constraint_prototype
   ;
 constraint_set
   : constraint_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '{' constraint_expression_list '}'
     /* TODO(fangism): $2 should be optional, but empty {} is covered by
        expr_primary_braces in constraint_expression, and S/R conflicts. */
@@ -1748,13 +1751,13 @@ constraint_set
   ;
 const_opt
   : TK_const
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 var_opt
   : TK_var
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1841,7 +1844,7 @@ data_type_primitive_scalar
   /* resolves conflict on: ID . '[' (sized-type or index expression?) */
 data_type_base
   : data_type_primitive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* hierarchy_identifier starting w/ GenericIdentifier
    * is source of major conflict, so we factor the rest out.
    **/
@@ -1877,7 +1880,7 @@ type_reference
  /* pulled decl_dimensions_opt outside of data_type to other rules */
 data_type
   : data_type_base /* decl_dimensions_opt */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 interface_type
@@ -1892,16 +1895,16 @@ interface_type
   ;
 interface_opt
   : TK_interface
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 
 delay3_or_drive_opt
   : delay3
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | drive_strength
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -1909,9 +1912,9 @@ delay3_or_drive_opt
 /* support interface.modport as a type */
 scope_or_if_res
   : TK_SCOPE_RES
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '.'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 /* Re-worked grammar to eliminate conflict on type identifier,
@@ -1924,8 +1927,8 @@ scope_or_if_res
  * Delay and drive specifiers occur in net_declarations.
  */
 type_identifier_or_implicit_followed_by_id_and_dimensions_opt
-  // : class_id GenericIdentifier { $$ = move($2); }
-  // : GenericIdentifier delay3_or_drive_opt GenericIdentifier { $$ = move($3); }
+  // : class_id GenericIdentifier { $$ = std::move($2); }
+  // : GenericIdentifier delay3_or_drive_opt GenericIdentifier { $$ = std::move($3); }
   : GenericIdentifier delay3 decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
@@ -1957,7 +1960,7 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
                                        $4,
                                        MakePackedDimensionsNode($5)),
                           $6, MakeUnpackedDimensionsNode($7)); }
-  // | delay3_or_drive_opt GenericIdentifier { $$ = move($2); }
+  // | delay3_or_drive_opt GenericIdentifier { $$ = std::move($2); }
   | /* implicit type */ /* decl_dimensions_opt */
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
@@ -2134,7 +2137,7 @@ data_type_or_implicit_followed_by_id_and_dimensions_opt
     /* $1 is type, including optional packed dimensions */
   /* allows optional delay3 or drive_strength: */
   | type_identifier_or_implicit_followed_by_id_and_dimensions_opt
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | signing decl_dimensions_opt delay3_or_drive_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
@@ -2159,7 +2162,7 @@ data_type_or_implicit_basic_followed_by_id
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId, $1, $2); }
   /* forbids optional delay3 or drive_strength: */
   | type_identifier_or_implicit_basic_followed_by_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | signing decl_dimensions_opt GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId,
                           MakeDataType($1, MakePackedDimensionsNode($2)),
@@ -2193,7 +2196,7 @@ data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     { $$ = MakeTypeIdDimensionsTuple($1, $2, MakeUnpackedDimensionsNode($3)); }
   /* forbids optional delay3 or drive_strength: */
   | type_identifier_or_implicit_basic_followed_by_id_and_dimensions_opt
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | signing decl_dimensions_opt class_id decl_dimensions_opt
     { $$ = MakeTypeIdDimensionsTuple(
                           MakeDataType($1, MakePackedDimensionsNode($2)),
@@ -2210,39 +2213,39 @@ data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
 
 description
   : module_or_interface_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | udp_primitive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | config_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | nature_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | package_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | discipline_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | package_item_no_pp
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TKK_attribute '(' GenericIdentifier ','
     TK_StringLiteral ',' TK_StringLiteral ')'
     { $$ = MakeTaggedNode(N::kAttribute, $1,
                           MakeParenGroup($2, MakeNode($3, $4, $5, $6, $7),
                                          $8)); }
   | bind_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_description_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* The following are only allowed in the library map sublanguage.
    * See LRM: Ch. 33
    */
   | library_source
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 description_list_opt
   : description_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2259,7 +2262,7 @@ library_source
   ;
 library_description_list_opt
   : library_description_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2271,13 +2274,13 @@ library_description_list
   ;
 library_description
   : library_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | include_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | config_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | ';'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 preprocessor_balanced_description_items
@@ -2291,7 +2294,7 @@ preprocessor_balanced_description_items
   ;
 preprocessor_elsif_description_items_opt
   : preprocessor_elsif_description_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2307,7 +2310,7 @@ preprocessor_elsif_description_item
   ;
 preprocessor_else_description_item_opt
   : preprocessor_else_description_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2333,7 +2336,7 @@ dynamic_array_new
   ;
 for_step_opt
   : for_step
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2346,16 +2349,16 @@ for_step
 /* LRM: this is named for_step_assignment */
 assignment_statement
   : assignment_statement_no_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | inc_or_dec_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(b/150645241): function_subroutine_call */
   ;
 assignment_statement_no_expr
   : lpvalue '=' expression
     { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
   | assign_modify_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 function_prototype
@@ -2373,7 +2376,7 @@ function_prototype
 function_return_type_and_id
   : data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
   /* $1 should not have unpacked dimensions */
-    { $$ = RepackReturnTypeId(move($1)); }
+    { $$ = RepackReturnTypeId(std::move($1)); }
   | interface_type class_id
     { $$ = RepackReturnTypeId(MakeTypeIdDimensionsTuple(
                MakeDataType($1), $2, nullptr)); }
@@ -2420,9 +2423,9 @@ endfunction_label_opt
   ;
 implicit_class_handle
   : TK_this
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_super
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 /* TODO(jeremycs): Fill this out */
@@ -2438,33 +2441,33 @@ inc_or_dec_expression
   ;
 integer_atom_type
   : TK_byte
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_shortint
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_int
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_longint
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_integer
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_time
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 integer_vector_type
   : TK_reg
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_bit
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_logic
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 join_keyword
   : TK_join
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_join_none
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_join_any
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 jump_statement
   : TK_break ';'
@@ -2505,7 +2508,7 @@ loop_statement
   ;
 for_initialization_opt
   : for_initialization
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2543,7 +2546,7 @@ variable_decl_assignment
   ;
 trailing_decl_assignment_opt
   : trailing_decl_assignment
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2559,7 +2562,7 @@ trailing_decl_assignment
   ;
 method_qualifier_list_opt
   : method_qualifier_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2578,20 +2581,20 @@ method_property_qualifier_list_not_starting_with_virtual
   ;
 method_qualifier
   : TK_virtual
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_pure TK_virtual
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | class_item_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 method_property_qualifier
   /* grammatic simplification: unify method_qualifier with property qualifier */
   : TK_virtual
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | class_item_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | random_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 modport_declaration
@@ -2633,38 +2636,38 @@ modport_ports_list
      the inner list can cover multiple identifier declarations.
     */
   : modport_simple_ports_declaration_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | modport_tf_ports_declaration_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | modport_clocking_declaration_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 dpi_spec_string
   : TK_StringLiteral
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism): Verify this is "DPI-C" or "DPI". */
   ;
 dpi_import_property_opt
   : dpi_import_property
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 dpi_import_property
   : TK_context
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* suitable for task_prototype and function_prototype */
   | TK_pure
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* suitable for only function_prototype */
   ;
 
 dpi_import_export
   : dpi_import_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | dpi_export_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 dpi_export_item
   /* The following rules are expanded from:
@@ -2677,9 +2680,9 @@ dpi_export_item
   ;
 import_export
   : TK_export
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_import
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 dpi_import_item
   /* The following rules are expanded from:
@@ -2695,11 +2698,11 @@ dpi_import_item
 
 modport_ports_declaration_trailing_comma
   : modport_simple_ports_declaration_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | modport_tf_ports_declaration_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | modport_clocking_declaration_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 modport_simple_ports_declaration_trailing_comma
   : modport_simple_ports_declaration_last ','
@@ -2775,38 +2778,38 @@ modport_simple_port
   ;
 modport_tf_port
   : task_prototype
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | function_prototype
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | GenericIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 non_integer_type
   : TK_real
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_realtime
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_shortreal
-    { $$ = move($1); }
+    { $$ = std::move($1); }
  | TK_wreal /* Verilog-AMS */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 macro_digits
   : MacroCall
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 based_number
   : dec_based_number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | bin_based_number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | oct_based_number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | hex_based_number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 dec_based_number
   : TK_DecBase TK_DecDigits
@@ -2849,9 +2852,9 @@ number
 /* allow `macro where one might expect a constant number */
 constant_dec_number
   : TK_DecNumber
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroNumericWidth
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 open_range_list
   : open_range_list ',' value_range
@@ -2867,7 +2870,7 @@ package_declaration
   ;
 module_package_import_list_opt
   : package_import_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2910,43 +2913,43 @@ package_import_item_list
   ;
 package_item
   : package_item_no_pp
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_package_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 package_item_no_pp
   : package_or_generate_item_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | timeunits_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | data_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | net_type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | interface_data_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | clocking_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | let_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | constraint_declaration_package_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | package_import_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | package_export_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | timescale_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | misc_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_item_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | error ';'  /* error in data or type declaration */
     { yyerrok; $$ = Recover(); }
   /**
@@ -2955,7 +2958,7 @@ package_item_no_pp
    * Tracked as b/36417019.
    **/
   | any_param_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* attribute_list_opt */ TK_initial statement_item
     { $$ = MakeTaggedNode(N::kInitialStatement, $1, $2); }
   ;
@@ -2970,7 +2973,7 @@ preprocessor_balanced_package_items
   ;
 preprocessor_elsif_package_items_opt
   : preprocessor_elsif_package_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -2986,7 +2989,7 @@ preprocessor_elsif_package_item
   ;
 preprocessor_else_package_item_opt
   : preprocessor_else_package_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3002,40 +3005,40 @@ package_item_list
   ;
 package_item_list_opt
   : package_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 misc_directive
   /* These directives may appear in top/package scope. */
   : DR_resetall
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_celldefine
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_endcelldefine
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_unconnected_drive pull01
     { $$ = MakeTaggedNode(N::kTopLevelDirective, $1, $2); }
   | DR_nounconnected_drive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_default_nettype net_type_or_none
     { $$ = MakeTaggedNode(N::kTopLevelDirective, $1, $2); }
   | DR_suppress_faults
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_nosuppress_faults
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_enable_portfaults
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_disable_portfaults
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_delay_mode_distributed
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_delay_mode_path
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_delay_mode_unit
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_delay_mode_zero
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_default_decay_time decay_value_simple
     { $$ = MakeTaggedNode(N::kTopLevelDirective, $1, $2); }
     /* $2 can be real or integer time */
@@ -3043,52 +3046,54 @@ misc_directive
     { $$ = MakeTaggedNode(N::kTopLevelDirective, $1, $2); }
     /* $2 is integer in [0,250] */
   | DR_pragma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_uselib
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_begin_keywords TK_StringLiteral
     { $$ = MakeTaggedNode(N::kTopLevelDirective, $1, $2); }
     /* $2 should name a standard, e.g. "1800-2012" or "1364-2005" */
   | DR_end_keywords
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 net_type_or_none
   : net_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
+  | TK_trireg    /* Would crate shift/reduce conflict if in net_type */
+    { $$ = std::move($1); }
   | GenericIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* $1 should be 'none', which is not a keyword. */
   ;
 module_item_directive
   /* These directives may appear within a module. */
   : DR_protect
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | DR_endprotect
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 port_direction
   : dir
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_ref
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 tf_port_direction
   : port_direction
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_const TK_ref
     { $$ = MakeTaggedNode(N::kConstRef, $1, $2); }
   ;
 tf_port_direction_opt
   : tf_port_direction
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 property_qualifier
   : class_item_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | random_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 property_spec
   : event_control_opt property_spec_disable_iff_opt property_expr
@@ -3105,47 +3110,47 @@ property_spec_disable_iff
   ;
 property_spec_disable_iff_opt
   : property_spec_disable_iff
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 random_qualifier_opt
   : random_qualifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 random_qualifier
   : TK_rand
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_randc
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 signing
   : TK_signed
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_unsigned
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 statement
   : /* attribute_list_opt */ statement_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | unqualified_id ':' /* attribute_list_opt */ statement_item
     { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
     /* $1 should be a GenericIdentifier, but unqualified_id avoids conflict. */
   ;
 statement_or_null
   : statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* attribute_list_opt */ ';'
     { $$ = MakeTaggedNode(N::kNullStatement, $1); }
   ;
 block_item_or_statement_or_null
   : block_item_decl
-      { $$ = move($1); }
+      { $$ = std::move($1); }
   | statement_or_null
-      { $$ = move($1); }
+      { $$ = std::move($1); }
   ;
 block_item_or_statement_or_null_list
   : block_item_or_statement_or_null_list block_item_or_statement_or_null
@@ -3155,13 +3160,13 @@ block_item_or_statement_or_null_list
   ;
 block_item_or_statement_or_null_list_opt
   : block_item_or_statement_or_null_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kBlockItemStatementList); }
   ;
 stream_expression
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism):
   | expression TK_with select_variable_dimension
    */
@@ -3174,9 +3179,9 @@ stream_expression_list
   ;
 stream_operator
   : TK_LS
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_RS
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 streaming_concatenation
   : '{' stream_operator slice_size_opt '{' stream_expression_list '}' '}'
@@ -3194,7 +3199,7 @@ streaming_concatenation
   ;
 slice_size_opt
   : slice_size
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3208,13 +3213,13 @@ slice_size
   * A close compromise is expr_primary without expr_primary_braces.
   */
   : expr_primary_no_groups
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expr_primary_parens
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | reference_or_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | data_type_primitive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* non-primitive data-types already covered by reference_or_call */
   ;
 task_prototype
@@ -3330,9 +3335,9 @@ tf_port_item_expr_opt
 
 tf_port_list
   : tf_port_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | tf_port_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 tf_port_list_trailing_comma
   : tf_port_list ','
@@ -3384,7 +3389,7 @@ timeunits_declaration
   ;
 value_range
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '[' expression ':' expression ']'
     { $$ = MakeTaggedNode(N::kValueRange, $1, $2, $3, $4, $5); }
   /* half-open ranges are only legal in certain contexts */
@@ -3430,7 +3435,7 @@ decl_variable_dimension
     { $$ = MakeTaggedNode(N::kDimensionAssociativeType, $1, $2, $3 ); }
     /* non-primitive data_type are covered by expression */
   | lb_star_rb
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 lb_star_rb
@@ -3535,20 +3540,20 @@ net_type_declaration
 
 block_item_decl
   : data_declaration_or_module_instantiation
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* temporarily removed
   | TK_reg data_type register_variable_list ';'
   */
   | net_type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | package_import_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_param_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | type_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | let_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 /** no longer needed
 block_item_decls
@@ -3601,9 +3606,9 @@ enum_data_type
   ;
 enum_name_list
   : enum_name_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | enum_name_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 enum_name_list_trailing_comma
   : enum_name_list ','
@@ -3628,7 +3633,7 @@ enum_name_list_item_last
 
 pos_neg_number
   : number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '-' number
     { $$ = MakeTaggedNode(N::kNumber, $1, ForwardChildren($2)); }
   ;
@@ -3679,7 +3684,7 @@ struct_union_member
     list_of_variable_decl_assignments ';'
     { $$ = MakeTaggedNode(N::kStructUnionMember, $1, $2, $3, $4, $5, $6); }
   | preprocessor_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 case_item
@@ -3746,7 +3751,7 @@ charge_strength
   ;
 charge_strength_opt
   : charge_strength
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3784,7 +3789,7 @@ delay3
   ;
 delay3_opt
   : delay3
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3796,7 +3801,7 @@ delay_value_list
   ;
 delay_value
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expression ':' expression ':' expression
     // TODO(jeremycs): change this structure to reflect mintypmax
     { $$ = MakeTaggedNode(N::kMinTypMaxList, $1, $2, $3, $4, $5); }
@@ -3807,7 +3812,7 @@ delay_value_simple
   | TK_RealTime
     { $$ = MakeTaggedNode(N::kDelayValue, $1); }
   | delay_identifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* $1 is a package-scope identifier in LRM, but some tools
      * also permit a general hierarchical reference.
      */
@@ -3820,7 +3825,7 @@ delay_identifier
   : delay_identifier '.' GenericIdentifier
     { $$ = ExtendNode($1, $2, $3); }
   | delay_scope
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 delay_scope
   : delay_scope TK_SCOPE_RES GenericIdentifier
@@ -3830,18 +3835,18 @@ delay_scope
   ;
 decay_value_simple
   : TK_DecNumber
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_RealTime
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_TimeLiteral
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_infinite
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 optional_semicolon
   : ';'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3852,7 +3857,7 @@ discipline_declaration
   ;
 discipline_items_opt
   : discipline_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3898,7 +3903,7 @@ library_declaration
   ;
 incdir_spec_opt
   : incdir_spec
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3919,7 +3924,7 @@ file_path_spec_list
   ;
 file_path_spec
   : TK_FILEPATH
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 config_declaration
@@ -3935,7 +3940,7 @@ design_statement
   ;
 lib_cell_identifiers_opt
   : lib_cell_identifiers
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3947,7 +3952,7 @@ lib_cell_identifiers
   ;
 list_of_config_rule_statements_opt
   : list_of_config_rule_statements
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -3969,7 +3974,7 @@ config_rule_statement
   | cell_clause use_clause ';'
     { $$ = MakeTaggedNode(N::kConfigRuleStatement, $1, $2, $3); }
   | preprocessor_balanced_config_rule_statements
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 inst_clause
   : TK_instance reference
@@ -4007,7 +4012,7 @@ preprocessor_balanced_config_rule_statements
   ;
 preprocessor_elsif_config_rule_statements_opt
   : preprocessor_elsif_config_rule_statements
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4024,7 +4029,7 @@ preprocessor_elsif_config_rule_statement
   ;
 preprocessor_else_config_rule_statement_opt
   : preprocessor_else_config_rule_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4062,7 +4067,7 @@ lib_cell_id
   ;
 list_of_libraries_opt
   : list_of_libraries
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4084,35 +4089,35 @@ drive_strength
   ;
 drive_strength_opt
   : drive_strength
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 dr_strength0
   : TK_supply0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_strong0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_pull0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_weak0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 dr_strength1
   : TK_supply1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_strong1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_pull1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_weak1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 pull01
   : TK_pull0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_pull1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 event_control
   : '@' hierarchy_event_identifier
@@ -4127,7 +4132,7 @@ event_control
   ;
 event_control_opt
   : event_control
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /*empty*/
     { $$ = nullptr; }
   ;
@@ -4160,7 +4165,7 @@ branch_probe_expression
 
 pattern_opt
   : pattern
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4204,7 +4209,7 @@ expression
 
 equiv_impl_expr
   : cond_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | cond_expr TK_LOGICAL_IMPLIES equiv_impl_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | cond_expr TK_LOGEQUIV equiv_impl_expr
@@ -4214,7 +4219,7 @@ equiv_impl_expr
 /* lowest precedence expression */
 cond_expr
   : logor_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | logor_expr '?' expression ':' cond_expr
     { $$ = MakeTaggedNode(N::kConditionExpression, $1, $2, $3, $4, $5); }
   // | cond_expr '?' cond_expr ':' cond_expr
@@ -4226,19 +4231,19 @@ cond_expr
 
 inc_or_dec_or_primary_expr
   : postfix_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | inc_or_dec_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 unary_expr
   : unary_prefix_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 unary_prefix_expr
   : inc_or_dec_or_primary_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* the following section's expr_primary-s were prefixed with attribute_list_opt */
   | unary_op unary_prefix_expr
    { $$ = MakeTaggedNode(N::kUnaryPrefixExpression, $1, $2); }
@@ -4246,37 +4251,37 @@ unary_prefix_expr
 
 unary_op
   : '+'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '-'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '~'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '&'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '!'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '|'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '^'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_NAND
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_NOR
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_NXOR
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 pow_expr
   : unary_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | pow_expr TK_POW unary_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 
 mul_expr
   : pow_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | mul_expr '*' pow_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | mul_expr '/' pow_expr
@@ -4287,7 +4292,7 @@ mul_expr
 
 add_expr
   : mul_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | add_expr '+' mul_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | add_expr '-' mul_expr
@@ -4296,7 +4301,7 @@ add_expr
 
 shift_expr
   : add_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | shift_expr TK_LS add_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | shift_expr TK_RS add_expr
@@ -4307,7 +4312,7 @@ shift_expr
 
 comp_expr
   : shift_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | comp_expr '<' shift_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | comp_expr '>' shift_expr
@@ -4328,7 +4333,7 @@ comp_expr
 
 logeq_expr
   : comp_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | logeq_expr TK_EQ comp_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | logeq_expr TK_NE comp_expr
@@ -4342,7 +4347,7 @@ logeq_expr
 
 caseeq_expr
   : logeq_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | caseeq_expr TK_CEQ logeq_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | caseeq_expr TK_CNE logeq_expr
@@ -4351,7 +4356,7 @@ caseeq_expr
 
 bitand_expr
   : caseeq_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | bitand_expr '&' caseeq_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | bitand_expr TK_NAND caseeq_expr
@@ -4360,7 +4365,7 @@ bitand_expr
 
 xor_expr
   : bitand_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | xor_expr '^' bitand_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | xor_expr TK_NXOR bitand_expr
@@ -4369,7 +4374,7 @@ xor_expr
 
 bitor_expr
   : xor_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | bitor_expr '|' xor_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | bitor_expr TK_NOR xor_expr
@@ -4380,12 +4385,12 @@ with_exprs_suffix
   : with_exprs_suffix with_covergroup_expression_in_parens
     { $$ = MakeTaggedNode(N::kWithGroup, $1, $2); }
   | bitor_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 matches_expr
   : with_exprs_suffix
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* matches_integer_covergroup_expr is a form of select_expression */
   | matches_expr TK_matches with_exprs_suffix
     { $$ = MakeBinaryExpression($1, $2, $3); }
@@ -4395,7 +4400,7 @@ matches_expr
 
 logand_expr
   : matches_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | logand_expr TK_LAND bitor_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
@@ -4403,7 +4408,7 @@ logand_expr
 /* lowest precedence binary expression */
 logor_expr
   : logand_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | logor_expr TK_LOR logand_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
@@ -4416,7 +4421,7 @@ expr_mintypmax
    * See trans_list (in comments).
    */
   : expr_mintypmax_trans_set
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 expr_mintypmax_trans_set
   /* TODO(jeremycs): reconsider decision to flatten here*/
@@ -4424,7 +4429,7 @@ expr_mintypmax_trans_set
   : expr_mintypmax_trans_set TK_EG expr_mintypmax_generalized
     { $$ = ExtendNode($1, $2, ForwardChildren($3)); }
   | expr_mintypmax_generalized
-    { $$ = IsExpression($1) ? move($1)
+    { $$ = IsExpression($1) ? std::move($1)
                             : MakeTaggedNode(N::kMinTypMaxList, ForwardChildren($1)); }
   ;
 expr_mintypmax_generalized
@@ -4434,7 +4439,7 @@ expr_mintypmax_generalized
   : expr_mintypmax_generalized ':' property_expr_or_assignment_list
     { $$ = ExtendNode($1, $2, ForwardChildren($3)); }
   | property_expr_or_assignment_list  /* ','-separated */
-    { $$ = IsExpression($1) ? move($1)
+    { $$ = IsExpression($1) ? std::move($1)
                             : MakeTaggedNode(N::kMinTypMaxList, ForwardChildren($1)); }
   /* for trans_list, each of these can be an open_range_list,
    * for all other contexts, these should be single value_range.
@@ -4445,12 +4450,12 @@ property_expr_or_assignment_list
   : property_expr_or_assignment_list ',' property_expr_or_assignment
     { $$ = ExtendNode($1, $2, $3); }
   | property_expr_or_assignment
-    { $$ = IsExpression($1) ? move($1)
+    { $$ = IsExpression($1) ? std::move($1)
                             : MakeTaggedNode(N::kMinTypMaxList, $1); }
   ;
 property_expr_or_assignment
   : property_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* covers sequence_repetition_expr
      * : expression_or_dist boolean_abbrev_opt
      * covers trans_range_list
@@ -4464,23 +4469,23 @@ property_expr_or_assignment
     { $$ = MakeTaggedNode(N::kValueRange, $1, $2, $3, $4, $5); }
     /* covers value_range */
   | assignment_statement_no_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* covers sequence_match_item: assignment_statement */
   ;
 
 argument_list_opt
   : any_argument_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 any_argument_list
   : any_argument_list_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_argument_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_argument_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 any_argument_list_trailing_comma
   : any_argument_list ','
@@ -4512,14 +4517,14 @@ any_argument_list_preprocessor_last
 any_argument
   /* similar to parameter_expr */
   : expression /* positional argument */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | data_type_primitive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | event_control
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* Special functions like $past() take an event_control argument. */
   | parameter_value_byname /* named argument */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 expression_or_null_list_opt
@@ -4531,7 +4536,7 @@ expression_or_null_list_opt
 
 expression_opt
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4552,9 +4557,9 @@ scope_prefix
 
 postfix_expression
   : reference_or_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expr_primary
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 reference_or_call
@@ -4592,16 +4597,16 @@ reference
 expr_primary
   /* split up as such to make it easier to work around conflicts */
   : expr_primary_no_groups
-    { $$ = move($1); }
+    { $$ = std::move($1); }
 
   // | '(' expr_mintypmax ')'
   //   { $$ = MakeParenGroup($1, $2, $3); }
   | expr_primary_parens
-   { $$ = move($1); }
+   { $$ = std::move($1); }
   | expr_primary_braces
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | assignment_pattern_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 expr_primary_parens
   : '(' expr_mintypmax ')'
@@ -4638,9 +4643,9 @@ range_list_in_braces
 /* TODO(jeremycs): unclear how much of this structure is actually needed */
 type_or_id_root
   : class_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | implicit_class_handle
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 local_root
   : TK_local_SCOPE type_or_id_root
@@ -4662,39 +4667,39 @@ local_root
 
 string_literal
   : TK_StringLiteral
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_EvalStringLiteral
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 expr_primary_no_groups
   : number
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_RealTime
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   // allow time literals in delay1 expressions,
   //   e.g. #(10ps) or #(N *5ps)
   | TK_TimeLiteral
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | string_literal
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | cast
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | randomize_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | select_condition  /* for covergroups */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '$'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* '$' is used to index into queues */
   | TK_null
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | system_tf_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | type_reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroGenericItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* This is useful for when there is an expression or reference
      * on its own line, at the end of an argument list.
      */
@@ -4705,20 +4710,20 @@ cast
   ;
 casting_type
   : TK_DecNumber
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* TODO(fangism): This should be a constant_primary. */
   | expr_primary_parens
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | system_tf_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* for constant functions like $bits and $clog2 */
   | data_type_base
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* $1 should be limited to 'simple_type', according to the LRM. */
   | signing
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_const
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* covered by data_type_base:
   | TK_string
   */
@@ -4753,7 +4758,7 @@ identifier_list
   ;
 with_constraint_block_opt
   : with_constraint_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -4776,9 +4781,9 @@ function_item_list
   ;
 function_item
   : tf_port_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | block_item_decl
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 /* primitive_gate_instance covers the following gate_instantiation constructs
@@ -4830,7 +4835,7 @@ gate_instance_or_register_variable
   | MacroCall
     /* covers MacroCallId '(' ... ')' as an instance */
     /* TODO(fangism): restructure this like a kGateInstance */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism): arrays should not be declared with port connections */
   /* TODO(b/36706412): support anonymous instances */
   // | '(' any_port_list_opt ')'
@@ -4844,29 +4849,29 @@ gate_instance_or_register_variable_list
 
 gatetype
   : TK_and
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_nand
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_or
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_nor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_xor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_xnor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_buf
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_bufif0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_bufif1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_not
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_notif0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_notif1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 switchtype
   : TK_nmos
@@ -4937,56 +4942,56 @@ index_extension
 **/
 builtin_array_method
   : array_locator_method
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | array_ordering_method
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | array_reduction_method
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 array_locator_method
   /* built-in method calls */
   : TK_find
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_find_index
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_find_first
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_find_first_index
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_find_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_find_last_index
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_unique
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_unique_index
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_min
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_max
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 array_ordering_method
   : TK_sort
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_rsort
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_reverse
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_shuffle
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 array_reduction_method
   : TK_sum
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_product
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_and
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_or
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_xor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 array_method_with_predicate_opt
   : TK_with '(' expression ')'
@@ -5055,7 +5060,7 @@ list_of_port_identifiers
 
 identifier_opt
   : GenericIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5063,13 +5068,13 @@ identifier_opt
 /* Inside preprocesor conditionals only, allow trailing comma */
 preprocessor_list_of_ports_or_port_declarations_opt
   : list_of_ports_or_port_declarations_opt
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | list_of_ports_or_port_declarations_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 list_of_ports_or_port_declarations_opt
   : list_of_ports_or_port_declarations
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kPortDeclarationList); }
   ;
@@ -5080,9 +5085,9 @@ list_of_ports_or_port_declarations
    * directives without ambiguity.
    */
   : list_of_ports_or_port_declarations_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | list_of_ports_or_port_declarations_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 list_of_ports_or_port_declarations_preprocessor_last
   : list_of_ports_or_port_declarations
@@ -5108,9 +5113,9 @@ list_of_ports_or_port_declarations_trailing_comma
   ;
 port_or_port_declaration
   : port
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | port_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /** The following has been incorporated into the 'port' rule:
   | GenericIdentifier trailing_assign_opt
   **/
@@ -5125,13 +5130,13 @@ preprocessor_balanced_port_declarations
                           ExtendNode($1, $2), ForwardChildren($3), $4, $5);
     }
   | MacroGenericItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 preprocessor_elsif_port_declarations_opt
   : preprocessor_elsif_port_declarations
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5147,7 +5152,7 @@ preprocessor_elsif_port_declaration
   ;
 preprocessor_else_port_declarations_opt
   : preprocessor_else_port_declarations
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5171,16 +5176,16 @@ list_of_port_declarations
 
 dir
   : TK_input
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_output
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_inout
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 port_declaration
   : /* attribute_list_opt */ port_declaration_noattr
-  { $$ = move($1); }
+  { $$ = std::move($1); }
   ;
 port_declaration_noattr
   /* should consist of:
@@ -5226,16 +5231,16 @@ port_declaration_noattr
   ;
 var_or_net_type_opt
   : net_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_var
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 
 signed_unsigned_opt
   : signing
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5278,9 +5283,9 @@ cont_assign_list
 
 symbol_or_label
   : GenericIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | MacroIdItem
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 module_or_interface_declaration
@@ -5305,22 +5310,22 @@ module_or_interface_declaration
 
 module_start
   : TK_module
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_macromodule
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_program
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_interface
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 module_end
   : TK_endmodule
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_endprogram
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_endinterface
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 label_opt
   : ':' symbol_or_label
@@ -5334,7 +5339,7 @@ module_attribute_foreign
   ;
 module_attribute_foreign_opt
   : module_attribute_foreign
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5361,9 +5366,9 @@ module_parameter_port_list_opt
 
 parameter_opt
   : TK_parameter
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_localparam
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5406,9 +5411,9 @@ type_assignment
 module_parameter_port_list
   /* expanded to allow preprocessing directives like `ifdef */
   : module_parameter_port_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_parameter_port_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 module_parameter_port_list_trailing_comma
   : module_parameter_port_list ','
@@ -5638,28 +5643,28 @@ analog_construct
 
 module_common_item
   : module_or_generate_item_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | always_construct
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | initial_construct
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | final_construct
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | analog_construct
     /* Verilog-AMS*/
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | assertion_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | bind_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | continuous_assign
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | net_alias
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | loop_generate_construct
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | conditional_generate_construct
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | system_tf_call ';'
     { $$ = ExtendNode($1, $2); }
     /* covers elaboration_system_task */
@@ -5673,71 +5678,71 @@ genvar_declaration
 module_or_generate_item_declaration
   // TODO(jeremycs): fill this out
   : package_or_generate_item_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | clocking_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_default TK_clocking GenericIdentifier ';'
     { $$ = MakeTaggedNode(N::kDefaultClockingStatement, $1, $2, $3, $4); }
   | TK_default TK_disable TK_iff expression_or_dist ';'
     { $$ = MakeTaggedNode(N::kDefaultDisableStatement, $1, $2, $3, $4, $5); }
   | genvar_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 package_or_generate_item_declaration
   : class_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | interface_class_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | net_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | task_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | function_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | covergroup_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | assertion_item_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | modport_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | specparam_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism): checker_declaration */
   | dpi_import_export
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | ';'
     { $$ = MakeTaggedNode(N::kNullItem, $1); }
   ;
 
 module_or_generate_item
   : parameter_override
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | gate_instantiation
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* TODO(fangism): udp_instantiation */
   | /* attribute_list_opt */ block_item_decl
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* includes module_instantiation, and most other instantiations */
   | module_common_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 module_item
   : module_port_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | non_port_module_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_module_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_item_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | error ';'
     { yyerrok; $$ = Recover(); }
   ;
@@ -5761,7 +5766,7 @@ preprocessor_balanced_module_items
   ;
 preprocessor_elsif_module_items_opt
   : preprocessor_elsif_module_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5777,7 +5782,7 @@ preprocessor_elsif_module_item
   ;
 preprocessor_else_module_item_opt
   : preprocessor_else_module_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5788,15 +5793,15 @@ preprocessor_else_module_item
 
 non_port_module_item
   : generate_region
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_or_generate_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | specify_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | timeunits_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | module_or_interface_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TKK_attribute '(' GenericIdentifier ',' TK_StringLiteral ',' TK_StringLiteral ')' ';'
     { $$ = MakeTaggedNode(N::kAttribute, $1,
                           MakeParenGroup($2, MakeNode($3, $4, $5, $6, $7),
@@ -5805,13 +5810,13 @@ non_port_module_item
 
 always_any
   : TK_always
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_always_ff
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_always_comb
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_always_latch
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 generate_if
   : TK_if expression_in_parens
@@ -5832,19 +5837,19 @@ generate_case_item
 
 generate_item
   : module_or_generate_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /*
   | interface_or_generate_item
   | checker_or_generate_item
    */
   | generate_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_balanced_generate_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | error ';'
     { yyerrok; $$ = Recover(); }
   ;
@@ -5859,7 +5864,7 @@ preprocessor_balanced_generate_items
   ;
 preprocessor_elsif_generate_items_opt
   : preprocessor_elsif_generate_items
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5875,7 +5880,7 @@ preprocessor_elsif_generate_item
   ;
 preprocessor_else_generate_item_opt
   : preprocessor_else_generate_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5920,7 +5925,7 @@ generate_item_list
 
 generate_item_list_opt
   : generate_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kGenerateItemList); }
   ;
@@ -5933,13 +5938,13 @@ module_item_list
   ;
 module_item_list_opt
   : module_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kModuleItemList); }
   ;
 genvar_opt
   : TK_genvar
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -5955,9 +5960,9 @@ net_decl_assigns
 **/
 net_variable_or_decl_assign
   : net_variable
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | net_decl_assign
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 net_variable_or_decl_assigns
   : net_variable_or_decl_assigns ',' net_variable_or_decl_assign
@@ -5968,47 +5973,47 @@ net_variable_or_decl_assigns
 
 bit_logic
   : TK_logic
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_bit
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 bit_logic_opt
   : bit_logic
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 port_net_type
   : net_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_logic
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 net_type
   : TK_wire
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_tri
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_tri1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_supply0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_wand
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_triand
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_tri0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_supply1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_wor
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_trior
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_wone
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_uwire
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 var_type
   : TK_reg
@@ -6115,7 +6120,7 @@ trailing_assign
   ;
 trailing_assign_opt
   : trailing_assign
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6148,7 +6153,7 @@ from_exclude
   ;
 parameter_value_opt
   : parameters
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6185,11 +6190,11 @@ parameter_value_byname
 parameter_value_byname_list
   /* named arguments */
   : parameter_value_byname_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | parameter_value_byname_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | parameter_value_byname_list_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 parameter_value_byname_list_trailing_comma
   : parameter_value_byname_list ','
@@ -6215,9 +6220,9 @@ parameter_value_byname_list_item_last
 parameter_expr
   /* similar to any_argument */
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | data_type_primitive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* Spec grammar allows any data_type, but all user-defined types can look like
    * expressions as qualified or unqualified identifiers.  So limiting this
    * rule to only primitive types eliminates conflict.
@@ -6225,7 +6230,7 @@ parameter_expr
    * table lookup.
    */
   | interface_type
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 /* non-ANSI port declarations are covered in the LRM 23.2.2.1 */
@@ -6238,20 +6243,20 @@ port
   ;
 any_port_list_opt
   : any_port_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 any_port_list
   : any_port_list_item_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_port_list_preprocessor_last
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | any_port_list_trailing_comma
-    { $$ = move($1); }
+    { $$ = std::move($1); }
 /* TODO(b/36237582): accept a macro item here
   | any_port_list_trailing_macro_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 */
 any_port_list_trailing_comma
@@ -6291,10 +6296,10 @@ any_port_list_preprocessor_last
   ;
 any_port
   : port_named
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expression
     /* Note: expr_primary_no_groups already covers MacroGenericItem */
-    { $$ = MakeTaggedNode(N::kActualPositionalPort, move($1)); }
+    { $$ = MakeTaggedNode(N::kActualPositionalPort, std::move($1)); }
   ;
 port_named
   : '.' member_name '(' expression ')'
@@ -6309,21 +6314,21 @@ port_named
 
 member_name
   : GenericIdentifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | builtin_array_method
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 port_expression_opt
   : port_expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 
 port_expression
   : port_reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '{' port_reference_list '}'
     { $$ = MakeBraceGroup($1, $2, $3); }
   ;
@@ -6346,7 +6351,7 @@ port_reference_list
   ;
 select_dimensions_opt
   : select_dimensions
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6362,7 +6367,7 @@ select_dimensions
  */
 decl_dimensions_opt
   : decl_dimensions
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6485,7 +6490,7 @@ specify_item
   | TK_noshowcancelled     specify_path_identifiers ';'
     { $$ = MakeTaggedNode(N::kSpecifyItem, $1, $2, $3); }
   | preprocessor_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 specify_item_list
   : specify_item
@@ -6497,7 +6502,7 @@ specify_item_list_opt
   : /* empty */
     { $$ = MakeTaggedNode(N::kSpecifyItemList); }
   | specify_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 specify_edge_path_decl
   : specify_edge_path '=' '(' delay_value_list ')'
@@ -6507,11 +6512,11 @@ specify_edge_path_decl
   ;
 edge_operator
   : TK_posedge
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_negedge
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_edge
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 specify_edge_path
   : '(' specify_path_identifiers spec_polarity
@@ -6533,11 +6538,11 @@ specify_edge_path
   ;
 polarity_operator
   : TK_PO_POS
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_PO_NEG
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | ':'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 specify_simple_path_decl
   : specify_simple_path '=' '(' delay_value_list ')'
@@ -6588,16 +6593,16 @@ specparam_list
   ;
 specparam_decl
   : specparam_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | decl_dimensions specparam_list
     { $$ = MakeTaggedNode(N::kSpecParamDeclaration,
                           MakePackedDimensionsNode($1), $2); }
   ;
 spec_polarity
   : '+'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '-'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6627,11 +6632,11 @@ edge_descriptor_list
   ;
 specify_terminal_descriptor
   : reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 spec_notifier_opt
   : spec_notifier
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6651,11 +6656,11 @@ spec_notifier
 
 case_any
   : TK_case
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_casex
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_casez
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 blocking_assignment
@@ -6749,16 +6754,16 @@ repeat_control
 
 delay_or_event_control
   : delay1
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | event_control
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | repeat_control event_control
     { $$ = MakeTaggedNode(N::kRepeatEventControl, $1, $2); }
   ;
 
 delay_or_event_control_opt
   : delay_or_event_control
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6802,44 +6807,44 @@ wait_statement
 statement_item
   /* TODO(fangism): Some of these may not be valid for both tasks and functions. */
   : blocking_assignment
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | nonblocking_assignment
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | procedural_continuous_assignment
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | case_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* covers randcase_statement */
   | conditional_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | assignment_statement ';'
     { $$ = ExtendNode($1, $2); }
     /* includes inc_or_dec_expression */
     /* TODO(fangism): expand this from for_step_assignment */
   | disable_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | event_trigger
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | loop_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | jump_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | par_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | procedural_timing_control_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | seq_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | wait_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | procedural_assertion_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expect_property_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | clocking_drive_only
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | randsequence_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | subroutine_call ';'
     { $$ = MakeTaggedNode(N::kStatement, $1, $2); }
   /* covered by reference_or_call rule:
@@ -6855,13 +6860,13 @@ statement_item
   | error ';'
     { yyerrok; $$ = Recover(); }
   | MacroGenericItem /* statement that does not end with ; */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* reference_or_call already covers: MacroCall ';' */
   /* preprocessor_directive has been split into the following: */
   | preprocessor_balanced_statements
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | preprocessor_action
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 preprocessor_balanced_statements
@@ -6875,7 +6880,7 @@ preprocessor_balanced_statements
   ;
 preprocessor_elsif_statements_opt
   : preprocessor_elsif_statements
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6891,7 +6896,7 @@ preprocessor_elsif_statement
   ;
 preprocessor_else_statement_opt
   : preprocessor_else_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -6932,17 +6937,17 @@ assign_modify_statement
   ;
 unique_priority_opt
   : TK_unique
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_unique0
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_priority
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 statement_or_null_list_opt
   : statement_or_null_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kStatementList); }
   ;
@@ -6959,9 +6964,9 @@ analog_statement
 /* same as function_item */
 task_item
   : block_item_decl
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | tf_port_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 /** merged with into tf_item_or_statement_or_null_list
 task_item_list
@@ -6976,9 +6981,9 @@ task_item_list_opt
 /* introduced to simplify grammar, reduce conflicts */
 tf_item_or_statement_or_null
   : task_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | statement_or_null
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 tf_item_or_statement_or_null_list
   /* TODO(jeremycs): unclear if this should have its own enum */
@@ -6989,7 +6994,7 @@ tf_item_or_statement_or_null_list
   ;
 tf_item_or_statement_or_null_list_opt
   : tf_item_or_statement_or_null_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kStatementList); }
   ;
@@ -7002,7 +7007,7 @@ tf_port_list_paren_opt
   ;
 tf_port_list_opt
   : tf_port_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
 
@@ -7018,11 +7023,11 @@ udp_body
   ;
 udp_entry_list
   : udp_comb_entry_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | udp_sequ_entry_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | udp_unknown_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 udp_unknown_list
   : udp_unknown_list preprocessor_directive
@@ -7064,7 +7069,7 @@ udp_initial
   ;
 udp_init_opt
   : udp_initial
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -7076,65 +7081,65 @@ udp_input_list
   ;
 udp_input_sym
   : '0'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '1'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'x'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '?'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'b'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '*'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '%'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'f'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'F'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'l'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'h'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'B'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'r'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'R'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'M'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'n'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'N'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'p'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'P'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'Q'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'q'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '_'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '+'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_DecNumber
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 udp_output_sym
   : '0'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '1'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | 'x'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | '-'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_DecNumber
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 udp_port_decl
   : TK_input list_of_identifiers ';'
@@ -7189,37 +7194,37 @@ udp_primitive
   ;
 lifetime
   : TK_automatic
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_static
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 lifetime_opt
   : lifetime
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 TK_reg_opt
   : TK_reg
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 TK_static_opt
   : TK_static
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 TK_tagged_opt
   : TK_tagged
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 TK_virtual_opt
   : TK_virtual
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -7245,7 +7250,7 @@ bind_target_instance_list
   ;
 bind_target_instance
   : reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* Any bit selections in []'s must be constant expressions. */
   ;
 bind_instantiation
@@ -7273,7 +7278,7 @@ clocking_declaration
   ;
 clocking_item_list_opt
   : clocking_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -7289,9 +7294,9 @@ clocking_item
   | clocking_direction list_of_clocking_decl_assign ';'
     { $$ = MakeTaggedNode(N::kClockingItem, $1, $2, $3); }
   | /* attribute_list_opt */ assertion_item_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | let_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 default_skew
   : TK_input clocking_skew
@@ -7303,7 +7308,7 @@ default_skew
   ;
 clocking_skew_opt
   : clocking_skew
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -7337,9 +7342,9 @@ clocking_decl_assign
 
 assertion_item_declaration
   : property_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | sequence_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* moved to other rules to avoid R/R conflict
   | let_declaration
   */
@@ -7373,7 +7378,7 @@ let_port_item
 let_formal_type_followed_by_id
   /* similar to property_formal_type_followed_by_id */
   : data_type_or_implicit_basic_followed_by_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_untyped GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId, $1, $2); }
   ;
@@ -7408,7 +7413,7 @@ sequence_port_list_in_parens_opt
   ;
 sequence_port_list_opt
   : sequence_port_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -7429,14 +7434,14 @@ local_sequence_lvar_port_direction_opt
   : TK_local dir
     { $$ = MakeNode($1, $2); }
   | TK_local
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 sequence_port_type_followed_by_id
   /* similar to property_formal_type_followed_by_id */
   : data_type_or_implicit_basic_followed_by_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_sequence GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId, $1, $2); }
   | TK_untyped GenericIdentifier
@@ -7495,7 +7500,7 @@ property_port_modifiers_opt
 property_formal_type_followed_by_id
   /* similar to sequence_port_type_followed_by_id */
   : data_type_or_implicit_basic_followed_by_id
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_sequence GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId, $1, $2); }
   | TK_untyped GenericIdentifier
@@ -7562,12 +7567,12 @@ property_actual_arg
  */
 property_expr
   : sequence_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 sequence_expr
   /* merged with property_expr */
   : property_implication_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 property_prefix_expr
@@ -7625,7 +7630,7 @@ property_prefix_expr
                           MakeTaggedNode(N::kCycleDelayConstRange, $2, $3, $4),
                           $5); }
   | property_if_else_expr
-   { $$ = move($1); }
+   { $$ = std::move($1); }
   ;
 
 property_if_else_expr
@@ -7637,7 +7642,7 @@ property_if_else_expr
     %prec less_than_TK_else
     { $$ = MakeTaggedNode(N::kPropertyIfElse, $1, MakeParenGroup($2, $3, $4), $5); }
   | simple_sequence_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 simple_sequence_expr
@@ -7652,7 +7657,7 @@ simple_sequence_expr
   | sequence_instance sequence_abbrev_opt
    */
   | property_case_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_strong '(' sequence_expr ')'
     { $$ = MakeTaggedNode(N::kPropertySimpleSequenceExpression, $1,
                           MakeParenGroup($2, $3, $4)); }
@@ -7660,7 +7665,7 @@ simple_sequence_expr
     { $$ = MakeTaggedNode(N::kPropertySimpleSequenceExpression, $1,
                           MakeParenGroup($2, $3, $4)); }
   | sequence_or_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 property_case_statement
@@ -7699,7 +7704,7 @@ property_implication_expr
   : property_implication_expr property_operator property_prefix_expr
     { $$ = ExtendNode($1, $2, $3); }
   | property_prefix_expr
-    { $$ = IsExpression($1) ? move($1)
+    { $$ = IsExpression($1) ? std::move($1)
                             : MakeTaggedNode(N::kPropertyImplicationList, $1); }
   ;
 
@@ -7707,37 +7712,37 @@ property_operator
   /* TODO(fangism): order these operators by precedence. */
     /* Could not find good reference about precedence of followed-by operators. */
   : implication_operator
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | until_operator
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | followed_by_operator
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 implication_operator
   : TK_PIPEARROW
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_PIPEARROW2
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_implies
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_iff
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 until_operator
   : TK_until
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_until_with
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_s_until
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_s_until_with
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 followed_by_operator
   : TK_POUNDEQPOUND
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_POUNDMINUSPOUND
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 
@@ -7766,15 +7771,15 @@ sequence_expr_match_item_list
   ;
 sequence_match_item
   : assignment_statement
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | subroutine_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 subroutine_call
   : reference_or_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | system_tf_call
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 // TODO(jeremycs): unclear if flattening is correct approach here
@@ -7782,42 +7787,42 @@ sequence_or_expr
   : sequence_or_expr TK_or sequence_and_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | sequence_and_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   ;
 sequence_and_expr
   : sequence_and_expr TK_and sequence_unary_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   | sequence_unary_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
 sequence_unary_expr
   : sequence_intersect_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   | TK_not sequence_intersect_expr
     { $$ = MakeTaggedNode(N::kUnaryPrefixExpression, $1, $2); }
     /* only for property_expr */
   ;
 sequence_intersect_expr
   : sequence_within_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   | sequence_intersect_expr TK_intersect sequence_within_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 sequence_within_expr
   : sequence_throughout_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   | sequence_within_expr TK_within sequence_throughout_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 sequence_throughout_expr
   : sequence_delay_range_expr
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   | sequence_throughout_expr TK_throughout sequence_delay_range_expr
     { $$ = MakeBinaryExpression($1, $2, $3); }
   ;
 
 sequence_delay_range_expr
   : sequence_delay_repetition_list
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   | cycle_delay_range sequence_delay_repetition_list
     { $$ = MakeTaggedNode(N::kSequenceDelayRange, $1, $2); }
   ;
@@ -7825,7 +7830,7 @@ sequence_delay_repetition_list
   : sequence_delay_repetition_list cycle_delay_range sequence_expr_primary
     { $$ = MakeTaggedNode(N::kSequenceDelayRepetition, $1, $2, $3); }
   | sequence_expr_primary
-    { $$ = IsExpression($1) ? move($1) : move($1); }
+    { $$ = IsExpression($1) ? std::move($1) : std::move($1); }
   ;
 
 cycle_delay
@@ -7856,9 +7861,9 @@ cycle_delay_range
 cycle_range_or_expr
   /* this covers repeat_range */
   : cycle_range
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 cycle_range
   /* For constant expressions, $3 can be '$'.  */
@@ -7921,7 +7926,7 @@ sequence_actual_arg
 sequence_expr_primary
   // TODO(fangism): Combine these into a single conflict-free ruleset.
   : sequence_repetition_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /*
   | sequence_expr_match_primary
    * is now 'covered' by sequence_repetition_expr, see explanation under
@@ -7936,7 +7941,7 @@ sequence_expr_match_primary
 sequence_repetition_expr
   /* Highest precedence sequence_expr. */
   : expression_or_dist boolean_abbrev_opt
-    { $$ = ($2 == nullptr) ? move($1) :
+    { $$ = ($2 == nullptr) ? std::move($1) :
                              MakeTaggedNode(N::kSequenceRepetitionExpression,
                                             $1, $2); }
   /* This covers a simple expression.
@@ -7957,10 +7962,10 @@ expression_or_dist
       // If dist_opt is nullptr, then we can just forward expression
       // without introducing another layer
       if ($2 == nullptr)  {
-        $$ = move($1);
+        $$ = std::move($1);
       } else {
         SetChild($2, 0, $1);
-        $$ = move($2);
+        $$ = std::move($2);
       }
     }
   ;
@@ -7974,18 +7979,18 @@ sequence_abbrev_opt
 boolean_abbrev_opt
   /* This covers repeat_range_opt. */
   : boolean_abbrev
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 boolean_abbrev
   /* similar to repeat_range */
   : consecutive_repetition
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | nonconsecutive_repetition
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | goto_repetition
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 consecutive_repetition
   : TK_LBSTAR cycle_range_or_expr ']'
@@ -8017,7 +8022,7 @@ covergroup_declaration
 
 coverage_spec_or_option_list_opt
   : coverage_spec_or_option_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8029,13 +8034,13 @@ coverage_spec_or_option_list
   ;
 coverage_spec_or_option
   : /* attribute_list_opt */ coverage_spec /* no ';' here */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* attribute_list_opt */ coverage_option ';'
     { $$ = ExtendNode($1, $2); }
   | preprocessor_directive
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 coverage_option
   : TK_option '.' GenericIdentifier '=' expression
@@ -8045,21 +8050,21 @@ coverage_option
   ;
 coverage_spec
   : cover_point
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* already ends with '}' or ';' */
   | cover_cross
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* already ends with '}' or ';' */
   ;
 coverage_event_opt
   : coverage_event
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 coverage_event
   : event_control
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_with__covergroup TK_function TK_sample '(' tf_port_list_opt ')'
     { $$ = MakeTaggedNode(N::kCoverageEvent, $1, $2, $3, MakeParenGroup($4, $5, $6)); }
   | TK_ATAT '(' block_event_expression ')'
@@ -8067,7 +8072,7 @@ coverage_event
   ;
 block_event_expression
   : block_event_or_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 block_event_or_expr
   : block_event_or_expr TK_or block_event_expr_primary
@@ -8097,11 +8102,11 @@ cross_body
   : '{' cross_body_item_list_opt '}'
     { $$ = MakeBraceGroup($1, $2, $3); }
   | ';'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 cross_body_item_list_opt
   : cross_body_item_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8120,7 +8125,7 @@ cross_item_list
   ;
 cross_body_item
   : function_declaration
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* attribute_list_opt */ bins_selection ';'
     { $$ = ExtendNode($1, $2); }
   | /* attribute_list_opt */ coverage_option ';'
@@ -8128,7 +8133,7 @@ cross_body_item
   ;
 cross_item
   : reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
     /* refers to a cover_point_identifier or variable_identifier */
     /* NOTE: The LRM only allows a simple GenericIdentifier here,
      * so a general hierarchical reference may be a vendor extension.
@@ -8162,7 +8167,7 @@ bins_or_options_list_opt
      * Code samples confirm that these are in fact required literal braces.
      */
   | ';'
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* error-recovery */
   | '{' error '}'
     { yyerrok; $$ = Recover(); }
@@ -8179,9 +8184,9 @@ bins_or_options
   | /* attribute_list_opt */ coverage_bin ';'
     { $$ = ExtendNode($1, $2); }
   | preprocessor_balanced_bins_or_options_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | macro_call_or_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* error-recovery */
   | error ';'
     { yyerrok; $$ = Recover(); }
@@ -8189,7 +8194,7 @@ bins_or_options
 
 bins_or_options_list_opt_pp
   : bins_or_options_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8204,7 +8209,7 @@ preprocessor_balanced_bins_or_options_list
   ;
 preprocessor_elsif_bins_or_options_list_opt
   : preprocessor_elsif_bins_or_options_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8220,7 +8225,7 @@ preprocessor_elsif_bins_or_options
   ;
 preprocessor_else_bins_or_options_opt
   : preprocessor_else_bins_or_options
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8237,25 +8242,25 @@ coverage_bin
   ;
 coverage_bin_rhs
   : set_covergroup_expression_or_covergroup_range_list_or_trans_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_default
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_default TK_sequence
     { $$ = MakeNode($1, $2); }
   ;
 wildcard_opt
   : TK_wildcard
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
 bins_keyword
   : TK_bins
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_illegal_bins
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_ignore_bins
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 covergroup_expression_bracketed_opt
   : '[' expression ']'
@@ -8268,7 +8273,7 @@ covergroup_expression_bracketed_opt
 set_covergroup_expression_or_covergroup_range_list_or_trans_list
   /* This has been grouped together in a permissive manner to mitigate conflicts. */
   : expression_list_proper  /* comma-separated list of expressions */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* set_covergroup_expression is covergroup_expression is expression.
    *
    * covers cover_point_identifier with:
@@ -8321,7 +8326,7 @@ bins_selection
   ;
 select_expression
   : property_expr
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   /* from EBNF:
   : select_condition
   | ! select_condition
@@ -8347,7 +8352,7 @@ select_condition
   ;
 bins_expression
   : reference
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 with_covergroup_expression_in_parens
   : TK_with__covergroup '(' with_covergroup_expression ')'
@@ -8388,7 +8393,7 @@ production
 data_type_or_void_with_id
   : data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
   /* simplify: this is too general, no need for dimensions */
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 rs_rule_list
@@ -8409,7 +8414,7 @@ rs_rule
 
 rs_production_list_or_rand_join
   : rs_production_list
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | TK_rand TK_join expression_in_parens_opt production_items_list
     { $$ = MakeTaggedNode(N::kRandJoin, $1, $2, $3, $4); }
   ;
@@ -8426,7 +8431,7 @@ expression_in_parens
 
 expression_in_parens_opt
   : expression_in_parens
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
@@ -8464,15 +8469,15 @@ production_items_list
 
 rs_prod
   : production_item
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | rs_code_block
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | rs_if_else
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | rs_repeat
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   | rs_case
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 production_item
@@ -8527,7 +8532,7 @@ case_item_expression_list
 
 case_item_expression
   : expression
-    { $$ = move($1); }
+    { $$ = std::move($1); }
   ;
 
 %%

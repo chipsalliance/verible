@@ -13,6 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This test provides an end-to-end test for the server.
+# Simple round-trip
+#  - 1: initialize
+#  - event: open file
+#  - 2: request document symbol on that file
+#  - event: close file
+#  - 3: attempt to request documenet symbol on that closed file.
+#  - 100: shutdown.
+#
+#
+# Functional tests should go to verilog-language-server_test.cc
+
 set -u
 
 [[ "$#" == 2 ]] || {
@@ -43,38 +55,17 @@ MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 awk '/^{/ { printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0", "id":1, "method":"initialize","params":null}
 
-# Testing a file with syntax errors: this should output some diagnostic
-{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://syntaxerror.sv","text":"brokenfile\n"}}}
+# Testing a file that should not create diagnostics
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://simple.sv","text":"module simple();\nendmodule\n"}}}
 
-# Let's manually request these diagnostics
-{"jsonrpc":"2.0", "id":2, "method":"textDocument/diagnostic","params":{"textDocument":{"uri":"file://syntaxerror.sv"}}}
+# Request document outline
+{"jsonrpc":"2.0", "id":2, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://simple.sv"}}}
 
-# A file with a lint error (no newline at EOF). Then editing it and watching diagnostic go away.
-{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://mini.sv","text":"module mini();\nendmodule"}}}
-
-# Requesting a code-action exactly at the position the EOF message is reported.
-# This is an interesting special case, as the missing EOF-newline is an empty
-# range, yet it should be detected as overlapping with that diagnostic message.
-{"jsonrpc":"2.0", "id":10, "method":"textDocument/codeAction","params":{"textDocument":{"uri":"file://mini.sv"},"range":{"start":{"line":1,"character":9},"end":{"line":1,"character":9}}}}
-{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file://mini.sv"},"contentChanges":[{"range":{"start":{"character":9,"line":1},"end":{"character":9,"line":1}},"text":"\n"}]}}
-{"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
-{"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://mini.sv"}}}
+# Close the file
+{"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file://simple.sv"}}}
 
 # Attempt to query closed file should gracefully return an empty response.
-{"jsonrpc":"2.0", "id":12, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini.sv"}}}
-
-# Highlight, but only symbols not highlighting 'assign' non-symbol.
-{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://sym.sv","text":"module sym();\nassign a=1;assign b=a+1;endmodule\n"}}}
-{"jsonrpc":"2.0", "id":20, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":7}}}
-{"jsonrpc":"2.0", "id":21, "method":"textDocument/documentHighlight","params":{"textDocument":{"uri":"file://sym.sv"},"position":{"line":1,"character":2}}}
-
-# Formatting a file
-{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file://fmt.sv","text":"module fmt();\nassign a=1;\nassign b=2;endmodule\n"}}}
-{"jsonrpc":"2.0", "id":30, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":2,"character":0}}}}
-{"jsonrpc":"2.0", "id":31, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":1,"character":1}}}}
-{"jsonrpc":"2.0", "id":32, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":2,"character":0},"end":{"line":2,"character":1}}}}
-{"jsonrpc":"2.0", "id":33, "method":"textDocument/rangeFormatting","params":{"textDocument":{"uri":"file://fmt.sv"},"range":{"start":{"line":1,"character":0},"end":{"line":3,"character":0}}}}
-{"jsonrpc":"2.0", "id":34, "method":"textDocument/formatting","params":{"textDocument":{"uri":"file://fmt.sv"}}}
+{"jsonrpc":"2.0", "id":3, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://simple.sv"}}}
 
 {"jsonrpc":"2.0", "id":100, "method":"shutdown","params":{}}
 EOF
@@ -96,136 +87,25 @@ cat > "${JSON_EXPECTED}" <<EOF
     "json_contains": {
        "method":"textDocument/publishDiagnostics",
        "params": {
-          "uri": "file://syntaxerror.sv",
-          "diagnostics":[{"message":"syntax error"}]
+          "uri": "file://simple.sv",
+          "diagnostics":[]
        }
      }
   },
-  {
-    "json_contains": {
-        "id":2,
-        "result": {
-           "kind":"full",
-           "items":[{"message":"syntax error"}]
-        }
-       }
-  },
 
   {
     "json_contains": {
-       "method":"textDocument/publishDiagnostics",
-       "params": {
-          "uri": "file://mini.sv",
-          "diagnostics":[{"message":"File must end with a newline.","range":{"start":{"line":1,"character":9}}}]
-       }
-    }
-  },
-  {
-    "json_contains": {
-       "id":10,
+       "id":2,
        "result": [
-          {"edit": {"changes": {"file://mini.sv":[{"newText":"\n"}]}}}
+          {"kind":6, "name":"simple"}
         ]
     }
   },
-  {
-    "json_contains": {
-       "method":"textDocument/publishDiagnostics",
-       "params": {
-          "uri": "file://mini.sv",
-          "diagnostics":[]
-       }
-    }
-  },
-  {
-    "json_contains": {
-       "id":11,
-       "result": [
-          {"kind":6, "name":"mini"}
-        ]
-    }
-  },
+
   {
     "json_contains":{
-       "id":12  ,
+       "id":3,
        "result": []
-    }
-  },
-
-
-  {
-    "json_contains": {
-       "method":"textDocument/publishDiagnostics",
-       "params": {
-          "uri": "file://sym.sv",
-          "diagnostics":[]
-       }
-    }
-  },
-  {
-    "json_contains":{
-       "id":20,
-       "result": [
-          {"range":{"start":{"line":1, "character": 7}, "end":{"line":1, "character": 8}}},
-          {"range":{"start":{"line":1, "character":20}, "end":{"line":1, "character":21}}}
-        ]
-    }
-  },
-  {
-    "json_contains":{
-       "id":21,
-       "result": []
-    }
-  },
-
-  {
-    "json_contains": {
-       "method":"textDocument/publishDiagnostics",
-       "params": {
-          "uri": "file://fmt.sv",
-          "diagnostics":[]
-       }
-    }
-  },
-  {
-    "json_contains":{
-       "id":30,
-       "result": [
-           {"newText":"  assign a=1;\n","range":{"end":{"character":0,"line":2},"start":{"character":0,"line":1}}}
-        ]
-    }
-  },
-  {
-    "json_contains":{
-       "id":31,
-       "result": [
-           {"newText":"  assign a=1;\n","range":{"end":{"character":0,"line":2},"start":{"character":0,"line":1}}}
-        ]
-    }
-  },
-  {
-    "json_contains":{
-       "id":32,
-       "result": [
-           {"newText":"  assign b=2;\nendmodule\n","range":{"end":{"character":0,"line":3},"start":{"character":0,"line":2}}}
-        ]
-    }
-  },
-  {
-    "json_contains":{
-       "id":33,
-       "result": [
-           {"newText":"  assign a = 1;\n  assign b = 2;\nendmodule\n","range":{"end":{"character":0,"line":3},"start":{"character":0,"line":1}}}
-        ]
-    }
-  },
-  {
-    "json_contains":{
-       "id":34,
-       "result": [{
-           "newText": "module fmt ();\n  assign a = 1;\n  assign b = 2;\nendmodule\n",
-           "range":   {"end":{"character":0,"line":3},"start":{"character":0,"line":0}}
-        }]
     }
   },
 

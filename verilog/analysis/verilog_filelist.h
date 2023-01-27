@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 namespace verilog {
@@ -38,10 +38,7 @@ struct TextMacroDefinition {
 //       the first files don't see all the incdirs yet, but after more incdirs
 //       are added, all of them are relevant ? If so, this would require some
 //       restructering.
-// TODO: document if files are relative to tool invocation or relative to
-//       file_list_path (the latter makes more sense, but I think currently that
-//       is underspecified).
-// TODO: Alongside previous: also introduce file_list_root field ?
+// TODO: Introduce file_list_root field ?
 struct FileList {
   // A struct holding information relevant to "VerilogPreprocess" preprocessor.
   struct PreprocessingInfo {
@@ -51,9 +48,6 @@ struct FileList {
     // Defined macros.
     std::vector<TextMacroDefinition> defines;
   };
-
-  // Path to the file list.
-  std::string file_list_path;
 
   // Ordered list of files to compile.
   std::vector<std::string> file_paths;
@@ -83,6 +77,7 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
 
 // Parse positional parameters from command line and extract files,
 // +incdir+ and +define+ and appends to FileList.
+// TODO: Also support --file_list_path (and -f), --file_list_root
 absl::Status AppendFileListFromCommandline(
     const std::vector<absl::string_view>& cmdline, FileList* append_to);
 

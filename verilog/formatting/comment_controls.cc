@@ -81,8 +81,10 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
     }
   }
   // If the disabling interval remains open, close it (to end-of-buffer).
-  if (begin_disable_offset != kNullOffset) {
-    disable_set.Add({begin_disable_offset, static_cast<int>(text.length())});
+  int text_length = static_cast<int>(text.length());
+  if (begin_disable_offset != kNullOffset &&
+      begin_disable_offset <= text_length) {
+    disable_set.Add({begin_disable_offset, text_length});
   }
   return disable_set;
 }

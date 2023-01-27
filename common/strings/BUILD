@@ -289,6 +289,7 @@ cc_library(
         "//common/text:__pkg__",
         "//verilog/analysis:__pkg__",
         "//verilog/formatting:__pkg__",
+        "//verilog/tools/ls:__pkg__",
     ],
     deps = [
         ":utf8",

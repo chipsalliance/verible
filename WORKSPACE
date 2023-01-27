@@ -31,9 +31,9 @@ http_archive(
     # implementation to solve the issue
     patch_args = ["-p1"],
     patches = ["//bazel:absl.patch"],
-    sha256 = "13c086356d01079377b9d894ee461cf63550bafd4119e93107afa70e0eb16fec",
-    strip_prefix = "abseil-cpp-0a066f31d981d69f7bde961055691906dabd4a3c",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/0a066f31d981d69f7bde961055691906dabd4a3c.zip"],
+    sha256 = "e46fe4fd52b94dc344429b74b9520bead577f1db622def7a69bdefae6908836c",
+    strip_prefix = "abseil-cpp-35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],
 )
 
 # Googletest

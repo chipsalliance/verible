@@ -50,6 +50,7 @@ static const ParserTestCaseArray kPreprocessorTests = {
     "`define TRUTH\n",        // definition without value
     "`define FOO BAR-1\n",    // definition with value
     "`include \"foo.svh\"\n"  // include directive
+    "`include <foo.svh>\n"    // include directive
     "`ifndef SANITY\n"
     "`define SANITY\n"
     "`endif\n",
@@ -1571,6 +1572,10 @@ static const ParserTestCaseArray kModuleTests = {
     "endmodule",
     "module preprocessor_pain (\n"
     "`include \"BLAH.svh\"\n"
+    "  );\n"
+    "endmodule",
+    "module preprocessor_pain (\n"
+    "`include <BLUH.svh>\n"
     "  );\n"
     "endmodule",
     "module preprocessor_pain (\n"
@@ -3131,6 +3136,9 @@ static const ParserTestCaseArray kModuleTests = {
     "module blank;\n"
     "endmodule\n"
     "`default_nettype tri\n"
+    "module blank;\n"
+    "endmodule",
+    "`default_nettype trireg\n"
     "module blank;\n"
     "endmodule",
     "`default_nettype supply0\n"

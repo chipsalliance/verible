@@ -876,7 +876,8 @@ TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
               StartsWith("Error expanding macro identifier"));
 }
 
-TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
+static void IncludeFileTestWithIncludeBracket(const char* start_inc,
+                                              const char* end_inc) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
   constexpr absl::string_view included_content(
@@ -885,8 +886,9 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
   const std::string included_absolute_path =
       JoinPath(includes_dir, included_filename);
 
-  const std::string src_content = absl::StrCat(
-      "`include \"", included_absolute_path, "\"\nmodule src(); endmodule\n");
+  const std::string src_content =
+      absl::StrCat("`include ", start_inc, included_absolute_path, end_inc,
+                   "\nmodule src(); endmodule\n");
   const std::string equivalent_content =
       "module included_file(); endmodule\nmodule src(); endmodule\n";
 
@@ -925,6 +927,13 @@ TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePath) {
     ++tester_it;
     ++equivalent_it;
   }
+}
+
+TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePathInDoubleQuotes) {
+  IncludeFileTestWithIncludeBracket("\"", "\"");
+}
+TEST(VerilogPreprocessTest, IncludingFileWithAbsolutePathInAngleBrackets) {
+  IncludeFileTestWithIncludeBracket("<", ">");
 }
 
 TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {

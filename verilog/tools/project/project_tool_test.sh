@@ -35,7 +35,7 @@ echo "=== Test no arguments."
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
@@ -46,12 +46,12 @@ echo "=== Test '--helpfull'."
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
 grep -q "file_list_path" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"file_list_path\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"file_list_path\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
@@ -66,12 +66,12 @@ echo "=== Expect failure on missing required flag"
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
-grep -q "file_list_path is required but missing" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"file_list_path is required but missing\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+grep -q "file_list_path.*missing" "$MY_OUTPUT_FILE" || {
+  echo "$LINENO: Expected \"file_list_path is required but missing\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
@@ -88,7 +88,7 @@ echo "=== Expect failure on nonexistent file list"
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
@@ -106,14 +106,14 @@ echo "nonexistent.sv" > "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 0, but got $status"
+  echo "$LINENO: Expected exit code 0, but got $status"
   exit 1
 }
 
 # Make sure we see some diagnostic message about missing files.
 # System message is different in Unix vs. Windows, but they both contain 'file'
 grep -q "file" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"No such file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"No such file\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
@@ -137,12 +137,13 @@ echo "myinput.txt" > "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 0 ]] || {
-  "Expected exit code 0, but got $status"
+  echo "$LINENO: Expected exit code 0, but got $status"
+  cat "$MY_OUTPUT_FILE"
   exit 1
 }
 
 grep -q "metatype: parameter" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"metatype: parameter\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"metatype: parameter\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
@@ -165,12 +166,12 @@ echo "myinput.txt" > "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
 grep -q "[combined statuses]:" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"[combined statuses]:\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"[combined statuses]:\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
@@ -194,13 +195,55 @@ echo "myinput.txt" > "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 0 ]] || {
-  "Expected exit code 0, but got $status"
+  echo "$LINENO: Expected exit code 0, but got $status"
   exit 1
 }
 
 grep -q "(@fooo -> \$root::fooo)" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"(@fooo -> \$root::fooo)\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"(@fooo -> \$root::fooo)\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+echo "=== Load one file, printing symbol references for debug. File on cmdline"
+
+cat > "$MY_INPUT_FILE" <<EOF
+localparam int fooo = 1;
+localparam int barr = fooo;
+EOF
+
+"$project_tool" \
+  symbol-table-refs \
+  --file_list_root "$(dirname "$MY_INPUT_FILE")" \
+  myinput.txt \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  cat "$MY_OUTPUT_FILE"
+  echo "$LINENO: Expected exit code 0, but got $status"
+  exit 1
+}
+
+grep -q "(@fooo -> \$root::fooo)" "$MY_OUTPUT_FILE" || {
+  echo "$LINENO: Expected \"(@fooo -> \$root::fooo)\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  cat "$MY_OUTPUT_FILE"
+  exit 1
+}
+
+################################################################################
+echo "=== Same as above, but with absolute file on cmdline"
+
+"$project_tool" \
+  symbol-table-refs \
+  $MY_INPUT_FILE \
+  > "$MY_OUTPUT_FILE" 2>&1
+
+status="$?"
+[[ $status == 0 ]] || {
+  cat "$MY_OUTPUT_FILE"
+  echo "$LINENO: Expected exit code 0, but got $status"
   exit 1
 }
 
@@ -222,18 +265,18 @@ echo "myinput.txt" > "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 1 ]] || {
-  "Expected exit code 1, but got $status"
+  echo "$LINENO: Expected exit code 1, but got $status"
   exit 1
 }
 
 grep -q "[combined statuses]:" "$MY_OUTPUT_FILE" || {
-  echo "Expected \"[combined statuses]:\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
+  echo "$LINENO: Expected \"[combined statuses]:\" in $MY_OUTPUT_FILE but didn't find it.  Got:"
   cat "$MY_OUTPUT_FILE"
   exit 1
 }
 
 ################################################################################
-echo "=== Show dependencies between two files (parameters)"
+echo "=== Show dependencies between two files on cmdline (parameters)"
 
 cat > "$MY_INPUT_FILE".A <<EOF
 localparam int barr = fooo + 1;
@@ -249,13 +292,13 @@ echo "myinput.txt.A" > "$FILE_LIST_INPUT"
 echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 "$project_tool" \
   file-deps \
-  --file_list_path "$FILE_LIST_INPUT" \
+  myinput.txt.A myinput.txt.B \
   --file_list_root "$(dirname "$MY_INPUT_FILE".A)" \
   > "$MY_OUTPUT_FILE" 2>&1
 
 status="$?"
 [[ $status == 0 ]] || {
-  "Expected exit code 0, but got $status"
+  echo "$LINENO: Expected exit code 0, but got $status"
   exit 1
 }
 
@@ -295,7 +338,7 @@ echo "myinput.txt.B" >> "$FILE_LIST_INPUT"
 
 status="$?"
 [[ $status == 0 ]] || {
-  "Expected exit code 0, but got $status"
+  echo "$LINENO: Expected exit code 0, but got $status"
   exit 1
 }
 

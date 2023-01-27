@@ -86,11 +86,21 @@ class BufferTrackerContainer {
   // (internally, they exercise Update() and Remove())
   verible::lsp::BufferCollection::UriBufferCallback GetSubscriptionCallback();
 
+  // type for buffer change callback function
+  // The callback takes uri of the file, and the pointer to the BufferTracker
+  // The pointer can be nullptr, meaning that e.g. the file was closed.
+  // The nullptr case should be handled by callback.
+  using ChangeCallback =
+      std::function<void(const std::string &uri, const BufferTracker *tracker)>;
+
   // Add a change listener for clients of ours interested in updated fresly
   // parsed content.
-  using ChangeCallback =
-      std::function<void(const std::string &uri, const BufferTracker &tracker)>;
-  void SetChangeListener(const ChangeCallback &cb) { change_listener_ = cb; }
+  // The callback takes uri of the file, and the pointer to the BufferTracker
+  // The pointer can be nullptr, meaning that e.g. the file was closed.
+  // The nullptr case should be handled by callback.
+  void AddChangeListener(const ChangeCallback &cb) {
+    change_listeners_.push_back(ABSL_DIE_IF_NULL(cb));
+  }
 
   // Given the URI, find the associated parse buffer if it exists.
   const BufferTracker *FindBufferTrackerOrNull(const std::string &uri) const;
@@ -104,7 +114,7 @@ class BufferTrackerContainer {
   // Remove the buffer tracker for the given "uri".
   void Remove(const std::string &uri) { buffers_.erase(uri); }
 
-  ChangeCallback change_listener_ = nullptr;
+  std::vector<ChangeCallback> change_listeners_;
   std::unordered_map<std::string, std::unique_ptr<BufferTracker>> buffers_;
 };
 }  // namespace verilog

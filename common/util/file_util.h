@@ -74,7 +74,11 @@ absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
 // Create file "filename" and store given content in it.
 absl::Status SetContents(absl::string_view filename, absl::string_view content);
 
-// Join directory + filename
+// Join directory + filename and lightly canonicalize.
+// The canonicalization step unifies ./ and ../ path elements lexically
+// without looking at the underlying file-system.
+//
+// If "filename" is already absolute, "base" is not prepended.
 std::string JoinPath(absl::string_view base, absl::string_view name);
 
 // Create directory with given name, return success.

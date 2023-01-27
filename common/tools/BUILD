@@ -1,6 +1,7 @@
 """This package contains language-agnostic tools in the Verible project."""
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 licenses(["notice"])
 
@@ -65,5 +66,27 @@ cc_binary(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+jcxxgen(
+    name = "jcxxgen_testfile",
+    src = "jcxxgen_testfile.yaml",
+    out = "jcxxgen_testfile.h",
+    namespace = "verible::test",
+)
+
+cc_test(
+    name = "jcxxgen_test",
+    srcs = ["jcxxgen_test.cc"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fexceptions"],
+    }),
+    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
+    deps = [
+        ":jcxxgen_testfile",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
     ],
 )
