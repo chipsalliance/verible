@@ -192,6 +192,17 @@ There is also [neovim](#neovim).
 
 ### VSCode
 
+#### Use released extension
+You can get the extension from the [release] files and download `verible.vsix`.
+
+Then, run vscode with the following flag to install the extension:
+
+```bash
+code --install-extension verible.vsix
+```
+
+#### Build yourself
+
 This is based on the VSCode [packaging extension](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#packaging-extensions) guide.
 
 First [install the verible tools](../../README.md#installation) and [vscode](https://code.visualstudio.com/Download).
@@ -206,3 +217,5 @@ npm install
 npm run vsix
 code --install-extension verible.vsix
 ```
+
+[release]: https://github.com/chipsalliance/verible/releases
