@@ -225,7 +225,7 @@ jobs:
         source ./.github/settings.sh
         ./.github/bin/set-compiler.sh 9
         ./.github/bin/install-bazel.sh
-        ./.github/bin/install-kythe.sh
+        ./.github/bin/install-kythe-tools.sh
 
     - name: Run Kythe Verification tests
       run: |
