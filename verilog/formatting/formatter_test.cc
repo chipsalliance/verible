@@ -9895,6 +9895,24 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
 
     // between identifier and '(', no args
 
+    {"// verilog_syntax: parse-as-module-body",
+     "// verilog_syntax: parse-as-module-body\n"},
+    {"// verilog_syntax: parse-as-statements",
+     "// verilog_syntax: parse-as-statements\n"},
+    {"// verilog_syntax: parse-as-class-body",
+     "// verilog_syntax: parse-as-class-body\n"},
+    {"// verilog_syntax: parse-as-package-body",
+     "// verilog_syntax: parse-as-package-body\n"},
+    {"// verilog_syntax: parse-as-library-map",
+     "// verilog_syntax: parse-as-library-map\n"},
+    {"// verilog_syntax: does-not-exist-mode",
+     "// verilog_syntax: does-not-exist-mode\n"},
+    {"// verilog_syntax: parse-as-module-body\n",
+     "// verilog_syntax: parse-as-module-body\n"},
+    {"// verilog_syntax: parse-as-module-body\n"
+     "// comment",
+     "// verilog_syntax: parse-as-module-body\n"
+     "// comment\n"},
     {"// verilog_syntax: parse-as-module-body\n"
      "$foobarbaz /* c */ ();\n",
      "// verilog_syntax: parse-as-module-body\n"
