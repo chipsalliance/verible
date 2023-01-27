@@ -209,7 +209,31 @@ jobs:
         path: "**/plot_*.svg"
 
 
-  Kythe:
+  KytheVerification:
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+       # Download complete repository + tags
+       fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        source ./.github/settings.sh
+        ./.github/bin/set-compiler.sh 9
+        ./.github/bin/install-bazel.sh
+        ./.github/bin/install-kythe-tools.sh
+
+    - name: Run Kythe Verification tests
+      run: |
+        source ./.github/settings.sh
+        ./.github/bin/verify-kythe-extraction.sh
+
+
+  KytheXrefs:
     runs-on: ubuntu-20.04
     if: false   # Currently disabled, need to investigate failure.
 
@@ -228,13 +252,12 @@ jobs:
         ./.github/bin/install-bazel.sh
         ./.github/bin/install-kythe.sh
 
-    - name: Run Kythe
+    - name: Extract Verible Kythe xRefs
       run: |
         source ./.github/settings.sh
-        ./.github/bin/verify-kythe-extraction.sh
         ./.github/bin/run-kythe.sh
 
-    - name: 📤 Upload Kythe output
+    - name: 📤 Upload Kythe xRefs to the action artifacts
       uses: actions/upload-artifact@v2
       with:
         path: kythe_output/*.kzip

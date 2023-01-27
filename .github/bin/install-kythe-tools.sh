@@ -13,10 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [ -z "${KYTHE_TOOLS_VERSION}" ]; then
+        echo "Set \$KYTHE_TOOLS_VERSION"
+        exit 1
+fi
+
 set -e
 
-# Verify that Verilog Kythe indexer produces the expected Kythe indexing facts.
-# Note: verifier tool path assumes it came with the release pre-built.
-KYTHE_DIRNAME="kythe-${KYTHE_TOOLS_VERSION}"
-KYTHE_DIR_ABS="$(readlink -f "kythe-tools-bin/${KYTHE_DIRNAME}")"
-bazel test --test_output=errors --test_arg="$KYTHE_DIR_ABS/tools/verifier" verilog/tools/kythe:verification_test
+echo "Fetching Kythe tools"
+
+mkdir kythe-tools-bin
+cd kythe-tools-bin
+# Use release, which comes with pre-built binaries
+wget --no-verbose -O kythe.tar.gz \
+  "https://github.com/kythe/kythe/releases/download/$KYTHE_TOOLS_VERSION/kythe-$KYTHE_TOOLS_VERSION.tar.gz"
+tar -xzf kythe.tar.gz "kythe-${KYTHE_TOOLS_VERSION}/tools/verifier"
