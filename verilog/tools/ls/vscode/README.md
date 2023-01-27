@@ -14,7 +14,7 @@ The language server provides a couple of features from the [Verible SystemVerilo
  * **[&#x1F389; New]** **Go-To-Definition**: Jump to the definition of the symbol under the cursor.
  * **[&#x1F389; New]** **AUTO**-expansion: Features known from
    [emacs verilog mode](https://www.veripool.org/verilog-mode/). Currently
-   `AUTOARG` (`AUTO_INST`, `AUTO_TEMPLATE` [coming soon](https://github.com/chipsalliance/verible/issues/1557)).
+   `AUTOARG` ([coming soon](https://github.com/chipsalliance/verible/issues/1557): `AUTO_INST`, `AUTO_TEMPLATE`).
 
 ## Filing Issues
 File bugs on the public [github issue tracker](https://github.com/chipsalliance/verible/issues/new/choose). Provide (sanitized) code examples if needed to illustrate an issue.
