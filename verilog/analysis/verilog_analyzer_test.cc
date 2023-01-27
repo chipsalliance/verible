@@ -353,6 +353,70 @@ TEST(AnalyzeVerilogAutomaticMode, NormalModeModule) {
   EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
 }
 
+TEST(AnalyzeVerilogAutomaticMode, StatementsModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-statements", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, ModuleBodyModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-module-body", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, ClassBodyModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-class-body", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, PackageBodyModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-package-body", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, LibraryMapModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-library-map", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, SingleDirectiveInvalidSelection) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: does-not-exist-mode", "<file>",
+          kDefaultPreprocess);
+  EXPECT_OK(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, ExpressionModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-expression", "<file>",
+          kDefaultPreprocess);
+  EXPECT_FALSE(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus().ok());
+}
+
+TEST(AnalyzeVerilogAutomaticMode, PropertySpecModeSingleDirective) {
+  std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
+      VerilogAnalyzer::AnalyzeAutomaticMode(
+          "// verilog_syntax: parse-as-property-spec", "<file>",
+          kDefaultPreprocess);
+  EXPECT_FALSE(ABSL_DIE_IF_NULL(analyzer_ptr)->ParseStatus().ok());
+}
+
 TEST(AnalyzeVerilogAutomaticMode, NormalModeModuleInvalidSelection) {
   std::unique_ptr<VerilogAnalyzer> analyzer_ptr =
       VerilogAnalyzer::AnalyzeAutomaticMode(
