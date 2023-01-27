@@ -115,7 +115,7 @@ jobs:
         mode:
         - test
         - smoke-test
-        - smoke-test-analyzer 
+        - smoke-test-analyzer
         - asan
         - asan-clang
         - compile
@@ -193,7 +193,7 @@ jobs:
       if: matrix.mode == 'compile'
       run: bazel run :install -c fastbuild -- $VERIBLE_BINDIR && tar cfv verible-bin.tar -C $VERIBLE_BINDIR .
 
-    - name: Upload bazel-bin 
+    - name: Upload bazel-bin
       if: matrix.mode == 'compile'
       uses: actions/upload-artifact@v2
       with:
@@ -335,6 +335,30 @@ jobs:
     - name: Tests
       run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
+  PrepareVSPlugin:
+    container: ubuntu:20.04
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        apt -qqy update
+        apt -qq -y install npm nodejs
+
+    - name: Build vsix
+      run: |
+        cd verilog/tools/ls/vscode
+        npm install
+        npm run vsix
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: verilog/tools/ls/vscode/verible.vsix
 
   WindowsBuild:
     runs-on: windows-latest
@@ -392,7 +416,7 @@ jobs:
 
 
   Release:
-    needs: [ Check, Build, WindowsBuild ]
+    needs: [ Check, Build, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
@@ -424,7 +448,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible-*.{tar.gz,zip}
+        file: artifact/verible*.{tar.gz,zip,vsix}
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
