@@ -81,7 +81,7 @@ static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
   return node.MatchesTagAnyOf({NodeEnum::kSeqBlock, NodeEnum::kGenerateBlock});
 }
 
-static SyntaxTreeNode& GetBlockEnd(const SyntaxTreeNode& block) {
+static const SyntaxTreeNode& GetBlockEnd(const SyntaxTreeNode& block) {
   CHECK(NodeIsBeginEndBlock(block));
   return verible::SymbolCastToNode(*block.children().back());
 }

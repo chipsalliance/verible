@@ -22,14 +22,11 @@
 #include <iosfwd>
 #include <memory>
 
+#include "common/text/symbol_ptr.h"
 #include "common/text/token_info.h"
 #include "common/text/visitors.h"
 
 namespace verible {
-
-class Symbol;
-
-using SymbolPtr = std::unique_ptr<Symbol>;
 using TokenComparator =
     std::function<bool(const TokenInfo &, const TokenInfo &)>;
 

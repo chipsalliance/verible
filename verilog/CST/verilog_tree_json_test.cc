@@ -32,7 +32,7 @@ TEST(VerilogTreeJsonTest, GeneratesGoodJsonTree) {
       "module foo;\nendmodule\n", "fake_file.sv");
   const auto status = ABSL_DIE_IF_NULL(analyzer_ptr)->Analyze();
   EXPECT_TRUE(status.ok()) << status.message();
-  const std::unique_ptr<verible::Symbol>& tree_ptr = analyzer_ptr->SyntaxTree();
+  const verible::SymbolPtr& tree_ptr = analyzer_ptr->SyntaxTree();
   ASSERT_NE(tree_ptr, nullptr);
 
   const json tree_json(verilog::ConvertVerilogTreeToJson(

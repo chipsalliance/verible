@@ -51,9 +51,6 @@
 
 namespace verible {
 
-// Using unique_ptr in the symbol stack requires careful moving.
-using SymbolPtr = std::unique_ptr<Symbol>;
-
 // Currently, a tree *is* a tree-node, but this may change in the future.
 // Treat this as an opaque type.
 using ConcreteSyntaxTree = SymbolPtr;

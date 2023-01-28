@@ -65,7 +65,10 @@ cc_library(
 cc_library(
     name = "symbol",
     srcs = ["symbol.cc"],
-    hdrs = ["symbol.h"],
+    hdrs = [
+        "symbol.h",
+        "symbol_ptr.h",
+    ],
     deps = [
         ":token_info",
         ":visitors",
