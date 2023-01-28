@@ -15,12 +15,11 @@
 #ifndef VERIBLE_COMMON_TEXT_VISITORS_H_
 #define VERIBLE_COMMON_TEXT_VISITORS_H_
 
-#include <memory>
+#include "common/text/symbol_ptr.h"
 
 namespace verible {
 
 // forward declaration to allow pointers in function prototypes
-class Symbol;
 class SyntaxTreeLeaf;
 class SyntaxTreeNode;
 
@@ -65,8 +64,8 @@ class SymbolVisitor {
 class MutableTreeVisitorRecursive {
  public:
   virtual ~MutableTreeVisitorRecursive() {}
-  virtual void Visit(const SyntaxTreeLeaf& leaf, std::unique_ptr<Symbol>*) = 0;
-  virtual void Visit(const SyntaxTreeNode& node, std::unique_ptr<Symbol>*) = 0;
+  virtual void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr*) = 0;
+  virtual void Visit(const SyntaxTreeNode& node, SymbolPtr*) = 0;
 };
 
 }  // namespace verible

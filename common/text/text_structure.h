@@ -61,7 +61,7 @@ class TextStructureView {
   // TODO(b/136014603): Replace with expandable token stream view abstraction.
   struct DeferredExpansion {
     // Position in the syntax tree to expand (leaf or node).
-    std::unique_ptr<Symbol>* expansion_point;
+    SymbolPtr* expansion_point;
 
     // Analysis of the substring that corresponds to the expansion_point.
     std::unique_ptr<TextStructure> subanalysis;
