@@ -82,6 +82,10 @@ case "$MODE" in
     bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS ${CHOSEN_TARGETS}
     ;;
 
+  test-nortti)
+    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS --cxxopt=-fno-rtti ${CHOSEN_TARGETS}
+    ;;
+
   asan|asan-clang)
     if [[ "${MODE}" == "asan" ]]; then
       # Some gcc 12 issue with regexp it seems.
@@ -113,7 +117,7 @@ case "$MODE" in
 
   smoke-test-analyzer)
     SMOKE_LOGGING_DIR=/tmp/error-logs/ $(dirname $0)/smoke-test.sh
-    python3 $(dirname $0)/error-log-analyzer.py /tmp/error-logs/ --verible-path $(dirname $0)/../../ 
+    python3 $(dirname $0)/error-log-analyzer.py /tmp/error-logs/ --verible-path $(dirname $0)/../../
     cat sta.md >> $GITHUB_STEP_SUMMARY
     ;;
 

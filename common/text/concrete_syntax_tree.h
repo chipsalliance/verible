@@ -84,12 +84,11 @@ class SyntaxTreeNode final : public Symbol {
   // If node is actually a leaf, just append the leaf.
   void AppendChild(ForwardChildren forwarded_children) {
     if (forwarded_children.node == nullptr) return;
-    auto* node = dynamic_cast<SyntaxTreeNode*>(forwarded_children.node.get());
-    if (node == nullptr) {
-      // Could be a SyntaxTreeLeaf, for instance.
+    if (forwarded_children.node->Kind() != SymbolKind::kNode) {
       children_.push_back(std::move(forwarded_children.node));
       return;
     }
+    auto* node = down_cast<SyntaxTreeNode*>(forwarded_children.node.get());
     const auto new_size = children_.size() + node->children_.size();
     children_.reserve(new_size);
     for (auto& child : node->children_) {
