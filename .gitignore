@@ -3,6 +3,7 @@
 tags
 releasing/out
 compile_commands.json
+coverage-html/
 
 # Local user config
 .envrc
