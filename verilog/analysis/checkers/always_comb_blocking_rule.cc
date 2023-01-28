@@ -25,6 +25,7 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/util/casts.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -32,6 +33,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::down_cast;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SearchSyntaxTree;
@@ -68,10 +70,9 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
   if (AlwaysCombMatcher().Matches(symbol, &manager)) {
     for (const auto& match :
          SearchSyntaxTree(symbol, NodekNonblockingAssignmentStatement())) {
-      const auto* node =
-          dynamic_cast<const verible::SyntaxTreeNode*>(match.match);
+      if (match.match->Kind() != verible::SymbolKind::kNode) continue;
 
-      if (node == nullptr) continue;
+      const auto* node = down_cast<const verible::SyntaxTreeNode*>(match.match);
 
       const verible::SyntaxTreeLeaf* leaf = verible::GetSubtreeAsLeaf(
           *node, NodeEnum::kNonblockingAssignmentStatement, 1);

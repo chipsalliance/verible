@@ -114,6 +114,7 @@ jobs:
       matrix:
         mode:
         - test
+        - test-nortti
         - smoke-test
         - smoke-test-analyzer
         - asan
