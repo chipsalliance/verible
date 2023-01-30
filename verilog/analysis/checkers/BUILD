@@ -1164,6 +1164,7 @@ cc_library(
         "//common/analysis/matcher:bound_symbol_manager",
         "//common/text:symbol",
         "//common/text:syntax_tree_context",
+        "//common/util:casts",
         "//verilog/CST:verilog_matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint_rule_registry",

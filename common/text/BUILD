@@ -63,13 +63,16 @@ cc_library(
 )
 
 cc_library(
+    name = "symbol_ptr",
+    hdrs = ["symbol_ptr.h"],
+)
+
+cc_library(
     name = "symbol",
     srcs = ["symbol.cc"],
-    hdrs = [
-        "symbol.h",
-        "symbol_ptr.h",
-    ],
+    hdrs = ["symbol.h"],
     deps = [
+        ":symbol_ptr",
         ":token_info",
         ":visitors",
     ],
@@ -139,6 +142,9 @@ cc_test(
 cc_library(
     name = "visitors",
     hdrs = ["visitors.h"],
+    deps = [
+        ":symbol_ptr",
+    ],
 )
 
 cc_library(
