@@ -28,7 +28,6 @@
 #include "common/strings/string_memory_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_filelist.h"
 
 namespace verilog {
 
@@ -117,7 +116,7 @@ class VerilogSourceFile {
  protected:
   // Tracking state for linear progression of analysis, which allows
   // prerequisite actions to be cached.
-  enum State {
+  enum class State {
     // Only the paths have been established.
     kInitialized,
 
@@ -132,16 +131,16 @@ class VerilogSourceFile {
   // This is the how the file is referenced either in a file list or `include.
   // This should be const for the lifetime of this object, but isn't declared as
   // such so this class can have a default move constructor.
-  std::string referenced_path_;
+  const std::string referenced_path_;
 
   // Often a concatenation of a base path with a relative path.
   // This should be const for the lifetime of this object, but isn't declared as
   // such so this class can have a default move constructor.
-  std::string resolved_path_;
+  const std::string resolved_path_;
 
   // The corpus to which this file belongs to (e.g.,
   // github.com/chipsalliance/verible).
-  absl::string_view corpus_;
+  const absl::string_view corpus_;
 
   // State of this file.
   State state_ = State::kInitialized;
@@ -221,7 +220,7 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
   }
 
  private:
-  const verible::TextStructureView* text_structure_;
+  const verible::TextStructureView* const text_structure_;
 };
 
 // VerilogProject represents a set of files as a cohesive unit of compilation.
