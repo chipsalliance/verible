@@ -987,6 +987,65 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response["result"].size(), 0);
 }
 
+// Performs simple textDocument/definition request when no verible.filelist
+// file is provided in the workspace
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoFileList) {
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics
+  GetResponse();
+
+  // find definition for "var1" variable in a.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+}
+
+// Check textDocument/definition request where we want definition of a symbol
+// inside other module edited in buffer without a filelist
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestSymbolFromDifferentOpenedModuleNoFileList) {
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find definition for "var1" variable in b.sv file
+  std::string definition_request =
+      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
+  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
+  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =

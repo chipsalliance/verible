@@ -199,9 +199,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const absl::Time finddefinition_start = absl::Now();
-  bool filelist_loaded =
-      LoadProjectFileList(curr_project_->TranslationUnitRoot());
-  if (!filelist_loaded) return {};
+  LoadProjectFileList(curr_project_->TranslationUnitRoot());
   if (files_dirty_) {
     std::vector<absl::Status> diagnostics = BuildProjectSymbolTable();
     bool success = true;
