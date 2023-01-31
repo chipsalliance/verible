@@ -59,6 +59,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 # Newer bisons produce an unused label in generated code
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-label"
 
+# Compiler evaluates  sizeof...(args) and complains about zero
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-type-limits"
+
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
 # tight warnings on for 'our' code-base.
