@@ -22,7 +22,7 @@ jobs:
 
 
   VerifyFormatting:
-    container: ubuntu:20.04
+    container: debian:bullseye
     runs-on: [self-hosted, Linux, X64]
 
     steps:
@@ -54,7 +54,7 @@ jobs:
         path: "**/plot_*.svg"
 
   ClangTidy:
-    container: ubuntu:20.04
+    container: debian:bullseye
     runs-on: [self-hosted, Linux, X64]
 
     env:
@@ -107,7 +107,7 @@ jobs:
 
 
   Check:
-    container: ubuntu:20.04
+    container: debian:bullseye
     runs-on: [self-hosted, Linux, X64]
     strategy:
       fail-fast: false
@@ -158,7 +158,7 @@ jobs:
       run: |
         set -x
         apt -qqy update
-        apt -qq -y install clang-10 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk cmake python3-pip
+        apt -qq -y install clang-11 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk cmake python3-pip
         source ./.github/settings.sh
         ./.github/bin/set-compiler.sh 10
         ./.github/bin/install-bazel.sh
@@ -360,7 +360,7 @@ jobs:
       run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
   PrepareVSPlugin:
-    container: ubuntu:20.04
+    container: debian:bullseye
     runs-on: [self-hosted, Linux, X64]
     steps:
 
