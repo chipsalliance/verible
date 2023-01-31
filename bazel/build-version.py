@@ -39,10 +39,16 @@ def main():
     version = ""
 
   if not date:
-    date = os.environ["GIT_DATE"]
+    try:
+      date = os.environ["GIT_DATE"]
+    except:
+      date = "<unknown-git-date>"
 
   if not version:
-    version = os.environ["GIT_VERSION"]
+    try:
+      version = os.environ["GIT_VERSION"]
+    except:
+      version = "<unknown-git-version>"
 
   print("GIT_DATE", '"{}"'.format(date))
   print("GIT_DESCRIBE", '"{}"'.format(version))
