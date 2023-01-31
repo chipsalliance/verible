@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -200,15 +199,20 @@ std::string VerilogProject::GetRelativePathToSource(
 void VerilogProject::UpdateFileContents(
     absl::string_view path, const verible::TextStructureView* updatedtext) {
   std::string projectpath = GetRelativePathToSource(path);
+
+  // If we get a non-null parsed file, use that, otherwise fall back to
+  // file based loading.
   std::unique_ptr<VerilogSourceFile> contents = nullptr;
-  if (updatedtext)
+  if (updatedtext) {
     contents = std::make_unique<ParsedVerilogSourceFile>(
         projectpath, path, updatedtext, /*corpus=*/"");
-  else
+  } else {
     contents = std::make_unique<VerilogSourceFile>(projectpath, path, "");
+  }
+
   auto fileptr = files_.find(projectpath);
   if (fileptr == files_.end()) {
-    files_.insert(std::make_pair(projectpath, std::move(contents)));
+    files_.emplace(projectpath, std::move(contents));
   } else {
     fileptr->second = std::move(contents);
   }

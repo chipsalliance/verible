@@ -382,7 +382,6 @@ cc_library(
     hdrs = ["verilog_project.h"],
     deps = [
         ":verilog_analyzer",
-        ":verilog_filelist",
         "//common/strings:mem_block",
         "//common/strings:string_memory_map",
         "//common/text:text_structure",
