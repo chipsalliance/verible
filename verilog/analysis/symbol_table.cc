@@ -912,7 +912,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const auto p = current_scope_->TryEmplace(
         name, SymbolInfo{metatype, source_, &element});
     if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->first);
+      DiagnoseSymbolAlreadyExists(name, p.first->second);
     }
     return &p.first->second;  // scope of the new (or pre-existing symbol)
   }
@@ -933,7 +933,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                   *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
               });
     if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->first);
+      DiagnoseSymbolAlreadyExists(name, p.first->second);
     }
     VLOG(1) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
@@ -1204,12 +1204,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DiagnoseSymbolAlreadyExists(absl::string_view name,
-                                   absl::string_view previous) {
+                                   const SymbolTableNode& previous_symbol) {
     std::ostringstream here_print;
     here_print << source_->GetTextStructure()->GetRangeForText(name);
 
     std::ostringstream previous_print;
-    previous_print << source_->GetTextStructure()->GetRangeForText(previous);
+    previous_print << previous_symbol.Value()
+                          .file_origin->GetTextStructure()
+                          ->GetRangeForText(*previous_symbol.Key());
 
     // TODO(hzeller): output in some structured form easy to use downstream.
     diagnostics_.push_back(absl::AlreadyExistsError(absl::StrCat(
