@@ -792,6 +792,37 @@ TEST(BuildSymbolTableTest, ModuleDeclarationDuplicate) {
   }
 }
 
+TEST(BuildSymbolTableTest, ModuleDeclarationDuplicateSeparateFiles) {
+  TestVerilogSourceFile src("foobar.sv", "module mm;\nendmodule\n");
+  TestVerilogSourceFile src2("foobar-2.sv", "module mm;\nendmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  const auto status2 = src2.Parse();
+  ASSERT_TRUE(status2.ok()) << status2.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics1 = BuildSymbolTable(src, &symbol_table);
+  const auto build_diagnostics = BuildSymbolTable(src2, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "mm");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err, build_diagnostics);
+  EXPECT_EQ(err.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err.message(),
+              HasSubstr("\"mm\" is already defined in the $root scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
 TEST(BuildSymbolTableTest, ModuleDeclarationNested) {
   TestVerilogSourceFile src("foobar.sv",
                             "module m_outer;\n"

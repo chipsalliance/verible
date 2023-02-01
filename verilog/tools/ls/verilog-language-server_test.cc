@@ -1046,6 +1046,58 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
 }
 
+TEST_F(VerilogLanguageServerSymbolTableTest, MultipleDefinitionsOfSameSymbol) {
+  static constexpr absl::string_view filelist_content =
+      "bar_1.sv\nbar_2.sv\nfoo.sv";
+
+  static constexpr absl::string_view  //
+      bar_1(
+          R"(module bar();
+endmodule
+)");
+  static constexpr absl::string_view  //
+      bar_2(
+          R"(module bar();
+endmodule
+)");
+  static constexpr absl::string_view  //
+      foo(
+          R"(module foo();
+  bar x;
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_bar_1(root_dir, bar_1,
+                                                            "bar_1.sv");
+  const verible::file::testing::ScopedTestFile module_bar_2(root_dir, bar_2,
+                                                            "bar_2.sv");
+  const verible::file::testing::ScopedTestFile module_foo(root_dir, foo,
+                                                          "foo.sv");
+
+  const std::string foo_open_request =
+      DidOpenRequest("file://" + module_foo.filename(), foo);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "bar" type
+  std::string definition_request =
+      DefinitionRequest("file://" + module_foo.filename(), 2, 1, 3);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 0);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 7);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 0);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 10);
+  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_bar_1.filename());
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
