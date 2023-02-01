@@ -81,21 +81,8 @@ class SymbolTableHandler {
                          const verible::TextStructureView *content);
 
  private:
-  // tells that symbol table should be rebuilt due to changes in files
-  bool files_dirty_ = true;
-  // current VerilogProject for which the symbol table is created
-  std::shared_ptr<VerilogProject> curr_project_;
-  // symbol table structure
-  std::unique_ptr<SymbolTable> symbol_table_;
-  // path to the filelist file for the project
-  std::string filelist_path_;
-  // last timestamp of filelist file - used to check whether SymbolTable should
-  // be updated
-  absl::optional<std::filesystem::file_time_type> last_filelist_update_;
-
   // Scans the symbol table tree to find a given symbol.
-  // When succeds, returns the pointer to table node with the symbol, otherwise
-  // returns false.
+  // returns pointer to table node with the symbol on success, else nullptr.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
       const SymbolTableNode *context, absl::string_view symbol);
 
@@ -103,6 +90,20 @@ class SymbolTableHandler {
   // to project.
   // It is meant to be executed once per VerilogProject setup
   bool LoadProjectFileList(absl::string_view current_dir);
+
+  // Path to the filelist file for the project
+  std::string filelist_path_;
+
+  // Last timestamp of filelist file - used to check whether SymbolTable should
+  // be updated
+  absl::optional<std::filesystem::file_time_type> last_filelist_update_;
+
+  // tells that symbol table should be rebuilt due to changes in files
+  bool files_dirty_ = true;
+
+  // current VerilogProject for which the symbol table is created
+  std::shared_ptr<VerilogProject> curr_project_;
+  std::unique_ptr<SymbolTable> symbol_table_;
 };
 
 };  // namespace verilog
