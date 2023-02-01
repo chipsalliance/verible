@@ -86,9 +86,8 @@ cc_library(
 genrule(
     name = "version_header",
     outs = ["generated_verible_build_version.h"],
-    cmd = "./$(location create_version_header.sh) > $@",
+    cmd = "sed -e 's/^/#define VERIBLE_/' bazel-out/volatile-status.txt > $@",
     stamp = 1,  # Tell bazel that we really are interested in the status file
-    tools = ["create_version_header.sh"],
     visibility = ["//visibility:private"],
 )
 
