@@ -1,0 +1,11 @@
+--- ./installer/installer.bash.template.orig	2023-02-01 13:10:18.224882680 -0800
++++ ./installer/installer.bash.template	2023-02-01 13:10:30.952848590 -0800
+@@ -104,7 +104,7 @@
+     $sudo mkdir --parents -- "${target_dir}"
+ 
+   $sudo install -m "${target_mode}" \
+-    -T -- "${source}" "${target_dir}/${target_name}"
++    -- "${source}" "${target_dir}/${target_name}"
+ }
+ 
+ function main() {

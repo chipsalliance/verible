@@ -68,6 +68,11 @@ http_archive(
 # 'make install' equivalent rule
 http_archive(
     name = "com_github_google_rules_install",
+    # The installer uses an option -T that is not available on MacOS, but
+    # it is benign to leave out.
+    # Upstream bug https://github.com/google/bazel_rules_install/issues/31
+    patch_args = ["-p1"],
+    patches = ["//bazel:installer.patch"],
     sha256 = "880217b21dbd40928bbe3bca3d97bd4de7d70d5383665ec007d7e1aac41d9739",
     strip_prefix = "bazel_rules_install-5ae7c2a8d22de2558098e3872fc7f3f7edc61fb4",
     urls = ["https://github.com/google/bazel_rules_install/archive/5ae7c2a8d22de2558098e3872fc7f3f7edc61fb4.zip"],
