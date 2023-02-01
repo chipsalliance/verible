@@ -7,6 +7,7 @@ pkgs.mkShell {
   buildInputs = with pkgs;
     [
       bash
+      gnused
       bazel_4
       gcc
       git
