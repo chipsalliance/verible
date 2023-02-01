@@ -95,6 +95,7 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/pulp-platform/axi \
          https://github.com/rsd-devel/rsd \
          https://github.com/syntacore/scr1 \
+         https://github.com/olofk/serv \
          https://github.com/bespoke-silicon-group/basejump_stl"
 
 ##
@@ -172,9 +173,11 @@ ExpectedFailCount[project:rsd]=43
 
 ExpectedFailCount[project:scr1]=45
 
-ExpectedFailCount[syntax:basejump_stl]=462
-ExpectedFailCount[lint:basejump_stl]=462
-ExpectedFailCount[project:basejump_stl]=569
+ExpectedFailCount[project:serv]=1
+
+ExpectedFailCount[syntax:basejump_stl]=464
+ExpectedFailCount[lint:basejump_stl]=464
+ExpectedFailCount[project:basejump_stl]=571
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current

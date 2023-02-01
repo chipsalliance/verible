@@ -144,6 +144,7 @@ project_urls = sorted([
             "https://github.com/pulp-platform/axi",
             "https://github.com/rsd-devel/rsd",
             "https://github.com/syntacore/scr1",
+            "https://github.com/olofk/serv",
             "https://github.com/bespoke-silicon-group/basejump_stl"
 ])
 
