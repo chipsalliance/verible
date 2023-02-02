@@ -616,6 +616,23 @@ std::string ReferencesRequest(absl::string_view file, int id, int line,
                                           line, character);
 }
 
+// Performs assertions on textDocument/definition responses where single
+// definition is expected
+void CheckDefinitionResponseSingleDefinition(const json &response, int id,
+                                             int start_line,
+                                             int start_character, int end_line,
+                                             int end_character,
+                                             const std::string &file_uri) {
+  ASSERT_EQ(response["id"], id);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], start_line);
+  ASSERT_EQ(response["result"][0]["range"]["start"]["character"],
+            start_character);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], end_line);
+  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], end_character);
+  ASSERT_EQ(response["result"][0]["uri"], file_uri);
+}
+
 // Performs simple textDocument/definition request with no VerilogProject set
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
   std::string definition_request = DefinitionRequest("file://b.sv", 2, 3, 18);
@@ -649,13 +666,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request when there are two symbols of the same
@@ -689,13 +701,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_b_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_b_uri);
 
   // find definition for "var1" variable in a.sv file
   definition_request = DefinitionRequest(module_a_uri, 3, 2, 16);
@@ -703,13 +710,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_a = json::parse(GetResponse());
 
-  ASSERT_EQ(response_a["id"], 3);
-  ASSERT_EQ(response_a["result"].size(), 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_a["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_a["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_a, 3, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -743,13 +745,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -780,13 +777,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -832,25 +824,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 
   // perform double check
   ASSERT_OK(SendRequest(definition_request));
   response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -891,13 +873,8 @@ endmodule
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -995,13 +972,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 // Check textDocument/definition when the cursor points at nothing
@@ -1112,13 +1084,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response_b, 2, 1, 9, 1, 13,
+                                          module_a_uri);
 }
 
 TEST_F(VerilogLanguageServerSymbolTableTest, MultipleDefinitionsOfSameSymbol) {
@@ -1165,13 +1132,8 @@ endmodule
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 0);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 7);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 0);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 10);
-  ASSERT_EQ(response["result"][0]["uri"], module_bar_1_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, 0, 7, 0, 10,
+                                          module_bar_1_uri);
 }
 
 // Sample of badly styled modle
