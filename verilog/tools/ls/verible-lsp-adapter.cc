@@ -287,14 +287,15 @@ std::vector<verible::lsp::TextEdit> FormatRange(
     std::string newText;
     if (!FormatVerilog(text, current->uri(), format_style, &newText).ok())
       return result;
-    // Emit a single edit that replaces the full file. One could consider
-    // patches maybe; also be safe and don't emit anything if text is the same.
+    // Emit a single edit that replaces the full range the file covers.
+    // TODO(hzeller): Could consider patches maybe.
+    // TODO(hzeller): Also be safe and don't emit anything if text is the same.
+    const auto range = text.GetRangeForText(text.Contents());
     result.push_back(verible::lsp::TextEdit{
         .range =
             {
                 .start = {.line = 0, .character = 0},
-                .end = {.line = static_cast<int>(text.Lines().size() - 1),
-                        .character = 0},
+                .end = {.line = range.end.line, .character = range.end.column},
             },
         .newText = newText});
   }

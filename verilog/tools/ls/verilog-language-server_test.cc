@@ -536,6 +536,33 @@ TEST_F(VerilogLanguageServerTest, FormattingTest) {
           R"({"start":{"line":0, "character": 0}, "end":{"line":3, "character": 0}})"));
 }
 
+TEST_F(VerilogLanguageServerTest, FormattingFileWithEmptyNewline_issue1667) {
+  const std::string fmt_module = DidOpenRequest(
+      "file://fmt.sv", "module fmt();\nassign a=1;\nassign b=2;endmodule");
+  // ---------------------------------------------------- no newline ---^
+  ASSERT_OK(SendRequest(fmt_module));
+
+  GetResponse();  // Ignore diagnostics.
+
+  const absl::string_view formatting_request = R"(
+{"jsonrpc":"2.0", "id":1,
+ "method": "textDocument/formatting",
+ "params": {"textDocument":{"uri":"file://fmt.sv"}}})";
+
+  ASSERT_OK(SendRequest(formatting_request));
+
+  const json response = json::parse(GetResponse());
+
+  // Formatted output now has a newline at end.
+  EXPECT_EQ(std::string(response["result"][0]["newText"]),
+            "module fmt ();\n  assign a = 1;\n  assign b = 2;\nendmodule\n");
+
+  // Full range of original file, including the characters of the last line.
+  EXPECT_EQ(response["result"][0]["range"], json::parse(R"(
+{"start":{"line":0, "character": 0},
+ "end":  {"line":2, "character": 20}})"));
+}
+
 // Creates a textDocument/definition request
 std::string DefinitionRequest(absl::string_view file, int id, int line,
                               int character) {
