@@ -197,6 +197,9 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   }
   // TODO (glatosinski): reduce searched scope by utilizing information from
   // syntax tree?
+  if (context->Key() && verible::IsSubRange(*context->Key(), symbol)) {
+    return context;
+  }
   for (const auto &ref : context->Value().local_references_to_bind) {
     if (ref.Empty()) continue;
     const SymbolTableNode *resolved =
