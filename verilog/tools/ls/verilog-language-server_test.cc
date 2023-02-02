@@ -1512,6 +1512,71 @@ endmodule
       response, 2, 0, 7, 0, 17, "file://" + module_instmodule.filename());
 }
 
+// Checks the definition request for module port
+// This check verifies ports with types defined inside port list
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortTypesInsideList) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    output logic [31:0] o,
+    input logic i
+);
+  wire [31:0] o = {32{i}};
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string foo_open_request =
+      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "i"
+  std::string definition_request =
+      DefinitionRequest("file://" + module_instmodule.filename(), 2, 4, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, 2, 16, 2, 17, "file://" + module_instmodule.filename());
+}
+
+// Checks the definition request for module port
+// This check verifies ports with types defined outside port list
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortTypesOutsideList) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output logic [31:0] o;
+  input logic i;
+  wire [31:0] o = {32{i}};
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string foo_open_request =
+      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "bar" type
+  std::string definition_request =
+      DefinitionRequest("file://" + module_instmodule.filename(), 2, 6, 22);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, 5, 14, 5, 15, "file://" + module_instmodule.filename());
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
