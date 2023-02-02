@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <filesystem>
@@ -1136,7 +1137,7 @@ endmodule
                                           module_bar_1_uri);
 }
 
-// Sample of badly styled modle
+// Sample of badly styled module
 constexpr static absl::string_view badly_styled_module =
     "module my_module(input logic in, output logic out);\n\tassign out = in; "
     "\nendmodule";
@@ -1419,6 +1420,96 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
 
   ASSERT_EQ(response_b["id"], 2);
   ASSERT_EQ(response_b["result"].size(), 0);
+}
+
+// Checks the definition request for module type in different module
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestModule) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output [31:0] o;
+  input i;
+  wire [31:0] o = {32{i}};
+endmodule
+
+module ExampInst (
+    o,
+    i
+);
+
+  output o;
+  input i;
+
+  InstModule instName (  /*AUTOINST*/);
+
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string foo_open_request =
+      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "InstModule"
+  std::string definition_request =
+      DefinitionRequest("file://" + module_instmodule.filename(), 2, 17, 3);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, 0, 7, 0, 17, "file://" + module_instmodule.filename());
+}
+
+// Checks the go-to definition when pointing to the definition of the symbol
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestSelf) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output [31:0] o;
+  input i;
+  wire [31:0] o = {32{i}};
+endmodule
+
+module ExampInst (
+    o,
+    i
+);
+
+  output o;
+  input i;
+
+  InstModule instName (  /*AUTOINST*/);
+
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string foo_open_request =
+      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "InstModule"
+  std::string definition_request =
+      DefinitionRequest("file://" + module_instmodule.filename(), 2, 0, 8);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, 0, 7, 0, 17, "file://" + module_instmodule.filename());
 }
 
 // Tests correctness of Language Server shutdown request
