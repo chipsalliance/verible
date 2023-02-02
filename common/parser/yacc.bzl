@@ -16,6 +16,7 @@
 
 def std_move_parser_symbols(name, src, out):
     """Convert symbol assignments (=) to std::move.
+
     transformations:
       *++yyvsp = yylval;       -> *++yyvsp = std::move(yylval);
       *++yyvsp = yyval;        -> *++yyvsp = std::move(yyval);
