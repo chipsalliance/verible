@@ -19,15 +19,22 @@
 // done separately here.
 namespace verible {
 namespace lsp {
+// Deliberately no enum class as this enum is used as set of integer constants
+// in the context of the Language Server Protocol, so static_cast<int>-ing
+// them would be needed every time.
+enum DiagnosticSeverity {
+  Error = 1,
+  Warning = 2,
+  Info = 3,
+  Hint = 4,
+};
+
 // These are the SymbolKinds defined by the LSP specifcation
 // https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#symbolKind
 // Interesting is, that not all of them are actually supported by all
 // editors (playing around with Kate (https://kate-editor.org/)). So maybe
 // these editors need to be made understanding.
-//
-// Deliberately no enum class as this enum is used as set of integer constants
-// in the context of the Language Server Protocol, so static_cast<int>-ing
-// them would be needed every time.
+// As above, deliberately not enum class
 enum SymbolKind {
   File = 1,
   Module = 2,     // SV module. Kate does not seem to support that ?

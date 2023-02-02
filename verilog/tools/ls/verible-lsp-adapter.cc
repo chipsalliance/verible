@@ -15,6 +15,7 @@
 
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
+#include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol-operators.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/text/text_structure.h"
@@ -43,6 +44,8 @@ static verible::lsp::Diagnostic ViolationToDiagnostic(
                         .character = range.start.column},
               .end = {.line = range.end.line, .character = range.end.column},
           },
+      .severity = verible::lsp::DiagnosticSeverity::Warning,
+      .has_severity = true,
       .message = absl::StrCat(violation.reason, " ", v.status->url, "[",
                               v.status->lint_rule_name, "]", fix_msg),
   };
@@ -95,12 +98,15 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
           if (!msg.empty()) {  // Note: msg is often empty and not useful.
             absl::StrAppend(&message, " ", msg);
           }
-          // TODO(hzeller): Add severity into lsp::Diagnostic json.
           result.emplace_back(verible::lsp::Diagnostic{
               .range{.start{.line = range.start.line,
                             .character = range.start.column},
                      .end{.line = range.end.line,  //
                           .character = range.end.column}},
+              .severity = severity == verible::ErrorSeverity::kError
+                              ? verible::lsp::DiagnosticSeverity::Error
+                              : verible::lsp::DiagnosticSeverity::Warning,
+              .has_severity = true,
               .message = message,
           });
         });
