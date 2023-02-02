@@ -50,6 +50,7 @@ cc_library(
         ":document-symbol-filler",
         ":lsp-parse-buffer",
         "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-protocol-enums",
         "//common/lsp:lsp-protocol-operators",
         "//common/text:text_structure",
         "//verilog/analysis:verilog_analyzer",

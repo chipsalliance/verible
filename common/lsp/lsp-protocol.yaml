@@ -86,6 +86,7 @@ DidCloseTextDocumentParams:     # textDocument/didClose
 # -- textDocument/publishDiagnostics
 Diagnostic:
   range: Range
+  severity?: integer   # DiagnosticSeverity enum
   source: string = "verible"
   message: string
 
