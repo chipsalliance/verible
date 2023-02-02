@@ -17,7 +17,7 @@ function initLanguageClient() {
     // Options to control the language client
     const clientOptions: vscodelc.LanguageClientOptions = {
         // Register the server for (System)Verilog documents
-        documentSelector: [{ scheme: 'file', language: 'system-verilog' },
+        documentSelector: [{ scheme: 'file', language: 'systemverilog' },
                            { scheme: 'file', language: 'verilog' }]
     };
 

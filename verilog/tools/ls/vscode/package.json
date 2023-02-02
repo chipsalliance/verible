@@ -15,14 +15,14 @@
   "contributes": {
     "languages": [
       {
-        "id": "system-verilog",
+        "id": "systemverilog",
         "extensions": [
           ".sv",
           ".v"
         ],
         "aliases": [
           "System Verilog",
-          "systemverilog",
+          "system-verilog",
           "verilog"
         ]
       }
@@ -41,7 +41,7 @@
     }
   },
   "activationEvents": [
-    "onLanguage:system-verilog",
+    "onLanguage:systemverilog",
     "onLanguage:verilog"
   ],
   "categories": [
