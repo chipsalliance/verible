@@ -91,13 +91,3 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
-
-sh_binary(
-    name = "move_yacc_stack_symbols",
-    srcs = ["move_yacc_stack_symbols.sh"],
-)
-
-sh_binary(
-    name = "record_syntax_error",
-    srcs = ["record_syntax_error.sh"],
-)
