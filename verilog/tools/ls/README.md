@@ -186,9 +186,24 @@ be helpful in case of issues.
 
 ### Vim
 
-TBD. What I found so far, there is
-[vim-lsp](https://github.com/prabirshrestha/vim-lsp) that can be used.
-There is also [neovim](#neovim).
+To make LSP work in Vim an dedicated LSP addon is required.
+The recommendeda addon is [vim-lsp](https://github.com/prabirshrestha/vim-lsp).
+Please refer to its README for installation guides and configuration recommendations.
+
+To enable Verible with this plugin, add the following snippet to your configuration (e.g. ``~/.vimrc``):
+
+```viml
+if executable('verible-verilog-ls')
+    au User lsp_setup call lsp#register_server({
+        \ 'name': 'verible-verilog-ls',
+        \ 'cmd': {server_info->['verible-verilog-ls']},
+        \ 'allowlist': ['verilog', 'systemverilog'],
+        \ })
+endif
+```
+
+Make sure ``verible-verilog-ls`` is available in your ``PATH`` and can be executed.
+Alternatively modify the snippet above to use an absolute path.
 
 ### VSCode
 
