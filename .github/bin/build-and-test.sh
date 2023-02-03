@@ -109,9 +109,9 @@ case "$MODE" in
     bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
 
-  compile20)
+  test-c++20)
     # Compile with C++ 20 to make sure to be compatible with the next version.
-    bazel build --keep_going $BAZEL_OPTS --cxxopt=-std=c++20 :install-binaries
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 ${CHOSEN_TARGETS}
     ;;
 
   smoke-test)

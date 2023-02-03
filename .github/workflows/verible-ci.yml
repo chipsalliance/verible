@@ -115,6 +115,7 @@ jobs:
         mode:
         - test
         - test-nortti
+        - test-c++20
         - smoke-test
         - smoke-test-analyzer
         - asan
