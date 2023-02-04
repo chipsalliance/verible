@@ -131,12 +131,10 @@ bison_register_toolchains()
 # A version newer than 21.21 as it fixes a warning on c++20
 http_archive(
     name = "com_google_protobuf",
-    patch_args = ["-p1"],
-    patches = ["//bazel:proto-no-mixed-sign-comp.patch"],
-    sha256 = "cc5f8e09a7cd8c6d67698c6f01240caf6f0e7833dc6159c517e7e3af84556ab3",
-    strip_prefix = "protobuf-0e5fe2e02d6c7d2521edb678a3ab712fb62b2db6",
+    sha256 = "3d6303e06c1155e6e7f8f19670fc0c96672b297396aac75b900ab324899a1624",
+    strip_prefix = "protobuf-8fb98cfb757ff8c7a6af9d874e12b0bb7f9dc0fb",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/archive/0e5fe2e02d6c7d2521edb678a3ab712fb62b2db6.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/8fb98cfb757ff8c7a6af9d874e12b0bb7f9dc0fb.zip",
     ],
 )
 
