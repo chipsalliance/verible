@@ -59,6 +59,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-redundant-move"
 # Newer bisons produce an unused label in generated code
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-label"
 
+# Compiler evaluates  sizeof...(args) and complains about zero
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-type-limits"
+
 # Warnings that come from other external parts that we compile.
 # Ideally, we would separate them out to ignore only there, while we keep
 # tight warnings on for 'our' code-base.
@@ -106,9 +109,9 @@ case "$MODE" in
     bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
 
-  compile20)
+  test-c++20)
     # Compile with C++ 20 to make sure to be compatible with the next version.
-    bazel build --keep_going $BAZEL_OPTS --cxxopt=-std=c++20 :install-binaries
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 ${CHOSEN_TARGETS}
     ;;
 
   smoke-test)
