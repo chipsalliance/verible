@@ -75,10 +75,10 @@ absl::Status VerilogSourceFile::Parse() {
   analyzed_structure_ = std::make_unique<VerilogAnalyzer>(
       content_, ResolvedPath(), kPreprocessConfig);
 
-  const absl::Time analyze_start = absl::Now();
+  const absl::Time start = absl::Now();
   status_ = analyzed_structure_->Analyze();
-  LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
-            << (absl::Now() - analyze_start);
+  VLOG(1) << "Analyzed " << ResolvedPath() << " in " << (absl::Now() - start);
+
   processing_state_ = ProcessingState::kParsed;
   return status_;
 }

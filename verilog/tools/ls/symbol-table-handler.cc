@@ -65,31 +65,32 @@ void SymbolTableHandler::ResetSymbolTable() {
   symbol_table_ = std::make_unique<SymbolTable>(curr_project_.get());
 }
 
-std::vector<absl::Status> SymbolTableHandler::BuildSymbolTableFor(
-    const VerilogSourceFile &file) {
-  return BuildSymbolTable(file, symbol_table_.get(), curr_project_.get());
-}
-
 std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   if (!curr_project_) {
     return {absl::UnavailableError("VerilogProject is not set")};
   }
   ResetSymbolTable();
   LOG(INFO) << "Parsing project files...";
-  std::vector<absl::Status> buildstatus;
-  symbol_table_->Build(&buildstatus);
-  for (const auto &diagnostic : buildstatus) {
-    LOG(WARNING) << diagnostic.message();
+
+  std::vector<absl::Status> buildstatus_result;
+
+  {
+    const absl::Time start = absl::Now();
+    symbol_table_->Build(&buildstatus_result);
+    LOG(INFO) << "SymbolTable::Build() took " << (absl::Now() - start);
   }
-  std::vector<absl::Status> resolvestatus;
-  symbol_table_->Resolve(&resolvestatus);
-  for (const auto &diagnostic : resolvestatus) {
-    LOG(WARNING) << diagnostic.message();
+
+  {
+    const absl::Time start = absl::Now();
+    symbol_table_->Resolve(&buildstatus_result);
+    LOG(INFO) << "SymbolTable::Resolve() took " << (absl::Now() - start);
   }
-  buildstatus.insert(buildstatus.end(), resolvestatus.begin(),
-                     resolvestatus.end());
+
+  if (buildstatus_result.size() <= 3 || VLOG_IS_ON(1)) {  // noisy on request
+    for (const auto &s : buildstatus_result) LOG(INFO) << s;
+  }
   files_dirty_ = false;
-  return buildstatus;
+  return buildstatus_result;
 }
 
 bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
@@ -135,7 +136,9 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     LOG(INFO) << "Adding include path:  " << incdir;
     curr_project_->AddIncludePath(incdir);
   }
-  // add files from file list to the project
+  // Add files from file list to the project
+  int file_count = 0;
+  const absl::Time start = absl::Now();
   for (const auto &file_in_project : filelist.file_paths) {
     const std::string canonicalized =
         std::filesystem::path(file_in_project).lexically_normal().string();
@@ -147,9 +150,11 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
                    << source.status();
       continue;
     }
-    LOG(INFO) << "Creating symbol table for:  " << canonicalized;
-    BuildSymbolTableFor(*source.value());
+    ++file_count;
   }
+
+  LOG(INFO) << "Opening " << file_count
+            << " files in file-list: " << (absl::Now() - start);
   return true;
 }
 
@@ -201,16 +206,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   const absl::Time finddefinition_start = absl::Now();
   LoadProjectFileList(curr_project_->TranslationUnitRoot());
   if (files_dirty_) {
-    std::vector<absl::Status> diagnostics = BuildProjectSymbolTable();
-    bool success = true;
-    for (const auto &diagnostic : diagnostics) {
-      if (!diagnostic.ok())
-        LOG(WARNING) << "Error on textDocument/definition:  " << diagnostic;
-      success &= diagnostic.ok();
-    }
-    if (!success) {
-      LOG(WARNING) << "There were errors during symbol table building";
-    }
+    BuildProjectSymbolTable();
   }
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {
