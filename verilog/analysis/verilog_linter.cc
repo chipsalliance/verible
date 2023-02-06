@@ -184,7 +184,7 @@ VerilogLinter::VerilogLinter()
 
 absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
                                       absl::string_view lintee_filename) {
-  if (VLOG_IS_ON(1)) {
+  if (VLOG_IS_ON(2)) {
     for (const auto& name : configuration.ActiveRuleIds()) {
       LOG(INFO) << "active rule: '" << name << '\'';
     }
