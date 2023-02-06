@@ -832,14 +832,299 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTOINPUT_ExpandEmpty) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOINPUT*/
+
+  input i3;
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2;  // To b of bar
+  // End of automatics
+
+  input i3;
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOINOUT_ExpandEmpty) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io1;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOINOUT*/
+
+  inout io2;
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io1;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout io1;  // To/From b of bar
+  // End of automatics
+
+  inout io2;
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io1(io1),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOOUTPUT_ExpandEmpty) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOOUTPUT*/
+
+  output o3;
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o1;  // From b of bar
+  output o2;  // From b of bar
+  // End of automatics
+
+  output o3;
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandPorts) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo(/*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo(/*AUTOARG*/
+  // Inputs
+  i1, i2,
+  // Inouts
+  io,
+  // Outputs
+  o1, o2
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o1;  // From b of bar
+  output o2;  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout io;  // To/From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandPorts_OutOfOrderModules) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo(/*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar(input i1, output o1);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+
+  inout io;
+  qux q(/*AUTOINST*/);
+endmodule
+
+module qux(
+  input i1,
+  input i2,
+  output o1,
+  output o2);
+endmodule
+)",
+                R"(
+module foo(/*AUTOARG*/
+  // Inputs
+  i1, i2,
+  // Inouts
+  io,
+  // Outputs
+  o1, o2
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o1;  // From b of bar
+  output o2;  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout io;  // To/From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+
+module bar(input i1, output o1);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i2;  // To q of qux
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o2;  // From q of qux
+  // End of automatics
+
+  inout io;
+  qux q(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+
+module qux(
+  input i1,
+  input i2,
+  output o1,
+  output o2);
+endmodule
+)");
+}
+
 TEST(Autoexpand, CodeActionExpandAll) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
 module foo(/*AUTOARG*/);
-  input logic clk;
-  input logic rst;
-  output logic o1;
-  output logic o2;
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
 
   bar b(/*AUTOINST*/);
 endmodule
@@ -858,10 +1143,16 @@ module foo(/*AUTOARG*/
   // Outputs
   o1, o2
   );
-  input logic clk;
-  input logic rst;
-  output logic o1;
-  output logic o2;
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To b of bar
+  input rst;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o1;  // From b of bar
+  output o2;  // From b of bar
+  // End of automatics
 
   bar b(/*AUTOINST*/
     // Inputs
@@ -891,16 +1182,14 @@ TEST(Autoexpand, CodeActionExpandRange) {
       [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
         return AutoExpandCodeActionToTextEdits(
             symbol_table_handler, tracker,
-            {.start = {.line = 0}, .end = {.line = 12}},
+            {.start = {.line = 0}, .end = {.line = 10}},
             "Expand all AUTOs in selected range");
       },
       R"(
 module foo(/*AUTOARG*/);
-  input logic clk;
-  input logic rst;
-  output logic out_a;
-  output logic out_b;
-
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+ 
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE ".*" (
        .o1(out_a),
@@ -923,11 +1212,17 @@ module foo(/*AUTOARG*/
   // Outputs
   out_a, out_b
   );
-  input logic clk;
-  input logic rst;
-  output logic out_a;
-  output logic out_b;
-
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To b of bar
+  input rst;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output out_a;  // From b of bar
+  output out_b;  // From b of bar
+  // End of automatics
+ 
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE ".*" (
        .o1(out_a),
