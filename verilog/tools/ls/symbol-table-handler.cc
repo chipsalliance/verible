@@ -29,6 +29,20 @@ namespace verilog {
 
 static constexpr absl::string_view kFileSchemePrefix = "file://";
 
+// If vlog, output all non-ok messages, otherwise just the first few.
+static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
+  int report_count = 0;
+  for (const auto &s : statuses) {
+    if (s.ok()) continue;
+    LOG(INFO) << s;
+    if (++report_count > 5 && !VLOG_IS_ON(1)) {
+      LOG(WARNING) << "skipped remaining messages; switch VLOG(1) on for "
+                   << statuses.size() << " statuses";
+      break;  // only more noisy on request.
+    }
+  }
+}
+
 absl::string_view LSPUriToPath(absl::string_view uri) {
   if (!absl::StartsWith(uri, kFileSchemePrefix)) return "";
   return uri.substr(kFileSchemePrefix.size());
@@ -65,32 +79,48 @@ void SymbolTableHandler::ResetSymbolTable() {
   symbol_table_ = std::make_unique<SymbolTable>(curr_project_.get());
 }
 
+void SymbolTableHandler::ParseProjectFiles() {
+  if (!curr_project_) return;
+
+  // Parse all files separate from SymbolTable::Build() to report parse duration
+  LOG(INFO) << "Parsing project files...";
+  const absl::Time start = absl::Now();
+  std::vector<absl::Status> results;
+  for (auto &unit : *curr_project_) {
+    VerilogSourceFile *const verilog_file = unit.second.get();
+    if (verilog_file->is_parsed()) continue;
+    results.emplace_back(verilog_file->Parse());
+  }
+  LogFullIfVLog(results);
+
+  LOG(INFO) << "VerilogSourceFile::Parse() for " << results.size()
+            << " files: " << (absl::Now() - start);
+}
+
 std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   if (!curr_project_) {
     return {absl::UnavailableError("VerilogProject is not set")};
   }
   ResetSymbolTable();
-  LOG(INFO) << "Parsing project files...";
-
-  std::vector<absl::Status> buildstatus_result;
+  ParseProjectFiles();
+  std::vector<absl::Status> buildstatus;
 
   {
     const absl::Time start = absl::Now();
-    symbol_table_->Build(&buildstatus_result);
+    symbol_table_->Build(&buildstatus);
     LOG(INFO) << "SymbolTable::Build() took " << (absl::Now() - start);
   }
 
   {
     const absl::Time start = absl::Now();
-    symbol_table_->Resolve(&buildstatus_result);
+    symbol_table_->Resolve(&buildstatus);
     LOG(INFO) << "SymbolTable::Resolve() took " << (absl::Now() - start);
   }
 
-  if (buildstatus_result.size() <= 3 || VLOG_IS_ON(1)) {  // noisy on request
-    for (const auto &s : buildstatus_result) LOG(INFO) << s;
-  }
+  LogFullIfVLog(buildstatus);
+
   files_dirty_ = false;
-  return buildstatus_result;
+  return buildstatus;
 }
 
 bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {

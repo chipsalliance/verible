@@ -90,6 +90,9 @@ class SymbolTableHandler {
   // It is meant to be executed once per VerilogProject setup
   bool LoadProjectFileList(absl::string_view current_dir);
 
+  // Parse all the files in the project.
+  void ParseProjectFiles();
+
   // Path to the filelist file for the project
   std::string filelist_path_;
 
