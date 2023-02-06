@@ -124,6 +124,14 @@ class AutoExpander {
     void EmitUndeclaredOutputDeclarations(std::ostream &output,
                                           absl::string_view indent) const;
 
+    // Writes wire declarations of undeclared output ports to the output stream
+    void EmitUndeclaredOutputWireDeclarations(std::ostream &output,
+                                              absl::string_view indent) const;
+
+    // Writes reg declarations of unconnected output ports to the output stream
+    void EmitUnconnectedOutputRegDeclarations(std::ostream &output,
+                                              absl::string_view indent) const;
+
     // Calls the closure on each port and the name of the port that should be
     // connected to it. If a template is given, the connected port name is taken
     // from the template, otherwise it's the same as the port name.
@@ -234,6 +242,12 @@ class AutoExpander {
   // Expands AUTOOUTPUT for the given module
   std::optional<TextEdit> ExpandAutooutput(Module &module) const;
 
+  // Expands AUTOWIRE for the given module
+  std::optional<TextEdit> ExpandAutowire(Module &module) const;
+
+  // Expands AUTOREG for the given module
+  std::optional<TextEdit> ExpandAutoreg(Module &module) const;
+
   // Expands all AUTOs in the buffer
   std::vector<TextEdit> Expand();
 
@@ -261,10 +275,12 @@ class AutoExpander {
   static const std::regex autotemplate_type_re_;
   static const std::regex autotemplate_conn_re_;
 
-  // Regexes for AUTOINPUT/AUTOOUTPUT/AUTOINOUT comments
+  // Regexes for AUTOINPUT/AUTOOUTPUT/AUTOINOUT/AUTOWIRE/AUTOREG comments
   static const std::regex autoinput_re_;
   static const std::regex autooutput_re_;
   static const std::regex autoinout_re_;
+  static const std::regex autowire_re_;
+  static const std::regex autoreg_re_;
 };
 
 const std::regex AutoExpander::autoarg_re_{R"(/\*\s*AUTOARG\s*\*/)"};
@@ -296,7 +312,7 @@ const std::regex AutoExpander::autotemplate_type_re_{
 const std::regex AutoExpander::autotemplate_conn_re_{
     R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*\))"};
 
-// AUTOINPUT/OUTPUT/INOUT regex breakdown:
+// AUTOINPUT/OUTPUT/INOUT/WIRE/REG regex breakdown:
 // (/\*\s* ... \s*\*/\s*?\n)                – starting comment
 // (?:\s*//.*\n)?                           – optional starting comment
 //                                            ("Beginning of automatic...")
@@ -313,6 +329,10 @@ const std::regex AutoExpander::autoinout_re_{
     absl::StrFormat(auto_declaration_re_fmt, "AUTOINOUT")};
 const std::regex AutoExpander::autooutput_re_{
     absl::StrFormat(auto_declaration_re_fmt, "AUTOOUTPUT")};
+const std::regex AutoExpander::autowire_re_{
+    absl::StrFormat(auto_declaration_re_fmt, "AUTOWIRE")};
+const std::regex AutoExpander::autoreg_re_{
+    absl::StrFormat(auto_declaration_re_fmt, "AUTOREG")};
 
 void AutoExpander::Module::EmitPortHeaderDeclarations(
     std::ostream &output, const absl::string_view indent,
@@ -374,6 +394,60 @@ void AutoExpander::Module::EmitUndeclaredOutputDeclarations(
     return port.declaration == Port::Undeclared &&
            port.direction == Port::Output;
   });
+}
+
+void AutoExpander::Module::EmitUndeclaredOutputWireDeclarations(
+    std::ostream &output, const absl::string_view indent) const {
+  absl::flat_hash_set<absl::string_view> declared_wires;
+  for (const auto &reg : FindAllNetVariables(symbol)) {
+    const SyntaxTreeLeaf *const net_name_leaf =
+        GetNameLeafOfNetVariable(*reg.match);
+    const absl::string_view net_name = net_name_leaf->get().text();
+    declared_wires.insert(net_name);
+  }
+  const auto is_undeclared_connected_and_not_wire = [&](const Port &port) {
+    return port.declaration == Port::Undeclared && port.connection &&
+           !declared_wires.contains(port.name);
+  };
+
+  for (const Port &port : ports_) {
+    if (port.direction == Port::Inout &&
+        is_undeclared_connected_and_not_wire(port)) {
+      output << indent << "wire " << port.name << ";  // To/From "
+             << port.connection->instance << " of " << port.connection->type
+             << "\n";
+    }
+  }
+  for (const Port &port : ports_) {
+    if (port.direction == Port::Output &&
+        is_undeclared_connected_and_not_wire(port)) {
+      output << indent << "wire " << port.name << ";  // From "
+             << port.connection->instance << " of " << port.connection->type
+             << "\n";
+    }
+  }
+}
+
+void AutoExpander::Module::EmitUnconnectedOutputRegDeclarations(
+    std::ostream &output, const absl::string_view indent) const {
+  absl::flat_hash_set<absl::string_view> declared_regs;
+  for (const auto &reg : FindAllRegisterVariables(symbol)) {
+    const SyntaxTreeLeaf *const reg_name_leaf =
+        GetNameLeafOfRegisterVariable(*reg.match);
+    const absl::string_view reg_name = reg_name_leaf->get().text();
+    declared_regs.insert(reg_name);
+  }
+  const auto is_declared_unconnected_and_not_reg = [&](const Port &port) {
+    return port.declaration == Port::Declared && !port.connection &&
+           !declared_regs.contains(port.name);
+  };
+
+  for (const Port &port : ports_) {
+    if (port.direction == Port::Output &&
+        is_declared_unconnected_and_not_reg(port)) {
+      output << indent << "reg " << port.name << ";\n";
+    }
+  }
 }
 
 void AutoExpander::Module::GenerateConnections(
@@ -832,6 +906,23 @@ std::optional<TextEdit> AutoExpander::ExpandAutooutput(Module &module) const {
   return result;
 }
 
+std::optional<TextEdit> AutoExpander::ExpandAutowire(Module &module) const {
+  return ExpandAutoDeclarations(
+      module, autowire_re_,
+      "wires (for undeclared instantiated-module outputs)",
+      [this](const Module &module, std::ostream &output) {
+        module.EmitUndeclaredOutputWireDeclarations(output, indent_);
+      });
+}
+
+std::optional<TextEdit> AutoExpander::ExpandAutoreg(Module &module) const {
+  return ExpandAutoDeclarations(
+      module, autoreg_re_, "regs (for this module's undeclared outputs)",
+      [this](const Module &module, std::ostream &output) {
+        module.EmitUnconnectedOutputRegDeclarations(output, indent_);
+      });
+}
+
 std::vector<TextEdit> AutoExpander::Expand() {
   std::vector<TextEdit> edits;
   if (!text_structure_.SyntaxTree()) {
@@ -882,6 +973,13 @@ std::vector<TextEdit> AutoExpander::Expand() {
       edits.push_back(*edit);
     }
     if (const auto edit = ExpandAutooutput(*module)) {
+      edits.push_back(*edit);
+    }
+    // AUTO wire/reg declarations
+    if (const auto edit = ExpandAutowire(*module)) {
+      edits.push_back(*edit);
+    }
+    if (const auto edit = ExpandAutoreg(*module)) {
       edits.push_back(*edit);
     }
     module->SortPortsByOffset();  // Ports need to be sorted by offset to ensure

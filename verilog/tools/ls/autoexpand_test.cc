@@ -1119,6 +1119,287 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTOWIRE_ExpandEmpty) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire io;  // To/From b of bar
+  wire o1;  // From b of bar
+  wire o2;  // From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOREG_ExpandEmpty) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  output o1;
+  output o2;
+  output o3;
+
+  /*AUTOREG*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  output o1;
+  output o2;
+  output o3;
+
+  /*AUTOREG*/
+  // Beginning of automatic regs (for this module's undeclared outputs)
+  reg o3;
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandVars) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+  /*AUTOREG*/
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+  /*AUTOREG*/
+  // Beginning of automatic regs (for this module's undeclared outputs)
+  reg o1;
+  reg o2;
+  // End of automatics
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire io;  // To/From b of bar
+  wire o1;  // From b of bar
+  wire o2;  // From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  output oo;
+
+  /*AUTOREG*/
+
+  /*AUTOWIRE*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+endmodule
+
+module foo;
+  output oo;
+
+  /*AUTOREG*/
+  // Beginning of automatic regs (for this module's undeclared outputs)
+  reg oo;
+  // End of automatics
+
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire io;  // To/From b of bar
+  wire o1;  // From b of bar
+  wire o2;  // From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandPortsWithAUTOVars) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module qux(input ii, output oo);
+endmodule
+ 
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+
+  /*AUTOWIRE*/
+
+  /*AUTOREG*/
+
+  qux q(/*AUTOINST*/);
+endmodule
+
+module foo(/*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module qux(input ii, output oo);
+endmodule
+ 
+module bar(input i1, output o1);
+  input i2;
+  inout io;
+  output o2;
+
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire oo;  // From q of qux
+  // End of automatics
+
+  /*AUTOREG*/
+  // Beginning of automatic regs (for this module's undeclared outputs)
+  reg o1;
+  reg o2;
+  // End of automatics
+
+  qux q(/*AUTOINST*/
+    // Inputs
+    .ii(ii),
+    // Outputs
+    .oo(oo));
+endmodule
+
+module foo(/*AUTOARG*/
+  // Inputs
+  i1, i2,
+  // Inouts
+  io,
+  // Outputs
+  o1, o2
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output o1;  // From b of bar
+  output o2;  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout io;  // To/From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2),
+    // Inouts
+    .io(io),
+    // Outputs
+    .o1(o1),
+    .o2(o2));
+endmodule
+)");
+}
+
 TEST(Autoexpand, CodeActionExpandAll) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
@@ -1134,6 +1415,8 @@ module bar(/*AUTOARG*/);
   input rst;
   output o1;
   output o2;
+
+  /*AUTOREG*/
 endmodule
 )",
                 R"(
@@ -1173,6 +1456,12 @@ module bar(/*AUTOARG*/
   input rst;
   output o1;
   output o2;
+
+  /*AUTOREG*/
+  // Beginning of automatic regs (for this module's undeclared outputs)
+  reg o1;
+  reg o2;
+  // End of automatics
 endmodule
 )");
 }
@@ -1203,6 +1492,8 @@ module bar(/*AUTOARG*/);
   input rst;
   output o1;
   output o2;
+
+  /*AUTOREG*/
 endmodule
 )",
       R"(
@@ -1242,6 +1533,8 @@ module bar(/*AUTOARG*/);
   input rst;
   output o1;
   output o2;
+
+  /*AUTOREG*/
 endmodule
 )",
       false  // Do not repeat: the range is incorrect after the first expansion
