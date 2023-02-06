@@ -116,7 +116,7 @@ class VerilogSourceFile {
  protected:
   // Tracking state for linear progression of analysis, which allows
   // prerequisite actions to be cached.
-  enum class State {
+  enum class ProcessingState {
     // Only the paths have been established.
     kInitialized,
 
@@ -142,8 +142,8 @@ class VerilogSourceFile {
   // github.com/chipsalliance/verible).
   const absl::string_view corpus_;
 
-  // State of this file.
-  State state_ = State::kInitialized;
+  // Linear progression of analysis.
+  ProcessingState processing_state_ = ProcessingState::kInitialized;
 
   // Holds any diagostics for problems encountered finding/reading this file.
   absl::Status status_;

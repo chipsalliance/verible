@@ -46,7 +46,7 @@ VerilogSourceFile::VerilogSourceFile(absl::string_view referenced_path,
 
 absl::Status VerilogSourceFile::Open() {
   // Don't re-open.  analyzed_structure_ should be set/written once only.
-  if (state_ != State::kInitialized) return status_;
+  if (processing_state_ != ProcessingState::kInitialized) return status_;
 
   // Load file contents.
   auto content_status = verible::file::GetContentAsMemBlock(ResolvedPath());
@@ -54,7 +54,7 @@ absl::Status VerilogSourceFile::Open() {
   if (!status_.ok()) return status_;
 
   content_ = std::move(*content_status);
-  state_ = State::kOpened;
+  processing_state_ = ProcessingState::kOpened;
 
   return status_;  // status_ is Ok here.
 }
@@ -65,7 +65,7 @@ absl::string_view VerilogSourceFile::GetContent() const {
 
 absl::Status VerilogSourceFile::Parse() {
   // Parsed state is cached.
-  if (state_ == State::kParsed) return status_;
+  if (processing_state_ == ProcessingState::kParsed) return status_;
 
   // Open file and load contents if not already done.
   status_ = Open();
@@ -79,7 +79,7 @@ absl::Status VerilogSourceFile::Parse() {
   status_ = analyzed_structure_->Analyze();
   LOG(INFO) << "Analyzed " << ResolvedPath() << " in "
             << (absl::Now() - analyze_start);
-  state_ = State::kParsed;
+  processing_state_ = ProcessingState::kParsed;
   return status_;
 }
 
@@ -111,19 +111,19 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 absl::Status InMemoryVerilogSourceFile::Open() {
-  state_ = State::kOpened;
+  processing_state_ = ProcessingState::kOpened;
   status_ = absl::OkStatus();
   return status_;
 }
 
 absl::Status ParsedVerilogSourceFile::Open() {
-  state_ = State::kOpened;
+  processing_state_ = ProcessingState::kOpened;
   status_ = absl::OkStatus();
   return status_;
 }
 
 absl::Status ParsedVerilogSourceFile::Parse() {
-  state_ = State::kParsed;
+  processing_state_ = ProcessingState::kParsed;
   status_ = absl::OkStatus();
   return status_;
 }
