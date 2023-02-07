@@ -77,7 +77,12 @@ absl::Status VerilogSourceFile::Parse() {
 
   const absl::Time start = absl::Now();
   status_ = analyzed_structure_->Analyze();
-  VLOG(1) << "Analyzed " << ResolvedPath() << " in " << (absl::Now() - start);
+  const absl::Duration analyze_time = absl::Now() - start;
+  if (analyze_time > absl::Milliseconds(500)) {
+    LOG(WARNING) << "Slow Parse " << ResolvedPath() << " took " << analyze_time;
+  } else {
+    VLOG(1) << "Parse " << ResolvedPath() << " in " << analyze_time;
+  }
 
   processing_state_ = ProcessingState::kParsed;
   return status_;
