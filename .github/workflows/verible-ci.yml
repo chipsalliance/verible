@@ -22,7 +22,7 @@ jobs:
 
 
   VerifyFormatting:
-    container: debian:bullseye
+    container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
 
     steps:
@@ -54,7 +54,7 @@ jobs:
         path: "**/plot_*.svg"
 
   ClangTidy:
-    container: debian:bullseye
+    container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
 
     env:
@@ -107,7 +107,7 @@ jobs:
 
 
   Check:
-    container: debian:bullseye
+    container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
     strategy:
       fail-fast: false
@@ -116,6 +116,7 @@ jobs:
         - test
         - test-nortti
         - test-c++20
+        - test-c++23
         - smoke-test
         - smoke-test-analyzer
         - asan
@@ -161,7 +162,8 @@ jobs:
         apt -qqy update
         apt -qq -y install clang-11 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk cmake python3-pip
         source ./.github/settings.sh
-        ./.github/bin/set-compiler.sh 10
+        # Use newer compiler for c++23 compilation
+        ./.github/bin/set-compiler.sh $([ "$MODE" == "test-c++23" ] && echo 11 || echo 10)
         ./.github/bin/install-bazel.sh
     - name: Build Slang
       if: matrix.mode == 'smoke-test-analyzer'
@@ -281,7 +283,7 @@ jobs:
 
   Build:
     needs: Matrix
-    container: debian:bullseye
+    container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
@@ -361,7 +363,7 @@ jobs:
       run: bazel test --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 
   PrepareVSPlugin:
-    container: debian:bullseye
+    container: ubuntu:jammy
     runs-on: [self-hosted, Linux, X64]
     steps:
 
