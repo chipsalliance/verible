@@ -195,7 +195,7 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   return nullptr;
 }
 
-std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
+std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const absl::Time finddefinition_start = absl::Now();
@@ -287,6 +287,17 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinition(
   LOG(INFO) << "textDocument/definition processing time:  "
             << (absl::Now() - finddefinition_start);
   return {location};
+}
+
+const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
+    absl::string_view symbol) {
+  if (files_dirty_) {
+    BuildProjectSymbolTable();
+  }
+  auto symbol_table_node =
+      ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
+  if (symbol_table_node) return symbol_table_node->Value().syntax_origin;
+  return nullptr;
 }
 
 void SymbolTableHandler::UpdateFileContent(

@@ -18,13 +18,19 @@ cc_library(
     hdrs = ["autoexpand.h"],
     deps = [
         ":lsp-parse-buffer",
+        ":symbol-table-handler",
         "//common/lsp:lsp-protocol",
         "//common/text:text_structure",
+        "//verilog/CST:declaration",
+        "//verilog/CST:expression",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
         "//verilog/CST:port",
+        "//verilog/CST:type",
         "//verilog/formatting:format_style_init",
         "//verilog/formatting:formatter",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 
@@ -49,6 +55,7 @@ cc_library(
         ":autoexpand",
         ":document-symbol-filler",
         ":lsp-parse-buffer",
+        ":symbol-table-handler",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
         "//common/lsp:lsp-protocol-operators",
