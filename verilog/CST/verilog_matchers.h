@@ -342,8 +342,8 @@ inline constexpr auto HasGenerateBlock =
 //
 //   ... = zz::bar(...);
 //
-inline constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
-    N(kExpression), N(kReferenceCallBase), N(kFunctionCall));
+static const auto RValueIsFunctionCall =
+    verible::matcher::MakePathMatcher({N(kExpression), N(kFunctionCall)});
 
 // Matches a function call if it is qualified.
 // For instance, matches:
@@ -354,8 +354,8 @@ inline constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
 //
 //   bar(...);
 //
-inline constexpr auto FunctionCallIsQualified =
-    verible::matcher::MakePathMatcher(N(kLocalRoot), N(kQualifiedId));
+static const auto FunctionCallIsQualified = verible::matcher::MakePathMatcher(
+    N(kReference), N(kLocalRoot), N(kQualifiedId));
 
 // Matches the arguments of a function call.
 // For instance, matches "a", "b", "c" (including commas) of:

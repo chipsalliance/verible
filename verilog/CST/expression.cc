@@ -164,14 +164,14 @@ static const verible::TokenInfo* ReferenceBaseIsSimple(
 const verible::TokenInfo* ReferenceIsSimpleIdentifier(
     const verible::Symbol& reference) {
   const auto& reference_node(
-      verible::CheckSymbolAsNode(reference, NodeEnum::kReferenceCallBase));
+      verible::CheckSymbolAsNode(reference, NodeEnum::kReference));
   // A simple reference contains one component without hierarchy, indexing, or
   // calls; it looks like just an identifier.
   if (reference_node.children().size() > 1) return nullptr;
   const auto& base_symbol = reference_node.children().front();
   if (!base_symbol) return nullptr;
   const auto& base_node = verible::SymbolCastToNode(*base_symbol);
-  if (!base_node.MatchesTag(NodeEnum::kReference)) return nullptr;
+  if (!base_node.MatchesTag(NodeEnum::kLocalRoot)) return nullptr;
   return ReferenceBaseIsSimple(base_node);
 }
 
