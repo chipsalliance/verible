@@ -27,10 +27,10 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:port",
         "//verilog/CST:type",
+        "//verilog/analysis:symbol_table",
         "//verilog/formatting:format_style_init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 

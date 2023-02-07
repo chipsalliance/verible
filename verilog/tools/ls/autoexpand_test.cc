@@ -398,7 +398,7 @@ module bar(input i1, output o1);
 endmodule
 
 module bar(input i2, output o2);
-endmodule 
+endmodule
 
 module foo;
   bar b(/*AUTOINST*/);
@@ -409,7 +409,7 @@ module bar(input i1, output o1);
 endmodule
 
 module bar(input i2, output o2);
-endmodule 
+endmodule
 
 module foo;
   bar b(/*AUTOINST*/
@@ -490,20 +490,20 @@ module bar(input i1, output o1);
   output o2;
 endmodule
     )",
-                 R"( 
+                 R"(
 module qux;
   input i1;
   inout io;
   output o2;
 endmodule
    )"},
-                R"( 
+                R"(
 module foo;
   bar b(/*AUTOINST*/);
   qux q(/*AUTOINST*/);
 endmodule
 )",
-                R"( 
+                R"(
 module foo;
   bar b(/*AUTOINST*/
     // Inputs
