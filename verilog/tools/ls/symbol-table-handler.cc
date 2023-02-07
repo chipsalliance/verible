@@ -29,6 +29,20 @@ namespace verilog {
 
 static constexpr absl::string_view kFileSchemePrefix = "file://";
 
+// If vlog, output all non-ok messages, otherwise just the first few.
+static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
+  int report_count = 0;
+  for (const auto &s : statuses) {
+    if (s.ok()) continue;
+    LOG(INFO) << s;
+    if (++report_count > 5 && !VLOG_IS_ON(1)) {
+      LOG(WARNING) << "skipped remaining messages; switch VLOG(1) on for "
+                   << statuses.size() << " statuses";
+      break;  // only more noisy on request.
+    }
+  }
+}
+
 absl::string_view LSPUriToPath(absl::string_view uri) {
   if (!absl::StartsWith(uri, kFileSchemePrefix)) return "";
   return uri.substr(kFileSchemePrefix.size());
@@ -65,9 +79,22 @@ void SymbolTableHandler::ResetSymbolTable() {
   symbol_table_ = std::make_unique<SymbolTable>(curr_project_.get());
 }
 
-std::vector<absl::Status> SymbolTableHandler::BuildSymbolTableFor(
-    const VerilogSourceFile &file) {
-  return BuildSymbolTable(file, symbol_table_.get(), curr_project_.get());
+void SymbolTableHandler::ParseProjectFiles() {
+  if (!curr_project_) return;
+
+  // Parse all files separate from SymbolTable::Build() to report parse duration
+  LOG(INFO) << "Parsing project files...";
+  const absl::Time start = absl::Now();
+  std::vector<absl::Status> results;
+  for (auto &unit : *curr_project_) {
+    VerilogSourceFile *const verilog_file = unit.second.get();
+    if (verilog_file->is_parsed()) continue;
+    results.emplace_back(verilog_file->Parse());
+  }
+  LogFullIfVLog(results);
+
+  LOG(INFO) << "VerilogSourceFile::Parse() for " << results.size()
+            << " files: " << (absl::Now() - start);
 }
 
 std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
@@ -75,19 +102,23 @@ std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
     return {absl::UnavailableError("VerilogProject is not set")};
   }
   ResetSymbolTable();
-  LOG(INFO) << "Parsing project files...";
+  ParseProjectFiles();
   std::vector<absl::Status> buildstatus;
-  symbol_table_->Build(&buildstatus);
-  for (const auto &diagnostic : buildstatus) {
-    LOG(WARNING) << diagnostic.message();
+
+  {
+    const absl::Time start = absl::Now();
+    symbol_table_->Build(&buildstatus);
+    LOG(INFO) << "SymbolTable::Build() took " << (absl::Now() - start);
   }
-  std::vector<absl::Status> resolvestatus;
-  symbol_table_->Resolve(&resolvestatus);
-  for (const auto &diagnostic : resolvestatus) {
-    LOG(WARNING) << diagnostic.message();
+
+  {
+    const absl::Time start = absl::Now();
+    symbol_table_->Resolve(&buildstatus);
+    LOG(INFO) << "SymbolTable::Resolve() took " << (absl::Now() - start);
   }
-  buildstatus.insert(buildstatus.end(), resolvestatus.begin(),
-                     resolvestatus.end());
+
+  LogFullIfVLog(buildstatus);
+
   files_dirty_ = false;
   return buildstatus;
 }
@@ -135,7 +166,9 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     LOG(INFO) << "Adding include path:  " << incdir;
     curr_project_->AddIncludePath(incdir);
   }
-  // add files from file list to the project
+  // Add files from file list to the project
+  int file_count = 0;
+  const absl::Time start = absl::Now();
   for (const auto &file_in_project : filelist.file_paths) {
     const std::string canonicalized =
         std::filesystem::path(file_in_project).lexically_normal().string();
@@ -147,9 +180,11 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
                    << source.status();
       continue;
     }
-    LOG(INFO) << "Creating symbol table for:  " << canonicalized;
-    BuildSymbolTableFor(*source.value());
+    ++file_count;
   }
+
+  LOG(INFO) << "Opening " << file_count
+            << " files in file-list: " << (absl::Now() - start);
   return true;
 }
 
@@ -201,16 +236,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   const absl::Time finddefinition_start = absl::Now();
   LoadProjectFileList(curr_project_->TranslationUnitRoot());
   if (files_dirty_) {
-    std::vector<absl::Status> diagnostics = BuildProjectSymbolTable();
-    bool success = true;
-    for (const auto &diagnostic : diagnostics) {
-      if (!diagnostic.ok())
-        LOG(WARNING) << "Error on textDocument/definition:  " << diagnostic;
-      success &= diagnostic.ok();
-    }
-    if (!success) {
-      LOG(WARNING) << "There were errors during symbol table building";
-    }
+    BuildProjectSymbolTable();
   }
   absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {

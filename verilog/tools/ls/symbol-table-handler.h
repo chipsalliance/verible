@@ -49,7 +49,7 @@ std::string FindFileList(absl::string_view current_dir);
 // The provided information is in LSP-friendly format.
 class SymbolTableHandler {
  public:
-  SymbolTableHandler(){};
+  SymbolTableHandler() = default;
 
   // Sets the project for the symbol table.
   // VerilogProject requires root, include_paths and corpus to
@@ -57,21 +57,8 @@ class SymbolTableHandler {
   // Once the project's root is set, a new SymbolTable is created.
   void SetProject(const std::shared_ptr<VerilogProject> &project);
 
-  // Returns the current project.
-  std::shared_ptr<VerilogProject> mutable_project() { return curr_project_; }
-
-  // Creates a new symbol table given the VerilogProject in setProject
-  // method.
-  void ResetSymbolTable();
-
-  // Fills the symbol table for a given verilog source file.
-  std::vector<absl::Status> BuildSymbolTableFor(const VerilogSourceFile &file);
-
-  // Creates a symbol table for entire project
-  std::vector<absl::Status> BuildProjectSymbolTable();
-
-  // Finds the location of the definition for a symbol provided in the
-  // DefinitionParams message delivered i.e. in textDocument/definition message.
+  // Finds the definition for a symbol provided in the DefinitionParams
+  // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
   std::vector<verible::lsp::Location> FindDefinitionLocation(
       const verible::lsp::DefinitionParams &params,
@@ -80,10 +67,19 @@ class SymbolTableHandler {
   // Finds the symbol of the definition for the given identifier.
   const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
 
+  // Provide new parsed content for the given path. If "content" is nullptr,
+  // opens the given file instead.
   void UpdateFileContent(absl::string_view path,
                          const verible::TextStructureView *content);
 
+  // Creates a symbol table for entire project (public: needed in unit-test)
+  std::vector<absl::Status> BuildProjectSymbolTable();
+
  private:
+  // Creates a new symbol table given the VerilogProject in setProject
+  // method.
+  void ResetSymbolTable();
+
   // Scans the symbol table tree to find a given symbol.
   // returns pointer to table node with the symbol on success, else nullptr.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
@@ -93,6 +89,9 @@ class SymbolTableHandler {
   // to project.
   // It is meant to be executed once per VerilogProject setup
   bool LoadProjectFileList(absl::string_view current_dir);
+
+  // Parse all the files in the project.
+  void ParseProjectFiles();
 
   // Path to the filelist file for the project
   std::string filelist_path_;

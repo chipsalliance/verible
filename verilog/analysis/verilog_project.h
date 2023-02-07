@@ -68,6 +68,12 @@ class VerilogSourceFile {
   // Depending on context, not all files are suitable for standalone parsing.
   virtual absl::Status Parse();
 
+  // Return if Parse() has been called and content has been parsed.
+  // (see Status() if it was actually successful).
+  bool is_parsed() const {
+    return processing_state_ >= ProcessingState::kParsed;
+  }
+
   // After Parse(), text structure may contain other analyzed structural forms.
   // Before successful Parse(), this is not initialized and returns nullptr.
   virtual const verible::TextStructureView* GetTextStructure() const;
