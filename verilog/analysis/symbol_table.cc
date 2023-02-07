@@ -187,7 +187,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
  private:  // methods
   void Visit(const SyntaxTreeNode& node) final {
     const auto tag = static_cast<NodeEnum>(node.Tag().tag);
-    VLOG(1) << __FUNCTION__ << " [node]: " << tag;
+    VLOG(2) << __FUNCTION__ << " [node]: " << tag;
     switch (tag) {
       case NodeEnum::kModuleDeclaration:
         DeclareModule(node);
@@ -293,7 +293,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
         Descend(node);
         break;
     }
-    VLOG(1) << "end of " << __FUNCTION__ << " [node]: " << tag;
+    VLOG(2) << "end of " << __FUNCTION__ << " [node]: " << tag;
   }
 
   // This overload enters 'scope' for the duration of the call.
@@ -395,7 +395,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   //   E -+- ::F
   //
   void DescendDataType(const SyntaxTreeNode& data_type_node) {
-    VLOG(1) << __FUNCTION__ << ": " << StringSpanOfSymbol(data_type_node);
+    VLOG(2) << __FUNCTION__ << ": " << StringSpanOfSymbol(data_type_node);
     const CaptureDependentReference capture(this);
 
     {
@@ -424,12 +424,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
         declaration_type_info_->user_defined_type =
             type_ref.LastTypeComponent();
       }
-      VLOG(2) << "declared type: " << *declaration_type_info_;
+      VLOG(3) << "declared type: " << *declaration_type_info_;
     }
 
     // In all cases, a type is being referenced from the current scope, so add
     // it to the list of references to resolve (done by 'capture').
-    VLOG(1) << "end of " << __FUNCTION__;
+    VLOG(2) << "end of " << __FUNCTION__;
   }
 
   void DescendActualParameterList(const SyntaxTreeNode& node) {
@@ -757,7 +757,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   void Visit(const SyntaxTreeLeaf& leaf) final {
     const auto tag = leaf.Tag().tag;
-    VLOG(1) << __FUNCTION__ << " [leaf]: " << VerboseToken(leaf.get());
+    VLOG(2) << __FUNCTION__ << " [leaf]: " << VerboseToken(leaf.get());
     switch (tag) {
       case verilog_tokentype::TK_new:  // constructor name
       case verilog_tokentype::SymbolIdentifier:
@@ -774,7 +774,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
         // Using that would result in some mis-classifications.
         break;
     }
-    VLOG(1) << "end " << __FUNCTION__ << " [leaf]:" << VerboseToken(leaf.get());
+    VLOG(2) << "end " << __FUNCTION__ << " [leaf]:" << VerboseToken(leaf.get());
   }
 
   // Distinguish between '.' and "::" hierarchy in reference components.
@@ -923,9 +923,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode& EmplaceTypedElementInCurrentScope(
       const verible::Symbol& element, absl::string_view name,
       SymbolMetaType metatype) {
-    VLOG(1) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
-    VLOG(1) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
-    VLOG(1) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
+    VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
+    VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
+    VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
         name, SymbolInfo{
                   metatype, source_, &element,
@@ -935,7 +935,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->second);
     }
-    VLOG(1) << "end of " << __FUNCTION__ << ": " << name;
+    VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
   }
 
@@ -1130,14 +1130,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   // Declares one or more variables/instances/nets.
   void DeclareData(const SyntaxTreeNode& data_decl_node) {
-    VLOG(1) << __FUNCTION__;
+    VLOG(2) << __FUNCTION__;
     DeclarationTypeInfo decl_type_info;
     // Set declaration_type_info_ to capture any user-defined type used to
     // declare data/variables/instances.
     const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
                                                      &decl_type_info);
     Descend(data_decl_node);
-    VLOG(1) << "end of " << __FUNCTION__;
+    VLOG(2) << "end of " << __FUNCTION__;
   }
 
   // Declare one (of potentially multiple) instances in a single declaration
@@ -1330,7 +1330,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     // Remove the double quotes from the filename.
     const absl::string_view filename_unquoted = StripOuterQuotes(filename_text);
-    VLOG(1) << "got: `include \"" << filename_unquoted << "\"";
+    VLOG(3) << "got: `include \"" << filename_unquoted << "\"";
 
     // Opening included file requires a VerilogProject.
     // Open this file (could be first time, or previously opened).
@@ -1346,7 +1346,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
     VerilogSourceFile* const included_file = *status_or_file;
     if (included_file == nullptr) return;
-    VLOG(1) << "opened include file: " << included_file->ResolvedPath();
+    VLOG(3) << "opened include file: " << included_file->ResolvedPath();
 
     const auto parse_status = included_file->Parse();
     if (!parse_status.ok()) {
@@ -1812,7 +1812,7 @@ ReferenceComponentMap ReferenceComponentNodeMapView(
 void DependentReferences::Resolve(
     const SymbolTableNode& context,
     std::vector<absl::Status>* diagnostics) const {
-  VLOG(1) << __FUNCTION__;
+  VLOG(2) << __FUNCTION__;
   if (components == nullptr) return;
   // References are arranged in dependency trees.
   // Parent node references must be resolved before children nodes,
@@ -1823,7 +1823,7 @@ void DependentReferences::Resolve(
                   // TODO: minor optimization, when resolution for a node fails,
                   // skip checking that node's subtree; early terminate.
                 });
-  VLOG(1) << "end of " << __FUNCTION__;
+  VLOG(2) << "end of " << __FUNCTION__;
 }
 
 void DependentReferences::ResolveLocally(const SymbolTableNode& context) const {
@@ -2073,7 +2073,7 @@ void SymbolTable::BuildSingleTranslationUnit(
 std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
                                            SymbolTable* symbol_table,
                                            VerilogProject* project) {
-  VLOG(1) << __FUNCTION__;
+  VLOG(2) << __FUNCTION__ << " " << source.ResolvedPath();
   const auto* text_structure = source.GetTextStructure();
   if (text_structure == nullptr) return std::vector<absl::Status>();
   const auto& syntax_tree = text_structure->SyntaxTree();
