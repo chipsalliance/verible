@@ -120,7 +120,6 @@ jobs:
         - smoke-test
         - smoke-test-analyzer
         - asan
-        - asan-clang
         - compile
         - compile-clang
         - coverage
@@ -160,11 +159,15 @@ jobs:
       run: |
         set -x
         apt -qqy update
-        apt -qq -y install clang-11 build-essential wget git python3 python-is-python3 gcc-10 g++-10 default-jdk cmake python3-pip
+        apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip
+        apt -qq -y install gcc-10 g++-10
+        apt -qq -y install gcc-11 g++-11
+        apt -qq -y install clang-11  # clang always a particular version.
         source ./.github/settings.sh
         # Use newer compiler for c++23 compilation
         ./.github/bin/set-compiler.sh $([ "$MODE" == "test-c++23" ] && echo 11 || echo 10)
         ./.github/bin/install-bazel.sh
+
     - name: Build Slang
       if: matrix.mode == 'smoke-test-analyzer'
       run: |

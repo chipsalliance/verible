@@ -1848,7 +1848,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "  logic aaa = expr1;\n"
      "  bit   b = expr2;\n"  // no alignment at '=' yet
      "endmodule\n"},
-    {"module mattr;\n"
+    {"(* foo='{\"bar_.*\"} *)\n"  // funny attribute
+     "module mattr;\n"
      "(* attr1=\"value1\" *)\n"  // attribute ignored
      "ex_input_pins_t ex_input_pins;\n"
      "(* attr2=\"value2\" *)\n"  // attribute ignored
@@ -1856,6 +1857,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "(* attr3=\"value3\" *)\n"  // attribute ignored
      "ex wrap_ex ( );\n"
      "endmodule\n",
+     "(* foo='{\"bar_.*\"} *)\n"
      "module mattr;\n"
      "  (* attr1=\"value1\" *)\n"           // indented
      "  ex_input_pins_t  ex_input_pins;\n"  // aligned
