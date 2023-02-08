@@ -45,4 +45,12 @@ EOF
 "${difftool}" --mode=format "${MY_INPUT_FILE2}" "${MY_INPUT_FILE1}"
 [[ $? -eq 0 ]] || exit 2
 
+# Verify that passing a wrong mode will complain
+"${difftool}" --mode=invalid_mode "${MY_INPUT_FILE2}" "${MY_INPUT_FILE1}"
+[[ $? -eq 1 ]] || exit 3
+
+# test default --mode
+grep "default:.*format" <("${difftool}" --helpfull) > /dev/null
+[[ $? -eq 0 ]] || exit 4
+
 echo "PASS"
