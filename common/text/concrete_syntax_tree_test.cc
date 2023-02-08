@@ -247,7 +247,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenNone) {
 
 // Test forwarding empty set of children to new node.
 TEST(SyntaxTreeNodeAppend, AdoptLeaf) {
-  auto leaf = std::unique_ptr<Symbol>(new SyntaxTreeLeaf(0, "abc"));
+  SymbolPtr leaf(new SyntaxTreeLeaf(0, "abc"));
   auto parent = MakeNode(ForwardChildren(leaf));
   EXPECT_THAT(leaf, IsNull());
   EXPECT_THAT(CheckTree(parent)->children(), SizeIs(1));
