@@ -114,6 +114,11 @@ case "$MODE" in
     bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 ${CHOSEN_TARGETS}
     ;;
 
+  test-c++23)
+    # Same; c++23
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++23 ${CHOSEN_TARGETS}
+    ;;
+
   smoke-test)
     $(dirname $0)/smoke-test.sh
     ;;
