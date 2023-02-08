@@ -189,9 +189,9 @@ class SyntaxTreeNode final : public Symbol {
 // Sample usage: $$ = MakeNode(TAG, $1, $2, $3);
 template <typename... Args>
 SymbolPtr MakeNode(Args&&... args) {
-  std::unique_ptr<SyntaxTreeNode> node_pointer(new SyntaxTreeNode);
+  SyntaxTreeNode* node_pointer = new SyntaxTreeNode();
   node_pointer->Append(std::forward<Args>(args)...);
-  return std::move(node_pointer);
+  return SymbolPtr(node_pointer);
 }
 
 // Construct a syntax tree node with a tag.
@@ -201,10 +201,9 @@ SymbolPtr MakeNode(Args&&... args) {
 //   $$ = MakeTaggedNode(TAG, $1, $2, $3);
 template <typename Enum, typename... Args>
 SymbolPtr MakeTaggedNode(const Enum tag, Args&&... args) {
-  std::unique_ptr<SyntaxTreeNode> node_pointer(
-      new SyntaxTreeNode(static_cast<int>(tag)));
+  SyntaxTreeNode* node_pointer = new SyntaxTreeNode(static_cast<int>(tag));
   node_pointer->Append(std::forward<Args>(args)...);
-  return std::move(node_pointer);
+  return SymbolPtr(node_pointer);
 }
 
 // Extend the children of an existing node.
