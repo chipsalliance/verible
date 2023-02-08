@@ -132,6 +132,7 @@ error_dirs = glob.glob(root+'/*-nonzeros')
 project_urls = sorted([
             "https://github.com/lowRISC/ibex",
             "https://github.com/lowRISC/opentitan",
+            "https://github.com/chipsalliance/sv-tests",
             "https://github.com/chipsalliance/Cores-VeeR-EH2",
             "https://github.com/openhwgroup/cva6",
             "https://github.com/SymbiFlow/uvm",
