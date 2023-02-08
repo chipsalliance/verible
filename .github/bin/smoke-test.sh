@@ -82,6 +82,7 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
 # array below, mapping them to Verible issue tracker numbers.
 readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/lowRISC/opentitan \
+         https://github.com/chipsalliance/sv-tests \
          https://github.com/chipsalliance/Cores-VeeR-EH2 \
          https://github.com/openhwgroup/cva6 \
          https://github.com/SymbiFlow/uvm \
@@ -131,6 +132,10 @@ ExpectedFailCount[syntax:opentitan]=35
 ExpectedFailCount[lint:opentitan]=35
 ExpectedFailCount[project:opentitan]=729
 
+ExpectedFailCount[syntax:sv-tests]=77
+ExpectedFailCount[lint:sv-tests]=76
+ExpectedFailCount[project:sv-tests]=187
+
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
 ExpectedFailCount[project:Cores-VeeR-EH2]=42
@@ -175,9 +180,9 @@ ExpectedFailCount[project:scr1]=45
 
 ExpectedFailCount[project:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=464
-ExpectedFailCount[lint:basejump_stl]=464
-ExpectedFailCount[project:basejump_stl]=571
+ExpectedFailCount[syntax:basejump_stl]=466
+ExpectedFailCount[lint:basejump_stl]=466
+ExpectedFailCount[project:basejump_stl]=575
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
