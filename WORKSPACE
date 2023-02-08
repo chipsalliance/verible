@@ -131,10 +131,10 @@ bison_register_toolchains()
 # A version newer than 21.21 as it fixes a warning on c++20
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "3d6303e06c1155e6e7f8f19670fc0c96672b297396aac75b900ab324899a1624",
-    strip_prefix = "protobuf-8fb98cfb757ff8c7a6af9d874e12b0bb7f9dc0fb",
+    sha256 = "b0cdeb606b7abb3afc35c1a937c0994721c8b7b8102c5ae481570d8f9cf54a87",
+    strip_prefix = "protobuf-f58d0b56e37aa6a85848618018d7a17b86746bc0",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/archive/8fb98cfb757ff8c7a6af9d874e12b0bb7f9dc0fb.zip",
+        "https://github.com/protocolbuffers/protobuf/archive/f58d0b56e37aa6a85848618018d7a17b86746bc0.zip",
     ],
 )
 
