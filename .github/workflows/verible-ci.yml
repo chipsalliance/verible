@@ -152,8 +152,8 @@ jobs:
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/root/.cache/bazel"
-        key: bazelcache_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_${{ matrix.mode }}_
+        key: bazelcache2_${{ matrix.mode }}_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache2_${{ matrix.mode }}_
 
     - name: Install Dependencies
       run: |
