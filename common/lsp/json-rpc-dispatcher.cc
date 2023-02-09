@@ -55,7 +55,7 @@ bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
                                          const std::string &method) {
   const auto &found = notifications_.find(method);
   if (found == notifications_.end()) {
-    LOG(ERROR) << "Unhandled notification '" << method << "'";
+    LOG(INFO) << "Ignoring notification '" << method << "'";
     return false;
   }
   try {
