@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <filesystem>
@@ -489,7 +488,7 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
        0}};
 
   for (const auto &params : formatting_params) {
-    std::string request = FormattingRequest("file://fmt.sv", params);
+    const std::string request = FormattingRequest("file://fmt.sv", params);
     ASSERT_OK(SendRequest(request));
 
     const json response = json::parse(GetResponse());
@@ -662,7 +661,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -741,7 +741,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -773,7 +774,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -820,7 +822,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -869,7 +872,8 @@ endmodule
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -910,7 +914,8 @@ endmodule
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 15);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 15);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -939,7 +944,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(
+  const std::string definition_request = DefinitionRequest(
       absl::StrReplaceAll(module_a_uri, {{"file://", "https://"}}), 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
@@ -968,7 +973,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 10);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 1, 10);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -996,7 +1002,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 0);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 1, 0);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1024,7 +1031,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 3, 2);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 3, 2);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1048,7 +1056,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoFileList) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1080,7 +1089,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -1128,7 +1138,8 @@ endmodule
   GetResponse();
 
   // find definition for "bar" type
-  std::string definition_request = DefinitionRequest(module_foo_uri, 2, 1, 3);
+  const std::string definition_request =
+      DefinitionRequest(module_foo_uri, 2, 1, 3);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1450,21 +1461,23 @@ endmodule
   const verible::file::testing::ScopedTestFile module_instmodule(
       root_dir, instmodule, "instmodule.sv");
 
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
   const std::string foo_open_request =
-      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+      DidOpenRequest(module_instmodule_uri, instmodule);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "InstModule"
-  std::string definition_request =
-      DefinitionRequest("file://" + module_instmodule.filename(), 2, 17, 3);
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 17, 3);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, 0, 7, 0, 17, "file://" + module_instmodule.filename());
+  CheckDefinitionResponseSingleDefinition(response, 2, 0, 7, 0, 17,
+                                          module_instmodule_uri);
 }
 
 // Checks the go-to definition when pointing to the definition of the symbol
@@ -1495,21 +1508,23 @@ endmodule
   const verible::file::testing::ScopedTestFile module_instmodule(
       root_dir, instmodule, "instmodule.sv");
 
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
   const std::string foo_open_request =
-      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+      DidOpenRequest(module_instmodule_uri, instmodule);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "InstModule"
-  std::string definition_request =
-      DefinitionRequest("file://" + module_instmodule.filename(), 2, 0, 8);
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 0, 8);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, 0, 7, 0, 17, "file://" + module_instmodule.filename());
+  CheckDefinitionResponseSingleDefinition(response, 2, 0, 7, 0, 17,
+                                          module_instmodule_uri);
 }
 
 // Checks the definition request for module port
@@ -1528,19 +1543,21 @@ endmodule
   const verible::file::testing::ScopedTestFile module_instmodule(
       root_dir, instmodule, "instmodule.sv");
 
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
   const std::string foo_open_request =
-      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+      DidOpenRequest(module_instmodule_uri, instmodule);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "i"
   std::string definition_request =
-      DefinitionRequest("file://" + module_instmodule.filename(), 2, 4, 22);
+      DefinitionRequest(module_instmodule_uri, 2, 4, 22);
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, 2, 16, 2, 17, "file://" + module_instmodule.filename());
+  CheckDefinitionResponseSingleDefinition(response, 2, 2, 16, 2, 17,
+                                          module_instmodule_uri);
 }
 
 // Checks the definition request for module port
@@ -1561,20 +1578,22 @@ endmodule
   const verible::file::testing::ScopedTestFile module_instmodule(
       root_dir, instmodule, "instmodule.sv");
 
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
   const std::string foo_open_request =
-      DidOpenRequest("file://" + module_instmodule.filename(), instmodule);
+      DidOpenRequest(module_instmodule_uri, instmodule);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "bar" type
-  std::string definition_request =
-      DefinitionRequest("file://" + module_instmodule.filename(), 2, 6, 22);
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 6, 22);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, 5, 14, 5, 15, "file://" + module_instmodule.filename());
+  CheckDefinitionResponseSingleDefinition(response, 2, 5, 14, 5, 15,
+                                          module_instmodule_uri);
 }
 
 // Tests correctness of Language Server shutdown request
