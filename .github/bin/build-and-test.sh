@@ -71,8 +71,11 @@ if [[ "${CXX}" == clang* ]]; then
   # -- only recognized by clang
   # Don't rely on implicit template type deduction
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
+
+  # Also warn about string conversion issues.
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # Protobuffer issue
+
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # utf8_range dependency
 fi
 
 # If parameter given and the MODE allows choosing, we build the target
@@ -109,14 +112,22 @@ case "$MODE" in
     bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
 
-  test-c++20)
+  test-c++20|test-c++20-clang)
     # Compile with C++ 20 to make sure to be compatible with the next version.
-    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 ${CHOSEN_TARGETS}
+    if [[ ${MODE} == "test-c++20" ]]; then
+       # gcc complaint in protobuf
+       BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
+    fi
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 -- ${CHOSEN_TARGETS}
     ;;
 
-  test-c++23)
+  test-c++23|test-c++23-clang)
     # Same; c++23
-    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++23 ${CHOSEN_TARGETS}
+    if [[ ${MODE} == "test-c++23" ]]; then
+       # gcc complaint in protobuf
+       BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
+    fi
+    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++2b -- ${CHOSEN_TARGETS}
     ;;
 
   smoke-test)
