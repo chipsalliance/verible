@@ -167,7 +167,8 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     curr_project_->AddIncludePath(incdir);
   }
   // Add files from file list to the project
-  int file_count = 0;
+  LOG(INFO) << "Resolving " << filelist.file_paths.size() << " files.";
+  int actually_opened = 0;
   const absl::Time start = absl::Now();
   for (const auto &file_in_project : filelist.file_paths) {
     const std::string canonicalized =
@@ -180,11 +181,11 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
                    << source.status();
       continue;
     }
-    ++file_count;
+    ++actually_opened;
   }
 
-  LOG(INFO) << "Opening " << file_count
-            << " files in file-list: " << (absl::Now() - start);
+  LOG(INFO) << "Successfully opened " << actually_opened
+            << " files from file-list: " << (absl::Now() - start);
   return true;
 }
 
