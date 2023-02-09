@@ -162,11 +162,11 @@ jobs:
         apt -qqy update
         apt -qq -y install build-essential wget git python3 python-is-python3 default-jdk cmake python3-pip
         apt -qq -y install gcc-10 g++-10
-        apt -qq -y install gcc-11 g++-11
+        apt -qq -y install gcc-12 g++-12
         apt -qq -y install clang-12  # clang always a particular version.
         source ./.github/settings.sh
-        # Use newer compiler for c++23 compilation
-        ./.github/bin/set-compiler.sh $([ "$MODE" == "test-c++23" ] && echo 11 || echo 10)
+        # Use newer compiler for c++2x compilation
+        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* ]] && echo 12 || echo 10)
         ./.github/bin/install-bazel.sh
 
     - name: Build Slang
