@@ -6,17 +6,15 @@
 pkgs.mkShell {
   buildInputs = with pkgs;
     [
-      bash
-      gnused
       bazel_4
-      gcc
-      git
-      glibc
       jdk11
-      lcov
+      git
+
+      # For scripts used inside bzl rules and tests
+      gnused
       python3
 
-      # for experimenting with --//bazel:use_local_flex_bison
+      # For using --//bazel:use_local_flex_bison if desired
       flex
       bison
 
@@ -24,7 +22,8 @@ pkgs.mkShell {
       nodejs
 
       # Ease development
-      clang-tools_11    # clang-format
+      lcov              # coverage html generation.
+      clang-tools_11    # clang-format, clang-tidy
       bazel-buildtools  # buildifier
     ];
 }
