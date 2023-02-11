@@ -31,14 +31,8 @@ class Parser {
   // Parse a sequence of tokens.
   virtual absl::Status Parse() = 0;
 
-  // Return the tree built by the parser, if applicable.
-  virtual const ConcreteSyntaxTree& Root() const = 0;
-
   // Transfer ownership of tree root.
   virtual ConcreteSyntaxTree TakeRoot() = 0;
-
-  // Return the location of the first error token.
-  virtual const TokenInfo& GetLastToken() const = 0;
 
   // Return the collection of rejected tokens from recovered syntax errors.
   virtual const std::vector<TokenInfo>& RejectedTokens() const = 0;

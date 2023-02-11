@@ -75,8 +75,6 @@ class ParserParam {
   // This is useful to determine a reasonable default parser stack size.
   size_t MaxUsedStackSize() const { return max_used_stack_size_; }
 
-  const ConcreteSyntaxTree& Root() const { return root_; }
-
   // Relinquishes ownership of syntax tree.
   ConcreteSyntaxTree TakeRoot() { return std::move(root_); }
 
