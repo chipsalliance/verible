@@ -57,13 +57,9 @@ class BisonParserAdapter : public Parser {
     }
   }
 
-  const TokenInfo& GetLastToken() const final { return param_.GetLastToken(); }
-
   const std::vector<TokenInfo>& RejectedTokens() const final {
     return param_.RecoveredSyntaxErrors();
   }
-
-  const ConcreteSyntaxTree& Root() const final { return param_.Root(); }
 
   ConcreteSyntaxTree TakeRoot() final { return param_.TakeRoot(); }
 
