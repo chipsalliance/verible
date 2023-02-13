@@ -6003,9 +6003,9 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     {{TK_endprimitive, "endprimitive"}},
     {"//www\n", {TK_endprimitive, "endprimitive"}},
     {"module m;\n"
-     "  foo()",
-     {';', ";"},
-     "\n"
+     "  foo",
+     {'(', "("},
+     ")\n"
      "endmodule\n"},
     {"module m;\n"
      "  if ((",
@@ -6015,7 +6015,7 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
      "endmodule\n"},
     {"[i()",  // unexpected EOF
      {verible::TK_EOF, ""}},
-    {"[i()'",  // unexpected EOF
+    {"[int'",  // unexpected EOF
      {verible::TK_EOF, ""}},
 };
 

@@ -940,6 +940,8 @@ assignment_pattern_expression
     { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
   | reference assignment_pattern
     { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
+  | reference call_base assignment_pattern
+    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, MakeTaggedNode(N::kDataType, $1, $2), $3); }
   ;
 structure_or_array_pattern_expression_list
   : structure_or_array_pattern_expression_list ',' structure_or_array_pattern_expression
@@ -2380,30 +2382,6 @@ function_return_type_and_id
   ;
 
 
-
-function_friendly_statement_or_null
-  : /* attribute_list_opt */ statement_item
-    { $$ = move($1); }
-  /* | unqualified_id ':' statement_item */
-  /*   { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); } */
-  | /* attribute_list_opt */ ';'
-    { $$ = MakeTaggedNode(N::kNullStatement, $1); }
-  ;
-
-ff_son_list
-  : ff_son_list ',' function_friendly_statement_or_null
-    {$$ = ExtendNode($1, $2, $3);}
-  | function_friendly_statement_or_null
-    {$$ = MakeTaggedNode(N::kStatementList, $1);}
-;
-
-ff_son_list_opt
-  : ff_son_list
-    {$$ = move($1);}
-  | 
-    { $$ = MakeTaggedNode(N::kStatementList);}
-;
-
 function_declaration
   /* This covers both in-line declarations and out-of-line class method
    * declarations.
@@ -2420,14 +2398,14 @@ function_declaration
   | TK_function lifetime_opt
     function_return_type_and_id ';'
     function_item_list
-    ff_son_list_opt 
+    statement_or_null_list_opt 
     TK_endfunction endfunction_label_opt
     { $$ = MakeFunctionDeclaration(qualifier_placeholder, $1, $2,
                                    ForwardChildren($3),  // expand type id pair
                                    nullptr, $4, $5, $6, $7, $8); }
   | TK_function lifetime_opt
     function_return_type_and_id ';'
-    ff_son_list_opt
+    statement_or_null_list_opt 
     TK_endfunction endfunction_label_opt
     { $$ = MakeFunctionDeclaration(qualifier_placeholder, $1, $2,
                                    ForwardChildren($3),  // expand type id pair
@@ -3180,6 +3158,8 @@ block_item_or_statement_or_null
     { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
   | /* attribute_list_opt */ ';'
     { $$ = MakeTaggedNode(N::kNullStatement, $1); }
+  | reference ';'
+    { $$ = MakeTaggedNode(N::kStatement, $1, $2); }
   ;
 block_item_or_statement_or_null_list
   : block_item_or_statement_or_null_list block_item_or_statement_or_null
@@ -3564,6 +3544,48 @@ data_declaration_or_module_instantiation
                             MakeTaggedNode(N::kQualifierList, $1, $2, $3),
                             $4, $5); }
   /* Using data_declaration_modifiers_opt causes S/R conflict.  */
+  ;
+
+
+
+non_anonymous_gate_instance_or_register_variable
+  /* similar to variable_decl_assignment */
+  : GenericIdentifier decl_dimensions_opt trailing_decl_assignment_opt
+    { $$ = MakeTaggedNode(N::kRegisterVariable, $1,
+                          MakeUnpackedDimensionsNode($2), $3); }
+  | GenericIdentifier decl_dimensions_opt '(' any_port_list_opt ')'
+    { $$ = MakeTaggedNode(N::kGateInstance, $1,
+                          MakeUnpackedDimensionsNode($2),
+                          MakeParenGroup($3, $4, $5)); }
+  | MacroCall
+    { $$ = std::move($1); }
+  ;
+
+non_anonymous_gate_instance_or_register_variable_list
+  : non_anonymous_gate_instance_or_register_variable_list ',' non_anonymous_gate_instance_or_register_variable
+    { $$ = ExtendNode($1, $2, $3); }
+  | non_anonymous_gate_instance_or_register_variable 
+    { $$ = MakeTaggedNode(N::kGateInstanceRegisterVariableList, $1); }
+  ;
+
+
+non_anonymous_instantiation_base
+  : instantiation_type non_anonymous_gate_instance_or_register_variable_list
+    { $$ = MakeInstantiationBase($1, $2); }
+
+function_item_data_declaration
+  : non_anonymous_instantiation_base ';'
+    { $$ = MakeDataDeclaration(qualifier_placeholder, $1, $2); }
+  | lifetime const_opt instantiation_base ';'
+    { $$ = MakeDataDeclaration(
+                          MakeTaggedNode(N::kQualifierList, $1, $2), $3, $4); }
+  | TK_var lifetime_opt instantiation_base ';'
+    { $$ = MakeDataDeclaration(
+                          MakeTaggedNode(N::kQualifierList, $1, $2), $3, $4); }
+  | TK_const var_opt lifetime_opt instantiation_base ';'
+      { $$ = MakeDataDeclaration(
+                            MakeTaggedNode(N::kQualifierList, $1, $2, $3),
+                            $4, $5); }
   ;
 
 net_type_declaration
@@ -4608,16 +4630,24 @@ call_base
     { $$ = MakeParenGroup($1, $2, $3); }
 ;
 
+//separated for chained calls (eg. foo().bar().baz())
+reference_or_call_base
+  : reference call_base 
+    { $$ = MakeTaggedNode(N::kFunctionCall, $1, $2); }
+  | reference_or_call_base hierarchy_or_call_extension
+    { $$ = ExtendNode($1,$2); }
+
 reference_or_call
   : reference
     { $$ = MakeTaggedNode(N::kReferenceCallBase,$1); }
+  | reference_or_call_base
+    {$$ = std::move($1);}
+  // to handle the built-ins when there is no function call earler in the chain
     /* base of reference, including GenericIdentifier */
-  | reference call_base
-    { $$ = MakeTaggedNode(N::kFunctionCall, $1, $2); }
-  | reference call_base hierarchy_or_call_extension
-    { $$ = ExtendNode(MakeTaggedNode(N::kFunctionCall, $1, $2), $3); }
-    /* . member */
-    /* or method call */
+  | reference '.' builtin_array_method
+    { $$ = ExtendNode($1, $2, $3); }
+  | reference '.' TK_randomize
+    { $$ = ExtendNode($1, MakeTaggedNode(N::kRandomizeMethodCallExtension, $2, $3, nullptr, nullptr)); }
   | reference call_base select_variable_dimension
     { $$ = ExtendNode(MakeTaggedNode(N::kFunctionCall, $1, $2), $3); }
     /* [ range ] */
@@ -4825,7 +4855,20 @@ function_item_list
 function_item
   : tf_port_declaration
     { $$ = std::move($1); }
-  | block_item_decl
+  | function_item_data_declaration 
+    { $$ = std::move($1); }
+  /* temporarily removed
+  | TK_reg data_type register_variable_list ';'
+  */
+  | net_type_declaration
+    { $$ = std::move($1); }
+  | package_import_declaration
+    { $$ = std::move($1); }
+  | any_param_declaration
+    { $$ = std::move($1); }
+  | type_declaration
+    { $$ = std::move($1); }
+  | let_declaration
     { $$ = std::move($1); }
   ;
 
@@ -4943,6 +4986,27 @@ hierarchy_extension
     { $$ = MakeTaggedNode(N::kHierarchyExtension, $1, $2); }
   | '.' MacroCall
     { $$ = MakeTaggedNode(N::kMacroCallExtension, $1, $2);}
+  | '.' TK_new
+    { $$ = MakeTaggedNode(N::kNewCall, $1, $2); }
+  | '.' TK_randomize call_base with_constraint_block_opt
+    { $$ = MakeTaggedNode(N::kRandomizeMethodCallExtension, $1,
+                          $2,
+                          $3, $4); }
+
+    /* Extra layers are created here to make the call to randomize appear as
+     * any other arbitrary function call.
+     */
+  | '.' TK_randomize with_constraint_block
+    { $$ = MakeTaggedNode(N::kRandomizeMethodCallExtension, $1,
+                          $2,
+                          nullptr, $3); }
+    /* member function form of randomize_call */
+  | '.' builtin_array_method call_base
+    array_method_with_predicate_opt
+    { $$ = MakeTaggedNode(N::kBuiltinArrayMethodCallExtension, $1, $2, $3, $4); }
+  | '.' builtin_array_method
+    array_method_with_predicate
+    { $$ = MakeTaggedNode(N::kBuiltinArrayMethodCallExtension, $1, $2, $3); }
   ;
 hierarchy_or_call_extension
   : '.' unqualified_id
@@ -4958,14 +5022,6 @@ hierarchy_or_call_extension
     { $$ = MakeTaggedNode(N::kNewCall, $1, $2); }
   | '.' TK_new call_base
     { $$ = MakeTaggedNode(N::kNewCall, $1, $2, $3); }
-  | '.' TK_randomize call_base with_constraint_block_opt
-    { $$ = MakeTaggedNode(N::kRandomizeMethodCallExtension, $1,
-                          $2,
-                          $3, $4); }
-
-    /* Extra layers are created here to make the call to randomize appear as
-     * any other arbitrary function call.
-     */
   | '.' TK_randomize with_constraint_block_opt
     { $$ = MakeTaggedNode(N::kRandomizeMethodCallExtension, $1,
                           $2,
@@ -5040,10 +5096,14 @@ array_reduction_method
     { $$ = std::move($1); }
   ;
 array_method_with_predicate_opt
-  : TK_with '(' expression ')'
-    { $$ = MakeTaggedNode(N::kArrayWithPredicate, $1, MakeParenGroup($2, $3, $4)); }
+  : array_method_with_predicate 
+    {$$ = std::move($1);}
   | /* empty */
     { $$ = nullptr; }
+  ;
+array_method_with_predicate
+  : TK_with '(' expression ')'
+    { $$ = MakeTaggedNode(N::kArrayWithPredicate, $1, MakeParenGroup($2, $3, $4)); }
   ;
 
 hierarchy_event_identifier
@@ -5766,8 +5826,17 @@ module_or_generate_item
     { $$ = std::move($1); }
   | gate_instantiation
     { $$ = std::move($1); }
-  /* TODO(fangism): udp_instantiation */
-  | /* attribute_list_opt */ block_item_decl
+  | function_item_data_declaration
+    { $$ = std::move($1); }
+  | net_type_declaration
+    { $$ = std::move($1); }
+  | package_import_declaration
+    { $$ = std::move($1); }
+  | any_param_declaration
+    { $$ = std::move($1); }
+  | type_declaration
+    { $$ = std::move($1); }
+  | let_declaration
     { $$ = std::move($1); }
     /* includes module_instantiation, and most other instantiations */
   | module_common_item
@@ -7009,7 +7078,20 @@ analog_statement
   ;
 /* same as function_item */
 task_item
-  : block_item_decl
+  : function_item_data_declaration 
+    { $$ = std::move($1); }
+  /* temporarily removed
+  | TK_reg data_type register_variable_list ';'
+  */
+  | net_type_declaration
+    { $$ = std::move($1); }
+  | package_import_declaration
+    { $$ = std::move($1); }
+  | any_param_declaration
+    { $$ = std::move($1); }
+  | type_declaration
+    { $$ = std::move($1); }
+  | let_declaration
     { $$ = std::move($1); }
   | tf_port_declaration
     { $$ = std::move($1); }
@@ -7028,12 +7110,8 @@ task_item_list_opt
 tf_item_or_statement_or_null
   : task_item
     { $$ = std::move($1); }
-  | statement_item
+  | statement_or_null
     { $$ = std::move($1); }
-  | unqualified_id ':' /* attribute_list_opt */ statement_item
-    { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
-  | /* attribute_list_opt */ ';'
-    { $$ = MakeTaggedNode(N::kNullStatement, $1); }
   ;
 tf_item_or_statement_or_null_list
   /* TODO(jeremycs): unclear if this should have its own enum */
