@@ -52,6 +52,8 @@ class LintRuleRegisterer;
 template <typename RuleType>
 using LintRuleGeneratorFun = std::function<std::unique_ptr<RuleType>()>;
 using LintDescriptionFun = std::function<LintRuleDescriptor()>;
+using LintAliasDescriptionsFun =
+    const std::vector<LintRuleAliasDescriptor>& (*)();
 
 template <typename RuleType>
 struct LintRuleInfo {
@@ -66,6 +68,28 @@ struct LintRuleDefaultConfig {
 
 using LintRuleDescriptionsMap =
     std::map<LintRuleId, LintRuleDefaultConfig, verible::StringViewCompare>;
+
+// Class that uses SFINAE to conditionally get T::GetAliasDescriptors function.
+template <class T>
+class GetAliasDescriptorsFuncOrNullptr {
+  template <typename U>
+  static constexpr LintAliasDescriptionsFun get(
+      decltype(U::GetAliasDescriptors)*) {
+    return U::GetAliasDescriptors;
+  }
+  template <typename U>
+  static constexpr LintAliasDescriptionsFun get(...) {
+    return nullptr;
+  }
+
+ public:
+  // Pointer to T::GetAliasDescriptors if it's implemented, nullptr otherwise.
+  static constexpr LintAliasDescriptionsFun value = get<T>(nullptr);
+};
+
+template <class T>
+inline constexpr LintAliasDescriptionsFun GetAliasDescriptorsFunc =
+    GetAliasDescriptorsFuncOrNullptr<T>::value;
 
 // Helper macro to register a LintRule with LintRuleRegistry. In order to have
 // a global registry, some static initialization is needed. This macros
@@ -98,11 +122,14 @@ using LintRuleDescriptionsMap =
 //
 // TODO(hzeller): once the class does not contain a state, extract the name
 // and description from the instance to avoid weird static initialization.
-#define VERILOG_REGISTER_LINT_RULE(class_name)                           \
-  static verilog::analysis::LintRuleRegisterer<class_name::rule_type>    \
-      __##class_name##__registerer(class_name::GetDescriptor, []() {     \
-        return std::unique_ptr<class_name::rule_type>(new class_name()); \
-      });
+#define VERILOG_REGISTER_LINT_RULE(class_name)                               \
+  static verilog::analysis::LintRuleRegisterer<class_name::rule_type>        \
+      __##class_name##__registerer(                                          \
+          class_name::GetDescriptor,                                         \
+          []() {                                                             \
+            return std::unique_ptr<class_name::rule_type>(new class_name()); \
+          },                                                                 \
+          verilog::analysis::GetAliasDescriptorsFunc<class_name>);
 
 // Static objects of type LintRuleRegisterer are used to register concrete
 // parsers in LintRuleRegistry. Users are expected to create these objects
@@ -111,7 +138,8 @@ template <typename RuleType>
 class LintRuleRegisterer {
  public:
   LintRuleRegisterer(const LintDescriptionFun& descriptor,
-                     const LintRuleGeneratorFun<RuleType>& creator);
+                     const LintRuleGeneratorFun<RuleType>& creator,
+                     LintAliasDescriptionsFun alias_descriptors);
 };
 
 // Returns true if rule_name refers to a known lint rule.
@@ -149,6 +177,18 @@ std::unique_ptr<verible::TextStructureLintRule> CreateTextStructureLintRule(
 // When storing string_views to the lint rule keys, use the ones returned in
 // this set, because their lifetime is guaranteed by the registration process.
 std::set<LintRuleId> GetAllRegisteredLintRuleNames();
+
+// Returns a set of aliases that were registered for given rule name.
+std::set<LintRuleId> GetLintRuleAliases(LintRuleId rule_name);
+
+// Returns a descriptor of a specific alias of a rule.
+// The caller shall check that the alias belongs to this rule.
+LintRuleAliasDescriptor GetLintRuleAliasDescriptor(LintRuleId rule_name,
+                                                   LintRuleId alias);
+
+// Returns a translated name of lint rule using a registered alias.
+// If such an alias doesn't exist, returns the input alias.
+LintRuleId TranslateAliasIfExists(LintRuleId alias);
 
 // Returns a map mapping each rule to a struct of information about the rule to
 // print.

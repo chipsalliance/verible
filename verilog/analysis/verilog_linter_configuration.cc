@@ -130,7 +130,8 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       const auto config = rule_name_with_config.substr(equals_pos + 1);
       setting.configuration.assign(config.data(), config.size());
     }
-    const auto rule_name = rule_name_with_config.substr(0, equals_pos);
+    const auto raw_name = rule_name_with_config.substr(0, equals_pos);
+    const auto rule_name = analysis::TranslateAliasIfExists(raw_name);
     const auto rule_name_set = analysis::GetAllRegisteredLintRuleNames();
     const auto rule_iter = rule_name_set.find(rule_name);
 
@@ -139,6 +140,30 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       *error = absl::StrCat("invalid flag \"", rule_name, "\"");
       return false;
     } else {
+      // check if it's an alias
+      if (raw_name != rule_name) {
+        auto alias_descriptor =
+            analysis::GetLintRuleAliasDescriptor(rule_name, raw_name);
+        VLOG(2) << raw_name << " is an alias of " << rule_name;
+
+        if (setting.enabled) {
+          // apply alias defaults, only if we're enabling the rule
+          std::vector<std::string> params;
+          for (auto const& param : alias_descriptor.param_defaults) {
+            // get the default parameters from the alias descriptor
+            params.push_back(absl::StrCat(param.first, ":", param.second));
+          }
+          std::string defaults = absl::StrJoin(params, ";");
+          VLOG(2) << "configuration from alias defaults: " << defaults;
+
+          // use the defaults first, then the commandline arguments
+          // join them with "," only if both have contents
+          setting.configuration = absl::StrJoin(
+              {defaults, setting.configuration},
+              (defaults.empty() || setting.configuration.empty()) ? "" : ";");
+        }
+      }
+
       // Map keys must use canonical registered string_views for guaranteed
       // lifetime, not just any string-equivalent copy.
       rules[*rule_iter] = setting;

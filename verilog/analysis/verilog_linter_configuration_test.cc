@@ -45,6 +45,7 @@
 namespace verilog {
 namespace {
 
+using analysis::LintRuleAliasDescriptor;
 using analysis::LintRuleDescriptor;
 using verible::LineLintRule;
 using verible::SyntaxTreeLintRule;
@@ -73,6 +74,20 @@ class TestRule1 : public TestRuleBase {
     static const LintRuleDescriptor d{
         .name = "test-rule-1",
         .desc = "TestRule1",
+        .param = {{"test_param1", "true", "test rule parameter"}},
+    };
+    return d;
+  }
+  static const std::vector<LintRuleAliasDescriptor>& GetAliasDescriptors() {
+    static const std::vector<LintRuleAliasDescriptor> d{
+        {
+            .name = "test-rule-1-alias-1",
+            .param_defaults = {{"test_param1", "false"}},
+        },
+        {
+            .name = "test-rule-1-alias-2",
+            .param_defaults = {{"test_param1", "true"}},
+        },
     };
     return d;
   }
@@ -652,6 +667,31 @@ TEST(RuleBundleTest, ParseRuleBundleEmpty) {
   EXPECT_TRUE(success) << error;
   EXPECT_TRUE(error.empty());
   EXPECT_TRUE(bundle.rules.empty());
+}
+
+TEST(RuleBundleTest, ParseRuleWithAlias) {
+  auto text = "+test-rule-1-alias-1";
+  RuleBundle bundle;
+  std::string error;
+  bool success = bundle.ParseConfiguration(text, ',', &error);
+  ASSERT_TRUE(success) << error;
+  ASSERT_THAT(bundle.rules, SizeIs(1));
+  EXPECT_TRUE(error.empty());
+
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+}
+
+TEST(RuleBundleTest, ParseRuleWithAliases) {
+  auto text = "+test-rule-1,-test-rule-1-alias-1,+test-rule-1-alias-2";
+  RuleBundle bundle;
+  std::string error;
+  bool success = bundle.ParseConfiguration(text, ',', &error);
+  ASSERT_TRUE(success) << error;
+  ASSERT_THAT(bundle.rules, SizeIs(1));
+  EXPECT_TRUE(error.empty());
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  // aliases have default configuration for this rule
+  EXPECT_FALSE(bundle.rules["test-rule-1"].configuration.empty());
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
