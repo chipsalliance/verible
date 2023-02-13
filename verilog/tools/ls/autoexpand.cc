@@ -21,7 +21,6 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_map.h"
-#include "absl/strings/str_format.h"
 #include "common/text/text_structure.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/expression.h"
@@ -331,18 +330,14 @@ const std::regex AutoExpander::autotemplate_conn_re_{
 //                                        declarations)
 //   [^\S\r\n]*// End of automatics.*\n – ended by an "End of automatics"
 //                                        comment
-constexpr absl::string_view auto_declaration_re_fmt =
-    R"((/\*\s*%s\s*\*/\s*?\n)(?:\s*//.*\n)?(?:[\s\S]*?[^\S\r\n]*// End of automatics.*\n)?)";
-const std::regex AutoExpander::autoinput_re_{
-    absl::StrFormat(auto_declaration_re_fmt, "AUTOINPUT")};
-const std::regex AutoExpander::autoinout_re_{
-    absl::StrFormat(auto_declaration_re_fmt, "AUTOINOUT")};
-const std::regex AutoExpander::autooutput_re_{
-    absl::StrFormat(auto_declaration_re_fmt, "AUTOOUTPUT")};
-const std::regex AutoExpander::autowire_re_{
-    absl::StrFormat(auto_declaration_re_fmt, "AUTOWIRE")};
-const std::regex AutoExpander::autoreg_re_{
-    absl::StrFormat(auto_declaration_re_fmt, "AUTOREG")};
+#define MAKE_AUTODECL_REGEX(decl_kind) \
+  R"((/\*\s*AUTO)" decl_kind           \
+  R"(\s*\*/\s*?\n)(?:\s*//.*\n)?(?:[\s\S]*?[^\S\r\n]*// End of automatics.*\n)?)"
+const std::regex AutoExpander::autoinput_re_{MAKE_AUTODECL_REGEX("INPUT")};
+const std::regex AutoExpander::autoinout_re_{MAKE_AUTODECL_REGEX("INOUT")};
+const std::regex AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
+const std::regex AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
+const std::regex AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
 
 void AutoExpander::Module::EmitPortHeaderDeclarations(
     std::ostream &output, const absl::string_view indent,
