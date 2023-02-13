@@ -124,9 +124,12 @@ static absl::Status PreprocessSingleFile(
       preprocessor.ScanStream(lexed_streamview);
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << u->text();
-  for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
-  if (!preprocessed_data.errors.empty())
+  for (auto& u : preprocessed_data.errors)
+    message_stream << u.error_message << '\n';
+  if (!preprocessed_data.errors.empty()) {
+    message_stream << "Exit code: " << preprocessed_data.exit_code << "\n";
     return absl::InvalidArgumentError("Error: The preprocessing has failed.");
+  }
   return absl::OkStatus();
 }
 

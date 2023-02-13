@@ -7,10 +7,10 @@
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+// License for the specific language governing permissions and limitations under
+// the License.
 
 // VerilogPreprocess is a *pseudo*-preprocessor for Verilog.
 // Unlike a conventional preprocessor, this pseudo-preprocessor does not open
@@ -35,6 +35,7 @@
 #ifndef VERIBLE_VERILOG_PREPROCESSOR_VERILOG_PREPROCESS_H_
 #define VERIBLE_VERILOG_PREPROCESSOR_VERILOG_PREPROCESS_H_
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -87,6 +88,10 @@ struct VerilogPreprocessData {
   // are two separate vectors.
   std::vector<VerilogPreprocessError> errors;
   std::vector<VerilogPreprocessError> warnings;
+
+  // An exit code of 4 bits is used to distinguish between errors met during
+  // preprocessing.
+  std::uint32_t exit_code{0};
 };
 
 // VerilogPreprocess transforms a TokenStreamView.
@@ -164,10 +169,10 @@ class VerilogPreprocess {
   absl::Status HandleElse(TokenStreamView::const_iterator else_pos);
   absl::Status HandleEndif(TokenStreamView::const_iterator endif_pos);
 
-  static absl::Status ConsumeAndParseMacroCall(TokenStreamView::const_iterator,
-                                               const StreamIteratorGenerator&,
-                                               verible::MacroCall*,
-                                               const verible::MacroDefinition&);
+  static absl::Status ConsumeAndParseMacroCall(
+      TokenStreamView::const_iterator, const StreamIteratorGenerator&,
+      verible::MacroCall*, const verible::MacroDefinition&,
+      std::vector<TokenStreamView::const_iterator>&);
 
   // The following functions return nullptr when there is no error:
   absl::Status ConsumeMacroDefinition(const StreamIteratorGenerator&,
@@ -188,7 +193,8 @@ class VerilogPreprocess {
 
   // Generate a const_iterator to a non-whitespace token.
   static TokenStreamView::const_iterator GenerateBypassWhiteSpaces(
-      const StreamIteratorGenerator&);
+      const StreamIteratorGenerator&,
+      std::vector<TokenStreamView::const_iterator>*);
 
   const Config config_;
 
@@ -253,6 +259,15 @@ class VerilogPreprocess {
   // A pointer to a file opener function.
   // This is needed for opening new files while handling includes.
   const FileOpener file_opener_ = nullptr;
+
+  enum ResultBits {
+    // file not found or tokenization error
+    kFileErrorBit = (1 << 0),
+    // At least one macro could not be expanded
+    kMacroUseNotExpandedBit = (1 << 1),
+    // At least one include file could not be found
+    kIncludeFileNotFoundBit = (1 << 2)
+  };
 };
 
 }  // namespace verilog
