@@ -29,12 +29,12 @@ using verible::lsp::TextEdit;
 
 // Generate text edits using the given function and test if they had the desired
 // effect
-void TestTextEdits(const std::function<std::vector<TextEdit>(
-                       SymbolTableHandler*, BufferTracker*)>& edit_fun,
-                   const std::vector<absl::string_view>& project_file_contents,
-                   const absl::string_view text_before,
-                   const absl::string_view text_golden,
-                   const bool repeat = true) {
+void TestTextEditsWithProject(
+    const std::function<std::vector<TextEdit>(SymbolTableHandler*,
+                                              BufferTracker*)>& edit_fun,
+    const std::vector<absl::string_view>& project_file_contents,
+    const absl::string_view text_before, const absl::string_view text_golden,
+    const bool repeat = true) {
   static const char* TESTED_FILENAME = "<<tested-file>>";
   // Init a text buffer which we need for the autoepxand functions
   EditTextBuffer buffer(text_before);
@@ -78,8 +78,8 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
   buffer.RequestContent([&](const absl::string_view text_after) {
     EXPECT_EQ(text_after, text_golden);
     if (repeat) {
-      TestTextEdits(edit_fun, project_file_contents, text_golden, text_golden,
-                    false);
+      TestTextEditsWithProject(edit_fun, project_file_contents, text_golden,
+                               text_golden, false);
     }
   });
 }
@@ -90,7 +90,7 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
                    const absl::string_view text_before,
                    const absl::string_view text_golden,
                    const bool repeat = true) {
-  TestTextEdits(edit_fun, {}, text_before, text_golden, repeat);
+  TestTextEditsWithProject(edit_fun, {}, text_before, text_golden, repeat);
 }
 
 // Generate a specific code action and extract text edits from it
@@ -482,28 +482,28 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_MultipleFiles) {
-  TestTextEdits(GenerateAutoExpandTextEdits,
-                {R"(
+  TestTextEditsWithProject(GenerateAutoExpandTextEdits,
+                           {R"(
 module bar(input i1, output o1);
   input i2;
   inout io;
   output o2;
 endmodule
     )",
-                 R"(
+                            R"(
 module qux;
   input i1;
   inout io;
   output o2;
 endmodule
    )"},
-                R"(
+                           R"(
 module foo;
   bar b(/*AUTOINST*/);
   qux q(/*AUTOINST*/);
 endmodule
 )",
-                R"(
+                           R"(
 module foo;
   bar b(/*AUTOINST*/
     // Inputs
