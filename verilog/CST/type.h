@@ -93,7 +93,7 @@ const verible::Symbol* GetBaseTypeFromDataType(
 // grammar for multiple purposes, which was a necessary defense against LR
 // grammar conflicts.
 // The original reference_call_base pointer is consumed in the process.
-verible::SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
+verible::SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
     verible::SymbolPtr& reference_call_base);  // NOLINT
 
 // Finds all node kDataType declarations. Used for testing the functions below.
@@ -151,6 +151,12 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
 // e.g from "pkg::some_type var1" return "pkg::some_type".
 const verible::Symbol* GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root);
+
+// Extracts kUnqualifiedId or kQualifiedId node from nodes tagged with
+// kDataType.
+// e.g from "pkg::some_type var1" return "pkg::some_type".
+const verible::Symbol* GetIdentifiersFromDataType(
+    const verible::Symbol& data_type);
 
 // Extracts kUnqualifiedId node from nodes tagged with kReferenceCallBase.
 const verible::SyntaxTreeNode* GetUnqualifiedIdFromReferenceCallBase(
@@ -221,6 +227,8 @@ const verible::SyntaxTreeLeaf* GetSymbolIdentifierFromEnumName(
 const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
+const verible::SyntaxTreeNode* GetTypeIdentifierFromCustomType(
+    const verible::Symbol& data_type);
 // Returns symbol identifier node for the type name from node tagged with
 // kDataType (if exists) or return nullptr if the base type is not a named
 // user-defined type.

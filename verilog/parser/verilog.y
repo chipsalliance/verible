@@ -1879,7 +1879,7 @@ data_type
   : data_type_base /* decl_dimensions_opt */
     { $$ = std::move($1); }
   | reference
-    { $$ = MakeTaggedNode(N::kReferenceCallBase, $1); }
+    { $$ = ReinterpretReferenceAsDataTypePackedDimensions($1); }
   ;
 
 interface_type

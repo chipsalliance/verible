@@ -14,6 +14,7 @@
 
 #include "verilog/CST/type.h"
 
+#include <iostream>
 #include <vector>
 
 #include "common/analysis/matcher/matcher.h"
@@ -43,16 +44,22 @@ static SymbolPtr ReinterpretReferenceAsType(Symbol& reference) {  // NOLINT
   return std::move(children[0]);
 }
 
-SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
+static SymbolPtr ReinterpretLocalRootAsType(Symbol& local_root) {  // NOLINT
+  auto& children(verible::SymbolCastToNode(local_root).mutable_children());
+  CHECK(!children.empty());
+  return std::move(children[0]);
+}
+
+SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
     SymbolPtr& reference_call_base) {
   SyntaxTreeNode& base(verible::CheckSymbolAsNode(
-      *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReferenceCallBase));
+      *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReference));
   auto& children(base.mutable_children());
   CHECK(!children.empty());
 
-  Symbol& reference(*children.front());
-  if (reference.Kind() != verible::SymbolKind::kNode ||
-      !verible::SymbolCastToNode(reference).MatchesTag(NodeEnum::kReference)) {
+  Symbol& local_root(*children.front());
+  if (local_root.Kind() != verible::SymbolKind::kNode ||
+      !verible::SymbolCastToNode(local_root).MatchesTag(NodeEnum::kLocalRoot)) {
     // function call -like syntax can never be interpreted as a type,
     // so return the whole subtree unmodified.
     return std::move(reference_call_base);
@@ -79,7 +86,8 @@ SymbolPtr ReinterpretReferenceCallBaseAsDataTypePackedDimensions(
     // TODO(fangism): instead of ignoring, retain non-tag-matched nodes as
     // syntax error nodes.
   }
-  return MakeDataType(ReinterpretReferenceAsType(reference), packed_dimensions);
+  return MakeDataType(ReinterpretLocalRootAsType(local_root),
+                      packed_dimensions);
 }
 
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
@@ -173,6 +181,10 @@ static const verible::SyntaxTreeNode* GetLocalRootFromReference(
 const verible::Symbol* GetIdentifiersFromLocalRoot(
     const verible::Symbol& local_root) {
   return verible::GetSubtreeAsSymbol(local_root, NodeEnum::kLocalRoot, 0);
+}
+const verible::Symbol* GetIdentifiersFromDataType(
+    const verible::Symbol& data_type) {
+  return verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 1);
 }
 
 const verible::SyntaxTreeNode* GetUnqualifiedIdFromReferenceCallBase(
@@ -314,6 +326,9 @@ const verible::Symbol* GetTypeIdentifierFromInstantiationType(
   if (NodeEnum(data_type->Tag().tag) == NodeEnum::kInterfaceType) {
     return GetTypeIdentifierFromInterfaceType(*data_type);
   }
+  // if (NodeEnum(data_type->Tag().tag) == NodeEnum::kReferenceCallBase) {
+  //   return GetTypeIdentifierFromCustomType(*data_type);
+  // }
   return nullptr;
 }
 
@@ -335,6 +350,27 @@ const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 
+//
+// const verible::SyntaxTreeNode* GetTypeIdentifierFromCustomType(
+//     const verible::Symbol& data_type) {
+//   const verible::SyntaxTreeNode& data_type_node =
+//       verible::SymbolCastToNode(data_type);
+//   if (!data_type_node.MatchesTag(NodeEnum::kReferenceCallBase)) return
+//   nullptr; if (data_type_node.children().empty()) {
+//     return nullptr;
+//   }
+//   const verible::Symbol* base_type = verible::GetSubtreeAsSymbol(data_type,
+//   NodeEnum::kReferenceCallBase, 0); if (base_type == nullptr) return nullptr;
+//   const verible::Symbol* base_type_deeper =
+//   verible::GetSubtreeAsSymbol(*base_type, NodeEnum::kReference, 0);
+//
+//   if (base_type_deeper == nullptr) return nullptr;
+//   std::cout << "base_type_deeper->Tag().tag: " << base_type_deeper->Tag().tag
+//   << std::endl;
+//
+//   return GetTypeIdentifierFromBaseType(*base_type_deeper);
+// }
+//
 const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
     const verible::Symbol& base_type) {
   const auto tag = static_cast<NodeEnum>(base_type.Tag().tag);
