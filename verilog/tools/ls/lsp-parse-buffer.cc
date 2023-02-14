@@ -39,8 +39,8 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
       uri_(uri),
       parser_(verilog::VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(
           content, uri)) {
-  LOG(INFO) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
-            << "; parser:" << parser_->ParseStatus() << std::endl;
+  VLOG(1) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
+          << "; parser:" << parser_->ParseStatus() << std::endl;
   // TODO(hzeller): we should use a filename not URI; strip prefix.
   if (auto lint_result = RunLinter(uri, *parser_); lint_result.ok()) {
     lint_statuses_ = std::move(lint_result.value());
