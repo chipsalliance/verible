@@ -25,6 +25,7 @@ cc_library(
         "//verilog/CST:expression",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
+        "//verilog/CST:net",
         "//verilog/CST:port",
         "//verilog/CST:type",
         "//verilog/analysis:symbol_table",
