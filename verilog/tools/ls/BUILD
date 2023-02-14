@@ -25,12 +25,15 @@ cc_library(
         "//verilog/CST:expression",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
+        "//verilog/CST:net",
         "//verilog/CST:port",
         "//verilog/CST:type",
         "//verilog/analysis:symbol_table",
         "//verilog/formatting:format_style_init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/container:node_hash_map",
     ],
 )
 
