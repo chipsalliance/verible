@@ -89,11 +89,8 @@ class AutoExpander {
   // Module information relevant to AUTO expansion
   class Module {
    public:
-    const Symbol &symbol;
-    const absl::string_view name;
-
     Module(const Symbol &module)
-        : symbol(module), name(GetModuleName(symbol)->get().text()) {
+        : symbol_(module), name_(GetModuleName(symbol_)->get().text()) {
       RetrieveModuleHeaderPorts();
       RetrieveModuleBodyPorts();
     }
@@ -147,7 +144,7 @@ class AutoExpander {
     // name, direction, and connection
     void AddGeneratedConnection(absl::string_view port_name,
                                 Port::Direction direction,
-                                Connection connection);
+                                const Connection &connection);
 
     // Erase all ports that were declared within the given byte range
     void ErasePortsInRange(size_t start_offset, size_t length);
@@ -174,6 +171,12 @@ class AutoExpander {
       return dependencies_.contains(type_name);
     }
 
+    // Returns the Symbol representing this module
+    const verible::Symbol &Symbol() const { return symbol_; }
+
+    // Returns the module name
+    absl::string_view Name() const { return name_; }
+
    private:
     // Writes declarations of ports that fulfill the given predicate to the
     // output stream
@@ -191,6 +194,12 @@ class AutoExpander {
     void PutDeclaredPort(absl::string_view::iterator base,
                          const SyntaxTreeLeaf *dir_leaf,
                          const SyntaxTreeLeaf *id_leaf);
+
+    // The symbol that represents this module
+    const verible::Symbol &symbol_;
+
+    // The name of this module
+    const absl::string_view name_;
 
     // This module's ports
     std::vector<Port> ports_;
@@ -411,7 +420,7 @@ void AutoExpander::Module::EmitUndeclaredOutputWireDeclarations(
     std::ostream &output, const absl::string_view indent,
     const absl::string_view auto_span) const {
   absl::flat_hash_set<absl::string_view> declared_wires;
-  for (const auto &reg : FindAllNetVariables(symbol)) {
+  for (const auto &reg : FindAllNetVariables(symbol_)) {
     const SyntaxTreeLeaf *const net_name_leaf =
         GetNameLeafOfNetVariable(*reg.match);
     const absl::string_view net_name = net_name_leaf->get().text();
@@ -446,7 +455,7 @@ void AutoExpander::Module::EmitUnconnectedOutputRegDeclarations(
     std::ostream &output, const absl::string_view indent,
     const absl::string_view auto_span) const {
   absl::flat_hash_set<absl::string_view> declared_regs;
-  for (const auto &reg : FindAllRegisterVariables(symbol)) {
+  for (const auto &reg : FindAllRegisterVariables(symbol_)) {
     const SyntaxTreeLeaf *const reg_name_leaf =
         GetNameLeafOfRegisterVariable(*reg.match);
     const absl::string_view reg_name = reg_name_leaf->get().text();
@@ -522,7 +531,7 @@ void AutoExpander::Module::SortPortsByOffset() {
 }
 
 void AutoExpander::Module::RetrieveAutoTemplates() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol);
+  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
   std::cmatch autotemplate_match;
   auto autotemplate_begin = module_span.begin();
   while (std::regex_search(autotemplate_begin, module_span.end(),
@@ -556,8 +565,8 @@ void AutoExpander::Module::RetrieveAutoTemplates() {
 }
 
 void AutoExpander::Module::RetrieveDependencies() {
-  for (const auto &data : FindAllDataDeclarations(symbol)) {
-    const Symbol *const type_id_node =
+  for (const auto &data : FindAllDataDeclarations(symbol_)) {
+    const verible::Symbol *const type_id_node =
         GetTypeIdentifierFromDataDeclaration(*data.match);
     // Some data declarations do not have a type id, ignore those
     if (!type_id_node) continue;
@@ -625,8 +634,8 @@ void AutoExpander::Module::EmitPortBodyDeclarations(
 }
 
 void AutoExpander::Module::RetrieveModuleHeaderPorts() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol);
-  const auto module_ports = GetModulePortDeclarationList(symbol);
+  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
+  const auto module_ports = GetModulePortDeclarationList(symbol_);
   if (!module_ports) return;
   for (const SymbolPtr &port : module_ports->children()) {
     if (port->Kind() == SymbolKind::kLeaf) continue;
@@ -643,8 +652,8 @@ void AutoExpander::Module::RetrieveModuleHeaderPorts() {
 }
 
 void AutoExpander::Module::RetrieveModuleBodyPorts() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol);
-  for (const auto &port : FindAllModulePortDeclarations(symbol)) {
+  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
+  for (const auto &port : FindAllModulePortDeclarations(symbol_)) {
     const SyntaxTreeLeaf *const dir_leaf =
         GetDirectionFromModulePortDeclaration(*port.match);
     const SyntaxTreeLeaf *const id_leaf =
@@ -736,7 +745,7 @@ absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsConnectedBefore(
 
 std::optional<TextEdit> AutoExpander::ExpandAutoarg(Module &module) const {
   const SyntaxTreeNode *const port_parens =
-      GetModulePortParenGroup(module.symbol);
+      GetModulePortParenGroup(module.Symbol());
   if (!port_parens) return {};  // No port paren group, so no AUTOARG
   const absl::string_view port_paren_span = StringSpanOfSymbol(*port_parens);
 
@@ -753,7 +762,7 @@ std::optional<TextEdit> AutoExpander::ExpandAutoarg(Module &module) const {
 
   // Ports listed before the comment should not be redeclared
   const auto predeclared_ports =
-      GetPortsListedBefore(module.symbol, start_linecol);
+      GetPortsListedBefore(module.Symbol(), start_linecol);
 
   std::ostringstream new_text;
   module.EmitPortHeaderDeclarations(
@@ -893,7 +902,7 @@ std::optional<TextEdit> AutoExpander::ExpandAutoDeclarations(
     const absl::string_view description,
     const std::function<void(const Module &, std::ostream &)> &emit) const {
   const absl::string_view auto_span =
-      StringSpanOfMatchInSymbol(module.symbol, match);
+      StringSpanOfMatchInSymbol(module.Symbol(), match);
   const LineColumnRange range = text_structure_.GetRangeForText(auto_span);
   std::stringstream new_text;
   new_text << match.str(1);  // Matched AUTO comment
@@ -955,10 +964,10 @@ std::optional<TextEdit> AutoExpander::ExpandAutooutput(
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutowire(Module &module) const {
-  const auto match = SearchInSymbol(module.symbol, autowire_re_);
+  const auto match = SearchInSymbol(module.Symbol(), autowire_re_);
   if (!match) return {};
   const absl::string_view auto_span =
-      StringSpanOfMatchInSymbol(module.symbol, *match);
+      StringSpanOfMatchInSymbol(module.Symbol(), *match);
   return ExpandAutoDeclarations(
       module, *match, "wires (for undeclared instantiated-module outputs)",
       [this, auto_span](const Module &module, std::ostream &output) {
@@ -967,10 +976,10 @@ std::optional<TextEdit> AutoExpander::ExpandAutowire(Module &module) const {
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutoreg(Module &module) const {
-  const auto match = SearchInSymbol(module.symbol, autoreg_re_);
+  const auto match = SearchInSymbol(module.Symbol(), autoreg_re_);
   if (!match) return {};
   const absl::string_view auto_span =
-      StringSpanOfMatchInSymbol(module.symbol, *match);
+      StringSpanOfMatchInSymbol(module.Symbol(), *match);
   return ExpandAutoDeclarations(
       module, *match, "regs (for this module's undeclared outputs)",
       [this, auto_span](const Module &module, std::ostream &output) {
@@ -992,38 +1001,40 @@ std::vector<TextEdit> AutoExpander::Expand() {
     Module module(*mod_decl.match);
     module.RetrieveDependencies();
     buffer_modules.push_back(
-        &modules_.insert(std::make_pair(module.name, std::move(module)))
+        &modules_.insert(std::make_pair(module.Name(), std::move(module)))
              .first->second);
   }
   // Sort modules in the buffer based on a dependency graph, so that AUTOs are
   // expanded in order
   std::sort(buffer_modules.begin(), buffer_modules.end(),
             [&](const Module *left, const Module *right) {
-              return right->DependsOn(left->name);
+              return right->DependsOn(left->Name());
             });
   for (Module *const module : buffer_modules) {
     // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from the
     // module, as they should be regenerated every time (in case they get
     // removed or their names change)
-    const auto autoinput_match = SearchInSymbol(module->symbol, autoinput_re_);
+    const auto autoinput_match =
+        SearchInSymbol(module->Symbol(), autoinput_re_);
     if (autoinput_match) {
       module->ErasePortsInRange(autoinput_match->position(),
                                 autoinput_match->length());
     }
-    const auto autoinout_match = SearchInSymbol(module->symbol, autoinout_re_);
+    const auto autoinout_match =
+        SearchInSymbol(module->Symbol(), autoinout_re_);
     if (autoinout_match) {
       module->ErasePortsInRange(autoinout_match->position(),
                                 autoinout_match->length());
     }
     const auto autooutput_match =
-        SearchInSymbol(module->symbol, autooutput_re_);
+        SearchInSymbol(module->Symbol(), autooutput_re_);
     if (autooutput_match) {
       module->ErasePortsInRange(autooutput_match->position(),
                                 autooutput_match->length());
     }
     // Do AUTOINST expansion
     module->RetrieveAutoTemplates();
-    for (const auto &data : FindAllDataDeclarations(module->symbol)) {
+    for (const auto &data : FindAllDataDeclarations(module->Symbol())) {
       const Symbol *const type_id_node =
           GetTypeIdentifierFromDataDeclaration(*data.match);
       // Some data declarations do not have a type id, ignore those
@@ -1031,7 +1042,7 @@ std::vector<TextEdit> AutoExpander::Expand() {
       const absl::string_view type_id = StringSpanOfSymbol(*type_id_node);
       // Find an AUTO_TEMPLATE that matches this instance
       int64_t instance_offset = std::distance(
-          StringSpanOfSymbol(module->symbol).begin(), type_id.begin());
+          StringSpanOfSymbol(module->Symbol()).begin(), type_id.begin());
       const Template *tmpl = module->GetAutoTemplate(type_id, instance_offset);
       for (const auto &instance : FindAllGateInstances(*data.match)) {
         if (const auto edit =
