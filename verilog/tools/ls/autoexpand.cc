@@ -402,6 +402,11 @@ void AutoExpander::Module::EmitUndeclaredOutputDeclarations(
   });
 }
 
+bool SpansNotOverlapping(const absl::string_view first,
+                         const absl::string_view second) {
+  return first.end() <= second.begin() || first.begin() >= second.end();
+}
+
 void AutoExpander::Module::EmitUndeclaredOutputWireDeclarations(
     std::ostream &output, const absl::string_view indent,
     const absl::string_view auto_span) const {
@@ -410,8 +415,7 @@ void AutoExpander::Module::EmitUndeclaredOutputWireDeclarations(
     const SyntaxTreeLeaf *const net_name_leaf =
         GetNameLeafOfNetVariable(*reg.match);
     const absl::string_view net_name = net_name_leaf->get().text();
-    if (net_name.end() <= auto_span.begin() &&
-        net_name.begin() >= auto_span.end()) {
+    if (SpansNotOverlapping(net_name, auto_span)) {
       declared_wires.insert(net_name);
     }
   }
@@ -446,8 +450,7 @@ void AutoExpander::Module::EmitUnconnectedOutputRegDeclarations(
     const SyntaxTreeLeaf *const reg_name_leaf =
         GetNameLeafOfRegisterVariable(*reg.match);
     const absl::string_view reg_name = reg_name_leaf->get().text();
-    if (reg_name.end() <= auto_span.begin() &&
-        reg_name.begin() >= auto_span.end()) {
+    if (SpansNotOverlapping(reg_name, auto_span)) {
       declared_regs.insert(reg_name);
     }
   }

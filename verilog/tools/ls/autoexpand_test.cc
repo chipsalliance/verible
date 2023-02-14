@@ -1337,6 +1337,8 @@ module bar(input i1, output o1);
 endmodule
 
 module foo;
+  wire o1;
+
   /*AUTOWIRE*/
 
   bar b(/*AUTOINST*/);
@@ -1350,10 +1352,11 @@ module bar(input i1, output o1);
 endmodule
 
 module foo;
+  wire o1;
+
   /*AUTOWIRE*/
   // Beginning of automatic wires (for undeclared instantiated-module outputs)
   wire io;  // To/From b of bar
-  wire o1;  // From b of bar
   wire o2;  // From b of bar
   // End of automatics
 
@@ -1404,6 +1407,8 @@ module bar(input i1, output o1);
 endmodule
 
 module foo;
+  wire o1;
+
   /*AUTOWIRE*/
   // Beginning of automatic wires (for undeclared instantiated-module outputs)
   wire in_out;  // To/From b of bar
@@ -1422,10 +1427,11 @@ module bar(input i1, output o1);
 endmodule
 
 module foo;
+  wire o1;
+
   /*AUTOWIRE*/
   // Beginning of automatic wires (for undeclared instantiated-module outputs)
   wire io;  // To/From b of bar
-  wire o1;  // From b of bar
   wire o2;  // From b of bar
   // End of automatics
 
@@ -1455,6 +1461,9 @@ module foo;
   output o1;
   output o2;
   output o3;
+  output o4;
+
+  reg o4;
 
   /*AUTOREG*/
 
@@ -1472,6 +1481,9 @@ module foo;
   output o1;
   output o2;
   output o3;
+  output o4;
+
+  reg o4;
 
   /*AUTOREG*/
   // Beginning of automatic regs (for this module's undeclared outputs)
@@ -1495,11 +1507,15 @@ TEST(Autoexpand, AUTOREG_NoExpand) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
 module foo;
+  output o;
+  reg o;
   /*AUTOREG*/
 endmodule
 )",
                 R"(
 module foo;
+  output o;
+  reg o;
   /*AUTOREG*/
 endmodule
 )");
