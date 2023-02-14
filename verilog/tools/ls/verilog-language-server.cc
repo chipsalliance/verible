@@ -176,7 +176,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
   } else if (!p.rootPath.empty()) {
     ConfigureProject(p.rootPath);
   } else {
-    LOG(WARNING) << "Could not configure Verilog Project root";
+    VLOG(1) << "No root URI given. Initialize with root='.'";
     ConfigureProject();
   }
   return GetCapabilities();
@@ -233,7 +233,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
   if (!buffer_tracker->last_good()) return;
   symbol_table_handler_.UpdateFileContent(
       path, &buffer_tracker->last_good()->parser().Data());
-  LOG(INFO) << "Updated file:  " << uri << " (" << path << ")";
+  VLOG(1) << "Updated file:  " << uri << " (" << path << ")";
 }
 
 };  // namespace verilog

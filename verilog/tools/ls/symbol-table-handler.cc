@@ -18,6 +18,8 @@
 #include <filesystem>
 
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "verilog/analysis/verilog_filelist.h"
@@ -29,16 +31,19 @@ namespace verilog {
 
 static constexpr absl::string_view kFileSchemePrefix = "file://";
 
-// If vlog, output all non-ok messages, otherwise just the first few.
+// If vlog(2), output all non-ok messages, with vlog(1) just the first few,
+// else: none
 static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
-  int report_count = 0;
-  for (const auto &s : statuses) {
-    if (s.ok()) continue;
-    LOG(INFO) << s;
-    if (++report_count > 5 && !VLOG_IS_ON(1)) {
-      LOG(WARNING) << "skipped remaining messages; switch VLOG(1) on for "
-                   << statuses.size() << " statuses";
-      break;  // only more noisy on request.
+  if (VLOG_IS_ON(1)) {
+    int report_count = 0;
+    for (const auto &s : statuses) {
+      if (s.ok()) continue;
+      LOG(INFO) << s;
+      if (++report_count > 5 && !VLOG_IS_ON(2)) {
+        LOG(WARNING) << "skipped remaining messages; switch VLOG(2) on for "
+                     << statuses.size() << " statuses";
+        break;  // only more noisy on request.
+      }
     }
   }
 }
@@ -59,12 +64,11 @@ std::string FindFileList(absl::string_view current_dir) {
   if (auto status = verible::file::UpwardFileSearch(
           current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
       !status.ok()) {
-    LOG(WARNING) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
-                 << " file in the project root (" << current_dir
-                 << "):  " << status;
+    VLOG(1) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
+            << " file in the project root (" << current_dir << "):  " << status;
     return "";
   }
-  LOG(INFO) << "Found file list under " << projectpath;
+  VLOG(1) << "Found file list under " << projectpath;
   return projectpath;
 }
 
@@ -83,7 +87,7 @@ void SymbolTableHandler::ParseProjectFiles() {
   if (!curr_project_) return;
 
   // Parse all files separate from SymbolTable::Build() to report parse duration
-  LOG(INFO) << "Parsing project files...";
+  VLOG(1) << "Parsing project files...";
   const absl::Time start = absl::Now();
   std::vector<absl::Status> results;
   for (auto &unit : *curr_project_) {
@@ -93,8 +97,8 @@ void SymbolTableHandler::ParseProjectFiles() {
   }
   LogFullIfVLog(results);
 
-  LOG(INFO) << "VerilogSourceFile::Parse() for " << results.size()
-            << " files: " << (absl::Now() - start);
+  VLOG(1) << "VerilogSourceFile::Parse() for " << results.size()
+          << " files: " << (absl::Now() - start);
 }
 
 std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
@@ -103,20 +107,10 @@ std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
   }
   ResetSymbolTable();
   ParseProjectFiles();
+
   std::vector<absl::Status> buildstatus;
-
-  {
-    const absl::Time start = absl::Now();
-    symbol_table_->Build(&buildstatus);
-    LOG(INFO) << "SymbolTable::Build() took " << (absl::Now() - start);
-  }
-
-  {
-    const absl::Time start = absl::Now();
-    symbol_table_->Resolve(&buildstatus);
-    LOG(INFO) << "SymbolTable::Resolve() took " << (absl::Now() - start);
-  }
-
+  symbol_table_->Build(&buildstatus);
+  symbol_table_->Resolve(&buildstatus);
   LogFullIfVLog(buildstatus);
 
   files_dirty_ = false;
@@ -124,7 +118,7 @@ std::vector<absl::Status> SymbolTableHandler::BuildProjectSymbolTable() {
 }
 
 bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
-  LOG(INFO) << __FUNCTION__;
+  VLOG(1) << __FUNCTION__;
   if (!curr_project_) return false;
   if (filelist_path_.empty()) {
     // search for FileList file up the directory hierarchy
@@ -134,7 +128,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
       last_filelist_update_ = {};
       return false;
     }
-    LOG(INFO) << "Found file list under " << projectpath;
+    VLOG(1) << "Found file list under " << projectpath;
     filelist_path_ = projectpath;
   }
   if (!last_filelist_update_) {
@@ -144,7 +138,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     // filelist file is unchanged, keeping it
     return true;
   }
-  LOG(INFO) << "Updating the filelist";
+  VLOG(1) << "Updating the filelist";
   // fill the FileList object
   FileList filelist;
   if (absl::Status status = AppendFileListFromFile(filelist_path_, &filelist);
@@ -160,14 +154,14 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   // TODO (glatosinski): should we do this?
   const absl::string_view filelist_dir = verible::file::Dirname(filelist_path_);
   curr_project_->AddIncludePath(filelist_dir);
-  LOG(INFO) << "Adding \"" << filelist_dir << "\" to include directories";
+  VLOG(1) << "Adding \"" << filelist_dir << "\" to include directories";
   // update include directories in project
   for (const auto &incdir : filelist.preprocessing.include_dirs) {
-    LOG(INFO) << "Adding include path:  " << incdir;
+    VLOG(1) << "Adding include path:  " << incdir;
     curr_project_->AddIncludePath(incdir);
   }
   // Add files from file list to the project
-  LOG(INFO) << "Resolving " << filelist.file_paths.size() << " files.";
+  VLOG(1) << "Resolving " << filelist.file_paths.size() << " files.";
   int actually_opened = 0;
   const absl::Time start = absl::Now();
   for (const auto &file_in_project : filelist.file_paths) {
@@ -176,16 +170,15 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     auto source = curr_project_->OpenTranslationUnit(canonicalized);
     if (!source.ok()) source = curr_project_->OpenIncludedFile(canonicalized);
     if (!source.ok()) {
-      LOG(WARNING) << "File included in " << filelist_path_
-                   << " not found:  " << canonicalized << ":  "
-                   << source.status();
+      VLOG(1) << "File included in " << filelist_path_
+              << " not found:  " << canonicalized << ":  " << source.status();
       continue;
     }
     ++actually_opened;
   }
 
-  LOG(INFO) << "Successfully opened " << actually_opened
-            << " files from file-list: " << (absl::Now() - start);
+  VLOG(1) << "Successfully opened " << actually_opened
+          << " files from file-list: " << (absl::Now() - start);
   return true;
 }
 
@@ -234,7 +227,6 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  const absl::Time finddefinition_start = absl::Now();
   LoadProjectFileList(curr_project_->TranslationUnitRoot());
   if (files_dirty_) {
     BuildProjectSymbolTable();
@@ -243,8 +235,6 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   if (filepath.empty()) {
     LOG(ERROR) << "Could not convert URI " << params.textDocument.uri
                << " to filesystem path." << std::endl;
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
@@ -252,16 +242,12 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
   if (!tracker) {
     LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   const verilog::ParsedBuffer *parsedbuffer = tracker->current();
   if (!parsedbuffer) {
     LOG(ERROR) << "Buffer not found among opened buffers:  "
                << params.textDocument.uri;
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   const verible::LineColumn cursor{params.position.line,
@@ -270,12 +256,10 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
   auto symbol = cursor_token.text();
-  LOG(INFO) << "Looking for symbol:  " << symbol;
+  VLOG(1) << "Looking for symbol:  " << symbol;
   auto reffile = curr_project_->LookupRegisteredFile(relativepath);
   if (!reffile) {
     LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
 
@@ -284,8 +268,6 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   auto node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) {
     LOG(INFO) << "Symbol " << symbol << " not found in symbol table:  " << node;
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   // TODO add iterating over multiple definitions?
@@ -293,16 +275,12 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   const verilog::SymbolInfo &symbolinfo = node->Value();
   if (!symbolinfo.file_origin) {
     LOG(ERROR) << "Origin file not available";
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   location.uri = PathToLSPUri(symbolinfo.file_origin->ResolvedPath());
   auto *textstructure = symbolinfo.file_origin->GetTextStructure();
   if (!textstructure) {
     LOG(ERROR) << "Origin file's text structure is not parsed";
-    LOG(INFO) << "textDocument/definition processing time:  "
-              << (absl::Now() - finddefinition_start);
     return {};
   }
   verible::LineColumnRange symbollocation =
@@ -311,8 +289,6 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
                           .character = symbollocation.start.column};
   location.range.end = {.line = symbollocation.end.line,
                         .character = symbollocation.end.column};
-  LOG(INFO) << "textDocument/definition processing time:  "
-            << (absl::Now() - finddefinition_start);
   return {location};
 }
 

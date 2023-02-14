@@ -22,6 +22,8 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "common/strings/display_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -2007,8 +2009,10 @@ void SymbolTable::CheckIntegrity() const {
 }
 
 void SymbolTable::Resolve(std::vector<absl::Status>* diagnostics) {
+  const absl::Time start = absl::Now();
   symbol_table_root_.ApplyPreOrder(
       [=](SymbolTableNode& node) { node.Value().Resolve(node, diagnostics); });
+  VLOG(1) << "SymbolTable::Resolve took " << (absl::Now() - start);
 }
 
 void SymbolTable::ResolveLocallyOnly() {
@@ -2050,10 +2054,12 @@ static void ParseFileAndBuildSymbolTable(
 }
 
 void SymbolTable::Build(std::vector<absl::Status>* diagnostics) {
+  const absl::Time start = absl::Now();
   for (auto& translation_unit : *project_) {
     ParseFileAndBuildSymbolTable(translation_unit.second.get(), this, project_,
                                  diagnostics);
   }
+  VLOG(1) << "SymbolTable::Build() took " << (absl::Now() - start);
 }
 
 void SymbolTable::BuildSingleTranslationUnit(
