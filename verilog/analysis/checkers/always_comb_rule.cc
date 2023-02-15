@@ -63,11 +63,20 @@ static const Matcher& AlwaysStarMatcher() {
   return matcher;
 }
 
+static const Matcher& AlwaysStarMatcherWithParentheses() {
+  static const Matcher matcher(NodekAlwaysStatement(
+      AlwaysKeyword(), AlwaysStatementHasEventControlStarAndParentheses()));
+  return matcher;
+}
+
 void AlwaysCombRule::HandleSymbol(const verible::Symbol& symbol,
                                   const SyntaxTreeContext& context) {
   // Check for offending use of always @*
   verible::matcher::BoundSymbolManager manager;
   if (AlwaysStarMatcher().Matches(symbol, &manager)) {
+    violations_.insert(LintViolation(symbol, kMessage, context));
+  }
+  if (AlwaysStarMatcherWithParentheses().Matches(symbol, &manager)) {
     violations_.insert(LintViolation(symbol, kMessage, context));
   }
 }

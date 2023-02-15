@@ -183,10 +183,8 @@ AngleBracketInclude {UnterminatedAngleBracketString}>
 
 /* attribute lists, treated like comments */
 AttributesBegin "(*"
-AttributesEnd   [*]+")"
-/* was TK_PSTAR and TK_STARP */
-AttributesContinue [^ \r\n\t\f\b)]
-AttributesContent ([^*]|("*"+[^)*]))*
+AttributesEnd   "*)"
+AttributesContent ([^)]|("("[^*]*")"))*
 Attributes {AttributesBegin}{AttributesContent}{AttributesEnd}
 
 /* comments */
@@ -859,36 +857,10 @@ zi_zp { UpdateLocation(); return TK_zi_zp; }
 "[->" { UpdateLocation(); return TK_LBRARROW; }
 "@@" { UpdateLocation(); return TK_ATAT; }
 
-  /* Watch out for the tricky case of (*). Cannot parse this as "(*"
-     and ")", but since I know that this is really ( * ), replace it
-     with "*" and return that. */
-  /* TODO(fangism): see if this can be simplified without lexer states. */
-{AttributesBegin} {
-  yy_push_state(ATTRIBUTE_START);
-  yymore();
-}
-<ATTRIBUTE_START>{Space}+ {
-  yymore();
-}
-<ATTRIBUTE_START>{LineTerminator} {
-  yymore();
-}
-<ATTRIBUTE_START>")" {
-  /* This is the (*) case. */
-  yy_pop_state();
-  UpdateLocation();
-  return '*';
-}
-<ATTRIBUTE_START,ATTRIBUTE_MIDDLE>{AttributesEnd} {
-  yy_pop_state();
+{Attributes} {
   UpdateLocation();
   return TK_ATTRIBUTE;
 }
-<ATTRIBUTE_START>{AttributesContinue} {
-  yy_set_top_state(ATTRIBUTE_MIDDLE);
-  yymore();
-}
-<ATTRIBUTE_MIDDLE>{AttributesContent} { yymore(); }
 
   /* Only enter the EDGES state if the next token is '[', otherwise, rewind. */
 <EDGES_POSSIBLY>{

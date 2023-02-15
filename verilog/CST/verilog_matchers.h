@@ -286,6 +286,15 @@ static const auto AlwaysStatementHasEventControlStar =
     verible::matcher::MakePathMatcher(
         {N(kProceduralTimingControlStatement), N(kEventControl), L('*')});
 
+static const auto AlwaysStatementHasEventControlStarAndParentheses =
+    verible::matcher::MakePathMatcher({N(kProceduralTimingControlStatement),
+                                       N(kEventControl), N(kParenGroup),
+                                       L('*')});
+
+static const auto AlwaysStatementHasParentheses =
+    verible::matcher::MakePathMatcher({N(kProceduralTimingControlStatement),
+                                       N(kEventControl), N(kParenGroup)});
+
 // Matches occurrence of the 'always' keyword.
 // This is needed to distinguish between various kAlwaysStatement's.
 // This matches 'always', but not 'always_ff', nor 'always_comb'.
