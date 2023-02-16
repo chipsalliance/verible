@@ -72,9 +72,9 @@ static const Matcher& DimensionRangeMatcher() {
 void UnpackedDimensionsRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   if (!ContextIsInsideUnpackedDimensions(context) ||
-      context.IsInside(NodeEnum::kGateInstance))
+      context.IsInside(NodeEnum::kGateInstance)) {
     return;
-
+  }
   verible::matcher::BoundSymbolManager manager;
   if (DimensionRangeMatcher().Matches(symbol, &manager)) {
     // Check whether or not bounds are numeric constants, including 0.

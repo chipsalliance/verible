@@ -302,8 +302,9 @@ absl::Status LinterConfiguration::AppendFromFile(
     RuleBundle local_rules_bundle;
     std::string error;
     if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
-      if (!error.empty())
+      if (!error.empty()) {
         std::cerr << "Warnings in parse configuration: " << error << std::endl;
+      }
       UseRuleBundle(local_rules_bundle);
     } else {
       std::cerr << "Unable to fully parse configuration: " << error

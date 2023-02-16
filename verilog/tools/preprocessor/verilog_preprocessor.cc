@@ -63,13 +63,14 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
     replace_char = ' ';
   } else if (args.size() == 2) {
     absl::string_view replace_str(args[1]);
-    if (replace_str.empty())
+    if (replace_str.empty()) {
       replace_char = '\0';
-    else if (replace_str.length() == 1)
+    } else if (replace_str.length() == 1) {
       replace_char = replace_str[0];
-    else
+    } else {
       return absl::InvalidArgumentError(
           "Replacement must be a single character.");
+    }
   } else {
     return absl::InvalidArgumentError("Too many arguments.");
   }
@@ -125,8 +126,9 @@ static absl::Status PreprocessSingleFile(
   auto& preprocessed_stream = preprocessed_data.preprocessed_token_stream;
   for (auto u : preprocessed_stream) outs << u->text();
   for (auto& u : preprocessed_data.errors) outs << u.error_message << '\n';
-  if (!preprocessed_data.errors.empty())
+  if (!preprocessed_data.errors.empty()) {
     return absl::InvalidArgumentError("Error: The preprocessing has failed.");
+  }
   return absl::OkStatus();
 }
 

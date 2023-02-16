@@ -284,10 +284,11 @@ static WithReason<int> SpacesRequiredBetween(
 
   // Hierarchy examples: "a.b", "a::b"
   if (left.format_token_enum == FormatTokenType::hierarchy ||
-      right.format_token_enum == FormatTokenType::hierarchy)
+      right.format_token_enum == FormatTokenType::hierarchy) {
     return {0,
             "No space separating hierarchy components "
             "(separated by . or ::)"};
+  }
   // TODO(fangism): space between numeric literals and '.'
   // Don't want to accidentally form m.d floating-point values.
 
@@ -474,12 +475,15 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Space after time literals in most other cases."};
   }
 
-  if (right.TokenEnum() == TK_POUNDPOUND)
+  if (right.TokenEnum() == TK_POUNDPOUND) {
     return {1, "Space before ## (delay) operator"};
-  if (left.format_token_enum == FormatTokenType::unary_operator)
+  }
+  if (left.format_token_enum == FormatTokenType::unary_operator) {
     return {0, "++i over ++ i"};  // "++i" instead of "++ i"
-  if (right.format_token_enum == FormatTokenType::unary_operator)
+  }
+  if (right.format_token_enum == FormatTokenType::unary_operator) {
     return {0, "i++ over i ++"};  // "i++" instead of "i ++"
+  }
 
   // TODO(fangism): handle ranges [ ... : ... ]
 
@@ -592,10 +596,12 @@ static WithReason<int> BreakPenaltyBetweenTokens(
   // Hierarchy examples: "a.b", "a::b"
   // TODO(fangism): '.' is not always hierarchy, differentiate by context.
   // slightly prefer to break on the left: "a .b" better than "a. b"
-  if (left.format_token_enum == FormatTokenType::hierarchy)
+  if (left.format_token_enum == FormatTokenType::hierarchy) {
     return {50, "hierarchy separator on left"};
-  if (right.format_token_enum == FormatTokenType::hierarchy)
+  }
+  if (right.format_token_enum == FormatTokenType::hierarchy) {
     return {45, "hierarchy separator on right"};
+  }
 
   // Prefer to split after commas rather than before them.
   if (right.TokenEnum() == ',') return {10, "avoid breaking before ','"};
@@ -618,8 +624,9 @@ static WithReason<int> BreakPenaltyBetweenTokens(
   }
   // Prefer to keep ')' with whatever is on the left.
   if (right.format_token_enum == FormatTokenType::close_group ||
-      right.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine)
+      right.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     return {10, "right is close-group"};
+  }
 
   if (left.TokenEnum() == TK_DecNumber &&
       right.TokenEnum() == TK_UnBasedNumber) {
@@ -842,12 +849,14 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (right.TokenEnum() == TK_else) {
     // TODO(fangism): feels like this should be the responsibility of
     // tree_unwrapper, handled by kElseClause, kGenerateElseClause, etc.
-    if (left.TokenEnum() == TK_end)
+    if (left.TokenEnum() == TK_end) {
       return {SpacingOptions::MustAppend,
               "'end'-'else' and should be together on one line."};
-    if (left.TokenEnum() == '}')
+    }
+    if (left.TokenEnum() == '}') {
       return {SpacingOptions::MustAppend,
               "'}'-'else' and should be together on one line."};
+    }
     // TODO(fangism): Some styles prefer to start with 'else' on its own line.
     return {SpacingOptions::MustWrap, "'else' starts its own line."};
   }

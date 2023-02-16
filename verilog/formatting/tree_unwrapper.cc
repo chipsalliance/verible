@@ -1205,9 +1205,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCoverPoint: {
       if (style_.expand_coverpoints) {
         VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
-      } else
+      } else {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
     }
 
@@ -1490,8 +1491,9 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
     auto* first_leaf = &LeftmostDescendant(partition);
     const auto leaf_policy = first_leaf->Value().PartitionPolicy();
     if (leaf_policy == PartitionPolicyEnum::kAlreadyFormatted ||
-        leaf_policy == PartitionPolicyEnum::kInline)
+        leaf_policy == PartitionPolicyEnum::kInline) {
       return true;
+    }
   }
 
   const auto ftokens = partition.Value().TokensRange();
@@ -1686,16 +1688,18 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
         });
     if (last_non_comment_it == rend ||
         !(last_non_comment_it->TokenEnum() == '=' ||
-          last_non_comment_it->TokenEnum() == ':'))
+          last_non_comment_it->TokenEnum() == ':')) {
       continue;
+    }
 
     const auto& next = partition->Children()[i + 1];
     if (next.Value().IsEmpty()) continue;
 
     const auto& next_token = next.Value().TokensRange().front();
     if (!(next_token.TokenEnum() == verilog_tokentype::TK_LP ||
-          next_token.TokenEnum() == '{'))
+          next_token.TokenEnum() == '{')) {
       continue;
+    }
 
     if (!PartitionIsForcedIntoNewLine(next)) {
       verible::MergeLeafIntoNextLeaf(&current);
@@ -1760,8 +1764,9 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
         next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_begin) ||
         next_origin->Tag() == verible::NodeTag(NodeEnum::kIfHeader) ||
         next_origin->Tag() == verible::NodeTag(NodeEnum::kGenerateIfHeader) ||
-        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_if)))
+        next_origin->Tag() == verible::LeafTag(verilog_tokentype::TK_if))) {
     return;
+  }
 
   verible::MergeLeafIntoNextLeaf(&else_partition);
 }
@@ -1992,8 +1997,9 @@ class MacroCallReshaper {
             std::none_of(tokens.begin(), tokens.end(),
                          [](const PreFormatToken& t) {
                            return IsComment(verilog_tokentype(t.TokenEnum()));
-                         }))
+                         })) {
           arg.Value().SetPartitionPolicy(PartitionPolicyEnum::kWrap);
+        }
       }
     }
 
@@ -2437,8 +2443,9 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
   const verible::Symbol* expression = verible::GetSubtreeAsSymbol(
       *trailing_assign, NodeEnum::kTrailingAssign, 1);
   if (!expression ||
-      expression->Tag() != verible::NodeTag(NodeEnum::kExpression))
+      expression->Tag() != verible::NodeTag(NodeEnum::kExpression)) {
     return nullptr;
+  }
 
   return &verible::SymbolCastToNode(*expression);
 }
@@ -2548,14 +2555,16 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       const auto* concat_expr_symbol = assigned_expr->children().front().get();
       if (concat_expr_symbol->Tag() !=
-          verible::NodeTag(NodeEnum::kConcatenationExpression))
+          verible::NodeTag(NodeEnum::kConcatenationExpression)) {
         break;
+      }
 
       const auto* open_range_list_symbol =
           verible::SymbolCastToNode(*concat_expr_symbol).children()[1].get();
       if (open_range_list_symbol->Tag() !=
-          verible::NodeTag(NodeEnum::kOpenRangeList))
+          verible::NodeTag(NodeEnum::kOpenRangeList)) {
         break;
+      }
 
       const auto& open_range_list =
           verible::SymbolCastToNode(*open_range_list_symbol);

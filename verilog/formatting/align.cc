@@ -105,10 +105,8 @@ static bool IgnoreCommentsAndPreprocessingDirectives(
   if (TokensAreAllCommentsOrAttributes(token_range)) return true;
 
   // ignore partitions belonging to preprocessing directives
-  if (IsPreprocessorKeyword(verilog_tokentype(token_range.front().TokenEnum())))
-    return true;
-
-  return false;
+  return IsPreprocessorKeyword(
+      verilog_tokentype(token_range.front().TokenEnum()));
 }
 
 static bool IgnoreWithinPortDeclarationPartitionGroup(
@@ -334,11 +332,11 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         // for vectors.
 
         SyntaxTreePath new_path;
-        if (current_path_ == SyntaxTreePath{1, 0, 3})
+        if (current_path_ == SyntaxTreePath{1, 0, 3}) {
           new_path = {1, 0, 0, 3};
-        else
+        } else {
           new_path = Path();
-
+        }
         const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
 
         // Left border is removed from each dimension subcolumn.
@@ -605,8 +603,9 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
         const Symbol* origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
-        if (symbol_tag.kind != verible::SymbolKind::kNode)
+        if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
+        }
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align net/variable declarations.
         if (IsAlignableDeclaration(node)) {
@@ -632,8 +631,9 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
         const Symbol* origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
-        if (symbol_tag.kind != verible::SymbolKind::kNode)
+        if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return {AlignmentGroupAction::kIgnore};
+        }
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align class member variables.
         return AlignClassify(IsAlignableDeclaration(node)
@@ -653,8 +653,9 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
         const Symbol* origin = partition.Value().Origin();
         if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
-        if (symbol_tag.kind != verible::SymbolKind::kNode)
+        if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
+        }
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align local variable declarations.
         if (IsAlignableDeclaration(node)) {
@@ -972,8 +973,9 @@ class ParameterDeclarationColumnSchemaScanner
           return;
         }
 
-        if (Context().DirectParentIs(NodeEnum::kParamType))
+        if (Context().DirectParentIs(NodeEnum::kParamType)) {
           ReserveNewColumn(leaf, FlushLeft);
+        }
         break;
       }
 

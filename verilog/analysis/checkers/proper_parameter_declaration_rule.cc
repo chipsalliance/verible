@@ -83,8 +83,9 @@ void ProperParameterDeclarationRule::HandleSymbol(
       }
     } else if (param_decl_token == TK_localparam) {
       // If the context is not inside a class or module, report violation.
-      if (!ContextIsInsideClass(context) && !ContextIsInsideModule(context))
+      if (!ContextIsInsideClass(context) && !ContextIsInsideModule(context)) {
         violations_.insert(LintViolation(symbol, kLocalParamMessage, context));
+      }
     }
   }
 }

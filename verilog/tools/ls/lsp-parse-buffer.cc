@@ -49,8 +49,9 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
 
 void BufferTracker::Update(const std::string &filename,
                            const verible::lsp::EditTextBuffer &txt) {
-  if (current_ && current_->version() == txt.last_global_version())
+  if (current_ && current_->version() == txt.last_global_version()) {
     return;  // Nothing to do (we don't really expect this to happen)
+  }
   txt.RequestContent([&txt, &filename, this](absl::string_view content) {
     current_ = std::make_shared<ParsedBuffer>(txt.last_global_version(),
                                               filename, content);

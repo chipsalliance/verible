@@ -1982,10 +1982,11 @@ std::ostream& SymbolInfo::PrintReferences(std::ostream& stream,
   newline_wrap.front() = '\n';
   stream << "refs:";
   // When there's at most 1 reference, print more compactly.
-  if (local_references_to_bind.size() > 1)
+  if (local_references_to_bind.size() > 1) {
     stream << newline_wrap;
-  else
+  } else {
     stream << ' ';
+  }
   stream << absl::StrJoin(local_references_to_bind, newline_wrap,
                           absl::StreamFormatter());
   if (local_references_to_bind.size() > 1) stream << newline_wrap;

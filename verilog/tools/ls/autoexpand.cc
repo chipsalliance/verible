@@ -912,8 +912,9 @@ std::optional<TextEdit> AutoExpander::ExpandAutoinst(Module *module,
     LOG(ERROR) << "AUTOINST: No definition found for module type: " << type_id;
     return {};
   }
-  if (!modules_.contains(type_id))
+  if (!modules_.contains(type_id)) {
     modules_.insert(std::make_pair(type_id, Module(*type_def)));
+  }
   const Module &inst_module = modules_.at(type_id);
 
   // Ports connected before the AUTOINST comment should be ignored

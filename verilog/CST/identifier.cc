@@ -69,8 +69,9 @@ const verible::SyntaxTreeLeaf* GetIdentifier(const verible::Symbol& symbol) {
   auto t = symbol.Tag();
   if (t.kind != SymbolKind::kNode) return nullptr;
   if (NodeEnum(t.tag) != NodeEnum::kUnqualifiedId &&
-      NodeEnum(t.tag) != NodeEnum::kPortIdentifier)
+      NodeEnum(t.tag) != NodeEnum::kPortIdentifier) {
     return nullptr;
+  }
   const auto& node = down_cast<const verible::SyntaxTreeNode&>(symbol);
   const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(node[0].get());
   return leaf;

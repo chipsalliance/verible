@@ -249,16 +249,17 @@ void GenerateCode(const std::string &filename,
     fprintf(out, " {\n");
     for (const auto &p : obj->properties) {
       std::string type;
-      if (p.object_type)
+      if (p.object_type) {
         type = p.object_type->name;
-      else if (p.type == "string")
+      } else if (p.type == "string") {
         type = "std::string";
-      else if (p.type == "integer")
+      } else if (p.type == "integer") {
         type = "int";
-      else if (p.type == "object")
+      } else if (p.type == "object") {
         type = "nlohmann::json";
-      else if (p.type == "boolean")
+      } else if (p.type == "boolean") {
         type = "bool";
+      }
       // TODO: optional and array
       if (type.empty()) {
         std::cerr << p.location << "Not supported yet '" << p.type << "'\n";

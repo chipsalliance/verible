@@ -282,8 +282,9 @@ std::vector<verible::lsp::TextEdit> FormatRange(
         p.range.end.line + 1 + last_line_include};
     std::string formatted_range;
     if (!FormatVerilogRange(text, format_style, &formatted_range, format_lines)
-             .ok())
+             .ok()) {
       return result;
+    }
     result.push_back(verible::lsp::TextEdit{
         .range =
             {
@@ -293,8 +294,9 @@ std::vector<verible::lsp::TextEdit> FormatRange(
         .newText = formatted_range});
   } else {
     std::string newText;
-    if (!FormatVerilog(text, current->uri(), format_style, &newText).ok())
+    if (!FormatVerilog(text, current->uri(), format_style, &newText).ok()) {
       return result;
+    }
     // Emit a single edit that replaces the full range the file covers.
     // TODO(hzeller): Could consider patches maybe.
     // TODO(hzeller): Also be safe and don't emit anything if text is the same.

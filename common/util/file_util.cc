@@ -104,9 +104,9 @@ absl::Status UpwardFileSearch(absl::string_view start,
   std::error_code err;
   const std::string search_file(filename);
   fs::path absolute_path = fs::absolute(std::string(start), err);
-  if (err.value() != 0)
+  if (err.value() != 0) {
     return CreateErrorStatusFromErr("invalid config path specified.", err);
-
+  }
   fs::path probe_dir = absolute_path;
   for (;;) {
     *result = (probe_dir / search_file).string();
@@ -240,9 +240,9 @@ std::string JoinPath(absl::string_view base, absl::string_view name) {
 absl::Status CreateDir(absl::string_view dir) {
   const std::string path(dir);
   std::error_code err;
-  if (fs::create_directory(path, err) || err.value() == 0)
+  if (fs::create_directory(path, err) || err.value() == 0) {
     return absl::OkStatus();
-
+  }
   return CreateErrorStatusFromErr("can't create directory", err);
 }
 
@@ -253,8 +253,9 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   d.path = dir.empty() ? "." : std::string(dir);
 
   fs::file_status stat = fs::status(d.path, err);
-  if (err.value() != 0)
+  if (err.value() != 0) {
     return CreateErrorStatusFromErr("Opening directory", err);
+  }
   if (!fs::is_directory(stat)) {
     return absl::InvalidArgumentError(absl::StrCat(dir, ": not a directory"));
   }

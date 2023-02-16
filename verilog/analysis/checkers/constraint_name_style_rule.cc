@@ -82,8 +82,9 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     const absl::string_view constraint_name = identifier_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(constraint_name) ||
-        !absl::EndsWith(constraint_name, "_c"))
+        !absl::EndsWith(constraint_name, "_c")) {
       violations_.insert(LintViolation(*identifier_token, kMessage, context));
+    }
   }
 }
 

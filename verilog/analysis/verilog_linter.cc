@@ -338,12 +338,12 @@ absl::Status PrintRuleInfo(std::ostream* os,
   constexpr char kFill = ' ';
 
   const auto it = rule_map.find(rule_name);
-  if (it == rule_map.end())
+  if (it == rule_map.end()) {
     return absl::NotFoundError(absl::StrCat(
         "Rule: \'", rule_name,
         "\' not found. Please specify a rule name or \"all\" for help on "
         "the rules.\n"));
-
+  }
   const auto& d = it->second.descriptor;
   // Print description.
   *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << rule_name

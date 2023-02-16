@@ -48,7 +48,6 @@ Checks: >
   -readability-convert-member-functions-to-static,
   -readability-use-anyofallof,
   google-*,
-  -google-readability-braces-around-statements,
   -google-readability-casting,
   -google-readability-todo,
   performance-*,

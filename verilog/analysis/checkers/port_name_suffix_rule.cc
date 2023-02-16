@@ -119,8 +119,9 @@ void PortNameSuffixRule::HandleSymbol(const Symbol& symbol,
       Violation(direction, token, context);
     }
 
-    if (!IsSuffixCorrect(name_parts.back(), direction))
+    if (!IsSuffixCorrect(name_parts.back(), direction)) {
       Violation(direction, token, context);
+    }
   }
 }
 

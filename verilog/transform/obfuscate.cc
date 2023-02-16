@@ -38,8 +38,10 @@ std::string RandomEqualLengthSymbolIdentifier(absl::string_view in) {
   for (;;) {
     std::string candidate = verible::RandomEqualLengthIdentifier(in);
     lexer.Restart(candidate);
-    if (lexer.DoNextToken().token_enum() == verilog_tokentype::SymbolIdentifier)
+    if (lexer.DoNextToken().token_enum() ==
+        verilog_tokentype::SymbolIdentifier) {
       return candidate;
+    }
   }
 }
 
