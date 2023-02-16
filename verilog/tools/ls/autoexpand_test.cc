@@ -138,21 +138,23 @@ endmodule
 )",
                 R"(
 module t1(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  o
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o
+);
   input logic clk;
   input logic rst;
   output logic o;
 endmodule
 module t2(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  o
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o
+);
   input logic clk;
   input rst;
   output reg o;
@@ -195,13 +197,14 @@ module t(/*AUTOARG*/
 endmodule)",
                 R"(
 module t(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Inouts
-  io,
-  // Outputs
-  o
-  );
+    // Inputs
+    clk,
+    rst,
+    // Inouts
+    io,
+    // Outputs
+    o
+);
   input logic clk;
   input logic rst;
   inout logic io;
@@ -226,11 +229,12 @@ endmodule)",
                 R"(
 module t(input i1, i2,
          o1, /*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  o2
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o2
+);
   input logic clk;
   input logic rst;
   input logic i2;
@@ -265,14 +269,15 @@ module foo;
   inout [7:0][7:0] io;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -345,12 +350,13 @@ module foo;
   inout logic io;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -374,11 +380,12 @@ module foo;
   inout logic io;
 
   bar b(.i1(io), /*AUTOINST*/
-    // Inputs
-    .i2(i2/*.[4][8]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar(input i1, output [15:0] o1);
@@ -424,10 +431,11 @@ endmodule
 
 module foo;
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    // Outputs
-    .o1(o1));
+      // Inputs
+      .i1(i1),
+      // Outputs
+      .o1(o1)
+  );
 endmodule
 )");
 }
@@ -462,26 +470,28 @@ module bar(input i1, output [15:0] o1);
   output [31:0] o2[8];
 
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module foo;
   inout logic io;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module qux;
@@ -517,21 +527,23 @@ endmodule
                            R"(
 module foo;
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -541,8 +553,8 @@ TEST(Autoexpand, AUTO_TEMPLATE_Simple) {
                 R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])
+         .i1(in_a[]),
+         .o2(out_b[])
      ); */
   bar b(/*AUTOINST*/);
 endmodule
@@ -558,18 +570,19 @@ endmodule
                 R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])
+         .i1(in_a[]),
+         .o2(out_b[])
      ); */
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(in_a),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(out_b/*[31:0].[8]*/));
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar;
@@ -587,11 +600,11 @@ TEST(Autoexpand, AUTO_TEMPLATE_SkipPreConnected) {
                 R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a),
-       .o2(out_b)
+         .i1(in_a),
+         .o2(out_b)
      ); */
   bar b(.i1(input_1),
-    /*AUTOINST*/);
+      /*AUTOINST*/);
 endmodule
 
 module bar;
@@ -605,18 +618,19 @@ endmodule
                 R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a),
-       .o2(out_b)
+         .i1(in_a),
+         .o2(out_b)
      ); */
   bar b(.i1(input_1),
-    /*AUTOINST*/
-    // Inputs
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(out_b));
+      /*AUTOINST*/
+      // Inputs
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b)
+  );
 endmodule
 
 module bar;
@@ -636,8 +650,8 @@ module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a),
-       .o2(out_b[])); */
+         .i1(in_a),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/);
   bar b(/*AUTOINST*/);
 endmodule
@@ -661,24 +675,26 @@ module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a),
-       .o2(out_b[])); */
+         .i1(in_a),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(in_a),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o2(out_b/*[31:0].[8]*/));
+      // Inputs
+      .i1(in_a),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(out_b  /*[31:0].[8]*/)
+  );
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(in_a),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(out_b/*[31:0].[8]*/));
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar;
@@ -703,16 +719,16 @@ TEST(Autoexpand, AUTO_TEMPLATE_Override) {
 module foo;
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])); */
+         .i1(in_a[]),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/);
 
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(input_1[]),
-       .o2(output_2),
-       .i2(input_2[]),
-       .io(input_output),
-       .o1(output_1[])); */
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
   bar b(/*AUTOINST*/);
 endmodule
 
@@ -734,31 +750,33 @@ endmodule
 module foo;
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])); */
+         .i1(in_a[]),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(in_a),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o2(out_b/*[31:0].[8]*/));
+      // Inputs
+      .i1(in_a),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(out_b  /*[31:0].[8]*/)
+  );
 
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(input_1[]),
-       .o2(output_2),
-       .i2(input_2[]),
-       .io(input_output),
-       .o1(output_1[])); */
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(input_1),
-    .i2(input_2/*.[4][8]*/),
-    // Inouts
-    .io(input_output),
-    // Outputs
-    .o1(output_1[15:0]),
-    .o2(output_2));
+      // Inputs
+      .i1(input_1),
+      .i2(input_2  /*.[4][8]*/),
+      // Inouts
+      .io(input_output),
+      // Outputs
+      .o1(output_1[15:0]),
+      .o2(output_2)
+  );
 endmodule
 
 module bar;
@@ -783,8 +801,8 @@ TEST(Autoexpand, AUTO_TEMPLATE_Mismatch) {
 module foo;
   /* quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])); */
+         .i1(in_a[]),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/);
   bar b(/*AUTOINST*/);
 endmodule
@@ -807,24 +825,26 @@ endmodule
 module foo;
   /* quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
-       .i1(in_a[]),
-       .o2(out_b[])); */
+         .i1(in_a[]),
+         .o2(out_b[])); */
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(o2  /*[31:0].[8]*/)
+  );
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(in_a),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(out_b/*[31:0].[8]*/));
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar;
@@ -877,14 +897,15 @@ module foo;
   input i3;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -947,14 +968,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1),
-    .o2(o2));
+      // Inputs
+      .i1(i1),
+      .i2(i2),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1),
+      .o2(o2)
+  );
 endmodule
 )");
 }
@@ -992,14 +1014,15 @@ module foo;
   inout io2;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io1(io1),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io1(io1),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1060,14 +1083,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1),
-    .o2(o2));
+      // Inputs
+      .i1(i1),
+      .i2(i2),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1),
+      .o2(o2)
+  );
 endmodule
 )");
 }
@@ -1106,14 +1130,15 @@ module foo;
   output o3;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1176,14 +1201,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1),
-    .o2(o2));
+      // Inputs
+      .i1(i1),
+      .i2(i2),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1),
+      .o2(o2)
+  );
 endmodule
 )");
 }
@@ -1213,13 +1239,15 @@ module bar(input i1, output [15:0] o1);
 endmodule
 
 module foo(/*AUTOARG*/
-  // Inputs
-  i1, i2,
-  // Inouts
-  io,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input i1;  // To b of bar
@@ -1236,14 +1264,15 @@ module foo(/*AUTOARG*/
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1258,9 +1287,9 @@ module bar(input i1, output [15:0] o1);
 endmodule
 
 module foo(
-  /*AUTOINPUT*/
-  /*AUTOOUTPUT*/
-  /*AUTOINOUT*/
+    /*AUTOINPUT*/
+    /*AUTOOUTPUT*/
+    /*AUTOINOUT*/
 );
 
   bar b(/*AUTOINST*/);
@@ -1274,31 +1303,32 @@ module bar(input i1, output [15:0] o1);
 endmodule
 
 module foo(
-  /*AUTOINPUT*/
-  // Beginning of automatic inputs (from autoinst inputs)
-  input i1,  // To b of bar
-  input i2[4][8],  // To b of bar
-  // End of automatics
-  /*AUTOOUTPUT*/
-  // Beginning of automatic outputs (from autoinst outputs)
-  output [15:0] o1,  // From b of bar
-  output [31:0] o2[8],  // From b of bar
-  // End of automatics
-  /*AUTOINOUT*/
-  // Beginning of automatic inouts (from autoinst inouts)
-  inout [7:0][7:0] io  // To/From b of bar
-  // End of automatics
+    /*AUTOINPUT*/
+    // Beginning of automatic inputs (from autoinst inputs)
+    input i1,  // To b of bar
+    input i2[4][8],  // To b of bar
+    // End of automatics
+    /*AUTOOUTPUT*/
+    // Beginning of automatic outputs (from autoinst outputs)
+    output [15:0] o1,  // From b of bar
+    output [31:0] o2[8],  // From b of bar
+    // End of automatics
+    /*AUTOINOUT*/
+    // Beginning of automatic inouts (from autoinst inouts)
+    inout [7:0][7:0] io  // To/From b of bar
+    // End of automatics
 );
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1331,13 +1361,15 @@ endmodule
 )",
                 R"(
 module foo(/*AUTOARG*/
-  // Inputs
-  i1, i2,
-  // Inouts
-  io,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input i1;  // To b of bar
@@ -1354,14 +1386,15 @@ module foo(/*AUTOARG*/
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar(input i1, output [15:0] o1);
@@ -1376,12 +1409,13 @@ module bar(input i1, output [15:0] o1);
 
   inout [7:0][7:0] io;
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module qux(
@@ -1425,13 +1459,15 @@ endmodule
 )",
                 R"(
 module foo(/*AUTOARG*/
-  // Inputs
-  i1, i2,
-  // Inouts
-  io,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input i1;  // To b of bar
@@ -1448,14 +1484,15 @@ module foo(/*AUTOARG*/
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module bar(input i1, output [15:0] o1);
@@ -1470,12 +1507,13 @@ module bar(input i1, output [15:0] o1);
 
   inout [7:0][7:0] io;
   qux q(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 
 module qux(
@@ -1485,14 +1523,15 @@ module qux(
   output [31:0] o2[8]);
 
   foo f(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )",
                 TestStrategy::kRepeatTestCompareSecond);
@@ -1532,14 +1571,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1591,14 +1631,15 @@ module foo(/*AUTOWIRE*/);
   wire o1;
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1642,14 +1683,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1),
-    .o2(o2));
+      // Inputs
+      .i1(i1),
+      .i2(i2),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1),
+      .o2(o2)
+  );
 endmodule
 )");
 }
@@ -1697,14 +1739,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1754,14 +1797,15 @@ module foo(/*AUTOREG*/);
   output [3:0][3:0] o3[16];
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1806,14 +1850,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1),
-    .o2(o2));
+      // Inputs
+      .i1(i1),
+      .i2(i2),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1),
+      .o2(o2)
+  );
 endmodule
 )");
 }
@@ -1855,14 +1900,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
   TestTextEdits(GenerateAutoExpandTextEdits,
@@ -1906,14 +1952,15 @@ module foo;
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -1965,20 +2012,23 @@ module bar(input i1, output [15:0] o1);
   // End of automatics
 
   qux q(/*AUTOINST*/
-    // Inputs
-    .ii(ii/*[1:0][7:0]*/),
-    // Outputs
-    .oo(oo/*[3:0].[5][3]*/));
+      // Inputs
+      .ii(ii  /*[1:0][7:0]*/),
+      // Outputs
+      .oo(oo  /*[3:0].[5][3]*/)
+  );
 endmodule
 
 module foo(/*AUTOARG*/
-  // Inputs
-  i1, i2,
-  // Inouts
-  io,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input i1;  // To b of bar
@@ -1995,14 +2045,15 @@ module foo(/*AUTOARG*/
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .i1(i1),
-    .i2(i2/*.[4][8]*/),
-    // Inouts
-    .io(io/*[7:0][7:0]*/),
-    // Outputs
-    .o1(o1[15:0]),
-    .o2(o2/*[31:0].[8]*/));
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
 endmodule
 )");
 }
@@ -2028,11 +2079,13 @@ endmodule
 )",
                 R"(
 module foo(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o1,
+    o2
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input clk;  // To b of bar
@@ -2045,20 +2098,23 @@ module foo(/*AUTOARG*/
   // End of automatics
 
   bar b(/*AUTOINST*/
-    // Inputs
-    .clk(clk),
-    .rst(rst),
-    // Outputs
-    .o1(o1[63:0]),
-    .o2(o2/*.[16]*/));
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1(o1[63:0]),
+      .o2(o2  /*.[16]*/)
+  );
 endmodule
 
 module bar(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  o1, o2
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o1,
+    o2
+);
   input clk;
   input rst;
   output [63:0] o1;
@@ -2088,8 +2144,8 @@ module foo(/*AUTOARG*/);
 
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE ".*" (
-       .o1(out_a[]),
-       .o2(out_b[])
+         .o1(out_a[]),
+         .o2(out_b[])
      ); */
   bar b(/*AUTOINST*/);
 endmodule
@@ -2105,11 +2161,13 @@ endmodule
 )",
       R"(
 module foo(/*AUTOARG*/
-  // Inputs
-  clk, rst,
-  // Outputs
-  out_a, out_b
-  );
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    out_a,
+    out_b
+);
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
   input clk;  // To b of bar
@@ -2123,16 +2181,17 @@ module foo(/*AUTOARG*/
 
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE ".*" (
-       .o1(out_a[]),
-       .o2(out_b[])
+         .o1(out_a[]),
+         .o2(out_b[])
      ); */
   bar b(/*AUTOINST*/
-    // Inputs
-    .clk(clk),
-    .rst(rst),
-    // Outputs
-    .o1(out_a[63:0]),
-    .o2(out_b/*.[16]*/));
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1(out_a[63:0]),
+      .o2(out_b  /*.[16]*/)
+  );
 endmodule
 
 module bar(/*AUTOARG*/);
