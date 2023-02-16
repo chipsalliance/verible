@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H__
-#define VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H__
+#ifndef VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H_
+#define VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H_
 
 #include "absl/strings/string_view.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -34,4 +34,4 @@ absl::string_view TokenTypeToString(size_t tokentype);
 
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H__
+#endif  // VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H_
