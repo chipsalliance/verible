@@ -35,11 +35,10 @@ absl::string_view Obfuscator::operator()(absl::string_view input) {
   if (decode_mode) {
     const auto* p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
-  } else {
-    const std::string* str = translator_.insert_using_value_generator(
-        std::string(input), [this, input]() { return generator_(input); });
-    return *str;
   }
+  const std::string* str = translator_.insert_using_value_generator(
+      std::string(input), [this, input]() { return generator_(input); });
+  return *str;
 }
 
 constexpr char kPairSeparator = ' ';

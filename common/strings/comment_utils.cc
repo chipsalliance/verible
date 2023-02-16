@@ -76,7 +76,8 @@ absl::string_view StripComment(absl::string_view text) {
   if (start == "//") {
     const auto ltrim = CountLeadingChars(text.substr(2), '/') + 2;
     return text.substr(ltrim);
-  } else if (start == "/*" && end == "*/") {
+  }
+  if (start == "/*" && end == "*/") {
     return StripBlockComment(text);
   }
   // else is not a well-formed comment

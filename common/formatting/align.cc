@@ -493,16 +493,15 @@ std::ostream& operator<<(std::ostream& stream,
         const auto& cell = node.Value();
         if (cell.IsUnused()) {
           return {"", '.'};
-        } else {
-          const auto width_info = absl::StrCat("\t(", cell.left_border_width,
-                                               "+", cell.compact_width, ")\t");
-          if (cell.IsComposite()) {
-            return {absl::StrCat("/", width_info, "\\"), '`'};
-          }
-          std::ostringstream label;
-          label << "\t" << cell << "\t\n" << width_info;
-          return {label.str(), ' '};
         }
+        const auto width_info = absl::StrCat("\t(", cell.left_border_width, "+",
+                                             cell.compact_width, ")\t");
+        if (cell.IsComposite()) {
+          return {absl::StrCat("/", width_info, "\\"), '`'};
+        }
+        std::ostringstream label;
+        label << "\t" << cell << "\t\n" << width_info;
+        return {label.str(), ' '};
       });
   return stream;
 }

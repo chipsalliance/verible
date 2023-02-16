@@ -98,16 +98,16 @@ class BijectiveMap {
       fwd_p.first->second = &rev_p.first->first;
       rev_p.first->second = &fwd_p.first->first;
       return true;
-    } else {  // either key or value already existed in respective set
-      // undo any insertions
-      if (fwd_p.second) {
-        forward_map.erase(fwd_p.first);
-      }
-      if (rev_p.second) {
-        reverse_map.erase(rev_p.first);
-      }
-      return false;
     }
+    // either key or value already existed in respective set
+    // undo any insertions
+    if (fwd_p.second) {
+      forward_map.erase(fwd_p.first);
+    }
+    if (rev_p.second) {
+      reverse_map.erase(rev_p.first);
+    }
+    return false;
   }
 
   // function f is a (lazy) value generator that is invoked only when the key

@@ -212,7 +212,8 @@ DiffStatus LexicallyEquivalent(
     if (size_match) {
       // Lengths match, and end of both sequences reached without mismatch.
       return DiffStatus::kEquivalent;
-    } else if (l_size < r_size) {
+    }
+    if (l_size < r_size) {
       *errstream << "First excess token in right sequence: "
                  << *right_filtered[min_size] << std::endl;
     } else {  // r_size < l_size

@@ -159,7 +159,8 @@ const verible::SyntaxTreeNode* GetTypeAssignmentFromParamDeclaration(
   // Check which type of node it is.
   if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignment) {
     return &verible::SymbolCastToNode(*assignment_symbol);
-  } else if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
+  }
+  if (NodeEnum(assignment_tag.tag) == NodeEnum::kTypeAssignmentList) {
     const auto& type_symbol = verible::GetSubtreeAsNode(
         *assignment_symbol, NodeEnum::kTypeAssignmentList, 0,
         NodeEnum::kTypeAssignment);

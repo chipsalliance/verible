@@ -158,9 +158,8 @@ TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {
   const auto& line_token_map = GetLineTokenMap();
   if (lineno + 1 < line_token_map.size()) {
     return make_range(line_token_map[lineno], line_token_map[lineno + 1]);
-  } else {
-    return make_range(tokens_.cend(), tokens_.cend());
   }
+  return make_range(tokens_.cend(), tokens_.cend());
 }
 
 TokenInfo TextStructureView::FindTokenAt(const LineColumn& pos) const {

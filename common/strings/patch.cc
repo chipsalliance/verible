@@ -545,12 +545,12 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   if (line_iter == lines.end()) {
     return absl::InvalidArgumentError(
         "Expected a file marker starting with \"+++\", but did not find one.");
-  } else {
-    if (auto status = ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
-        !status.ok()) {
-      return status;
-    }
   }
+  if (auto status = ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
+      !status.ok()) {
+    return status;
+  }
+
   ++line_iter;
 
   // find hunk starts, and parse ranges of hunk texts

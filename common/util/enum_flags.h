@@ -130,12 +130,11 @@ class EnumNameMap {
     if (found_value != nullptr) {
       *enum_value = *found_value;
       return true;
-    } else {
-      errstream << "Invalid " << type_name << ": '" << text
-                << "'\nValid options are: ";
-      ListNames(errstream, ",");
-      return false;
     }
+    errstream << "Invalid " << type_name << ": '" << text
+              << "'\nValid options are: ";
+    ListNames(errstream, ",");
+    return false;
   }
 
   // Converts the name of an enum to its corresponding value.

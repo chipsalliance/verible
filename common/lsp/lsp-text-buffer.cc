@@ -40,9 +40,8 @@ bool EditTextBuffer::ApplyChange(const TextDocumentContentChangeEvent &c) {
   if (c.range.start.line == c.range.end.line &&
       c.text.find_first_of('\n') == std::string::npos) {
     return LineEdit(c, lines_[c.range.start.line].get());  // simple case.
-  } else {
-    return MultiLineEdit(c);
   }
+  return MultiLineEdit(c);
 }
 
 /*static*/ EditTextBuffer::LineVector EditTextBuffer::GenerateLines(

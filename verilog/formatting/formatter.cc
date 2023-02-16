@@ -191,12 +191,11 @@ static Status ReformatVerilog(absl::string_view original_text,
     // format whole file
     return FormatVerilog(formatted_text, filename, style, reformat_stream,
                          lines, convergence_control);
-  } else {
-    // reformat incrementally
-    return ReformatVerilogIncrementally(original_text, formatted_text, filename,
-                                        style, reformat_stream,
-                                        convergence_control);
   }
+  // reformat incrementally
+  return ReformatVerilogIncrementally(original_text, formatted_text, filename,
+                                      style, reformat_stream,
+                                      convergence_control);
 }
 
 static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(

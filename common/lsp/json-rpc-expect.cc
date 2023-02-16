@@ -89,7 +89,8 @@ static bool ValuesMatch(const json &expected, const json &received) {
   }
   if (expected.is_object()) {
     return CheckNested(expected, received);
-  } else if (expected.is_array()) {
+  }
+  if (expected.is_array()) {
     if (expected.size() != received.size()) {
       std::cerr << "array size mismatch. Expected: " << expected.size()
                 << "; got: " << received.size() << std::endl;
@@ -99,8 +100,8 @@ static bool ValuesMatch(const json &expected, const json &received) {
       if (!ValuesMatch(expected[i], received[i])) return false;
     }
     return true;
-
-  } else if (expected.is_string()) {
+  }
+  if (expected.is_string()) {
     return absl::StrContains(received.get<std::string>(),
                              expected.get<std::string>());
   }

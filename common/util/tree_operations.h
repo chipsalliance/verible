@@ -923,10 +923,9 @@ TreeNodePair<LT, RT> DeepEqual(
                         const auto result = DeepEqual(l, r, comp);
                         if (result.left == nullptr) {
                           return true;
-                        } else {
-                          first_diff = result;  // Capture first difference.
-                          return false;
                         }
+                        first_diff = result;  // Capture first difference.
+                        return false;
                         // When this returns true, no further comparisons will
                         // be called, so the assignment to first_diff will
                         // contain the desired result.

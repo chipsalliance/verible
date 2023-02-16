@@ -31,9 +31,8 @@ bool SyntaxTreeLeaf::equals(const Symbol *symbol,
   if (symbol->Kind() == SymbolKind::kLeaf) {
     const auto *leaf = down_cast<const SyntaxTreeLeaf *>(symbol);
     return equals(leaf, compare_tokens);
-  } else {
-    return false;
   }
+  return false;
 }
 
 // Tests if this is equal to SyntaxTreeLeaf under compare_tokens function

@@ -653,13 +653,15 @@ int LexicalContext::_InterpretToken(int token_enum) const {
         //     x -> y;
         //   }
         return randomize_call_tracker_.InterpretToken(token_enum);
-      } else if (constraint_declaration_tracker_.IsActive()) {
+      }
+      if (constraint_declaration_tracker_.IsActive()) {
         // e.g.
         //   constraint c {
         //     x -> y;
         //   }
         return constraint_declaration_tracker_.InterpretToken(token_enum);
-      } else if (ExpectingStatement()) {
+      }
+      if (ExpectingStatement()) {
         // e.g.
         //   task foo();
         //     ...
@@ -667,16 +669,14 @@ int LexicalContext::_InterpretToken(int token_enum) const {
         //     ...
         //   endtask
         return TK_TRIGGER;
-      } else {
-        // Everywhere where right-arrow can appear should be interpreted
-        // as the 'implies' binary operator for expressions.
-        // e.g.
-        //   if (a -> b) ...
-        return TK_LOGICAL_IMPLIES;
       }
-      break;
-    }
-    // TODO(b/129204554): disambiguate '<='
+      // Everywhere where right-arrow can appear should be interpreted
+      // as the 'implies' binary operator for expressions.
+      // e.g.
+      //   if (a -> b) ...
+      return TK_LOGICAL_IMPLIES;
+    } break;
+      // TODO(b/129204554): disambiguate '<='
     default:
       break;
   }

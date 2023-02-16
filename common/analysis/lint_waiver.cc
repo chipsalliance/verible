@@ -312,7 +312,8 @@ static absl::Status WaiveCommandHandler(
           if (line_start < 1) {
             return WaiveCommandError(token_pos, waive_file,
                                      "Invalid line number: ", val);
-          } else if (line_start > line_end) {
+          }
+          if (line_start > line_end) {
             return WaiveCommandError(token_pos, waive_file,
                                      "Invalid line range: ", val);
           }
@@ -472,9 +473,8 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
 
   if (all_commands_ok) {
     return absl::OkStatus();
-  } else {
-    return absl::InvalidArgumentError("Errors applying external waivers.");
   }
+  return absl::InvalidArgumentError("Errors applying external waivers.");
 }
 
 }  // namespace verible

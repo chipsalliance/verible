@@ -77,15 +77,14 @@ class StringSpliterator {
       remainder_.remove_prefix(remainder_.length());  // empty
       end_ = true;
       return result;
-    } else {
-      // More text follows after the next occurrence of the delimiter.
-      // If the text ends with the delimiter, then the last string
-      // returned before the end() will be empty.
-      const absl::string_view result(remainder_.substr(0, pos));
-      // Skip over the delimiter.
-      remainder_.remove_prefix(pos + internal::DelimiterSize(delimiter));
-      return result;
     }
+    // More text follows after the next occurrence of the delimiter.
+    // If the text ends with the delimiter, then the last string
+    // returned before the end() will be empty.
+    const absl::string_view result(remainder_.substr(0, pos));
+    // Skip over the delimiter.
+    remainder_.remove_prefix(pos + internal::DelimiterSize(delimiter));
+    return result;
   }
 
   // Returns the un-scanned portion of text.

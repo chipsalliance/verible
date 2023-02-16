@@ -35,11 +35,10 @@ void ParserVerifier::Visit(const SyntaxTreeLeaf& leaf) {
       // Found a matching token, continue to next leaf
       view_iterator_++;
       break;
-    } else {
-      // Failed to find a matching token.
-      unmatched_tokens_.push_back(view_token);
-      view_iterator_++;
     }
+    // Failed to find a matching token.
+    unmatched_tokens_.push_back(view_token);
+    view_iterator_++;
   } while (true);
 }
 
