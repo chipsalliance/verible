@@ -24,12 +24,14 @@
 #include "absl/container/node_hash_map.h"
 #include "common/text/text_structure.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/dimensions.h"
 #include "verilog/CST/expression.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
+#include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 
@@ -38,6 +40,7 @@ using verible::LineColumn;
 using verible::LineColumnRange;
 using verible::StringSpanOfSymbol;
 using verible::Symbol;
+using verible::SymbolCastToNode;
 using verible::SymbolKind;
 using verible::SymbolPtr;
 using verible::SyntaxTreeLeaf;
@@ -57,6 +60,13 @@ class AutoExpander {
  public:
   // Represents a port connection
   struct Connection {
+    absl::string_view port_name;  // The name of the port in the module instance
+    bool emit_dimensions;  // If true, when emitted, the connection should be
+                           // annotated with the signal dimensions
+  };
+
+  // Stores information about the instance the port is connected to
+  struct ConnectedInstance {
     absl::string_view instance;  // Name of the instance a port is connected to
     absl::string_view type;      // Type of the instance a port is connected to
   };
@@ -71,19 +81,34 @@ class AutoExpander {
     absl::string_view name;   // Name of the port
     size_t offset;            // Byte offset of the port's declaration (relative
                               // to the module span)
-    std::optional<Connection> connection;  // (Optional) What is it connected
-                                           // to?
+    std::optional<ConnectedInstance> conn_inst;  // (Optional) What instance is
+                                                 // it connected to?
+    std::vector<absl::string_view> packed_dimensions;    // Spans of this port's
+                                                         // packed dimensions
+    std::vector<absl::string_view> unpacked_dimensions;  // Spans of this port's
+                                                         // unpacked dimensions
+
+    // Writes the port's direction to the output stream
+    void EmitDirection(std::ostream &output) const;
+
+    // Writes the port's identifier with packed and unpacked dimensions to the
+    // output stream
+    void EmitIdWithDimensions(std::ostream &output) const;
+
+    // Writes a comment describing the port's connection to the output stream
+    void EmitConnectionComment(std::ostream &output) const;
+
+    // Returns true if the port is connected to any instance
+    bool IsConnected() const { return conn_inst.has_value(); }
   };
 
   // Represents an AUTO_TEMPLATE
   struct Template {
     using Map = absl::flat_hash_map<absl::string_view, std::vector<Template>>;
-    using ConnectionMap =
-        absl::flat_hash_map<absl::string_view, absl::string_view>;
 
-    int64_t offset;             // Offset of the template in the source file
-    ConnectionMap connections;  // Map of instance ports to connected module
-                                // ports
+    int64_t offset;  // Offset of the template in the source file
+    absl::flat_hash_map<absl::string_view, Connection>
+        connections;  // Map of instance ports ports to connected module ports
   };
 
   // Module information relevant to AUTO expansion
@@ -138,13 +163,15 @@ class AutoExpander {
     // from the template, otherwise it's the same as the port name.
     void GenerateConnections(
         const Template *tmpl,
-        const std::function<void(const Port &, absl::string_view)> &fun) const;
+        const std::function<void(const Port &, const Connection &)> &fun) const;
 
     // Set an existing port's connection, or create a new port with the given
     // name, direction, and connection
-    void AddGeneratedConnection(absl::string_view port_name,
-                                Port::Direction direction,
-                                const Connection &connection);
+    void AddGeneratedConnection(
+        absl::string_view port_name, Port::Direction direction,
+        const ConnectedInstance &connection,
+        const std::vector<absl::string_view> &packed_dimensions,
+        const std::vector<absl::string_view> &unpacked_dimensions);
 
     // Erase all ports that were declared within the given byte range
     void ErasePortsInRange(size_t start_offset, size_t length);
@@ -191,9 +218,7 @@ class AutoExpander {
     void RetrieveModuleBodyPorts();
 
     // Store the given port in the internal vector
-    void PutDeclaredPort(absl::string_view::iterator base,
-                         const SyntaxTreeLeaf *dir_leaf,
-                         const SyntaxTreeLeaf *id_leaf);
+    void PutDeclaredPort(const SyntaxTreeNode &port_node);
 
     // The symbol that represents this module
     const verible::Symbol &symbol_;
@@ -328,9 +353,10 @@ const std::regex AutoExpander::autotemplate_type_re_{
 //              opening paren
 // \s*\(\s*   – optional whitespace, opening paren, optional whitespace again
 // ([^\s(]+?) – second group, same as the first one
+// \s*(\[\])? – optional third group, capturing '[]'
 // \s*\)*     – optional whitespace, closing paren
 const std::regex AutoExpander::autotemplate_conn_re_{
-    R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*\))"};
+    R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*(\[\])?\s*\))"};
 
 // AUTOINPUT/OUTPUT/INOUT/WIRE/REG regex breakdown:
 // (/\*\s* ... \s*\*/\s*?\n)            – starting comment
@@ -349,6 +375,57 @@ const std::regex AutoExpander::autoinout_re_{MAKE_AUTODECL_REGEX("INOUT")};
 const std::regex AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
 const std::regex AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
 const std::regex AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
+
+void AutoExpander::Port::EmitDirection(std::ostream &output) const {
+  switch (direction) {
+    case Port::Direction::kInput:
+      output << "input ";
+      break;
+    case Port::Direction::kInout:
+      output << "inout ";
+      break;
+    case Port::Direction::kOutput:
+      output << "output ";
+      break;
+    default:
+      LOG(ERROR) << "Incorrect port direction";
+      break;
+  }
+}
+
+void AutoExpander::Port::EmitIdWithDimensions(std::ostream &output) const {
+  if (!packed_dimensions.empty()) {
+    for (const absl::string_view dimension : packed_dimensions) {
+      output << dimension;
+    }
+    output << ' ';
+  }
+  output << name;
+  for (const absl::string_view dimension : unpacked_dimensions) {
+    output << dimension;
+  }
+  output << ';';
+}
+
+void AutoExpander::Port::EmitConnectionComment(std::ostream &output) const {
+  if (!conn_inst) return;
+  switch (direction) {
+    case Direction::kInput:
+      output << "  // To " << conn_inst->instance << " of " << conn_inst->type;
+      break;
+    case Direction::kInout:
+      output << "  // To/From " << conn_inst->instance << " of "
+             << conn_inst->type;
+      break;
+    case Direction::kOutput:
+      output << "  // From " << conn_inst->instance << " of "
+             << conn_inst->type;
+      break;
+    default:
+      LOG(ERROR) << "Incorrect port direction";
+      break;
+  }
+}
 
 void AutoExpander::Module::EmitPortHeaderDeclarations(
     std::ostream &output, const absl::string_view indent,
@@ -373,19 +450,38 @@ void AutoExpander::Module::EmitPortConnections(
     const absl::string_view header,
     const std::function<bool(const Port &)> &pred, const Template *tmpl) const {
   bool first = true;
-  GenerateConnections(
-      tmpl, [&](const Port &port, const absl::string_view connected_name) {
-        if (!pred(port)) return;
-        if (first) {
-          if (output.tellp() != 0) output << ',';
-          output << '\n' << indent << "// " << header;
-          first = false;
-        } else {
-          output << ',';
+  GenerateConnections(tmpl, [&](const Port &port, const Connection &connected) {
+    if (!pred(port)) return;
+    if (first) {
+      if (output.tellp() != 0) output << ',';
+      output << '\n' << indent << "// " << header;
+      first = false;
+    } else {
+      output << ',';
+    }
+    output << '\n' << indent << '.' << port.name << '(' << connected.port_name;
+    if (!connected.emit_dimensions) {
+      output << ')';
+      return;
+    }
+    if (port.packed_dimensions.size() > 1 ||
+        !port.unpacked_dimensions.empty()) {
+      output << "/*";
+      for (const absl::string_view dimension : port.packed_dimensions) {
+        output << dimension;
+      }
+      if (!port.unpacked_dimensions.empty()) {
+        output << '.';
+        for (const absl::string_view dimension : port.unpacked_dimensions) {
+          output << dimension;
         }
-        output << '\n'
-               << indent << '.' << port.name << '(' << connected_name << ")";
-      });
+      }
+      output << "*/";
+    } else if (port.packed_dimensions.size() == 1) {
+      output << port.packed_dimensions[0];
+    }
+    output << ')';
+  });
 }
 
 void AutoExpander::Module::EmitUndeclaredInputDeclarations(
@@ -429,25 +525,15 @@ void AutoExpander::Module::EmitUndeclaredOutputWireDeclarations(
       declared_wires.insert(net_name);
     }
   }
-  const auto is_undeclared_connected_and_not_wire = [&](const Port &port) {
-    return port.declaration == Port::Declaration::kUndeclared &&
-           port.connection && !declared_wires.contains(port.name);
-  };
 
   for (const Port &port : ports_) {
-    if (port.direction == Port::Direction::kInout &&
-        is_undeclared_connected_and_not_wire(port)) {
-      output << indent << "wire " << port.name << ";  // To/From "
-             << port.connection->instance << " of " << port.connection->type
-             << "\n";
-    }
-  }
-  for (const Port &port : ports_) {
-    if (port.direction == Port::Direction::kOutput &&
-        is_undeclared_connected_and_not_wire(port)) {
-      output << indent << "wire " << port.name << ";  // From "
-             << port.connection->instance << " of " << port.connection->type
-             << "\n";
+    if (port.direction != Port::Direction::kInput &&
+        port.declaration == Port::Declaration::kUndeclared &&
+        port.IsConnected() && !declared_wires.contains(port.name)) {
+      output << indent << "wire ";
+      port.EmitIdWithDimensions(output);
+      port.EmitConnectionComment(output);
+      output << '\n';
     }
   }
 }
@@ -464,43 +550,44 @@ void AutoExpander::Module::EmitUnconnectedOutputRegDeclarations(
       declared_regs.insert(reg_name);
     }
   }
-  const auto is_declared_unconnected_and_not_reg = [&](const Port &port) {
-    return port.declaration == Port::Declaration::kDeclared &&
-           !port.connection && !declared_regs.contains(port.name);
-  };
 
   for (const Port &port : ports_) {
     if (port.direction == Port::Direction::kOutput &&
-        is_declared_unconnected_and_not_reg(port)) {
-      output << indent << "reg " << port.name << ";\n";
+        port.declaration == Port::Declaration::kDeclared &&
+        !port.IsConnected() && !declared_regs.contains(port.name)) {
+      output << indent << "reg ";
+      port.EmitIdWithDimensions(output);
+      output << '\n';
     }
   }
 }
 
 void AutoExpander::Module::GenerateConnections(
     const Template *tmpl,
-    const std::function<void(const Port &, absl::string_view)> &fun) const {
+    const std::function<void(const Port &, const Connection &)> &fun) const {
   for (const Port &port : ports_) {
-    absl::string_view connected_name = port.name;
+    Connection connected{.port_name = port.name, .emit_dimensions = true};
     if (tmpl) {
       const auto it = tmpl->connections.find(port.name);
-      if (it != tmpl->connections.end()) connected_name = it->second;
+      if (it != tmpl->connections.end()) connected = it->second;
     }
-    fun(port, connected_name);
+    fun(port, connected);
   }
 }
 
 void AutoExpander::Module::AddGeneratedConnection(
     const absl::string_view port_name, const Port::Direction direction,
-    const Connection &connection) {
+    const ConnectedInstance &connection,
+    const std::vector<absl::string_view> &packed_dimensions,
+    const std::vector<absl::string_view> &unpacked_dimensions) {
   for (Port &port : ports_) {
     if (port.name == port_name) {
-      port.connection = connection;
+      port.conn_inst = connection;
       return;
     }
   }
-  ports_.push_back(
-      {direction, Port::Declaration::kUndeclared, port_name, 0, connection});
+  ports_.push_back({direction, Port::Declaration::kUndeclared, port_name, 0,
+                    connection, packed_dimensions, unpacked_dimensions});
 }
 
 void AutoExpander::Module::ErasePortsInRange(const size_t start_offset,
@@ -553,7 +640,10 @@ void AutoExpander::Module::RetrieveAutoTemplates() {
           begin + match.position(1), static_cast<size_t>(match.length(1))};
       const absl::string_view module_port_id{
           begin + match.position(2), static_cast<size_t>(match.length(2))};
-      tmpl.connections.insert(std::make_pair(instance_port_id, module_port_id));
+      tmpl.connections.insert(
+          std::make_pair(instance_port_id,
+                         Connection{.port_name = module_port_id,
+                                    .emit_dimensions = match.length(3) != 0}));
       begin += match.position() + match.length();
     }
 
@@ -599,47 +689,15 @@ void AutoExpander::Module::EmitPortBodyDeclarations(
   for (const Port &port : ports_) {
     if (pred(port)) {
       output << indent;
-      switch (port.direction) {
-        case Port::Direction::kInput:
-          output << "input ";
-          break;
-        case Port::Direction::kInout:
-          output << "inout ";
-          break;
-        case Port::Direction::kOutput:
-          output << "output ";
-          break;
-        default:
-          LOG(ERROR) << "Incorrect port direction";
-          break;
-      }
-      output << port.name << ';';
-      if (port.connection) {
-        switch (port.direction) {
-          case Port::Direction::kInput:
-            output << "  // To " << port.connection->instance << " of "
-                   << port.connection->type;
-            break;
-          case Port::Direction::kInout:
-            output << "  // To/From " << port.connection->instance << " of "
-                   << port.connection->type;
-            break;
-          case Port::Direction::kOutput:
-            output << "  // From " << port.connection->instance << " of "
-                   << port.connection->type;
-            break;
-          default:
-            LOG(ERROR) << "Incorrect port direction";
-            break;
-        }
-      }
+      port.EmitDirection(output);
+      port.EmitIdWithDimensions(output);
+      port.EmitConnectionComment(output);
       output << '\n';
     }
   }
 }
 
 void AutoExpander::Module::RetrieveModuleHeaderPorts() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
   const auto module_ports = GetModulePortDeclarationList(symbol_);
   if (!module_ports) return;
   for (const SymbolPtr &port : module_ports->children()) {
@@ -647,45 +705,74 @@ void AutoExpander::Module::RetrieveModuleHeaderPorts() {
     const SyntaxTreeNode &port_node = SymbolCastToNode(*port);
     const NodeEnum tag = NodeEnum(port_node.Tag().tag);
     if (tag == NodeEnum::kPortDeclaration) {
-      const SyntaxTreeLeaf *const dir_leaf =
-          GetDirectionFromPortDeclaration(*port);
-      const SyntaxTreeLeaf *const id_leaf =
-          GetIdentifierFromPortDeclaration(*port);
-      PutDeclaredPort(module_span.begin(), dir_leaf, id_leaf);
+      PutDeclaredPort(port_node);
     }
   }
 }
 
 void AutoExpander::Module::RetrieveModuleBodyPorts() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
   for (const auto &port : FindAllModulePortDeclarations(symbol_)) {
-    const SyntaxTreeLeaf *const dir_leaf =
-        GetDirectionFromModulePortDeclaration(*port.match);
-    const SyntaxTreeLeaf *const id_leaf =
-        GetIdentifierFromModulePortDeclaration(*port.match);
-    PutDeclaredPort(module_span.begin(), dir_leaf, id_leaf);
+    PutDeclaredPort(SymbolCastToNode(*port.match));
   }
 }
 
-void AutoExpander::Module::PutDeclaredPort(
-    const absl::string_view::iterator base,
-    const SyntaxTreeLeaf *const dir_leaf, const SyntaxTreeLeaf *const id_leaf) {
+void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
+  const NodeEnum tag = NodeEnum(port_node.Tag().tag);
+  const SyntaxTreeLeaf *const dir_leaf =
+      tag == NodeEnum::kPortDeclaration
+          ? GetDirectionFromPortDeclaration(port_node)
+          : GetDirectionFromModulePortDeclaration(port_node);
+  const SyntaxTreeLeaf *const id_leaf =
+      tag == NodeEnum::kPortDeclaration
+          ? GetIdentifierFromPortDeclaration(port_node)
+          : GetIdentifierFromModulePortDeclaration(port_node);
   if (!dir_leaf || !id_leaf) return;
-  const absl::string_view dir = dir_leaf->get().text();
+  const absl::string_view dir_span = dir_leaf->get().text();
   const absl::string_view name = id_leaf->get().text();
-  const size_t offset = static_cast<size_t>(std::distance(base, dir.begin()));
+
+  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
+  const size_t offset =
+      static_cast<size_t>(std::distance(module_span.begin(), dir_span.begin()));
+
+  const auto get_dimension_spans = [](const auto &dimension_nodes) {
+    std::vector<absl::string_view> dimension_spans;
+    dimension_spans.reserve(dimension_nodes.size());
+    for (auto &dimension : dimension_nodes) {
+      for (const auto &scalar :
+           SearchSyntaxTree(*dimension.match, NodekDimensionScalar())) {
+        dimension_spans.push_back(StringSpanOfSymbol(*scalar.match));
+      }
+      for (const auto &range :
+           SearchSyntaxTree(*dimension.match, NodekDimensionRange())) {
+        dimension_spans.push_back(StringSpanOfSymbol(*range.match));
+      }
+    }
+    return dimension_spans;
+  };
+  std::vector<absl::string_view> packed_dimensions =
+      get_dimension_spans(FindAllPackedDimensions(port_node));
+  std::vector<absl::string_view> unpacked_dimensions =
+      get_dimension_spans(FindAllUnpackedDimensions(port_node));
+
   Port::Direction direction;
-  if (dir == "input") {
+  if (dir_span == "input") {
     direction = Port::Direction::kInput;
-  } else if (dir == "inout") {
+  } else if (dir_span == "inout") {
     direction = Port::Direction::kInout;
-  } else if (dir == "output") {
+  } else if (dir_span == "output") {
     direction = Port::Direction::kOutput;
   } else {
     LOG(ERROR) << "Incorrect port direction";
     return;
   }
-  ports_.push_back({direction, Port::Declaration::kDeclared, name, offset});
+
+  ports_.push_back({direction,
+                    Port::Declaration::kDeclared,
+                    name,
+                    offset,
+                    {},
+                    std::move(packed_dimensions),
+                    std::move(unpacked_dimensions)});
 }
 
 absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsListedBefore(
@@ -860,17 +947,18 @@ std::optional<TextEdit> AutoExpander::ExpandAutoinst(Module *module,
       },
       tmpl);
 
-  // The module's port connections need to be updated, as new ones may have been
-  // generated
+  // The module's port connections need to be updated, as new ones may have
+  // been generated
   const absl::string_view instance_name =
       GetModuleInstanceNameTokenInfoFromGateInstance(instance)->text();
-  inst_module.GenerateConnections(
-      tmpl, [&](const Port &port, const absl::string_view connected_name) {
-        if (port.declaration == Port::Declaration::kUndeclared) return;
-        Connection connection{.instance = instance_name, .type = type_id};
-        module->AddGeneratedConnection(connected_name, port.direction,
-                                       connection);
-      });
+  inst_module.GenerateConnections(tmpl, [&](const Port &port,
+                                            const Connection &connected) {
+    if (port.declaration == Port::Declaration::kUndeclared) return;
+    ConnectedInstance connection{.instance = instance_name, .type = type_id};
+    module->AddGeneratedConnection(connected.port_name, port.direction,
+                                   connection, port.packed_dimensions,
+                                   port.unpacked_dimensions);
+  });
 
   const LineColumn end_linecol =
       text_structure_.GetRangeForText(paren_span).end;
@@ -1019,8 +1107,8 @@ std::vector<TextEdit> AutoExpander::Expand() {
               return right->DependsOn(left->Name());
             });
   for (Module *const module : buffer_modules) {
-    // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from the
-    // module, as they should be regenerated every time (in case they get
+    // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from
+    // the module, as they should be regenerated every time (in case they get
     // removed or their names change)
     const auto autoinput_match =
         SearchInSymbol(module->Symbol(), autoinput_re_);
@@ -1082,8 +1170,8 @@ std::vector<TextEdit> AutoExpander::Expand() {
     if (const auto edit = ExpandAutoreg(*module)) {
       edits.push_back(*edit);
     }
-    module->SortPortsByOffset();  // Ports need to be sorted by offset to ensure
-                                  // AUTOARG stability
+    module->SortPortsByOffset();  // Ports need to be sorted by offset to
+                                  // ensure AUTOARG stability
     // AUTOARG
     if (const auto edit = ExpandAutoarg(*module)) {
       edits.push_back(*edit);
