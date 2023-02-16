@@ -18,8 +18,8 @@
 //
 // See verilog.y for parser specification.
 
-#ifndef VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H__
-#define VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H__
+#ifndef VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H_
+#define VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H_
 
 #include <cstddef>
 
@@ -43,4 +43,4 @@ const char* verilog_symbol_name(size_t symbol_enum);
 
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H__
+#endif  // VERIBLE_VERILOG_PARSER_VERILOG_PARSER_H_

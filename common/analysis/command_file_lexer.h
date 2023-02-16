@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_CONFIG_FILE_LEXER_H__
-#define VERIBLE_CONFIG_FILE_LEXER_H__
+#ifndef VERIBLE_CONFIG_FILE_LEXER_H_
+#define VERIBLE_CONFIG_FILE_LEXER_H_
 
 // lint_waiver_config.lex has "%prefix=verible", meaning the class flex
 // creates is veribleFlexLexer. Unfortunately, FlexLexer.h doesn't have proper
@@ -71,4 +71,4 @@ class CommandFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
 
 }  // namespace verible
 
-#endif  // VERIBLE_CONFIG_FILE_LEXER_H__
+#endif  // VERIBLE_CONFIG_FILE_LEXER_H_

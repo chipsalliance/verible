@@ -7,8 +7,8 @@
 // conversion functions on different platforms.
 
 // Forked from https://gist.github.com/panzi/6856583
-#ifndef PORTABLE_ENDIAN_H__
-#define PORTABLE_ENDIAN_H__
+#ifndef PORTABLE_ENDIAN_H_
+#define PORTABLE_ENDIAN_H_
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && \
     !defined(__WINDOWS__)

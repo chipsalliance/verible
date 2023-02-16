@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_COMMON_TEXT_SYMBOLPTR_H__
-#define VERIBLE_COMMON_TEXT_SYMBOLPTR_H__
+#ifndef VERIBLE_COMMON_TEXT_SYMBOLPTR_H_
+#define VERIBLE_COMMON_TEXT_SYMBOLPTR_H_
 
 #include <memory>
 
@@ -21,4 +21,4 @@ namespace verible {
 class Symbol;
 using SymbolPtr = std::unique_ptr<Symbol>;
 }  // namespace verible
-#endif  // VERIBLE_COMMON_TEXT_SYMBOLPTR_H__
+#endif  // VERIBLE_COMMON_TEXT_SYMBOLPTR_H_

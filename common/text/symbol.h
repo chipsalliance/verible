@@ -15,8 +15,8 @@
 // Symbol is a base class that covers both terminal and nonterminal symbols.
 // See bison_parser_common.h for sample usage.
 
-#ifndef VERIBLE_COMMON_TEXT_SYMBOL_H__
-#define VERIBLE_COMMON_TEXT_SYMBOL_H__
+#ifndef VERIBLE_COMMON_TEXT_SYMBOL_H_
+#define VERIBLE_COMMON_TEXT_SYMBOL_H_
 
 #include <functional>
 #include <iosfwd>
@@ -85,4 +85,4 @@ class Symbol {
 
 }  // namespace verible
 
-#endif  // VERIBLE_COMMON_TEXT_SYMBOL_H__
+#endif  // VERIBLE_COMMON_TEXT_SYMBOL_H_
