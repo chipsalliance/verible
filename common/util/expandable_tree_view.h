@@ -180,10 +180,7 @@ class ExpandableTreeView {
       // This is the last child of the group.
       // Find the nearest parent that has a next child (ascending).
       auto* next_ancestor = next_sibling(*current.Parent());
-      if (next_ancestor != nullptr) {
-        return first_unexpanded_child(*next_ancestor);
-      }
-      return nullptr;
+      return next_ancestor ? first_unexpanded_child(*next_ancestor) : nullptr;
     }
     // More children follow this one.
     return first_unexpanded_child(current.Parent()->Children()[next_rank]);

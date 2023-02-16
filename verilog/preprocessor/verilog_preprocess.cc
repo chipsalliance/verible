@@ -264,7 +264,9 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
       parameters_size--;
       continue;
     }
-    if ((*token_iter)->text() == ")") break;
+    if ((*token_iter)->text() == ")") {
+      break;
+    }
   }
   if (parameters_size > 0) {
     while (parameters_size--) {

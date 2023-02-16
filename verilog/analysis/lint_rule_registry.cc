@@ -55,10 +55,7 @@ class LintRuleRegistry {
   // Returns nullptr if rule is not registered.
   static std::unique_ptr<RuleType> CreateLintRule(const LintRuleId& rule) {
     auto* create_func = FindOrNull(*GetLintRuleRegistry<RuleType>(), rule);
-    if (create_func == nullptr) {
-      return nullptr;
-    }
-    return (create_func->lint_rule_generator)();
+    return create_func ? (create_func->lint_rule_generator)() : nullptr;
   }
 
   // Returns true if registry holds a LintRule named rule.
