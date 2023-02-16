@@ -75,8 +75,9 @@ void ParameterTypeNameStyleRule::HandleSymbol(
     const auto param_name = param_name_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(param_name) ||
-        !absl::EndsWith(param_name, "_t"))
+        !absl::EndsWith(param_name, "_t")) {
       violations_.insert(LintViolation(*param_name_token, kMessage, context));
+    }
   }
 }
 

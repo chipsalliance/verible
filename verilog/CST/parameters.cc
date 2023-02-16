@@ -74,10 +74,11 @@ const verible::TokenInfo* GetParameterNameToken(const verible::Symbol& symbol) {
   if (!identifier_symbol) return nullptr;
   auto t = identifier_symbol->Tag();
   const SyntaxTreeLeaf* identifier_leaf = nullptr;
-  if (t.kind == verible::SymbolKind::kNode)
+  if (t.kind == verible::SymbolKind::kNode) {
     identifier_leaf = GetIdentifier(*identifier_symbol);
-  else
+  } else {
     identifier_leaf = down_cast<const SyntaxTreeLeaf*>(identifier_symbol);
+  }
   if (!identifier_leaf) return nullptr;
   return &identifier_leaf->get();
 }

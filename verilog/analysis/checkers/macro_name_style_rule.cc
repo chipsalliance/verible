@@ -85,17 +85,20 @@ void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
         case PP_Identifier: {
           if (absl::StartsWith(text, "uvm_")) {
             // Special case for uvm_* macros
-            if (!verible::IsLowerSnakeCaseWithDigits(text))
+            if (!verible::IsLowerSnakeCaseWithDigits(text)) {
               violations_.insert(LintViolation(token, kMessage));
+            }
           } else if (absl::StartsWith(text, "UVM_")) {
             // Special case for UVM_* macros
-            if (!verible::IsNameAllCapsUnderscoresDigits(text))
+            if (!verible::IsNameAllCapsUnderscoresDigits(text)) {
               violations_.insert(LintViolation(token, kMessage));
+            }
           } else {
             // General case for everything else
             // TODO(fangism): make this configurable
-            if (!verible::IsNameAllCapsUnderscoresDigits(text))
+            if (!verible::IsNameAllCapsUnderscoresDigits(text)) {
               violations_.insert(LintViolation(token, kMessage));
+            }
           }
           state_ = State::kNormal;
           break;

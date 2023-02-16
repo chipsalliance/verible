@@ -75,12 +75,13 @@ static int digitBits(char digit, bool* is_lower_bound) {
     return 1;  // Minimum number of bits assumed
   }
   *is_lower_bound = false;
-  if (digit > '7')
+  if (digit > '7') {
     return 4;
-  else if (digit > '3')
+  } else if (digit > '3') {
     return 3;
-  else if (digit > '1')
+  } else if (digit > '1') {
     return 2;
+  }
   return 1;
 }
 

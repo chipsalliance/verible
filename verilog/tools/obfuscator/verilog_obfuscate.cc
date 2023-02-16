@@ -125,8 +125,9 @@ Output is written to stdout.
       std::cerr << status.message();
       return 1;
     }
-    for (auto const& preserved_name : preserved)
+    for (auto const& preserved_name : preserved) {
       subst.encode(preserved_name, preserved_name);
+    }
   }
 
   if (absl::GetFlag(FLAGS_preserve_builtin_functions)) {

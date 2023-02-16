@@ -322,8 +322,9 @@ class VerilogProject {
   void AddIncludePath(absl::string_view includepath) {
     std::string path = {includepath.begin(), includepath.end()};
     if (std::find(include_paths_.begin(), include_paths_.end(), path) ==
-        include_paths_.end())
+        include_paths_.end()) {
       include_paths_.push_back(path);
+    }
   }
 
  private:

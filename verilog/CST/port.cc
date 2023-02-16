@@ -77,8 +77,9 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
   static const char* const TOO_MANY_IDS_ERROR =
       "Expected one identifier node in module port declaration, but got ";
   auto& node = SymbolCastToNode(symbol);
-  if (!MatchNodeEnumOrNull(node, NodeEnum::kModulePortDeclaration))
+  if (!MatchNodeEnumOrNull(node, NodeEnum::kModulePortDeclaration)) {
     return nullptr;
+  }
   auto id_unpacked_dims = FindAllIdentifierUnpackedDimensions(symbol);
   if (id_unpacked_dims.empty()) {
     auto port_ids = verible::SearchSyntaxTree(symbol, NodekPortIdentifier());

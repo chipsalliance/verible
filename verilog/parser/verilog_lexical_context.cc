@@ -345,8 +345,9 @@ void _RandomizeCallStateMachine::UpdateState(int token_enum) {
       break;
     case kInsideConstraintBlock: {
       constraint_block_tracker_.UpdateState(token_enum);
-      if (!constraint_block_tracker_.IsActive())
+      if (!constraint_block_tracker_.IsActive()) {
         state_ = kNone;  // end of randomize_call
+      }
       // otherwise no state change
       break;
     }

@@ -77,8 +77,9 @@ void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
       const verible::SyntaxTreeLeaf* leaf = verible::GetSubtreeAsLeaf(
           *node, NodeEnum::kNonblockingAssignmentStatement, 1);
 
-      if (leaf && leaf->get().token_enum() == TK_LE)
+      if (leaf && leaf->get().token_enum() == TK_LE) {
         violations_.insert(LintViolation(*leaf, kMessage, match.context));
+      }
     }
   }
 }

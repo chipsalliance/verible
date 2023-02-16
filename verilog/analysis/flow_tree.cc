@@ -58,12 +58,13 @@ absl::Status FlowTree::AddBlockEdges(const ConditionalBlock &block) {
       edges_[*iter].push_back((*iter) + 1);
 
       // Assuming the condition is false.
-      if (iter + 1 != block.elsif_locations.end())
+      if (iter + 1 != block.elsif_locations.end()) {
         edges_[*iter].push_back(*(iter + 1));
-      else if (contains_else)
+      } else if (contains_else) {
         edges_[*iter].push_back(block.else_location);
-      else
+      } else {
         edges_[*iter].push_back(block.endif_location);
+      }
     }
   }
 
@@ -85,8 +86,9 @@ absl::Status FlowTree::AddBlockEdges(const ConditionalBlock &block) {
   // Edge to be added: from <line_final> to `endif.
   edges_[block.endif_location - 1].push_back(block.endif_location);
   if (contains_elsif) {
-    for (auto iter : block.elsif_locations)
+    for (auto iter : block.elsif_locations) {
       edges_[iter - 1].push_back(block.endif_location);
+    }
   }
   if (contains_else) {
     edges_[block.else_location - 1].push_back(block.endif_location);
@@ -122,10 +124,11 @@ absl::Status FlowTree::MacroFollows(
     return absl::InvalidArgumentError("Error macro name can't be extracted.");
   }
   auto macro_iterator = conditional_iterator + 1;
-  if (macro_iterator->token_enum() != PP_Identifier)
+  if (macro_iterator->token_enum() != PP_Identifier) {
     return absl::InvalidArgumentError("Expected identifier for macro name.");
-  else
+  } else {
     return absl::OkStatus();
+  }
 }
 
 // Adds a conditional macro to conditional_macros_ if not added before,
@@ -240,10 +243,10 @@ absl::Status FlowTree::GenerateControlFlowTree() {
   }
 
   // Checks for uncompleted conditionals.
-  if (!if_blocks_.empty())
+  if (!if_blocks_.empty()) {
     return absl::InvalidArgumentError(
         "ERROR: Uncompleted conditional is found.");
-
+  }
   return absl::OkStatus();
 }
 
@@ -286,10 +289,11 @@ absl::Status FlowTree::DepthFirstSearch(
       current_variant_.visited.flip(macro_id);
       // This macro wans't visited before, then we can check both edges.
       // Assume the condition is true.
-      if (negated)
+      if (negated) {
         current_variant_.macros_mask.reset(macro_id);
-      else
+      } else {
         current_variant_.macros_mask.set(macro_id);
+      }
       if (auto status = DepthFirstSearch(receiver, edges_[current_node][0]);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails.";
@@ -297,10 +301,11 @@ absl::Status FlowTree::DepthFirstSearch(
       }
 
       // Assume the condition is false.
-      if (!negated)
+      if (!negated) {
         current_variant_.macros_mask.reset(macro_id);
-      else
+      } else {
         current_variant_.macros_mask.set(macro_id);
+      }
       if (auto status = DepthFirstSearch(receiver, edges_[current_node][1]);
           !status.ok()) {
         std::cerr << "ERROR: DepthFirstSearch fails.";

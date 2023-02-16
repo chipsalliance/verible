@@ -192,8 +192,9 @@ bool IsStringViewContained(absl::string_view origin, absl::string_view substr) {
 
 const SymbolTableNode *ScanReferenceComponents(
     const ReferenceComponentNode *ref, absl::string_view symbol) {
-  if (IsStringViewContained(ref->Value().identifier, symbol))
+  if (IsStringViewContained(ref->Value().identifier, symbol)) {
     return ref->Value().resolved_symbol;
+  }
   for (const auto &childref : ref->Children()) {
     const SymbolTableNode *resolved =
         ScanReferenceComponents(&childref, symbol);

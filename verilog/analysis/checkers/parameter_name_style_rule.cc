@@ -95,11 +95,12 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     for (const auto* id : identifiers) {
       const auto param_name = id->text();
       uint32_t observed_style = 0;
-      if (verible::IsUpperCamelCaseWithDigits(param_name))
+      if (verible::IsUpperCamelCaseWithDigits(param_name)) {
         observed_style |= kUpperCamelCase;
-      if (verible::IsNameAllCapsUnderscoresDigits(param_name))
+      }
+      if (verible::IsNameAllCapsUnderscoresDigits(param_name)) {
         observed_style |= kAllCaps;
-
+      }
       if (param_decl_token == TK_localparam && localparam_allowed_style_ &&
           (observed_style & localparam_allowed_style_) == 0) {
         violations_.insert(LintViolation(

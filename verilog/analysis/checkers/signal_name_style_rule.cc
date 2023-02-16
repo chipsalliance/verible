@@ -81,22 +81,25 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
   if (PortMatcher().Matches(symbol, &manager)) {
     const auto* identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
-    if (!verible::IsLowerSnakeCaseWithDigits(name))
+    if (!verible::IsLowerSnakeCaseWithDigits(name)) {
       violations_.insert(
           LintViolation(identifier_leaf->get(), kMessage, context));
+    }
   } else if (NetMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
     for (const auto* leaf : identifier_leaves) {
       const auto name = leaf->text();
-      if (!verible::IsLowerSnakeCaseWithDigits(name))
+      if (!verible::IsLowerSnakeCaseWithDigits(name)) {
         violations_.insert(LintViolation(*leaf, kMessage, context));
+      }
     }
   } else if (DataMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
     for (const auto* leaf : identifier_leaves) {
       const auto name = leaf->text();
-      if (!verible::IsLowerSnakeCaseWithDigits(name))
+      if (!verible::IsLowerSnakeCaseWithDigits(name)) {
         violations_.insert(LintViolation(*leaf, kMessage, context));
+      }
     }
   }
 }

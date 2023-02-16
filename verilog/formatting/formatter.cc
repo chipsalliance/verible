@@ -711,9 +711,9 @@ class ContinuationCommentAligner {
     }
 
     VLOG(4) << "Continuation comment line - finalizing formatting";
-    if (formatted_column_ == kInvalidColumn)
+    if (formatted_column_ == kInvalidColumn) {
       formatted_column_ = CalculateEolCommentColumn(previous_line);
-
+    }
     UnwrappedLine aligned_uwline(uwline);
     aligned_uwline.SetIndentationSpaces(formatted_column_);
     already_formatted_lines->emplace_back(aligned_uwline);
@@ -735,10 +735,11 @@ class ContinuationCommentAligner {
       const verible::FormattedToken& token, int* column) {
     switch (token.before.action) {
       case verible::SpacingDecision::Preserve: {
-        if (token.before.preserved_space_start != nullptr)
+        if (token.before.preserved_space_start != nullptr) {
           *column += token.OriginalLeadingSpaces().length();
-        else
+        } else {
           *column += token.before.spaces;
+        }
         break;
       }
       case verible::SpacingDecision::Wrap:
@@ -755,10 +756,12 @@ class ContinuationCommentAligner {
     int column = 0;
     const auto& front = line.Tokens().front();
 
-    if (front.before.action != verible::SpacingDecision::Preserve)
+    if (front.before.action != verible::SpacingDecision::Preserve) {
       column += line.IndentationSpaces();
-    if (front.before.action == verible::SpacingDecision::Align)
+    }
+    if (front.before.action == verible::SpacingDecision::Align) {
       column += front.before.spaces;
+    }
     column += front.token->text().length();
 
     for (const auto& ftoken : verible::make_range(line.Tokens().begin() + 1,
