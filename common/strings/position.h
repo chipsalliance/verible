@@ -34,7 +34,7 @@ int AdvancingTextNewColumnPosition(int old_column_position,
 // IntervalSet<int> to avoid potential confusion with other IntervalSet<int>.
 // Type safety will enforce intent of meaning.
 class ByteOffsetSet : public verible::IntervalSet<int> {
-  typedef verible::IntervalSet<int> impl_type;
+  using impl_type = verible::IntervalSet<int>;
 
  public:
   ByteOffsetSet() = default;
@@ -52,7 +52,7 @@ class ByteOffsetSet : public verible::IntervalSet<int> {
 // avoid potential confusion with other IntervalSet<int>.
 // Mismatches will be caught as type errors.
 class LineNumberSet : public verible::IntervalSet<int> {
-  typedef verible::IntervalSet<int> impl_type;
+  using impl_type = verible::IntervalSet<int>;
 
  public:
   LineNumberSet() = default;

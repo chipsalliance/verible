@@ -150,7 +150,7 @@ class SyntaxTreeNode final : public Symbol {
     auto it = enums.begin();
     // Unroll OR expression. Right now, we never have more than 4.
     switch (enums.size()) {
-      case 4:
+      case 4:  // NOLINT(bugprone-branch-clone)
         if (*it++ == EnumType(tag_)) return true;
         ABSL_FALLTHROUGH_INTENDED;
       case 3:
@@ -189,7 +189,7 @@ class SyntaxTreeNode final : public Symbol {
 // Sample usage: $$ = MakeNode(TAG, $1, $2, $3);
 template <typename... Args>
 SymbolPtr MakeNode(Args&&... args) {
-  SyntaxTreeNode* node_pointer = new SyntaxTreeNode();
+  auto* const node_pointer = new SyntaxTreeNode();
   node_pointer->Append(std::forward<Args>(args)...);
   return SymbolPtr(node_pointer);
 }
@@ -201,7 +201,7 @@ SymbolPtr MakeNode(Args&&... args) {
 //   $$ = MakeTaggedNode(TAG, $1, $2, $3);
 template <typename Enum, typename... Args>
 SymbolPtr MakeTaggedNode(const Enum tag, Args&&... args) {
-  SyntaxTreeNode* node_pointer = new SyntaxTreeNode(static_cast<int>(tag));
+  auto* const node_pointer = new SyntaxTreeNode(static_cast<int>(tag));
   node_pointer->Append(std::forward<Args>(args)...);
   return SymbolPtr(node_pointer);
 }
@@ -220,7 +220,7 @@ SymbolPtr ExtendNode(T&& list_ptr, Args&&... args) {
 template <typename... Args>
 SymbolPtr _ExtendNodeMoved(SymbolPtr list_ptr, Args&&... args) {
   CHECK(list_ptr->Kind() == SymbolKind::kNode);
-  SyntaxTreeNode* node_pointer = down_cast<SyntaxTreeNode*>(list_ptr.get());
+  auto* const node_pointer = down_cast<SyntaxTreeNode*>(list_ptr.get());
   node_pointer->Append(std::forward<Args>(args)...);
   return list_ptr;
 }

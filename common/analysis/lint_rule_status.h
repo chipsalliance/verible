@@ -62,7 +62,7 @@ struct ReplacementEdit {
 // Collection of ReplacementEdits performing single violation fix.
 class AutoFix {
  public:
-  AutoFix() {}
+  AutoFix() = default;
   AutoFix(const AutoFix& other) = default;
   AutoFix(AutoFix&& other) = default;
 
@@ -91,30 +91,22 @@ class AutoFix {
 // LintViolation is a class that represents a single rule violation.
 struct LintViolation {
   // This construct records a token stream lint violation.
-  LintViolation(const TokenInfo& token, const std::string& reason,
+  LintViolation(const TokenInfo& token, absl::string_view reason,
                 const std::vector<AutoFix>& autofixes = {})
-      : root(nullptr),
-        token(token),
-        reason(reason),
-        context(),
-        autofixes(autofixes) {}
+      : token(token), reason(reason), context(), autofixes(autofixes) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
-  LintViolation(const TokenInfo& token, const std::string& reason,
+  LintViolation(const TokenInfo& token, absl::string_view reason,
                 const SyntaxTreeContext& context,
                 const std::vector<AutoFix>& autofixes = {})
-      : root(nullptr),
-        token(token),
-        reason(reason),
-        context(context),
-        autofixes(autofixes) {}
+      : token(token), reason(reason), context(context), autofixes(autofixes) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the range of violation is a subtree that spans
   // multiple tokens.  The violation will be reported at the location of
   // the left-most leaf of the subtree.
-  LintViolation(const Symbol& root, const std::string& reason,
+  LintViolation(const Symbol& root, absl::string_view reason,
                 const SyntaxTreeContext& context,
                 const std::vector<AutoFix>& autofixes = {});
 
@@ -144,7 +136,7 @@ struct LintViolation {
 
 // LintRuleStatus represents the result of running a single lint rule.
 struct LintRuleStatus {
-  LintRuleStatus() {}
+  LintRuleStatus() = default;
 
   LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
                  const std::string& url)

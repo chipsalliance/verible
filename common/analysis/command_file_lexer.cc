@@ -55,7 +55,7 @@ std::vector<TokenRange> CommandFileLexer::GetCommandsTokenRanges() {
   auto i = tokens_.cbegin();
   auto j = i;
 
-  while (1) {
+  for (;;) {
     // Note that empty lines or lines with whitespace only are skipped
     // by the lexer and do not have to be handled here
     j = std::find_if(i + 1, tokens_.cend(), [](TokenInfo t) {

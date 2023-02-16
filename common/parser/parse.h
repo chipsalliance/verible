@@ -37,12 +37,12 @@ class Parser {
   // Return the collection of rejected tokens from recovered syntax errors.
   virtual const std::vector<TokenInfo>& RejectedTokens() const = 0;
 
-  virtual ~Parser() {}
+  virtual ~Parser() = default;
 
  protected:
-  Parser() {}
+  Parser() = default;
 
- private:
+ public:                                      // Deleted should be public.
   Parser(const Parser&) = delete;             // disallow copy
   Parser& operator=(const Parser&) = delete;  // disallow assign
 };

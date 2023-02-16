@@ -873,7 +873,7 @@ template <typename LT, typename RT,
           std::enable_if_t<TreeNodeTraits<LT>::available &&
                            TreeNodeTraits<RT>::available>* = nullptr>
 struct TreeNodePair {
-  TreeNodePair() {}
+  TreeNodePair() = default;
   TreeNodePair(const LT* l, const RT* r) : left(l), right(r) {}
   const LT* left = nullptr;
   const RT* right = nullptr;

@@ -15,8 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TRAILING_SPACES_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TRAILING_SPACES_RULE_H_
 
-#include <stddef.h>
-
+#include <cstddef>
 #include <set>
 #include <string>
 
@@ -35,7 +34,7 @@ class NoTrailingSpacesRule : public verible::LineLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  NoTrailingSpacesRule() {}
+  NoTrailingSpacesRule() = default;
 
   void HandleLine(absl::string_view line) final;
 

@@ -34,7 +34,7 @@ class NumericFormatStringStyleRule : public verible::TokenStreamLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  NumericFormatStringStyleRule() {}
+  NumericFormatStringStyleRule() = default;
 
   void HandleToken(const verible::TokenInfo& token) final;
 

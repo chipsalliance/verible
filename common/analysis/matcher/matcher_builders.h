@@ -134,7 +134,7 @@ constexpr PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
 template <SymbolKind Kind, typename EnumType, EnumType Tag>
 class TagMatchBuilder {
  public:
-  constexpr TagMatchBuilder() {}
+  constexpr TagMatchBuilder() = default;
 
   template <typename... Args>
   BindableMatcher operator()(Args... args) const {

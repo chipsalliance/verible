@@ -56,7 +56,7 @@ using verilog::formatter::FormatVerilog;
 //   --flag x --flag y yields [x, y]
 struct LineRanges {
   // need to copy string, cannot just use string_view
-  typedef std::vector<std::string> storage_type;
+  using storage_type = std::vector<std::string>;
   static storage_type values;
 };
 
@@ -69,9 +69,9 @@ bool AbslParseFlag(absl::string_view flag_arg, LineRanges* /* unused */,
   // equivalent.
   const std::vector<absl::string_view> tokens = absl::StrSplit(flag_arg, ',');
   values.reserve(values.size() + tokens.size());
-  for (const auto& token : tokens) {
+  for (const absl::string_view& token : tokens) {
     // need to copy string, cannot just use string_view
-    values.push_back(std::string(token.begin(), token.end()));
+    values.emplace_back(token.begin(), token.end());
   }
   // Range validation done later.
   return true;

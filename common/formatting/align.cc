@@ -111,7 +111,7 @@ struct AlignmentCell {
   int TotalWidth() const { return left_border_width + compact_width; }
 
   FormatTokenRange ConstTokensRange() const {
-    return FormatTokenRange(tokens.begin(), tokens.end());
+    return {tokens.begin(), tokens.end()};
   }
 
   void UpdateWidths() {
@@ -246,12 +246,13 @@ static void ColumnsTreeFormatter(
       const int padding_len = lines[level - 1].size() - lines[level].size() -
                               node.Parent()->Value().width;
       if (padding_len > 0) {
-        if (lines[level].empty())
+        if (lines[level].empty()) {
           lines[level].append(std::string(padding_len, ' '));
-        else if (padding_len > int(kCellSeparator.size()))
+        } else if (padding_len > int(kCellSeparator.size())) {
           lines[level].append(absl::StrCat(
               kCellSeparator,
               std::string(padding_len - kCellSeparator.size(), ' ')));
+        }
       }
     }
 
@@ -495,9 +496,9 @@ std::ostream& operator<<(std::ostream& stream,
         } else {
           const auto width_info = absl::StrCat("\t(", cell.left_border_width,
                                                "+", cell.compact_width, ")\t");
-          if (cell.IsComposite())
+          if (cell.IsComposite()) {
             return {absl::StrCat("/", width_info, "\\"), '`'};
-
+          }
           std::ostringstream label;
           label << "\t" << cell << "\t\n" << width_info;
           return {label.str(), ' '};
@@ -804,7 +805,7 @@ static FormatTokenRange EpilogRange(const TokenPartitionTree& partition,
   // spanned by 'row'.
   auto partition_end = partition.Value().TokensRange().end();
   auto row_end = last_subcol.Value().tokens.end();
-  return FormatTokenRange(row_end, partition_end);
+  return {row_end, partition_end};
 }
 
 // This width calculation accounts for the unaligned tokens in the tail position
@@ -957,8 +958,9 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
     }
     // Also check for length of unaligned trailing tokens.
     if (!AlignedRowsFitUnderColumnLimit(rows, result.matrix, total_column_width,
-                                        column_limit))
+                                        column_limit)) {
       return result;
+    }
   }
 
   // TODO(fangism): implement overflow mitigation fallback strategies.

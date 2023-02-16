@@ -29,7 +29,7 @@ namespace verible {
 bool SyntaxTreeNode::equals(const Symbol* symbol,
                             const TokenComparator& compare_tokens) const {
   if (symbol->Kind() == SymbolKind::kNode) {
-    const SyntaxTreeNode* node = down_cast<const SyntaxTreeNode*>(symbol);
+    const auto* node = down_cast<const SyntaxTreeNode*>(symbol);
     return equals(node, compare_tokens);
   } else {
     return false;
@@ -47,8 +47,9 @@ bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
     int size = children_.size();
     for (int i = 0; i < size; i++) {
       if (!EqualTrees(children_[i].get(), node->children()[i].get(),
-                      compare_tokens))
+                      compare_tokens)) {
         return false;
+      }
     }
   }
   return true;

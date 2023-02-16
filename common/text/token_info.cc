@@ -30,11 +30,11 @@ namespace verible {
 
 TokenInfo TokenInfo::EOFToken() {
   static constexpr absl::string_view null_text;
-  return TokenInfo(TK_EOF, null_text);
+  return {TK_EOF, null_text};
 }
 
 TokenInfo TokenInfo::EOFToken(absl::string_view buffer) {
-  return TokenInfo(TK_EOF, absl::string_view(buffer.end(), 0));
+  return {TK_EOF, absl::string_view(buffer.end(), 0)};
 }
 
 bool TokenInfo::operator==(const TokenInfo& token) const {

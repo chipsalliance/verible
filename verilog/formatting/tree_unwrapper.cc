@@ -208,7 +208,7 @@ class TreeUnwrapper::TokenScanner {
   }
 
  protected:
-  typedef TokenScannerState State;
+  using State = TokenScannerState;
 
   // The current state of the TokenScanner.
   State current_state_ = kStart;
@@ -314,7 +314,7 @@ TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
   CHECK(back.text().empty());
 }
 
-TreeUnwrapper::~TreeUnwrapper() {}
+TreeUnwrapper::~TreeUnwrapper() = default;
 
 static bool IsPreprocessorClause(NodeEnum e) {
   switch (e) {

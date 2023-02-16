@@ -32,7 +32,8 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
                                        FileList* append_to) {
   // TODO(hzeller): parse +define+ and stash into preprocessing configuration.
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
-  append_to->preprocessing.include_dirs.push_back(".");  // Should we do that?
+  append_to->preprocessing.include_dirs.emplace_back(
+      ".");  // Should we do that?
   std::string file_path;
   std::istringstream stream(file_list_content);
   while (std::getline(stream, file_path)) {

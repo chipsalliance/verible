@@ -95,13 +95,12 @@ class EnumNameMap {
   // Using a string_view is safe when the string-memory owned elsewhere is
   // guaranteed to outlive objects of this class.
   // String-literals are acceptable sources of string_views for this purpose.
-  typedef absl::string_view key_type;
+  using key_type = absl::string_view;
 
   // Storage type for mapping information.
   // StringViewCompare gives the benefit of copy-free heterogeneous lookup.
-  typedef BijectiveMap<key_type, EnumType, StringViewCompare,
-                       internal::EnumCompare>
-      map_type;
+  using map_type = BijectiveMap<key_type, EnumType, StringViewCompare,
+                                internal::EnumCompare>;
 
  public:
   // Pairs must contain unique keys or values, or this will result in a fatal

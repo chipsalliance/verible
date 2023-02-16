@@ -43,7 +43,7 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  UvmMacroSemicolonRule() : state_(State::kNormal) {}
+  UvmMacroSemicolonRule() = default;
 
   // Returns the description of the rule implemented
   static const LintRuleDescriptor& GetDescriptor();
@@ -61,7 +61,7 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
   };
 
   // Internal analysis state
-  State state_;
+  State state_ = State::kNormal;
 
   // Save the matching macro and include it in diagnostic message
   verible::TokenInfo macro_id_ = verible::TokenInfo::EOFToken();

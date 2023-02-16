@@ -36,7 +36,7 @@ class ForbidConsecutiveNullStatementsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  ForbidConsecutiveNullStatementsRule() : state_(State::kNormal) {}
+  ForbidConsecutiveNullStatementsRule() = default;
 
   static const LintRuleDescriptor& GetDescriptor();
 
@@ -53,7 +53,7 @@ class ForbidConsecutiveNullStatementsRule : public verible::SyntaxTreeLintRule {
   };
 
   // Internal analysis state.
-  State state_;
+  State state_ = State::kNormal;
 
   std::set<verible::LintViolation> violations_;
 };

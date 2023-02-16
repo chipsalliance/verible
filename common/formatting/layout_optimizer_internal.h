@@ -257,17 +257,19 @@ class LayoutFunction {
   LayoutFunction& operator=(const LayoutFunction&) = default;
 
   void push_back(const LayoutFunctionSegment& segment) {
-    if (!segments_.empty())
+    if (!segments_.empty()) {
       CHECK_LT(segments_.back().column, segment.column);
-    else
+    } else {
       CHECK_EQ(segment.column, 0);
+    }
     segments_.push_back(segment);
   }
   void push_back(LayoutFunctionSegment&& segment) {
-    if (!segments_.empty())
+    if (!segments_.empty()) {
       CHECK_LT(segments_.back().column, segment.column);
-    else
+    } else {
       CHECK_EQ(segment.column, 0);
+    }
     segments_.push_back(segment);
   }
 
@@ -319,8 +321,9 @@ class LayoutFunction {
 
   // Sets whether to force line break just before this layout.
   void SetMustWrap(bool must_wrap) {
-    for (auto& segment : segments_)
+    for (auto& segment : segments_) {
       segment.layout.Value().SetMustWrap(must_wrap);
+    }
   }
 
  private:
@@ -533,7 +536,7 @@ class LayoutFunctionFactory {
                   "Iterator's value type must be LayoutFunction.");
     const auto lfs = make_container_range(begin, end);
 
-    if (lfs.empty()) return LayoutFunction();
+    if (lfs.empty()) return {};
     if (lfs.size() == 1) return lfs.front();
 
     // Create a segment iterator for each LayoutFunction.
@@ -580,7 +583,7 @@ class LayoutFunctionFactory {
 
     auto lfs_container = make_container_range(begin, end);
 
-    if (lfs_container.empty()) return LayoutFunction();
+    if (lfs_container.empty()) return {};
     if (lfs_container.size() == 1) return lfs_container.front();
 
     LayoutFunction incremental = lfs_container.front();
@@ -612,7 +615,7 @@ class LayoutFunctionFactory {
                   "Iterator's value type must be LayoutFunction.");
     const auto lfs = make_container_range(begin, end);
 
-    if (lfs.empty()) return LayoutFunction();
+    if (lfs.empty()) return {};
     if (lfs.size() == 1) return lfs.front();
 
     // Create a segment iterator for each LayoutFunction.
@@ -651,7 +654,7 @@ class LayoutFunctionFactory {
 
     const auto lfs = make_container_range(begin, end);
 
-    if (lfs.empty()) return LayoutFunction();
+    if (lfs.empty()) return {};
     if (lfs.size() == 1) return lfs.front();
 
     absl::FixedArray<LayoutFunction> results(lfs.size());
@@ -678,19 +681,21 @@ class LayoutFunctionFactory {
           const auto& first_token = first_line.TokensRange().front();
           const int token_break_penalty = first_token.before.break_penalty;
 
-          for (auto& segment : results_i[j - i])
+          for (auto& segment : results_i[j - i]) {
             segment.intercept += wrapping_penalty + token_break_penalty;
+          }
         }
 
-        if (next_element.MustWrap())
+        if (next_element.MustWrap()) {
           incremental = Stack({
               std::move(incremental),
               Indent(next_element, hanging_indentation),
           });
-        else
+        } else {
           // TODO(mglb): use Stack for invervals where lfs[j] is multiline (i.e.
           // has any stack sublayouts)
           incremental = Juxtaposition({std::move(incremental), next_element});
+        }
       }
       results_i.back() = std::move(incremental);
 

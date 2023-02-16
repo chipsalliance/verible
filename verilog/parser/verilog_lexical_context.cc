@@ -581,7 +581,7 @@ void LexicalContext::_UpdateState(const TokenInfo& token) {
     case TK_case:   // fall-through
     case TK_casex:  // fall-through
     case TK_casez:
-      flow_control_stack_.push_back(FlowControlState(&token));
+      flow_control_stack_.emplace_back(&token);
       break;
 
     // Procedural control blocks:

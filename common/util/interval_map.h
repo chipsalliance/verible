@@ -126,16 +126,16 @@ static std::pair<typename M::iterator, bool> FindNonoverlappingEmplacePosition(
 template <typename K, typename V>
 class DisjointIntervalMap {
   // Interpreted as the interval [i,j)
-  typedef std::pair<K, K> interval_key_type;
-  typedef internal::CompareFirst<K> comparator;
-  typedef std::map<interval_key_type, V, comparator> map_type;
+  using interval_key_type = std::pair<K, K>;
+  using comparator = internal::CompareFirst<K>;
+  using map_type = std::map<interval_key_type, V, comparator>;
 
  public:
-  typedef typename map_type::key_type key_type;
-  typedef typename map_type::mapped_type mapped_type;
-  typedef typename map_type::value_type value_type;
-  typedef typename map_type::iterator iterator;
-  typedef typename map_type::const_iterator const_iterator;
+  using key_type = typename map_type::key_type;
+  using mapped_type = typename map_type::mapped_type;
+  using value_type = typename map_type::value_type;
+  using iterator = typename map_type::iterator;
+  using const_iterator = typename map_type::const_iterator;
 
  public:
   DisjointIntervalMap() = default;

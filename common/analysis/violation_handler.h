@@ -46,8 +46,7 @@ class ViolationHandler {
 // messages.
 class ViolationPrinter : public ViolationHandler {
  public:
-  explicit ViolationPrinter(std::ostream* stream)
-      : stream_(stream), formatter_(nullptr) {}
+  explicit ViolationPrinter(std::ostream* stream) : stream_(stream) {}
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
@@ -55,7 +54,7 @@ class ViolationPrinter : public ViolationHandler {
 
  protected:
   std::ostream* const stream_;
-  verible::LintStatusFormatter* formatter_;
+  verible::LintStatusFormatter* formatter_ = nullptr;
 };
 
 // ViolationHandler that prints all violations in a format required by
@@ -64,9 +63,7 @@ class ViolationWaiverPrinter : public ViolationHandler {
  public:
   explicit ViolationWaiverPrinter(std::ostream* message_stream_,
                                   std::ostream* waiver_stream_)
-      : message_stream_(message_stream_),
-        waiver_stream_(waiver_stream_),
-        formatter_(nullptr) {}
+      : message_stream_(message_stream_), waiver_stream_(waiver_stream_) {}
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
@@ -75,7 +72,7 @@ class ViolationWaiverPrinter : public ViolationHandler {
  protected:
   std::ostream* const message_stream_;
   std::ostream* const waiver_stream_;
-  verible::LintStatusFormatter* formatter_;
+  verible::LintStatusFormatter* formatter_ = nullptr;
 };
 
 // ViolationHandler that prints all violations and gives an option to fix those

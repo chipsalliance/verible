@@ -36,8 +36,8 @@ namespace verible {
 // is reached.  StateNode is language-agnostic.
 // StateNode is purely an implementation detail of line_wrap_searcher.cc.
 struct StateNode {
-  typedef std::vector<PreFormatToken> path_type;
-  typedef container_iterator_range<path_type::const_iterator> range_type;
+  using path_type = std::vector<PreFormatToken>;
+  using range_type = container_iterator_range<path_type::const_iterator>;
 
   // The StateNode that has an edge to this StateNode, to backtrack once a final
   // state is reached.

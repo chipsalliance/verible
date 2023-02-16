@@ -36,7 +36,7 @@ class LintWaiver {
   using RegexVector = std::vector<const std::regex*>;
 
  public:
-  LintWaiver() {}
+  LintWaiver() = default;
 
   // Construction either done in Builder function or LintWaiverBuilder class
   // defined below.

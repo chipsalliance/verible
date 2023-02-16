@@ -166,7 +166,7 @@ struct LinterOptions {
 class LinterConfiguration {
  public:
   // Constructor has no rules enabled by default;
-  LinterConfiguration() {}
+  LinterConfiguration() = default;
 
   // This is copy-able.
   LinterConfiguration(const LinterConfiguration&) = default;

@@ -277,7 +277,7 @@ void AdjustIndentationAbsolute(TokenPartitionTree* tree, int amount) {
 }
 
 absl::string_view StringSpanOfTokenRange(const FormatTokenRange& range) {
-  if (range.empty()) return absl::string_view();
+  if (range.empty()) return {};
   return make_string_view_range(range.front().Text().begin(),
                                 range.back().Text().end());
 }
@@ -343,8 +343,9 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
 
   for (auto& token : make_range(mutable_tokens_begin, mutable_tokens_end)) {
     auto& decision = token.before.break_decision;
-    if (decision == verible::SpacingOptions::Undecided)
+    if (decision == verible::SpacingOptions::Undecided) {
       decision = verible::SpacingOptions::MustAppend;
+    }
   }
   // Children are no longer needed
   already_formatted_partition_node->Children().clear();
@@ -550,8 +551,7 @@ class TokenPartitionTreeWrapper {
   /* implicit */ TokenPartitionTreeWrapper(  // NOLINT
       const UnwrappedLine& unwrapped_line)
       : node_(nullptr) {
-    unwrapped_line_ =
-        std::unique_ptr<UnwrappedLine>(new UnwrappedLine(unwrapped_line));
+    unwrapped_line_ = std::make_unique<UnwrappedLine>(unwrapped_line);
   }
 
   // At least one of node_ or unwrapped_line_ should not be nullptr
@@ -564,8 +564,7 @@ class TokenPartitionTreeWrapper {
       node_ = other.node_;
     } else {
       node_ = nullptr;
-      unwrapped_line_ = std::unique_ptr<UnwrappedLine>(
-          new UnwrappedLine(*other.unwrapped_line_));
+      unwrapped_line_ = std::make_unique<UnwrappedLine>(*other.unwrapped_line_);
     }
   }
 

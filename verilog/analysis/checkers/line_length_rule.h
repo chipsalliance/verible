@@ -45,7 +45,7 @@ class LineLengthRule : public verible::TextStructureLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  LineLengthRule() {}
+  LineLengthRule() = default;
 
   absl::Status Configure(absl::string_view configuration) final;
 

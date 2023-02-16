@@ -72,7 +72,7 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   using verible::TreeUnwrapper::Unwrap;
 
  private:
-  typedef std::vector<verible::PreFormatToken> preformatted_tokens_type;
+  using preformatted_tokens_type = std::vector<verible::PreFormatToken>;
 
   // Private implementation type for handling tokens between syntax tree leaves.
   class TokenScanner;

@@ -60,7 +60,7 @@ inline constexpr SymbolTag LeafTag(int tag) { return {SymbolKind::kLeaf, tag}; }
 
 class Symbol {
  public:
-  virtual ~Symbol() {}
+  virtual ~Symbol() = default;
 
   virtual bool equals(const Symbol *symbol,
                       const TokenComparator &compare_tokens) const = 0;
@@ -80,7 +80,7 @@ class Symbol {
   virtual SymbolTag Tag() const = 0;
 
  protected:
-  Symbol() {}
+  Symbol() = default;
 };
 
 }  // namespace verible

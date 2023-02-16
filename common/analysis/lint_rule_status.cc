@@ -72,7 +72,7 @@ static TokenInfo SymbolToToken(const Symbol& root) {
   return TokenInfo::EOFToken();
 }
 
-LintViolation::LintViolation(const Symbol& root, const std::string& reason,
+LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
                              const SyntaxTreeContext& context,
                              const std::vector<AutoFix>& autofixes)
     : root(&root),
