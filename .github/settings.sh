@@ -28,8 +28,8 @@ export GIT_VERSION=${GIT_VERSION:-$(git describe --match=v*)}
 
 export BAZEL_CXXOPTS="-std=c++17"
 
-# Reduce the verbosity of progress output on CI
-export BAZEL_OPTS="-c opt --show_progress_rate_limit=10.0"
+# Progress output is just noisy in CI outputs.
+export BAZEL_OPTS="-c opt --noshow_progress"
 
 # Used to fetch the BAZEL version where needed.
 export BAZEL_VERSION=4.0.0
