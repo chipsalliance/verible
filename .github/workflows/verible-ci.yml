@@ -129,6 +129,12 @@ jobs:
         - x86_64
         - arm64
         exclude:
+          - mode: test-nortti
+            arch: arm64
+          - mode: test-c++20
+            arch: arm64
+          - mode: test-c++23
+            arch: arm64
           - mode: asan
             arch: arm64
           - mode: asan-clang
