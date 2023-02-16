@@ -55,7 +55,7 @@ bool VerilogLexer::KeepSyntaxTreeTokens(const TokenInfo& t) {
 void RecursiveLexText(absl::string_view text,
                       const std::function<void(const TokenInfo&)>& func) {
   VerilogLexer lexer(text);
-  while (true) {
+  for (;;) {
     const TokenInfo& subtoken(lexer.DoNextToken());
     if (subtoken.isEOF()) break;
     func(subtoken);

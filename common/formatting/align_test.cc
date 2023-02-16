@@ -1050,7 +1050,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
     partition_ = TokenPartitionTree{all};
 
     auto token_iter = pre_format_tokens_.begin();
-    while (true) {
+    for (;;) {
       UnwrappedLine uwline(0, token_iter);
       SymbolPtr item = ParseItem(&token_iter, pre_format_tokens_.end());
       if (!item) {

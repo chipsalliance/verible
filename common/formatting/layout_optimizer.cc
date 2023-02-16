@@ -236,7 +236,7 @@ LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
   auto column = indent;
   auto segment = lf.AtOrToTheLeftOf(column);
 
-  while (true) {
+  for (;;) {
     auto columns_over_limit = column - style_.column_limit;
 
     const float new_intercept =
@@ -288,7 +288,7 @@ LayoutFunction LayoutFunctionFactory::Juxtaposition(
   auto column_r = segment_l->span + segment_r->layout.Value().SpacesBefore();
   segment_r = right.AtOrToTheLeftOf(column_r);
 
-  while (true) {
+  for (;;) {
     const int columns_over_limit = column_r - style_.column_limit;
 
     const float new_intercept =

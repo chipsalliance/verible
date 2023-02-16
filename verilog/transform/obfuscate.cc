@@ -53,7 +53,7 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
                                          IdentifierObfuscator* subst) {
   VLOG(1) << __FUNCTION__;
   verilog::VerilogLexer lexer(content);
-  while (true) {
+  for (;;) {
     const verible::TokenInfo& token(lexer.DoNextToken());
     if (token.isEOF()) break;
     switch (token.token_enum()) {
