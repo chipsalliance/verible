@@ -101,9 +101,8 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym) {
     const auto range_end = right->get().text().end();
     return absl::string_view(range_begin,
                              std::distance(range_begin, range_end));
-  } else {
-    return "";
   }
+  return "";
 }
 
 const SyntaxTreeNode& SymbolCastToNode(const Symbol& symbol) {

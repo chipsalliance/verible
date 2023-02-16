@@ -1253,11 +1253,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         VisitIndentedSection(node, indent,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
         break;
-      } else {
-        // Default handling
-        TraverseChildren(node);
-        break;
       }
+      // Default handling
+      TraverseChildren(node);
+      break;
     }
 
     case NodeEnum::kPortList: {

@@ -49,12 +49,12 @@ class BisonParserAdapter : public Parser {
     VLOG(3) << "max_used_stack_size : " << MaxUsedStackSize();
     if (result == 0 && param_.RecoveredSyntaxErrors().empty()) {
       return absl::OkStatus();
-    } else {
-      // We could potentially dump the parser's symbol stack from ParserParam.
-      // We could also print information about recovered errors.
-      return absl::InvalidArgumentError("Syntax error.");
-      // More detailed error information is stored inside param_.
     }
+
+    // We could potentially dump the parser's symbol stack from ParserParam.
+    // We could also print information about recovered errors.
+    return absl::InvalidArgumentError("Syntax error.");
+    // More detailed error information is stored inside param_.
   }
 
   const std::vector<TokenInfo>& RejectedTokens() const final {

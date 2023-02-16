@@ -217,13 +217,12 @@ LayoutFunction LayoutFunctionFactory::Line(const UnwrappedLine& uwline) const {
         {style_.column_limit - span, std::move(layout), span, 0,
          style_.over_column_limit_penalty},
     };
-  } else {
-    return LayoutFunction{
-        {0, std::move(layout), span,
-         float((span - style_.column_limit) * style_.over_column_limit_penalty),
-         style_.over_column_limit_penalty},
-    };
   }
+  return LayoutFunction{
+      {0, std::move(layout), span,
+       float((span - style_.column_limit) * style_.over_column_limit_penalty),
+       style_.over_column_limit_penalty},
+  };
 }
 
 LayoutFunction LayoutFunctionFactory::Indent(const LayoutFunction& lf,
@@ -495,9 +494,8 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
         node.Value().TokensRange().size() > 1 &&
         node.Value().TokensRange().size() < kWrapTokensLimit) {
       return factory_.WrappedLine(node.Value());
-    } else {
-      return factory_.Line(node.Value());
     }
+    return factory_.Line(node.Value());
   }
 
   // Traverse and calculate children layouts

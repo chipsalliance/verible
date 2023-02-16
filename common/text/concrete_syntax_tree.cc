@@ -31,9 +31,8 @@ bool SyntaxTreeNode::equals(const Symbol* symbol,
   if (symbol->Kind() == SymbolKind::kNode) {
     const auto* node = down_cast<const SyntaxTreeNode*>(symbol);
     return equals(node, compare_tokens);
-  } else {
-    return false;
   }
+  return false;
 }
 
 // Checks if this is equal to a SyntaxTreeNode under compare_token function
@@ -43,13 +42,12 @@ bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
                             const TokenComparator& compare_tokens) const {
   if (children_.size() != node->children().size()) {
     return false;
-  } else {
-    int size = children_.size();
-    for (int i = 0; i < size; i++) {
-      if (!EqualTrees(children_[i].get(), node->children()[i].get(),
-                      compare_tokens)) {
-        return false;
-      }
+  }
+  int size = children_.size();
+  for (int i = 0; i < size; i++) {
+    if (!EqualTrees(children_[i].get(), node->children()[i].get(),
+                    compare_tokens)) {
+      return false;
     }
   }
   return true;

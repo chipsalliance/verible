@@ -159,9 +159,8 @@ class ExpandableTreeView {
     if (info.IsExpanded() && !is_leaf(current)) {
       // Let compiler to tail-call optimize self-recursion.
       return first_unexpanded_child(current.Children().front());
-    } else {
-      return &current;
     }
+    return &current;
   }
 
   // Helper function for iterating to next node in sequence, which could be
@@ -172,27 +171,22 @@ class ExpandableTreeView {
   // \precondition this->parent_->expand_ is true (for all ancestors),
   //   otherwise we would have never reached this node.
   static const impl_type* next_sibling(const impl_type& current) {
-    if (current.Parent() != nullptr) {
-      // Find the next sibling, if there is one.
-      const size_t birth_rank = verible::BirthRank(current);
-      const size_t next_rank = birth_rank + 1;
-      if (next_rank == current.Parent()->Children().size()) {
-        // This is the last child of the group.
-        // Find the nearest parent that has a next child (ascending).
-        auto* next_ancestor = next_sibling(*current.Parent());
-        if (next_ancestor != nullptr) {
-          return first_unexpanded_child(*next_ancestor);
-        } else {
-          return nullptr;
-        }
-      } else {
-        // More children follow this one.
-        return first_unexpanded_child(current.Parent()->Children()[next_rank]);
+    if (current.Parent() == nullptr) return nullptr;
+
+    // Find the next sibling, if there is one.
+    const size_t birth_rank = verible::BirthRank(current);
+    const size_t next_rank = birth_rank + 1;
+    if (next_rank == current.Parent()->Children().size()) {
+      // This is the last child of the group.
+      // Find the nearest parent that has a next child (ascending).
+      auto* next_ancestor = next_sibling(*current.Parent());
+      if (next_ancestor != nullptr) {
+        return first_unexpanded_child(*next_ancestor);
       }
-    } else {
-      // Root node has no next sibling, this is the end().
       return nullptr;
     }
+    // More children follow this one.
+    return first_unexpanded_child(current.Parent()->Children()[next_rank]);
   }
 
  private:

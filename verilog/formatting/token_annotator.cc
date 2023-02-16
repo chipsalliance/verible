@@ -207,9 +207,10 @@ static WithReason<int> SpacesRequiredBetween(
   if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
       return {0, "No space around streaming operators"};
-    } else if (left.format_token_enum == FormatTokenType::numeric_literal ||
-               left.format_token_enum == FormatTokenType::identifier ||
-               left.format_token_enum == FormatTokenType::keyword) {
+    }
+    if (left.format_token_enum == FormatTokenType::numeric_literal ||
+        left.format_token_enum == FormatTokenType::identifier ||
+        left.format_token_enum == FormatTokenType::keyword) {
       return {0, "No space around streaming operator slice size"};
     }
   }
@@ -511,9 +512,8 @@ static WithReason<int> SpacesRequiredBetween(
              NodeEnum::kExtendsList},
             {})) {
       return {0, "No space before # when direct parent is kUnqualifiedId."};
-    } else {
-      return {1, "Spaces before # in most other contexts."};
     }
+    return {1, "Spaces before # in most other contexts."};
   }
 
   if (right.format_token_enum == FormatTokenType::keyword) {
@@ -772,11 +772,10 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     if (std::count(text.begin(), text.end(), '\n') >= 2) {
       return {SpacingOptions::Preserve,
               "Preserve spacing before a multi-line macro definition body."};
-    } else {
-      return {SpacingOptions::MustAppend,
-              "Macro definition body must start on same line (but may be "
-              "line-continued)."};
     }
+    return {SpacingOptions::MustAppend,
+            "Macro definition body must start on same line (but may be "
+            "line-continued)."};
   }
 
   // Check for mandatory line breaks.

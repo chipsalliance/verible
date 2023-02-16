@@ -57,9 +57,8 @@ class LintRuleRegistry {
     auto* create_func = FindOrNull(*GetLintRuleRegistry<RuleType>(), rule);
     if (create_func == nullptr) {
       return nullptr;
-    } else {
-      return (create_func->lint_rule_generator)();
     }
+    return (create_func->lint_rule_generator)();
   }
 
   // Returns true if registry holds a LintRule named rule.

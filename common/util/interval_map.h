@@ -91,13 +91,12 @@ static std::pair<typename M::iterator, bool> FindNonoverlappingEmplacePosition(
     // Can't use CHECK_LT because iterators are not printable (logging.h).
     CHECK(interval.first <= iter->first.first);
     return {iter, interval.second <= iter->first.first};
-  } else {
-    const auto prev = std::prev(iter);
-    CHECK(prev->first.first <= interval.first);
-    return {iter, prev->first.second <= interval.first &&
-                      (iter == intervals.end() ||
-                       interval.second <= iter->first.first)};
   }
+  const auto prev = std::prev(iter);
+  CHECK(prev->first.first <= interval.first);
+  return {iter, prev->first.second <= interval.first &&
+                    (iter == intervals.end() ||
+                     interval.second <= iter->first.first)};
 }
 
 }  // namespace internal

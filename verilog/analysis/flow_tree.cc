@@ -126,9 +126,8 @@ absl::Status FlowTree::MacroFollows(
   auto macro_iterator = conditional_iterator + 1;
   if (macro_iterator->token_enum() != PP_Identifier) {
     return absl::InvalidArgumentError("Expected identifier for macro name.");
-  } else {
-    return absl::OkStatus();
   }
+  return absl::OkStatus();
 }
 
 // Adds a conditional macro to conditional_macros_ if not added before,

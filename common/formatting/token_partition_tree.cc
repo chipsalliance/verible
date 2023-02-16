@@ -570,11 +570,7 @@ class TokenPartitionTreeWrapper {
 
   // Return wrapped node value or concatenation of subnodes values
   const UnwrappedLine& Value() const {
-    if (node_) {
-      return node_->Value();
-    } else {
-      return *unwrapped_line_;
-    }
+    return node_ ? node_->Value() : *unwrapped_line_;
   }
 
   // Concatenate subnodes value with other node value

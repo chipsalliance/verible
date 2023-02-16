@@ -47,15 +47,14 @@ char ReadCharFromUser(std::istream& input, std::ostream& output,
       return '\0';
     }
     return line.empty() ? '\n' : line.front();
-  } else {
-    // Input from a file or pipe: no prompt, read single character.
-    char c;
-    input.get(c);
-    if (input.eof() || input.fail()) {
-      return '\0';
-    }
-    return c;
   }
+  // Input from a file or pipe: no prompt, read single character.
+  char c;
+  input.get(c);
+  if (input.eof() || input.fail()) {
+    return '\0';
+  }
+  return c;
 }
 
 namespace term {

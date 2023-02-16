@@ -140,12 +140,11 @@ ConfigValueSetter SetStringOneOf(std::string* value,
                return absl::InvalidArgumentError(
                    absl::StrCat("Value can only be '", allowed[0], "'; got '",
                                 v, "'"));
-             } else {
-               return absl::InvalidArgumentError(
-                   absl::StrCat("Value can only be one of ['",
-                                absl::StrJoin(allowed, "', '"),
-                                "']; got '", v, "'"));
              }
+             return absl::InvalidArgumentError(
+                 absl::StrCat("Value can only be one of ['",
+                              absl::StrJoin(allowed, "', '"),
+                              "']; got '", v, "'"));
            }
            value->assign(v.data(), v.length());
            return absl::OkStatus();

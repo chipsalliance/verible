@@ -162,10 +162,9 @@ int StateNode::_UpdateColumnPosition() {
       // text up to the first newline.
       if (IsRootState()) {
         return first_newline_pos;
-      } else {
-        return prev_state->current_column +
-               current_format_token.before.spaces_required + first_newline_pos;
       }
+      return prev_state->current_column +
+             current_format_token.before.spaces_required + first_newline_pos;
     }
   }
 
@@ -328,12 +327,10 @@ std::shared_ptr<const StateNode> StateNode::AppendIfItFits(
       std::make_shared<StateNode>(current_state, style, SpacingDecision::Wrap);
   const auto appended = std::make_shared<StateNode>(current_state, style,
                                                     SpacingDecision::Append);
-  if (token.before.break_decision == SpacingOptions::MustWrap ||
-      appended->current_column > style.column_limit) {
-    return wrapped;
-  } else {
-    return appended;
-  }
+  return (token.before.break_decision == SpacingOptions::MustWrap ||
+          appended->current_column > style.column_limit)
+             ? wrapped
+             : appended;
 }
 
 std::shared_ptr<const StateNode> StateNode::QuickFinish(

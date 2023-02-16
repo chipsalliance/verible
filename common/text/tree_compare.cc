@@ -24,12 +24,12 @@ bool EqualTrees(const Symbol* lhs, const Symbol* rhs,
                 const TokenComparator& compare_tokens) {
   if (lhs == nullptr && rhs == nullptr) {
     return true;
-  } else if (lhs == nullptr || rhs == nullptr) {
-    return false;
-  } else {
-    const Symbol* rhs_pointer = rhs;
-    return lhs->equals(rhs_pointer, compare_tokens);
   }
+  if (lhs == nullptr || rhs == nullptr) {
+    return false;
+  }
+  const Symbol* rhs_pointer = rhs;
+  return lhs->equals(rhs_pointer, compare_tokens);
 }
 
 bool EqualTrees(const Symbol* lhs, const Symbol* rhs) {

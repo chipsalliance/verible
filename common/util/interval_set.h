@@ -121,12 +121,11 @@ class _IntervalSetImpl {
       // Can't use CHECK_LT because iterators are not printable (logging.h).
       CHECK(min <= iter->first);
       return {iter, max <= iter->first};
-    } else {
-      const auto prev = std::prev(iter);
-      CHECK(prev->first <= min);
-      return {iter, prev->second <= min &&
-                        (iter == intervals.end() || max <= iter->first)};
     }
+    const auto prev = std::prev(iter);
+    CHECK(prev->first <= min);
+    return {iter, prev->second <= min &&
+                      (iter == intervals.end() || max <= iter->first)};
   }
 };
 
@@ -325,7 +324,8 @@ class IntervalSet : private _IntervalSetImpl {
     const auto min_lb = LowerBound(min);
     if (min_lb == intervals_.end()) {
       return;  // interval is out of range of this set
-    } else if (AsInterval(*min_lb).contains(min)) {
+    }
+    if (AsInterval(*min_lb).contains(min)) {
       if (min_lb->first == min) {
         erase_begin = min_lb;  // erase starting at this interval
         replaced_lower_interval = {max, min_lb->second};

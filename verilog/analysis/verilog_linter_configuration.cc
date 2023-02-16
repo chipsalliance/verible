@@ -138,11 +138,10 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
     if (rule_iter == rule_name_set.end()) {
       *error = absl::StrCat("invalid flag \"", rule_name, "\"");
       return false;
-    } else {
-      // Map keys must use canonical registered string_views for guaranteed
-      // lifetime, not just any string-equivalent copy.
-      rules[*rule_iter] = setting;
     }
+    // Map keys must use canonical registered string_views for guaranteed
+    // lifetime, not just any string-equivalent copy.
+    rules[*rule_iter] = setting;
   }
 
   return true;

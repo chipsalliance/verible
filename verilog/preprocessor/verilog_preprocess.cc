@@ -256,15 +256,15 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
       }
       parameters_size--;
       continue;
-    } else if ((*token_iter)->text() == ",") {
+    }
+    if ((*token_iter)->text() == ",") {
       macro_call->positional_arguments.emplace_back(
           verible::DefaultTokenInfo());
       token_iter = GenerateBypassWhiteSpaces(generator);
       parameters_size--;
       continue;
-    } else if ((*token_iter)->text() == ")") {
-      break;
     }
+    if ((*token_iter)->text() == ")") break;
   }
   if (parameters_size > 0) {
     while (parameters_size--) {

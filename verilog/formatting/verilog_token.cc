@@ -532,52 +532,51 @@ FTT GetFormatTokenType(verilog_tokentype e) {
   // token's enum value, where lower values are ASCII character values.
   if (e > 257) {
     return FindWithDefault(FormatTokenTypeMap(), e, FTT::unknown);
-  } else {
-    // single char tokens which use ASCII values as enum.
-    switch (static_cast<int>(e)) {
-      /* arithmetic */
-      case '+':
-      case '-':
-      case '*':
-      case '/':
-      case '%':
-      /* bitwise */
-      case '&':
-      case '|':
-      case '^':
-      /* relational */
-      case '<':
-      case '>':
-        return FTT::binary_operator;
-      case '?':
-        // Technically, ?: is a ternary operator, but nonetheless we
-        // space it the same way as a binary operator.
-        return FTT::binary_operator;
-      // TODO(fangism): handle the ':' separator, but use context-sensitivity
-      // to accommodate the cases where spacing is undesirable.
-      case '=':
-        // Though technically = is an assignment operator, and not an expression
-        // operator, we lump it with binary_operator for convenience.
-        // It is also used in contexts like default values.
-        // Make sure this stays consistent with nonblocking assignment '<=',
-        // which happens to be an overloaded TK_LE.
-        return FTT::binary_operator;
-      case '.':
-        // TODO(fangism): this is actually context-dependent.  .port(foo) in a
-        // port actual list, vs. a.b.c for a member reference.  distinguish
-        // these.
-        return FTT::hierarchy;
-      case '(':
-      case '[':
-      case '{':
-        return FTT::open_group;
-      case ')':
-      case ']':
-      case '}':
-        return FTT::close_group;
-      default:
-        return FTT::unknown;
-    }
+  }
+  // single char tokens which use ASCII values as enum.
+  switch (static_cast<int>(e)) {
+    /* arithmetic */
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '%':
+    /* bitwise */
+    case '&':
+    case '|':
+    case '^':
+    /* relational */
+    case '<':
+    case '>':
+      return FTT::binary_operator;
+    case '?':
+      // Technically, ?: is a ternary operator, but nonetheless we
+      // space it the same way as a binary operator.
+      return FTT::binary_operator;
+    // TODO(fangism): handle the ':' separator, but use context-sensitivity
+    // to accommodate the cases where spacing is undesirable.
+    case '=':
+      // Though technically = is an assignment operator, and not an expression
+      // operator, we lump it with binary_operator for convenience.
+      // It is also used in contexts like default values.
+      // Make sure this stays consistent with nonblocking assignment '<=',
+      // which happens to be an overloaded TK_LE.
+      return FTT::binary_operator;
+    case '.':
+      // TODO(fangism): this is actually context-dependent.  .port(foo) in a
+      // port actual list, vs. a.b.c for a member reference.  distinguish
+      // these.
+      return FTT::hierarchy;
+    case '(':
+    case '[':
+    case '{':
+      return FTT::open_group;
+    case ')':
+    case ']':
+    case '}':
+      return FTT::close_group;
+    default:
+      return FTT::unknown;
   }
 }
 
