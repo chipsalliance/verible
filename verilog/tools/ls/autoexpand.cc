@@ -89,7 +89,7 @@ class AutoExpander {
   // Module information relevant to AUTO expansion
   class Module {
    public:
-    Module(const Symbol &module)
+    explicit Module(const Symbol &module)
         : symbol_(module), name_(GetModuleName(symbol_)->get().text()) {
       RetrieveModuleHeaderPorts();
       RetrieveModuleBodyPorts();
@@ -235,10 +235,10 @@ class AutoExpander {
       const Symbol &instance, LineColumn linecol) const;
 
   // Expands AUTOARG for the given module
-  std::optional<TextEdit> ExpandAutoarg(Module &module) const;
+  std::optional<TextEdit> ExpandAutoarg(const Module &module) const;
 
   // Expands AUTOINST for the given module instance
-  std::optional<TextEdit> ExpandAutoinst(Module &module, const Symbol &instance,
+  std::optional<TextEdit> ExpandAutoinst(Module *module, const Symbol &instance,
                                          absl::string_view type_id,
                                          const Template *tmpl);
 
@@ -246,26 +246,27 @@ class AutoExpander {
   // Limitation: this only detects ports from AUTOINST. This limitation is also
   // present in the original Emacs Verilog-mode.
   std::optional<TextEdit> ExpandAutoDeclarations(
-      Module &module, const std::cmatch &match, absl::string_view description,
+      const Module &module, const std::cmatch &match,
+      absl::string_view description,
       const std::function<void(const Module &, std::ostream &)> &emit) const;
 
   // Expands AUTOINPUT for the given module
-  std::optional<TextEdit> ExpandAutoinput(Module &module,
+  std::optional<TextEdit> ExpandAutoinput(Module *module,
                                           const std::cmatch &match) const;
 
   // Expands AUTOINOUT for the given module
-  std::optional<TextEdit> ExpandAutoinout(Module &module,
+  std::optional<TextEdit> ExpandAutoinout(Module *module,
                                           const std::cmatch &match) const;
 
   // Expands AUTOOUTPUT for the given module
-  std::optional<TextEdit> ExpandAutooutput(Module &module,
+  std::optional<TextEdit> ExpandAutooutput(Module *module,
                                            const std::cmatch &match) const;
 
   // Expands AUTOWIRE for the given module
-  std::optional<TextEdit> ExpandAutowire(Module &module) const;
+  std::optional<TextEdit> ExpandAutowire(const Module &module) const;
 
   // Expands AUTOREG for the given module
-  std::optional<TextEdit> ExpandAutoreg(Module &module) const;
+  std::optional<TextEdit> ExpandAutoreg(const Module &module) const;
 
   // Expands all AUTOs in the buffer
   std::vector<TextEdit> Expand();
@@ -743,7 +744,8 @@ absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsConnectedBefore(
   return ports_before;
 }
 
-std::optional<TextEdit> AutoExpander::ExpandAutoarg(Module &module) const {
+std::optional<TextEdit> AutoExpander::ExpandAutoarg(
+    const Module &module) const {
   const SyntaxTreeNode *const port_parens =
       GetModulePortParenGroup(module.Symbol());
   if (!port_parens) return {};  // No port paren group, so no AUTOARG
@@ -796,7 +798,7 @@ std::optional<TextEdit> AutoExpander::ExpandAutoarg(Module &module) const {
                   .newText = absl::StrCat(comment_span, new_text.str())};
 }
 
-std::optional<TextEdit> AutoExpander::ExpandAutoinst(Module &module,
+std::optional<TextEdit> AutoExpander::ExpandAutoinst(Module *module,
                                                      const Symbol &instance,
                                                      absl::string_view type_id,
                                                      const Template *tmpl) {
@@ -862,8 +864,8 @@ std::optional<TextEdit> AutoExpander::ExpandAutoinst(Module &module,
       tmpl, [&](const Port &port, const absl::string_view connected_name) {
         if (port.declaration == Port::Declaration::kUndeclared) return;
         Connection connection{.instance = instance_name, .type = type_id};
-        module.AddGeneratedConnection(connected_name, port.direction,
-                                      connection);
+        module->AddGeneratedConnection(connected_name, port.direction,
+                                       connection);
       });
 
   const LineColumn end_linecol =
@@ -898,7 +900,7 @@ absl::string_view StringSpanOfMatchInSymbol(const Symbol &symbol,
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutoDeclarations(
-    Module &module, const std::cmatch &match,
+    const Module &module, const std::cmatch &match,
     const absl::string_view description,
     const std::function<void(const Module &, std::ostream &)> &emit) const {
   const absl::string_view auto_span =
@@ -922,48 +924,49 @@ std::optional<TextEdit> AutoExpander::ExpandAutoDeclarations(
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutoinput(
-    Module &module, const std::cmatch &match) const {
+    Module *module, const std::cmatch &match) const {
   auto result = ExpandAutoDeclarations(
-      module, match, "inputs (from autoinst inputs)",
+      *module, match, "inputs (from autoinst inputs)",
       [this](const Module &module, std::ostream &output) {
         module.EmitUndeclaredInputDeclarations(output, indent_);
       });
   if (result) {
-    module.MarkUndeclaredPortsAsAutogenerated(Port::Direction::kInput,
-                                              match.position());
+    module->MarkUndeclaredPortsAsAutogenerated(Port::Direction::kInput,
+                                               match.position());
   }
   return result;
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutoinout(
-    Module &module, const std::cmatch &match) const {
+    Module *module, const std::cmatch &match) const {
   auto result = ExpandAutoDeclarations(
-      module, match, "inouts (from autoinst inouts)",
+      *module, match, "inouts (from autoinst inouts)",
       [this](const Module &module, std::ostream &output) {
         module.EmitUndeclaredInoutDeclarations(output, indent_);
       });
   if (result) {
-    module.MarkUndeclaredPortsAsAutogenerated(Port::Direction::kInout,
-                                              match.position());
+    module->MarkUndeclaredPortsAsAutogenerated(Port::Direction::kInout,
+                                               match.position());
   }
   return result;
 }
 
 std::optional<TextEdit> AutoExpander::ExpandAutooutput(
-    Module &module, const std::cmatch &match) const {
+    Module *module, const std::cmatch &match) const {
   auto result = ExpandAutoDeclarations(
-      module, match, "outputs (from autoinst outputs)",
+      *module, match, "outputs (from autoinst outputs)",
       [this](const Module &module, std::ostream &output) {
         module.EmitUndeclaredOutputDeclarations(output, indent_);
       });
   if (result) {
-    module.MarkUndeclaredPortsAsAutogenerated(Port::Direction::kOutput,
-                                              match.position());
+    module->MarkUndeclaredPortsAsAutogenerated(Port::Direction::kOutput,
+                                               match.position());
   }
   return result;
 }
 
-std::optional<TextEdit> AutoExpander::ExpandAutowire(Module &module) const {
+std::optional<TextEdit> AutoExpander::ExpandAutowire(
+    const Module &module) const {
   const auto match = SearchInSymbol(module.Symbol(), autowire_re_);
   if (!match) return {};
   const absl::string_view auto_span =
@@ -975,7 +978,8 @@ std::optional<TextEdit> AutoExpander::ExpandAutowire(Module &module) const {
       });
 }
 
-std::optional<TextEdit> AutoExpander::ExpandAutoreg(Module &module) const {
+std::optional<TextEdit> AutoExpander::ExpandAutoreg(
+    const Module &module) const {
   const auto match = SearchInSymbol(module.Symbol(), autoreg_re_);
   if (!match) return {};
   const absl::string_view auto_span =
@@ -1046,24 +1050,24 @@ std::vector<TextEdit> AutoExpander::Expand() {
       const Template *tmpl = module->GetAutoTemplate(type_id, instance_offset);
       for (const auto &instance : FindAllGateInstances(*data.match)) {
         if (const auto edit =
-                ExpandAutoinst(*module, *instance.match, type_id, tmpl)) {
+                ExpandAutoinst(module, *instance.match, type_id, tmpl)) {
           edits.push_back(*edit);
         }
       }
     }
     // Expand AUTO port declarations
     if (autoinput_match) {
-      if (const auto edit = ExpandAutoinput(*module, *autoinput_match)) {
+      if (const auto edit = ExpandAutoinput(module, *autoinput_match)) {
         edits.push_back(*edit);
       }
     }
     if (autoinout_match) {
-      if (const auto edit = ExpandAutoinout(*module, *autoinout_match)) {
+      if (const auto edit = ExpandAutoinout(module, *autoinout_match)) {
         edits.push_back(*edit);
       }
     }
     if (autooutput_match) {
-      if (const auto edit = ExpandAutooutput(*module, *autooutput_match)) {
+      if (const auto edit = ExpandAutooutput(module, *autooutput_match)) {
         edits.push_back(*edit);
       }
     }

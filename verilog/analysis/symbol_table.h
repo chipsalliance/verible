@@ -323,9 +323,10 @@ struct SymbolInfo {
 
  public:  // methods
   SymbolInfo() = default;
-  SymbolInfo(SymbolMetaType metatype, const VerilogSourceFile* file_origin = {},
-             const verible::Symbol* syntax_origin = {},
-             DeclarationTypeInfo declared_type = {})
+  explicit SymbolInfo(SymbolMetaType metatype,
+                      const VerilogSourceFile* file_origin = {},
+                      const verible::Symbol* syntax_origin = {},
+                      DeclarationTypeInfo declared_type = {})
       : metatype(metatype),
         file_origin(file_origin),
         syntax_origin(syntax_origin),

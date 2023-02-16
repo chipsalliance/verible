@@ -200,7 +200,8 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
     return CreateErrorStatusFromErrno("Can't mmap file");
   }
 
-  return std::make_unique<MemMapBlock>((char *)buffer, file_size);
+  return std::make_unique<MemMapBlock>(reinterpret_cast<char *>(buffer),
+                                       file_size);
 #else
   // TODO: implement some memory mapping on Windows.
   return absl::UnimplementedError("No windows mmap implementation yet.");

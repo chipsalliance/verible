@@ -14,6 +14,9 @@
 #    returns; however since the iterator is implementation defined, this is not
 #    a valid assertion. Running the check every now and then manually and
 #    fixing all the non-iterator cases is useful though. Off by default.
+#
+# NOTE: Below, there must be no comments, otherwise clang tidy silently ignores
+#       rules... (ask me how I know).
 ##
 Checks: >
   clang-diagnostic-*,clang-analyzer-*,
@@ -35,7 +38,7 @@ Checks: >
   -readability-use-anyofallof,
   -readability-identifier-length,
   -readability-uppercase-literal-suffix,
-  -readability-convert-member-functions-to-static,  # creates false positive ?
+  -readability-convert-member-functions-to-static,
   google-*,
   -google-readability-braces-around-statements,
   -google-readability-todo,
