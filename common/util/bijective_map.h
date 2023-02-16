@@ -36,11 +36,11 @@ class BijectiveMap {
   // Map of keys to values (by pointer).
   // Would really rather have value_type be a reverse_map_type::const_iterator
   // but cannot due to mutually recursive template type.
-  typedef std::map<K, const V*, KComp> forward_map_type;
+  using forward_map_type = std::map<K, const V*, KComp>;
   // Map of values to keys (by pointer).
   // Would really rather have value_type be a forward_map_type::const_iterator
   // but cannot due to mutually recursive template type.
-  typedef std::map<V, const K*, VComp> reverse_map_type;
+  using reverse_map_type = std::map<V, const K*, VComp>;
 
  public:
   BijectiveMap() = default;

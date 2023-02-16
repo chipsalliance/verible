@@ -33,7 +33,7 @@ struct ValueTypeFromKeyType;
 // Constructs a default-valued pair from a key-type, for map-like types.
 template <class KeyType, class MappedType>
 struct ValueTypeFromKeyType<KeyType, std::pair<const KeyType, MappedType>> {
-  typedef std::pair<const KeyType, MappedType> ValueType;
+  using ValueType = std::pair<const KeyType, MappedType>;
   ValueType operator()(const KeyType& k) const {
     return {k, MappedType{}};  // default-value mapped-type
   }
@@ -59,9 +59,8 @@ bool InsertOrUpdate(M* map, const typename M::key_type& k,
 
 template <typename M>
 typename M::mapped_type& InsertKeyOrDie(M* m, const typename M::key_type& k) {
-  typedef internal::ValueTypeFromKeyType<typename M::key_type,
-                                         typename M::value_type>
-      value_inserter;
+  using value_inserter = internal::ValueTypeFromKeyType<typename M::key_type,
+                                                        typename M::value_type>;
   auto res = m->insert(value_inserter()(k));
   CHECK(res.second) << "duplicate key: " << k;
   return res.first->second;

@@ -29,7 +29,7 @@ namespace verible {
 // LintRule is an abstract base class that represent a single linter rule.
 class LintRule {
  public:
-  virtual ~LintRule() {}
+  virtual ~LintRule() = default;
 
   // If there is a configuration string for this rule, it will be passed to this
   // rule before use. This is a single string and the rule is free to impose

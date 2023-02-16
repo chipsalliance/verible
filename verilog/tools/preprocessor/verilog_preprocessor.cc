@@ -92,7 +92,7 @@ static absl::Status PreprocessSingleFile(
   verilog::VerilogPreprocess::Config config;
   config.filter_branches = true;
   config.include_files = true;
-  config.expand_macros = 1;
+  config.expand_macros = true;
 
   verilog::VerilogProject project(".", preprocessing_info.include_dirs);
 
@@ -143,7 +143,7 @@ static absl::Status MultipleCU(const SubcommandArgsRange& args, std::istream&,
 
   // TODO(karimtera): allow including files with absolute paths.
   // This is a hacky solution for now.
-  preprocessing_info.include_dirs.push_back("/");
+  preprocessing_info.include_dirs.emplace_back("/");
 
   if (files.empty()) {
     return absl::InvalidArgumentError("ERROR: Missing file argument.");

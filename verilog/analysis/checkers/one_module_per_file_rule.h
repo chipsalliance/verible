@@ -34,7 +34,7 @@ class OneModulePerFileRule : public verible::TextStructureLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  OneModulePerFileRule() {}
+  OneModulePerFileRule() = default;
 
   void Lint(const verible::TextStructureView&, absl::string_view) final;
 

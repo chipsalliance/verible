@@ -21,7 +21,7 @@
 namespace verible {
 
 std::vector<absl::string_view> SplitLines(absl::string_view text) {
-  if (text.empty()) return std::vector<absl::string_view>();
+  if (text.empty()) return {};
   std::vector<absl::string_view> lines(
       absl::StrSplit(text, absl::ByChar('\n')));
   // If text ends cleanly with a \n, omit the last blank split,
@@ -40,8 +40,9 @@ class AfterCharDelimiter {
 
   absl::string_view Find(absl::string_view text, size_t pos) const {
     const size_t found_pos = text.find(delimiter_, pos);
-    if (found_pos == absl::string_view::npos)
-      return absl::string_view(text.data() + text.size(), 0);
+    if (found_pos == absl::string_view::npos) {
+      return {text.data() + text.size(), 0};
+    }
     return text.substr(found_pos + 1, 0);
   }
 
@@ -51,7 +52,7 @@ class AfterCharDelimiter {
 
 std::vector<absl::string_view> SplitLinesKeepLineTerminator(
     absl::string_view text) {
-  if (text.empty()) return std::vector<absl::string_view>();
+  if (text.empty()) return {};
   return absl::StrSplit(text, AfterCharDelimiter('\n'));
 }
 

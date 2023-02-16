@@ -14,11 +14,10 @@
 
 #include "common/util/file_util.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <algorithm>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -78,15 +77,15 @@ static absl::Status CreateErrorStatusFromSysError(const char *fallback_msg,
   switch (sys_error) {
     case EPERM:
     case EACCES:
-      return absl::Status(StatusCode::kPermissionDenied, system_msg);
+      return {StatusCode::kPermissionDenied, system_msg};
     case ENOENT:
-      return absl::Status(StatusCode::kNotFound, system_msg);
+      return {StatusCode::kNotFound, system_msg};
     case EEXIST:
-      return absl::Status(StatusCode::kAlreadyExists, system_msg);
+      return {StatusCode::kAlreadyExists, system_msg};
     case EINVAL:
-      return absl::Status(StatusCode::kInvalidArgument, system_msg);
+      return {StatusCode::kInvalidArgument, system_msg};
     default:
-      return absl::Status(StatusCode::kUnknown, system_msg);
+      return {StatusCode::kUnknown, system_msg};
   }
 }
 
@@ -194,9 +193,9 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
   }
 
   const size_t file_size = s.st_size;
-  void *const buffer = mmap(NULL, file_size, PROT_READ, MAP_SHARED, fd, 0);
+  void *const buffer = mmap(nullptr, file_size, PROT_READ, MAP_SHARED, fd, 0);
   close(fd);
-  if (buffer == MAP_FAILED) {
+  if (buffer == MAP_FAILED) {  // NOLINT(performance-no-int-to-ptr)
     return CreateErrorStatusFromErrno("Can't mmap file");
   }
 

@@ -38,7 +38,7 @@ namespace verible {
 // that managed elements are non-nullptrs.
 class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
  public:
-  typedef AutoPopStack<const SyntaxTreeNode*> base_type;
+  using base_type = AutoPopStack<const SyntaxTreeNode*>;
 
   // member class to handle push and pop of stack safely
   using AutoPop = base_type::AutoPop;

@@ -33,7 +33,7 @@ class MacroStringConcatenationRule : public verible::TokenStreamLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  MacroStringConcatenationRule() : state_(State::kNormal) {}
+  MacroStringConcatenationRule() = default;
 
   void HandleToken(const verible::TokenInfo& token) final;
 
@@ -47,7 +47,7 @@ class MacroStringConcatenationRule : public verible::TokenStreamLintRule {
   };
 
   // Internal lexical analysis state.
-  State state_;
+  State state_ = State::kNormal;
 
   std::set<verible::LintViolation> violations_;
 };

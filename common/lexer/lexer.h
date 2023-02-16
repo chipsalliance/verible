@@ -24,7 +24,7 @@ namespace verible {
 
 class Lexer {
  public:
-  virtual ~Lexer() {}
+  virtual ~Lexer() = default;
 
   Lexer(const Lexer&) = delete;
   Lexer& operator=(const Lexer&) = delete;
@@ -42,7 +42,7 @@ class Lexer {
   virtual bool TokenIsError(const TokenInfo&) const = 0;
 
  protected:
-  Lexer() {}
+  Lexer() = default;
 };
 
 }  // namespace verible

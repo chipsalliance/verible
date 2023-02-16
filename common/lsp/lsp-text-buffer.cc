@@ -143,8 +143,9 @@ void BufferCollection::didOpenEvent(const DidOpenTextDocumentParams &o) {
   if (inserted.second) {
     inserted.first->second.reset(new EditTextBuffer(o.textDocument.text));
     inserted.first->second->set_last_global_version(++global_version_);
-    if (change_listener_)
+    if (change_listener_) {
       change_listener_(o.textDocument.uri, inserted.first->second.get());
+    }
   }
 }
 

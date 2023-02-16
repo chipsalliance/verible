@@ -73,20 +73,20 @@ namespace verible {
 //
 template <typename K, typename V, typename KeyComp = std::less<K>>
 class MapTree {
-  typedef MapTree<K, V, KeyComp> this_type;
+  using this_type = MapTree<K, V, KeyComp>;
 
   // Self-recursive type that holds subtrees.
   // A std::map is chosen for key-value co-location and iterator stability.
   // We chose std::map over std::set to allow values to be mutable, while keys
   // remain const.
-  typedef std::map<K, this_type, KeyComp> subtrees_type;
+  using subtrees_type = std::map<K, this_type, KeyComp>;
 
  public:
-  typedef K key_type;
-  typedef V node_value_type;
-  typedef typename subtrees_type::value_type key_value_type;  // pair
-  typedef typename subtrees_type::iterator iterator;
-  typedef typename subtrees_type::const_iterator const_iterator;
+  using key_type = K;
+  using node_value_type = V;
+  using key_value_type = typename subtrees_type::value_type;  // pair
+  using iterator = typename subtrees_type::iterator;
+  using const_iterator = typename subtrees_type::const_iterator;
 
   MapTree() = default;
 

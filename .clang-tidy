@@ -15,19 +15,27 @@
 #    a valid assertion. Running the check every now and then manually and
 #    fixing all the non-iterator cases is useful though. Off by default.
 #
+# misc-const-correctness: useful, but it seems to be overzealous at times.
+#
+# modernize-make-unique: mostly correct, but wants to also replace .reset()
+#                         which is a more readable way than assign.
 # NOTE: Below, there must be no comments, otherwise clang tidy silently ignores
 #       rules... (ask me how I know).
-##
+###
 Checks: >
-  clang-diagnostic-*,clang-analyzer-*,
+  clang-diagnostic-*,
+  -clang-diagnostic-unused-const-variable,
+  clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
   -clang-analyzer-cplusplus.NewDeleteLeaks,
-  -clang-diagnostic-unused-const-variable,
-  abseil-*,-abseil-no-namespace,
+  abseil-*,
+  -abseil-no-namespace,
   readability-*,
   -readability-braces-around-statements,
+  -readability-convert-member-functions-to-static,
   -readability-else-after-return,
   -readability-function-cognitive-complexity,
+  -readability-identifier-length,
   -readability-implicit-bool-conversion,
   -readability-isolate-declaration,
   -readability-magic-numbers,
@@ -35,12 +43,13 @@ Checks: >
   -readability-named-parameter,
   -readability-qualified-auto,
   -readability-redundant-access-specifiers,
-  -readability-use-anyofallof,
-  -readability-identifier-length,
+  -readability-simplify-boolean-expr,
   -readability-uppercase-literal-suffix,
   -readability-convert-member-functions-to-static,
+  -readability-use-anyofallof,
   google-*,
   -google-readability-braces-around-statements,
+  -google-readability-casting,
   -google-readability-todo,
   performance-*,
   bugprone-*,
@@ -50,8 +59,20 @@ Checks: >
   -bugprone-move-forwarding-reference,
   -bugprone-narrowing-conversions,
   -bugprone-reserved-identifier,
-  modernize-use-override,
+  modernize-*,
+  -modernize-avoid-bind,
+  -modernize-avoid-c-arrays,
+  -modernize-concat-nested-namespaces,
+  -modernize-make-unique,
+  -modernize-pass-by-value,
+  -modernize-raw-string-literal,
+  -modernize-return-braced-init-list,
+  -modernize-use-auto,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -modernize-use-transparent-functors,
   misc-*,
+  -misc-const-correctness,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-redundant-expression,
@@ -59,5 +80,5 @@ Checks: >
 
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
+AnalyzeTemporaryDtors: true
 ...

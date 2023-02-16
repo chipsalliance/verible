@@ -29,7 +29,7 @@ namespace verible {
 bool SyntaxTreeLeaf::equals(const Symbol *symbol,
                             const TokenComparator &compare_tokens) const {
   if (symbol->Kind() == SymbolKind::kLeaf) {
-    const SyntaxTreeLeaf *leaf = down_cast<const SyntaxTreeLeaf *>(symbol);
+    const auto *leaf = down_cast<const SyntaxTreeLeaf *>(symbol);
     return equals(leaf, compare_tokens);
   } else {
     return false;

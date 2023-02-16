@@ -34,27 +34,25 @@ namespace verible {
 template <typename T>
 class AutoPopStack {
  public:
-  typedef T value_type;
-  typedef AutoPopStack<value_type> this_type;
+  using value_type = T;
+  using this_type = AutoPopStack<value_type>;
 
-  typedef value_type& reference;
-  typedef const value_type& const_reference;
+  using reference = value_type&;
+  using const_reference = const value_type&;
 
-  typedef std::vector<value_type> stack_type;
-  typedef typename stack_type::iterator iterator;
-  typedef typename stack_type::const_iterator const_iterator;
-  typedef typename stack_type::const_reverse_iterator const_reverse_iterator;
+  using stack_type = std::vector<value_type>;
+  using iterator = typename stack_type::iterator;
+  using const_iterator = typename stack_type::const_iterator;
+  using const_reverse_iterator = typename stack_type::const_reverse_iterator;
 
   // member class which exclusively manages stack.
   // it's the only class that can modify number of elements in stack
   class AutoPop {
    public:
-    AutoPop(this_type* stack, value_type&& value) {
-      stack_ = stack;
+    AutoPop(this_type* stack, value_type&& value) : stack_(stack) {
       stack->Push(std::move(value));
     }
-    AutoPop(this_type* stack, const_reference value) {
-      stack_ = stack;
+    AutoPop(this_type* stack, const_reference value) : stack_(stack) {
       stack->Push(&value);
     }
     ~AutoPop() { stack_->Pop(); }

@@ -71,7 +71,7 @@ using verible::UnwrappedLine;
 using verible::VectorTree;
 using verible::VectorTreeLeavesIterator;
 
-typedef VectorTree<TreeViewNodeInfo<TokenPartitionTree>> partition_node_type;
+using partition_node_type = VectorTree<TreeViewNodeInfo<TokenPartitionTree>>;
 
 // Takes a TextStructureView and FormatStyle, and formats UnwrappedLines.
 class Formatter {

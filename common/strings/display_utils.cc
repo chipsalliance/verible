@@ -65,11 +65,12 @@ std::ostream& operator<<(std::ostream& stream, const EscapeString& vis) {
         break;
 
       default:
-        if (c < 0x20 || c > 0x7E)
+        if (c < 0x20 || c > 0x7E) {
           stream << "\\x" << std::hex << std::setw(2) << std::setfill('0')
                  << static_cast<unsigned>(c);
-        else
+        } else {
           stream << c;
+        }
     }
   }
   return stream;

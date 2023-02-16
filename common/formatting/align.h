@@ -264,8 +264,7 @@ class AlignablePartitionGroup {
   bool IsEmpty() const { return alignable_rows_.empty(); }
 
   TokenPartitionRange Range() const {
-    return TokenPartitionRange(alignable_rows_.front(),
-                               alignable_rows_.back() + 1);
+    return {alignable_rows_.front(), alignable_rows_.back() + 1};
   }
 
   // This executes alignment, depending on the alignment_policy.

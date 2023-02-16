@@ -35,7 +35,7 @@ class PackageFilenameRule : public verible::TextStructureLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  PackageFilenameRule() {}
+  PackageFilenameRule() = default;
 
   absl::Status Configure(absl::string_view configuration) final;
   void Lint(const verible::TextStructureView&, absl::string_view) final;

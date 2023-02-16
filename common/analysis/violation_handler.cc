@@ -153,8 +153,9 @@ void ViolationFixer::HandleViolation(
         rule_answers_[rule_name] = {AnswerChoice::kApply, answer.alternative};
         [[fallthrough]];
       case AnswerChoice::kApply:  // Apply fix chosen in the alternatative
-        if (answer.alternative >= violation.autofixes.size())
+        if (answer.alternative >= violation.autofixes.size()) {
           continue;  // ask again.
+        }
         if (!fix->AddEdits(violation.autofixes[answer.alternative].Edits())) {
           *message_stream_ << previous_fix_conflict;
         }
@@ -202,8 +203,9 @@ ViolationFixer::Answer ViolationFixer::InteractiveAnswerChooser(
     help_message =
         absl::StrCat("y - apply first fix\n[1-", fix_count,
                      "] - apply given alternative\n", fixed_help_message);
-    for (size_t i = 0; i < fix_count; ++i)
+    for (size_t i = 0; i < fix_count; ++i) {
       absl::StrAppend(&alternative_list, (i + 1), ",");
+    }
   } else {
     help_message = absl::StrCat("y - apply fix\n", fixed_help_message);
   }

@@ -419,8 +419,7 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     absl::string_view lintee_filename, absl::string_view waiver_filename,
     absl::string_view waivers_config_content) {
   if (waivers_config_content.empty()) {
-    return absl::Status(absl::StatusCode::kInternal,
-                        "Broken waiver config handle");
+    return {absl::StatusCode::kInternal, "Broken waiver config handle"};
   }
 
   CommandFileLexer lexer(waivers_config_content);

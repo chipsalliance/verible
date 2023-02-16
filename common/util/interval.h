@@ -28,8 +28,8 @@ namespace verible {
 // Currently intended for direct use in IntervalSet<>.
 template <typename T>
 struct Interval {
-  typedef T value_type;
-  typedef ForwardReferenceElseConstruct<Interval<T>> forwarder;
+  using value_type = T;
+  using forwarder = ForwardReferenceElseConstruct<Interval<T>>;
 
   // Allow direct access.  Use responsibly.  Check valid()-ity.
   T min = {};
@@ -76,10 +76,11 @@ struct Interval {
   std::ostream& FormatInclusive(std::ostream& stream, bool compact,
                                 char delim = '-') const {
     const T upper = max - 1;
-    if ((min == upper) && compact)
+    if ((min == upper) && compact) {
       stream << min;  // N instead of N-N
-    else
+    } else {
       stream << min << delim << upper;
+    }
     return stream;
   }
 };

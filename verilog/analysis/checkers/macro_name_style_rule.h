@@ -34,7 +34,7 @@ class MacroNameStyleRule : public verible::TokenStreamLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  MacroNameStyleRule() : state_(State::kNormal) {}
+  MacroNameStyleRule() = default;
 
   void HandleToken(const verible::TokenInfo& token) final;
 
@@ -48,7 +48,7 @@ class MacroNameStyleRule : public verible::TokenStreamLintRule {
   };
 
   // Internal lexical analysis state.
-  State state_;
+  State state_ = State::kNormal;
 
   std::set<verible::LintViolation> violations_;
 };

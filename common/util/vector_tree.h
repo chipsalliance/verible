@@ -65,15 +65,15 @@ namespace verible {
 // parent.
 template <typename T>
 class VectorTree {
-  typedef VectorTree<T> this_type;
+  using this_type = VectorTree<T>;
 
   // Forward declaration
   class ChildrenList;
 
  public:
   // Self-recursive type that represents children in an expanded view.
-  typedef std::vector<this_type> subnodes_type;
-  typedef T value_type;
+  using subnodes_type = std::vector<this_type>;
+  using value_type = T;
 
   VectorTree() : children_(*this) {}
 
@@ -224,9 +224,6 @@ class VectorTree {
 
     explicit ChildrenList(VectorTree& node) : node_(node) {}
 
-    // Construction requires parent node reference.
-    ChildrenList(const ChildrenList&) = delete;
-
     ChildrenList(VectorTree& node, const ChildrenList& other)
         : node_(node), container_(other.container_) {
       LinkChildrenToParent(container_);
@@ -237,9 +234,6 @@ class VectorTree {
       LinkChildrenToParent(container_);
       return *this;
     }
-
-    // Construction requires parent node reference.
-    ChildrenList(ChildrenList&&) = delete;
 
     ChildrenList(VectorTree& node, ChildrenList&& other) noexcept
         : node_(node), container_(std::move(other.container_)) {
@@ -266,6 +260,13 @@ class VectorTree {
 
     // Actual data container where the nodes are stored.
     subnodes_type container_;
+
+   public:  // deleted members need to be public.
+    // Construction requires parent node reference.
+    ChildrenList(const ChildrenList&) = delete;
+
+    // Construction requires parent node reference.
+    ChildrenList(ChildrenList&&) = delete;
   };
 
   // Singular value stored at this node.

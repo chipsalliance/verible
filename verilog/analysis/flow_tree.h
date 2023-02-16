@@ -141,7 +141,7 @@ class FlowTree {
 
   // A flag that determines if the VariantReceiver returned 'false'.
   // By default: it assumes VariantReceiver wants more variants.
-  bool wants_more_ = 1;
+  bool wants_more_ = true;
 
   // Mapping each conditional macro to an integer ID,
   // to use it later as a bit offset.

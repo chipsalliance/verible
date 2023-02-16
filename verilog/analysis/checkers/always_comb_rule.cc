@@ -39,7 +39,8 @@ using verible::matcher::Matcher;
 // Register AlwaysCombRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombRule);
 
-static const char kMessage[] = "Use \'always_comb\' instead of \'always @*\'.";
+static constexpr absl::string_view kMessage =
+    "Use 'always_comb' instead of 'always @*'.";
 
 const LintRuleDescriptor& AlwaysCombRule::GetDescriptor() {
   static const LintRuleDescriptor d{

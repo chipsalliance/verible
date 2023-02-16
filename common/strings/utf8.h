@@ -35,12 +35,13 @@ inline absl::string_view utf8_substr(absl::string_view str,
   size_t remaining = character_pos;
   absl::string_view::const_iterator it;
   for (it = str.begin(); remaining && it != str.end(); ++it, --remaining) {
-    if ((*it & 0xE0) == 0xC0)
+    if ((*it & 0xE0) == 0xC0) {
       remaining += 1;
-    else if ((*it & 0xF0) == 0xE0)
+    } else if ((*it & 0xF0) == 0xE0) {
       remaining += 2;
-    else if ((*it & 0xF8) == 0xF0)
+    } else if ((*it & 0xF8) == 0xF0) {
       remaining += 3;
+    }
   }
   return str.substr(it - str.begin());
 }

@@ -39,7 +39,7 @@ namespace verible {
 // design documentation.
 class TreeUnwrapper : public TreeContextVisitor {
  protected:
-  typedef std::vector<verible::PreFormatToken> preformatted_tokens_type;
+  using preformatted_tokens_type = std::vector<verible::PreFormatToken>;
 
  public:
   explicit TreeUnwrapper(const TextStructureView& view,
@@ -52,7 +52,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
   TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
 
-  ~TreeUnwrapper() override {}
+  ~TreeUnwrapper() override = default;
 
   // Partitions the token stream (in text_structure_view_) into
   // unwrapped_lines_ by traversing the syntax tree representation.

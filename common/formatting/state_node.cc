@@ -33,7 +33,7 @@
 
 namespace verible {
 
-static const char kNotForAlignment[] =
+static absl::string_view kNotForAlignment =
     "Aligned tokens should never use line-wrap optimization!";
 
 static SpacingDecision FrontTokenSpacing(const FormatTokenRange range) {

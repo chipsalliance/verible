@@ -95,7 +95,7 @@ class FileAnalyzer {
   FileAnalyzer(absl::string_view contents, absl::string_view filename)
       : text_structure_(new TextStructure(contents)), filename_(filename) {}
 
-  virtual ~FileAnalyzer() {}
+  virtual ~FileAnalyzer() = default;
 
   virtual absl::Status Tokenize() = 0;
 

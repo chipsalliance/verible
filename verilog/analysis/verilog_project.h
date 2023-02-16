@@ -236,13 +236,13 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
 class VerilogProject {
   // Collection of per-file metadata and analyzer objects
   // key: referenced file name (as opposed to resolved filename)
-  typedef std::map<std::string, std::unique_ptr<VerilogSourceFile>,
-                   VerilogSourceFile::Less>
-      file_set_type;
+  using file_set_type =
+      std::map<std::string, std::unique_ptr<VerilogSourceFile>,
+               VerilogSourceFile::Less>;
 
  public:
-  typedef file_set_type::iterator iterator;
-  typedef file_set_type::const_iterator const_iterator;
+  using iterator = file_set_type::iterator;
+  using const_iterator = file_set_type::const_iterator;
 
   // Constructor. Note that `populate_string_maps` (populating internal string
   // view maps) fragments the class's usage. Enabling it prevents removing files

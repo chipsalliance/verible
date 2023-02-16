@@ -45,7 +45,7 @@ class ThreadPool {
   // executed synchronously.
   template <class T>
   std::future<T> ExecAsync(const std::function<T()> &f) {
-    std::promise<T> *p = new std::promise<T>();
+    auto *p = new std::promise<T>();
     std::future<T> future_result = p->get_future();
     auto promise_fulfiller = [p, f]() {
       try {

@@ -37,7 +37,7 @@ namespace verible {
 // (like std::pair).
 template <class Iter>
 std::ostream& FormatIntervals(std::ostream& stream, Iter begin, Iter end) {
-  typedef typename std::iterator_traits<Iter>::value_type value_type;
+  using value_type = typename std::iterator_traits<Iter>::value_type;
   return stream << absl::StrJoin(
              begin, end, ", ",
              [](std::string* out, const value_type& interval) {
@@ -138,17 +138,17 @@ class _IntervalSetImpl {
 template <typename T>
 class IntervalSet : private _IntervalSetImpl {
  private:
-  typedef std::map<T, T> impl_type;
+  using impl_type = std::map<T, T>;
 
  protected:
-  typedef typename impl_type::iterator iterator;
-  typedef typename impl_type::reverse_iterator reverse_iterator;
+  using iterator = typename impl_type::iterator;
+  using reverse_iterator = typename impl_type::reverse_iterator;
 
  public:
-  typedef typename impl_type::value_type value_type;
-  typedef typename impl_type::const_iterator const_iterator;
-  typedef typename impl_type::const_reverse_iterator const_reverse_iterator;
-  typedef typename impl_type::size_type size_type;
+  using value_type = typename impl_type::value_type;
+  using const_iterator = typename impl_type::const_iterator;
+  using const_reverse_iterator = typename impl_type::const_reverse_iterator;
+  using size_type = typename impl_type::size_type;
 
  public:
   IntervalSet() = default;
@@ -168,21 +168,21 @@ class IntervalSet : private _IntervalSetImpl {
   IntervalSet<T>& operator=(IntervalSet<T>&&) noexcept = default;
 
  public:
-  const_iterator begin(void) const { return intervals_.begin(); }
+  const_iterator begin() const { return intervals_.begin(); }
 
-  const_iterator end(void) const { return intervals_.end(); }
+  const_iterator end() const { return intervals_.end(); }
 
   // Returns the number of disjoint intervals that compose this set.
-  size_type size(void) const { return intervals_.size(); }
+  size_type size() const { return intervals_.size(); }
 
   // Returns sum of sizes of all intervals.
-  size_type sum_of_sizes(void) const;
+  size_type sum_of_sizes() const;
 
   // Returns true if the set contains no intervals/values.
-  bool empty(void) const { return intervals_.empty(); }
+  bool empty() const { return intervals_.empty(); }
 
   // Remove all intervals from the set.
-  void clear(void) { intervals_.clear(); }
+  void clear() { intervals_.clear(); }
 
   void swap(IntervalSet<T>& other) { intervals_.swap(other.intervals_); }
 
@@ -463,8 +463,8 @@ class IntervalSet : private _IntervalSetImpl {
   }
 
   // Checks invariant properties described in class description.
-  void CheckIntegrity(void) const {
-    typedef Interval<T> interval_type;
+  void CheckIntegrity() const {
+    using interval_type = Interval<T>;
     if (intervals_.empty()) return;
 
     // Check front outside of loop.
@@ -571,15 +571,15 @@ template <typename T>
 class DisjointIntervalSet : private _IntervalSetImpl {
  private:
   // This makes the value_type an immutable std::pair<const T, const T>.
-  typedef std::map<T, const T> impl_type;
+  using impl_type = std::map<T, const T>;
 
  public:
-  typedef typename impl_type::key_type key_type;
-  typedef typename impl_type::value_type value_type;
-  typedef typename impl_type::mapped_type mapped_type;
-  typedef typename impl_type::const_iterator const_iterator;
-  typedef typename impl_type::const_reverse_iterator const_reverse_iterator;
-  typedef typename impl_type::size_type size_type;
+  using key_type = typename impl_type::key_type;
+  using value_type = typename impl_type::value_type;
+  using mapped_type = typename impl_type::mapped_type;
+  using const_iterator = typename impl_type::const_iterator;
+  using const_reverse_iterator = typename impl_type::const_reverse_iterator;
+  using size_type = typename impl_type::size_type;
 
  public:
   DisjointIntervalSet() = default;

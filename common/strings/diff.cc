@@ -178,9 +178,7 @@ void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
     int chunk_before_lines_count = 0;
     int chunk_added_lines_count = 0;
 
-    for (size_t i = 0; i < chunk.size(); ++i) {
-      const auto& edit = chunk[i];
-
+    for (const auto& edit : chunk) {
       if (edit.operation == Operation::INSERT) {
         chunk_added_lines_count += edit.end - edit.start;
       } else if (edit.operation == Operation::DELETE) {

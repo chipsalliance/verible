@@ -125,9 +125,7 @@ struct MarkedLine {
   bool IsAdded() const { return Marker() == '+'; }
   bool IsDeleted() const { return Marker() == '-'; }
 
-  absl::string_view Text() const {
-    return absl::string_view(&line[1], line.length() - 1);
-  }
+  absl::string_view Text() const { return {&line[1], line.length() - 1}; }
 
   // default equality operator
   bool operator==(const MarkedLine& other) const { return line == other.line; }

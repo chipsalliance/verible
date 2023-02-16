@@ -374,11 +374,12 @@ struct SymbolInfo {
     }
   };
 
-  typedef std::set<const DependentReferences*, StringAddressCompare>
-      address_ordered_set_type;
-  typedef std::map<absl::string_view, address_ordered_set_type,
-                   verible::StringViewCompare>
-      references_map_view_type;
+  using address_ordered_set_type =
+      std::set<const DependentReferences*, StringAddressCompare>;
+
+  using references_map_view_type =
+      std::map<absl::string_view, address_ordered_set_type,
+               verible::StringViewCompare>;
 
   // For testing only, quickly find reference candidates by name, and positional
   // occurence.  The outer map is ordered by string contents, and the inner

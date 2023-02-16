@@ -26,13 +26,13 @@ namespace verible {
 // as std::shared_ptr<> if needed in multiple places.
 class MemBlock {
  public:
-  virtual ~MemBlock() {}
+  virtual ~MemBlock() = default;
   virtual absl::string_view AsStringView() const = 0;
 
  protected:
   MemBlock() = default;
 
- private:
+ public:
   MemBlock(const MemBlock&) = delete;
   MemBlock(MemBlock&&) = delete;
   MemBlock& operator=(const MemBlock&) = delete;
@@ -42,7 +42,7 @@ class MemBlock {
 // An implementation of MemBlock backed by a std::string
 class StringMemBlock final : public MemBlock {
  public:
-  StringMemBlock() {}
+  StringMemBlock() = default;
   explicit StringMemBlock(absl::string_view copy_from)
       : content_(copy_from.begin(), copy_from.end()) {}
 

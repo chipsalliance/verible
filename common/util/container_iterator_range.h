@@ -36,8 +36,8 @@ namespace verible {
 // invalidates these iterator ranges, e.g. vector::push_back().
 template <typename IT>
 class container_iterator_range : public iterator_range<IT> {
-  typedef container_iterator_range<IT> this_type;
-  typedef iterator_range<IT> range_type;
+  using this_type = container_iterator_range<IT>;
+  using range_type = iterator_range<IT>;
 
  public:
   using iterator = IT;

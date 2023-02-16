@@ -30,7 +30,7 @@ namespace verible {
 template <typename T, typename Comp = std::greater<T>>
 class TopN {
  public:
-  typedef T value_type;
+  using value_type = T;
 
   explicit TopN(size_t limit) : max_size_(limit) {}
 
@@ -80,7 +80,7 @@ class TopN {
 
   // For simplicity, use existing priority_queue internally, which implements
   // the desired ordering.
-  typedef std::priority_queue<T, std::vector<T>, Comp> impl_type;
+  using impl_type = std::priority_queue<T, std::vector<T>, Comp>;
 
   // Internal storage of elements.
   impl_type elements_;

@@ -67,8 +67,9 @@ void AdoptLayoutAndFlattenIfSameType(const LayoutTree& source,
     CHECK(src_item.SpacesBefore() == first_subitem.SpacesBefore());
     destination->Children().reserve(destination->Children().size() +
                                     source.Children().size());
-    for (const auto& sublayout : source.Children())
+    for (const auto& sublayout : source.Children()) {
       AdoptSubtree(*destination, sublayout);
+    }
   } else {
     AdoptSubtree(*destination, source);
   }
@@ -429,8 +430,9 @@ LayoutFunction LayoutFunctionFactory::Choice(
       const LayoutFunction::const_iterator min_cost_segment = *std::min_element(
           segments->begin(), segments->end(),
           [current_column](const auto& a, const auto& b) {
-            if (a->CostAt(current_column) != b->CostAt(current_column))
+            if (a->CostAt(current_column) != b->CostAt(current_column)) {
               return (a->CostAt(current_column) < b->CostAt(current_column));
+            }
             // Sort by gradient when cost is the same. Favor earlier
             // element when both gradients are equal.
             return (a->gradient < b->gradient);
@@ -601,8 +603,9 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
       }
       auto stack = factory_.Stack(layouts.begin(), layouts.end());
 
-      if (juxtaposition_allowed)
+      if (juxtaposition_allowed) {
         return factory_.Choice({std::move(juxtaposition), std::move(stack)});
+      }
       return stack;
     }
 
@@ -695,8 +698,9 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
         // TODO(mglb): add support for break_decision == Preserve
         if (layout.SpacesBefore() == tokens.front().before.spaces_required) {
           // No need for separate inline partition
-          if (!slices.empty())
+          if (!slices.empty()) {
             slices.back().Value().SpanUpToToken(tokens.end());
+          }
           return;
         }
 

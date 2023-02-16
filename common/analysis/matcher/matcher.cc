@@ -45,9 +45,9 @@ bool Matcher::Matches(const Symbol& symbol, BoundSymbolManager* manager) const {
       if (!target_symbol) continue;
       bool inner_match_result =
           inner_match_handler_(*target_symbol, inner_matchers_, manager);
-      if (inner_match_result && manager && bind_id_)
+      if (inner_match_result && manager && bind_id_) {
         manager->BindSymbol(bind_id_.value(), target_symbol);
-
+      }
       any_target_matches |= inner_match_result;
     }
 

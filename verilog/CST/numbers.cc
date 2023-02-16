@@ -14,9 +14,8 @@
 
 #include "verilog/CST/numbers.h"
 
-#include <ctype.h>
-
 #include <algorithm>
+#include <cctype>
 #include <iterator>
 #include <string>
 

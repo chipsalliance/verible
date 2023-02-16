@@ -183,7 +183,7 @@ static WithReason<int> SpacesRequiredBetween(
   }
 
   if (left.TokenEnum() == TK_SCOPE_RES) {
-    return {0, "Prefer \"::id\" over \":: id\", \"::*\" over \":: *\""};
+    return {0, R"(Prefer "::id" over ":: id", \"::*" over ":: *")"};
   }
 
   // Delimiters, list separators

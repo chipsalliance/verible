@@ -41,7 +41,7 @@ class PosixEOFRule : public verible::TextStructureLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  PosixEOFRule() {}
+  PosixEOFRule() = default;
 
   void Lint(const verible::TextStructureView&, absl::string_view) final;
 

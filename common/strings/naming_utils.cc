@@ -47,9 +47,9 @@ bool IsUpperCamelCaseWithDigits(absl::string_view text) {
 
   // Check for underscores followed by digits
   auto pos = text.find('_');
-  if (pos != absl::string_view::npos)
+  if (pos != absl::string_view::npos) {
     return AllUnderscoresFollowedByDigits(text.substr(pos));
-
+  }
   return true;
 }
 

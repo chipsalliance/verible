@@ -40,13 +40,13 @@ string_view_to_pair(absl::string_view sv) {
 // any of the referenced memory -- the user is responsible for maintaining
 // proper string lifetime, owning strings must outlive these objects.
 class StringViewSuperRangeMap {
-  typedef DisjointIntervalSet<absl::string_view::const_iterator> impl_type;
+  using impl_type = DisjointIntervalSet<absl::string_view::const_iterator>;
 
  public:
   // This iterator dereferences to a std::pair of
   // absl::string_view::const_iterator, which can be constructed into a
   // string_view.
-  typedef impl_type::const_iterator const_iterator;
+  using const_iterator = impl_type::const_iterator;
 
   StringViewSuperRangeMap() = default;
 
@@ -68,7 +68,7 @@ class StringViewSuperRangeMap {
   // Similar to find(), but asserts that a superstring range is found,
   // and converts the result directly to a string_view.
   absl::string_view must_find(absl::string_view substring) const {
-    const const_iterator found(find(substring));
+    const auto found(find(substring));
     CHECK(found != string_map_.end());
     return make_string_view_range(found->first, found->second);  // superstring
   }
@@ -104,11 +104,11 @@ class StringViewSuperRangeMap {
 //
 template <class T, absl::string_view RangeOf(const T&)>
 class StringMemoryMap {
-  typedef absl::string_view::const_iterator key_type;
-  typedef DisjointIntervalMap<key_type, T> map_type;
+  using key_type = absl::string_view::const_iterator;
+  using map_type = DisjointIntervalMap<key_type, T>;
 
  public:
-  typedef typename map_type::iterator iterator;
+  using iterator = typename map_type::iterator;
 
   StringMemoryMap() = default;
 

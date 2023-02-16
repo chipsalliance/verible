@@ -110,7 +110,7 @@ std::ostream& operator<<(std::ostream&, PartitionPolicyEnum);
 // line wrap optimization. It consists of a lightweight const_iterator range
 // that can be easily grown without any copy-overhead.
 class UnwrappedLine {
-  typedef FormatTokenRange::const_iterator token_iterator;
+  using token_iterator = FormatTokenRange::const_iterator;
 
  public:
   enum {

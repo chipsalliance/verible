@@ -35,7 +35,7 @@ class SyntaxTreeNode;
 //
 class TreeVisitorRecursive {
  public:
-  virtual ~TreeVisitorRecursive() {}
+  virtual ~TreeVisitorRecursive() = default;
   virtual void Visit(const SyntaxTreeLeaf& leaf) = 0;
   virtual void Visit(const SyntaxTreeNode& node) = 0;
 };
@@ -50,7 +50,7 @@ class TreeVisitorRecursive {
 //
 class SymbolVisitor {
  public:
-  virtual ~SymbolVisitor() {}
+  virtual ~SymbolVisitor() = default;
   virtual void Visit(const SyntaxTreeLeaf& leaf) = 0;
   virtual void Visit(const SyntaxTreeNode& node) = 0;
 };
@@ -63,7 +63,7 @@ class SymbolVisitor {
 // delete or mutate syntax tree nodes.
 class MutableTreeVisitorRecursive {
  public:
-  virtual ~MutableTreeVisitorRecursive() {}
+  virtual ~MutableTreeVisitorRecursive() = default;
   virtual void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr*) = 0;
   virtual void Visit(const SyntaxTreeNode& node, SymbolPtr*) = 0;
 };

@@ -50,7 +50,7 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
 
   static const LintRuleDescriptor& GetDescriptor();
 
-  EndifCommentRule() : state_(State::kNormal) {}
+  EndifCommentRule() = default;
 
   void HandleToken(const verible::TokenInfo& token) final;
 
@@ -65,7 +65,7 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
   };
 
   // Internal lexical analysis state.
-  State state_;
+  State state_ = State::kNormal;
 
   // Token information for the last seen `endif.
   verible::TokenInfo last_endif_ = verible::TokenInfo::EOFToken();

@@ -65,18 +65,18 @@ struct MacroCall {
   DefaultTokenInfo macro_name;
 
   // Distinguish between a definition without () vs. with empty ().
-  bool has_parameters;
+  bool has_parameters = false;
 
   // Positional arguments to macro call.
   std::vector<DefaultTokenInfo> positional_arguments;
 
-  MacroCall() : has_parameters(false) {}
+  MacroCall() = default;
 };
 
 class MacroDefinition {
  public:
   MacroDefinition(const TokenInfo& header, const TokenInfo& name)
-      : header_(header), name_(name), is_callable_(false) {}
+      : header_(header), name_(name) {}
 
   absl::string_view Name() const { return name_.text(); }
   const TokenInfo& NameToken() const { return name_; }
@@ -100,7 +100,7 @@ class MacroDefinition {
     return parameter_info_array_;
   }
 
-  typedef std::map<absl::string_view, DefaultTokenInfo> substitution_map_type;
+  using substitution_map_type = std::map<absl::string_view, DefaultTokenInfo>;
 
   // Create a text substitution map to be used for macro expansion.
   absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo>&,
@@ -121,7 +121,7 @@ class MacroDefinition {
   TokenInfo name_;
 
   // Distinguish between a definition without () vs. with empty ().
-  bool is_callable_;
+  bool is_callable_ = false;
 
   // These form an ordered dictionary on macro parameters.
   std::vector<MacroParameterInfo> parameter_info_array_;

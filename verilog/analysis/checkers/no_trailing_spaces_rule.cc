@@ -14,10 +14,9 @@
 
 #include "verilog/analysis/checkers/no_trailing_spaces_rule.h"
 
-#include <stddef.h>
-
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <iterator>
 #include <set>
 #include <string>

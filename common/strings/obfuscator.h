@@ -40,10 +40,9 @@ namespace verible {
 // substitutions written/read from a text file.
 class Obfuscator {
  public:
-  typedef std::function<std::string(absl::string_view)> generator_type;
-  typedef BijectiveMap<std::string, std::string, StringViewCompare,
-                       StringViewCompare>
-      translator_type;
+  using generator_type = std::function<std::string(absl::string_view)>;
+  using translator_type = BijectiveMap<std::string, std::string,
+                                       StringViewCompare, StringViewCompare>;
 
   explicit Obfuscator(const generator_type& g) : generator_(g) {}
 
@@ -86,7 +85,7 @@ class Obfuscator {
 };
 
 class IdentifierObfuscator : public Obfuscator {
-  typedef Obfuscator parent_type;
+  using parent_type = Obfuscator;
 
  public:
   // Tip for users of this: use something like RandomEqualLengthIdentifier,

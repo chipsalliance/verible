@@ -251,7 +251,7 @@ std::vector<Hunk> Hunk::Split() const {
   std::vector<Hunk> sub_hunks;
 
   // Split after every group of changed lines.
-  typedef std::vector<MarkedLine>::const_iterator MarkedLineIterator;
+  using MarkedLineIterator = std::vector<MarkedLine>::const_iterator;
   std::vector<MarkedLineIterator> cut_points;
   verible::find_all(lines_.begin(), lines_.end(),
                     std::back_inserter(cut_points), HunkSplitter());
@@ -269,7 +269,7 @@ std::vector<Hunk> Hunk::Split() const {
   // cut_points always contains lines_.begin(), and .end()
 
   // convert cut points to sub-ranges
-  typedef container_iterator_range<MarkedLineIterator> MarkedLineRange;
+  using MarkedLineRange = container_iterator_range<MarkedLineIterator>;
   const std::vector<MarkedLineRange> ranges(
       IteratorsToRanges<MarkedLineRange>(cut_points));
 
@@ -325,7 +325,7 @@ absl::Status SourceInfo::Parse(absl::string_view text) {
   path.assign(token.begin(), token.end());
   if (path.empty()) {
     return absl::InvalidArgumentError(absl::StrCat(
-        "Expected \"path [timestamp]\" (tab-separated), but got: \"", text,
+        R"(Expected "path [timestamp]" (tab-separated), but got: ")", text,
         "\"."));
   }
 

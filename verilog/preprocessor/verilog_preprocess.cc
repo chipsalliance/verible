@@ -74,16 +74,16 @@ VerilogPreprocess::ExtractMacroName(const StreamIteratorGenerator& generator) {
   TokenStreamView::const_iterator token_iter =
       GenerateBypassWhiteSpaces(generator);
   if ((*token_iter)->isEOF()) {
-    preprocess_data_.errors.push_back(
-        {**token_iter, "unexpected EOF where expecting macro name"});
+    preprocess_data_.errors.emplace_back(
+        **token_iter, "unexpected EOF where expecting macro name");
     return absl::InvalidArgumentError("Unexpected EOF");
   }
   const auto& macro_name = *token_iter;
   if (macro_name->token_enum() != PP_Identifier) {
-    preprocess_data_.errors.push_back(
-        {**token_iter,
-         absl::StrCat("Expected identifier for macro name, but got \"",
-                      macro_name->text(), "...\"")});
+    preprocess_data_.errors.emplace_back(
+        **token_iter,
+        absl::StrCat("Expected identifier for macro name, but got \"",
+                     macro_name->text(), "...\""));
     return absl::InvalidArgumentError("macro name expected");
   }
   return token_iter;
@@ -231,10 +231,10 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
 
   // Checking if the macro has formal parameters.
   if (!macro_definition.IsCallable()) {
-    macro_call->has_parameters = 0;
+    macro_call->has_parameters = false;
     return absl::OkStatus();
   }
-  macro_call->has_parameters = 1;
+  macro_call->has_parameters = true;
 
   // Parsing parameters.
   TokenStreamView::const_iterator token_iter =
@@ -278,7 +278,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
     const TokenStreamView::const_iterator
         iter  // points to `MACROIDENTIFIER token
     ,
-    const StreamIteratorGenerator& generator, bool forward = 1) {
+    const StreamIteratorGenerator& generator, bool forward = true) {
   // Note: since this function is called we know that config_.expand_macros is
   // true.
 
@@ -287,7 +287,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
   const auto* found =
       FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
   if (!found) {
-    preprocess_data_.errors.push_back(VerilogPreprocessError(
+    preprocess_data_.errors.emplace_back(VerilogPreprocessError(
         **iter,
         "Error expanding macro identifier, might not be defined before."));
     return absl::InvalidArgumentError(
@@ -360,7 +360,7 @@ absl::Status VerilogPreprocess::ExpandText(
     if (last_token.token_enum() == MacroIdentifier ||
         last_token.token_enum() == MacroIdItem ||
         last_token.token_enum() == MacroCallId) {
-      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, false);
           !status.ok())
         return status;
 
@@ -417,7 +417,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
     if (last_token.token_enum() == MacroIdentifier ||
         last_token.token_enum() == MacroIdItem ||
         last_token.token_enum() == MacroCallId) {
-      if (auto status = HandleMacroIdentifier(iter, iter_generator, 0);
+      if (auto status = HandleMacroIdentifier(iter, iter_generator, false);
           !status.ok())
         return status;
 
@@ -519,13 +519,13 @@ absl::Status VerilogPreprocess::HandleIf(
 
   if ((*ifpos)->token_enum() == PP_elsif) {
     if (conditional_block_.size() <= 1) {
-      preprocess_data_.errors.push_back({**ifpos, "Unmatched `elsif"});
+      preprocess_data_.errors.emplace_back(**ifpos, "Unmatched `elsif");
       return absl::InvalidArgumentError("Unmatched `else");
     }
     if (!conditional_block_.top().UpdateCondition(**ifpos, condition_met)) {
-      preprocess_data_.errors.push_back({**ifpos, "`elsif after `else"});
-      preprocess_data_.errors.push_back(
-          {conditional_block_.top().token(), "Previous `else started here."});
+      preprocess_data_.errors.emplace_back(**ifpos, "`elsif after `else");
+      preprocess_data_.errors.emplace_back(conditional_block_.top().token(),
+                                           "Previous `else started here.");
       return absl::InvalidArgumentError("Duplicate `else");
     }
   } else {
@@ -544,14 +544,14 @@ absl::Status VerilogPreprocess::HandleElse(
   }
 
   if (conditional_block_.size() <= 1) {
-    preprocess_data_.errors.push_back({**else_pos, "Unmatched `else"});
+    preprocess_data_.errors.emplace_back(**else_pos, "Unmatched `else");
     return absl::InvalidArgumentError("Unmatched `else");
   }
 
   if (!conditional_block_.top().StartElse(**else_pos)) {
-    preprocess_data_.errors.push_back({**else_pos, "Duplicate `else"});
-    preprocess_data_.errors.push_back(
-        {conditional_block_.top().token(), "Previous `else started here."});
+    preprocess_data_.errors.emplace_back(**else_pos, "Duplicate `else");
+    preprocess_data_.errors.emplace_back(conditional_block_.top().token(),
+                                         "Previous `else started here.");
     return absl::InvalidArgumentError("Duplicate `else");
   }
   return absl::OkStatus();
@@ -565,7 +565,7 @@ absl::Status VerilogPreprocess::HandleEndif(
   }
 
   if (conditional_block_.size() <= 1) {
-    preprocess_data_.errors.push_back({**endif_pos, "Unmatched `endif"});
+    preprocess_data_.errors.emplace_back(**endif_pos, "Unmatched `endif");
     return absl::InvalidArgumentError("Unmatched `endif");
   }
   conditional_block_.pop();
@@ -600,8 +600,8 @@ absl::Status VerilogPreprocess::HandleInclude(
   auto file_token_iter = *token_iter;
   if (file_token_iter->token_enum() != TK_StringLiteral &&
       file_token_iter->token_enum() != TK_AngleBracketInclude) {
-    preprocess_data_.errors.push_back(
-        {**token_iter, "Expected a path to a SV file."});
+    preprocess_data_.errors.emplace_back(**token_iter,
+                                         "Expected a path to a SV file.");
     return absl::InvalidArgumentError("Expected a path to a SV file.");
   }
   // Currently the file path looks like "path", we need to remove "" or <>
@@ -613,8 +613,8 @@ absl::Status VerilogPreprocess::HandleInclude(
   // Use the provided FileOpener to open the included file.
   const auto status_or_file = file_opener_(file_path.string());
   if (!status_or_file.ok()) {
-    preprocess_data_.errors.push_back(
-        {**token_iter, std::string(status_or_file.status().message())});
+    preprocess_data_.errors.emplace_back(
+        **token_iter, std::string(status_or_file.status().message()));
     return status_or_file.status();
   }
   const absl::string_view source_contents = *status_or_file;
@@ -747,10 +747,10 @@ VerilogPreprocessData VerilogPreprocess::ScanStream(
 
   if (conditional_block_.size() > 1 &&
       preprocess_data_.errors.empty()) {  // Only report if not followup-error
-    preprocess_data_.errors.push_back(
-        {conditional_block_.top().token(),
-         "Unterminated preprocessing conditional here, but never completed at "
-         "end of file."});
+    preprocess_data_.errors.emplace_back(
+        conditional_block_.top().token(),
+        "Unterminated preprocessing conditional here, but never completed at "
+        "end of file.");
   }
   return std::move(preprocess_data_);
 }

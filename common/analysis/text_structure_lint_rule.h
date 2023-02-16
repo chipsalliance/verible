@@ -38,7 +38,7 @@ namespace verible {
 
 class TextStructureLintRule : public LintRule {
  public:
-  ~TextStructureLintRule() override {}
+  ~TextStructureLintRule() override = default;
 
   // Analyze text structure for violations.
   virtual void Lint(const TextStructureView& text_structure,

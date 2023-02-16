@@ -31,11 +31,8 @@ bool BoundSymbolManager::ContainsSymbol(const std::string& id) const {
 }
 
 const Symbol* BoundSymbolManager::FindSymbol(const std::string& id) const {
-  auto result = FindOrNull(bound_symbols_, id);
-  if (result)
-    return *result;
-  else
-    return nullptr;
+  auto* result = FindOrNull(bound_symbols_, id);
+  return result ? *result : nullptr;
 }
 
 void BoundSymbolManager::BindSymbol(const std::string& id,

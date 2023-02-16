@@ -99,6 +99,7 @@ class ParserParam {
   ValueStack value_stack_;
   size_t max_used_stack_size_;
 
+ public:  // deleted member functions: public.
   ParserParam(const ParserParam&) = delete;
   ParserParam& operator=(const ParserParam&) = delete;
 };

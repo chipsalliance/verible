@@ -34,7 +34,7 @@ ParserParam::ParserParam(TokenGenerator* token_stream)
       last_token_(TokenInfo::EOFToken()),
       max_used_stack_size_(0) {}
 
-ParserParam::~ParserParam() {}
+ParserParam::~ParserParam() = default;
 
 const TokenInfo& ParserParam::FetchToken() {
   last_token_ = (*token_stream_)();
