@@ -26,7 +26,7 @@
 namespace verible {
 
 void ParserVerifier::Visit(const SyntaxTreeLeaf& leaf) {
-  do {
+  for (;;) {
     // Check to stop if reached end of stream or end of file
     if (view_iterator_ == view_.end() || (**view_iterator_).isEOF()) return;
 
@@ -34,12 +34,12 @@ void ParserVerifier::Visit(const SyntaxTreeLeaf& leaf) {
     if (token_comparator_(view_token, leaf.get())) {
       // Found a matching token, continue to next leaf
       view_iterator_++;
-      break;
+      return;
     }
     // Failed to find a matching token.
     unmatched_tokens_.push_back(view_token);
     view_iterator_++;
-  } while (true);
+  }
 }
 
 std::vector<TokenInfo> ParserVerifier::Verify() {

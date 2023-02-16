@@ -57,7 +57,7 @@ void StripVerilogComments(absl::string_view content, std::ostream* output,
     stream << verilog_symbol_name(e);
   });
 
-  while (true) {
+  for (;;) {
     const verible::TokenInfo& token(lexer.DoNextToken());
     if (token.isEOF()) break;
 
