@@ -35,7 +35,7 @@ class VerilogLanguageServer {
   using WriteFun = verible::lsp::JsonRpcDispatcher::WriteFun;
 
   // Constructor preparing the callbacks for Language Server requests
-  VerilogLanguageServer(const WriteFun &write_fun);
+  explicit VerilogLanguageServer(const WriteFun &write_fun);
 
   // Reads single request and responds to it
   absl::Status Step(const ReadFun &read_fun);

@@ -35,7 +35,7 @@ class MemBlock {
  private:
   MemBlock(const MemBlock&) = delete;
   MemBlock(MemBlock&&) = delete;
-  MemBlock& operator=(MemBlock&) = delete;
+  MemBlock& operator=(const MemBlock&) = delete;
   MemBlock& operator=(MemBlock&&) = delete;
 };
 

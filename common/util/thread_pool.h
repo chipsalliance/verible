@@ -33,7 +33,7 @@ class ThreadPool {
  public:
   // Create thread pool with "thread_count" threads.
   // If that count is zero, functions will be executed synchronously.
-  ThreadPool(int thread_count);
+  explicit ThreadPool(int thread_count);
 
   // Exit ASAP and leave remaining work in queue unfinished.
   ~ThreadPool();

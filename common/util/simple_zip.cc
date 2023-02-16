@@ -43,7 +43,7 @@ ByteSource FileByteSource(const char *filename) {
   FILE *f = fopen(filename, "rb");
   if (!f) return nullptr;
   struct State {
-    State(FILE *f) : file(f) {}
+    explicit State(FILE *f) : file(f) {}
     ~State() { fclose(file); }
     FILE *file;
     char buffer[65536];
@@ -60,7 +60,7 @@ namespace {
 
 class HeaderWriter {
  public:
-  HeaderWriter(char *buffer) : begin_(buffer), pos_(buffer) {}
+  explicit HeaderWriter(char *buffer) : begin_(buffer), pos_(buffer) {}
 
   HeaderWriter &AddInt16(uint16_t value) {
     uint16_t le = htole16(value);  // NOP on most platforms
@@ -201,7 +201,8 @@ struct Encoder::Impl {
     size_t processed_size = 0;
     absl::string_view chunk;
     while (!(chunk = generator()).empty()) {
-      crc = crc32(crc, (const uint8_t *)chunk.data(), chunk.size());
+      crc = crc32(crc, reinterpret_cast<const uint8_t *>(chunk.data()),
+                  chunk.size());
       processed_size += chunk.size();
       out_(chunk);
     }
@@ -222,14 +223,17 @@ struct Encoder::Impl {
     do {
       chunk = generator();
       const int flush_setting = chunk.empty() ? Z_FINISH : Z_NO_FLUSH;
-      if (!chunk.empty())
-        crc = crc32(crc, (const uint8_t *)chunk.data(), chunk.size());
-
+      if (!chunk.empty()) {
+        crc = crc32(crc, reinterpret_cast<const uint8_t *>(chunk.data()),
+                    chunk.size());
+      }
       stream.avail_in = chunk.size();
-      stream.next_in = (uint8_t *)chunk.data();
+      // Nasty C-API without 'const' input.
+      stream.next_in =
+          reinterpret_cast<uint8_t *>(const_cast<char *>(chunk.data()));
       do {
         stream.avail_out = kScratchSize;
-        stream.next_out = (uint8_t *)scratch_space_;
+        stream.next_out = reinterpret_cast<uint8_t *>(scratch_space_);
         deflate(&stream, flush_setting);
         const size_t output_size = kScratchSize - stream.avail_out;
         if (output_size) out_({scratch_space_, output_size});

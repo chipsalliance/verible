@@ -90,7 +90,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          /tmp/clang-tidy-hashes.cache
+          /tmp/verible-clang-tidy-hashes.cache
           /root/.cache/bazel
         key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy-

@@ -14,16 +14,21 @@
 # limitations under the License.
 
 set -u
+
+readonly CLANG_CONFIG_FILE=.clang-tidy
+
 TMPDIR="${TMPDIR:-/tmp}"
+readonly NAME_PREFIX=verible-clang-tidy  # Make files easy to tab-complete-find
+readonly CLANG_TIDY_CONFIG_MSG=${TMPDIR}/${NAME_PREFIX}-config.msg
 
 readonly PARALLEL_COUNT=$(nproc)
 readonly FILES_PER_INVOCATION=5
 
-readonly CLANG_TIDY_SEEN_CACHE=${TMPDIR}/clang-tidy-hashes.cache
+readonly CLANG_TIDY_SEEN_CACHE=${TMPDIR}/${NAME_PREFIX}-hashes.cache
 touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet
 
-readonly FILES_TO_PROCESS=${TMPDIR}/clang-tidy-files.list
-readonly TIDY_OUT=${TMPDIR}/clang-tidy-verible.out
+readonly FILES_TO_PROCESS=${TMPDIR}/${NAME_PREFIX}-files.list
+readonly TIDY_OUT=${TMPDIR}/${NAME_PREFIX}.out
 
 # Use clang-tidy-11 if available as it still checks for
 # google-runtime-references, non-const references - which is the
@@ -39,6 +44,32 @@ for version in 11 12 13 14 ; do
   fi
 done
 hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
+
+# Explicitly test the configuration, otherwise clang-tidy will silently
+# fall back to some minimal default config.
+
+# A particular annoying thing: if there is a comment in the configuration,
+# things break. Silently.
+awk '
+BEGIN      { in_rules = 0; }
+/^Checks:/ { in_rules = 1; }
+/#/        { if (in_rules)  { printf("Comment found %s\n", $0); exit(1); } }
+END        { if (!in_rules) { printf("Never seen Checks: >\n"); exit(2); } }' \
+      < ${CLANG_CONFIG_FILE}
+
+if [ $? -ne 0 ]; then
+  echo "::error:: config not valid: clang-tidy can't deal with comments."
+  exit 1
+fi
+
+# If there is an issue with the configuration, clang tidy will
+# not exit with a non-zero exit code (at least clang-tidy-11)
+# But at least there will be an error message to stderr.
+${CLANG_TIDY} --dump-config > /dev/null 2> ${CLANG_TIDY_CONFIG_MSG}
+if [ -s ${CLANG_TIDY_CONFIG_MSG} ]; then
+  cat ${CLANG_TIDY_CONFIG_MSG}
+  exit 1
+fi
 
 echo ::group::Build compilation database
 
@@ -78,8 +109,9 @@ if [ -s ${FILES_TO_PROCESS} ]; then
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
             ${CLANG_TIDY} --quiet 2>/dev/null \
-    | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}
+    | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
 
+  mv ${TIDY_OUT}.tmp ${TIDY_OUT}
   cat ${TIDY_OUT}
   echo "::endgroup::"
 
