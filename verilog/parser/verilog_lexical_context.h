@@ -25,11 +25,10 @@
 #include "common/util/with_reason.h"
 
 namespace verilog {
-
-// TODO(fangism): move all of these _classes into an internal namespace.
+namespace internal {
 
 // Helper state machine to parse optional labels after certain keywords.
-class _KeywordLabelStateMachine {
+class KeywordLabelStateMachine {
  public:
   // Updates the state machine, by looking ahead at the next token's enum.
   void UpdateState(int);
@@ -52,9 +51,9 @@ class _KeywordLabelStateMachine {
 
 // Helper state machine for tracking constraint_block and constraint_set in the
 // grammar.
-class _ConstraintBlockStateMachine {
+class ConstraintBlockStateMachine {
  public:
-  _ConstraintBlockStateMachine() = default;
+  ConstraintBlockStateMachine() = default;
 
   bool IsActive() const { return !states_.empty(); }
 
@@ -108,12 +107,12 @@ class _ConstraintBlockStateMachine {
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-                                const _ConstraintBlockStateMachine& s) {
+                                const ConstraintBlockStateMachine& s) {
   return s.Dump(os);
 }
 
 // Helper state machine to parse randomize calls.
-class _RandomizeCallStateMachine {
+class RandomizeCallStateMachine {
  public:
   bool IsActive() const { return state_ != kNone; }
 
@@ -139,11 +138,11 @@ class _RandomizeCallStateMachine {
   State state_ = kNone;
 
   // Nested state machine.
-  _ConstraintBlockStateMachine constraint_block_tracker_;
+  ConstraintBlockStateMachine constraint_block_tracker_;
 };
 
 // Helper state machine to parse (non-extern) constraint declarations.
-class _ConstraintDeclarationStateMachine {
+class ConstraintDeclarationStateMachine {
  public:
   bool IsActive() const { return state_ != kNone; }
 
@@ -164,7 +163,7 @@ class _ConstraintDeclarationStateMachine {
   State state_ = kNone;
 
   // Nested state machine.
-  _ConstraintBlockStateMachine constraint_block_tracker_;
+  ConstraintBlockStateMachine constraint_block_tracker_;
 };
 
 // This state machine keeps track of semicolons in a range enclosed by
@@ -174,9 +173,9 @@ class _ConstraintDeclarationStateMachine {
 // sequence_declaration for examples.
 // For additional fun, both declarations accept an optional ';' right before
 // the terminating keyword, but that one should *not* count as the 'last'.
-class _LastSemicolonStateMachine {
+class LastSemicolonStateMachine {
  public:
-  _LastSemicolonStateMachine(int trigger, int stop, int replacement)
+  LastSemicolonStateMachine(int trigger, int stop, int replacement)
       : trigger_token_enum_(trigger),
         finish_token_enum_(stop),
         semicolon_replacement_(replacement) {}
@@ -206,7 +205,8 @@ class _LastSemicolonStateMachine {
   // One token look-back.
   verible::TokenInfo* previous_token_ = nullptr;
 };
-
+}  // namespace internal
+   //
 // A structure for tracking context needed to disambiguate tokens.
 // The main input is a token stream coming from a lexer, and the main consumer
 // is a parser that accepts a token stream.
@@ -245,24 +245,24 @@ class LexicalContext {
     // TODO(fangism): Using a stream interface would further decouple the input
     // iteration from output iteration.
     for (auto iter : tokens_view) {
-      _AdvanceToken(&*iter);
+      AdvanceToken(&*iter);
     }
   }
 
  protected:  // Allow direct testing of some methods.
   // Reads a single token, and may alter it depending on internal state.
-  void _AdvanceToken(verible::TokenInfo*);
+  void AdvanceToken(verible::TokenInfo*);
 
   // Changes the enum of a token where disambiguation is needed.
-  int _InterpretToken(int token_enum) const;
+  int InterpretToken(int token_enum) const;
 
   // Changes the enum of a token (in-place) without changing internal state.
-  void _MutateToken(verible::TokenInfo* token) const {
-    token->set_token_enum(_InterpretToken(token->token_enum()));
+  void MutateToken(verible::TokenInfo* token) const {
+    token->set_token_enum(InterpretToken(token->token_enum()));
   }
 
   // Updates the internally tracked state without touching the token.
-  void _UpdateState(const verible::TokenInfo& token);
+  void UpdateState(const verible::TokenInfo& token);
 
   // State functions:
 
@@ -327,21 +327,21 @@ class LexicalContext {
   std::vector<FlowControlState> flow_control_stack_;
 
   // Tracks optional labels after certain keywords.
-  _KeywordLabelStateMachine keyword_label_tracker_;
+  internal::KeywordLabelStateMachine keyword_label_tracker_;
 
   // Tracks parsing state inside randomize_call.
-  _RandomizeCallStateMachine randomize_call_tracker_;
+  internal::RandomizeCallStateMachine randomize_call_tracker_;
 
   // Tracks parsing state inside randomize_call.
-  _ConstraintDeclarationStateMachine constraint_declaration_tracker_;
+  internal::ConstraintDeclarationStateMachine constraint_declaration_tracker_;
 
   // Tracks last semicolon in property_declarations so that it can be
   // re-enumerated to help disambiguate.
-  _LastSemicolonStateMachine property_declaration_tracker_;
+  internal::LastSemicolonStateMachine property_declaration_tracker_;
 
   // Tracks last semicolon in sequence_declarations so that it can be
   // re-enumerated to help disambiguate.
-  _LastSemicolonStateMachine sequence_declaration_tracker_;
+  internal::LastSemicolonStateMachine sequence_declaration_tracker_;
 
   // Tracks begin-end paired sequence blocks in all contexts (generate blocks,
   // function/task statements, flow-control constructs...).

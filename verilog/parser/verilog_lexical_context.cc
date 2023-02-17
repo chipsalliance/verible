@@ -30,6 +30,7 @@ namespace verilog {
 using verible::TokenInfo;
 using verible::WithReason;
 
+namespace internal {
 // Returns true for begin/end-like tokens that can be followed with an optional
 // label.
 // TODO(fangism): move this to verilog_token_classifications.cc
@@ -47,7 +48,7 @@ static bool KeywordAcceptsOptionalLabel(int token_enum) {
   return keywords->find(token_enum) != keywords->end();
 }
 
-void _KeywordLabelStateMachine::UpdateState(int token_enum) {
+void KeywordLabelStateMachine::UpdateState(int token_enum) {
   // In any state, reset on encountering keyword.
   if (KeywordAcceptsOptionalLabel(token_enum)) {
     state_ = kGotLabelableKeyword;
@@ -75,7 +76,7 @@ void _KeywordLabelStateMachine::UpdateState(int token_enum) {
   }
 }
 
-std::ostream& _ConstraintBlockStateMachine::Dump(std::ostream& os) const {
+std::ostream& ConstraintBlockStateMachine::Dump(std::ostream& os) const {
   os << '[' << states_.size() << ']';
   if (!states_.empty()) {
     os << ": top:" << int(states_.top());
@@ -83,14 +84,14 @@ std::ostream& _ConstraintBlockStateMachine::Dump(std::ostream& os) const {
   return os;
 }
 
-void _ConstraintBlockStateMachine::DeferInvalidToken(int token_enum) {
+void ConstraintBlockStateMachine::DeferInvalidToken(int token_enum) {
   // On invalid syntax, defer handling of token to previous state on the
   // stack.  If stack is empty, exit the state machine entirely.
   states_.pop();
   if (IsActive()) UpdateState(token_enum);
 }
 
-void _ConstraintBlockStateMachine::UpdateState(int token_enum) {
+void ConstraintBlockStateMachine::UpdateState(int token_enum) {
   if (!IsActive()) {
     if (token_enum == '{') {
       // Activate this state machine.
@@ -258,7 +259,7 @@ void _ConstraintBlockStateMachine::UpdateState(int token_enum) {
   }  // switch (top)
 }
 
-int _ConstraintBlockStateMachine::InterpretToken(int token_enum) const {
+int ConstraintBlockStateMachine::InterpretToken(int token_enum) const {
   if (!IsActive() || token_enum != _TK_RARROW) return token_enum;
   // The only token re-interpreted by this state machine is "->".
   switch (states_.top()) {
@@ -269,7 +270,7 @@ int _ConstraintBlockStateMachine::InterpretToken(int token_enum) const {
   }
 }
 
-void _RandomizeCallStateMachine::UpdateState(int token_enum) {
+void RandomizeCallStateMachine::UpdateState(int token_enum) {
   // EBNF for randomize_call:
   // 'randomize' { attribute_instance }
   //   [ '(' [ variable_identifier_list | 'null' ] ')' ]
@@ -354,7 +355,7 @@ void _RandomizeCallStateMachine::UpdateState(int token_enum) {
   }
 }
 
-int _RandomizeCallStateMachine::InterpretToken(int token_enum) const {
+int RandomizeCallStateMachine::InterpretToken(int token_enum) const {
   switch (state_) {
     case kInsideConstraintBlock:
       return constraint_block_tracker_.InterpretToken(token_enum);
@@ -364,7 +365,7 @@ int _RandomizeCallStateMachine::InterpretToken(int token_enum) const {
   return token_enum;  // no change
 }
 
-void _ConstraintDeclarationStateMachine::UpdateState(int token_enum) {
+void ConstraintDeclarationStateMachine::UpdateState(int token_enum) {
   switch (state_) {
     case kNone:
       switch (token_enum) {
@@ -403,7 +404,7 @@ void _ConstraintDeclarationStateMachine::UpdateState(int token_enum) {
   }
 }
 
-int _ConstraintDeclarationStateMachine::InterpretToken(int token_enum) const {
+int ConstraintDeclarationStateMachine::InterpretToken(int token_enum) const {
   switch (state_) {
     case kInsideConstraintBlock:
       return constraint_block_tracker_.InterpretToken(token_enum);
@@ -413,7 +414,7 @@ int _ConstraintDeclarationStateMachine::InterpretToken(int token_enum) const {
   return token_enum;  // no change
 }
 
-void _LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
+void LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
   switch (state_) {
     case kNone:
       if (token->token_enum() == trigger_token_enum_) {
@@ -447,6 +448,8 @@ void _LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
   previous_token_ = token;
 }
 
+}  // namespace internal
+
 LexicalContext::LexicalContext()
     : property_declaration_tracker_(
           TK_property, TK_endproperty,
@@ -455,14 +458,14 @@ LexicalContext::LexicalContext()
           TK_sequence, TK_endsequence,
           SemicolonEndOfAssertionVariableDeclarations) {}
 
-void LexicalContext::_AdvanceToken(TokenInfo* token) {
+void LexicalContext::AdvanceToken(TokenInfo* token) {
   // Note: It might not always be possible to mutate a token as it is
   // encountered; it may have to be bookmarked to be returned to later after
   // looking ahead.
 
-  _MutateToken(token);  // only modifies token, not *this
+  MutateToken(token);  // only modifies token, not *this
 
-  _UpdateState(*token);  // only modifies *this, not token
+  UpdateState(*token);  // only modifies *this, not token
 
   // The following state machines require a mutable token reference:
   property_declaration_tracker_.UpdateState(token);
@@ -472,7 +475,7 @@ void LexicalContext::_AdvanceToken(TokenInfo* token) {
   previous_token_ = token;
 }
 
-void LexicalContext::_UpdateState(const TokenInfo& token) {
+void LexicalContext::UpdateState(const TokenInfo& token) {
   // Forward tokens to concurrent sub-state-machines.
   {
     // Handle begin/end-like keywords with optional labels.
@@ -639,7 +642,7 @@ void LexicalContext::_UpdateState(const TokenInfo& token) {
   }  // switch (token.token_enum)
 }
 
-int LexicalContext::_InterpretToken(int token_enum) const {
+int LexicalContext::InterpretToken(int token_enum) const {
   // Every top-level case of this switch is a token enumeration (_TK_*)
   // that must be transformed into a disambiguated enumeration (TK_*).
   // All other tokens pass through unmodified.

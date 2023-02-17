@@ -102,7 +102,7 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), 7);  // including EOF
 
-  _KeywordLabelStateMachine b;
+  internal::KeywordLabelStateMachine b;
   EXPECT_TRUE(b.ItemMayStart());
   int i = 0;
   for (auto iter : tokens_view) {
@@ -124,7 +124,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());
 
-  _KeywordLabelStateMachine b;
+  internal::KeywordLabelStateMachine b;
   EXPECT_TRUE(b.ItemMayStart());
   auto expect_iter = expect_item_may_start.begin();
   for (auto iter : tokens_view) {
@@ -148,7 +148,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
-  _KeywordLabelStateMachine b;
+  internal::KeywordLabelStateMachine b;
   EXPECT_TRUE(b.ItemMayStart());
   auto expect_iter = expect_item_may_start.cbegin();
   for (auto iter : tokens_view) {
@@ -172,7 +172,7 @@ TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
   const auto& tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
-  _KeywordLabelStateMachine b;
+  internal::KeywordLabelStateMachine b;
   EXPECT_TRUE(b.ItemMayStart());
   auto expect_iter = expect_item_may_start.cbegin();
   for (auto iter : tokens_view) {
@@ -185,11 +185,12 @@ TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
   }
 }
 
-class LastSemicolonStateMachineTest : public ::testing::Test,
-                                      public _LastSemicolonStateMachine {
+class LastSemicolonStateMachineTest
+    : public ::testing::Test,
+      public internal::LastSemicolonStateMachine {
  public:
   LastSemicolonStateMachineTest()
-      : _LastSemicolonStateMachine(
+      : internal::LastSemicolonStateMachine(
             TK_property, TK_endproperty,
             SemicolonEndOfAssertionVariableDeclarations) {}
 };
@@ -338,10 +339,10 @@ struct ConstraintBlockStateMachineTest : public StateMachineTestBase {
   }
 
   // Instance of the state machine under test.
-  _ConstraintBlockStateMachine sm;
+  internal::ConstraintBlockStateMachine sm;
 };
 
-// Test initial conditions of _ConstraintBlockStateMachine.
+// Test initial conditions of internal::ConstraintBlockStateMachine.
 TEST_F(ConstraintBlockStateMachineTest, Initialization) {
   EXPECT_FALSE(sm.IsActive());
 }
@@ -995,17 +996,18 @@ struct RandomizeCallStateMachineTest : public StateMachineTestBase {
   }
 
   // Instance of the state machine under test.
-  _RandomizeCallStateMachine sm;
+  internal::RandomizeCallStateMachine sm;
 };
 
-// Test that _RandomizeCallStateMachine initializes in inactive state.
+// Test that internal::RandomizeCallStateMachine initializes in inactive state.
 TEST_F(RandomizeCallStateMachineTest, Initialization) {
   EXPECT_FALSE(sm.IsActive());
   sm.UpdateState(TK_randomize);
   EXPECT_TRUE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with plain call.
+// Test that internal::RandomizeCallStateMachine updates correctly with plain
+// call.
 TEST_F(RandomizeCallStateMachineTest, ParseStdCall) {
   Tokenize(R"(
   x = std::randomize;
@@ -1019,7 +1021,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseStdCall) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with method call.
+// Test that internal::RandomizeCallStateMachine updates correctly with method
+// call.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCall) {
   Tokenize(R"(
   x = y.randomize;
@@ -1031,7 +1034,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCall) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with empty variables.
+// Test that internal::RandomizeCallStateMachine updates correctly with empty
+// variables.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCallEmptyVariables) {
   Tokenize(R"(
   x = y.randomize();
@@ -1044,7 +1048,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCallEmptyVariables) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with one variable.
+// Test that internal::RandomizeCallStateMachine updates correctly with one
+// variable.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCallOneVariable) {
   Tokenize(R"(
   x = y.randomize(z);
@@ -1056,7 +1061,7 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCallOneVariable) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with multiple
+// Test that internal::RandomizeCallStateMachine updates correctly with multiple
 // variables.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCallMultiVariables) {
   Tokenize(R"(
@@ -1071,7 +1076,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCallMultiVariables) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly as a predicate.
+// Test that internal::RandomizeCallStateMachine updates correctly as a
+// predicate.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCallPredicate) {
   Tokenize(R"(
   if (y.randomize) begin
@@ -1086,7 +1092,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCallPredicate) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with constraint_block.
+// Test that internal::RandomizeCallStateMachine updates correctly with
+// constraint_block.
 TEST_F(RandomizeCallStateMachineTest, ParseMethodCallWithConstraintBlock) {
   Tokenize(R"(
   if (y.randomize with {a -> b;}) begin
@@ -1104,8 +1111,8 @@ TEST_F(RandomizeCallStateMachineTest, ParseMethodCallWithConstraintBlock) {
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with constraint_block
-// with empty variable list.
+// Test that internal::RandomizeCallStateMachine updates correctly with
+// constraint_block with empty variable list.
 TEST_F(RandomizeCallStateMachineTest,
        ParseMethodCallWithConstraintBlockAndEmptyVariableList) {
   Tokenize(R"(
@@ -1124,8 +1131,8 @@ TEST_F(RandomizeCallStateMachineTest,
   EXPECT_FALSE(sm.IsActive());
 }
 
-// Test that _RandomizeCallStateMachine updates correctly with constraint_block
-// with non-empty variable list.
+// Test that internal::RandomizeCallStateMachine updates correctly with
+// constraint_block with non-empty variable list.
 TEST_F(RandomizeCallStateMachineTest,
        ParseMethodCallWithConstraintBlockAndVariableList) {
   Tokenize(R"(
@@ -1171,7 +1178,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
   void AdvanceToken() {
     TokenSequence::iterator iter(*token_iter_);
     TokenInfo& token(*iter);
-    _AdvanceToken(&token);
+    LexicalContext::AdvanceToken(&token);
     ++token_iter_;
   }
 
