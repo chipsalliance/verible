@@ -76,7 +76,7 @@ static bool TokenLocationLess(const TokenInfo& token, const char* offset) {
 
 // Makes an iterator-writable copy of items_view without using const_cast.
 template <class V>
-std::vector<typename V::iterator> _CopyWriteableIterators(
+std::vector<typename V::iterator> CopyWriteableIterators(
     V& items, const std::vector<typename V::const_iterator>& items_view) {
   // precondition: items_view's iterators all point into items array.
   // postcondition: results's iterators point to the same items as items_view.
@@ -91,7 +91,7 @@ std::vector<typename V::iterator> _CopyWriteableIterators(
 }
 
 TokenStreamReferenceView TextStructureView::MakeTokenStreamReferenceView() {
-  return _CopyWriteableIterators(tokens_, tokens_view_);
+  return CopyWriteableIterators(tokens_, tokens_view_);
 }
 
 const std::vector<TokenSequence::const_iterator>&

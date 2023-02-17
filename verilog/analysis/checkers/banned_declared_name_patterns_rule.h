@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS__BANNED_DECLARED_NAME_PATTERNS_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS__BANNED_DECLARED_NAME_PATTERNS_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_BANNED_DECLARED_NAME_PATTERNS_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_BANNED_DECLARED_NAME_PATTERNS_RULE_H_
 
 #include <set>
 #include <string>
@@ -49,4 +49,4 @@ class BannedDeclaredNamePatternsRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS__BANNED_DECLARED_NAME_PATTERNS_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_BANNED_DECLARED_NAME_PATTERNS_RULE_H_

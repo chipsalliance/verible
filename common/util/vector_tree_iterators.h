@@ -30,7 +30,8 @@ namespace internal {
 
 // Class implementing common VectorTree*Iterator members using CRTP polymorphic
 // chaining. Derived class must implement following methods:
-// - `static VectorTreeType* _NextNode(VectorTreeType* node)` - returns pointer
+// - `static VectorTreeType* GetNextNode(VectorTreeType* node)` - returns
+// pointer
 //   to a next node
 template <typename ImplType, typename VectorTreeType>
 class VectorTreeIteratorBase {
@@ -53,12 +54,12 @@ class VectorTreeIteratorBase {
     return node_;
   }
   ImplType& operator++() {
-    node_ = ImplType::_NextNode(node_);
+    node_ = ImplType::GetNextNode(node_);
     return static_cast<ImplType&>(*this);
   }
   ImplType operator++(int) {
     ImplType tmp = static_cast<ImplType&>(*this);
-    node_ = ImplType::_NextNode(node_);
+    node_ = ImplType::GetNextNode(node_);
     return tmp;
   }
   friend ImplType operator+(ImplType lhs, std::size_t rhs) {
@@ -90,7 +91,7 @@ class VectorTreeLeavesIterator
   explicit VectorTreeLeavesIterator(VectorTreeType* node)
       : base_type(node ? &LeftmostDescendant(*node) : nullptr) {}
 
-  static VectorTreeType* _NextNode(VectorTreeType* node) {
+  static VectorTreeType* GetNextNode(VectorTreeType* node) {
     if (!node) return nullptr;
     return NextLeaf(*node);
   }
@@ -123,7 +124,7 @@ class VectorTreePreOrderIterator
   VectorTreePreOrderIterator() : base_type() {}
   explicit VectorTreePreOrderIterator(VectorTreeType* node) : base_type(node) {}
 
-  static VectorTreeType* _NextNode(VectorTreeType* node) {
+  static VectorTreeType* GetNextNode(VectorTreeType* node) {
     if (!node) return nullptr;
     if (!node->Children().empty()) return &node->Children().front();
     while (node && verible::IsLastChild(*node)) {
@@ -136,7 +137,7 @@ class VectorTreePreOrderIterator
   this_type begin() const { return *this; }
   this_type end() const {
     if (!this->node_) return this_type(nullptr);
-    return this_type(_NextNode(&RightmostDescendant(*this->node_)));
+    return this_type(GetNextNode(&RightmostDescendant(*this->node_)));
   }
 };
 
@@ -165,7 +166,7 @@ class VectorTreePostOrderIterator
   explicit VectorTreePostOrderIterator(VectorTreeType* node)
       : base_type(node) {}
 
-  static VectorTreeType* _NextNode(VectorTreeType* node) {
+  static VectorTreeType* GetNextNode(VectorTreeType* node) {
     if (!node) return nullptr;
     if (verible::IsLastChild(*node)) return node->Parent();
     node = NextSibling(*node);
@@ -177,7 +178,7 @@ class VectorTreePostOrderIterator
     if (!this->node_) return this_type(nullptr);
     return this_type(&LeftmostDescendant(*this->node_));
   }
-  this_type end() const { return this_type(_NextNode(this->node_)); }
+  this_type end() const { return this_type(GetNextNode(this->node_)); }
 };
 
 template <typename VectorTreeType>

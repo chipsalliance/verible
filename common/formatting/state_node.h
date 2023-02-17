@@ -162,12 +162,12 @@ struct StateNode {
   void ReconstructFormatDecisions(FormattedExcerpt*) const;
 
  private:
-  const PreFormatToken& _GetPreviousToken() const;
+  const PreFormatToken& GetPreviousToken() const;
 
-  int _UpdateColumnPosition();
-  void _UpdateCumulativeCost(const BasicFormatStyle&, int column_for_penalty);
-  void _OpenGroupBalance(const BasicFormatStyle&);
-  void _CloseGroupBalance();
+  int UpdateColumnPosition();
+  void UpdateCumulativeCost(const BasicFormatStyle&, int column_for_penalty);
+  void OpenGroupBalance(const BasicFormatStyle&);
+  void CloseGroupBalance();
 };
 
 // Human-readable representation for debugging only.

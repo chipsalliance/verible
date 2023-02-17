@@ -56,7 +56,6 @@ Checks: >
   -bugprone-macro-parentheses,
   -bugprone-move-forwarding-reference,
   -bugprone-narrowing-conversions,
-  -bugprone-reserved-identifier,
   modernize-*,
   -modernize-avoid-bind,
   -modernize-avoid-c-arrays,
