@@ -128,13 +128,12 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
 bison_register_toolchains()
 
-# A version newer than 21.21 as it fixes a warning on c++20
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "b0cdeb606b7abb3afc35c1a937c0994721c8b7b8102c5ae481570d8f9cf54a87",
-    strip_prefix = "protobuf-f58d0b56e37aa6a85848618018d7a17b86746bc0",
+    sha256 = "e340f39fad1e35d9237540bcd6a2592ccac353e5d21d0f0521f6ab77370e0142",
+    strip_prefix = "protobuf-22.0",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/archive/f58d0b56e37aa6a85848618018d7a17b86746bc0.zip",
+        "https://github.com/protocolbuffers/protobuf/releases/download/v22.0/protobuf-22.0.tar.gz",
     ],
 )
 
