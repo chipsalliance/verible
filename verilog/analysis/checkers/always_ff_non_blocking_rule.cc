@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 // Register AlwaysFFNonBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysFFNonBlockingRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Use blocking assignments, at most, for locals inside "
     "'always_ff' sequential blocks.";
 

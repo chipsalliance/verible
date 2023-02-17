@@ -15,18 +15,20 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_CONSTANTS_H_
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_CONSTANTS_H_
 
+#include "absl/strings/string_view.h"
+
 namespace verilog {
 
 // This is the leading string that makes a comment a lint waiver.
-static constexpr char kLinterTrigger[] = "verilog_lint:";
+static constexpr absl::string_view kLinterTrigger = "verilog_lint:";
 
 // This command says to waive one line (this or next applicable).
-static constexpr char kLinterWaiveLineCommand[] = "waive";
+static constexpr absl::string_view kLinterWaiveLineCommand = "waive";
 
 // This command says to start waiving a rule from this line...
-static constexpr char kLinterWaiveStartCommand[] = "waive-start";
+static constexpr absl::string_view kLinterWaiveStartCommand = "waive-start";
 // ... and stop waiving at this line.
-static constexpr char kLinterWaiveStopCommand[] = "waive-stop";
+static constexpr absl::string_view kLinterWaiveStopCommand = "waive-stop";
 
 }  // namespace verilog
 

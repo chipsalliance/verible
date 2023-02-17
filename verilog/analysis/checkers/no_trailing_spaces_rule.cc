@@ -41,7 +41,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTrailingSpacesRule);
 
-static const char kMessage[] = "Remove trailing spaces.";
+static constexpr absl::string_view kMessage = "Remove trailing spaces.";
 
 const LintRuleDescriptor& NoTrailingSpacesRule::GetDescriptor() {
   static const LintRuleDescriptor d{

@@ -35,7 +35,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroStringConcatenationRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Token concatenation (``) used inside plain string literal.";
 
 const LintRuleDescriptor& MacroStringConcatenationRule::GetDescriptor() {

@@ -36,7 +36,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NoTabsRule);
 
-static const char kMessage[] = "Use spaces, not tabs.";
+static constexpr absl::string_view kMessage = "Use spaces, not tabs.";
 
 const LintRuleDescriptor& NoTabsRule::GetDescriptor() {
   static const LintRuleDescriptor d{

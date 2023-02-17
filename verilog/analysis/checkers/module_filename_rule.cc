@@ -45,7 +45,7 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ModuleFilenameRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Declared module does not match the first dot-delimited component "
     "of file name: ";
 

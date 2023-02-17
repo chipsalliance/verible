@@ -41,7 +41,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(EndifCommentRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "`endif should be followed on the same line by a comment that matches the "
     "opening `ifdef/`ifndef.";
 

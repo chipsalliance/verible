@@ -35,7 +35,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbidDefparamRule);
 
-static const char kMessage[] = "Do not use defparam.";
+static constexpr absl::string_view kMessage = "Do not use defparam.";
 
 const LintRuleDescriptor& ForbidDefparamRule::GetDescriptor() {
   static const LintRuleDescriptor d{

@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register CaseMissingDefaultRule
 VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Explicitly define a default case for every case statement.";
 
 const LintRuleDescriptor& CaseMissingDefaultRule::GetDescriptor() {

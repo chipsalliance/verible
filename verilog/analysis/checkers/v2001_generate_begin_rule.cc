@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(V2001GenerateBeginRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Do not begin a generate block inside a generate region.";
 
 const LintRuleDescriptor& V2001GenerateBeginRule::GetDescriptor() {

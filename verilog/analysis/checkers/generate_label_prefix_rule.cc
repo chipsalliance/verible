@@ -38,7 +38,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "All generate block labels must start with g_ or gen_";
 
 // TODO(fangism): and be lower_snake_case?

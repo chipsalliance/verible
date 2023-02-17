@@ -42,9 +42,9 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
-static const char optional_suffix[] = "_pkg";
+static constexpr absl::string_view optional_suffix = "_pkg";
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Package declaration name must match the file name "
     "(ignoring optional \"_pkg\" file name suffix).  ";
 

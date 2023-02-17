@@ -42,7 +42,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitFunctionLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionLifetimeRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class functions";
 
 const LintRuleDescriptor& ExplicitFunctionLifetimeRule::GetDescriptor() {

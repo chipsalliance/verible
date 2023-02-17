@@ -43,7 +43,7 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PackedDimensionsRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Declare packed dimension range in little-endian (decreasing) order, "
     "e.g. [N-1:0].";
 

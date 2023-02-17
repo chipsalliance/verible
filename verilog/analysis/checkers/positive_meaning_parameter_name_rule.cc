@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 // Register PositiveMeaningParameterNameRule.
 VERILOG_REGISTER_LINT_RULE(PositiveMeaningParameterNameRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Use positive naming for parameters, start the name with 'enable' instead.";
 
 const LintRuleDescriptor& PositiveMeaningParameterNameRule::GetDescriptor() {

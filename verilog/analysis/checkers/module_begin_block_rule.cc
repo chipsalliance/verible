@@ -35,7 +35,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ModuleBeginBlockRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Module-level begin-end blocks are not LRM-valid syntax.";
 
 const LintRuleDescriptor& ModuleBeginBlockRule::GetDescriptor() {

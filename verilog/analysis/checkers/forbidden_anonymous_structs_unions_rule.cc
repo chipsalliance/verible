@@ -39,9 +39,9 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousStructsUnionsRule);
 
-static const char kMessageStruct[] =
+static constexpr absl::string_view kMessageStruct =
     "struct definitions always should be named using typedef.";
-static const char kMessageUnion[] =
+static constexpr absl::string_view kMessageUnion =
     "union definitions always should be named using typedef.";
 
 const LintRuleDescriptor& ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {

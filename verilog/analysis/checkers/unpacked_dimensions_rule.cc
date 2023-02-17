@@ -41,13 +41,13 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(UnpackedDimensionsRule);
 
-static const char kMessageScalarInOrder[] =
+static constexpr absl::string_view kMessageScalarInOrder =
     "When an unpacked dimension range is zero-based ([0:N-1]), "
     "declare size as [N] instead.";
-static const char kMessageScalarReversed[] =
+static constexpr absl::string_view kMessageScalarReversed =
     "Unpacked dimension range must be declared in big-endian ([0:N-1]) order.  "
     "Declare zero-based big-endian unpacked dimensions sized as [N].";
-static const char kMessageReorder[] =
+static constexpr absl::string_view kMessageReorder =
     "Declare unpacked dimension range in big-endian (increasing) order, "
     "e.g. [N:N+M].";
 

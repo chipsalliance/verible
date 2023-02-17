@@ -38,7 +38,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PosixEOFRule);
 
-static const char kMessage[] = "File must end with a newline.";
+static constexpr absl::string_view kMessage = "File must end with a newline.";
 
 const LintRuleDescriptor& PosixEOFRule::GetDescriptor() {
   static const LintRuleDescriptor d{

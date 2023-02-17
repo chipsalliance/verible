@@ -230,6 +230,9 @@ cc_library(
 cc_library(
     name = "verilog_linter_constants",
     hdrs = ["verilog_linter_constants.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_library(

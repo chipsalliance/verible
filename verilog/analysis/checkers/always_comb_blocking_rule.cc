@@ -43,7 +43,7 @@ using verible::matcher::Matcher;
 // Register AlwaysCombBlockingRule
 VERILOG_REGISTER_LINT_RULE(AlwaysCombBlockingRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Use only blocking assignments in \'always_comb\' combinational blocks.";
 
 const LintRuleDescriptor& AlwaysCombBlockingRule::GetDescriptor() {

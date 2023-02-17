@@ -40,8 +40,10 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MismatchedLabelsRule);
 
-static const char kMessageMismatch[] = "Begin/end block labels must match.";
-static const char kMessageMissing[] = "Matching begin label is missing.";
+static constexpr absl::string_view kMessageMismatch =
+    "Begin/end block labels must match.";
+static constexpr absl::string_view kMessageMissing =
+    "Matching begin label is missing.";
 
 const LintRuleDescriptor& MismatchedLabelsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
