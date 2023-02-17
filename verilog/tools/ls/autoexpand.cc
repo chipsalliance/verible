@@ -187,15 +187,17 @@ class AutoExpander {
     void RetrieveAutoTemplates();
 
     // Gets all dependencies of the module (modules instantiated within it)
-    void RetrieveDependencies();
+    void RetrieveDependencies(
+        const absl::node_hash_map<absl::string_view, Module> &modules);
 
     // Retrieves the matching template from a typename -> template map
     const Template *GetAutoTemplate(absl::string_view type_id,
                                     int64_t instance_offset) const;
 
     // Returns true if the module depends on (uses) a given module
-    bool DependsOn(const absl::string_view type_name) const {
-      return dependencies_.contains(type_name);
+    bool DependsOn(const Module *module) const {
+      absl::flat_hash_set<const Module *> visited;
+      return DependsOn(module, &visited);
     }
 
     // Returns the Symbol representing this module
@@ -220,6 +222,16 @@ class AutoExpander {
     // Store the given port in the internal vector
     void PutDeclaredPort(const SyntaxTreeNode &port_node);
 
+    // Recurses into dependencies to check if we depend on a given module.
+    // Stores visited modules in a set to avoid infinite loops. For big
+    // dependency graphs one should build a proper graph and do a
+    // topological sort. However, these dependencies (and the dependent) are all
+    // from a single file, and usually there is only one module per file. This
+    // should be fast enough for unusual cases where there are multiple modules
+    // in a single file.
+    bool DependsOn(const Module *module,
+                   absl::flat_hash_set<const Module *> *visited) const;
+
     // The symbol that represents this module
     const verible::Symbol &symbol_;
 
@@ -229,10 +241,8 @@ class AutoExpander {
     // This module's ports
     std::vector<Port> ports_;
 
-    absl::flat_hash_set<absl::string_view> port_names_;
-
-    // This module's dependencies
-    absl::flat_hash_set<absl::string_view> dependencies_;
+    // This module's direct dependencies
+    absl::flat_hash_set<const Module *> dependencies_;
 
     // This module's AUTO_TEMPLATEs
     Template::Map templates_;
@@ -659,13 +669,18 @@ void AutoExpander::Module::RetrieveAutoTemplates() {
   }
 }
 
-void AutoExpander::Module::RetrieveDependencies() {
+void AutoExpander::Module::RetrieveDependencies(
+    const absl::node_hash_map<absl::string_view, Module> &modules) {
   for (const auto &data : FindAllDataDeclarations(symbol_)) {
     const verible::Symbol *const type_id_node =
         GetTypeIdentifierFromDataDeclaration(*data.match);
     // Some data declarations do not have a type id, ignore those
     if (!type_id_node) continue;
-    dependencies_.insert(StringSpanOfSymbol(*type_id_node));
+    const absl::string_view dependency_name = StringSpanOfSymbol(*type_id_node);
+    const auto it = modules.find(dependency_name);
+    if (it != modules.end()) {
+      dependencies_.insert(&it->second);
+    }
   }
 }
 
@@ -773,6 +788,18 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
                     {},
                     std::move(packed_dimensions),
                     std::move(unpacked_dimensions)});
+}
+
+bool AutoExpander::Module::DependsOn(
+    const Module *module, absl::flat_hash_set<const Module *> *visited) const {
+  visited->insert(this);
+  for (const Module *dependency : dependencies_) {
+    if (dependency == module) return true;
+    if (!visited->contains(dependency)) {
+      if (dependency->DependsOn(module, visited)) return true;
+    }
+  }
+  return false;
 }
 
 absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsListedBefore(
@@ -1096,16 +1123,18 @@ std::vector<TextEdit> AutoExpander::Expand() {
   for (const auto &mod_decl :
        FindAllModuleDeclarations(*text_structure_.SyntaxTree())) {
     Module module(*mod_decl.match);
-    module.RetrieveDependencies();
     buffer_modules.push_back(
         &modules_.insert(std::make_pair(module.Name(), std::move(module)))
              .first->second);
   }
+  for (auto module : buffer_modules) {
+    module->RetrieveDependencies(modules_);
+  }
   // Sort modules in the buffer based on a dependency graph, so that AUTOs are
   // expanded in order
   std::sort(buffer_modules.begin(), buffer_modules.end(),
-            [&](const Module *left, const Module *right) {
-              return right->DependsOn(left->Name());
+            [](const Module *left, const Module *right) {
+              return right->DependsOn(left);
             });
   for (Module *const module : buffer_modules) {
     // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from
