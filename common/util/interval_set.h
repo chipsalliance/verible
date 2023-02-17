@@ -47,8 +47,9 @@ std::ostream& FormatIntervals(std::ostream& stream, Iter begin, Iter end) {
              });
 }
 
+namespace internal {
 // Non-template private implementation class of IntervalSet.
-class _IntervalSetImpl {
+class IntervalSetImpl {
  protected:
   // Returns the first (interval) iterator that spans or follows 'value'.
   // Implementing this way avoids duplication between the const_iterator and
@@ -129,13 +130,15 @@ class _IntervalSetImpl {
   }
 };
 
+}  // namespace internal
+
 // IntervalSet represents a set of integral values.
 // Set membership is efficiently represented as a collection of
 // non-overlapping [min, max) intervals.
 // Mutating operations will automatically merge abutting intervals.
 // Type T must be std::less-comparable for binary-search-ability.
 template <typename T>
-class IntervalSet : private _IntervalSetImpl {
+class IntervalSet : private internal::IntervalSetImpl {
  private:
   using impl_type = std::map<T, T>;
 
@@ -208,7 +211,7 @@ class IntervalSet : private _IntervalSetImpl {
 
   // Returns the first (interval) iterator that spans or follows 'value'.
   const_iterator LowerBound(const T& value) const {
-    return _IntervalSetImpl::FindLowerBound(intervals_, value);
+    return internal::IntervalSetImpl::FindLowerBound(intervals_, value);
   }
 
   // Returns the first (interval) iterator that follows 'value'.
@@ -219,13 +222,14 @@ class IntervalSet : private _IntervalSetImpl {
   // Returns an iterator to the interval that entirely contains [min,max),
   // or the end iterator if no such interval exists, or the input is empty.
   const_iterator Find(const Interval<T>& interval) const {
-    return _IntervalSetImpl::FindSpanningInterval(intervals_, interval);
+    return internal::IntervalSetImpl::FindSpanningInterval(intervals_,
+                                                           interval);
   }
 
   // Returns an iterator to the interval that contains 'value',
   // or the end iterator if no such interval exists.
   const_iterator Find(const T& value) const {
-    return _IntervalSetImpl::FindSpanningInterval(intervals_, value);
+    return internal::IntervalSetImpl::FindSpanningInterval(intervals_, value);
   }
 
   // Adds an interval to the interval set.
@@ -491,13 +495,14 @@ class IntervalSet : private _IntervalSetImpl {
   // Mutable variants of Find(), LowerBound() are protected to preserve
   // invariants.
   iterator Find(const Interval<T>& interval) {
-    return _IntervalSetImpl::FindSpanningInterval(intervals_, interval);
+    return internal::IntervalSetImpl::FindSpanningInterval(intervals_,
+                                                           interval);
   }
   iterator Find(const T& value) {
-    return _IntervalSetImpl::FindSpanningInterval(intervals_, value);
+    return internal::IntervalSetImpl::FindSpanningInterval(intervals_, value);
   }
   iterator LowerBound(const T& value) {
-    return _IntervalSetImpl::FindLowerBound(intervals_, value);
+    return internal::IntervalSetImpl::FindLowerBound(intervals_, value);
   }
   iterator UpperBound(const T& value) { return intervals_.upper_bound(value); }
 
@@ -568,7 +573,7 @@ bool ParseInclusiveRanges(IntervalSet<T>* iset, Iter begin, Iter end,
 //
 // See also DisjointIntervalMap in interval_map.h.
 template <typename T>
-class DisjointIntervalSet : private _IntervalSetImpl {
+class DisjointIntervalSet : private internal::IntervalSetImpl {
  private:
   // This makes the value_type an immutable std::pair<const T, const T>.
   using impl_type = std::map<T, const T>;
