@@ -53,6 +53,7 @@ Checks: >
   -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
+  -bugprone-macro-parentheses,
   -bugprone-move-forwarding-reference,
   -bugprone-narrowing-conversions,
   -bugprone-reserved-identifier,

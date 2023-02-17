@@ -14,24 +14,5 @@
 
 #include "verilog/CST/verilog_matchers.h"
 
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/text/symbol.h"
-#include "verilog/CST/verilog_nonterminals.h"
-
-namespace verilog {
-
-#define N(tag) verible::NodeTag(NodeEnum::tag)
-
-// Define every syntax tree node matcher object.
-#define CONSIDER(tag) const NodeMatcher<NodeEnum::tag> Node##tag;
-#include "verilog/CST/verilog_nonterminals_foreach.inc"  // IWYU pragma: keep
-#undef CONSIDER
-
-// Define every single-node path matcher object.
-#define CONSIDER(tag)                                     \
-  const verible::matcher::PathMatchBuilder<1> Path##tag = \
-      verible::matcher::MakePathMatcher({N(tag)});
-#include "verilog/CST/verilog_nonterminals_foreach.inc"  // IWYU pragma: keep
-#undef CONSIDER
-
-}  // namespace verilog
+// Nothing in here. Just a place-holder so that bazel knows that this header
+// is C++ and clang-tidy picks up that knowledge.
