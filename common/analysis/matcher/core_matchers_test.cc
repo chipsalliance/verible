@@ -29,14 +29,14 @@ namespace matcher {
 namespace {
 
 // Collection of simple matchers used in test cases
-const TagMatchBuilder<SymbolKind::kNode, int, 5> Node5;
-const TagMatchBuilder<SymbolKind::kNode, int, 1> Node1;
-const TagMatchBuilder<SymbolKind::kLeaf, int, 1> Leaf1;
-const auto Path543 = MakePathMatcher({NodeTag(3), NodeTag(4), LeafTag(10)});
-const auto PathNode1 = MakePathMatcher({NodeTag(1)});
-const auto PathLeaf1 = MakePathMatcher({LeafTag(1)});
-const auto PathNode2 = MakePathMatcher({NodeTag(2)});
-const auto PathLeaf2 = MakePathMatcher({LeafTag(2)});
+constexpr TagMatchBuilder<SymbolKind::kNode, int, 5> Node5;
+constexpr TagMatchBuilder<SymbolKind::kNode, int, 1> Node1;
+constexpr TagMatchBuilder<SymbolKind::kLeaf, int, 1> Leaf1;
+
+constexpr auto PathNode1 = MakePathMatcher(NodeTag(1));
+constexpr auto PathLeaf1 = MakePathMatcher(LeafTag(1));
+constexpr auto PathNode2 = MakePathMatcher(NodeTag(2));
+constexpr auto PathLeaf2 = MakePathMatcher(LeafTag(2));
 
 // Basic test case for AnyOf
 TEST(MatcherBuildersTest, AnyOfSimple) {

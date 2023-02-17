@@ -63,8 +63,8 @@ bool EqualTagPredicate(const Symbol& symbol) {
 // TODO(jeremycs): handle match branches...
 //
 // Usage:
-// PathMatchBuilder DescendPath123 = MakePathMatcher({NodeTag(1), NodeTag(2),
-//                                                    LeafTag(3)});
+// PathMatchBuilder DescendPath123 = MakePathMatcher(NodeTag(1), NodeTag(2),
+//                                                   LeafTag(3));
 // auto matcher = SomeOutMatcher(DescendPath123(...inner matchers...));
 // matcher.Matches(some_tree);
 //
@@ -73,10 +73,8 @@ class PathMatchBuilder {
   static_assert(N > 0, "Path must have at least one element");
 
  public:
-  // TODO(hzeller): make this a constexpr constructor.
-  explicit PathMatchBuilder(const SymbolTag (&path)[N]) {
-    std::copy(std::begin(path), std::end(path), std::begin(path_));
-  }
+  explicit constexpr PathMatchBuilder(const std::array<SymbolTag, N>& path)
+      : path_(path) {}
 
   template <typename... Args>
   BindableMatcher operator()(Args... args) const {
@@ -107,11 +105,26 @@ class PathMatchBuilder {
   std::array<SymbolTag, N> path_;
 };
 
-// Helper function for creating PathMatchers.
-// Deduces size of path.
-template <int N>
-constexpr PathMatchBuilder<N> MakePathMatcher(const SymbolTag (&path)[N]) {
-  return PathMatchBuilder<N>(path);
+// Helper functions to create PathMatchers.
+// Length of path determine by number of params. Might need to add more or
+// TODO: implement a arg... template
+inline constexpr PathMatchBuilder<1> MakePathMatcher(const SymbolTag t1) {
+  return PathMatchBuilder<1>(std::array<SymbolTag, 1>{t1});
+}
+inline constexpr PathMatchBuilder<2> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2) {
+  return PathMatchBuilder<2>(std::array<SymbolTag, 2>{t1, t2});
+}
+inline constexpr PathMatchBuilder<3> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2,
+                                                     const SymbolTag t3) {
+  return PathMatchBuilder<3>(std::array<SymbolTag, 3>{t1, t2, t3});
+}
+inline constexpr PathMatchBuilder<4> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2,
+                                                     const SymbolTag t3,
+                                                     const SymbolTag t4) {
+  return PathMatchBuilder<4>(std::array<SymbolTag, 4>{t1, t2, t3, t4});
 }
 
 // TagMatchBuilder is a Matcher generator that is parameterized over

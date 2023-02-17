@@ -30,15 +30,16 @@ namespace matcher {
 namespace {
 
 // Collection of simple matchers used in test cases
-const TagMatchBuilder<SymbolKind::kNode, int, 5> Node5;
-const TagMatchBuilder<SymbolKind::kNode, int, 1> Node1;
-const TagMatchBuilder<SymbolKind::kLeaf, int, 1> Leaf1;
+constexpr TagMatchBuilder<SymbolKind::kNode, int, 5> Node5;
+constexpr TagMatchBuilder<SymbolKind::kNode, int, 1> Node1;
+constexpr TagMatchBuilder<SymbolKind::kLeaf, int, 1> Leaf1;
+constexpr auto Path543 = MakePathMatcher(NodeTag(3), NodeTag(4), LeafTag(10));
+constexpr auto PathNode1 = MakePathMatcher(NodeTag(1));
+constexpr auto PathLeaf1 = MakePathMatcher(LeafTag(1));
+
 const DynamicTagMatchBuilder DNode5{SymbolTag{SymbolKind::kNode, 5}};
 const DynamicTagMatchBuilder DNode1{SymbolTag{SymbolKind::kNode, 1}};
 const DynamicTagMatchBuilder DLeaf1{SymbolTag{SymbolKind::kLeaf, 1}};
-const auto Path543 = MakePathMatcher({NodeTag(3), NodeTag(4), LeafTag(10)});
-const auto PathNode1 = MakePathMatcher({NodeTag(1)});
-const auto PathLeaf1 = MakePathMatcher({LeafTag(1)});
 
 TEST(MatcherBuildersTest, MatcherTestCases) {
   const MatcherTestCase test_cases[] = {
