@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS__SUGGEST_PARENTHESES_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS__SUGGEST_PARENTHESES_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_SUGGEST_PARENTHESES_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_SUGGEST_PARENTHESES_RULE_H_
 
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "verilog/analysis/descriptions.h"
@@ -44,4 +44,4 @@ class SuggestParenthesesRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS__SUGGEST_PARENTHESES_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_SUGGEST_PARENTHESES_RULE_H_
