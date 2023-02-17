@@ -48,6 +48,7 @@ void TestTextEditsWithProject(
   EditTextBuffer buffer(text_before);
   BufferTracker tracker;
   tracker.Update(TESTED_FILENAME, buffer);
+  ASSERT_TRUE(tracker.current()->parser().SyntaxTree());
   // Create a Verilog project with the given project file contents
   const std::shared_ptr<VerilogProject> proj =
       std::make_shared<VerilogProject>(".", std::vector<std::string>());
@@ -1247,6 +1248,61 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPortsInHeader) {
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+);
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1,  // To b of bar
+  input i2[4][8],  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1,  // From b of bar
+  output [31:0] o2[8],  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io  // To/From b of bar
+  // End of automatics
+);
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Inouts
+    .io(io/*[7:0][7:0]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTO_ExpandPorts_OutOfOrderModules) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
@@ -1510,6 +1566,41 @@ module foo;
   bar b(/*AUTOINST*/);
 endmodule
 )");
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(/*AUTOWIRE*/);
+  wire o1;
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(/*AUTOWIRE*/);
+  wire o1;
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Inouts
+    .io(io/*[7:0][7:0]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
+endmodule
+)");
 }
 
 TEST(Autoexpand, AUTOWIRE_Replace) {
@@ -1632,6 +1723,45 @@ module foo;
   output o;
   reg o;
   /*AUTOREG*/
+endmodule
+)");
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(/*AUTOREG*/);
+  output [15:0] o1;
+  output [31:0] o2[8];
+  output [3:0][3:0] o3[16];
+
+  bar b(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module bar(input i1, output [15:0] o1);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module foo(/*AUTOREG*/);
+  output [15:0] o1;
+  output [31:0] o2[8];
+  output [3:0][3:0] o3[16];
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Inouts
+    .io(io/*[7:0][7:0]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
 endmodule
 )");
 }
