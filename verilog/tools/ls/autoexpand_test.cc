@@ -27,6 +27,14 @@ using verible::lsp::Range;
 using verible::lsp::TextDocumentContentChangeEvent;
 using verible::lsp::TextEdit;
 
+// Determines how TextTextEdits* should test a function
+enum class TestStrategy {
+  kTestOnce,                 // Test it once
+  kRepeatTest,               // Test it twice
+  kRepeatTestCompareSecond,  // Test twice, but only compare with golden the
+                             // second time
+};
+
 // Generate text edits using the given function and test if they had the desired
 // effect
 void TestTextEditsWithProject(
@@ -34,7 +42,7 @@ void TestTextEditsWithProject(
                                               BufferTracker*)>& edit_fun,
     const std::vector<absl::string_view>& project_file_contents,
     const absl::string_view text_before, const absl::string_view text_golden,
-    const bool repeat = true) {
+    const TestStrategy strategy = TestStrategy::kRepeatTest) {
   static const char* TESTED_FILENAME = "<<tested-file>>";
   // Init a text buffer which we need for the autoepxand functions
   EditTextBuffer buffer(text_before);
@@ -76,10 +84,12 @@ void TestTextEditsWithProject(
   }
   // Check the result and test again to check idempotence
   buffer.RequestContent([&](const absl::string_view text_after) {
-    EXPECT_EQ(text_after, text_golden);
-    if (repeat) {
+    if (strategy != TestStrategy::kRepeatTestCompareSecond) {
+      EXPECT_EQ(text_golden, text_after);
+    }
+    if (strategy != TestStrategy::kTestOnce) {
       TestTextEditsWithProject(edit_fun, project_file_contents, text_golden,
-                               text_golden, false);
+                               text_golden, TestStrategy::kTestOnce);
     }
   });
 }
@@ -89,8 +99,8 @@ void TestTextEdits(const std::function<std::vector<TextEdit>(
                        SymbolTableHandler*, BufferTracker*)>& edit_fun,
                    const absl::string_view text_before,
                    const absl::string_view text_golden,
-                   const bool repeat = true) {
-  TestTextEditsWithProject(edit_fun, {}, text_before, text_golden, repeat);
+                   const TestStrategy strategy = TestStrategy::kRepeatTest) {
+  TestTextEditsWithProject(edit_fun, {}, text_before, text_golden, strategy);
 }
 
 // Generate a specific code action and extract text edits from it
@@ -1327,6 +1337,111 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPorts_DependencyLoop) {
+  // This test is incorrect Verilog, but it checks that we don't loop forever or
+  // do any other unexpected thing
+  TestTextEdits(GenerateAutoExpandTextEdits,
+                R"(
+module foo(/*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b(/*AUTOINST*/);
+endmodule
+
+module bar(input i1, output [15:0] o1);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+
+  inout [7:0][7:0] io;
+  qux q(/*AUTOINST*/);
+endmodule
+
+module qux(
+  input i1,
+  input i2[4][8],
+  output [15:0] o1,
+  output [31:0] o2[8]);
+
+  foo f(/*AUTOINST*/);
+endmodule
+)",
+                R"(
+module foo(/*AUTOARG*/
+  // Inputs
+  i1, i2,
+  // Inouts
+  io,
+  // Outputs
+  o1, o2
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2[4][8];  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b of bar
+  output [31:0] o2[8];  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b of bar
+  // End of automatics
+
+  bar b(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Inouts
+    .io(io/*[7:0][7:0]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
+endmodule
+
+module bar(input i1, output [15:0] o1);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i2[4][8];  // To q of qux
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [31:0] o2[8];  // From q of qux
+  // End of automatics
+
+  inout [7:0][7:0] io;
+  qux q(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
+endmodule
+
+module qux(
+  input i1,
+  input i2[4][8],
+  output [15:0] o1,
+  output [31:0] o2[8]);
+
+  foo f(/*AUTOINST*/
+    // Inputs
+    .i1(i1),
+    .i2(i2/*.[4][8]*/),
+    // Inouts
+    .io(io/*[7:0][7:0]*/),
+    // Outputs
+    .o1(o1[15:0]),
+    .o2(o2/*[31:0].[8]*/));
+endmodule
+)",
+                TestStrategy::kRepeatTestCompareSecond);
+}
+
 TEST(Autoexpand, AUTOWIRE_ExpandEmpty) {
   TestTextEdits(GenerateAutoExpandTextEdits,
                 R"(
@@ -1899,7 +2014,8 @@ module bar(/*AUTOARG*/);
   /*AUTOREG*/
 endmodule
 )",
-      false  // Do not repeat: the range is incorrect after the first expansion
+      TestStrategy::kRepeatTest  // Do not repeat: the range is incorrect after
+                                 // the first expansion
   );
 }
 
