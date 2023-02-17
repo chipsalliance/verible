@@ -16,11 +16,13 @@
 
 #include <filesystem>
 
+#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "gtest/gtest.h"
+#include "verilog/analysis/verilog_linter.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value)                      \
@@ -80,6 +82,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
     std::string response = response_stream_.str();
     response_stream_.str("");
     response_stream_.clear();
+    absl::SetFlag(&FLAGS_rules_config_search, true);
     return response;
   }
 
@@ -142,6 +145,7 @@ class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
 
  protected:
   void SetUp() override {
+    absl::SetFlag(&FLAGS_rules_config_search, true);
     root_dir = verible::file::JoinPath(
         ::testing::TempDir(),
         ::testing::UnitTest::GetInstance()->current_test_info()->name());
@@ -1123,6 +1127,103 @@ endmodule
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 0);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 10);
   ASSERT_EQ(response["result"][0]["uri"], "file://" + module_bar_1.filename());
+}
+
+// Sample of badly styled modle
+constexpr static absl::string_view badly_styled_module =
+    "module my_module(input logic in, output logic out);\n\tassign out = in; "
+    "\nendmodule";
+
+// Checks if a given substring (lint rule type) is present
+// in linter diagnostics.
+bool CheckDiagnosticsContainLinterIssue(const json &diagnostics,
+                                        absl::string_view lint_issue_type) {
+  for (const auto &issue : diagnostics) {
+    if (absl::StrContains(issue["message"], lint_issue_type)) return true;
+  }
+  return false;
+}
+
+// Performs default run of the linter, without configuration file.
+TEST_F(VerilogLanguageServerSymbolTableTest, DefaultConfigurationTest) {
+  const verible::file::testing::ScopedTestFile module_mod(
+      root_dir, badly_styled_module, "my_mod.sv");
+  const std::string mod_open_request =
+      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+
+  ASSERT_OK(SendRequest(mod_open_request));
+
+  const json diagnostics = json::parse(GetResponse());
+
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_GT(diagnostics["params"]["diagnostics"].size(), 0);
+
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "module-filename"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-tabs"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-trailing-spaces"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "posix-eof"));
+}
+
+// Checks the work of linter in language server when
+// configuration file with "-no-tabs" file is present
+TEST_F(VerilogLanguageServerSymbolTableTest, ParsingLinterNoTabs) {
+  constexpr absl::string_view lint_config = "-no-tabs";
+  const verible::file::testing::ScopedTestFile module_mod(
+      root_dir, badly_styled_module, "my_mod.sv");
+  const verible::file::testing::ScopedTestFile lint_file(root_dir, lint_config,
+                                                         ".rules.verible_lint");
+  const std::string mod_open_request =
+      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+
+  ASSERT_OK(SendRequest(mod_open_request));
+
+  const json diagnostics = json::parse(GetResponse());
+
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_GT(diagnostics["params"]["diagnostics"].size(), 0);
+
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "module-filename"));
+  ASSERT_FALSE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-tabs"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-trailing-spaces"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "posix-eof"));
+}
+
+// Performs another check on linter configuration with more disabled
+// rules
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       ParsingLinterNoTabsIgnoreModuleName) {
+  constexpr absl::string_view lint_config =
+      "-module-filename\n-posix-eof\n-no-tabs";
+  const verible::file::testing::ScopedTestFile module_mod(
+      root_dir, badly_styled_module, "my_mod.sv");
+  const verible::file::testing::ScopedTestFile lint_file(root_dir, lint_config,
+                                                         ".rules.verible_lint");
+  const std::string mod_open_request =
+      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+
+  ASSERT_OK(SendRequest(mod_open_request));
+
+  const json diagnostics = json::parse(GetResponse());
+
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_GT(diagnostics["params"]["diagnostics"].size(), 0);
+
+  ASSERT_FALSE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "module-filename"));
+  ASSERT_FALSE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-tabs"));
+  ASSERT_TRUE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "no-trailing-spaces"));
+  ASSERT_FALSE(CheckDiagnosticsContainLinterIssue(
+      diagnostics["params"]["diagnostics"], "posix-eof"));
 }
 
 // Tests correctness of Language Server shutdown request
