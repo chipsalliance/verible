@@ -41,10 +41,10 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(DisableStatementNoLabelsRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "fork;";
-static const char kMessageSeqBlock[] =
+static constexpr absl::string_view kMessageSeqBlock =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "label_of_seq_block;";
 
@@ -72,7 +72,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
   if (!DisableMatcher().Matches(symbol, &manager)) {
     return;
   }
-  const char* kMessageFinal = kMessage;
+  absl::string_view message_final = kMessage;
   // if no kDisable label, return, nothing to be checked
   const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
   if (disableLabels.empty()) {
@@ -104,7 +104,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
       if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
           ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
           ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
-        kMessageFinal = kMessageSeqBlock;
+        message_final = kMessageSeqBlock;
         break;
       }
       const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
@@ -114,7 +114,7 @@ void DisableStatementNoLabelsRule::HandleSymbol(
       }
     }
   }
-  violations_.insert(LintViolation(symbol, kMessageFinal, context));
+  violations_.insert(LintViolation(symbol, message_final, context));
 }
 
 LintRuleStatus DisableStatementNoLabelsRule::Report() const {

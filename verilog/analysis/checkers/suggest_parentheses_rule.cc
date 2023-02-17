@@ -28,7 +28,7 @@ using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Parenthesize condition expressions that appear in the true-clause of "
     "another condition expression.";
 

@@ -41,10 +41,10 @@ using verible::matcher::Matcher;
 // Register ProperParameterDeclarationRule
 VERILOG_REGISTER_LINT_RULE(ProperParameterDeclarationRule);
 
-static const char kParameterMessage[] =
+static constexpr absl::string_view kParameterMessage =
     "\'parameter\' declarations should only be within packages or in the "
     "formal parameter list of modules/classes.";
-static const char kLocalParamMessage[] =
+static constexpr absl::string_view kLocalParamMessage =
     "\'localparam\' declarations should only be within modules\' or classes\' "
     "definition bodies.";
 

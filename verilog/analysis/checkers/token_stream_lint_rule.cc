@@ -41,7 +41,7 @@ using verible::matcher::Matcher;
 // Register TokenStreamLintRule
 VERILOG_REGISTER_LINT_RULE(TokenStreamLintRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "The lines can't be continued with \'\\\', use concatenation operator with "
     "braces";
 

@@ -37,7 +37,8 @@ VERILOG_REGISTER_LINT_RULE(LegacyGenvarDeclarationRule);
 using verible::LintRuleStatus;
 using verible::LintViolation;
 
-static const char kMessage[] = "Do not use separate genvar declaration.";
+static constexpr absl::string_view kMessage =
+    "Do not use separate genvar declaration.";
 
 const LintRuleDescriptor& LegacyGenvarDeclarationRule::GetDescriptor() {
   static const LintRuleDescriptor d{

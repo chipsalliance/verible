@@ -37,7 +37,7 @@ using verible::SyntaxTreeContext;
 // Register ForbidConsecutiveNullStatementsRule
 VERILOG_REGISTER_LINT_RULE(ForbidConsecutiveNullStatementsRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Do not use consecutive null statements like \';;\'.";
 
 const LintRuleDescriptor& ForbidConsecutiveNullStatementsRule::GetDescriptor() {

@@ -162,7 +162,7 @@ class FakeTextStructureView : public TextStructureView {
 static const verible::LineColumnMap dummy_map("");
 
 // Don't care about file name for these tests.
-static const char filename[] = "";
+static constexpr absl::string_view filename = "";
 
 TEST(ProjectPolicyTest, MatchesAnyPath) {
   struct TestCase {

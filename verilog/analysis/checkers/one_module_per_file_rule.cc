@@ -44,7 +44,7 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(OneModulePerFileRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Each file should have only one module declaration. Found: ";
 
 const LintRuleDescriptor& OneModulePerFileRule::GetDescriptor() {

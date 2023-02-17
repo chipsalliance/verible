@@ -40,7 +40,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroNameStyleRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Macro names must contain only CAPITALS, underscores, and digits.  "
     "Exception: UVM-like macros.";
 

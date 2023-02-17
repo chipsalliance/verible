@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 // Register ParameterTypeNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ParameterTypeNameStyleRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Parameter type names must use the lower_snake_case naming convention"
     " and end with _t.";
 

@@ -42,8 +42,8 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static const char kMessageStruct[] = "Struct names";
-static const char kMessageUnion[] = "Union names";
+static constexpr absl::string_view kMessageStruct = "Struct names";
+static constexpr absl::string_view kMessageUnion = "Union names";
 
 const LintRuleDescriptor& StructUnionNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -72,7 +72,7 @@ void StructUnionNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     // have consistent shape for all kTypeDeclaration nodes.
     const bool is_struct = !FindAllStructTypes(symbol).empty();
     if (!is_struct && FindAllUnionTypes(symbol).empty()) return;
-    const char* const msg = is_struct ? kMessageStruct : kMessageUnion;
+    const absl::string_view msg = is_struct ? kMessageStruct : kMessageUnion;
 
     const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();

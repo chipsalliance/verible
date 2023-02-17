@@ -52,7 +52,7 @@ using verible::TokenSequence;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(LineLengthRule);
 
-static const char kMessage[] = "Line length exceeds max: ";
+static constexpr absl::string_view kMessage = "Line length exceeds max: ";
 
 #if 0  // See comment below about comment-reflowing being implemented
 static bool ContainsAnyWhitespace(absl::string_view s) {

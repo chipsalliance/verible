@@ -107,7 +107,7 @@ class VerilogAnalyzer : public verible::FileAnalyzer {
       const verible::TokenSequence& raw_tokens);
 
   // Special string inside a comment that triggers setting parsing mode.
-  static const char kParseDirectiveName[];
+  static constexpr absl::string_view kParseDirectiveName = "verilog_syntax:";
 
  private:
   // Attempt to parse all macro arguments as expressions.  Where parsing as an

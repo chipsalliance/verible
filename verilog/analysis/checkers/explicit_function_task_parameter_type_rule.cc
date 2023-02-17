@@ -42,7 +42,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitFunctionTaskParameterTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitFunctionTaskParameterTypeRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Explicitly define a storage type for every function parameter.";
 
 const LintRuleDescriptor&

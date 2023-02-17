@@ -38,7 +38,7 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::matcher::EqualTagPredicate;
 
-static const char kMessage[] = "Do not use generate regions.";
+static constexpr absl::string_view kMessage = "Do not use generate regions.";
 
 const LintRuleDescriptor& LegacyGenerateRegionRule::GetDescriptor() {
   static const LintRuleDescriptor d{

@@ -37,8 +37,8 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);
 
-static const char kForbiddenFunctionName[] = "$test$plusargs";
-static const char kCorrectFunctionName[] = "$value$plusargs";
+static constexpr absl::string_view kForbiddenFunctionName = "$test$plusargs";
+static constexpr absl::string_view kCorrectFunctionName = "$value$plusargs";
 
 const LintRuleDescriptor& PlusargAssignmentRule::GetDescriptor() {
   static const LintRuleDescriptor d{

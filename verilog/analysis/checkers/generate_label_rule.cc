@@ -36,7 +36,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "All generate block statements must have a label";
 
 const LintRuleDescriptor& GenerateLabelRule::GetDescriptor() {

@@ -114,7 +114,7 @@ static bool IsAnyPort(const verible::Symbol* symbol) {
 
 void ModuleParameterRule::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
-  static const char kMessage[] =
+  static constexpr absl::string_view kMessage =
       "Pass named parameters for parameterized module instantiations with "
       "more than one parameter";
 
@@ -152,7 +152,7 @@ verible::LintRuleStatus ModuleParameterRule::Report() const {
 
 void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
                                   const verible::SyntaxTreeContext& context) {
-  static const char kMessage[] =
+  static constexpr absl::string_view kMessage =
       "Use named ports for module instantiation with "
       "more than one port";
 

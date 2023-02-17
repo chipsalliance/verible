@@ -55,8 +55,6 @@ using verible::TokenInfo;
 using verible::TokenSequence;
 using verible::container::InsertKeyOrDie;
 
-const char VerilogAnalyzer::kParseDirectiveName[] = "verilog_syntax:";
-
 absl::Status VerilogAnalyzer::Tokenize() {
   if (!tokenized_) {
     VerilogLexer lexer{Data().Contents()};

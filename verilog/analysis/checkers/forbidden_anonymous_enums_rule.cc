@@ -37,7 +37,7 @@ using Matcher = verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousEnumsRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "enum types always should be named using typedef.";
 
 const LintRuleDescriptor& ForbiddenAnonymousEnumsRule::GetDescriptor() {

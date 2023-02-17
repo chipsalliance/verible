@@ -42,7 +42,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitTaskLifetimeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitTaskLifetimeRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class tasks";
 
 const LintRuleDescriptor& ExplicitTaskLifetimeRule::GetDescriptor() {

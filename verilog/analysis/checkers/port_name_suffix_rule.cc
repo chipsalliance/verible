@@ -48,11 +48,11 @@ using verible::matcher::Matcher;
 // Register PortNameSuffixRule.
 VERILOG_REGISTER_LINT_RULE(PortNameSuffixRule);
 
-static const char kMessageIn[] =
+static constexpr absl::string_view kMessageIn =
     "input port names must end with _i, _ni or _pi";
-static const char kMessageOut[] =
+static constexpr absl::string_view kMessageOut =
     "output port names must end with _o, _no, or _po";
-static const char kMessageInOut[] =
+static constexpr absl::string_view kMessageInOut =
     "inout port names must end with _io, _nio or _pio";
 
 const LintRuleDescriptor& PortNameSuffixRule::GetDescriptor() {

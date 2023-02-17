@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 // Register ConstraintNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Constraint names must by styled with lower_snake_case and end with _c.";
 
 const LintRuleDescriptor& ConstraintNameStyleRule::GetDescriptor() {

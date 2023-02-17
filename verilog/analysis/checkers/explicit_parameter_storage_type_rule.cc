@@ -42,7 +42,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ExplicitParameterStorageTypeRule
 VERILOG_REGISTER_LINT_RULE(ExplicitParameterStorageTypeRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Explicitly define a storage type for every parameter and localparam, ";
 
 const LintRuleDescriptor& ExplicitParameterStorageTypeRule::GetDescriptor() {

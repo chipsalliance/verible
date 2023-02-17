@@ -39,7 +39,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Enum names must use lower_snake_case naming convention "
     "and end with _t or _e.";
 

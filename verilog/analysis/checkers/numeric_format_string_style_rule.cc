@@ -41,7 +41,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(NumericFormatStringStyleRule);
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Formatting string must contain proper style-compilant numeric specifiers.";
 
 const LintRuleDescriptor& NumericFormatStringStyleRule::GetDescriptor() {

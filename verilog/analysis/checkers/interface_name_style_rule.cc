@@ -40,7 +40,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static const char kMessage[] =
+static constexpr absl::string_view kMessage =
     "Interface names must use lower_snake_case naming convention "
     "and end with _if.";
 
