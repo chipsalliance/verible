@@ -105,24 +105,25 @@ class PathMatchBuilder {
   std::array<SymbolTag, N> path_;
 };
 
-// Helper function for creating PathMatchers.
-// Deduces size of path.
-constexpr PathMatchBuilder<1> MakePathMatcher(const SymbolTag t1) {
+// Helper functions to create PathMatchers.
+// Length of path determine by number of params. Might need to add more or
+// TODO: implement a arg... template
+inline constexpr PathMatchBuilder<1> MakePathMatcher(const SymbolTag t1) {
   return PathMatchBuilder<1>(std::array<SymbolTag, 1>{t1});
 }
-constexpr PathMatchBuilder<2> MakePathMatcher(const SymbolTag t1,
-                                              const SymbolTag t2) {
+inline constexpr PathMatchBuilder<2> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2) {
   return PathMatchBuilder<2>(std::array<SymbolTag, 2>{t1, t2});
 }
-constexpr PathMatchBuilder<3> MakePathMatcher(const SymbolTag t1,
-                                              const SymbolTag t2,
-                                              const SymbolTag t3) {
+inline constexpr PathMatchBuilder<3> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2,
+                                                     const SymbolTag t3) {
   return PathMatchBuilder<3>(std::array<SymbolTag, 3>{t1, t2, t3});
 }
-constexpr PathMatchBuilder<4> MakePathMatcher(const SymbolTag t1,
-                                              const SymbolTag t2,
-                                              const SymbolTag t3,
-                                              const SymbolTag t4) {
+inline constexpr PathMatchBuilder<4> MakePathMatcher(const SymbolTag t1,
+                                                     const SymbolTag t2,
+                                                     const SymbolTag t3,
+                                                     const SymbolTag t4) {
   return PathMatchBuilder<4>(std::array<SymbolTag, 4>{t1, t2, t3, t4});
 }
 

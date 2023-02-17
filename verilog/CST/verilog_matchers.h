@@ -25,8 +25,8 @@ namespace verilog {
 // These are locally defined macros (undef'd at end of header) to enable
 // concise description of Path Matchers.
 
-#define N(tag) (verible::NodeTag(NodeEnum::tag))
-#define L(tag) (verible::LeafTag(tag))
+#define N(tag) verible::NodeTag(NodeEnum::tag)
+#define L(tag) verible::LeafTag(tag)
 
 // NodeMatcher matches a syntax tree node with a specific tag.
 // This is a template type alias.
@@ -51,7 +51,7 @@ using LeafMatcher =
 //    $psprintf(...);
 //    $foo_bar(...);
 //
-static constexpr LeafMatcher<SystemTFIdentifier> SystemTFIdentifierLeaf;
+inline constexpr LeafMatcher<SystemTFIdentifier> SystemTFIdentifierLeaf;
 
 // Matches against macro call identifiers, which are identifiers
 // begin with a ` character.
@@ -60,7 +60,7 @@ static constexpr LeafMatcher<SystemTFIdentifier> SystemTFIdentifierLeaf;
 //    `MACRO()
 //    `MACRO();
 //
-static constexpr LeafMatcher<MacroCallId> MacroCallIdLeaf;
+inline constexpr LeafMatcher<MacroCallId> MacroCallIdLeaf;
 
 // Matches against symbol identifiers.
 //
@@ -68,20 +68,20 @@ static constexpr LeafMatcher<MacroCallId> MacroCallIdLeaf;
 //    wire foo;
 //    parameter foo = 32'hDEADBEEF;
 //
-static constexpr LeafMatcher<SymbolIdentifier> SymbolIdentifierLeaf;
+inline constexpr LeafMatcher<SymbolIdentifier> SymbolIdentifierLeaf;
 
 // Declaration of Node Matchers
 
 // Declare every syntax tree node matcher.
 // NodekFoo is a matcher that matches against syntax tree nodes tagged kFoo.
-#define CONSIDER(tag) static constexpr NodeMatcher<NodeEnum::tag> Node##tag;
+#define CONSIDER(tag) inline constexpr NodeMatcher<NodeEnum::tag> Node##tag;
 #include "verilog/CST/verilog_nonterminals_foreach.inc"  // IWYU pragma: keep
 #undef CONSIDER
 
 // Declare every syntax tree single-node path matcher.
 // PathkFoo is a PathMatcher that matches against a single node tagged kFoo.
 #define CONSIDER(tag)                                                \
-  static constexpr verible::matcher::PathMatchBuilder<1> Path##tag = \
+  inline constexpr verible::matcher::PathMatchBuilder<1> Path##tag = \
       verible::matcher::MakePathMatcher(N(tag));
 #include "verilog/CST/verilog_nonterminals_foreach.inc"  // IWYU pragma: keep
 #undef CONSIDER
@@ -144,7 +144,7 @@ static constexpr LeafMatcher<SymbolIdentifier> SymbolIdentifierLeaf;
 // matches all of
 //   void'(expression());
 //
-static constexpr auto VoidcastHasExpression =
+inline constexpr auto VoidcastHasExpression =
     verible::matcher::MakePathMatcher(N(kParenGroup), N(kExpression));
 
 // Matches against a top level function call contained within an expression.
@@ -154,7 +154,7 @@ static constexpr auto VoidcastHasExpression =
 // matches "foo()" in
 //   x = foo();
 //
-static constexpr auto ExpressionHasFunctionCall =
+inline constexpr auto ExpressionHasFunctionCall =
     verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kFunctionCall));
 
 // Matches a randomize call extension, or a call to an object's randomize
@@ -165,7 +165,7 @@ static constexpr auto ExpressionHasFunctionCall =
 // matches
 //   result = obj.randomize();
 //
-static constexpr auto ExpressionHasRandomizeCallExtension =
+inline constexpr auto ExpressionHasRandomizeCallExtension =
     verible::matcher::MakePathMatcher(N(kReferenceCallBase),
                                       N(kRandomizeMethodCallExtension));
 
@@ -176,7 +176,7 @@ static constexpr auto ExpressionHasRandomizeCallExtension =
 // matches
 //   result = randomize(obj);
 //
-static constexpr auto ExpressionHasRandomizeFunction =
+inline constexpr auto ExpressionHasRandomizeFunction =
     verible::matcher::MakePathMatcher(N(kRandomizeFunctionCall));
 
 // Matches against the SymbolIdentifier leaf containing the name
@@ -187,10 +187,10 @@ static constexpr auto ExpressionHasRandomizeFunction =
 // matches
 //   x = foo(); // innermost matcher matches "foo" token
 //
-static constexpr auto UnqualifiedReferenceHasId =
+inline constexpr auto UnqualifiedReferenceHasId =
     verible::matcher::MakePathMatcher(N(kLocalRoot), N(kUnqualifiedId),
                                       L(SymbolIdentifier));
-static constexpr auto FunctionCallHasId = UnqualifiedReferenceHasId;
+inline constexpr auto FunctionCallHasId = UnqualifiedReferenceHasId;
 
 // Matches if the WIDTH in "WIDTH 'BASE DIGITS" is a constant (decimal).
 //
@@ -202,7 +202,7 @@ static constexpr auto FunctionCallHasId = UnqualifiedReferenceHasId;
 // TODO(fangism): The path matcher actually finds the constant in any
 // child node position.  To be more precise, we only want to look at the
 // leftmost child, as in a positional-child-matcher.
-static constexpr auto NumberHasConstantWidth =
+inline constexpr auto NumberHasConstantWidth =
     verible::matcher::MakePathMatcher(L(TK_DecNumber));
 
 // Matches if the base of "'BASE DIGITS" is binary.
@@ -212,7 +212,7 @@ static constexpr auto NumberHasConstantWidth =
 // matches
 //   "'b" in "4'b1111"
 //
-static constexpr auto NumberIsBinary =
+inline constexpr auto NumberIsBinary =
     verible::matcher::MakePathMatcher(L(TK_BinBase));
 
 // Matches the digits of "'BASE DIGITS" when base is binary.
@@ -222,7 +222,7 @@ static constexpr auto NumberIsBinary =
 // matches
 //   "1111" in "4'b1111"
 //
-static constexpr auto NumberHasBinaryDigits =
+inline constexpr auto NumberHasBinaryDigits =
     verible::matcher::MakePathMatcher(L(TK_BinDigits));
 
 // Matches if the LITERAL in "WIDTH'LITERAL" specifies a numeric base ([bdho]).
@@ -232,7 +232,7 @@ static constexpr auto NumberHasBinaryDigits =
 // matches
 //   "'b1111" in "4'b1111"
 //
-static constexpr auto NumberHasBasedLiteral =
+inline constexpr auto NumberHasBasedLiteral =
     verible::matcher::MakePathMatcher(N(kBaseDigits));
 
 // Matches against the positional parameter list contained within an
@@ -245,7 +245,7 @@ static constexpr auto NumberHasBasedLiteral =
 // and does not match
 //   foo $(.param(1), .param2(2));
 //
-static constexpr auto ActualParameterListHasPositionalParameterList =
+inline constexpr auto ActualParameterListHasPositionalParameterList =
     verible::matcher::MakePathMatcher(N(kParenGroup),
                                       N(kActualParameterPositionalList));
 
@@ -255,7 +255,7 @@ static constexpr auto ActualParameterListHasPositionalParameterList =
 // matches
 //   foo bar(port1, port2);
 //
-static constexpr auto GateInstanceHasPortList =
+inline constexpr auto GateInstanceHasPortList =
     verible::matcher::MakePathMatcher(N(kParenGroup), N(kPortActualList));
 
 // Matches against a node's child tagged with kBegin.kLabel if one exists.
@@ -266,11 +266,11 @@ static constexpr auto GateInstanceHasPortList =
 //       always @(posedge clk) foo <= bar;
 //     end
 //   endgenerate
-static constexpr auto HasBeginLabel =
+inline constexpr auto HasBeginLabel =
     verible::matcher::MakePathMatcher(N(kBegin), N(kLabel));
 
 // Matches against a disable node's child tagged with kReference if one exists.
-static constexpr auto DisableStatementHasLabel =
+inline constexpr auto DisableStatementHasLabel =
     verible::matcher::MakePathMatcher(N(kReference));
 
 // Matches event controls that use *.
@@ -284,36 +284,36 @@ static constexpr auto DisableStatementHasLabel =
 //   always_comb begin
 //     c = d;
 //   end
-static constexpr auto AlwaysStatementHasEventControlStar =
+inline constexpr auto AlwaysStatementHasEventControlStar =
     verible::matcher::MakePathMatcher(N(kProceduralTimingControlStatement),
                                       N(kEventControl), L('*'));
 
-static constexpr auto AlwaysStatementHasEventControlStarAndParentheses =
+inline constexpr auto AlwaysStatementHasEventControlStarAndParentheses =
     verible::matcher::MakePathMatcher(N(kProceduralTimingControlStatement),
                                       N(kEventControl), N(kParenGroup), L('*'));
 
-static constexpr auto AlwaysStatementHasParentheses =
+inline constexpr auto AlwaysStatementHasParentheses =
     verible::matcher::MakePathMatcher(N(kProceduralTimingControlStatement),
                                       N(kEventControl), N(kParenGroup));
 
 // Matches occurrence of the 'always' keyword.
 // This is needed to distinguish between various kAlwaysStatement's.
 // This matches 'always', but not 'always_ff', nor 'always_comb'.
-static constexpr auto AlwaysKeyword =
+inline constexpr auto AlwaysKeyword =
     verible::matcher::MakePathMatcher(L(TK_always));
 
 // Matches occurrence of the 'always_comb' keyword.
 // This is needed to distinguish between various kAlwaysStatement's.
-static constexpr auto AlwaysCombKeyword =
+inline constexpr auto AlwaysCombKeyword =
     verible::matcher::MakePathMatcher(L(TK_always_comb));
 
 // Matches occurrence of the 'always_ff' keyword.
 // This is needed to distinguish between various kAlwaysStatement's.
-static constexpr auto AlwaysFFKeyword =
+inline constexpr auto AlwaysFFKeyword =
     verible::matcher::MakePathMatcher(L(TK_always_ff));
 
 // Matches occurrence of the 'StringLiteral' keyword.
-static constexpr auto StringLiteralKeyword =
+inline constexpr auto StringLiteralKeyword =
     verible::matcher::MakePathMatcher(L(TK_StringLiteral));
 
 // Matches legacy-style begin-block inside generate region.
@@ -326,7 +326,7 @@ static constexpr auto StringLiteralKeyword =
 //     end
 //  endgenerate
 //
-static constexpr auto HasGenerateBlock =
+inline constexpr auto HasGenerateBlock =
     verible::matcher::MakePathMatcher(N(kGenerateItemList), N(kGenerateBlock));
 
 // Matches the RHS of an assignment that is a function call.
@@ -342,7 +342,7 @@ static constexpr auto HasGenerateBlock =
 //
 //   ... = zz::bar(...);
 //
-static constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
+inline constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
     N(kExpression), N(kReferenceCallBase), N(kFunctionCall));
 
 // Matches a function call if it is qualified.
@@ -354,7 +354,7 @@ static constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
 //
 //   bar(...);
 //
-static constexpr auto FunctionCallIsQualified =
+inline constexpr auto FunctionCallIsQualified =
     verible::matcher::MakePathMatcher(N(kLocalRoot), N(kQualifiedId));
 
 // Matches the arguments of a function call.
@@ -364,7 +364,7 @@ static constexpr auto FunctionCallIsQualified =
 //
 // Note: This does not match macro call arguments.
 //
-static constexpr auto FunctionCallArguments =
+inline constexpr auto FunctionCallArguments =
     verible::matcher::MakePathMatcher(N(kParenGroup), N(kArgumentList));
 
 // Matches sub-ranges of array declarations.
@@ -373,7 +373,7 @@ static constexpr auto FunctionCallArguments =
 //   wire [x:y] w;
 //   wire w [x:y];
 //
-static constexpr auto DeclarationDimensionsHasRanges =
+inline constexpr auto DeclarationDimensionsHasRanges =
     verible::matcher::MakePathMatcher(N(kDimensionRange));
 
 // Matches with a default case item.
@@ -389,7 +389,7 @@ static constexpr auto DeclarationDimensionsHasRanges =
 //     1: return 0;
 //   endcase
 //
-static constexpr auto HasDefaultCase =
+inline constexpr auto HasDefaultCase =
     verible::matcher::MakePathMatcher(N(kDefaultItem));
 
 // Clean up macros
