@@ -213,12 +213,12 @@ SymbolPtr MakeTaggedNode(const Enum tag, Args&&... args) {
 // Sample usage: $$ = ExtendNode($1, $2, $3);
 template <typename T, typename... Args>
 SymbolPtr ExtendNode(T&& list_ptr, Args&&... args) {
-  return _ExtendNodeMoved(std::move(list_ptr), std::forward<Args>(args)...);
+  return ExtendNodeMoved(std::move(list_ptr), std::forward<Args>(args)...);
 }
 
 // Implementation detail, call ExtendNode instead for automatic std::move.
 template <typename... Args>
-SymbolPtr _ExtendNodeMoved(SymbolPtr list_ptr, Args&&... args) {
+SymbolPtr ExtendNodeMoved(SymbolPtr list_ptr, Args&&... args) {
   CHECK(list_ptr->Kind() == SymbolKind::kNode);
   auto* const node_pointer = down_cast<SyntaxTreeNode*>(list_ptr.get());
   node_pointer->Append(std::forward<Args>(args)...);

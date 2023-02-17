@@ -68,9 +68,9 @@ StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
     // Point undecided_path past the first token.
     undecided_path.pop_front();
     // Place first token on unwrapped line.
-    _UpdateColumnPosition();
+    UpdateColumnPosition();
     CHECK_EQ(cumulative_cost, 0);
-    _OpenGroupBalance(style);
+    OpenGroupBalance(style);
   }
   VLOG(4) << "root: " << *this;
 }
@@ -96,38 +96,38 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
     // When wrapping and closing a balance group, adjust wrap column stack
     // first.
     if (current_format_token.balancing == GroupBalancing::Close) {
-      _CloseGroupBalance();
+      CloseGroupBalance();
       called_close_group_balance = true;
     }
     // When wrapping after opening a balance group, adjust wrap column stack
     // first.
     if (prev_state->spacing_choice == SpacingDecision::Wrap) {
-      _OpenGroupBalance(style);
+      OpenGroupBalance(style);
       called_open_group_balance = true;
     }
   }
 
   // Update column position and add penalty to the cumulative cost.
-  const int column_for_penalty = _UpdateColumnPosition();
-  _UpdateCumulativeCost(style, column_for_penalty);
+  const int column_for_penalty = UpdateColumnPosition();
+  UpdateCumulativeCost(style, column_for_penalty);
 
   // Adjusting for open-group is done after updating current column position,
   // and is based on the *previous* open-group token, and the
   // spacing_choice for *this* token.
   if (!called_open_group_balance) {
-    _OpenGroupBalance(style);
+    OpenGroupBalance(style);
   }
 
   // When appending and closing a balance group, adjust wrap column stack last.
   if (!called_close_group_balance &&
       (current_format_token.balancing == GroupBalancing::Close)) {
-    _CloseGroupBalance();
+    CloseGroupBalance();
   }
 
   VLOG(4) << "new state_node: " << *this;
 }
 
-const PreFormatToken& StateNode::_GetPreviousToken() const {
+const PreFormatToken& StateNode::GetPreviousToken() const {
   CHECK(!ABSL_DIE_IF_NULL(prev_state)->Done());
   return prev_state->GetCurrentToken();
 }
@@ -135,7 +135,7 @@ const PreFormatToken& StateNode::_GetPreviousToken() const {
 // Returns the effective column position that should be used for determining
 // penalty for going over the column limit.  This could be different from
 // current_column for multi-line tokens.
-int StateNode::_UpdateColumnPosition() {
+int StateNode::UpdateColumnPosition() {
   VLOG(4) << __FUNCTION__ << " spacing decision: " << spacing_choice;
   const PreFormatToken& current_format_token(GetCurrentToken());
   const int token_length = current_format_token.Length();
@@ -212,9 +212,9 @@ int StateNode::_UpdateColumnPosition() {
   return current_column;
 }
 
-void StateNode::_UpdateCumulativeCost(const BasicFormatStyle& style,
-                                      int column_for_penalty) {
-  // This must be called after _UpdateColumnPosition() to account for
+void StateNode::UpdateCumulativeCost(const BasicFormatStyle& style,
+                                     int column_for_penalty) {
+  // This must be called after UpdateColumnPosition() to account for
   // the updated current_column.
   // column_for_penalty can be different than current_column in the
   // case of multi-line tokens.
@@ -239,7 +239,7 @@ void StateNode::_UpdateCumulativeCost(const BasicFormatStyle& style,
   // no additional cost if Spacing::Preserve
 }
 
-void StateNode::_OpenGroupBalance(const BasicFormatStyle& style) {
+void StateNode::OpenGroupBalance(const BasicFormatStyle& style) {
   VLOG(4) << __FUNCTION__;
   // The adjustment to the wrap_column_positions stack based on a token's
   // balance type is delayed until we see the token *after*.
@@ -274,7 +274,7 @@ void StateNode::_OpenGroupBalance(const BasicFormatStyle& style) {
   CHECK(!wrap_column_positions.empty());
 
   if (!IsRootState()) {
-    const PreFormatToken& prev_format_token(_GetPreviousToken());
+    const PreFormatToken& prev_format_token(GetPreviousToken());
     if (prev_format_token.balancing == GroupBalancing::Open) {
       VLOG(4) << "previous token is open-group";
       switch (spacing_choice) {
@@ -299,7 +299,7 @@ void StateNode::_OpenGroupBalance(const BasicFormatStyle& style) {
   // TODO(fangism): what if first token on unwrapped line is open-group?
 }
 
-void StateNode::_CloseGroupBalance() {
+void StateNode::CloseGroupBalance() {
   if (wrap_column_positions.size() > 1) {
     // Always maintain at least one element on column position stack.
     wrap_column_positions.pop();
