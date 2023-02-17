@@ -23,13 +23,12 @@
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/tools/ls/lsp-file-utils.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
           "Name of the file with Verible FileList for the project");
 
 namespace verilog {
-
-static constexpr absl::string_view kFileSchemePrefix = "file://";
 
 // If vlog(2), output all non-ok messages, with vlog(1) just the first few,
 // else: none
@@ -46,16 +45,6 @@ static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
       }
     }
   }
-}
-
-absl::string_view LSPUriToPath(absl::string_view uri) {
-  if (!absl::StartsWith(uri, kFileSchemePrefix)) return "";
-  return uri.substr(kFileSchemePrefix.size());
-}
-
-std::string PathToLSPUri(absl::string_view path) {
-  std::filesystem::path p(path.begin(), path.end());
-  return absl::StrCat(kFileSchemePrefix, std::filesystem::absolute(p).string());
 }
 
 std::string FindFileList(absl::string_view current_dir) {

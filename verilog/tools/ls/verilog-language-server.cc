@@ -21,6 +21,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "verilog/tools/ls/lsp-file-utils.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
