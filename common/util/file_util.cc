@@ -198,7 +198,10 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
   if (buffer == MAP_FAILED) {  // NOLINT(performance-no-int-to-ptr)
     return CreateErrorStatusFromErrno("Can't mmap file");
   }
-
+#ifdef POSIX_MADV_WILLNEED
+  // Trigger read-ahead if possible.
+  posix_madvise(buffer, file_size, POSIX_MADV_WILLNEED);
+#endif
   return std::make_unique<MemMapBlock>(reinterpret_cast<char *>(buffer),
                                        file_size);
 #else
