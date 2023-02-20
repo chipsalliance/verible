@@ -190,6 +190,8 @@ cc_test(
         ":autoexpand",
         ":verible-lsp-adapter",
         "//common/lsp:lsp-protocol",
+        "//verilog/formatting:format_style_init",
+        "//verilog/formatting:formatter",
         "@com_google_googletest//:gtest_main",
     ],
 )

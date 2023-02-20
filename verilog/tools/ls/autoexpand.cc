@@ -252,8 +252,6 @@ class AutoExpander {
         symbol_table_handler(symbol_table_handler) {
     // Get the indentation from the format style
     // The ideal solution would be to infer the style from the file.
-    // TODO: Add a test that formats the file after AUTO expansion and checks
-    // that the output is the same
     InitializeFromFlags(&format_style_);
   }
 
