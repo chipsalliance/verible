@@ -50,7 +50,12 @@ KzipCreator::KzipCreator(absl::string_view output_path)
     : zip_file_(fopen(std::string(output_path).c_str(), "wb"), &fclose),
       archive_(kKZipCompressionLevel, [this](absl::string_view s) {
         return fwrite(s.data(), 1, s.size(), zip_file_.get()) == s.size();
-      }) {}
+      }) {
+  // Create the directory structure.
+  archive_.AddFile("root/", verible::zip::MemoryByteSource(""));
+  archive_.AddFile(kFileRoot, verible::zip::MemoryByteSource(""));
+  archive_.AddFile(kProtoUnitRoot, verible::zip::MemoryByteSource(""));
+}
 
 std::string KzipCreator::AddSourceFile(absl::string_view path,
                                        absl::string_view content) {
