@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/flags/declare.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -33,6 +34,10 @@
 #include "common/text/text_structure.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
+
+// Flag is declared for testing purposes (used e.g. in
+// verilog/tools/ls/verilog-language-server_test.cc)
+ABSL_DECLARE_FLAG(bool, rules_config_search);
 
 namespace verilog {
 
