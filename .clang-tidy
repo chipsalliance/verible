@@ -24,7 +24,6 @@
 ###
 Checks: >
   clang-diagnostic-*,
-  -clang-diagnostic-unused-const-variable,
   clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
   -clang-analyzer-cplusplus.NewDeleteLeaks,

@@ -21,7 +21,7 @@ namespace verible {
 
 // This is the value of EOF token from all Flex-generated lexers.
 // This is also the value expected by Bison-generated parsers for $end.
-constexpr int TK_EOF = 0;
+inline constexpr int TK_EOF = 0;
 
 // Language-specific tags for various nonterminals should be nonzero.
 enum NodeEnum {

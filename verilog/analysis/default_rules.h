@@ -22,7 +22,7 @@ namespace analysis {
 // Use --ruleset default
 // clang-format off
 // LINT.IfChange
-constexpr const char* kDefaultRuleSet[] = {
+inline constexpr const char* kDefaultRuleSet[] = {
     "invalid-system-task-function",
     "module-begin-block",
     "module-parameter",
