@@ -14,8 +14,6 @@
 
 #include "common/util/simple_zip.h"
 
-#include <zlib.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -24,6 +22,7 @@
 
 #include "absl/strings/string_view.h"
 #include "third_party/portable_endian/portable_endian.h"
+#include "zlib.h"  // WORKSPACE imported project header
 
 namespace verible {
 namespace zip {
