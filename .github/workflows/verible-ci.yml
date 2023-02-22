@@ -23,7 +23,7 @@ jobs:
 
   VerifyFormatting:
     container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     steps:
 
@@ -55,7 +55,7 @@ jobs:
 
   ClangTidy:
     container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
 
     env:
       GHA_MACHINE_TYPE: "n2-standard-4"
@@ -108,7 +108,7 @@ jobs:
 
   Check:
     container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     strategy:
       fail-fast: false
       matrix:
@@ -288,7 +288,7 @@ jobs:
   Build:
     needs: Matrix
     container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
     if: ${{github.event_name == 'push'}}
@@ -368,7 +368,7 @@ jobs:
 
   PrepareVSPlugin:
     container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
     - uses: actions/checkout@v2
