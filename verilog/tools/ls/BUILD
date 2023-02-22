@@ -21,6 +21,7 @@ cc_library(
         ":symbol-table-handler",
         "//common/lsp:lsp-protocol",
         "//common/text:text_structure",
+        "//common/util:spacer",
         "//verilog/CST:declaration",
         "//verilog/CST:dimensions",
         "//verilog/CST:expression",
@@ -189,6 +190,8 @@ cc_test(
         ":autoexpand",
         ":verible-lsp-adapter",
         "//common/lsp:lsp-protocol",
+        "//verilog/formatting:format_style_init",
+        "//verilog/formatting:formatter",
         "@com_google_googletest//:gtest_main",
     ],
 )
