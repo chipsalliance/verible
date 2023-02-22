@@ -20,15 +20,16 @@
 namespace verilog {
 
 // This is the leading string that makes a comment a lint waiver.
-static constexpr absl::string_view kLinterTrigger = "verilog_lint:";
+inline constexpr absl::string_view kLinterTrigger = "verilog_lint:";
 
 // This command says to waive one line (this or next applicable).
-static constexpr absl::string_view kLinterWaiveLineCommand = "waive";
+inline constexpr absl::string_view kLinterWaiveLineCommand = "waive";
 
 // This command says to start waiving a rule from this line...
-static constexpr absl::string_view kLinterWaiveStartCommand = "waive-start";
+inline constexpr absl::string_view kLinterWaiveStartCommand = "waive-start";
+
 // ... and stop waiving at this line.
-static constexpr absl::string_view kLinterWaiveStopCommand = "waive-stop";
+inline constexpr absl::string_view kLinterWaiveStopCommand = "waive-stop";
 
 }  // namespace verilog
 
