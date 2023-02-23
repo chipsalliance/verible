@@ -83,7 +83,7 @@ class TokenPartitionTreeBuilder {
       std::initializer_list<TokenPartitionTreeBuilder> children)
       : policy_(policy), children_(children) {}
 
-  explicit TokenPartitionTreeBuilder(
+  TokenPartitionTreeBuilder(
       std::initializer_list<TokenPartitionTreeBuilder> children)
       : children_(children) {}
 

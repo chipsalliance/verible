@@ -351,7 +351,7 @@ struct DiffEditsToPatchHunksTestCase {
 };
 
 TEST(DiffEditsToPatchHunksTest, Various) {
-  typedef std::initializer_list<RelativeEdit> RelEdits;
+  using RelEdits = std::initializer_list<RelativeEdit>;
   const DiffEditsToPatchHunksTestCase kTestCases[] = {
       {
           .whole_edits = MakeDiffEdits(RelEdits{{Operation::EQUALS, 2}}),

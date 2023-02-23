@@ -23,7 +23,7 @@ namespace {
 
 using ::testing::ElementsAre;
 
-typedef AutoPopStack<int> IntStack;
+using IntStack = AutoPopStack<int>;
 
 // Test that AutoPop properly pushes and pops nodes on and off the stack
 TEST(AutoPopStackTest, PushPopTest) {

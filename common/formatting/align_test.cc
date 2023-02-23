@@ -155,7 +155,7 @@ TEST_F(TabularAlignTokenTest, EmptyPartitionRange) {
 
 class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
  public:
-  MatrixTreeAlignmentTestFixture(absl::string_view text)
+  explicit MatrixTreeAlignmentTestFixture(absl::string_view text)
       : AlignmentTestFixture(text),
         syntax_tree_(nullptr),  // for subclasses to initialize
         partition_(/* temporary */ UnwrappedLine()) {}
@@ -183,7 +183,7 @@ class MatrixTreeAlignmentTestFixture : public AlignmentTestFixture {
 
 class Sparse3x3MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
-  Sparse3x3MatrixAlignmentTest(
+  explicit Sparse3x3MatrixAlignmentTest(
       absl::string_view text = "one two three four five six")
       : MatrixTreeAlignmentTestFixture(text) {
     // From the sample_ text, each pair of tokens will span a subpartition.
@@ -843,7 +843,8 @@ TEST_F(GetPartitionAlignmentSubrangesSubtypedTestFixture, VariousRanges) {
 
 class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
-  Dense2x2MatrixAlignmentTest(absl::string_view text = "one two three four")
+  explicit Dense2x2MatrixAlignmentTest(
+      absl::string_view text = "one two three four")
       : MatrixTreeAlignmentTestFixture(text) {
     CHECK_EQ(tokens_.size(), 4);
 
@@ -1019,12 +1020,13 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
 
 class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
  public:
-  SubcolumnsTreeAlignmentTest(absl::string_view text =
-                                  "zero\n"
-                                  "( one two three )\n"
-                                  "( four ( five six ) seven )\n"
-                                  "( eight ( ( nine ) ten ) )\n"
-                                  "( eleven nineteen-ninety-nine 2k )\n")
+  explicit SubcolumnsTreeAlignmentTest(
+      absl::string_view text =
+          "zero\n"
+          "( one two three )\n"
+          "( four ( five six ) seven )\n"
+          "( eight ( ( nine ) ten ) )\n"
+          "( eleven nineteen-ninety-nine 2k )\n")
       : MatrixTreeAlignmentTestFixture(text) {
     //  Columns tree:
     //
@@ -1249,13 +1251,14 @@ TEST_F(SubcolumnsTreeAlignmentTest,
 
 class MultiSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
  public:
-  MultiSubcolumnsTreeAlignmentTest(absl::string_view text =
-                                       "zero\n"
-                                       "( one two three )\n"
-                                       "( four ( five six ) seven )\n"
-                                       "\n"
-                                       "( eight ( ( nine ) ten ) )\n"
-                                       "( eleven nineteen-ninety-nine 2k )\n")
+  explicit MultiSubcolumnsTreeAlignmentTest(
+      absl::string_view text =
+          "zero\n"
+          "( one two three )\n"
+          "( four ( five six ) seven )\n"
+          "\n"
+          "( eight ( ( nine ) ten ) )\n"
+          "( eleven nineteen-ninety-nine 2k )\n")
       : SubcolumnsTreeAlignmentTest(text) {}
 
   std::string Render() {
@@ -1302,7 +1305,7 @@ TEST_F(MultiSubcolumnsTreeAlignmentTest, BlankLineSeparatedGroups) {
 
 class InferSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
  public:
-  InferSubcolumnsTreeAlignmentTest(
+  explicit InferSubcolumnsTreeAlignmentTest(
       absl::string_view text =
           "zero\n"
           "( one     two                   three )\n"
@@ -1344,12 +1347,12 @@ TEST_F(InferSubcolumnsTreeAlignmentTest, InferUserIntent) {
 
 class SubcolumnsTreeWithDelimitersTest : public SubcolumnsTreeAlignmentTest {
  public:
-  SubcolumnsTreeWithDelimitersTest(absl::string_view text =
-                                       "( One Two , )\n"
-                                       "( Three Four )\n"
-                                       "\n"
-                                       "( Seven Eight , )\n"
-                                       "( Five Six )\n")
+  explicit SubcolumnsTreeWithDelimitersTest(absl::string_view text =
+                                                "( One Two , )\n"
+                                                "( Three Four )\n"
+                                                "\n"
+                                                "( Seven Eight , )\n"
+                                                "( Five Six )\n")
       : SubcolumnsTreeAlignmentTest(text) {}
 };
 

@@ -36,7 +36,7 @@ using verible::file::testing::ScopedTestFile;
 
 class TempDirFile : public ScopedTestFile {
  public:
-  TempDirFile(absl::string_view content)
+  explicit TempDirFile(absl::string_view content)
       : ScopedTestFile(::testing::TempDir(), content) {}
 };
 

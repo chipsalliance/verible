@@ -2187,7 +2187,7 @@ TEST(PatchSetAddedLinesMapTest, NewAndExistingFile) {
   const auto status = patch_set.Parse(patch_contents);
   ASSERT_TRUE(status.ok()) << status.message();
 
-  typedef FileLineNumbersMap::value_type P;
+  using P = FileLineNumbersMap::value_type;
   EXPECT_THAT(patch_set.AddedLinesMap(false),
               ElementsAre(P{"/path/to/file1.txt", {}},
                           P{"/path/to/file2.txt", {{54, 56}}}));

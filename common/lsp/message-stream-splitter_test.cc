@@ -38,7 +38,7 @@ TEST(MessageStreamSplitterTest, NotRegisteredMessageProcessor) {
 // simulate partial reads.
 class DataStreamSimulator {
  public:
-  DataStreamSimulator(absl::string_view content, int max_chunk = -1)
+  explicit DataStreamSimulator(absl::string_view content, int max_chunk = -1)
       : content_(content), max_chunk_(max_chunk) {}
 
   int read(char *buf, int size) {

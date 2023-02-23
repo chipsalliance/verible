@@ -93,7 +93,7 @@ template <class AnalyzerType, class RuleClass>
 void RunConfiguredLintTestCases(
     std::initializer_list<LintTestCase> tests, absl::string_view configuration,
     absl::string_view filename = "<<inline-test>>") {
-  typedef typename RuleClass::rule_type rule_type;
+  using rule_type = typename RuleClass::rule_type;
   auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
     std::unique_ptr<rule_type> instance(new RuleClass());
     absl::Status config_status = instance->Configure(configuration);
@@ -143,7 +143,7 @@ void RunLintAutoFixCase(const AutoFixInOut& test,
 template <class AnalyzerType, class RuleClass>
 void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
                       absl::string_view configuration) {
-  typedef typename RuleClass::rule_type rule_type;
+  using rule_type = typename RuleClass::rule_type;
   auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
     std::unique_ptr<rule_type> instance(new RuleClass());
     absl::Status config_status = instance->Configure(configuration);

@@ -126,7 +126,7 @@ TEST(MapTreeTest, EmplaceOneChild) {
 struct NonCopyable {
   absl::string_view text;
 
-  NonCopyable(absl::string_view text) : text(text) {}
+  explicit NonCopyable(absl::string_view text) : text(text) {}
 
   // move-only, no copy
   NonCopyable(const NonCopyable&) = delete;

@@ -117,7 +117,7 @@ TEST(IntervalSetTest, EqualityDifferentAsymmetricOverlapRight) {
   EXPECT_NE(iset2, iset1);
 }
 
-typedef std::map<int, int>::value_type pair_t;
+using pair_t = std::map<int, int>::value_type;
 
 TEST(IntervalSetTest, ConstructionWithInitializerOneInterval) {
   const interval_set_type iset{{2, 4}};
@@ -239,14 +239,18 @@ TEST(IntervalSetTest, Assign) {
 
 TEST(IntervalSetTest, CopyConstruct) {
   UnsafeIntervalSet iset{{2, 5}, {10, 11}};
-  const interval_set_type copy(iset);
+  // clang-format off
+  const interval_set_type copy(iset);  // NOLINT(performance-unnecessary-copy-initialization)
+  // clang-format on
   EXPECT_THAT(iset, ElementsAre(pair_t{2, 5}, pair_t{10, 11}));
   EXPECT_THAT(copy, ElementsAre(pair_t{2, 5}, pair_t{10, 11}));
 }
 
 TEST(IntervalSetTest, CopyAssign) {
   UnsafeIntervalSet iset{{2, 5}, {10, 11}};
-  const interval_set_type copy = iset;
+  // clang-format off
+  const interval_set_type copy = iset;  // NOLINT(performance-unnecessary-copy-initialization)
+  // clang-format on
   EXPECT_THAT(iset, ElementsAre(pair_t{2, 5}, pair_t{10, 11}));
   EXPECT_THAT(copy, ElementsAre(pair_t{2, 5}, pair_t{10, 11}));
 }
@@ -474,7 +478,7 @@ TEST(IntervalSetTest, AddInvalidInterval) {
   EXPECT_DEATH((iset.Add({2, 1})), "");
 }
 
-typedef AddIntervalTestData DifferenceIntervalTestData;
+using DifferenceIntervalTestData = AddIntervalTestData;
 
 TEST(IntervalSetTest, DifferenceInvalidInterval) {
   UnsafeIntervalSet iset{};
@@ -498,7 +502,7 @@ TEST(IntervalSetTest, DifferenceEmptyIntervalFromNonEmptySet) {
   }
 }
 
-typedef AddSingleValueTestData DifferenceSingleValueTestData;
+using DifferenceSingleValueTestData = AddSingleValueTestData;
 
 TEST(IntervalSetTest, DifferenceSingleValue) {
   const UnsafeIntervalSet init{{10, 20}, {30, 40}};
@@ -673,7 +677,7 @@ TEST(IntervalSetTest, SetUnions) {
   }
 }
 
-typedef AddIntervalTestData ComplementTestData;
+using ComplementTestData = AddIntervalTestData;
 
 TEST(IntervalSetTest, ComplementEmptyInitial) {
   const interval_type kTestCases[] = {
@@ -948,8 +952,8 @@ TEST(UniformRandomGeneratorTest, MultiRanges) {
 
 // DisjointIntervalSet tests
 
-typedef DisjointIntervalSet<int> IntIntervalSet;
-typedef DisjointIntervalSet<std::vector<int>::const_iterator> VectorIntervalSet;
+using IntIntervalSet = DisjointIntervalSet<int>;
+using VectorIntervalSet = DisjointIntervalSet<std::vector<int>::const_iterator>;
 
 // Make sure values interior to a range point back to the entire range.
 template <typename M>

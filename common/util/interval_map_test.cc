@@ -27,9 +27,9 @@
 namespace verible {
 namespace {
 
-typedef DisjointIntervalMap<int, std::unique_ptr<int>> IntIntervalMap;
-typedef DisjointIntervalMap<int, std::unique_ptr<std::string>>
-    StringIntervalMap;
+using IntIntervalMap = DisjointIntervalMap<int, std::unique_ptr<int>>;
+using StringIntervalMap =
+    DisjointIntervalMap<int, std::unique_ptr<std::string>>;
 
 TEST(DisjointIntervalMapTest, DefaultCtor) {
   const IntIntervalMap imap;
@@ -275,8 +275,8 @@ TEST(DisjointIntervalMapTest, BeginEndRangeConstIterators) {
 
 // std::vector is moveable and guaranteed to transfer ownership over its
 // internal array, i.e. no small/inline-vector optimization.
-typedef DisjointIntervalMap<std::vector<int>::const_iterator, std::vector<int>>
-    VectorIntervalMap;
+using VectorIntervalMap =
+    DisjointIntervalMap<std::vector<int>::const_iterator, std::vector<int>>;
 
 static VectorIntervalMap::iterator AllocateVectorBlock(VectorIntervalMap* vmap,
                                                        int min, int max) {

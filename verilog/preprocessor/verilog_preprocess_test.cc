@@ -45,7 +45,7 @@ using FileOpener = VerilogPreprocess::FileOpener;
 
 class LexerTester {
  public:
-  LexerTester(absl::string_view text) : lexer_(text) {
+  explicit LexerTester(absl::string_view text) : lexer_(text) {
     for (lexer_.DoNextToken(); !lexer_.GetLastToken().isEOF();
          lexer_.DoNextToken()) {
       lexed_sequence_.push_back(lexer_.GetLastToken());

@@ -105,7 +105,7 @@ class SimpleNode {
  public:
   using ChildrenType = Container<ThisType>;
 
-  SimpleNode(absl::string_view id, ChildrenType&& children = {})
+  explicit SimpleNode(absl::string_view id, ChildrenType&& children = {})
       : children_(std::move(children)), id_(id) {
     Relink();
   }
@@ -212,7 +212,7 @@ class NodeWithParentAndValue
 class IntNode {
  public:
   IntNode() {}
-  IntNode(int value, std::initializer_list<IntNode> children = {})
+  explicit IntNode(int value, std::initializer_list<IntNode> children = {})
       : value_(value), children_(children) {}
 
   const int& Value() const { return value_; }
