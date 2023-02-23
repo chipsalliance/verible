@@ -32,7 +32,7 @@ namespace verible {
 template <>
 class LintRunner<TextStructureLintRule> {
  public:
-  explicit LintRunner(std::unique_ptr<TextStructureLintRule> rule) : linter_() {
+  explicit LintRunner(std::unique_ptr<TextStructureLintRule> rule) {
     linter_.AddRule(std::move(rule));
   }
 

@@ -45,8 +45,9 @@ std::string ToString(const T& value) {
 
 std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
                             int indentation) {
-  for (const auto& line : verible::SplitLinesKeepLineTerminator(str))
+  for (const auto& line : verible::SplitLinesKeepLineTerminator(str)) {
     stream << verible::Spacer(indentation) << line;
+  }
   return stream;
 }
 
@@ -103,8 +104,9 @@ void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
                                *layout_diff.left, *layout_diff.right, 2, true);
     }
 
-    if (auto str = segment_msg.str(); !str.empty())
+    if (auto str = segment_msg.str(); !str.empty()) {
       msg << "segment[" << i << "]:\n" << str << "\n";
+    }
   }
 
   if (const auto str = msg.str(); !str.empty()) {
@@ -718,8 +720,9 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
-        if (first_on_line_must_wrap)
+        if (first_on_line_must_wrap) {
           token->before.break_decision = SpacingOptions::MustWrap;
+        }
         uwlines->back().SpanUpToToken(token);
         uwlines->emplace_back(0, token);
       }
@@ -2384,27 +2387,26 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
         style_(CreateStyle()),
         factory_(LayoutFunctionFactory(style_)) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfosExternalStringBuffer(ftokens_);
     ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
                                                &pre_format_tokens_);
 
     // Set token properties
-    for (auto token_it = pre_format_tokens_.begin();
-         token_it != pre_format_tokens_.end(); ++token_it) {
-      const auto leading_spaces = token_it->OriginalLeadingSpaces();
+    for (auto& token : pre_format_tokens_) {
+      const auto leading_spaces = token.OriginalLeadingSpaces();
 
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
-        token_it->before.break_decision = SpacingOptions::MustWrap;
+        token.before.break_decision = SpacingOptions::MustWrap;
         auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
         if (last_non_space_offset != absl::string_view::npos) {
-          token_it->before.spaces_required =
+          token.before.spaces_required =
               leading_spaces.size() - 1 - last_non_space_offset;
         }
       } else {
-        token_it->before.spaces_required = leading_spaces.size();
+        token.before.spaces_required = leading_spaces.size();
       }
     }
     pre_format_tokens_.front().before.break_decision = SpacingOptions::MustWrap;

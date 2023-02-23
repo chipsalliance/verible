@@ -35,7 +35,7 @@ using testing::SizeIs;
 // Blank lines are considered bad for demonstration purposes.
 class BlankLineRule : public LineLintRule {
  public:
-  BlankLineRule() {}
+  BlankLineRule() = default;
 
   void HandleLine(absl::string_view line) final {
     if (line.empty()) {
@@ -90,7 +90,7 @@ TEST(LineLinterTest, OneRuleRejectsLine) {
 // Mock rule that rejects empty files.
 class EmptyFileRule : public LineLintRule {
  public:
-  EmptyFileRule() {}
+  EmptyFileRule() = default;
 
   void HandleLine(absl::string_view line) final { ++lines_; }
 

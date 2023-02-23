@@ -39,7 +39,7 @@ namespace verible {
 // Modeled after the Lexer base class.
 class FakeLexer {
  protected:
-  explicit FakeLexer() {}
+  explicit FakeLexer() = default;
 
   void SetTokensData(const std::vector<TokenInfo>& tokens);
 

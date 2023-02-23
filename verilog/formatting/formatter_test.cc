@@ -18435,8 +18435,8 @@ std::string NLCountAndfirstWord(absl::string_view str) {
   result.append(1,
                 static_cast<char>(newline_count + '0'));  // single digit itoa
   const char* end_str = begin;
-  for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str)
-    ;
+  for (/**/; end_str < str.end() && !isspace(*end_str); ++end_str) {
+  }
   result.append(begin, end_str);
   return result;
 }
@@ -18453,8 +18453,8 @@ std::string lastWordAndNLCount(absl::string_view str) {
   }
 
   const char* start_str = back;
-  for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str)
-    ;
+  for (/**/; start_str >= str.begin() && !isspace(*start_str); --start_str) {
+  }
   result.append(start_str + 1, back - start_str);
   // Emit number of newlines seen following last token.
   result.append(1,

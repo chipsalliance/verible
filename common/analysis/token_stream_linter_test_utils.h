@@ -32,7 +32,7 @@ namespace verible {
 template <>
 class LintRunner<TokenStreamLintRule> {
  public:
-  explicit LintRunner(std::unique_ptr<TokenStreamLintRule> rule) : linter_() {
+  explicit LintRunner(std::unique_ptr<TokenStreamLintRule> rule) {
     linter_.AddRule(std::move(rule));
   }
 

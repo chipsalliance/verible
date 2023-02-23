@@ -33,7 +33,7 @@ namespace verible {
 template <>
 class LintRunner<SyntaxTreeLintRule> {
  public:
-  explicit LintRunner(std::unique_ptr<SyntaxTreeLintRule> rule) : linter_() {
+  explicit LintRunner(std::unique_ptr<SyntaxTreeLintRule> rule) {
     linter_.AddRule(std::move(rule));
   }
 

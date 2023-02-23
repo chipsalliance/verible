@@ -40,7 +40,7 @@ TEST(PackageFilenameRuleTest, BlankFilename) {
       {"package m; endpackage"},
       {"class c; endclass"},
   };
-  const std::string filename = "";
+  const std::string filename;
   RunLintTestCases<VerilogAnalyzer, PackageFilenameRule>(kTestCases, filename);
 }
 

@@ -554,9 +554,9 @@ TEST(RuleSetTest, ParseRuleSetSuccess) {
   std::string all_text = "all";
   std::string default_text = "default";
 
-  std::string none_error = "";
-  std::string all_error = "";
-  std::string default_error = "";
+  std::string none_error;
+  std::string all_error;
+  std::string default_error;
 
   RuleSet none_destination, all_destination, default_destination;
 
@@ -580,7 +580,7 @@ TEST(RuleSetTest, ParseRuleSetSuccess) {
 
 TEST(RuleSetTest, ParseRuleSetError) {
   std::string bad_text = "fdsfdfds";
-  std::string error = "";
+  std::string error;
 
   RuleSet rule_result;
   bool result = AbslParseFlag(bad_text, &rule_result, &error);
@@ -635,7 +635,7 @@ TEST(RuleBundleTest, UnparseRuleBundleSeveralConfiguration) {
 
 TEST(RuleBundleTest, UnparseRuleBundleEmpty) {
   RuleBundle bundle = {};
-  std::string expected = "";
+  std::string expected;
 
   std::string result_comma = bundle.UnparseConfiguration(',');
   EXPECT_EQ(result_comma, expected);

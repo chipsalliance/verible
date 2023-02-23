@@ -1153,7 +1153,7 @@ TEST_F(RandomizeCallStateMachineTest,
 // Class for testing some internal methods of LexicalContext.
 class LexicalContextTest : public ::testing::Test, public LexicalContext {
  protected:
-  LexicalContextTest() {}
+  LexicalContextTest() = default;
 
   void CheckInitialState() const {
     EXPECT_EQ(previous_token_, nullptr);

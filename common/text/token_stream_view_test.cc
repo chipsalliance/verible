@@ -28,7 +28,7 @@ namespace verible {
 
 class TokenStreamViewTest : public testing::Test {
  protected:
-  TokenStreamViewTest() : tokens_() {
+  TokenStreamViewTest() {
     // Generate with bogus token enums, with 0 at the end.
     for (int i = 0; i < 10; ++i) {
       tokens_.push_back(TokenInfo(i + 2, "moo"));
