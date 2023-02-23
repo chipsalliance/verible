@@ -31,7 +31,7 @@ namespace verible {
 template <>
 class LintRunner<LineLintRule> {
  public:
-  explicit LintRunner(std::unique_ptr<LineLintRule> rule) : linter_() {
+  explicit LintRunner(std::unique_ptr<LineLintRule> rule) {
     linter_.AddRule(std::move(rule));
   }
 

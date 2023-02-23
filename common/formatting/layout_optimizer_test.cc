@@ -45,8 +45,9 @@ std::string ToString(const T& value) {
 
 std::ostream& PrintIndented(std::ostream& stream, absl::string_view str,
                             int indentation) {
-  for (const auto& line : verible::SplitLinesKeepLineTerminator(str))
+  for (const auto& line : verible::SplitLinesKeepLineTerminator(str)) {
     stream << verible::Spacer(indentation) << line;
+  }
   return stream;
 }
 
@@ -103,8 +104,9 @@ void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
                                *layout_diff.left, *layout_diff.right, 2, true);
     }
 
-    if (auto str = segment_msg.str(); !str.empty())
+    if (auto str = segment_msg.str(); !str.empty()) {
       msg << "segment[" << i << "]:\n" << str << "\n";
+    }
   }
 
   if (const auto str = msg.str(); !str.empty()) {
@@ -718,8 +720,9 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
 
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
-        if (first_on_line_must_wrap)
+        if (first_on_line_must_wrap) {
           token->before.break_decision = SpacingOptions::MustWrap;
+        }
         uwlines->back().SpanUpToToken(token);
         uwlines->emplace_back(0, token);
       }

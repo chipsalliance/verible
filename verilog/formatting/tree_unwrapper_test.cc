@@ -53,7 +53,7 @@ struct ExpectedUnwrappedLine {
   int indentation_spaces;
   std::vector<absl::string_view> tokens;  // includes comments
 
-  explicit ExpectedUnwrappedLine(int s) : indentation_spaces(s), tokens() {}
+  explicit ExpectedUnwrappedLine(int s) : indentation_spaces(s) {}
 
   ExpectedUnwrappedLine(
       int s, std::initializer_list<absl::string_view> expected_tokens)

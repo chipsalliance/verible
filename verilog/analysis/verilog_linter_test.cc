@@ -55,9 +55,7 @@ using verible::file::testing::ScopedTestFile;
 class DefaultLinterConfigTestFixture {
  public:
   // Test code using the default rule set.
-  DefaultLinterConfigTestFixture() : config_() {
-    config_.UseRuleSet(RuleSet::kDefault);
-  }
+  DefaultLinterConfigTestFixture() { config_.UseRuleSet(RuleSet::kDefault); }
 
  protected:
   LinterConfiguration config_;
@@ -438,7 +436,7 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
 
 class ViolationFixerTest : public testing::Test {
  public:
-  ViolationFixerTest() : config_() {
+  ViolationFixerTest() {
     config_.UseRuleSet(RuleSet::kNone);
     config_.TurnOn("forbid-consecutive-null-statements");
     config_.TurnOn("no-trailing-spaces");

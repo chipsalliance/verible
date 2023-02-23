@@ -701,7 +701,8 @@ class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
         partition.Value().TokensRange().front().Text();
     if (text == "match") {
       return AlignmentGroupAction::kMatch;
-    } else if (text == "nomatch") {
+    }
+    if (text == "nomatch") {
       return AlignmentGroupAction::kNoMatch;
     } else {
       return AlignmentGroupAction::kIgnore;
@@ -804,7 +805,8 @@ class GetPartitionAlignmentSubrangesSubtypedTestFixture
       absl::string_view last = *std::next(toks.begin());
       // Use the first character after the : as the subtype, so 'X', 'Y', 'Z'.
       return {AlignmentGroupAction::kMatch, static_cast<int>(last.front())};
-    } else if (text == "nomatch") {
+    }
+    if (text == "nomatch") {
       return {AlignmentGroupAction::kNoMatch};
     } else {
       return {AlignmentGroupAction::kIgnore};
@@ -995,10 +997,11 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
 
   void Visit(const SyntaxTreeNode& node) final {
     ColumnPositionTree* column;
-    if (!current_column_)
+    if (!current_column_) {
       column = ReserveNewColumn(node, props);
-    else
+    } else {
       column = ReserveNewColumn(current_column_, node, props);
+    }
 
     ValueSaver<ColumnPositionTree*> current_column_saver(&current_column_,
                                                          column);
@@ -1008,10 +1011,11 @@ class SyntaxTreeColumnizer : public ColumnSchemaScanner {
     AlignmentColumnProperties local_props = props;
     if (leaf.get().text() == ",") local_props.contains_delimiter = true;
 
-    if (!current_column_)
+    if (!current_column_) {
       ReserveNewColumn(leaf, local_props);
-    else
+    } else {
       ReserveNewColumn(current_column_, leaf, local_props);
+    }
   }
 
  private:
@@ -1093,7 +1097,8 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       SymbolPtr rp = Leaf(1, (*it)->Text());
       ++*it;
       return TNode(1, std::move(lp), std::move(list), std::move(rp));
-    } else if ((*it)->Text() == ")") {
+    }
+    if ((*it)->Text() == ")") {
       return SymbolPtr(nullptr);
     } else {
       SymbolPtr leaf = Leaf(0, (*it)->Text());
@@ -1448,11 +1453,13 @@ class OutsideCharPairs {
   absl::string_view Find(absl::string_view text, size_t pos) const {
     if (text[pos] == start_) {
       const size_t stop_pos = text.find(stop_, pos + 1);
-      if (stop_pos == absl::string_view::npos)
+      if (stop_pos == absl::string_view::npos) {
         return absl::string_view(text.data() + text.size(), 0);
+      }
       const size_t start_pos = text.find(start_, stop_pos + 1);
-      if (start_pos == absl::string_view::npos)
+      if (start_pos == absl::string_view::npos) {
         return text.substr(stop_pos + 1);
+      }
       return text.substr(stop_pos + 1, start_pos - stop_pos - 1);
     }
     const size_t start_pos = text.find(start_, pos);

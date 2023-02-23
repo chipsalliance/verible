@@ -211,7 +211,7 @@ class NodeWithParentAndValue
 // trees.
 class IntNode {
  public:
-  IntNode() {}
+  IntNode() = default;
   explicit IntNode(int value, std::initializer_list<IntNode> children = {})
       : value_(value), children_(children) {}
 
@@ -254,7 +254,7 @@ class IntNode {
 template <class Node>
 class TreeTest : public ::testing::Test {
  public:
-  TreeTest() {}
+  TreeTest() = default;
 
   using N = Node;
   N root = N("root", {N("0"),                                          //

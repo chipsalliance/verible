@@ -47,7 +47,7 @@ std::ostream &operator<<(std::ostream &out, const Edit &edit) {
 
 std::ostream &operator<<(std::ostream &out, const Edits &edits) {
   out << "Edits{";
-  std::string outer_delim = "";
+  std::string outer_delim;
   for (auto &edit : edits) {
     out << outer_delim << edit;
     outer_delim = ",";

@@ -215,7 +215,7 @@ TEST(TokenWithContextTest, StreamOutput) {
 
 // Test that empty string token rebases correctly.
 TEST(RebaseStringViewTest, EmptyStringsZeroOffset) {
-  const std::string text = "";
+  const std::string text;
   // We want another empty string, but we need to trick too smart compilers
   // to give us a different memory address.
   std::string substr = "foo";

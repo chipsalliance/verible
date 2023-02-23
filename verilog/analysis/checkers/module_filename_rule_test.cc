@@ -42,7 +42,7 @@ TEST(ModuleFilenameRuleTest, BlankFilename) {
       {"module m; endmodule"},
       {"class c; endclass"},
   };
-  const std::string filename = "";
+  const std::string filename;
   RunLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases, filename);
 }
 

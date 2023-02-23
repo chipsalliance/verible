@@ -238,7 +238,7 @@ class ContainerProxy
 template <class Proxy>
 class ContainerProxyTest : public ::testing::Test {
  public:
-  ContainerProxyTest() {}
+  ContainerProxyTest() = default;
 
   using Container = typename Proxy::container_type;
   Container container = {"zero", "one", "two"};

@@ -35,7 +35,7 @@ using testing::SizeIs;
 // Example lint rule that uses raw contents and lines array.
 class RequireHelloRule : public TextStructureLintRule {
  public:
-  RequireHelloRule() {}
+  RequireHelloRule() = default;
 
   void Lint(const TextStructureView& text_structure,
             absl::string_view filename) final {
