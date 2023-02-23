@@ -5,7 +5,6 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
-load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -72,12 +71,3 @@ action_listener(
     visibility = ["//visibility:public"],
 )
 
-compilation_database(
-    name = "compdb",
-    targets = [
-        ":install-binaries",
-        "//common/lsp:dummy-ls",
-    ],
-    # TODO: is there a way to essentially specify //... so that all tests
-    # are included as well ?
-)
