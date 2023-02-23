@@ -1,0 +1,6 @@
+# Install bazel
+ARG BAZEL_VERSION
+ARG ARCH
+
+RUN wget --no-verbose "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-"${ARCH} -O /usr/bin/bazel; \
+ chmod +x /usr/bin/bazel

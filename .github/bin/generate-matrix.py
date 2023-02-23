@@ -20,9 +20,11 @@ matrix = []
 
 with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_bases.txt').open('r') as fptr:
     for items in [line.strip().split(':') for line in fptr.readlines()]:
-        matrix.append({
-            'os': items[0],
-            'ver': items[1]
-        })
+        for arch in ["x86_64", "arm64"]:
+            matrix.append({
+                'os': items[0],
+                'ver': items[1],
+                'arch': arch
+            })
 
 print('::set-output name=matrix::' + str(matrix))

@@ -49,8 +49,9 @@ cp -a /tmp/pages/* $PREFIX_DOC
 # Man pages
 for app in syntax lint format diff obfuscate ; do
     BIN_NAME="verible-verilog-${app}"
-    gflags2man --help_flag="--helpfull" --dest_dir "$PREFIX_MAN" "$PREFIX_BIN/$BIN_NAME"
-    gzip "${PREFIX_MAN}/${BIN_NAME}.1"
+    MAN_FILE="${PREFIX_MAN}/${BIN_NAME}.1"
+    help2man --help-option="--helpfull" --output="$MAN_FILE" "$PREFIX_BIN/$BIN_NAME"
+    gzip "$MAN_FILE"
 
     # Set up manpage for legacy tool-names as symbolic link to the real deal.
     ln -s "${BIN_NAME}.1.gz" "${PREFIX_MAN}/verilog_${app}.1.gz"
