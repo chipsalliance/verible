@@ -62,9 +62,8 @@ static DiffStatus FlipStatus(DiffStatus status) {
 }
 
 static void ExpectCompareWithErrstream(
-    std::function<DiffStatus(absl::string_view, absl::string_view,
-                             std::ostream*)>
-        func,
+    const std::function<DiffStatus(absl::string_view, absl::string_view,
+                                   std::ostream*)>& func,
     DiffStatus expect_compare, absl::string_view left, absl::string_view right,
     std::ostream* errstream = &std::cout) {
   EXPECT_EQ(func(left, right, errstream), expect_compare)

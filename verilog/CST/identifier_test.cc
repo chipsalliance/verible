@@ -228,6 +228,7 @@ TEST(FindAllSymbolIdentifierTest, VariousIds) {
           const auto& root = text_structure.SyntaxTree();
           const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
           std::vector<TreeSearchMatch> identifiers;
+          identifiers.reserve(symb_ids.size());
           for (const auto& symb_id : symb_ids) {
             identifiers.push_back(
                 TreeSearchMatch{symb_id.match, {/* ignored context */}});

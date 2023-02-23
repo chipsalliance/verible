@@ -24,9 +24,10 @@ namespace {
 
 using ::testing::ElementsAre;
 
-static void AcceptFunctionChar(std::function<absl::string_view(char)> func) {}
+static void AcceptFunctionChar(
+    const std::function<absl::string_view(char)>& func) {}
 static void AcceptFunctionStringView(
-    std::function<absl::string_view(absl::string_view)> func) {}
+    const std::function<absl::string_view(absl::string_view)>& func) {}
 
 // This tests that StringSpliterator can be passed to a std::function.
 TEST(StringSpliteratorTest, CompileTimeAsFunction) {

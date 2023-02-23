@@ -21,17 +21,15 @@ namespace verible {
 namespace {
 
 TEST(MatchConst, NonConst) {
-  static_assert(std::is_same<match_const<int, char>::type, int>::value, "");
-  static_assert(std::is_same<match_const<const int, char>::type, int>::value,
-                "");
+  static_assert(std::is_same<match_const<int, char>::type, int>::value);
+  static_assert(std::is_same<match_const<const int, char>::type, int>::value);
 }
 
 TEST(MatchConst, Const) {
   static_assert(
-      std::is_same<match_const<int, const char>::type, const int>::value, "");
+      std::is_same<match_const<int, const char>::type, const int>::value);
   static_assert(
-      std::is_same<match_const<const int, const char>::type, const int>::value,
-      "");
+      std::is_same<match_const<const int, const char>::type, const int>::value);
 }
 
 }  // namespace

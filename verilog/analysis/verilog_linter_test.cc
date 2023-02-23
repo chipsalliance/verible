@@ -447,7 +447,7 @@ class ViolationFixerTest : public testing::Test {
   LinterConfiguration config_;
 
   absl::Status LintAnalyzeFixText(absl::string_view content,
-                                  ViolationFixer& violation_fixer,
+                                  ViolationFixer* violation_fixer,
                                   std::string* fixed_content) const {
     const ScopedTestFile temp_file(testing::TempDir(), content);
 
@@ -463,8 +463,8 @@ class ViolationFixerTest : public testing::Test {
 
     const std::set<verible::LintViolationWithStatus> violations =
         GetSortedViolations(lint_result.value());
-    violation_fixer.HandleViolations(violations, text_structure.Contents(),
-                                     temp_file.filename());
+    violation_fixer->HandleViolations(violations, text_structure.Contents(),
+                                      temp_file.filename());
 
     const auto ok = GetContents(temp_file.filename(), fixed_content);
     return lint_result.status();
@@ -526,7 +526,7 @@ class ViolationFixerTest : public testing::Test {
         std::string& fixed_source = fixed_sources[i];
 
         const absl::Status status =
-            LintAnalyzeFixText(input_source, violation_fixer, &fixed_source);
+            LintAnalyzeFixText(input_source, &violation_fixer, &fixed_source);
         EXPECT_TRUE(status.ok());
       }
 
@@ -556,7 +556,7 @@ class ViolationFixerTest : public testing::Test {
         std::string& fixed_source = fixed_sources[i];
 
         const absl::Status status =
-            LintAnalyzeFixText(input_source, violation_fixer, &fixed_source);
+            LintAnalyzeFixText(input_source, &violation_fixer, &fixed_source);
         EXPECT_TRUE(status.ok());
       }
 

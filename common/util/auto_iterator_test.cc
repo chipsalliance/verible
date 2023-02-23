@@ -27,34 +27,26 @@ namespace {
 
 TEST(AutoIteratorSelectorTest, NonConst) {
   static_assert(std::is_same<auto_iterator_selector<std::list<int>>::type,
-                             std::list<int>::iterator>::value,
-                "");
+                             std::list<int>::iterator>::value);
   static_assert(std::is_same<auto_iterator_selector<std::map<int, char>>::type,
-                             std::map<int, char>::iterator>::value,
-                "");
+                             std::map<int, char>::iterator>::value);
   static_assert(std::is_same<auto_iterator_selector<std::set<int>>::type,
-                             std::set<int>::iterator>::value,
-                "");
+                             std::set<int>::iterator>::value);
   static_assert(std::is_same<auto_iterator_selector<std::vector<int>>::type,
-                             std::vector<int>::iterator>::value,
-                "");
+                             std::vector<int>::iterator>::value);
 }
 
 TEST(AutoIteratorSelectorTest, Const) {
   static_assert(std::is_same<auto_iterator_selector<const std::list<int>>::type,
-                             std::list<int>::const_iterator>::value,
-                "");
+                             std::list<int>::const_iterator>::value);
   static_assert(
       std::is_same<auto_iterator_selector<const std::map<int, char>>::type,
-                   std::map<int, char>::const_iterator>::value,
-      "");
+                   std::map<int, char>::const_iterator>::value);
   static_assert(std::is_same<auto_iterator_selector<const std::set<int>>::type,
-                             std::set<int>::const_iterator>::value,
-                "");
+                             std::set<int>::const_iterator>::value);
   static_assert(
       std::is_same<auto_iterator_selector<const std::vector<int>>::type,
-                   std::vector<int>::const_iterator>::value,
-      "");
+                   std::vector<int>::const_iterator>::value);
 }
 
 }  // namespace

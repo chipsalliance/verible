@@ -704,9 +704,8 @@ class GetPartitionAlignmentSubrangesTestFixture : public AlignmentTestFixture {
     }
     if (text == "nomatch") {
       return AlignmentGroupAction::kNoMatch;
-    } else {
-      return AlignmentGroupAction::kIgnore;
     }
+    return AlignmentGroupAction::kIgnore;
   }
 
  protected:
@@ -730,6 +729,7 @@ TEST_F(GetPartitionAlignmentSubrangesTestFixture, VariousRanges) {
 
   using P = std::pair<int, int>;
   std::vector<P> range_indices;
+  range_indices.reserve(ranges.size());
   for (const auto& range : ranges) {
     range_indices.push_back(SubRangeIndices(range.range, children));
   }
@@ -808,9 +808,8 @@ class GetPartitionAlignmentSubrangesSubtypedTestFixture
     }
     if (text == "nomatch") {
       return {AlignmentGroupAction::kNoMatch};
-    } else {
-      return {AlignmentGroupAction::kIgnore};
     }
+    return {AlignmentGroupAction::kIgnore};
   }
 
  protected:
@@ -830,6 +829,7 @@ TEST_F(GetPartitionAlignmentSubrangesSubtypedTestFixture, VariousRanges) {
 
   using P = std::pair<int, int>;
   std::vector<P> range_indices;
+  range_indices.reserve(ranges.size());
   for (const auto& range : ranges) {
     range_indices.push_back(SubRangeIndices(range.range, children));
   }
@@ -1064,7 +1064,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       }
       uwline.SpanUpToToken(token_iter);
       uwline.SetOrigin(item.get());
-      partition_.Children().emplace_back(std::move(uwline));
+      partition_.Children().emplace_back(uwline);
       SymbolCastToNode(*syntax_tree_).AppendChild(std::move(item));
     }
   }
@@ -1100,11 +1100,10 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
     }
     if ((*it)->Text() == ")") {
       return SymbolPtr(nullptr);
-    } else {
-      SymbolPtr leaf = Leaf(0, (*it)->Text());
-      ++*it;
-      return leaf;
     }
+    SymbolPtr leaf = Leaf(0, (*it)->Text());
+    ++*it;
+    return leaf;
   }
 };
 
@@ -1498,7 +1497,7 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
 
  protected:
   void RunTestCase(TokenPartitionTree actual,
-                   const TokenPartitionTree expected) {
+                   const TokenPartitionTree& expected) {
     TokenPartitionTree::subnodes_type nodes;
     nodes.push_back(std::move(actual));
     FormatUsingOriginalSpacing(TokenPartitionRange(nodes.begin(), nodes.end()));

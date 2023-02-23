@@ -26,6 +26,7 @@ Checks: >
   clang-analyzer-*,
   -clang-analyzer-core.NonNullParamChecker,
   -clang-analyzer-cplusplus.NewDeleteLeaks,
+  -clang-analyzer-optin.performance.Padding,
   abseil-*,
   -abseil-no-namespace,
   readability-*,

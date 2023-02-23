@@ -259,7 +259,7 @@ TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+          auto decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
           // Verify that quals is either nullptr or empty or contains only
           // nullptrs.
@@ -293,6 +293,7 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
       {"static ", {kTag, "foo"}, " bar;\n"},
       {"var static ", {kTag, "foo"}, " bar;\n"},
       {"automatic ", {kTag, "foo"}, " bar;\n"},
+
       {"class c;\n",
        {kTag, "int"},
        " foo;\n"
@@ -302,6 +303,7 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
        {kTag, "int"},
        " foo;\n"
        "endclass\n"},
+
       {"class c;\n"
        "function f;\n"
        "const ",
@@ -309,27 +311,29 @@ TEST(GetTypeOfDataDeclarationTest, ExplicitTypes) {
        " foo;\n"
        "endfunction\n"
        "endclass\n"},
-      {"class c;\n"
-       "function f;\n"
+
+      {"class c;\n",
+       "function f;\n",
        "const ",
        {kTag, "int"},
        " foo;\n",
        {kTag, "bit"},
-       " bar;\n"
-       "endfunction\n"
+       " bar;\n",
+       "endfunction\n",
        "endclass\n"},
-      {"class c;\n"
-       "function f;\n"
+
+      {"class c;\n",
+       "function f;\n",
        "const ",
        {kTag, "int"},
        " foo;\n",
-       "endfunction\n"
-       "endclass\n"
-       "class d;\n"
+       "endfunction\n",
+       "endclass\n",
+       "class d;\n",
        "function g;\n",
        {kTag, "bit"},
-       " bar;\n"
-       "endfunction\n"
+       " bar;\n",
+       "endfunction\n",
        "endclass\n"},
   };
   for (const auto& test : kTestCases) {

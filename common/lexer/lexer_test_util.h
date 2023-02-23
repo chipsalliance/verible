@@ -179,9 +179,9 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
 
 // These types and objects help dispatch the right overload of TestLexer.
 struct IgnoredText {};
-static const IgnoredText Ignored{};
+inline constexpr IgnoredText Ignored{};
 struct SingleCharTok {};
-static const SingleCharTok SingleChar{};
+inline constexpr SingleCharTok SingleChar{};
 
 // Test for ignored tokens.
 template <class Lexer>

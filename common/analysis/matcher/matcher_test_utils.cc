@@ -56,8 +56,7 @@ void RunMatcherTestCase(const MatcherTestCase& test) {
 
 class MatchCounter : public TreeVisitorRecursive {
  public:
-  explicit MatchCounter(const Matcher& matcher)
-      : matcher_(matcher), num_matches_(0) {}
+  explicit MatchCounter(const Matcher& matcher) : matcher_(matcher) {}
 
   int Count(const Symbol& symbol) {
     num_matches_ = 0;
@@ -69,7 +68,7 @@ class MatchCounter : public TreeVisitorRecursive {
   void Visit(const SyntaxTreeNode& node) final { TestSymbol(node); }
 
  private:
-  Matcher matcher_;
+  const Matcher matcher_;
   int num_matches_ = 0;
 
   void TestSymbol(const Symbol& symbol) {

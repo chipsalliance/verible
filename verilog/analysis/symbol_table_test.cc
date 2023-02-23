@@ -394,12 +394,12 @@ TEST(BuildSymbolTableTest, IntegrityCheckResolvedSymbol) {
     // mind the destruction ordering here:
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
-    root2.Value().local_references_to_bind.push_back(DependentReferences{
+    root2.Value().local_references_to_bind.emplace_back(
         std::make_unique<ReferenceComponentNode>(ReferenceComponent{
             .identifier = "foo",
             .ref_type = ReferenceType::kUnqualified,
             .required_metatype = SymbolMetaType::kUnspecified,
-            .resolved_symbol = &root1})});
+            .resolved_symbol = &root1}));
     // CheckIntegrity() will fail on destruction of symbol_table_2.
   };
   EXPECT_DEATH(test_func(),
@@ -416,12 +416,12 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
     // mind the destruction ordering here:
     // symbol_table1 will outlive symbol_table_2, so give symbol_table_2 a
     // pointer to symbol_table_1.
-    root1.Value().local_references_to_bind.push_back(DependentReferences{
+    root1.Value().local_references_to_bind.emplace_back(
         std::make_unique<ReferenceComponentNode>(ReferenceComponent{
             .identifier = "foo",
             .ref_type = ReferenceType::kUnqualified,
             .required_metatype = SymbolMetaType::kUnspecified,
-            .resolved_symbol = &root1})});
+            .resolved_symbol = &root1}));
     root2.Value().declared_type.user_defined_type =
         root1.Value().local_references_to_bind.front().components.get();
     // CheckIntegrity() will fail on destruction of symbol_table_2.

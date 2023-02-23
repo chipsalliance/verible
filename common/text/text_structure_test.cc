@@ -84,12 +84,12 @@ void MultiTokenTextStructureViewNoTree(TextStructureView* view) {
   CHECK_GE(contents.length(), 5);
   auto& stream = view->MutableTokenStream();
   for (int i = 0; i < 5; ++i) {  // Populate with 5 single-char tokens.
-    stream.push_back(TokenInfo(i + 1, contents.substr(i, 1)));
+    stream.emplace_back(i + 1, contents.substr(i, 1));
   }
   auto& stream_view = view->MutableTokenStreamView();
   // Populate view with 2 tokens.
-  stream_view.push_back(stream.begin() + 1);
-  stream_view.push_back(stream.begin() + 3);
+  stream_view.emplace_back(stream.begin() + 1);
+  stream_view.emplace_back(stream.begin() + 3);
 }
 
 // Test that filtering can keep tokens.
