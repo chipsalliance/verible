@@ -57,7 +57,7 @@ testing::AssertionResult VerifyTree(const T& actual, const T& expected,
     }
     return err;
   }
-  if (actual.Children().size() != 0) {
+  if (!actual.Children().empty()) {
     auto actual_child = actual.Children().begin();
     auto expected_child = expected.Children().begin();
     auto child_path = path;

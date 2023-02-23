@@ -42,11 +42,11 @@ using ParserTestCaseArray = std::initializer_list<const char*>;
 static constexpr VerilogPreprocess::Config kDefaultPreprocess;
 
 // No syntax tree expected from these inputs.
-static const ParserTestCaseArray kEmptyTests = {
+static constexpr ParserTestCaseArray kEmptyTests = {
     "", "    ", "\t\t\t", "\n\n", "// comment\n", "/* comment */\n",
 };
 
-static const ParserTestCaseArray kPreprocessorTests = {
+static constexpr ParserTestCaseArray kPreprocessorTests = {
     "`define TRUTH\n",        // definition without value
     "`define FOO BAR-1\n",    // definition with value
     "`include \"foo.svh\"\n"  // include directive
@@ -108,17 +108,17 @@ static const ParserTestCaseArray kPreprocessorTests = {
 };
 
 // Make sure line continuations, newlines and spaces get filtered out
-static const ParserTestCaseArray kLexerFilterTests = {
+static constexpr ParserTestCaseArray kLexerFilterTests = {
     "parameter \tfoo =\t\t0;",
     "parameter\n\nfoo =\n 0;",
     "parameter \\\nfoo =\\\n 0;",
     "//comment with line-continuation\\\n",
-    "//comment1 with line-continuation\\\n"
-    "//comment2 with line-continuation\\\n",
+    ("//comment1 with line-continuation\\\n"
+     "//comment2 with line-continuation\\\n"),
 };
 
 // Numbers are parsed as ([width], [signed]base, digits)
-static const ParserTestCaseArray kNumberTests = {
+static constexpr ParserTestCaseArray kNumberTests = {
     "parameter foo = 0;",
     "parameter int foo = 0;",
     "parameter int foo = '0;",
@@ -204,7 +204,7 @@ static const ParserTestCaseArray kNumberTests = {
 };
 
 // classes are a System Verilog construct
-static const ParserTestCaseArray kClassTests = {
+static constexpr ParserTestCaseArray kClassTests = {
     "class semicolon_classy; ; ;;; ; ; ;endclass",
     "class Foo; endclass",
     "class static Foo; endclass",
@@ -504,7 +504,7 @@ static const ParserTestCaseArray kClassTests = {
     "endclass",
 };
 
-static const ParserTestCaseArray kFunctionTests = {
+static constexpr ParserTestCaseArray kFunctionTests = {
     "function integer add;\n"
     "input a, b;\n"
     "begin\n"
@@ -887,7 +887,7 @@ static const ParserTestCaseArray kFunctionTests = {
     "endfunction\n",
 };
 
-static const ParserTestCaseArray kTaskTests = {
+static constexpr ParserTestCaseArray kTaskTests = {
     "task task_a;\n"
     "endtask",
     "task static task_a;\n"
@@ -1332,7 +1332,7 @@ static const ParserTestCaseArray kTaskTests = {
     "endtask\n",
 };
 
-static const ParserTestCaseArray kModuleTests = {
+static constexpr ParserTestCaseArray kModuleTests = {
     "module modular_thing;\n"
     "endmodule",
     "module semicolon_madness;;;;;\n"
@@ -3495,7 +3495,7 @@ static const ParserTestCaseArray kModuleTests = {
     "endmodule",
 };
 
-static const ParserTestCaseArray kModuleInstanceTests = {
+static constexpr ParserTestCaseArray kModuleInstanceTests = {
     "module tryme;\n"
     "logic lol;\n"   // is a data_declaration
     "wire money;\n"  // is a net_declaration
@@ -3544,7 +3544,7 @@ static const ParserTestCaseArray kModuleInstanceTests = {
     "endmodule",
 };
 
-static const ParserTestCaseArray kInterfaceTests = {
+static constexpr ParserTestCaseArray kInterfaceTests = {
     "interface Face;\n"
     "endinterface",
     "interface Face;\n"
@@ -3682,7 +3682,7 @@ endinterface : conduit_if
     "endinterface",
 };
 
-static const ParserTestCaseArray kTypedefTests = {
+static constexpr ParserTestCaseArray kTypedefTests = {
     "typedef i_am_a_type_really;",
     "typedef reg[3:0] quartet;",
     "typedef reg quartet[3:0];",
@@ -3764,7 +3764,7 @@ static const ParserTestCaseArray kTypedefTests = {
 };
 
 // typedefs as forward declarations
-static const ParserTestCaseArray kStructTests = {
+static constexpr ParserTestCaseArray kStructTests = {
     "typedef struct mystruct_fwd;",
     // anonymous structs:
     "struct { int i; bit b; } foo;",
@@ -3773,11 +3773,11 @@ static const ParserTestCaseArray kStructTests = {
     "struct packed unsigned { int i; bit b; } foo;",
 };
 
-static const ParserTestCaseArray kEnumTests = {
+static constexpr ParserTestCaseArray kEnumTests = {
     "typedef enum myenum_fwd;",
 };
 
-static const ParserTestCaseArray kUnionTests = {
+static constexpr ParserTestCaseArray kUnionTests = {
     "typedef union myunion_fwd;",
     // anonymous unions:
     "union { int i; bit b; } foo;",
@@ -3793,7 +3793,7 @@ static const ParserTestCaseArray kUnionTests = {
 // TODO(fangism): implement and test ENUM_CONSTANT
 
 // packages
-static const ParserTestCaseArray kPackageTests = {
+static constexpr ParserTestCaseArray kPackageTests = {
     "package mypkg;\n"
     "endpackage",
     "package automatic mypkg;\n"
@@ -4041,7 +4041,7 @@ static const ParserTestCaseArray kPackageTests = {
     "endpackage\n",
 };
 
-static const ParserTestCaseArray kDescriptionTests = {
+static constexpr ParserTestCaseArray kDescriptionTests = {
     // preprocessor balanced top-level description items
     "`ifdef DEBUGGER\n"  // empty
     "`endif\n",
@@ -4139,7 +4139,7 @@ static const ParserTestCaseArray kDescriptionTests = {
     "`endif\n",
 };
 
-static const ParserTestCaseArray kSequenceTests = {
+static constexpr ParserTestCaseArray kSequenceTests = {
     "sequence myseq;\n"
     "  a != b\n"
     "endsequence\n",
@@ -4183,7 +4183,7 @@ static const ParserTestCaseArray kSequenceTests = {
     "endsequence\n",
 };
 
-static const ParserTestCaseArray kPropertyTests = {
+static constexpr ParserTestCaseArray kPropertyTests = {
     "property ready_follows_valid_bounded_P;\n"
     "  @(posedge clk) disable iff (reset)\n"
     "  valid |-> eventually [0:Bound] (ready);\n"
@@ -4348,7 +4348,7 @@ static const ParserTestCaseArray kPropertyTests = {
     "endproperty\n",
 };
 
-static const ParserTestCaseArray kModuleMemberTests = {
+static constexpr ParserTestCaseArray kModuleMemberTests = {
     "module mymodule;\n"
     "task subtask;\n"
     "endtask\n"
@@ -4673,7 +4673,7 @@ static const ParserTestCaseArray kModuleMemberTests = {
     "endgroup",
 };
 
-static const ParserTestCaseArray kClassMemberTests = {
+static constexpr ParserTestCaseArray kClassMemberTests = {
     // member tasks
     "class myclass;\n"
     "task subtask;\n"
@@ -5001,7 +5001,7 @@ static const ParserTestCaseArray kClassMemberTests = {
     "endclass\n",
 };
 
-static const ParserTestCaseArray kInterfaceClassTests = {
+static constexpr ParserTestCaseArray kInterfaceClassTests = {
     "interface class base_ic;\n"
     "endclass",
     "interface class base_ic;\n"
@@ -5046,7 +5046,7 @@ static const ParserTestCaseArray kInterfaceClassTests = {
     "endclass",
 };
 
-static const ParserTestCaseArray kConstraintTests = {
+static constexpr ParserTestCaseArray kConstraintTests = {
     "constraint solve_this {\n"
     "  solve x.z before y.x;\n"
     "}",
@@ -5200,7 +5200,7 @@ static const ParserTestCaseArray kConstraintTests = {
     "}",
 };
 
-static const ParserTestCaseArray kConfigTests = {
+static constexpr ParserTestCaseArray kConfigTests = {
     "config cfg;\n"
     "  design foo.bar;\n"  // library-qualified cell-id
     "endconfig",
@@ -5427,7 +5427,7 @@ static const ParserTestCaseArray kConfigTests = {
     "endconfig",
 };
 
-static const ParserTestCaseArray kPrimitiveTests = {
+static constexpr ParserTestCaseArray kPrimitiveTests = {
     "primitive ape (output out, input in1, input in2);\n"
     "  table\n"
     "    0:0:0;\n"  // sequential entry
@@ -5500,7 +5500,7 @@ static const ParserTestCaseArray kPrimitiveTests = {
     "endprimitive",
 };
 
-static const ParserTestCaseArray kDisciplineTests = {
+static constexpr ParserTestCaseArray kDisciplineTests = {
     "discipline d;\n"
     "enddiscipline\n",
     "discipline d \n"  // no ';'
@@ -5519,7 +5519,7 @@ static const ParserTestCaseArray kDisciplineTests = {
     "enddiscipline\n",
 };
 
-static const ParserTestCaseArray kMultiBlockTests = {
+static constexpr ParserTestCaseArray kMultiBlockTests = {
     // check for correct scope switching around timescale and module
     "module modular_thing1;\n"
     "endmodule\n"
@@ -5555,7 +5555,7 @@ static const ParserTestCaseArray kMultiBlockTests = {
     "  endtask\n"
     "endclass\n"};
 
-static const ParserTestCaseArray kRandSequenceTests = {
+static constexpr ParserTestCaseArray kRandSequenceTests = {
     // randsequence inside initial block
     "module foo();\n"
     "initial begin\n"
@@ -5711,7 +5711,7 @@ static const ParserTestCaseArray kRandSequenceTests = {
     "endtask\n",
 };
 
-static const ParserTestCaseArray kNetAliasTests = {
+static constexpr ParserTestCaseArray kNetAliasTests = {
     "module byte_swap (inout wire [31:0] A, inout wire [31:0] B);\n"
     "  alias {A[7:0],A[15:8],A[23:16],A[31:24]} = B;\n"
     "endmodule\n",
@@ -5744,7 +5744,7 @@ static const ParserTestCaseArray kNetAliasTests = {
 };
 
 // These tests target LRM Ch. 33
-static const ParserTestCaseArray kLibraryTests = {
+static constexpr ParserTestCaseArray kLibraryTests = {
     ";\n",
     "library foolib bar;\n",
     "library foolib *.bar;\n",

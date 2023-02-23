@@ -2387,27 +2387,26 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
         style_(CreateStyle()),
         factory_(LayoutFunctionFactory(style_)) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfosExternalStringBuffer(ftokens_);
     ConnectPreFormatTokensPreservedSpaceStarts(sample_.data(),
                                                &pre_format_tokens_);
 
     // Set token properties
-    for (auto token_it = pre_format_tokens_.begin();
-         token_it != pre_format_tokens_.end(); ++token_it) {
-      const auto leading_spaces = token_it->OriginalLeadingSpaces();
+    for (auto& token : pre_format_tokens_) {
+      const auto leading_spaces = token.OriginalLeadingSpaces();
 
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
-        token_it->before.break_decision = SpacingOptions::MustWrap;
+        token.before.break_decision = SpacingOptions::MustWrap;
         auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
         if (last_non_space_offset != absl::string_view::npos) {
-          token_it->before.spaces_required =
+          token.before.spaces_required =
               leading_spaces.size() - 1 - last_non_space_offset;
         }
       } else {
-        token_it->before.spaces_required = leading_spaces.size();
+        token.before.spaces_required = leading_spaces.size();
       }
     }
     pre_format_tokens_.front().before.break_decision = SpacingOptions::MustWrap;

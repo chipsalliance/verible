@@ -162,6 +162,7 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        {kToken, ";"},
        "`uvm_analysis_imp_decl(_TX)",
        {kToken, ";"}},
+
       {"`uvm_info_begin(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_message_add_tag(\"my_color\", \"red\")",
@@ -176,7 +177,7 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "endfunction\n"},
-      {"function void f();"
+      {"function void f();",
        "`uvm_info_begin(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_message_add_tag(\"my_color\", \"red\")",
@@ -186,7 +187,8 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "`uvm_info_end",
        {kToken, ";"},
        "endfunction\n"},
-      {"function void f();"
+
+      {"function void f();",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -196,11 +198,13 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
        "endfunction\n"},
+
       {"task t();"
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "endtask\n"},
-      {"task t();"
+
+      {"task t();",
        "`uvm_info_begin(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_message_add_tag(\"my_color\", \"red\")",
@@ -210,7 +214,8 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "`uvm_info_end",
        {kToken, ";"},
        "endtask\n"},
-      {"task t();"
+
+      {"task t();",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -233,11 +238,11 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
       {"class c extends uvm_object;",
        "`uvm_object_utils_begin(c)",
        {kToken, ";"},
-       "\n"
+       "\n",
        "`uvm_object_utils_end\n",
        "endclass\n"},
-      {"class c extends uvm_object;"
-       "function void f();"
+      {"class c extends uvm_object;",
+       "function void f();",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -246,11 +251,11 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        {kToken, ";"},
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
-       "endfunction\n"
+       "endfunction\n",
        "endclass\n"},
 
       // Module scope
-      {"module top;"
+      {"module top;",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -262,22 +267,22 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "endmodule\n"},
 
       // Block scope
-      {"function void f();"
-       "if(1)\n"
+      {"function void f();",
+       "if(1)\n",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
-       "if(1)\n"
+       "if(1)\n",
        "`uvm_warning(\"msg_id\",\"message\")",
        {kToken, ";"},
-       "if(1)\n"
+       "if(1)\n",
        "`uvm_error(\"msg_id\",\"message\")",
        {kToken, ";"},
-       "if(1)\n"
+       "if(1)\n",
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
        "endfunction"},
-      {"function void f();"
-       "if(1) begin\n"
+      {"function void f();",
+       "if(1) begin\n",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -286,24 +291,25 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        {kToken, ";"},
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
-       "end\n"
+       "end\n",
        "endfunction\n"},
-      {"task t();"
-       "for(int i=0;i<10;i++)"
+      {"task t();",
+       "for(int i=0;i<10;i++)",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
-       "for(int i=0;i<10;i++)"
+       "for(int i=0;i<10;i++)",
        "`uvm_warning(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
-       "for(int i=0;i<10;i++)"
+       "for(int i=0;i<10;i++)",
        "`uvm_error(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
-       "for(int i=0;i<10;i++)"
+       "for(int i=0;i<10;i++)",
        "`uvm_fatal(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "endtask\n"},
-      {"task t();"
-       "for(int i=0;i<10;i++) begin"
+
+      {"task t();",
+       "for(int i=0;i<10;i++) begin",
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
        "`uvm_warning(\"msg_id\",\"message\")",
@@ -312,7 +318,7 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        {kToken, ";"},
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
-       "end\n"
+       "end\n",
        "endtask\n"}};
   RunLintTestCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases);
 }
