@@ -65,7 +65,8 @@ fi
 # If there is an issue with the configuration, clang tidy will
 # not exit with a non-zero exit code (at least clang-tidy-11)
 # But at least there will be an error message to stderr.
-${CLANG_TIDY} --dump-config > /dev/null 2> ${CLANG_TIDY_CONFIG_MSG}
+${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --dump-config \
+  > /dev/null 2> ${CLANG_TIDY_CONFIG_MSG}
 if [ -s ${CLANG_TIDY_CONFIG_MSG} ]; then
   cat ${CLANG_TIDY_CONFIG_MSG}
   exit 1
@@ -92,10 +93,13 @@ for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
                 -or -name "*.h" -and -not -name "*test*.h" \
              | grep -v "verilog/tools/kythe" \
              | grep -v "verilog/tools/ls/vscode" \
-             ) ; do
-  (echo $CLANG_TIDY ; cat .clang-tidy WORKSPACE $f) | md5sum | sed "s|-|$f|g"
+           )
+do
+  (${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE $f) \
+    | md5sum | sed "s|-|$f|g"
 done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 
+# Only the files with different hashes are the ones we want to process.
 join -v2 ${CLANG_TIDY_SEEN_CACHE} ${CLANG_TIDY_SEEN_CACHE}.new \
   | awk '{print $2}' | sort > ${FILES_TO_PROCESS}
 
@@ -108,7 +112,7 @@ if [ -s ${FILES_TO_PROCESS} ]; then
 
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
-            ${CLANG_TIDY} --quiet 2>/dev/null \
+      ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet 2>/dev/null \
     | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
 
   mv ${TIDY_OUT}.tmp ${TIDY_OUT}
@@ -116,8 +120,7 @@ if [ -s ${FILES_TO_PROCESS} ]; then
   echo "::endgroup::"
 
   echo ::group::Summary
-  sed 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < ${TIDY_OUT} | sort | uniq -c | sort -n
-
+  sed 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < ${TIDY_OUT} | sort | uniq -c | sort -rn
   echo "::endgroup::"
 
   if [ -s ${TIDY_OUT} ]; then
