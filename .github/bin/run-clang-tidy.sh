@@ -15,6 +15,12 @@
 
 set -u
 
+# The caller can supply additional clang-tidy flags that are passed
+# to it as-is.
+# Example:
+# .github/bin/run-clang-tidy.sh --checks="-*,modernize-use-equals-default" --fix
+readonly ADDITIONAL_TIDY_OPTIONS=("$@")
+
 readonly CLANG_CONFIG_FILE=.clang-tidy
 
 TMPDIR="${TMPDIR:-/tmp}"
@@ -112,7 +118,7 @@ if [ -s ${FILES_TO_PROCESS} ]; then
 
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
-      ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet 2>/dev/null \
+      ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet "${ADDITIONAL_TIDY_OPTIONS[@]}" 2>/dev/null \
     | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
 
   mv ${TIDY_OUT}.tmp ${TIDY_OUT}
