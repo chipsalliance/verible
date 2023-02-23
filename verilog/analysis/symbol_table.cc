@@ -224,6 +224,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPortList:
         DeclarePorts(node);
         break;
+      case NodeEnum::kModulePortDeclaration:
       case NodeEnum::kPortItem:           // fall-through
                                           // for function/task parameters
       case NodeEnum::kPortDeclaration:    // fall-through
@@ -607,7 +608,18 @@ class SymbolTable::Builder : public TreeContextVisitor {
         Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId,
              NodeEnum::kDataTypeImplicitBasicIdDimensions,
-             NodeEnum::kPortItem})) {
+             NodeEnum::kPortItem}) ||
+        Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kIdentifierUnpackedDimensions,
+             NodeEnum::kIdentifierList, NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kIdentifierUnpackedDimensions,
+                                    NodeEnum::kIdentifierUnpackedDimensionsList,
+                                    NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kPortIdentifier,
+                                    NodeEnum::kPortIdentifierList,
+                                    NodeEnum::kModulePortDeclaration})) {
       // This identifier declares a (non-parameter) port (of a module,
       // function, task).
       EmplaceTypedElementInCurrentScope(
