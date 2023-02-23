@@ -38,7 +38,7 @@ TEST(MakeStringViewRangeTest, BadRange) {
   EXPECT_DEATH(make_string_view_range(text.end(), text.begin()), "Malformed");
 }
 
-typedef std::pair<int, int> IntPair;
+using IntPair = std::pair<int, int>;
 
 TEST(ByteOffsetRangeTest, EmptyInEmpty) {
   const absl::string_view superstring("");

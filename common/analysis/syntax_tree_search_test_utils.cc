@@ -58,7 +58,7 @@ struct LessStringRanges {
   }
 };
 
-typedef std::set<absl::string_view, LessStringRanges> StringRangeSet;
+using StringRangeSet = std::set<absl::string_view, LessStringRanges>;
 
 // This function helps find symmetric differences between two sets
 // of findings (actual vs. expected) based on locations.

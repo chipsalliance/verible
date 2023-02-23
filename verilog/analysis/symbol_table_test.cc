@@ -124,7 +124,7 @@ TEST(SymbolMetaTypePrintTest, Print) {
 }
 
 TEST(SymbolTableNodeFullPathTest, Print) {
-  typedef SymbolTableNode::key_value_type KV;
+  using KV = SymbolTableNode::key_value_type;
   const SymbolTableNode root(
       SymbolInfo{},
       KV("AA", SymbolTableNode(SymbolInfo{}, KV("BB", SymbolTableNode{}))));
@@ -211,8 +211,8 @@ TEST(ReferenceComponentTest, MatchesMetatypeTest) {
 }
 
 TEST(ReferenceNodeFullPathTest, Print) {
-  typedef ReferenceComponentNode Node;
-  typedef ReferenceComponent Data;
+  using Node = ReferenceComponentNode;
+  using Data = ReferenceComponent;
   const Node root(
       Data{.identifier = "xx",
            .ref_type = ReferenceType::kUnqualified,
@@ -257,7 +257,7 @@ TEST(DependentReferencesTest, PrintOnlyRootNodeUnresolved) {
 
 TEST(DependentReferencesTest, PrintNonRootResolved) {
   // Synthesize a symbol table.
-  typedef SymbolTableNode::key_value_type KV;
+  using KV = SymbolTableNode::key_value_type;
   SymbolTableNode root(
       SymbolInfo{SymbolMetaType::kRoot},
       KV{"p_pkg",

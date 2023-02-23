@@ -108,7 +108,7 @@ TEST(VectorTreeTest, RootOnlySiblingIteration) {
 }
 
 TEST(VectorTreeTest, CopyAssignEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
   tree_type tree2(5);
@@ -126,7 +126,7 @@ TEST(VectorTreeTest, CopyAssignEmpty) {
 }
 
 TEST(VectorTreeTest, CopyAssignDeep) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1,
                        tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   const tree_type expected(
@@ -146,7 +146,7 @@ TEST(VectorTreeTest, CopyAssignDeep) {
 }
 
 TEST(VectorTreeTest, CopyInitializeEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
   tree_type tree2 = tree;
@@ -163,7 +163,7 @@ TEST(VectorTreeTest, CopyInitializeEmpty) {
 }
 
 TEST(VectorTreeTest, CopyInitializeDeep) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1,
                        tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   const tree_type expected(
@@ -182,7 +182,7 @@ TEST(VectorTreeTest, CopyInitializeDeep) {
 }
 
 TEST(VectorTreeTest, MoveInitializeEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
   tree_type tree2 = std::move(tree);
@@ -192,7 +192,7 @@ TEST(VectorTreeTest, MoveInitializeEmpty) {
 }
 
 TEST(VectorTreeTest, MoveInitializeDeep) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   const tree_type expected(
       1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
@@ -203,7 +203,7 @@ TEST(VectorTreeTest, MoveInitializeDeep) {
 }
 
 TEST(VectorTreeTest, MoveAssignEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
   tree_type tree2(2);
@@ -216,7 +216,7 @@ TEST(VectorTreeTest, MoveAssignEmpty) {
 }
 
 TEST(VectorTreeTest, MoveAssignDeep) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   tree_type tree2(7, tree_type(8, tree_type(9)));
   tree2 = std::move(tree);
@@ -228,7 +228,7 @@ TEST(VectorTreeTest, MoveAssignDeep) {
 }
 
 TEST(VectorTreeTest, SwapUnrelatedRoots) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   tree_type tree2(7, tree_type(8, tree_type(9)));
   const tree_type t1_expected(tree2);  // deep-copy
@@ -247,7 +247,7 @@ TEST(VectorTreeTest, SwapUnrelatedRoots) {
 }
 
 TEST(VectorTreeTest, SwapUnrelatedSubtrees) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   tree_type tree2(7, tree_type(8, tree_type(9, tree_type(10))));
   swap(tree.Children()[0], tree2.Children()[0]);
@@ -267,7 +267,7 @@ TEST(VectorTreeTest, SwapUnrelatedSubtrees) {
 }
 
 TEST(VectorTreeTest, SwapSiblings) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,  //
                  tree_type(0),
                  tree_type(2, tree_type(3, tree_type(4, tree_type(5)))),
@@ -284,7 +284,7 @@ TEST(VectorTreeTest, SwapSiblings) {
 }
 
 TEST(VectorTreeTest, SwapDistantCousins) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,  //
                  tree_type(0),
                  tree_type(2, tree_type(3, tree_type(4, tree_type(5)))),
@@ -981,35 +981,35 @@ TEST(VectorTreeTest, FamilyTreeMembersDeepEqualCustomComparator) {
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorNoneMutable) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree1{0}, tree2{0};
   EXPECT_EQ(NearestCommonAncestor(tree1, tree2), nullptr);
   EXPECT_EQ(NearestCommonAncestor(tree2, tree1), nullptr);
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorNoneConst) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree1{0}, tree2{0};
   EXPECT_EQ(NearestCommonAncestor(tree1, tree2), nullptr);
   EXPECT_EQ(NearestCommonAncestor(tree2, tree1), nullptr);
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorSameMutable) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree{0};
   EXPECT_EQ(NearestCommonAncestor(tree, tree), &tree);
   EXPECT_EQ(NearestCommonAncestor(tree, tree), &tree);
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorSameConst) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree{0};
   EXPECT_EQ(NearestCommonAncestor(tree, tree), &tree);
   EXPECT_EQ(NearestCommonAncestor(tree, tree), &tree);
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorOneIsRootConst) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1,            //
                        tree_type(2,  //
                                  tree_type(4), tree_type(5)),
@@ -1033,7 +1033,7 @@ TEST(VectorTreeTest, NearestCommonAncestorOneIsRootConst) {
 }
 
 TEST(VectorTreeTest, NearestCommonAncestorNeitherIsRootConst) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   const tree_type tree(1,            //
                        tree_type(2,  //
                                  tree_type(4), tree_type(5)),
@@ -1417,7 +1417,7 @@ static std::vector<typename T::value_type> NodeValues(const T& node) {
 }
 
 TEST(VectorTreeTest, AdoptSubtreesFromEmptyToEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree1(1), tree2(2);  // no subtrees
   EXPECT_TRUE(is_leaf(tree1));
   EXPECT_TRUE(is_leaf(tree2));
@@ -1428,7 +1428,7 @@ TEST(VectorTreeTest, AdoptSubtreesFromEmptyToEmpty) {
 }
 
 TEST(VectorTreeTest, AdoptSubtreesFromEmptyToNonempty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree1(1, tree_type(4)), tree2(2);
   EXPECT_THAT(NodeValues(tree1), ElementsAre(4));
   EXPECT_THAT(NodeValues(tree2), ElementsAre());
@@ -1439,7 +1439,7 @@ TEST(VectorTreeTest, AdoptSubtreesFromEmptyToNonempty) {
 }
 
 TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree1(1), tree2(2, tree_type(5));
   EXPECT_THAT(NodeValues(tree1), ElementsAre());
   EXPECT_THAT(NodeValues(tree2), ElementsAre(5));
@@ -1450,7 +1450,7 @@ TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToEmpty) {
 }
 
 TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToNonempty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree1(1, tree_type(3), tree_type(6)),
       tree2(2, tree_type(5), tree_type(8));
   EXPECT_THAT(NodeValues(tree1), ElementsAre(3, 6));
@@ -1462,7 +1462,7 @@ TEST(VectorTreeTest, AdoptSubtreesFromNonemptyToNonempty) {
 }
 
 TEST(VectorTreeTest, MergeConsecutiveSiblingsTooFewElements) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2));
   auto adder = [](int* left, const int& right) { *left += right; };
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
@@ -1470,7 +1470,7 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsTooFewElements) {
 }
 
 TEST(VectorTreeTest, MergeConsecutiveSiblingsOutOfBounds) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2), tree_type(3));
   auto adder = [](int* left, const int& right) { *left += right; };
   EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3));
@@ -1478,7 +1478,7 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsOutOfBounds) {
 }
 
 TEST(VectorTreeTest, MergeConsecutiveSiblingsAddLeaves) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2), tree_type(3), tree_type(4), tree_type(5));
   auto adder = [](int* left, const int& right) { *left += right; };
   EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
@@ -1499,7 +1499,7 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsAddLeaves) {
 }
 
 TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtreesOnce) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -1518,7 +1518,7 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtreesOnce) {
 }
 
 TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtrees) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -1546,13 +1546,13 @@ TEST(VectorTreeTest, MergeConsecutiveSiblingsConcatenateSubtrees) {
 }
 
 TEST(VectorTreeTest, RemoveSelfFromParentRoot) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);
   EXPECT_DEATH(RemoveSelfFromParent(tree), "");
 }
 
 TEST(VectorTreeTest, RemoveSelfFromParentFirstChild) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1576,7 +1576,7 @@ TEST(VectorTreeTest, RemoveSelfFromParentFirstChild) {
 }
 
 TEST(VectorTreeTest, RemoveSelfFromParentMiddleChildWithGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1600,7 +1600,7 @@ TEST(VectorTreeTest, RemoveSelfFromParentMiddleChildWithGrandchildren) {
 }
 
 TEST(VectorTreeTest, RemoveSelfFromParentMiddleChildWithoutGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1624,7 +1624,7 @@ TEST(VectorTreeTest, RemoveSelfFromParentMiddleChildWithoutGrandchildren) {
 }
 
 TEST(VectorTreeTest, RemoveSelfFromParentLastChild) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1649,7 +1649,7 @@ TEST(VectorTreeTest, RemoveSelfFromParentLastChild) {
 }
 
 TEST(VectorTreeTest, FlattenOnceNoChildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);
   EXPECT_THAT(NodeValues(tree), ElementsAre());
 
@@ -1661,7 +1661,7 @@ TEST(VectorTreeTest, FlattenOnceNoChildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnceNoGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,  // no grandchildren
                  tree_type(2), tree_type(3), tree_type(4), tree_type(5));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
@@ -1674,7 +1674,7 @@ TEST(VectorTreeTest, FlattenOnceNoGrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnceOneGrandchild) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3)));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
@@ -1686,7 +1686,7 @@ TEST(VectorTreeTest, FlattenOnceOneGrandchild) {
 }
 
 TEST(VectorTreeTest, FlattenOnceMixed) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1706,7 +1706,7 @@ TEST(VectorTreeTest, FlattenOnceMixed) {
 }
 
 TEST(VectorTreeTest, FlattenOnceAllNonempty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -1729,7 +1729,7 @@ TEST(VectorTreeTest, FlattenOnceAllNonempty) {
 }
 
 TEST(VectorTreeTest, FlattenOnceGreatgrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,                      //
                  tree_type(2,            //
                            tree_type(6,  //
@@ -1761,7 +1761,7 @@ TEST(VectorTreeTest, FlattenOnceGreatgrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);
   EXPECT_THAT(NodeValues(tree), ElementsAre());
 
@@ -1775,7 +1775,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildrenNoOffsets) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1);
   EXPECT_THAT(NodeValues(tree), ElementsAre());
 
@@ -1787,7 +1787,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoChildrenNoOffsets) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,  // no grandchildren
                  tree_type(2), tree_type(3), tree_type(4), tree_type(5));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2, 3, 4, 5));
@@ -1804,7 +1804,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenNoGrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchild) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3)));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
@@ -1818,7 +1818,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchild) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchildNoOffsets) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3)));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
@@ -1830,7 +1830,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenOneGrandchildNoOffsets) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenTwoGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1, tree_type(2, tree_type(3), tree_type(7)));
   EXPECT_THAT(NodeValues(tree), ElementsAre(2));
 
@@ -1844,7 +1844,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenTwoGrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenMixed) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,             //
                  tree_type(2),  // no grandchildren
                  tree_type(3,   //
@@ -1868,7 +1868,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenMixed) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenAllNonempty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -1893,7 +1893,7 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenAllNonempty) {
 }
 
 TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenGreatgrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,                      //
                  tree_type(2,            //
                            tree_type(6,  //
@@ -1927,13 +1927,13 @@ TEST(VectorTreeTest, FlattenOnlyChildrenWithChildrenGreatgrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOneChildEmpty) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(4);  // no children
   EXPECT_DEATH(FlattenOneChild(tree, 0), "");
 }
 
 TEST(VectorTreeTest, FlattenOneChildOnlyChildNoGrandchildren) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(4, tree_type(2));  // no grandchildren
   const tree_type expect_tree(4);
   FlattenOneChild(tree, 0);
@@ -1943,7 +1943,7 @@ TEST(VectorTreeTest, FlattenOneChildOnlyChildNoGrandchildren) {
 }
 
 TEST(VectorTreeTest, FlattenOneChildOnlyChildOneGrandchild) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(4, tree_type(2, tree_type(11)));  // with grandchild
   const tree_type expect_tree(4, tree_type(11));
   FlattenOneChild(tree, 0);
@@ -1953,7 +1953,7 @@ TEST(VectorTreeTest, FlattenOneChildOnlyChildOneGrandchild) {
 }
 
 TEST(VectorTreeTest, FlattenOneChildFirstChildInFamilyTree) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -1979,7 +1979,7 @@ TEST(VectorTreeTest, FlattenOneChildFirstChildInFamilyTree) {
 }
 
 TEST(VectorTreeTest, FlattenOneChildMiddleChildInFamilyTree) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),
@@ -2005,7 +2005,7 @@ TEST(VectorTreeTest, FlattenOneChildMiddleChildInFamilyTree) {
 }
 
 TEST(VectorTreeTest, FlattenOneChildLastChildInFamilyTree) {
-  typedef VectorTree<int> tree_type;
+  using tree_type = VectorTree<int>;
   tree_type tree(1,            //
                  tree_type(2,  //
                            tree_type(6), tree_type(7)),

@@ -33,7 +33,7 @@ using VectorTreeTestType = VectorTree<NamedInterval>;
 // Convenient type alias for constructing test trees.
 // Calling this like a function actually invokes the recursive constructor
 // and builds entire trees using recursive initializer lists.
-typedef VectorTreeTestType MakeTree;
+using MakeTree = VectorTreeTestType;
 
 VectorTreeTestType MakeRootOnlyExampleTree() {
   return MakeTree({0, 2, "root"});

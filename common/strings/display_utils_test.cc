@@ -104,7 +104,7 @@ TEST(EscapeStringTest, Various) {
   }
 }
 
-typedef std::vector<int> IntVector;
+using IntVector = std::vector<int>;
 
 // Normally a definition like the following would appear in a header
 // to be shared.

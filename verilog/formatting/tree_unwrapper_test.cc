@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 // This tree type will be 'diff-ed' against a VectorTree<UnwrappedLine>.
-typedef verible::VectorTree<ExpectedUnwrappedLine> ExpectedUnwrappedLineTree;
+using ExpectedUnwrappedLineTree = verible::VectorTree<ExpectedUnwrappedLine>;
 
 void ValidateExpectedTreeNode(const ExpectedUnwrappedLineTree& etree) {
   // At each tree node, there should either be expected tokens in the node's

@@ -167,7 +167,7 @@ TEST(BoundsEqualTest, DerivedSubStringView) {
   EXPECT_FALSE(BoundsEqual(str.substr(3, 4), str.substr(1, 4)));  // partial
 }
 
-typedef std::pair<int, int> IntPair;
+using IntPair = std::pair<int, int>;
 
 TEST(SubRangeIndicesTest, Empty) {
   const std::vector<int> v;

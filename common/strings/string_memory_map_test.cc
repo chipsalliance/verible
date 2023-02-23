@@ -111,8 +111,8 @@ static absl::string_view StringViewKey(
   return absl::string_view(*ABSL_DIE_IF_NULL(owned));
 }
 
-typedef StringMemoryMap<std::unique_ptr<const std::string>, StringViewKey>
-    StringSet;
+using StringSet =
+    StringMemoryMap<std::unique_ptr<const std::string>, StringViewKey>;
 
 TEST(StringMemoryMapTest, EmptyOwnsNothing) {
   const StringSet sset;
