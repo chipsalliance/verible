@@ -382,6 +382,11 @@ jobs:
         key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
         restore-keys: bazelcache_macos_
 
+    - name: Test compilation DB creation
+      run: |
+        .github/bin/make-compilation-db.sh
+        wc -l compile_commands.json
+
     - name: Tests
       run: bazel test --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
 

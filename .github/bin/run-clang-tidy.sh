@@ -22,7 +22,7 @@ readonly NAME_PREFIX=verible-clang-tidy  # Make files easy to tab-complete-find
 readonly CLANG_TIDY_CONFIG_MSG=${TMPDIR}/${NAME_PREFIX}-config.msg
 
 readonly PARALLEL_COUNT=$(nproc)
-readonly FILES_PER_INVOCATION=5
+readonly FILES_PER_INVOCATION=1
 
 readonly CLANG_TIDY_SEEN_CACHE=${TMPDIR}/${NAME_PREFIX}-hashes.cache
 touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet

@@ -15,16 +15,11 @@
 
 set -u
 set -e
-set -o pipefail
 
-readonly OUTPUT_BASE=$(bazel info output_base)
+bazel fetch ...  # no double-slash: seems to problematic on Windows
 
-# First, build the compilation database baseline with placeholders for exec-root
-bazel build :compdb > /dev/null 2>&1
+readonly OUTPUT_BASE="$(bazel info output_base)"
+python3 "${OUTPUT_BASE}/external/com_grail_bazel_compdb/generate.py"
 
-# Fix up the __OUTPUT_BASE__ to the path used by bazel and put the resulting
-# db with the expected name in the root directory of the project.
-cat bazel-bin/compile_commands.json \
-  | sed "s|__OUTPUT_BASE__|$OUTPUT_BASE|g" \
-  | sed 's/-fno-canonical-system-headers//g' \
-        > compile_commands.json
+# Remove a gcc compiler flag that clang-tidy doesn't understand.
+sed -i -e 's/-fno-canonical-system-headers//g' compile_commands.json

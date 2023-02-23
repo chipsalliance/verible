@@ -195,12 +195,15 @@ http_archive(
     ],
 )
 
+# 2022-09-19
 http_archive(
     name = "com_grail_bazel_compdb",
     sha256 = "a3ff6fe238eec8202270dff75580cba3d604edafb8c3408711e82633c153efa8",
     strip_prefix = "bazel-compilation-database-940cedacdb8a1acbce42093bf67f3a5ca8b265f7",
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/940cedacdb8a1acbce42093bf67f3a5ca8b265f7.tar.gz"],
 )
+load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
+bazel_compdb_deps()
 
 # zlib is imported through protobuf. Make the dependency explicit considering
 # it's used outside protobuf.
