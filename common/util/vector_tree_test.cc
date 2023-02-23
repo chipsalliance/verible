@@ -149,7 +149,10 @@ TEST(VectorTreeTest, CopyInitializeEmpty) {
   using tree_type = VectorTree<int>;
   const tree_type tree(1);  // Root only tree.
   const tree_type expected(1);
-  tree_type tree2 = tree;
+  // Specifically testing copy here.
+  // clang-format off
+  tree_type tree2 = tree;  // NOLINT(performance-unnecessary-copy-initialization)
+  // clang-format on
   {
     const auto result_pair = DeepEqual(tree2, expected);
     EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -168,7 +171,10 @@ TEST(VectorTreeTest, CopyInitializeDeep) {
                        tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
   const tree_type expected(
       1, tree_type(2, tree_type(3, tree_type(4, tree_type(5)))));
-  tree_type tree2 = tree;
+  // Specifically testing copy here.
+  // clang-format off
+  tree_type tree2 = tree;  // NOLINT(performance-unnecessary-copy-initialization)
+  // clang-format on
   {
     const auto result_pair = DeepEqual(tree2, expected);
     EXPECT_EQ(result_pair.left, nullptr) << *result_pair.left;
@@ -680,7 +686,10 @@ TEST(VectorTreeTest, FamilyTreeMembers) {
 // Tests internal consistency and properties of copied tree.
 TEST(VectorTreeTest, FamilyTreeCopiedMembers) {
   const auto orig_tree = verible::testing::MakeExampleFamilyTree();
-  const auto tree(orig_tree);  // copied
+  // Specifically testing copy here.
+  // clang-format off
+  const auto tree(orig_tree);  // NOLINT(performance-unnecessary-copy-initialization)
+  // clang-format on
   VerifyFamilyTree(orig_tree);
   VerifyFamilyTree(tree);
 

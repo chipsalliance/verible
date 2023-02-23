@@ -23,10 +23,10 @@
 #include "gtest/gtest.h"
 
 #undef ASSERT_OK
-#define ASSERT_OK(value)                      \
-  if (auto status__ = (value); status__.ok()) \
-    ;                                         \
-  else                                        \
+#define ASSERT_OK(value)                             \
+  if (const auto &status__ = (value); status__.ok()) \
+    ;                                                \
+  else                                               \
     EXPECT_TRUE(status__.ok()) << status__
 
 namespace verilog {

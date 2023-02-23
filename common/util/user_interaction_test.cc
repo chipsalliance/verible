@@ -28,8 +28,8 @@ TEST(ReadCharFromUserTest, NonTerminalInput) {
   std::ostringstream output;
   char characters[6];
 
-  for (unsigned i = 0; i < 6; ++i) {
-    characters[i] = ReadCharFromUser(input, output, false, "A prompt.");
+  for (char& c : characters) {
+    c = ReadCharFromUser(input, output, false, "A prompt.");
   }
 
   EXPECT_EQ(characters[0], 'a');
@@ -46,10 +46,10 @@ TEST(ReadCharFromUserTest, TerminalInput) {
   std::ostringstream output;
   char characters[4];
 
-  for (unsigned i = 0; i < 4; ++i) {
+  for (char& c : characters) {
     output.str("");
     output.clear();
-    characters[i] = ReadCharFromUser(input, output, true, "A prompt.");
+    c = ReadCharFromUser(input, output, true, "A prompt.");
     EXPECT_TRUE(absl::StrContains(output.str(), "A prompt."))
         << "Actual value: " << output.str();
   }

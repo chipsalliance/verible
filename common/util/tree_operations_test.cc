@@ -144,7 +144,7 @@ class SimpleNode {
   }
 
  protected:
-  void PrintRecursively(std::ostream& stream, int depth = 0) const {
+  void PrintRecursively(std::ostream& stream, size_t depth = 0) const {
     stream << verible::Spacer(4 * depth)
            << absl::StreamFormat("@%p (%s; parent=%p)\n",
                                  static_cast<const ThisType*>(this), id_,
@@ -237,7 +237,7 @@ class IntNode {
   }
 
  private:
-  void PrintRecursively(std::ostream& stream, int depth = 0) const {
+  void PrintRecursively(std::ostream& stream, size_t depth = 0) const {
     stream << verible::Spacer(4 * depth)
            << absl::StreamFormat("@%p (%d)\n", this, value_);
     for (const auto& child : Children()) {

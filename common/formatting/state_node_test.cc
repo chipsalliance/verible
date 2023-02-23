@@ -93,7 +93,7 @@ TEST_F(StateNodeTestFixture, ConstructionWithEmptyFormatTokens) {
 // Tests that root StateNode of search can initialize to an array
 // of FormatTokens.
 TEST_F(StateNodeTestFixture, ConstructionWithOneFormatToken) {
-  static const int kInitialIndent = 1;
+  constexpr size_t kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{0, "token1"}};
   Initialize(kInitialIndent, tokens);
   StateNode s(*uwline, style);
