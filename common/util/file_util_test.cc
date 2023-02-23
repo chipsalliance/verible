@@ -30,13 +30,13 @@ using testing::HasSubstr;
 #undef EXPECT_OK
 #define EXPECT_OK(value)      \
   {                           \
-    auto s = (value);         \
+    const auto& s = (value);  \
     EXPECT_TRUE(s.ok()) << s; \
   }
 #undef ASSERT_OK
 #define ASSERT_OK(value)      \
   {                           \
-    auto s = (value);         \
+    const auto& s = (value);  \
     ASSERT_TRUE(s.ok()) << s; \
   }
 

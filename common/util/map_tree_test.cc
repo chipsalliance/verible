@@ -285,7 +285,10 @@ TEST(MapTreeTest, InitializeTwoGenerationsDeepCopy) {
   check(m);
 
   {
-    const MapTreeTestType mcopy(m);  // deep copy
+    // specificially testing deep copy.
+    // clang-format off
+    const MapTreeTestType mcopy(m);  // NOLINT(performance-unnecessary-copy-initialization)
+    // clang-format on
     check(mcopy);
     check(m);
   }

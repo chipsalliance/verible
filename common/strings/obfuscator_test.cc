@@ -24,12 +24,9 @@ namespace verible {
 namespace {
 
 static char Rot13(char c) {
-  if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M'))
-    return c + 13;
-  else if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z'))
-    return c - 13;
-  else
-    return c;
+  if ((c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M')) return c + 13;
+  if ((c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z')) return c - 13;
+  return c;
 }
 
 // Non-random generator, just for the sake of testing.
