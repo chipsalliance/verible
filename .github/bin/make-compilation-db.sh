@@ -16,10 +16,12 @@
 set -u
 set -e
 
-bazel fetch ...  # no double-slash: seems to problematic on Windows
-
 readonly OUTPUT_BASE="$(bazel info output_base)"
-python3 "${OUTPUT_BASE}/external/com_grail_bazel_compdb/generate.py"
+
+readonly COMPDB_SCRIPT="${OUTPUT_BASE}/external/com_grail_bazel_compdb/generate.py"
+[ -r "${COMPDB_SCRIPT}" ] || bazel fetch ...
+
+python3 "${COMPDB_SCRIPT}"
 
 # Remove a gcc compiler flag that clang-tidy doesn't understand.
 sed -i -e 's/-fno-canonical-system-headers//g' compile_commands.json
