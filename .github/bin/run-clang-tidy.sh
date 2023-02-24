@@ -102,7 +102,7 @@ for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
            )
 do
   (${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE $f) \
-    | md5sum | sed "s|-|$f|g"
+    | md5sum | sed -e "s|-|$f|g"
 done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 
 # Only the files with different hashes are the ones we want to process.
@@ -113,32 +113,52 @@ echo "::group::$(wc -l < ${FILES_TO_PROCESS}) files to process"
 cat ${FILES_TO_PROCESS}
 echo "::endgroup::"
 
+EXIT_CODE=0
 if [ -s ${FILES_TO_PROCESS} ]; then
   echo "::group::Run ${PARALLEL_COUNT} parallel invocations of ${CLANG_TIDY} in chunks of ${FILES_PER_INVOCATION} files."
 
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
       ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet "${ADDITIONAL_TIDY_OPTIONS[@]}" 2>/dev/null \
-    | sed "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
+    | sed -e "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
 
   mv ${TIDY_OUT}.tmp ${TIDY_OUT}
   cat ${TIDY_OUT}
   echo "::endgroup::"
 
   echo ::group::Summary
-  sed 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < ${TIDY_OUT} | sort | uniq -c | sort -rn
+  sed -e 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < ${TIDY_OUT} | sort | uniq -c | sort -rn
   echo "::endgroup::"
-
-  if [ -s ${TIDY_OUT} ]; then
-    echo "::error::There were clang-tidy warnings. Please fix"
-    exit 1
-  fi
 else
   echo "Skipping clang-tidy run: nothing to do"
 fi
 
-# No complaints. We can cache this list now as baseline for next time.
-cp ${CLANG_TIDY_SEEN_CACHE}.new ${CLANG_TIDY_SEEN_CACHE}
 
-echo "No clang-tidy complaints.😎"
-exit 0
+if [ -s "${TIDY_OUT}" ]; then
+  echo "::error::There were clang-tidy warnings. Please fix"
+  EXIT_CODE=1
+  # Assemble a sed expression that matches all files that were mentioned
+  # in the clang-tidy output.
+  # Use that to filter the file list cache to leave out files with failures,
+  # but keep the ones that had no issues.
+  # That way, only files that had issues will have to be processed in
+  # subsequent clang-tidy runs.
+  awk -F: '
+     /^[a-zA-Z_./]*:/ { seen[$1]=1; }
+     END {
+       is_first=1;
+       for (k in seen) {
+         printf("%s%s", is_first ? "/" : "\\|", gensub(/\//, "\\\\/", "g", k));
+         is_first=0;
+       }
+       printf("/d");
+     }' < "${TIDY_OUT}" > "${CLANG_TIDY_SEEN_CACHE}".exclude_expression
+  sed -f "${CLANG_TIDY_SEEN_CACHE}".exclude_expression \
+    < "${CLANG_TIDY_SEEN_CACHE}".new > "${CLANG_TIDY_SEEN_CACHE}"
+else
+  # No complaints. We can keep the enire list now as baseline for next time.
+  cp "${CLANG_TIDY_SEEN_CACHE}".new "${CLANG_TIDY_SEEN_CACHE}"
+  echo "No clang-tidy complaints.😎"
+fi
+
+exit ${EXIT_CODE}
