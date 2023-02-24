@@ -84,9 +84,7 @@ time $(dirname $0)/make-compilation-db.sh
 
 readonly EXEC_ROOT=$(bazel info execution_root)
 
-# The compdb doesn't include tests currently, so we exclude all test files
-# for now.
-# Also, exclude kythe for now, as it is somehwat noisy and should be
+# Exclude kythe for now, as it is somehwat noisy and should be
 # addressed separately.
 #
 # We create a hash of each file content to only have to look at new files.
@@ -95,8 +93,7 @@ readonly EXEC_ROOT=$(bazel info execution_root)
 #  or combine hashes of all mentioned #includes that are also in our list)
 # Make need to re-run file dependent on clang-tidy configuration, WORKSPACE
 # and of course file content.
-for f in $(find . -name "*.cc" -and -not -name "*test*.cc" \
-                -or -name "*.h" -and -not -name "*test*.h" \
+for f in $(find . -name "*.cc" -or -name "*.h" \
              | grep -v "verilog/tools/kythe" \
              | grep -v "verilog/tools/ls/vscode" \
            )
