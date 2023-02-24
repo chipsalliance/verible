@@ -67,7 +67,11 @@ TEST(IsSubRangeTest, IdenticalSeparateStrings) {
   const std::string superstring = "a";
   const std::string substring = "a";
   EXPECT_FALSE(IsSubRange(substring, superstring));
-  EXPECT_FALSE(IsSubRange(superstring, substring));
+  // clang-tidy is really good in recognizing that this is suspicious,
+  // deduced from the naming of the parameters.
+  // clang-format off
+  EXPECT_FALSE(IsSubRange(superstring, substring));  // NOLINT(readability-suspicious-call-argument)
+  // clang-format on
 }
 
 // Test that IsSubRange matches sub-string_view.

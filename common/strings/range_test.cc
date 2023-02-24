@@ -63,8 +63,12 @@ TEST(ByteOffsetRangeTest, InsideOut) {
   for (size_t i = 0; i < superstring.length(); ++i) {
     for (size_t j = i; j < superstring.length(); ++j) {
       const auto substring = superstring.substr(i, j - i);
-      EXPECT_DEATH(SubstringOffsets(superstring, substring), "")
-          << i << ", " << j;
+      // clang-tidy is really good in recognizing that this is suspicious,
+      // deduced from the naming of the parameters.
+      // clang-format off
+      EXPECT_DEATH(SubstringOffsets(superstring, substring), "") /* NOLINT(readability-suspicious-call-argument) */
+        << i << ", " << j;
+      // clang-format on
     }
   }
 }
