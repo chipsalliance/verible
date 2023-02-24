@@ -5406,8 +5406,8 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
     auto token_vector = test_data.FindImportantTokens();
     ASSERT_EQ(token_vector.size(), 2);
 
-    PreFormatToken left(&token_vector[0]);
-    PreFormatToken right(&token_vector[1]);
+    PreFormatToken left(token_vector.data());
+    PreFormatToken right(token_vector.data() + 1);
     // like verible::ConnectPreFormatTokensPreservedSpaceStarts();
     right.before.preserved_space_start = left.Text().end();
 
