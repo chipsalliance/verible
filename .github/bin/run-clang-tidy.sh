@@ -15,6 +15,11 @@
 
 set -u
 
+if [ ! -f WORKSPACE ]; then
+  echo "This script needs to be invoked in the root of the bazel project"
+  exit 1
+fi
+
 # The caller can supply additional clang-tidy flags that are passed
 # to it as-is.
 # Example:
@@ -36,6 +41,8 @@ touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet
 readonly FILES_TO_PROCESS=${TMPDIR}/${NAME_PREFIX}-files.list
 readonly TIDY_OUT=${TMPDIR}/${NAME_PREFIX}.out
 
+readonly AWK=gawk  # we need the gensub function
+
 # Use clang-tidy-11 if available as it still checks for
 # google-runtime-references, non-const references - which is the
 # preferred style in this project.
@@ -56,7 +63,7 @@ hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
 
 # A particular annoying thing: if there is a comment in the configuration,
 # things break. Silently.
-awk '
+"${AWK}" '
 BEGIN      { in_rules = 0; }
 /^Checks:/ { in_rules = 1; }
 /#/        { if (in_rules)  { printf("Comment found %s\n", $0); exit(1); } }
@@ -82,7 +89,12 @@ echo ::group::Build compilation database
 
 time $(dirname $0)/make-compilation-db.sh
 
-readonly EXEC_ROOT=$(bazel info execution_root)
+# The files might be reported with various absolute prefixes that
+# we remove to canonicalize and report as relative paths from project
+# root.
+readonly EXEC_ROOT="$(bazel info execution_root)"
+readonly CURRENT_DIR="$(pwd)"
+readonly CANONICALIZE_SOURCE_PATH_REGEX="\(${EXEC_ROOT}\|${CURRENT_DIR}\)/"
 
 # Exclude kythe for now, as it is somehwat noisy and should be
 # addressed separately.
@@ -104,7 +116,7 @@ done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
 
 # Only the files with different hashes are the ones we want to process.
 join -v2 ${CLANG_TIDY_SEEN_CACHE} ${CLANG_TIDY_SEEN_CACHE}.new \
-  | awk '{print $2}' | sort > ${FILES_TO_PROCESS}
+  | "${AWK}" '{print $2}' | sort > ${FILES_TO_PROCESS}
 
 echo "::group::$(wc -l < ${FILES_TO_PROCESS}) files to process"
 cat ${FILES_TO_PROCESS}
@@ -117,8 +129,7 @@ if [ -s ${FILES_TO_PROCESS} ]; then
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
       ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet "${ADDITIONAL_TIDY_OPTIONS[@]}" 2>/dev/null \
-    | sed -e "s|$EXEC_ROOT/||g" \
-    | sed -e "s|$(pwd)||g" \
+    | sed -e "s@${CANONICALIZE_SOURCE_PATH_REGEX}@@g" \
     > ${TIDY_OUT}.tmp
 
   mv ${TIDY_OUT}.tmp ${TIDY_OUT}
@@ -142,7 +153,7 @@ if [ -s "${TIDY_OUT}" ]; then
   # but keep the ones that had no issues.
   # That way, only files that had issues will have to be processed in
   # subsequent clang-tidy runs.
-  awk -F: '
+  "${AWK}" -F: '
      /^[a-zA-Z0-9_./-]+:[0-9]/ { seen[$1]=1; }
      END {
        is_first=1;
