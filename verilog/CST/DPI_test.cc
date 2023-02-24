@@ -118,6 +118,7 @@ TEST(GetDPIImportPrototypeTest, Various) {
 
           const auto dpi_imports = FindAllDPIImports(*ABSL_DIE_IF_NULL(root));
           std::vector<TreeSearchMatch> prototypes;
+          prototypes.reserve(dpi_imports.size());
           for (const auto& dpi_import : dpi_imports) {
             prototypes.push_back(TreeSearchMatch{
                 GetDPIImportPrototype(*dpi_import.match), /* no context */});

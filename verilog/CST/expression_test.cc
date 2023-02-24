@@ -172,7 +172,7 @@ TEST(AssociativeBinaryExpressionsTest, ThreeFlatOperands) {
     TestVerilogSyntaxRangeMatches(
         __FUNCTION__, test, [](const TextStructureView& text_structure) {
           const auto& root = text_structure.SyntaxTree();
-          const auto matches = FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
+          auto matches = FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
           for (const auto& match : matches) {
             // "A op B op C" is 5 sibling tokens, due to flattening
             EXPECT_EQ(verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(match.match))

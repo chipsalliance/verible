@@ -204,7 +204,7 @@ TEST(FileUtil, ScopedTestFileEmplace) {
     std::vector<ScopedTestFile> files;
     for (size_t i = 0; i < 10; ++i) {
       files.emplace_back(::testing::TempDir(), "zzz");
-      names.push_back(std::string(files.back().filename()));
+      names.emplace_back(files.back().filename());
     }
     for (const auto& name : names) {
       EXPECT_TRUE(file::FileExists(name).ok());

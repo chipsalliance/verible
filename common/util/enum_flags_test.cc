@@ -75,7 +75,7 @@ std::string AbslUnparseFlag(const MyFakeEnum& mode) {
 
 TEST_F(EnumNameMapTest, ParseFlagValueValues) {
   for (const auto& p : enum_name_map_.forward_view()) {
-    MyFakeEnum e;
+    MyFakeEnum e = MyFakeEnum::kValue1;
     std::string error;
     EXPECT_TRUE(AbslParseFlag(p.first, &e, &error)) << " parsing " << p.first;
     EXPECT_EQ(e, *p.second) << " from " << p.first;

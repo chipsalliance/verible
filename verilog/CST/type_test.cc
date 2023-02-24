@@ -275,6 +275,7 @@ TEST(GetIdentifierFromTypeDeclarationTest, TypedefNames) {
           const auto& root = text_structure.SyntaxTree();
           const auto type_declarations = FindAllTypeDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
+          ids.reserve(type_declarations.size());
           for (const auto& decl : type_declarations) {
             ids.push_back(TreeSearchMatch{
                 GetIdentifierFromTypeDeclaration(*decl.match),

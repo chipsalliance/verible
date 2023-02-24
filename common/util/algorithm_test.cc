@@ -305,10 +305,10 @@ TEST(FindAllTest, StrSplitAtEqual) {
 TEST(FindAllTest, StrSplitAfterEqual) {
   const absl::string_view seq("aa=b=cd");
   std::vector<absl::string_view::const_iterator> bounds;
-  int prev = -1;
+  char prev = 0;
   find_all(seq.begin(), seq.end(), std::back_inserter(bounds), [&](char i) {
     // Split *after* each '='.
-    const bool p = prev == '=';
+    const bool p = (prev == '=');
     prev = i;
     return p;
   });

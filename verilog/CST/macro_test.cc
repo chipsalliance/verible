@@ -100,6 +100,7 @@ TEST(GetMacroCallIdsTest, Various) {
     const auto& root = analyzer.Data().SyntaxTree();
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     std::vector<absl::string_view> found_names;
+    found_names.reserve(macro_calls.size());
     for (const auto& match : macro_calls) {
       found_names.push_back(GetMacroCallId(*match.match)->text());
     }

@@ -167,6 +167,7 @@ TEST(FindAllFunctionPrototypesTest, Various) {
           const auto& root = text_structure.SyntaxTree();
           const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
           std::vector<TreeSearchMatch> headers;
+          headers.reserve(protos.size());
           for (const auto& proto : protos) {
             headers.push_back(TreeSearchMatch{
                 GetFunctionPrototypeHeader(*proto.match), /* no context */});

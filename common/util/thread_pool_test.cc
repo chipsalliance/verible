@@ -48,6 +48,7 @@ TEST(ThreadPoolTest, WorkIsCompleted) {
   ThreadPool pool(3);
 
   std::vector<std::future<int>> results;
+  results.reserve(kLoops);
   for (int i = 0; i < kLoops; ++i) {
     results.emplace_back(pool.ExecAsync<int>([i]() -> int {
       PretendWork(10);
@@ -68,6 +69,7 @@ TEST(ThreadPoolTest, ExceptionsArePropagated) {
   ThreadPool pool(3);
 
   std::vector<std::future<int>> results;
+  results.reserve(10);
   for (int i = 0; i < 10; ++i) {
     results.emplace_back(pool.ExecAsync<int>([]() -> int {
       throw 1;

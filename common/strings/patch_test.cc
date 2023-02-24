@@ -37,6 +37,7 @@ namespace {
 static std::vector<MarkedLine> MakeMarkedLines(
     const std::vector<absl::string_view>& lines) {
   std::vector<MarkedLine> result;
+  result.reserve(lines.size());
   for (const auto& line : lines) {
     result.emplace_back(line);
   }
@@ -555,6 +556,7 @@ static std::vector<Hunk> MakeExpectedHunks(
     const Hunk& original, const std::vector<ExpectedHunk>& hunk_infos) {
   const auto& marked_lines = original.MarkedLines();
   std::vector<Hunk> results;
+  results.reserve(hunk_infos.size());
   for (const auto& hunk_info : hunk_infos) {
     results.emplace_back(
         hunk_info.old_starting_line, hunk_info.new_starting_line,
@@ -886,8 +888,8 @@ TEST(FilePatchParseAndPrintTest, ValidInputs) {
       },
       {
           // one line of file metadata
-          "==== //depot/p4/style/path/to/file.txt#4 - local/path/to/file.txt "
-          "====",
+          ("==== //depot/p4/style/path/to/file.txt#4 - local/path/to/file.txt "
+           "===="),
           "--- /path/to/file.txt\t2020-03-30",
           "+++ /path/to/file.txt\t2020-03-30",
           "@@ -12,1 +13,1 @@",

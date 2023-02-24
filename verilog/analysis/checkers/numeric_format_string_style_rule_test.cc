@@ -137,67 +137,73 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
        "\", dec); endmodule"},
 
       // Multiple violations
-      {"module test;"
+      {"module test;\n",
        "  initial $display(\"Value: 0x%0x ",
        {kToken, "%0x"},
        " ",
        {kToken, "%0x"},
-       "\", hex1, hex2, hex3);"
+       "\", hex1, hex2, hex3);",
        "endmodule"},
-      {"module test;"
+
+      {"module test;\n",
        "  initial $display(\"Value: ",
        {kToken, "%0x"},
        " 'h%0h ",
        {kToken, "%0x"},
-       "\", hex1, hex2, hex3);"
+       "\", hex1, hex2, hex3);",
        "endmodule"},
-      {"module test;"
+
+      {"module test;\n",
        "  initial $display(\"Value: ",
        {kToken, "%0x"},
        " ",
        {kToken, "%0x"},
        " ",
        {kToken, "%0x"},
-       "\", hex1, hex2, hex3);"
+       "\", hex1, hex2, hex3);",
        "endmodule"},
 
-      {"module test;"
+      {"module test;\n",
        "  initial $display(\"Value: 0b%0b ",
        {kToken, "%0b"},
        " ",
        {kToken, "%0b"},
-       "\", bin1, bin2, bin3);"
+       "\", bin1, bin2, bin3);",
        "endmodule"},
-      {"module test;"
+
+      {"module test;\n",
        "  initial $display(\"Value: ",
        {kToken, "%0b"},
        " 'b%0b ",
        {kToken, "%0b"},
-       "\", bin1, bin2, bin3);"
+       "\", bin1, bin2, bin3);",
        "endmodule"},
-      {"module test;"
+
+      {"module test;\n",
        "  initial $display(\"Value: ",
        {kToken, "%0b"},
        " ",
        {kToken, "%0b"},
        " ",
        {kToken, "%0b"},
-       "\",  bin1, bin2, bin3);"
+       "\",  bin1, bin2, bin3);",
        "endmodule"},
 
-      {"module test;"
+      {"module test;\n",
        "  initial $display(\"Value: ",
        {kToken, "0d%0d"},
        {kToken, "'D%0d"},
-       " %0d\", dec1, dec2, dec3);"
+       " %0d\", dec1, dec2, dec3);",
        "endmodule"},
-      {"module test;"
+
+      {"module test;\n",
        "  initial $display(\"Value: %0d ",
        {kToken, "0D%0d"},
        " ",
        {kToken, "'d%0d"},
-       "\", dec1, dec2, dec3);"
+       "\", dec1, dec2, dec3);",
        "endmodule"},
+
       {"module test;"
        "  initial $display(\"Value: %0d %0d %0d\", dec1, dec2, dec3);"
        "endmodule"},
@@ -205,13 +211,16 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
       {"module test;"
        "  initial $display(\"0x%0x, %d\", hex, dec);"
        "endmodule"},
+
       {"module test;"
        "  initial $display(\"0x%0x, 'b%0b\", hex, bin);"
        "endmodule"},
+
       {"module test;"
        "  initial $display(\"Value: 0x%0x (bin: 'b%b, dec: %d)\", hex, bin, "
        "dec);"
        "endmodule"},
+
       {"module test;"
        "  initial $display(\"Value: 0x%0x (bin: ",
        {kToken, "%b"},
@@ -221,6 +230,7 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
       {"module test;"
        "  parameter string fmt = \"Interrupts: %d\";"
        "endmodule"},
+
       {"module test;"
        "  parameter string fmt = \"Interrupts: ",
        {kToken, "'d%d"},
@@ -230,6 +240,7 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
       {"module test;"
        "  parameter string fmt = \"Interrupts: %d (flags: 0x%0x)\";"
        "endmodule"},
+
       {"module test;"
        "  parameter string fmt = \"Interrupts: ",
        {kToken, "'d%d"},
@@ -240,6 +251,7 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
        "  string s;"
        "  initial $sformat(s, \"misc: 0x%0x\", some_hex_value);"
        "endmodule"},
+
       {"module test;"
        "  string s;"
        "  initial $sformat(s, \"misc: ",
@@ -251,6 +263,7 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
        "  string s;"
        "  initial $sformat(s, \"misc: 0b%0b\", some_hex_value);"
        "endmodule"},
+
       {"module test;"
        "  string s;"
        "  initial $sformat(s, \"misc: ",
@@ -262,6 +275,7 @@ TEST(NumericFormatStringStyleRuleTest, BasicTests) {
        "  string s;"
        "  initial $sformat(s, \"counter: %d\", some_dec_value);"
        "endmodule"},
+
       {"module test;"
        "  string s;"
        "  initial $sformat(s, \"counter: ",
