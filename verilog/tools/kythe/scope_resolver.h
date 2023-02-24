@@ -79,7 +79,9 @@ H AbslHashValue(H state, const ScopedVname& v) {
 // up and comparing the substrings).
 class ScopeResolver {
  public:
-  ScopeResolver(const Signature& top_scope) { SetCurrentScope(top_scope); }
+  explicit ScopeResolver(const Signature& top_scope) {
+    SetCurrentScope(top_scope);
+  }
 
   ScopeResolver(const ScopeResolver&) = delete;
   ScopeResolver(ScopeResolver&&) = delete;
@@ -122,7 +124,7 @@ class ScopeResolver {
       const SignatureDigest& scope_digest) const;
 
   // Returns human readable description of the scope.
-  std::string ScopeDebug(SignatureDigest scope) const;
+  std::string ScopeDebug(const SignatureDigest& scope) const;
 
   const SignatureDigest& CurrentScopeDigest() const {
     return current_scope_digest_;

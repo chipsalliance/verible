@@ -27,8 +27,7 @@
 namespace verilog {
 namespace kythe {
 
-Anchor::Anchor(const Anchor& other)
-    : content_(other.content_), source_text_range_(other.source_text_range_) {}
+Anchor::Anchor(const Anchor& other) = default;
 
 std::string Anchor::DebugString() const {
   if (source_text_range_) {

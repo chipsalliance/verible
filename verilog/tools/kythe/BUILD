@@ -195,6 +195,7 @@ cc_test(
         "//common/analysis:syntax_tree_search_test_utils",
         "//common/text:concrete_syntax_tree",
         "//common/util:file_util",
+        "//common/util:logging",
         "//common/util:range",
         "//common/util:tree_operations",
         "//verilog/analysis:verilog_analyzer",

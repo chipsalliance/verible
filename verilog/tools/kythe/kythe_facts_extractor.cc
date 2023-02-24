@@ -78,7 +78,7 @@ class KytheFactsExtractor {
   // endmodule: bar
   class VNameContext : public verible::AutoPopStack<const VName*> {
    public:
-    typedef verible::AutoPopStack<const VName*> base_type;
+    using base_type = verible::AutoPopStack<const VName*>;
 
     // member class to handle push and pop of stack safely
     using AutoPop = base_type::AutoPop;
@@ -911,7 +911,7 @@ void KytheFactsExtractor::ReferenceFunctionOrTaskCall(
                   : scope_resolver_->FindScopeAndDefinition(anchor.Text());
     if (type) {
       CreateAnchorReference(anchor, type->vname);
-      last_type = std::move(type);
+      last_type = type;
     } else {
       // Failed to fully resolve the types.
       return;
@@ -958,7 +958,7 @@ void KytheFactsExtractor::ReferenceExtendsInheritance(
     const auto type = scope_resolver_->FindScopeAndDefinition(anchor.Text());
     if (type) {
       CreateAnchorReference(anchor, type->vname);
-      last_type = std::move(type);
+      last_type = type;
     }
   }
 
