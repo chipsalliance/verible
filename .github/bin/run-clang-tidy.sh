@@ -117,7 +117,9 @@ if [ -s ${FILES_TO_PROCESS} ]; then
   cat ${FILES_TO_PROCESS} \
     | xargs -P${PARALLEL_COUNT} -n ${FILES_PER_INVOCATION} -- \
       ${CLANG_TIDY} --config="$(cat ${CLANG_CONFIG_FILE})" --quiet "${ADDITIONAL_TIDY_OPTIONS[@]}" 2>/dev/null \
-    | sed -e "s|$EXEC_ROOT/||g" > ${TIDY_OUT}.tmp
+    | sed -e "s|$EXEC_ROOT/||g" \
+    | sed -e "s|$(pwd)||g" \
+    > ${TIDY_OUT}.tmp
 
   mv ${TIDY_OUT}.tmp ${TIDY_OUT}
   cat ${TIDY_OUT}
@@ -141,11 +143,11 @@ if [ -s "${TIDY_OUT}" ]; then
   # That way, only files that had issues will have to be processed in
   # subsequent clang-tidy runs.
   awk -F: '
-     /^[a-zA-Z_./]*:/ { seen[$1]=1; }
+     /^[a-zA-Z0-9_./-]+:[0-9]/ { seen[$1]=1; }
      END {
        is_first=1;
        for (k in seen) {
-         printf("%s%s", is_first ? "/" : "\\|", gensub(/\//, "\\\\/", "g", k));
+         printf("%s%s", is_first ? "/" : "\\|", gensub(/([\/.-])/, "\\\\\\1", "g", k));
          is_first=0;
        }
        printf("/d");
