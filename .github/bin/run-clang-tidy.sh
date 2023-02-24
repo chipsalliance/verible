@@ -41,8 +41,6 @@ touch ${CLANG_TIDY_SEEN_CACHE}  # Just in case it is not there yet
 readonly FILES_TO_PROCESS=${TMPDIR}/${NAME_PREFIX}-files.list
 readonly TIDY_OUT=${TMPDIR}/${NAME_PREFIX}.out
 
-readonly AWK=gawk  # we need the gensub function
-
 # Use clang-tidy-11 if available as it still checks for
 # google-runtime-references, non-const references - which is the
 # preferred style in this project.
@@ -63,7 +61,7 @@ hash ${CLANG_TIDY} || exit 2  # make sure it is installed.
 
 # A particular annoying thing: if there is a comment in the configuration,
 # things break. Silently.
-"${AWK}" '
+awk '
 BEGIN      { in_rules = 0; }
 /^Checks:/ { in_rules = 1; }
 /#/        { if (in_rules)  { printf("Comment found %s\n", $0); exit(1); } }
@@ -94,7 +92,7 @@ time $(dirname $0)/make-compilation-db.sh
 # root.
 readonly EXEC_ROOT="$(bazel info execution_root)"
 readonly CURRENT_DIR="$(pwd)"
-readonly CANONICALIZE_SOURCE_PATH_REGEX="\(${EXEC_ROOT}\|${CURRENT_DIR}\)/"
+readonly CANONICALIZE_SOURCE_PATH_REGEX="^\(${EXEC_ROOT}\|${CURRENT_DIR}\|\.\)/"
 
 # Exclude kythe for now, as it is somehwat noisy and should be
 # addressed separately.
@@ -112,14 +110,14 @@ for f in $(find . -name "*.cc" -or -name "*.h" \
 do
   (${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE $f) \
     | md5sum | sed -e "s|-|$f|g"
-done | sort > ${CLANG_TIDY_SEEN_CACHE}.new
+done | sort > "${CLANG_TIDY_SEEN_CACHE}".new
 
 # Only the files with different hashes are the ones we want to process.
-join -v2 ${CLANG_TIDY_SEEN_CACHE} ${CLANG_TIDY_SEEN_CACHE}.new \
-  | "${AWK}" '{print $2}' | sort > ${FILES_TO_PROCESS}
+join -v2 "${CLANG_TIDY_SEEN_CACHE}" "${CLANG_TIDY_SEEN_CACHE}".new \
+  | awk '{print $2}' | sort > "${FILES_TO_PROCESS}"
 
 echo "::group::$(wc -l < ${FILES_TO_PROCESS}) files to process"
-cat ${FILES_TO_PROCESS}
+cat "${FILES_TO_PROCESS}"
 echo "::endgroup::"
 
 EXIT_CODE=0
@@ -145,24 +143,25 @@ fi
 
 
 if [ -s "${TIDY_OUT}" ]; then
-  echo "::error::There were clang-tidy warnings. Please fix"
   EXIT_CODE=1
+  echo "::error::There were clang-tidy warnings. Please fix"
+  echo "You find the raw output in ${TIDY_OUT}"
   # Assemble a sed expression that matches all files that were mentioned
   # in the clang-tidy output.
   # Use that to filter the file list cache to leave out files with failures,
   # but keep the ones that had no issues.
   # That way, only files that had issues will have to be processed in
   # subsequent clang-tidy runs.
-  "${AWK}" -F: '
-     /^[a-zA-Z0-9_./-]+:[0-9]/ { seen[$1]=1; }
-     END {
-       is_first=1;
-       for (k in seen) {
-         printf("%s%s", is_first ? "/" : "\\|", gensub(/([\/.-])/, "\\\\\\1", "g", k));
-         is_first=0;
-       }
-       printf("/d");
-     }' < "${TIDY_OUT}" > "${CLANG_TIDY_SEEN_CACHE}".exclude_expression
+
+  # Extract filenames from error messages in clang-tidy output
+  sed 's/^\([a-zA-Z0-9_/.-]\+\):[0-9].*/\1/p;d' "${TIDY_OUT}" \
+    | sort | uniq > "${CLANG_TIDY_SEEN_CACHE}".files_with_issues
+
+  # Escape regex special characters in paths, then convert to delete sed expr
+  sed 's|\([/.-]\)|\\\1|g' "${CLANG_TIDY_SEEN_CACHE}".files_with_issues \
+    | sed 's|^.*$|/\0/d|' > "${CLANG_TIDY_SEEN_CACHE}".exclude_expression
+
+  # Exclude all lines in cache representing files that need reprocessing
   sed -f "${CLANG_TIDY_SEEN_CACHE}".exclude_expression \
     < "${CLANG_TIDY_SEEN_CACHE}".new > "${CLANG_TIDY_SEEN_CACHE}"
 else
@@ -170,5 +169,7 @@ else
   cp "${CLANG_TIDY_SEEN_CACHE}".new "${CLANG_TIDY_SEEN_CACHE}"
   echo "No clang-tidy complaints.😎"
 fi
+
+echo "To reduce the work on next invocation, keep ${CLANG_TIDY_SEEN_CACHE}"
 
 exit ${EXIT_CODE}

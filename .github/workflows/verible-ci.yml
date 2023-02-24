@@ -75,7 +75,7 @@ jobs:
     - name: Install Dependencies
       run: |
         apt -qqy update
-        apt -qq -y install clang-tidy-11 build-essential git wget gawk
+        apt -qq -y install clang-tidy-11 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
         echo "TMPDIR=/tmp" >> $GITHUB_ENV

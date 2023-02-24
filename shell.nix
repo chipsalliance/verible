@@ -25,6 +25,5 @@ pkgs.mkShell {
       lcov              # coverage html generation.
       clang-tools_11    # clang-format, clang-tidy
       bazel-buildtools  # buildifier
-      gawk              # clang-tidy script.
     ];
 }
