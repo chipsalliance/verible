@@ -83,6 +83,7 @@ struct TestFileEntry {
   }
 
   T::value_type ExpectedFileData() const {
+    CHECK(source_file != nullptr);
     return {
         IndexingFactType::kFile,
         Anchor(source_file->ResolvedPath()),

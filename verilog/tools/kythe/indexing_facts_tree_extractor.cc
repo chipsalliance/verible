@@ -71,7 +71,7 @@ struct VerilogExtractionState {
 // facts from CST nodes and constructs a tree of indexing facts.
 class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
  public:
-  IndexingFactsTreeExtractor(IndexingFactNode& file_list_facts_tree,
+  IndexingFactsTreeExtractor(IndexingFactNode* file_list_facts_tree,
                              const VerilogSourceFile& source_file,
                              VerilogExtractionState* extraction_state,
                              std::vector<absl::Status>* errors)
@@ -205,11 +205,11 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 
   // Extracts function header and creates its corresponding fact tree.
   void ExtractFunctionHeader(const SyntaxTreeNode& function_header,
-                             IndexingFactNode& function_node);
+                             IndexingFactNode* function_node);
 
   // Extracts task header and creates its corresponding fact tree.
   void ExtractTaskHeader(const SyntaxTreeNode& task_header,
-                         IndexingFactNode& task_node);
+                         IndexingFactNode* task_node);
 
   // Extracts enum type declaration preceeded with "typedef" and creates its
   // corresponding fact tree.
@@ -279,7 +279,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // Moves the anchors and children from the the last extracted node in
   // "facts_tree_context_", adds them to the new_node and pops remove the last
   // extracted node.
-  void MoveAndDeleteLastExtractedNode(IndexingFactNode& new_node);
+  void MoveAndDeleteLastExtractedNode(IndexingFactNode* new_node);
 
   absl::string_view FileContent() {
     return source_file_.GetTextStructure()->Contents();
@@ -296,7 +296,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
   // facts trees of the files in the ordered file list. The extracted files will
   // be children of this node and ordered as they are given in the ordered file
   // list.
-  IndexingFactNode& file_list_facts_tree_;
+  IndexingFactNode* file_list_facts_tree_;
 
   // The current file being extracted.
   const VerilogSourceFile& source_file_;
@@ -314,7 +314,7 @@ class IndexingFactsTreeExtractor : public verible::TreeContextVisitor {
 // Given a root to CST this function traverses the tree, extracts and constructs
 // the indexing facts tree for one file.
 IndexingFactNode BuildIndexingFactsTree(
-    IndexingFactNode& file_list_facts_tree,
+    IndexingFactNode* file_list_facts_tree,
     const VerilogSourceFile& source_file,
     VerilogExtractionState* extraction_state,
     std::vector<absl::Status>* errors) {
@@ -375,7 +375,7 @@ IndexingFactNode ExtractFiles(absl::string_view file_list_path,
     // status is also stored in translation_unit for later retrieval.
     if (parse_status.ok()) {
       file_list_facts_tree.Children().push_back(
-          BuildIndexingFactsTree(file_list_facts_tree, *translation_unit,
+          BuildIndexingFactsTree(&file_list_facts_tree, *translation_unit,
                                  &project_extraction_state, errors));
     } else {
       if (errors != nullptr) {
@@ -663,7 +663,7 @@ void IndexingFactsTreeExtractor::ExtractTypedVariableDefinition(
       IndexingNodeData{IndexingFactType::kDataTypeReference});
 
   type_identifier.Accept(this);
-  MoveAndDeleteLastExtractedNode(type_node);
+  MoveAndDeleteLastExtractedNode(&type_node);
 
   {
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &type_node);
@@ -813,7 +813,7 @@ void IndexingFactsTreeExtractor::ExtractModulePort(
         IndexingFactNode data_type_node(
             IndexingNodeData{IndexingFactType::kDataTypeReference});
         data_type->Accept(this);
-        MoveAndDeleteLastExtractedNode(data_type_node);
+        MoveAndDeleteLastExtractedNode(&data_type_node);
 
         // Make the current port node child of this data type, remove it from
         // the top node and push the kDataTypeRefernce Node.
@@ -886,7 +886,7 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
 
   // Extract module instance type and parameters.
   type->Accept(this);
-  MoveAndDeleteLastExtractedNode(type_node);
+  MoveAndDeleteLastExtractedNode(&type_node);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
@@ -1063,7 +1063,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualFunction(
   // Extract function header.
   const SyntaxTreeNode* function_header =
       GetFunctionPrototypeHeader(function_prototype);
-  if (function_header) ExtractFunctionHeader(*function_header, function_node);
+  if (function_header) ExtractFunctionHeader(*function_header, &function_node);
 
   facts_tree_context_.top().Children().push_back(std::move(function_node));
 }
@@ -1075,7 +1075,7 @@ void IndexingFactsTreeExtractor::ExtractPureVirtualTask(
 
   // Extract task header.
   const SyntaxTreeNode* task_header = GetTaskPrototypeHeader(task_prototype);
-  if (task_header) ExtractTaskHeader(*task_header, task_node);
+  if (task_header) ExtractTaskHeader(*task_header, &task_node);
 
   facts_tree_context_.top().Children().push_back(std::move(task_node));
 }
@@ -1088,7 +1088,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionDeclaration(
   // Extract function header.
   const SyntaxTreeNode* function_header =
       GetFunctionHeader(function_declaration_node);
-  if (function_header) ExtractFunctionHeader(*function_header, function_node);
+  if (function_header) ExtractFunctionHeader(*function_header, &function_node);
 
   {
     // Extract function body.
@@ -1109,7 +1109,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
 
   // Extract task header.
   const SyntaxTreeNode* task_header = GetTaskHeader(task_declaration_node);
-  if (task_header) ExtractTaskHeader(*task_header, task_node);
+  if (task_header) ExtractTaskHeader(*task_header, &task_node);
 
   {
     // Extract task body.
@@ -1123,7 +1123,7 @@ void IndexingFactsTreeExtractor::ExtractTaskDeclaration(
 }
 
 void IndexingFactsTreeExtractor::ExtractFunctionHeader(
-    const SyntaxTreeNode& function_header, IndexingFactNode& function_node) {
+    const SyntaxTreeNode& function_header, IndexingFactNode* function_node) {
   // Extract function name.
   const Symbol* function_name = GetFunctionHeaderId(function_header);
   if (function_name == nullptr) {
@@ -1133,15 +1133,16 @@ void IndexingFactsTreeExtractor::ExtractFunctionHeader(
   MoveAndDeleteLastExtractedNode(function_node);
 
   {
+    IndexingFactNode& function_node_ref = *function_node;
     const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
-                                              &function_node);
+                                              &function_node_ref);
     // Extract function ports.
     ExtractFunctionOrTaskOrConstructorPort(function_header);
   }
 }
 
 void IndexingFactsTreeExtractor::ExtractTaskHeader(
-    const SyntaxTreeNode& task_header, IndexingFactNode& task_node) {
+    const SyntaxTreeNode& task_header, IndexingFactNode* task_node) {
   // Extract task name.
   const Symbol* task_name = GetTaskHeaderId(task_header);
   if (task_name == nullptr) {
@@ -1151,7 +1152,9 @@ void IndexingFactsTreeExtractor::ExtractTaskHeader(
   MoveAndDeleteLastExtractedNode(task_node);
 
   {
-    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_, &task_node);
+    IndexingFactNode& task_node_ref = *task_node;
+    const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                              &task_node_ref);
     // Extract task ports.
     ExtractFunctionOrTaskOrConstructorPort(task_header);
   }
@@ -1224,7 +1227,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
       IndexingFactNode type_node(
           IndexingNodeData{IndexingFactType::kDataTypeReference});
       type_identifier->Accept(this);
-      MoveAndDeleteLastExtractedNode(type_node);
+      MoveAndDeleteLastExtractedNode(&type_node);
 
       type_node.Children().emplace_back(
           IndexingNodeData(IndexingFactType::kVariableDefinition,
@@ -1266,7 +1269,7 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
 
   // Move the data from the last extracted node to the current node and delete
   // that last node.
-  MoveAndDeleteLastExtractedNode(function_node);
+  MoveAndDeleteLastExtractedNode(&function_node);
 
   // Terminate if no function name is found.
   // in case of built-in functions: "sin(x)";
@@ -1292,7 +1295,7 @@ void IndexingFactsTreeExtractor::ExtractMethodCallExtension(
 
   // Move the data from the last extracted node to the current node and delete
   // that last node.
-  MoveAndDeleteLastExtractedNode(function_node);
+  MoveAndDeleteLastExtractedNode(&function_node);
 
   // Terminate if no function name is found.
   // in case of built-in functions: "q.sort()";
@@ -1328,7 +1331,7 @@ void IndexingFactsTreeExtractor::ExtractMemberExtension(
 
   // Move the data from the last extracted node to the current node and delete
   // that last node.
-  MoveAndDeleteLastExtractedNode(member_node);
+  MoveAndDeleteLastExtractedNode(&member_node);
 
   {
     const verible::SyntaxTreeLeaf* unqualified =
@@ -1385,7 +1388,7 @@ void IndexingFactsTreeExtractor::ExtractClassDeclaration(
         ExtractQualifiedId(*extended_class);
         // Construct extends node from the last node which is kMemberReference,
         // remove kMemberReference node and append the new extends node.
-        MoveAndDeleteLastExtractedNode(extends_node);
+        MoveAndDeleteLastExtractedNode(&extends_node);
       }
 
       // Add the extends node as a child of this class node.
@@ -1414,7 +1417,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
 
   // Extract class type and parameters.
   type->Accept(this);
-  MoveAndDeleteLastExtractedNode(type_node);
+  MoveAndDeleteLastExtractedNode(&type_node);
 
   // Class instances may may appear as multiple instances sharing the same
   // type in a single statement e.g. myClass b1 = new, b2 = new. LRM 8.8 Typed
@@ -1429,7 +1432,7 @@ void IndexingFactsTreeExtractor::ExtractClassInstances(
     // Re-use the kRegisterVariable and kVariableDeclarationAssignment tag
     // resolver.
     instance.match->Accept(this);
-    MoveAndDeleteLastExtractedNode(class_instance_node);
+    MoveAndDeleteLastExtractedNode(&class_instance_node);
 
     type_node.Children().push_back(std::move(class_instance_node));
   }
@@ -1514,7 +1517,7 @@ void IndexingFactsTreeExtractor::ExtractUnqualifiedId(
       IndexingFactNode variable_reference(
           IndexingNodeData{IndexingFactType::kVariableReference});
       ExtractSymbolIdentifier(*identifier);
-      MoveAndDeleteLastExtractedNode(variable_reference);
+      MoveAndDeleteLastExtractedNode(&variable_reference);
 
       const SyntaxTreeNode* param_list =
           GetParamListFromUnqualifiedId(unqualified_id);
@@ -1756,7 +1759,7 @@ void IndexingFactsTreeExtractor::ExtractInclude(
       // Parse included file and extract.
       const auto parse_status = included_file->Parse();
       if (parse_status.ok()) {
-        file_list_facts_tree_.Children().push_back(BuildIndexingFactsTree(
+        file_list_facts_tree_->Children().push_back(BuildIndexingFactsTree(
             file_list_facts_tree_, *included_file, extraction_state_, errors_));
       } else {
         if (errors_ != nullptr) {
@@ -1991,7 +1994,7 @@ void IndexingFactsTreeExtractor::ExtractAnonymousScope(
 }
 
 void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(
-    IndexingFactNode& new_node) {
+    IndexingFactNode* new_node) {
   // Terminate if there is no parent or the parent has no children.
   if (facts_tree_context_.empty() || is_leaf(facts_tree_context_.top())) {
     return;
@@ -2001,10 +2004,10 @@ void IndexingFactsTreeExtractor::MoveAndDeleteLastExtractedNode(
   IndexingFactNode& previous_node = facts_tree_context_.top().Children().back();
 
   // Fill the anchors of the previous node to the current node.
-  new_node.Value().SwapAnchors(&previous_node.Value());
+  new_node->Value().SwapAnchors(&previous_node.Value());
 
   // Move the children of the previous node to this node.
-  AdoptSubtreesFrom(new_node, &previous_node);
+  AdoptSubtreesFrom(*new_node, &previous_node);
 
   // Remove the last extracted node.
   facts_tree_context_.top().Children().pop_back();
