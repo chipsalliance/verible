@@ -21,6 +21,7 @@
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/file_util.h"
+#include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
@@ -38,8 +39,8 @@ namespace {
 
 using verible::file::testing::ScopedTestFile;
 
-typedef IndexingFactNode T;
-typedef IndexingNodeData D;
+using T = IndexingFactNode;
+using D = IndexingNodeData;
 
 // This class exists, solely to store the temp dir name in a variable that
 // outlives its uses.  Do not pass TempDir() directly anywhere that expects a
@@ -76,7 +77,10 @@ struct TestFileEntry {
         source_file(file_opener(temp_file.filename())) {}
 
   // Returns the string_view of text owned by this->source_file.
-  absl::string_view SourceText() const { return source_file->GetContent(); }
+  absl::string_view SourceText() const {
+    CHECK(source_file != nullptr);
+    return source_file->GetContent();
+  }
 
   T::value_type ExpectedFileData() const {
     return {
@@ -94,8 +98,7 @@ class SimpleTestProject : public TempDir, public VerilogProject {
   // 'code_text' is the contents of the single translation unit in this project
   explicit SimpleTestProject(absl::string_view code_text,
                              const std::vector<std::string>& include_paths = {})
-      : TempDir(),
-        VerilogProject(temp_dir_, include_paths, /*corpus=*/"unittest",
+      : VerilogProject(temp_dir_, include_paths, /*corpus=*/"unittest",
                        /*populate_string_maps=*/false),
         code_text_(code_text),
         translation_unit_(code_text, temp_dir_,

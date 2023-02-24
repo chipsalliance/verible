@@ -26,7 +26,7 @@ namespace kythe {
 class IndexingFactsTreeContext
     : public verible::AutoPopStack<IndexingFactNode*> {
  public:
-  typedef verible::AutoPopStack<IndexingFactNode*> base_type;
+  using base_type = verible::AutoPopStack<IndexingFactNode*>;
 
   // member class to handle push and pop of stack safely
   using AutoPop = base_type::AutoPop;

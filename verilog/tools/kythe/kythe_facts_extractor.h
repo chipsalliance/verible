@@ -64,7 +64,7 @@ class KytheOutput {
   // Output all Kythe facts from the indexing data.
   virtual void Emit(const Fact& fact) = 0;
   virtual void Emit(const Edge& edge) = 0;
-  virtual ~KytheOutput() {}
+  virtual ~KytheOutput() = default;
 };
 
 // Extract facts across an entire project.

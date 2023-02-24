@@ -171,7 +171,7 @@ const absl::flat_hash_set<VName>& ScopeResolver::ListScopeMembers(
   return scope->second;
 }
 
-std::string ScopeResolver::ScopeDebug(SignatureDigest scope) const {
+std::string ScopeResolver::ScopeDebug(const SignatureDigest& scope) const {
   if (!enable_debug_) {
     return "UNKNOWN (debug off)";
   }

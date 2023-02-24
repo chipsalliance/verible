@@ -59,7 +59,7 @@ KzipCreator::KzipCreator(absl::string_view output_path)
 
 std::string KzipCreator::AddSourceFile(absl::string_view path,
                                        absl::string_view content) {
-  const std::string digest = SHA256Digest(content);
+  std::string digest = SHA256Digest(content);
   const std::string archive_path = verible::file::JoinPath(kFileRoot, digest);
   archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return digest;

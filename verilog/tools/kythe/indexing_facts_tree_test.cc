@@ -32,7 +32,7 @@ class TestAnchor : public Anchor {
  public:
   // Forward all constructors
   template <typename... Args>
-  TestAnchor(Args&&... args) : Anchor(std::forward<Args>(args)...) {}
+  explicit TestAnchor(Args&&... args) : Anchor(std::forward<Args>(args)...) {}
 };
 
 TEST(AnchorTest, DebugStringUsingOffsets) {
@@ -168,7 +168,7 @@ TEST(IndexingNodeDataTest, DebugStringUsingOffsets) {
 
 TEST(IndexingFactNodeTest, StreamPrint) {
   constexpr absl::string_view text("abcdefghij");
-  typedef IndexingFactNode Node;
+  using Node = IndexingFactNode;
   const Node node(
       IndexingNodeData(IndexingFactType::kClass,
                        Anchor(text.substr(1, 2), /*begin=*/1, /*length=*/2),
