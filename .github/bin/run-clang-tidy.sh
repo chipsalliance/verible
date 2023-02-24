@@ -94,9 +94,6 @@ readonly EXEC_ROOT="$(bazel info execution_root)"
 readonly CURRENT_DIR="$(pwd)"
 readonly CANONICALIZE_SOURCE_PATH_REGEX="^\(${EXEC_ROOT}\|${CURRENT_DIR}\|\.\)/"
 
-# Exclude kythe for now, as it is somehwat noisy and should be
-# addressed separately.
-#
 # We create a hash of each file content to only have to look at new files.
 # (TODO: could the tidy result be different if an include content changes ?
 #  Then we have to do g++ -E (using compilation database knowing about -I etc.)
@@ -104,7 +101,6 @@ readonly CANONICALIZE_SOURCE_PATH_REGEX="^\(${EXEC_ROOT}\|${CURRENT_DIR}\|\.\)/"
 # Make need to re-run file dependent on clang-tidy configuration, WORKSPACE
 # and of course file content.
 for f in $(find . -name "*.cc" -or -name "*.h" \
-             | grep -v "verilog/tools/kythe" \
              | grep -v "verilog/tools/ls/vscode" \
            )
 do
