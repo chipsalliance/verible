@@ -258,8 +258,7 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
       continue;
     }
     if ((*token_iter)->text() == ",") {
-      macro_call->positional_arguments.emplace_back(
-          verible::DefaultTokenInfo());
+      macro_call->positional_arguments.emplace_back();  // default token info
       token_iter = GenerateBypassWhiteSpaces(generator);
       parameters_size--;
       continue;
@@ -270,8 +269,7 @@ absl::Status VerilogPreprocess::ConsumeAndParseMacroCall(
   }
   if (parameters_size > 0) {
     while (parameters_size--) {
-      macro_call->positional_arguments.emplace_back(
-          verible::DefaultTokenInfo());
+      macro_call->positional_arguments.emplace_back();  // default token info
     }
   }
   return absl::OkStatus();
@@ -292,9 +290,9 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
   const auto* found =
       FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
   if (!found) {
-    preprocess_data_.errors.emplace_back(VerilogPreprocessError(
+    preprocess_data_.errors.emplace_back(
         **iter,
-        "Error expanding macro identifier, might not be defined before."));
+        "Error expanding macro identifier, might not be defined before.");
     return absl::InvalidArgumentError(
         "Error expanding macro identifier, might not be defined before.");
   }
@@ -328,8 +326,8 @@ void VerilogPreprocess::RegisterMacroDefinition(
   const bool inserted = InsertOrUpdate(&preprocess_data_.macro_definitions,
                                        definition.Name(), definition);
   if (inserted) return;
-  preprocess_data_.warnings.emplace_back(
-      VerilogPreprocessError(definition.NameToken(), "Re-defining macro"));
+  preprocess_data_.warnings.emplace_back(definition.NameToken(),
+                                         "Re-defining macro");
   // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 

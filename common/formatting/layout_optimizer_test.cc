@@ -149,7 +149,7 @@ class LayoutTest : public ::testing::Test, public UnwrappedLineMemoryHandler {
             "loooooong_line"),
         tokens_(absl::StrSplit(sample_, '\n')) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfos(ftokens_);
   }
@@ -677,8 +677,8 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
     // Create two sets of tokens
     const size_t number_of_tokens_in_set = tokens_.size();
     ftokens_.reserve(number_of_tokens_in_set * 2);
-    for (const auto token : tokens_) ftokens_.emplace_back(TokenInfo{1, token});
-    for (const auto token : tokens_) ftokens_.emplace_back(TokenInfo{1, token});
+    for (const auto token : tokens_) ftokens_.emplace_back(1, token);
+    for (const auto token : tokens_) ftokens_.emplace_back(1, token);
 
     CreateTokenInfosExternalStringBuffer(ftokens_);
 
@@ -1965,7 +1965,7 @@ class TreeReconstructorTest : public ::testing::Test,
       : sample_("first_line second_line third_line fourth_line"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfos(ftokens_);
   }
@@ -2323,7 +2323,7 @@ class OptimizeTokenPartitionTreeTest : public ::testing::Test,
             "seven eight nine ten eleven twelve"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfos(ftokens_);
   }

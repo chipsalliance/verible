@@ -45,7 +45,7 @@ class TokenPartitionTreeTestFixture : public ::testing::Test,
       : sample_("one two three four five six"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfos(ftokens_);
   }
@@ -1239,7 +1239,7 @@ class GetSubpartitionsBetweenBlankLinesTest
         partition_(/* temporary */ UnwrappedLine()) {
     CHECK_EQ(tokens_.size(), 8);
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     // sample_ is the memory-owning string buffer
     CreateTokenInfosExternalStringBuffer(ftokens_);
@@ -2702,7 +2702,7 @@ class ReshapeFittingSubpartitionsTestFixture
             "type_e_eeeeeeee, type_f_ffff);"),
         tokens_(absl::StrSplit(sample_, ' ')) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     CreateTokenInfos(ftokens_);
   }

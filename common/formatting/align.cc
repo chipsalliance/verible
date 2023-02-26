@@ -1060,9 +1060,9 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     for (const auto& range : ranges) {
       // Apply the same alignment scanner and policy to all alignment groups.
       // This ignores range.match_subtype.
-      groups.emplace_back(AlignablePartitionGroup{
+      groups.emplace_back(
           FilterAlignablePartitions(range.range, legacy_ignore_predicate),
-          alignment_cell_scanner, alignment_policy});
+          alignment_cell_scanner, alignment_policy);
       if (groups.back().IsEmpty()) groups.pop_back();
     }
     return groups;
