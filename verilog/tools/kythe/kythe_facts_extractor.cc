@@ -331,6 +331,9 @@ std::optional<SignatureDigest> KytheFactsExtractor::GetParentTypeScope(
     focused_scope = parent_type->type_scope;
   }
 
+  if (!parent_type.has_value()) {
+    return std::nullopt;
+  }
   VLOG(2) << "GetParentTypeScope for " << node_name << " succeeded. Parent: "
           << scope_resolver_->ScopeDebug(parent_type->type_scope);
   return parent_type->type_scope;

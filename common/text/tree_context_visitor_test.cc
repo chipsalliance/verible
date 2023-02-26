@@ -48,6 +48,7 @@ class ContextRecorder : public BaseVisitor {
 
   std::vector<std::vector<int>> ContextTagHistory() const {
     std::vector<std::vector<int>> result;
+    result.reserve(context_history_.size());
     for (const auto& context : context_history_) {
       result.emplace_back(ContextToTags(context));
     }

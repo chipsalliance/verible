@@ -59,7 +59,7 @@ class AlignmentTestFixture : public ::testing::Test,
         tokens_(absl::StrSplit(sample_, absl::ByAnyChar(" \n"),
                                absl::SkipEmpty())) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     // sample_ is the memory-owning string buffer
     CreateTokenInfosExternalStringBuffer(ftokens_);
@@ -1487,7 +1487,7 @@ class FormatUsingOriginalSpacingTest : public ::testing::Test,
         tokens_(absl::StrSplit(sample_, OutsideCharPairs('<', '>'),
                                absl::SkipEmpty())) {
     for (const auto token : tokens_) {
-      ftokens_.emplace_back(TokenInfo{1, token});
+      ftokens_.emplace_back(1, token);
     }
     // sample_ is the memory-owning string buffer
     CreateTokenInfosExternalStringBuffer(ftokens_);

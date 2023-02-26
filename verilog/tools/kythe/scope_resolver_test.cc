@@ -76,16 +76,20 @@ TEST(ScopeResolverTests, AddAndFindDefinition) {
       scope_resolver.FindScopeAndDefinition(vnames[2].signature.Names().back());
 
   ASSERT_TRUE(def_without_type.has_value());
-  EXPECT_EQ(def_without_type->instantiation_scope,
-            scope_resolver.CurrentScopeDigest());
-  EXPECT_EQ(def_without_type->type_scope, vnames[0].signature.Digest());
-  EXPECT_EQ(def_without_type->vname.signature, vnames[0].signature);
+  if (def_without_type.has_value()) {   // make clang-tidy happy.
+    EXPECT_EQ(def_without_type->instantiation_scope,
+              scope_resolver.CurrentScopeDigest());
+    EXPECT_EQ(def_without_type->type_scope, vnames[0].signature.Digest());
+    EXPECT_EQ(def_without_type->vname.signature, vnames[0].signature);
+  }
 
   ASSERT_TRUE(def_with_type.has_value());
-  EXPECT_EQ(def_with_type->instantiation_scope,
-            scope_resolver.CurrentScopeDigest());
-  EXPECT_EQ(def_with_type->type_scope, signatures[5].Digest());
-  EXPECT_EQ(def_with_type->vname.signature, vnames[1].signature);
+  if (def_with_type.has_value()) {   // make clang-tidy happy.
+    EXPECT_EQ(def_with_type->instantiation_scope,
+              scope_resolver.CurrentScopeDigest());
+    EXPECT_EQ(def_with_type->type_scope, signatures[5].Digest());
+    EXPECT_EQ(def_with_type->vname.signature, vnames[1].signature);
+  }
 
   EXPECT_FALSE(unknown_def.has_value());
 }
@@ -132,17 +136,22 @@ TEST(ScopeResolverTests, SameNameVariableInMultipleScopes) {
   const auto def_var1 =
       scope_resolver.FindScopeAndDefinition(name, signatures[6].Digest());
   ASSERT_TRUE(def_var1.has_value());
-  EXPECT_EQ(def_var1->vname.signature, sig1);
+  if (def_var1.has_value()) {  // make clang-tidy happy
+    EXPECT_EQ(def_var1->vname.signature, sig1);
+  }
 
   const auto def_var2 =
       scope_resolver.FindScopeAndDefinition(name, signatures[0].Digest());
   ASSERT_TRUE(def_var2.has_value());
-  EXPECT_EQ(def_var2->vname.signature, sig2);
-
+  if (def_var2.has_value()) {  // make clang-tidy happy
+    EXPECT_EQ(def_var2->vname.signature, sig2);
+  }
   const auto def_var_current_scope =
       scope_resolver.FindScopeAndDefinition(name);
   ASSERT_TRUE(def_var_current_scope.has_value());
-  EXPECT_EQ(def_var_current_scope->vname.signature, sig2);
+  if (def_var_current_scope.has_value()) {  // make clang-tidy happy.
+    EXPECT_EQ(def_var_current_scope->vname.signature, sig2);
+  }
 }
 
 TEST(ScopeResolverTests, ListScopeMembers) {
