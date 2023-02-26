@@ -76,7 +76,7 @@ TEST(ScopeResolverTests, AddAndFindDefinition) {
       scope_resolver.FindScopeAndDefinition(vnames[2].signature.Names().back());
 
   ASSERT_TRUE(def_without_type.has_value());
-  if (def_without_type.has_value()) {   // make clang-tidy happy.
+  if (def_without_type.has_value()) {  // make clang-tidy happy.
     EXPECT_EQ(def_without_type->instantiation_scope,
               scope_resolver.CurrentScopeDigest());
     EXPECT_EQ(def_without_type->type_scope, vnames[0].signature.Digest());
@@ -84,7 +84,7 @@ TEST(ScopeResolverTests, AddAndFindDefinition) {
   }
 
   ASSERT_TRUE(def_with_type.has_value());
-  if (def_with_type.has_value()) {   // make clang-tidy happy.
+  if (def_with_type.has_value()) {  // make clang-tidy happy.
     EXPECT_EQ(def_with_type->instantiation_scope,
               scope_resolver.CurrentScopeDigest());
     EXPECT_EQ(def_with_type->type_scope, signatures[5].Digest());

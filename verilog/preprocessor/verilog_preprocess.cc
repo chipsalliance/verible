@@ -326,8 +326,8 @@ void VerilogPreprocess::RegisterMacroDefinition(
   const bool inserted = InsertOrUpdate(&preprocess_data_.macro_definitions,
                                        definition.Name(), definition);
   if (inserted) return;
-  preprocess_data_.warnings.emplace_back(
-      definition.NameToken(), "Re-defining macro");
+  preprocess_data_.warnings.emplace_back(definition.NameToken(),
+                                         "Re-defining macro");
   // TODO(hzeller): multiline warning with 'previously defined here' location
 }
 

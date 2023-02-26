@@ -1426,9 +1426,9 @@ static std::vector<AlignablePartitionGroup> ExtractAlignablePartitionGroups(
     // match_subtype.  This supports aligning a heterogenous collection of
     // alignable partition groups from the same parent partition (full_range).
     groups.emplace_back(
-      FilterAlignablePartitions(range.range, ignore_group_predicate),
-      AlignmentColumnScannerSelector(vstyle, range.match_subtype),
-      AlignmentPolicySelector(vstyle, range.match_subtype));
+        FilterAlignablePartitions(range.range, ignore_group_predicate),
+        AlignmentColumnScannerSelector(vstyle, range.match_subtype),
+        AlignmentPolicySelector(vstyle, range.match_subtype));
     if (groups.back().IsEmpty()) groups.pop_back();
   }
   return groups;
