@@ -23,7 +23,7 @@ pkgs.mkShell {
 
       # Ease development
       lcov              # coverage html generation.
-      clang-tools_15    # clang-format, clang-tidy
+      clang-tools_14    # clang-format, clang-tidy
       bazel-buildtools  # buildifier
     ];
 }

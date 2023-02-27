@@ -34,7 +34,7 @@ fi
 # The caller can supply additional clang-tidy flags that are passed as-is
 # Example:
 #   run-clang-tidy.sh --checks="-*,modernize-use-equals-default" --fix
-readonly ADDITIONAL_TIDY_OPTIONS="$@"
+readonly ADDITIONAL_TIDY_OPTIONS=("$@")
 readonly PARALLEL_COUNT="$(nproc)"
 
 # clang-tidy binary name can be provided in CLANG_TIDY environment variable.
@@ -71,7 +71,7 @@ fi
 # Assemble unique name depending on the configuration. This allows to play with
 # various clang-tidy versions and have outputs cached in separate directories.
 readonly CLANG_SHORT_VERSION="$(${CLANG_TIDY} --version | sed 's/.*version \([0-9]\+\).*/\1/p;d')"
-readonly CONFIG_NAME="v${CLANG_SHORT_VERSION}_$((${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE; echo ${ADDITIONAL_TIDY_OPTIONS}) | md5sum | cut -b1-8)"
+readonly CONFIG_NAME="v${CLANG_SHORT_VERSION}_$((${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE; echo ${ADDITIONAL_TIDY_OPTIONS[@]}) | md5sum | cut -b1-8)"
 
 readonly BASE_DIR="${CACHE_DIR}/${PROJECT_NAME}-clang-tidy-${CONFIG_NAME}"
 readonly BASE_DIR_TMP="${BASE_DIR}/tmp"
@@ -84,6 +84,7 @@ readonly INCLUDE_REPLACE="${BASE_DIR_TMP}/include-replace.expression"
 readonly FILES_OF_INTEREST="${BASE_DIR_TMP}/files.all"
 readonly HASHES_OF_INTEREST="${BASE_DIR_TMP}/hashes.interest"
 readonly FILE_HASHES_TO_PROCESS="${BASE_DIR_TMP}/files-hash.process"
+readonly CLANG_TIDY_HELPER="${BASE_DIR_TMP}/run-clang-tidy.sh"
 trap 'rm -rf -- "${BASE_DIR_TMP}"' EXIT
 
 readonly TIDY_OUT="${BASE_DIR}/tidy.out"
@@ -119,7 +120,6 @@ fi
 
 : > "${HASHES_OF_INTEREST}"      # truncate if exists; we'll re-create below
 : > "${FILE_HASHES_TO_PROCESS}"
-: > "${INCLUDE_REPLACE}"
 
 # All the files we want to run clang-tidy on: *.cc and *.h
 find . -name "*.cc" -or -name "*.h" \
@@ -137,9 +137,9 @@ find . -name "*.cc" -or -name "*.h" \
 for f in $(cat ${FILES_OF_INTEREST}); do
   if [ "${f##*.}" == "h" ]; then     # only headers expected to be relevant
     c_hash="$(cat $f | md5sum | awk '{print $1}')"
-    echo "s|$f|$c_hash|g" | sed 's|\.|\\.|g' >> "${INCLUDE_REPLACE}"
+    echo "s|$f|$c_hash|g" | sed 's|\.|\\.|g'
   fi
-done
+done > "${INCLUDE_REPLACE}"
 
 # Create a content hash of each file, first changing include filenames with
 # their content-hash as described above.
@@ -173,21 +173,22 @@ if [ -s "${FILE_HASHES_TO_PROCESS}" ]; then
   readonly CURRENT_DIR="$(pwd)"
   readonly CANONICALIZE_SOURCE_PATH_REGEX="^\(${EXEC_ROOT}\|${CURRENT_DIR}\|\.\)/"
 
-  # Call an in-line shell script in parallel that gets the file/hash tuple
-  # as parameter. Split the argument into ${args[0]} (hash value)
-  # and ${args[1]} (cc-file to process) and call clang-tidy on it. So each
-  # clang-tidy result is stored to its content-addressed file.
-  # (shell-quoting nightmare ahead:)
+  # Helper script gets "<hash-value> <filename>" as single argument.
+  # Run clang-tidy on <filename> and store result in ${CONTENT_DIR}/<hash>
+  cat > "${CLANG_TIDY_HELPER}" <<EOF
+read OUTPUT_FILE INPUT_FILE <<< \$1
+${CLANG_TIDY} --quiet --config="$(cat ${CLANG_CONFIG_FILE})" \
+  ${ADDITIONAL_TIDY_OPTIONS[@]@Q} "\${INPUT_FILE}" 2>/dev/null \
+  | sed -e "s@${CANONICALIZE_SOURCE_PATH_REGEX}@@g" \
+  > "${CONTENT_DIR}/\${OUTPUT_FILE}.tmp"
+mv "${CONTENT_DIR}/\${OUTPUT_FILE}".tmp "${CONTENT_DIR}/\${OUTPUT_FILE}"
+EOF
+
+  # Call the helper shell script in parallel that gets the file/hash tuple
+  # as parameter.
   echo "Processing in ${PARALLEL_COUNT} parallel invocations of ${CLANG_TIDY}"
   cat "${FILE_HASHES_TO_PROCESS}" | \
-    xargs -P"${PARALLEL_COUNT}" -d'\n' -n1 -- \
-          bash -c "read -a args <<< \$1 ;
-              ${CLANG_TIDY} --config=\"$(cat ${CLANG_CONFIG_FILE})\" \
-              --quiet ${ADDITIONAL_TIDY_OPTIONS} \${args[1]} 2>/dev/null \
-              | sed -e \"s@${CANONICALIZE_SOURCE_PATH_REGEX}@@g\" \
-              > ${CONTENT_DIR}/\${args[0]}.tmp ;\
-              mv ${CONTENT_DIR}/\${args[0]}.tmp ${CONTENT_DIR}/\${args[0]}" \
-              --args
+    xargs -P"${PARALLEL_COUNT}" -d'\n' -n1 -- "${SHELL}" "${CLANG_TIDY_HELPER}"
 fi
 
 # Assemble the outputs of all files of interest into one clang tidy output
@@ -205,7 +206,7 @@ if [ -s "${TIDY_OUT}" ]; then
   echo "Find this output in ${CURRENT_TIDY_OUT}"
   echo "::endgroup::"
 
-  echo "Summary"
+  echo "Summary (in ${SUMMARY_OUT})"
   sed -e 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < "${TIDY_OUT}" \
     | sort | uniq -c | sort -rn > "${SUMMARY_OUT}"
   cat "${SUMMARY_OUT}"
