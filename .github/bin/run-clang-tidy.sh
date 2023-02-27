@@ -19,7 +19,10 @@
 
 set -u
 
-readonly PROJECT_NAME=verible           # Prefix for directory in ${TMPDIR}
+# If enviornment variable CACHE_DIR is set, uses that as base to assemble
+# a path for the cache. Otherwise ~/.cache, ${TMPDIR}, or /tmp whatever first.
+
+readonly PROJECT_NAME=verible           # To assemble name inside ${CACHE_DIR}
 readonly EXIT_CODE_ON_WARNINGS=1        # Should fail on warnings found ?
 readonly CLANG_CONFIG_FILE=.clang-tidy  # config file used
 
@@ -51,15 +54,26 @@ fi
 
 hash "${CLANG_TIDY}" || exit 2  # make sure it is installed.
 
-TMPDIR="${TMPDIR:-/tmp}"
 EXIT_CODE=0
+
+# Find best place to put the cache.
+TMPDIR="${TMPDIR:-/tmp}"
+CACHE_DIR="${CACHE_DIR:-empty_env}"
+if [ "${CACHE_DIR}" == "empty_env" ]; then
+  if [ -d "${HOME}/.cache" ]; then
+    CACHE_DIR="${HOME}/.cache/clang-tidy"
+    mkdir -p "${CACHE_DIR}"
+  else
+    CACHE_DIR="${TMPDIR}"
+  fi
+fi
 
 # Assemble unique name depending on the configuration. This allows to play with
 # various clang-tidy versions and have outputs cached in separate directories.
 readonly CLANG_SHORT_VERSION="$(${CLANG_TIDY} --version | sed 's/.*version \([0-9]\+\).*/\1/p;d')"
 readonly CONFIG_NAME="v${CLANG_SHORT_VERSION}_$((${CLANG_TIDY} --version; cat ${CLANG_CONFIG_FILE} WORKSPACE; echo ${ADDITIONAL_TIDY_OPTIONS}) | md5sum | cut -b1-8)"
 
-readonly BASE_DIR="${TMPDIR}/${PROJECT_NAME}-clang-tidy-${CONFIG_NAME}"
+readonly BASE_DIR="${CACHE_DIR}/${PROJECT_NAME}-clang-tidy-${CONFIG_NAME}"
 readonly BASE_DIR_TMP="${BASE_DIR}/tmp"
 readonly CONTENT_DIR="${BASE_DIR}/contents"
 mkdir -p "${BASE_DIR}" "${BASE_DIR_TMP}" "${CONTENT_DIR}"
@@ -73,7 +87,8 @@ readonly FILE_HASHES_TO_PROCESS="${BASE_DIR_TMP}/files-hash.process"
 trap 'rm -rf -- "${BASE_DIR_TMP}"' EXIT
 
 readonly TIDY_OUT="${BASE_DIR}/tidy.out"
-readonly CURRENT_TIDY_OUT="${TMPDIR}/${PROJECT_NAME}-clang-tidy-current.out"
+readonly SUMMARY_OUT="${BASE_DIR}/tidy.out.summary"
+readonly CURRENT_TIDY_OUT="${PROJECT_NAME}-clang-tidy-current.out"
 
 # Explicitly test the configuration, otherwise clang-tidy will silently
 # fall back to some minimal default config.
@@ -170,7 +185,9 @@ if [ -s "${FILE_HASHES_TO_PROCESS}" ]; then
               ${CLANG_TIDY} --config=\"$(cat ${CLANG_CONFIG_FILE})\" \
               --quiet ${ADDITIONAL_TIDY_OPTIONS} \${args[1]} 2>/dev/null \
               | sed -e \"s@${CANONICALIZE_SOURCE_PATH_REGEX}@@g\" \
-              > ${CONTENT_DIR}/\${args[0]}" --args
+              > ${CONTENT_DIR}/\${args[0]}.tmp ;\
+              mv ${CONTENT_DIR}/\${args[0]}.tmp ${CONTENT_DIR}/\${args[0]}" \
+              --args
 fi
 
 # Assemble the outputs of all files of interest into one clang tidy output
@@ -178,7 +195,7 @@ while read -r content_hash ; do
   cat "${CONTENT_DIR}/${content_hash}"
 done < "${HASHES_OF_INTEREST}" > "${TIDY_OUT}"
 
-ln -sf "${TIDY_OUT}" "${CURRENT_TIDY_OUT}"
+ln -sf "${TIDY_OUT}" "${CURRENT_TIDY_OUT}"  # Convenience location
 
 if [ -s "${TIDY_OUT}" ]; then
   EXIT_CODE="${EXIT_CODE_ON_WARNINGS}"
@@ -190,7 +207,8 @@ if [ -s "${TIDY_OUT}" ]; then
 
   echo "Summary"
   sed -e 's|\(.*\)\(\[[a-zA-Z.-]*\]$\)|\2|p;d' < "${TIDY_OUT}" \
-    | sort | uniq -c | sort -rn
+    | sort | uniq -c | sort -rn > "${SUMMARY_OUT}"
+  cat "${SUMMARY_OUT}"
 else
   echo "No clang-tidy complaints.😎"
 fi

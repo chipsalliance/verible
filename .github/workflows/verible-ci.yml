@@ -75,10 +75,9 @@ jobs:
     - name: Install Dependencies
       run: |
         apt -qqy update
-        apt -qq -y install clang-tidy-11 clang-tidy-15 build-essential git wget
+        apt -qq -y install clang-tidy-11 clang-tidy-14 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
-        echo "TMPDIR=/tmp" >> $GITHUB_ENV
 
     - name: Create Cache Timestamp
       id: cache_timestamp
@@ -90,7 +89,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          /tmp/verible-clang-tidy-*/contents
+          /root/.cache/clang-tidy
           /root/.cache/bazel
         key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy-
@@ -99,7 +98,7 @@ jobs:
       run: |
         # For runtime references, use clang-tidy 11, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy.sh --checks="-*,google-runtime-references"
-        CLANG_TIDY=clang-tidy-15 ./.github/bin/run-clang-tidy.sh
+        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy.sh
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
