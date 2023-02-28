@@ -32,17 +32,6 @@ namespace verilog {
 
 using verible::Symbol;
 using verible::SymbolPtr;
-using verible::SyntaxTreeNode;
-
-static SymbolPtr ReinterpretReferenceAsType(Symbol& reference) {  // NOLINT
-  SyntaxTreeNode& local_root(*ABSL_DIE_IF_NULL(verible::GetSubtreeAsNode(
-      reference, NodeEnum::kReference, 0, NodeEnum::kLocalRoot)));
-  auto& children(local_root.mutable_children());
-  CHECK(!children.empty());
-  // kLocalRoot has multiple constructions in verilog.y
-  // TODO(fangism): reject the ones that are not plausible types as errors.
-  return std::move(children[0]);
-}
 
 static SymbolPtr ReinterpretLocalRootAsType(Symbol& local_root) {  // NOLINT
   auto& children(verible::SymbolCastToNode(local_root).mutable_children());
@@ -52,7 +41,7 @@ static SymbolPtr ReinterpretLocalRootAsType(Symbol& local_root) {  // NOLINT
 
 SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
     SymbolPtr& reference_call_base) {
-  SyntaxTreeNode& base(verible::CheckSymbolAsNode(
+  verible::SyntaxTreeNode& base(verible::CheckSymbolAsNode(
       *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReference));
   auto& children(base.mutable_children());
   CHECK(!children.empty());
@@ -69,15 +58,36 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
       verible::MakeTaggedNode(NodeEnum::kPackedDimensions));
   verible::SyntaxTreeNode& pdim_node(
       verible::SymbolCastToNode(*packed_dimensions));
+
+  SymbolPtr local_root_with_extension(
+      verible::MakeTaggedNode(NodeEnum::kLocalRoot));
+
+  verible::SyntaxTreeNode& local_root_with_extension_node(
+      verible::SymbolCastToNode(*local_root_with_extension));
+  local_root_with_extension_node.AppendChild(ReinterpretLocalRootAsType(*children.front()));
+
   for (auto& child :
        verible::make_range(children.begin() + 1, children.end())) {
     // Each child could be a call-extension or an index (bit-select/slice).
     // Only [] indices are valid, any others are syntax errors.
     // We discard syntax errors for now, but in the future should retain these
     // error nodes for diagnostics.
+
     if (!child) continue;
+    
+    if (child->Kind() == verible::SymbolKind::kNode &&
+        verible::SymbolCastToNode(*child).MatchesTag(NodeEnum::kHierarchyExtension)) {
+      local_root_with_extension_node.AppendChild(std::move(child));
+      continue;
+    }
+    
     const auto tag = child->Tag();
-    if (tag.kind != verible::SymbolKind::kNode) continue;
+    if (tag.kind != verible::SymbolKind::kNode)
+    {
+      pdim_node.AppendChild(std::move(child));
+      continue;
+    }
+    
     auto& node = verible::SymbolCastToNode(*child);
     if (node.MatchesTagAnyOf(
             {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar})) {
@@ -86,8 +96,7 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
     // TODO(fangism): instead of ignoring, retain non-tag-matched nodes as
     // syntax error nodes.
   }
-  return MakeDataType(ReinterpretLocalRootAsType(local_root),
-                      packed_dimensions);
+  return MakeDataType(local_root_with_extension, packed_dimensions);
 }
 
 std::vector<verible::TreeSearchMatch> FindAllDataTypeDeclarations(
@@ -150,7 +159,24 @@ const verible::SyntaxTreeLeaf* GetIdentifierFromTypeDeclaration(
 
 const verible::Symbol* GetBaseTypeFromDataType(
     const verible::Symbol& data_type) {
-  return verible::GetSubtreeAsSymbol(data_type, NodeEnum::kDataType, 1);
+  const auto* local_root = verible::GetSubtreeAsNode(data_type, NodeEnum::kDataType, 1);
+  if (!local_root) return nullptr;
+  if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) return local_root;
+
+  auto& children = local_root->children();
+  CHECK(!children.empty());
+  verible::Symbol* last_child = nullptr;
+  for (auto& child : children) {
+    if (child.get() != nullptr && child->Kind() == verible::SymbolKind::kNode) {
+      last_child = child.get();
+    }
+  }
+  if(!last_child) return nullptr;
+  if(verible::SymbolCastToNode(*last_child).MatchesTag(NodeEnum::kHierarchyExtension)) {
+    //FIXME(jbylicki): This really should return something logical
+    return nullptr;
+  }
+  return last_child;
 }
 
 const verible::SyntaxTreeNode* GetPackedDimensionFromDataType(
@@ -173,7 +199,7 @@ static const verible::SyntaxTreeNode* GetReferenceFromReferenceCallBase(
                                    NodeEnum::kReferenceCallBase, 0);
 }
 
-static const verible::SyntaxTreeNode* GetLocalRootFromReference(
+const verible::SyntaxTreeNode* GetLocalRootFromReference(
     const verible::Symbol& reference) {
   return verible::GetSubtreeAsNode(reference, NodeEnum::kReference, 0);
 }
@@ -204,10 +230,10 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataType(
   const verible::Symbol* type = GetBaseTypeFromDataType(data_type);
 
   if (type == nullptr ||
-      NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive) {
+      (NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive && NodeEnum(type->Tag().tag) != NodeEnum::kLocalRoot) 
+  ) {
     return nullptr;
   }
-
   const verible::Symbol* inner_type =
       verible::GetSubtreeAsSymbol(*type, NodeEnum::kDataTypePrimitive, 0);
 
@@ -290,7 +316,11 @@ const verible::SyntaxTreeLeaf* GetNonprimitiveTypeOfDataTypeImplicitDimensions(
       verible::GetSubtreeAsNode(data_type_implicit_id_dimensions,
                                 NodeEnum::kDataTypeImplicitIdDimensions, 0);
   if (!type_node) return nullptr;
-  const verible::Symbol* identifier = GetBaseTypeFromDataType(*type_node);
+  const verible::Symbol* base_type = GetBaseTypeFromDataType(*type_node);
+  if(!base_type) return nullptr;
+  const verible::Symbol* type_id = GetTypeIdentifierFromBaseType(*base_type);
+  if(!type_id) return nullptr;
+  const verible::Symbol* identifier = verible::GetLeftmostLeaf(*type_id);
   if (identifier == nullptr ||
       identifier->Kind() != verible::SymbolKind::kLeaf) {
     return nullptr;
@@ -350,31 +380,13 @@ const verible::SyntaxTreeNode* GetTypeIdentifierFromDataType(
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 
-//
-// const verible::SyntaxTreeNode* GetTypeIdentifierFromCustomType(
-//     const verible::Symbol& data_type) {
-//   const verible::SyntaxTreeNode& data_type_node =
-//       verible::SymbolCastToNode(data_type);
-//   if (!data_type_node.MatchesTag(NodeEnum::kReferenceCallBase)) return
-//   nullptr; if (data_type_node.children().empty()) {
-//     return nullptr;
-//   }
-//   const verible::Symbol* base_type = verible::GetSubtreeAsSymbol(data_type,
-//   NodeEnum::kReferenceCallBase, 0); if (base_type == nullptr) return nullptr;
-//   const verible::Symbol* base_type_deeper =
-//   verible::GetSubtreeAsSymbol(*base_type, NodeEnum::kReference, 0);
-//
-//   if (base_type_deeper == nullptr) return nullptr;
-//   std::cout << "base_type_deeper->Tag().tag: " << base_type_deeper->Tag().tag
-//   << std::endl;
-//
-//   return GetTypeIdentifierFromBaseType(*base_type_deeper);
-// }
-//
 const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
     const verible::Symbol& base_type) {
   const auto tag = static_cast<NodeEnum>(base_type.Tag().tag);
-  if (tag == NodeEnum::kUnqualifiedId || tag == NodeEnum::kQualifiedId) {
+  if (tag == NodeEnum::kLocalRoot) {
+    return verible::GetSubtreeAsNode(base_type, NodeEnum::kLocalRoot, 0);
+  }
+  else if (tag == NodeEnum::kUnqualifiedId || tag == NodeEnum::kQualifiedId) {
     return &verible::SymbolCastToNode(base_type);
   }
   return nullptr;

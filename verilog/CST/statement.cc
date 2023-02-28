@@ -464,7 +464,11 @@ const verible::SyntaxTreeLeaf *GetVariableNameFromForInitialization(
   }
   const verible::SyntaxTreeNode *lpvalue =
       verible::GetSubtreeAsNode(*child, NodeEnum::kLPValue, 0);
-  return AutoUnwrapIdentifier(*GetUnqualifiedIdFromReferenceCallBase(*lpvalue));
+  const verible::SyntaxTreeNode* local_root =
+    GetLocalRootFromReference(*lpvalue);
+  if (!local_root) return nullptr;
+  const verible::Symbol* identifiers = GetIdentifiersFromLocalRoot(*local_root);
+  return AutoUnwrapIdentifier(*identifiers);
 }
 
 // Returns the rhs expression from for loop initialization.

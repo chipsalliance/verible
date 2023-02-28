@@ -939,9 +939,9 @@ assignment_pattern_expression
   | data_type_base assignment_pattern
     { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
   | reference assignment_pattern
-    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, $1, $2); }
+    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, ReinterpretReferenceAsDataTypePackedDimensions($1), $2); }
   | reference call_base assignment_pattern
-    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, MakeTaggedNode(N::kDataType, $1, $2), $3); }
+    { $$ = MakeTaggedNode(N::kAssignmentPatternExpression, ReinterpretReferenceAsDataTypePackedDimensions($1), $2, $3); }
   ;
 structure_or_array_pattern_expression_list
   : structure_or_array_pattern_expression_list ',' structure_or_array_pattern_expression
@@ -1880,6 +1880,7 @@ data_type
     { $$ = std::move($1); }
   | reference
     { $$ = ReinterpretReferenceAsDataTypePackedDimensions($1); }
+    /* { $$ = std::move($1); } */
   ;
 
 interface_type
@@ -1931,19 +1932,19 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
   : GenericIdentifier delay3 decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
-                          MakeDataType(nullptr, $1, $2,
+                          MakeDataType(nullptr, MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), $2,
                                        MakePackedDimensionsNode($3)),
                           $4, MakeUnpackedDimensionsNode($5)); }
   | GenericIdentifier drive_strength decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
-                          MakeDataType(nullptr, $1, $2,
+                          MakeDataType(nullptr, MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), $2,
                                        MakePackedDimensionsNode($3)),
                           $4, MakeUnpackedDimensionsNode($5)); }
   | GenericIdentifier decl_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
-                          MakeDataType(nullptr, $1, nullptr,
+                          MakeDataType(nullptr, MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), nullptr,
                                        MakePackedDimensionsNode($2)),
                           $3, MakeUnpackedDimensionsNode($4)); }
   | GenericIdentifier scope_or_if_res GenericIdentifier
@@ -1988,12 +1989,12 @@ type_identifier_or_implicit_followed_by_id_and_dimensions_opt
 type_identifier_followed_by_id
   : unqualified_id decl_dimensions_opt GenericIdentifier
     { $$ = MakeTypeIdTuple(
-                          MakeDataType($1, MakePackedDimensionsNode($2)),
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot,$1), MakePackedDimensionsNode($2)),
                           MakeTaggedNode(N::kUnqualifiedId, $3)); }
     /* $1 is type */
   | qualified_id decl_dimensions_opt GenericIdentifier
     { $$ = MakeTypeIdTuple(
-                          MakeDataType($1, MakePackedDimensionsNode($2)),
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot,$1), MakePackedDimensionsNode($2)),
                           MakeTaggedNode(N::kUnqualifiedId, $3)); }
   /* The following are 'interface_port_header' from the LRM: */
   | unqualified_id '.' member_name decl_dimensions_opt GenericIdentifier
@@ -2022,11 +2023,11 @@ type_identifier_or_implicit_basic_followed_by_id
   // TODO(jeremycs): standardize this family of rules
   : unqualified_id GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId,
-                          MakeDataType($1), $2); }
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot,$1)), $2); }
     /* $1 is type */
   | qualified_id GenericIdentifier
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId,
-                          MakeDataType($1), $2); }
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot,$1)), $2); }
     /* $1 is type */
   | /* implicit type */ unqualified_id
     { $$ = MakeTaggedNode(N::kDataTypeImplicitBasicId,
@@ -2064,13 +2065,13 @@ type_identifier_or_implicit_basic_followed_by_id_and_dimensions_opt
   : qualified_id decl_dimensions_opt
     class_id decl_dimensions_opt
     { $$ = MakeTypeIdDimensionsTuple(
-                          MakeDataType($1, MakePackedDimensionsNode($2)),
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot, $1), MakePackedDimensionsNode($2)),
                           $3, MakeUnpackedDimensionsNode($4)); }
     /* $1 is type */
   | unqualified_id decl_dimensions_opt
     class_id decl_dimensions_opt
     { $$ = MakeTypeIdDimensionsTuple(
-                          MakeDataType($1, MakePackedDimensionsNode($2)),
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot, $1), MakePackedDimensionsNode($2)),
                           $3, MakeUnpackedDimensionsNode($4)); }
   | unqualified_id '.' member_name decl_dimensions_opt
     class_id decl_dimensions_opt
@@ -2113,12 +2114,12 @@ data_type_or_implicit
                           $3, nullptr, nullptr); }
   | GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
-                          MakeDataType($1, MakePackedDimensionsNode($2)),
+                          MakeDataType(MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$1)), MakePackedDimensionsNode($2)),
                           $3, nullptr, nullptr); }
   | GenericIdentifier TK_SCOPE_RES GenericIdentifier decl_dimensions_opt delay3_or_drive_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType(
-                              MakeTaggedNode(N::kQualifiedId, $1, $2, $3),
+                              MakeTaggedNode(N::kLocalRoot, MakeTaggedNode(N::kQualifiedId, $1, $2, $3)),
                               MakePackedDimensionsNode($4)),
                           $5, nullptr, nullptr); }
   /* want to use just 'class_id' to cover all qualified and unqualified types,
@@ -2141,18 +2142,18 @@ data_type_or_implicit_followed_by_id_and_dimensions_opt
     GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType($1, MakePackedDimensionsNode($2)),
-                          $3, $4,
+                          MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$3)), $4,
                           MakeUnpackedDimensionsNode($5)); }
   | decl_dimensions delay3_or_drive_opt GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType(nullptr,
                                        MakePackedDimensionsNode($1)),
-                          $2, $3,
+                          $2, MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$3)),
                           MakeUnpackedDimensionsNode($4)); }
   | TK_void GenericIdentifier decl_dimensions_opt
     { $$ = MakeTaggedNode(N::kDataTypeImplicitIdDimensions,
                           MakeDataType($1),
-                          nullptr /* delay3_or_drive_opt */, $2,
+                          nullptr /* delay3_or_drive_opt */, MakeTaggedNode(N::kLocalRoot,MakeTaggedNode(N::kUnqualifiedId,$2)),
                           MakeUnpackedDimensionsNode($3)); }
   ;
 
@@ -3138,7 +3139,7 @@ statement
   | unqualified_id ':' /* attribute_list_opt */ statement_item
     { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
   | reference_or_call ';'
-    { $$ = MakeTaggedNode(N::kFunctionCall, $1, $2); }
+    { $$ = MakeTaggedNode(N::kStatement, MakeTaggedNode(N::kFunctionCall, $1), $2); }
   | unqualified_id ':' reference_or_call ';'
     { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, MakeTaggedNode(N::kFunctionCall, $3, $4 )); }
     /* $1 should be a GenericIdentifier, but unqualified_id avoids conflict. */
@@ -3226,7 +3227,7 @@ slice_size
   | expr_primary_parens
     { $$ = std::move($1); }
   | reference_or_call
-    { $$ = std::move($1); }
+    { $$ = MakeTaggedNode(N::kFunctionCall, $1); }
   | data_type_primitive
     { $$ = std::move($1); }
   /* non-primitive data-types already covered by reference_or_call */
@@ -4620,7 +4621,7 @@ scope_prefix
 
 postfix_expression
   : reference_or_call
-    { $$ = std::move($1); }
+    { $$ = MakeTaggedNode(N::kFunctionCall, $1); }
   | expr_primary
     { $$ = std::move($1); }
   ;
@@ -4633,13 +4634,13 @@ call_base
 //separated for chained calls (eg. foo().bar().baz())
 reference_or_call_base
   : reference call_base 
-    { $$ = MakeTaggedNode(N::kFunctionCall, $1, $2); }
+    { $$ = MakeTaggedNode(N::kReferenceCallBase, $1, $2); }
   | reference_or_call_base hierarchy_or_call_extension
     { $$ = ExtendNode($1,$2); }
 
 reference_or_call
   : reference
-    { $$ = MakeTaggedNode(N::kReferenceCallBase,$1); }
+    { $$ = std::move($1); }
   | reference_or_call_base
     {$$ = std::move($1);}
   // to handle the built-ins when there is no function call earler in the chain
@@ -4649,7 +4650,7 @@ reference_or_call
   | reference '.' TK_randomize
     { $$ = ExtendNode($1, MakeTaggedNode(N::kRandomizeMethodCallExtension, $2, $3, nullptr, nullptr)); }
   | reference call_base select_variable_dimension
-    { $$ = ExtendNode(MakeTaggedNode(N::kFunctionCall, $1, $2), $3); }
+    { $$ = ExtendNode(MakeTaggedNode(N::kReferenceCallBase, $1, $2), $3); }
     /* [ range ] */
   ;
 
@@ -5033,6 +5034,8 @@ hierarchy_or_call_extension
   | '.' builtin_array_method
     array_method_with_predicate_opt
     { $$ = MakeTaggedNode(N::kBuiltinArrayMethodCallExtension, $1, $2, $3); }
+  | '.' TK_randomize call_base
+    { $$ = MakeTaggedNode(N::kRandomizeMethodCallExtension, $1, $2, nullptr, $3); }
   ;
 /** this was merged into variable_dimension: (eliminate conflict on '[' )
 index_extension
@@ -7903,7 +7906,7 @@ sequence_match_item
   | subroutine_call
     { $$ = std::move($1); }
   | reference_or_call
-    { $$ = std::move($1); }
+    { $$ = MakeTaggedNode(N::kFunctionCall, $1); }
   ;
 subroutine_call
   : system_tf_call

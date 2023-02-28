@@ -435,7 +435,6 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
 
           std::vector<TreeSearchMatch> inner_types;
           for (const auto& decl : types) {
-            VLOG(1) << "type: " << verible::StringSpanOfSymbol(*decl.match);
             const auto* inner_type =
                 GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
             if (inner_type == nullptr) {

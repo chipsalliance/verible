@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <vector>
+#include <iostream>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/string_view.h"
@@ -133,7 +134,12 @@ std::vector<TreeSearchMatch> FindAllConditionExpressions(
 
 std::vector<TreeSearchMatch> FindAllReferenceFullExpressions(
     const verible::Symbol& root) {
-  return verible::SearchSyntaxTree(root, NodekReferenceCallBase());
+  auto references = verible::SearchSyntaxTree(root, NodekReference());
+  auto reference_calls = verible::SearchSyntaxTree(root, NodekReferenceCallBase());
+  for(auto& reference : references)
+    if(!(reference.context.DirectParentIs(NodeEnum::kReferenceCallBase)))
+      reference_calls.emplace_back(reference);
+  return reference_calls;
 }
 
 static const verible::TokenInfo* ReferenceBaseIsSimple(
@@ -163,8 +169,17 @@ static const verible::TokenInfo* ReferenceBaseIsSimple(
 
 const verible::TokenInfo* ReferenceIsSimpleIdentifier(
     const verible::Symbol& reference) {
+  // remove calls since they are not simple - but a ReferenceCallBase can be just a reference,
+  // depending on where it is placed in the code
+  auto sentinel = false;
+  if (reference.Tag().tag == (int) NodeEnum::kReferenceCallBase)
+  {
+    if(verible::SymbolCastToNode(reference).children().size() != 1 ) return nullptr;
+    sentinel = true;
+    // reference = verible::GetSubtreeAsSymbol(reference, NodeEnum::kReferenceCallBase, 0);
+  }
   const auto& reference_node(
-      verible::CheckSymbolAsNode(reference, NodeEnum::kReference));
+      verible::CheckSymbolAsNode(sentinel ? *verible::GetSubtreeAsSymbol(reference, NodeEnum::kReferenceCallBase, 0):reference, NodeEnum::kReference));
   // A simple reference contains one component without hierarchy, indexing, or
   // calls; it looks like just an identifier.
   if (reference_node.children().size() > 1) return nullptr;
