@@ -65,7 +65,7 @@ TEST(LineLinterTest, NoRules) {
 
 // This test verifies that LineLinter works with a single rule.
 TEST(LineLinterTest, OneRuleAcceptsLines) {
-  std::vector<absl::string_view> lines{{"abc", "def"}};
+  std::vector<absl::string_view> lines{"abc", "def"};
   LineLinter linter;
   linter.AddRule(MakeBlankLineRule());
   linter.Lint(lines);
@@ -77,7 +77,7 @@ TEST(LineLinterTest, OneRuleAcceptsLines) {
 
 // This test verifies that LineLinter can find violations.
 TEST(LineLinterTest, OneRuleRejectsLine) {
-  std::vector<absl::string_view> lines{{"abc", "", "def"}};
+  std::vector<absl::string_view> lines{"abc", "", "def"};
   LineLinter linter;
   linter.AddRule(MakeBlankLineRule());
   linter.Lint(lines);
@@ -115,7 +115,7 @@ std::unique_ptr<LineLintRule> MakeEmptyFileRule() {
 
 // This test verifies that LineLinter calls Finalize without error.
 TEST(LineLinterTest, FinalizeAccepts) {
-  std::vector<absl::string_view> lines{{"x"}};
+  std::vector<absl::string_view> lines{"x"};
   LineLinter linter;
   linter.AddRule(MakeEmptyFileRule());
   linter.Lint(lines);
