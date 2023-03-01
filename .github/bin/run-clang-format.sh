@@ -22,7 +22,8 @@ CLANG_FORMAT_BINARY=clang-format
 ${CLANG_FORMAT_BINARY} --version
 
 # Run on all files.
-find . -name "*.h" -o -name "*.cc" | grep -v 'third_party/|external_libs/' \
+find . -name "*.h" -o -name "*.cc" \
+  | egrep -v 'third_party/|external_libs/|.github/' \
   | xargs -P2 ${CLANG_FORMAT_BINARY} -i
 
 # Check if we got any diff
