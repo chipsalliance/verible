@@ -45,7 +45,7 @@ details below in the [Developers](#developers-welcome) section.
 
 We provide a standalone [`verible-verilog-syntax`](./verilog/tools/syntax) tool
 to help with visualizing the syntax structure as understood by the lexer and
-parser. This is very useful tor troubleshooting and understand the internal
+parser. This is very useful for troubleshooting and understand the internal
 representations seen by the other tools.
 
 The tool has an ability of exporting a concrete syntax tree in JSON format,
