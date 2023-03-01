@@ -23,5 +23,6 @@ readonly COMPDB_SCRIPT="${OUTPUT_BASE}/external/com_grail_bazel_compdb/generate.
 
 python3 "${COMPDB_SCRIPT}"
 
-# Remove a gcc compiler flag that clang-tidy doesn't understand.
-sed -i -e 's/-fno-canonical-system-headers//g' compile_commands.json
+# Remove a flags observed in the wild that clang-tidy doesn't understand.
+sed -i -e 's/-fno-canonical-system-headers//g; s/DEBUG_PREFIX_MAP_PWD=.//g' \
+       compile_commands.json

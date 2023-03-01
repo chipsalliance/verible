@@ -4,6 +4,7 @@ tags
 releasing/out
 compile_commands.json
 coverage-html/
+run-clang-tidy
 
 # Local user config
 .envrc
