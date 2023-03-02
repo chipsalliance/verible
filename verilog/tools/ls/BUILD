@@ -45,6 +45,7 @@ cc_library(
     srcs = ["lsp-parse-buffer.cc"],
     hdrs = ["lsp-parse-buffer.h"],
     deps = [
+        ":lsp-file-utils",
         "//common/lsp:lsp-text-buffer",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
@@ -99,6 +100,7 @@ cc_library(
     hdrs = ["symbol-table-handler.h"],
     deps = [
         ":lsp-parse-buffer",
+        ":lsp-file-utils",
         "//common/lsp:lsp-protocol",
         "//common/strings:line_column_map",
         "//common/util:file_util",
@@ -111,6 +113,16 @@ cc_library(
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
     ],
+)
+
+cc_library(
+    name = "lsp-file-utils",
+    srcs = ["lsp-file-utils.cc"],
+    hdrs = ["lsp-file-utils.h"],
+    deps = [
+        "//common/util:file_util",
+        "@com_google_absl//absl/strings"
+    ]
 )
 
 cc_test(
