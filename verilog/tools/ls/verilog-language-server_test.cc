@@ -1610,6 +1610,85 @@ endmodule
       module_instmodule_uri);
 }
 
+// Checks jumps to different variants of kModulePortDeclaration
+// * port with implicit type
+// * kPortIdentifier (reg with assignment)
+// * port with dimensions
+// * simple port
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortPortIdentifierVariant) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(a, rst, clk, out);
+    input logic [15:0] a;
+    input rst;
+    input logic clk;
+    output reg [15:0] out = 0;
+
+    always @(posedge clk) begin
+        if (! rst) begin
+            out = 0;
+        end
+        else begin
+            out = out + a;
+        end
+    end
+endmodule)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string foo_open_request = DidOpenRequest(
+      "file://" + module_port_identifier.filename(), port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "a"
+  std::string definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 2, 11, 24);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, {.line = 1, .column = 23}, {.line = 1, .column = 24},
+      "file://" + module_port_identifier.filename());
+
+  // find definition for "clk"
+  definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 3, 6, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 3, {.line = 3, .column = 16}, {.line = 3, .column = 19},
+      "file://" + module_port_identifier.filename());
+
+  // find definition for "rst"
+  definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 4, 6, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 4, {.line = 3, .column = 16}, {.line = 3, .column = 19},
+      "file://" + module_port_identifier.filename());
+
+  // find first definition for "out"
+  definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 5, 8, 13);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 5, {.line = 4, .column = 22}, {.line = 4, .column = 25},
+      "file://" + module_port_identifier.filename());
+
+  // find second definition for "out"
+  definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 6, 11, 18);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 6, {.line = 4, .column = 22}, {.line = 4, .column = 25},
+      "file://" + module_port_identifier.filename());
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
