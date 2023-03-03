@@ -96,9 +96,13 @@ jobs:
 
     - name: Run clang tidy
       run: |
+        echo "::group::Make Compilation DB"
+        .github/bin/make-compilation-db.sh
+        wc -l compile_commands.json
+        echo "::endgroup::"
         # For runtime references, use clang-tidy 11, everything else: latest.
-        CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy.sh --checks="-*,google-runtime-references"
-        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy.sh
+        CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy.cc --checks="-*,google-runtime-references"
+        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy.cc
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
@@ -363,11 +367,22 @@ jobs:
         name: "diag"
         path: "**/plot_*.svg"
 
-  MacOsBuild:
+  MacOsBuildDevTools:
     runs-on: macos-latest
     steps:
 
-    - uses: actions/checkout@v2
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Install Dependencies
+      run: |
+        brew install llvm
+        echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
+
+    - name: Checkout code
+      uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
@@ -380,14 +395,48 @@ jobs:
     - name: Mount bazel cache
       uses: actions/cache@v3
       with:
-        path: "/private/var/tmp/_bazel_runner"
+        path: |
+          /private/var/tmp/_bazel_runner
+          /Users/runner/.cache/clang-tidy
+        key: clangtidy_macos_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clangtidy_macos_
+
+    - name: Test Developer tooling scripts
+      run: |
+        # Just a smoke test to make sure developer scripts run on Mac
+        echo "::group::Make Compilation DB"
+        .github/bin/make-compilation-db.sh
+        echo "::endgroup::"
+        # Quick with no checks to be fast (full tidy run in ClangTidy action)
+        .github/bin/run-clang-tidy.cc --checks="-*"
+
+  MacOsBuild:
+    runs-on: macos-latest
+    steps:
+
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Create Cache Timestamp
+      id: cache_timestamp
+      uses: nanzm/get-time-action@v1.1
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
+    - name: Mount bazel cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          /private/var/tmp/_bazel_runner
         key: bazelcache_macos_${{ steps.cache_timestamp.outputs.time }}
         restore-keys: bazelcache_macos_
-
-    - name: Test compilation DB creation
-      run: |
-        .github/bin/make-compilation-db.sh
-        wc -l compile_commands.json
 
     - name: Tests
       run: bazel test --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
