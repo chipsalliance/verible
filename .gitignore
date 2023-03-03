@@ -2,9 +2,11 @@
 /bazel-*
 tags
 releasing/out
-compile_commands.json
 coverage-html/
-run-clang-tidy
+
+compile_commands.json
+run-clang-tidy-cached
+verible_clang-tidy.out
 
 # Local user config
 .envrc

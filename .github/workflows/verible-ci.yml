@@ -101,8 +101,8 @@ jobs:
         wc -l compile_commands.json
         echo "::endgroup::"
         # For runtime references, use clang-tidy 11, everything else: latest.
-        CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy.cc --checks="-*,google-runtime-references"
-        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy.cc
+        CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references"
+        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy-cached.cc
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
@@ -408,7 +408,7 @@ jobs:
         .github/bin/make-compilation-db.sh
         echo "::endgroup::"
         # Quick with no checks to be fast (full tidy run in ClangTidy action)
-        .github/bin/run-clang-tidy.cc --checks="-*"
+        .github/bin/run-clang-tidy-cached.cc --checks="-*"
 
   MacOsBuild:
     runs-on: macos-latest
