@@ -1,5 +1,5 @@
 #if 0  // Invoke with /bin/sh or simply add executable bit on this file on Unix.
-BIN=${0%%.cc}; [ $BIN -nt $0 ] || c++ -std=c++17 $0 -o $BIN && exec -a$0 $BIN $@
+B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 #endif
 // Copyright 2023 The Verible Authors.
 //
@@ -18,6 +18,12 @@ BIN=${0%%.cc}; [ $BIN -nt $0 ] || c++ -std=c++17 $0 -o $BIN && exec -a$0 $BIN $@
 // Script to run clang-tidy on files in a bazel project while caching the
 // results as clang-tidy can be pretty slow. The clang-tidy output messages
 // are content-addressed in a hash(cc-file-content) cache file.
+// Should run on any system with a shell that provides 2>/dev/null redirect.
+//
+// Invocation without parameters simply uses the .clang-tidy config to run on
+// all *.{cc,h} files. Additional parameters passed to this script are passed
+// to clang-tidy as-is. Typical use could be for instance
+//   run-clang-tidy-cached.cc --checks="-*,modernize-use-override" --fix
 
 #include <algorithm>
 #include <cinttypes>
@@ -83,6 +89,24 @@ fs::path GetCacheDir() {
   return fs::path(getenv("TMPDIR") ?: "/tmp");
 }
 
+// Fix filename paths that are not emitted relative to project root.
+void CanonicalizeSourcePaths(const fs::path &infile, const fs::path &outfile) {
+  static const std::regex sFixPathsRe = []() {
+    std::string canonicalize_expr = "(^|\\n)(";  // fix names at start of line
+    auto root = GetContent(popen("bazel info execution_root 2>/dev/null", "r"));
+    if (!root.empty()) {
+      root.pop_back();  // remove newline.
+      canonicalize_expr += root + "/|";
+    }
+    canonicalize_expr += fs::current_path().string() + "/";  // $(pwd)/
+    canonicalize_expr += ")?(\\./)?";  // Some start with, or have a trailing ./
+    return std::regex{canonicalize_expr};
+  }();
+  const auto in_content = GetContent(infile);
+  std::fstream out_stream(outfile, std::ios::out);
+  out_stream << std::regex_replace(in_content, sFixPathsRe, "$1");
+}
+
 // Given a work-queue in/out-file, process it. Using system() for portability.
 void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
                            std::list<filepath_contenthash_t> *work_queue) {
@@ -101,18 +125,18 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
         work = work_queue->front();
         work_queue->pop_front();
       }
-      const fs::path output = content_dir / toHex(work.second);
-      const std::string tmp_out = output.string() + ".tmp";
-      std::string command = cmd + " " + work.first.string() + " > " + tmp_out;
-      command += " 2>/dev/null";
-      int r = system(command.c_str());
+      const fs::path final_out = content_dir / toHex(work.second);
+      const std::string tmp_out = final_out.string() + ".tmp";
+      const std::string command = cmd + " '" + work.first.string() + "'" +
+                                  "> '" + tmp_out + "' 2>/dev/null";
+      const int r = system(command.c_str());
 #ifdef WIFSIGNALED
       if (WIFSIGNALED(r) && (WTERMSIG(r) == SIGINT || WTERMSIG(r) == SIGQUIT)) {
         break;  // got Ctrl-C
       }
 #endif
-      std::error_code ec;
-      fs::rename(tmp_out, output, ec);
+      CanonicalizeSourcePaths(tmp_out, tmp_out);
+      fs::rename(tmp_out, final_out);  // atomic replacement
     }
   };
   std::vector<std::thread> workers;
@@ -122,21 +146,21 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
 }
 
 int main(int argc, char *argv[]) {
-  std::error_code ignored_error;  // filesystem errors we don't care about.
-  if (!fs::exists("compile_commands.json")) {
-    std::cerr << "No compilation db found. First, run make-compilation-db.sh\n";
-    return 1;
-  }
-  const auto config = ReadAndVerifyTidyConfig(".clang-tidy");
-  if (!config) return 1;
-
-  const std::string kProjectPrefix = "verible_";  // Filenames based around it.
-  const std::string kSearchDir = ".";             // Where to look for files
+  const std::string kProjectPrefix = "verible_";
+  const std::string kSearchDir = ".";
   const std::string kFileExcludeRe = "vscode/|run-clang-tidy";
 
   const std::string kTidySymlink = kProjectPrefix + "clang-tidy.out";
   const fs::path cache_dir = GetCacheDir() / "clang-tidy";
 
+  if (!fs::exists("compile_commands.json")) {
+    std::cerr << "No compilation db found. First, run make-compilation-db.sh\n";
+    return EXIT_FAILURE;
+  }
+  const auto config = ReadAndVerifyTidyConfig(".clang-tidy");
+  if (!config) return EXIT_FAILURE;
+
+  // We'll invoke clang-tidy with all the additional flags user provides.
   const std::string clang_tidy = getenv("CLANG_TIDY") ?: "clang-tidy";
   std::string clang_tidy_invocation = clang_tidy + " --quiet";
   clang_tidy_invocation.append(" \"--config=").append(*config).append("\"");
@@ -178,38 +202,41 @@ int main(int argc, char *argv[]) {
   }
   std::cerr << files_of_interest.size() << " files of interest.\n";
 
-  // Create content hash address. If any header it depends on changes, consider
-  // for reprocessing. So we make the hash dependent on header content as well.
+  // Create content hash address. If any header a file depends on changes, we
+  // want to reprocess. So we make the hash dependent on header content as well.
   std::list<filepath_contenthash_t> work_queue;
   const std::regex inc_re("\"([0-9a-zA-Z_/-]+\\.h)\"");  // match include
   for (filepath_contenthash_t &f : files_of_interest) {
-    auto content = GetContent(f.first);
+    const auto content = GetContent(f.first);
     f.second = hash(content);
     for (ReIt it(content.begin(), content.end(), inc_re); it != ReIt(); ++it) {
       const std::string &header_path = (*it)[1].str();
       f.second ^= header_hashes[header_path];
     }
     const fs::path content_hash_file = content_dir / toHex(f.second);
-    if (!exists(content_hash_file)) work_queue.push_back(f);
+    if (!exists(content_hash_file)) work_queue.emplace_back(f);
   }
+
+  // Run clang tidy in parallel on the files to process.
   ClangTidyProcessFiles(content_dir, clang_tidy_invocation, &work_queue);
 
-  // Assemble the separate outputs into a single file. Add up summary counts.
+  // Assemble the separate outputs into a single file. Tally up per-check stats.
   const std::regex check_re("(\\[[a-zA-Z.-]+\\])\n");
   std::map<std::string, int> checks_seen;
-  std::fstream tidy_collect(tidy_outfile, std::ios::out);
+  std::ofstream tidy_collect(tidy_outfile);
   for (const filepath_contenthash_t &f : files_of_interest) {
-    const auto &tidy = GetContent(content_dir / toHex(f.second));
+    const auto tidy = GetContent(content_dir / toHex(f.second));
     if (!tidy.empty()) tidy_collect << f.first.string() << ":\n" << tidy;
     for (ReIt it(tidy.begin(), tidy.end(), check_re); it != ReIt(); ++it) {
       checks_seen[(*it)[1].str()]++;
     }
   }
+  std::error_code ignored_error;
   fs::remove(kTidySymlink, ignored_error);
   fs::create_symlink(tidy_outfile, kTidySymlink, ignored_error);
 
   if (checks_seen.empty()) {
-    std::cerr << "No clang-tidy complaints.😎\n";
+    std::cerr << "No clang-tidy complaints. 😎\n";
   } else {
     std::cerr << "--- Summary --- (details in " << kTidySymlink << ")\n";
     using check_count_t = std::pair<std::string, int>;
@@ -222,5 +249,5 @@ int main(int argc, char *argv[]) {
       fprintf(stdout, "%5d %s\n", counts.second, counts.first.c_str());
     }
   }
-  return checks_seen.empty() ? 0 : 1;
+  return checks_seen.empty() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
