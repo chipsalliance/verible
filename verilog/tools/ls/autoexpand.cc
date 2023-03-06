@@ -223,8 +223,10 @@ class AutoExpander {
 
     // Erase all ports that fulfill the given predicate
     void ErasePortsIf(const std::function<bool(const Port &)> &pred) {
+#if 0  // MUTANT test
       const auto it = std::remove_if(ports_.begin(), ports_.end(), pred);
       ports_.erase(it, ports_.end());
+#endif
     }
 
     // Returns the Symbol representing this module
@@ -675,9 +677,11 @@ void AutoExpander::Module::SortPortsByLocation() {
   // AUTOOUTPUT, and AUTOINOUT get assigned one location, which is the start of
   // the corresponding `AUTO` comment. Using unstable sort results in a random
   // order of ports.
+#if 0  // MUTANT test
   std::stable_sort(
       ports_.begin(), ports_.end(),
       [](const Port &left, const Port &right) { return left.it < right.it; });
+#endif
 }
 
 void AutoExpander::Module::RetrieveAutoTemplates() {
@@ -1352,7 +1356,7 @@ absl::flat_hash_set<AutoKind> AutoExpander::FindAutoKinds() {
     } else {
       LOG(ERROR) << "Invalid AUTO comment string";
     }
-    begin += match.position() + match.length();
+    begin += match.position() + match.length() + 1;  // MUTANT test
   }
   return kinds;
 }
