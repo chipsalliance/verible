@@ -18,10 +18,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using testing::ElementsAre;
-using verible::file::testing::ScopedTestFile;
-
 namespace verilog {
+namespace {
+
+using ::testing::ElementsAre;
+using ::testing::Eq;
+using ::verible::file::testing::ScopedTestFile;
 
 TEST(FileListTest, AppendFileListFromFile) {
   const auto tempdir = ::testing::TempDir();
@@ -31,6 +33,8 @@ TEST(FileListTest, AppendFileListFromFile) {
     // Another comment
     // on two lines
     +incdir+/an/include_dir2
+    +define+macro1=a
+    +define+invalid_macro
 
     /a/source/file/1.sv
     /a/source/file/2.sv
@@ -44,6 +48,8 @@ TEST(FileListTest, AppendFileListFromFile) {
               ElementsAre("/a/source/file/1.sv", "/a/source/file/2.sv"));
   EXPECT_THAT(result.preprocessing.include_dirs,
               ElementsAre(".", "/an/include_dir1", "/an/include_dir2"));
+  EXPECT_THAT(result.preprocessing.defines,
+              ElementsAre(TextMacroDefinition("macro1", "a")));
 }
 
 TEST(FileListTest, AppendFileListFromInvalidCommandline) {
@@ -57,12 +63,6 @@ TEST(FileListTest, AppendFileListFromInvalidCommandline) {
     auto status = AppendFileListFromCommandline(cmdline, &result);
     EXPECT_FALSE(status.ok());
   }
-}
-
-// EXPECT_THAT expects that
-static bool operator==(const TextMacroDefinition& a,
-                       const TextMacroDefinition& b) {
-  return a.name == b.name && a.value == b.value;
 }
 
 TEST(FileListTest, AppendFileListFromCommandline) {
@@ -93,4 +93,36 @@ TEST(FileListTest, AppendFileListFromCommandline) {
                           macros[5]));
 }
 
+TEST(FileListTest, ToString) {
+  const auto tempdir = ::testing::TempDir();
+  const std::string file_list_content = R"(
+    # A comment to ignore.
+    +incdir+/an/include_dir1
+    // Another comment
+    // on two lines
+    +incdir+/an/include_dir2
+    +define+macro1=a
+    file0
+    +define+macro2=a=b
+
+    /a/source/file/1.sv
+    /a/source/file/2.sv
+  )";
+  const ScopedTestFile file_list_file(tempdir, file_list_content);
+  FileList result;
+  auto status = AppendFileListFromFile(file_list_file.filename(), &result);
+  ASSERT_TRUE(status.ok()) << status;
+
+  EXPECT_THAT(result.ToString(), Eq(R"(+define+macro1=a
++define+macro2=a=b
++incdir+.
++incdir+/an/include_dir1
++incdir+/an/include_dir2
+file0
+/a/source/file/1.sv
+/a/source/file/2.sv
+)"));
+}
+
+}  // namespace
 }  // namespace verilog

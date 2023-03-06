@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/verilog_filelist.h"
 
+#include <iosfwd>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -30,8 +31,8 @@ namespace verilog {
 absl::Status AppendFileListFromContent(absl::string_view file_list_path,
                                        const std::string& file_list_content,
                                        FileList* append_to) {
-  // TODO(hzeller): parse +define+ and stash into preprocessing configuration.
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
+  constexpr absl::string_view kDefineMacroPrefix = "+define+";
   append_to->preprocessing.include_dirs.emplace_back(
       ".");  // Should we do that?
   std::string file_path;
@@ -50,10 +51,29 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
       // TODO(karimtera): split directories by comma, to allow multiple dirs.
       append_to->preprocessing.include_dirs.emplace_back(
           absl::StripPrefix(file_path, kIncludeDirPrefix));
-    } else {
-      // A regular file
-      append_to->file_paths.push_back(file_path);
+      continue;
     }
+
+    if (absl::StartsWith(file_path, kDefineMacroPrefix)) {
+      // Handle defines
+      absl::string_view definition =
+          absl::StripPrefix(file_path, kDefineMacroPrefix);
+      std::pair<std::string, std::string> define_value = absl::StrSplit(
+          definition, absl::MaxSplits('=', 1), absl::SkipEmpty());
+      if (!define_value.second.empty()) {
+        append_to->preprocessing.defines.emplace_back(define_value.first,
+                                                      define_value.second);
+      }
+      continue;
+    }
+
+    if (file_path[0] == '+' || file_path[0] == '-') {
+      // Ignore unsupported parameter
+      continue;
+    }
+
+    // A regular file
+    append_to->file_paths.push_back(file_path);
   }
   return absl::OkStatus();
 }
@@ -119,4 +139,19 @@ absl::Status AppendFileListFromCommandline(
   }
   return absl::OkStatus();
 }
+
+std::string FileList::ToString() const {
+  std::stringstream buffer;
+  for (const auto& definition : preprocessing.defines) {
+    buffer << "+define+" << definition.name << "=" << definition.value << '\n';
+  }
+  for (absl::string_view include : preprocessing.include_dirs) {
+    buffer << "+incdir+" << include << '\n';
+  }
+  for (absl::string_view path : file_paths) {
+    buffer << path << '\n';
+  }
+  return buffer.str();
+}
+
 }  // namespace verilog

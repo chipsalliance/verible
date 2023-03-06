@@ -29,6 +29,10 @@ struct TextMacroDefinition {
       : name(std::move(name)), value(std::move(value)){};
   std::string name;
   std::string value;
+
+  bool operator==(const TextMacroDefinition& other) const {
+    return name == other.name && value == other.value;
+  }
 };
 
 // File list for compiling a System Verilog project.
@@ -54,6 +58,10 @@ struct FileList {
 
   // Information relevant to the preprocessor.
   PreprocessingInfo preprocessing;
+
+  // Returns the file list in Icarus Verilog format
+  // (http://iverilog.wikia.com/wiki/Command_File_Format)
+  std::string ToString() const;
 };
 
 // Reads in a list of files line-by-line from "file_list_file" and

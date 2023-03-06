@@ -31,10 +31,6 @@ ABSL_FLAG(std::string, filelist_path, "",
           "The path to the file list which contains the names of SystemVerilog "
           "files. The files should be ordered by definition dependencies.");
 
-ABSL_FLAG(std::string, filelist_root, ".",
-          "The absolute location which we prepend to the files in the file "
-          "list (where listed files are relative to).");
-
 ABSL_FLAG(std::string, code_revision, "",
           "Version control revision at which this code was taken.");
 
@@ -43,10 +39,14 @@ ABSL_FLAG(std::string, corpus, "",
 
 ABSL_FLAG(std::string, output_path, "", "Path where to write the kzip.");
 
+ABSL_RETIRED_FLAG(
+    std::string, filelist_root, ".",
+    "The absolute location which we prepend to the files in the file "
+    "list (where listed files are relative to).");
+
 int main(int argc, char** argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] --filelist_path FILE "
-                                  "--filelist_root FILE --output_path FILE\n",
                                   R"(
 Produces Kythe KZip from the given SystemVerilog source files.
 
@@ -60,11 +60,6 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
   const std::string filelist_path = absl::GetFlag(FLAGS_filelist_path);
   if (filelist_path.empty()) {
     LOG(ERROR) << "No --filelist_path was specified";
-    return 1;
-  }
-  const std::string filelist_root = absl::GetFlag(FLAGS_filelist_root);
-  if (filelist_root.empty()) {
-    LOG(ERROR) << "No --filelist_root was specified";
     return 1;
   }
   const std::string output_path = absl::GetFlag(FLAGS_output_path);
@@ -86,6 +81,14 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
     LOG(ERROR) << "Filelist parse error " << status;
     return 1;
   }
+  // Normalize the file list
+  absl::string_view filelist_root = verible::file::Dirname(filelist_path);
+  for (std::string& file_path : filelist.file_paths) {
+    file_path = verible::file::JoinPath(filelist_root, file_path);
+  }
+  for (std::string& include : filelist.preprocessing.include_dirs) {
+    include = verible::file::JoinPath(filelist_root, include);
+  }
 
   kythe::proto::IndexedCompilation compilation;
   const std::string code_revision = absl::GetFlag(FLAGS_code_revision);
@@ -95,7 +98,6 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
 
   auto* unit = compilation.mutable_unit();
   *unit->mutable_v_name()->mutable_corpus() = absl::GetFlag(FLAGS_corpus);
-  *unit->mutable_v_name()->mutable_root() = filelist_root;
   *unit->mutable_v_name()->mutable_language() = "verilog";
   *unit->add_argument() = "--f=filelist";
 
@@ -104,18 +106,15 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
 
   verilog::kythe::KzipCreator kzip(output_path);
   const std::string filelist_digest =
-      kzip.AddSourceFile("filelist", filelist_content);
+      kzip.AddSourceFile("filelist", filelist.ToString());
   auto* filelist_input = unit->add_required_input();
   *filelist_input->mutable_info()->mutable_path() = "filelist";
   *filelist_input->mutable_info()->mutable_digest() = filelist_digest;
-  absl::string_view path_prefix = verible::file::Dirname(filelist_path);
   for (const std::string& file_path : file_paths) {
-    const std::string full_path =
-        verible::file::JoinPath(path_prefix, file_path);
     std::string content;
-    auto file_read_status = verible::file::GetContents(full_path, &content);
+    auto file_read_status = verible::file::GetContents(file_path, &content);
     if (!file_read_status.ok()) {
-      LOG(ERROR) << "Failed to open " << full_path
+      LOG(ERROR) << "Failed to open " << file_path
                  << ". Error: " << file_read_status;
       continue;
     }
@@ -124,7 +123,6 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
     *file_input->mutable_info()->mutable_path() = file_path;
     *file_input->mutable_info()->mutable_digest() = digest;
     *file_input->mutable_v_name()->mutable_path() = file_path;
-    *file_input->mutable_v_name()->mutable_root() = filelist_root;
   }
   CHECK(kzip.AddCompilationUnit(compilation).ok());
 
