@@ -21,7 +21,6 @@ cc_library(
         ":symbol-table-handler",
         "//common/lsp:lsp-protocol",
         "//common/text:text_structure",
-        "//common/util:spacer",
         "//verilog/CST:declaration",
         "//verilog/CST:dimensions",
         "//verilog/CST:expression",
