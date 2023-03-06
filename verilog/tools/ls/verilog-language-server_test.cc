@@ -1138,8 +1138,10 @@ constexpr static absl::string_view badly_styled_module =
 // in linter diagnostics.
 bool CheckDiagnosticsContainLinterIssue(const json &diagnostics,
                                         absl::string_view lint_issue_type) {
-  for (const auto &issue : diagnostics) {
-    if (absl::StrContains(issue["message"], lint_issue_type)) return true;
+  for (const auto &d : diagnostics) {
+    if (absl::StrContains(d["message"].get<std::string>(), lint_issue_type)) {
+      return true;
+    }
   }
   return false;
 }
