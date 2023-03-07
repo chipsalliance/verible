@@ -18,6 +18,8 @@
 #include <cstdlib>
 #include <vector>
 
+#include "absl/debugging/failure_signal_handler.h"
+#include "absl/debugging/symbolize.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
@@ -64,6 +66,7 @@ std::vector<absl::string_view> InitCommandLine(
     absl::string_view usage,
     int* argc,  // NOLINT(readability-non-const-parameter)
     char*** argv) {
+  absl::InitializeSymbolizer(*argv[0]);
   absl::FlagsUsageConfig usage_config;
   usage_config.version_string = GetBuildVersion;
   absl::SetFlagsUsageConfig(usage_config);
@@ -91,9 +94,8 @@ std::vector<absl::string_view> InitCommandLine(
   // Print stacktrace on issue, but not if --config=asan
   // which comes with its own stacktrace handling.
 #if !defined(__SANITIZE_ADDRESS__)
-#if 0  // Used to be in GLOG. Use absl/debugging/failure_signal_handler.h ?
-  google::InstallFailureSignalHandler();
-#endif
+  absl::FailureSignalHandlerOptions options;
+  absl::InstallFailureSignalHandler(options);
 #endif
 
   const auto positional_parameters = absl::ParseCommandLine(*argc, *argv);

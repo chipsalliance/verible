@@ -105,6 +105,8 @@ cc_library(
         # these deps are needed by init_command_line.cc:
         ":logging",  # buildcleaner: keep
         ":build_version",  # buildcleaner: keep
+        "@com_google_absl//absl/debugging:failure_signal_handler",  # buildcleaner: keep
+        "@com_google_absl//absl/debugging:symbolize",  # buildcleaner: keep
         "@com_google_absl//absl/flags:config",  # buildcleaner: keep
         "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
         "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
