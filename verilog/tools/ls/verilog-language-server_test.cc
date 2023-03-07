@@ -308,31 +308,31 @@ endmodule
       document_symbol["result"];
   EXPECT_EQ(toplevel.size(), 2);
 
-  EXPECT_EQ(toplevel[0].kind, verible::lsp::SymbolKind::Package);
+  EXPECT_EQ(toplevel[0].kind, verible::lsp::SymbolKind::kPackage);
   EXPECT_EQ(toplevel[0].name, "mini");
 
-  EXPECT_EQ(toplevel[1].kind, verible::lsp::SymbolKind::Method);  // module.
+  EXPECT_EQ(toplevel[1].kind, verible::lsp::SymbolKind::kMethod);  // module.
   EXPECT_EQ(toplevel[1].name, "mini");
 
   // Descend tree into package and look at expected nested symbols there.
   std::vector<verible::lsp::DocumentSymbol> package = toplevel[0].children;
   EXPECT_EQ(package.size(), 2);
-  EXPECT_EQ(package[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(package[0].kind, verible::lsp::SymbolKind::kFunction);
   EXPECT_EQ(package[0].name, "fun_foo");
 
-  EXPECT_EQ(package[1].kind, verible::lsp::SymbolKind::Class);
+  EXPECT_EQ(package[1].kind, verible::lsp::SymbolKind::kClass);
   EXPECT_EQ(package[1].name, "some_class");
 
   // Descend tree into class and find nested function.
   std::vector<verible::lsp::DocumentSymbol> class_block = package[1].children;
   EXPECT_EQ(class_block.size(), 1);
-  EXPECT_EQ(class_block[0].kind, verible::lsp::SymbolKind::Function);
+  EXPECT_EQ(class_block[0].kind, verible::lsp::SymbolKind::kFunction);
   EXPECT_EQ(class_block[0].name, "member");
 
   // Descent tree into module and find labelled block.
   std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
   EXPECT_EQ(module.size(), 1);
-  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::Namespace);
+  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::kNamespace);
   EXPECT_EQ(module[0].name, "labelled_block");
 }
 

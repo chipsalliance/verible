@@ -23,10 +23,10 @@ namespace lsp {
 // in the context of the Language Server Protocol, so static_cast<int>-ing
 // them would be needed every time.
 enum DiagnosticSeverity {
-  Error = 1,
-  Warning = 2,
-  Info = 3,
-  Hint = 4,
+  kError = 1,
+  kWarning = 2,
+  kInfo = 3,
+  kHint = 4,
 };
 
 // These are the SymbolKinds defined by the LSP specifcation
@@ -36,32 +36,32 @@ enum DiagnosticSeverity {
 // these editors need to be made understanding.
 // As above, deliberately not enum class
 enum SymbolKind {
-  File = 1,
-  Module = 2,     // SV module. Kate does not seem to support that ?
-  Namespace = 3,  // SV labelled begin/end blocks (Kate also has trouble here)
-  Package = 4,    // SV package
-  Class = 5,      // SV class
-  Method = 6,     // SV class -> method
-  Property = 7,
-  Field = 8,
-  Constructor = 9,
-  Enum = 10,  // SV enum type
-  Interface = 11,
-  Function = 12,  // SV function
-  Variable = 13,
-  Constant = 14,
-  String = 15,
-  Number = 16,
-  Boolean = 17,
-  Array = 18,
-  Object = 19,
-  Key = 20,
-  Null = 21,
-  EnumMember = 22,  // SV enum member
-  Struct = 23,
-  Event = 24,
-  Operator = 25,
-  TypeParameter = 26,
+  kFile = 1,
+  kModule = 2,     // SV module. Kate does not seem to support that ?
+  kNamespace = 3,  // SV labelled begin/end blocks (Kate also has trouble here)
+  kPackage = 4,    // SV package
+  kClass = 5,      // SV class
+  kMethod = 6,     // SV class -> method
+  kProperty = 7,
+  kField = 8,
+  kConstructor = 9,
+  kEnum = 10,  // SV enum type
+  kInterface = 11,
+  kFunction = 12,  // SV function
+  kVariable = 13,
+  kConstant = 14,
+  kString = 15,
+  kNumber = 16,
+  kBoolean = 17,
+  kArray = 18,
+  kObject = 19,
+  kKey = 20,
+  kNull = 21,
+  kEnumMember = 22,  // SV enum member
+  kStruct = 23,
+  kEvent = 24,
+  kOperator = 25,
+  kTypeParameter = 26,
 };
 }  // namespace lsp
 }  // namespace verible
