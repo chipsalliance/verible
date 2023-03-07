@@ -296,7 +296,7 @@ class LexicalContext {
 
   bool in_initial_always_final_construct_ = false;
 
-  bool seen_delay_value_in_initial_always_final_construct_context = false;
+  bool seen_delay_value_in_initial_always_final_construct_context_ = false;
 
   bool in_function_declaration_ = false;
   bool in_function_body_ = false;
