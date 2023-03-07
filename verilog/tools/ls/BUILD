@@ -98,8 +98,8 @@ cc_library(
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
     deps = [
-        ":lsp-parse-buffer",
         ":lsp-file-utils",
+        ":lsp-parse-buffer",
         "//common/lsp:lsp-protocol",
         "//common/strings:line_column_map",
         "//common/util:file_util",
@@ -119,9 +119,8 @@ cc_library(
     srcs = ["lsp-file-utils.cc"],
     hdrs = ["lsp-file-utils.h"],
     deps = [
-        "//common/util:file_util",
-        "@com_google_absl//absl/strings"
-    ]
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test(
@@ -142,6 +141,7 @@ cc_library(
     hdrs = ["verilog-language-server.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":lsp-file-utils",
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
@@ -164,6 +164,8 @@ cc_test(
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
         "//common/util:file_util",
+        "//verilog/analysis:verilog_linter",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
