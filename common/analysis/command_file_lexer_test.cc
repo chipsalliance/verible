@@ -33,7 +33,7 @@ class FilteredCommandFileLexer : public CommandFileLexer {
 
   bool KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
     switch (t.token_enum()) {
-      case CFG_TK_NEWLINE:
+      case ConfigToken::kNewline:
         return false;
       default:
         return true;
@@ -63,18 +63,18 @@ static void TestFilteredLexer(Args&&... args) {
 }
 
 static const std::initializer_list<LexerTestData> kTokenTests = {
-    {{CFG_TK_COMMENT, "#comment"}, {TK_EOF, "\0"}},
-    {{CFG_TK_COMMAND, "waive"}, {TK_EOF, "\0"}},
-    {{CFG_TK_COMMAND, "waive"},
+    {{CommandFileLexer::ConfigToken::kComment, "#comment"}, {TK_EOF, "\0"}},
+    {{CommandFileLexer::ConfigToken::kCommand, "waive"}, {TK_EOF, "\0"}},
+    {{CommandFileLexer::ConfigToken::kCommand, "waive"},
      {ExpectedTokenInfo::kNoToken, " "},
-     {CFG_TK_FLAG_WITH_ARG, "--rule="},
-     {CFG_TK_ARG, "rulename"},
+     {CommandFileLexer::ConfigToken::kFlagWithArg, "--rule="},
+     {CommandFileLexer::ConfigToken::kArg, "rulename"},
      {TK_EOF, "\0"}},
-    {{CFG_TK_COMMAND, "waive"},
+    {{CommandFileLexer::ConfigToken::kCommand, "waive"},
      {ExpectedTokenInfo::kNoToken, " "},
-     {CFG_TK_PARAM, "parameter"},
+     {CommandFileLexer::ConfigToken::kParam, "parameter"},
      {TK_EOF, "\0"}},
-    {{CFG_TK_ERROR, "%"}},
+    {{CommandFileLexer::ConfigToken::kError, "%"}},
 };
 
 TEST(CommandLexerTest, Comments) { TestFilteredLexer(kTokenTests); }
