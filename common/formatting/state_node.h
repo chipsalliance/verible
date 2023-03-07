@@ -49,7 +49,7 @@ struct StateNode {
   range_type undecided_path;
 
   // Explores one of the SpacingDecision choices.
-  SpacingDecision spacing_choice = SpacingDecision::Preserve;
+  SpacingDecision spacing_choice = SpacingDecision::kPreserve;
 
   // The current column position, this increases with every token that is
   // appended onto the current line, and resets to the indentation level

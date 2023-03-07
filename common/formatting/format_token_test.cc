@@ -32,27 +32,27 @@ namespace {
 TEST(BreakDecisionTest, StringRep) {
   {
     std::ostringstream stream;
-    stream << SpacingOptions::Undecided;
+    stream << SpacingOptions::kUndecided;
     EXPECT_EQ(stream.str(), "undecided");
   }
   {
     std::ostringstream stream;
-    stream << SpacingOptions::MustAppend;
+    stream << SpacingOptions::kMustAppend;
     EXPECT_EQ(stream.str(), "must-append");
   }
   {
     std::ostringstream stream;
-    stream << SpacingOptions::MustWrap;
+    stream << SpacingOptions::kMustWrap;
     EXPECT_EQ(stream.str(), "must-wrap");
   }
   {
     std::ostringstream stream;
-    stream << SpacingOptions::Preserve;
+    stream << SpacingOptions::kPreserve;
     EXPECT_EQ(stream.str(), "preserve");
   }
   {
     std::ostringstream stream;
-    stream << SpacingOptions::AppendAligned;
+    stream << SpacingOptions::kAppendAligned;
     EXPECT_EQ(stream.str(), "append-aligned");
   }
 }
@@ -61,17 +61,17 @@ TEST(BreakDecisionTest, StringRep) {
 TEST(GroupBalancingTest, StringRep) {
   {
     std::ostringstream stream;
-    stream << GroupBalancing::None;
+    stream << GroupBalancing::kNone;
     EXPECT_EQ(stream.str(), "none");
   }
   {
     std::ostringstream stream;
-    stream << GroupBalancing::Open;
+    stream << GroupBalancing::kOpen;
     EXPECT_EQ(stream.str(), "open");
   }
   {
     std::ostringstream stream;
-    stream << GroupBalancing::Close;
+    stream << GroupBalancing::kClose;
     EXPECT_EQ(stream.str(), "close");
   }
 }
@@ -81,7 +81,7 @@ TEST(InterTokenInfoTest, Initialization) {
   InterTokenInfo info;
   EXPECT_EQ(0, info.spaces_required);
   EXPECT_EQ(0, info.break_penalty);
-  EXPECT_EQ(info.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(info.break_decision, SpacingOptions::kUndecided);
 }
 
 // Test for InterTokenInfo equality.
@@ -106,12 +106,12 @@ TEST(InterTokenInfoTest, Inequality) {
   }
   {
     InterTokenInfo info4;
-    info4.break_decision = SpacingOptions::MustAppend;
+    info4.break_decision = SpacingOptions::kMustAppend;
     EXPECT_NE(info1, info4);
   }
   {
     InterTokenInfo info5;
-    info5.break_decision = SpacingOptions::MustWrap;
+    info5.break_decision = SpacingOptions::kMustWrap;
     EXPECT_NE(info1, info5);
   }
 }
@@ -191,10 +191,10 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
     PreFormatToken p1(&tok1), p2(&tok2);
     // set original spacing, but not preserve mode.
     p1.before.preserved_space_start = text.begin();
-    p1.before.break_decision = SpacingOptions::Undecided;
+    p1.before.break_decision = SpacingOptions::kUndecided;
     p1.before.spaces_required = 1;
     p2.before.preserved_space_start = tok1.text().end();
-    p2.before.break_decision = SpacingOptions::Undecided;
+    p2.before.break_decision = SpacingOptions::kUndecided;
     p2.before.spaces_required = 2;
     EXPECT_EQ(p1.LeadingSpacesLength(), 1);
     EXPECT_EQ(p2.LeadingSpacesLength(), 2);
@@ -203,10 +203,10 @@ TEST(PreFormatTokenTest, LeadingSpacesLength) {
     PreFormatToken p1(&tok1), p2(&tok2);
     // set original spacing and preserve mode.
     p1.before.preserved_space_start = text.begin();
-    p1.before.break_decision = SpacingOptions::Preserve;
+    p1.before.break_decision = SpacingOptions::kPreserve;
     p1.before.spaces_required = 2;
     p2.before.preserved_space_start = tok1.text().end();
-    p2.before.break_decision = SpacingOptions::Preserve;
+    p2.before.break_decision = SpacingOptions::kPreserve;
     p2.before.spaces_required = 4;
     EXPECT_EQ(p1.LeadingSpacesLength(), 1);  // "a"
     EXPECT_EQ(p2.LeadingSpacesLength(), 1);  // "d"
@@ -274,7 +274,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableNone) {
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   for (const auto& ftoken : pre_format_tokens_) {
-    EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::Undecided);
+    EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::kUndecided);
   }
 }
 
@@ -291,12 +291,12 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceBeforeText) {
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[3].before.break_decision,
-            SpacingOptions::Preserve);  // before "d"
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+            SpacingOptions::kPreserve);  // before "d"
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
 }
 
 TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceAfterText) {
@@ -312,11 +312,12 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceAfterText) {
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);  // "c"
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[2].before.break_decision,
+            SpacingOptions::kPreserve);  // "c"
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
 }
 
 TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningTwoTokens) {
@@ -332,12 +333,12 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningTwoTokens) {
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[2].before.break_decision,
-            SpacingOptions::Preserve);  // before "c"
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Preserve);
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+            SpacingOptions::kPreserve);  // before "c"
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kPreserve);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
 }
 
 TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningMustWrap) {
@@ -351,23 +352,23 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningMustWrap) {
   });
   ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   ByteOffsetSet disabled_bytes{{2, 5}};  // substring "b c"
-  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_TRUE(
       BoundsEqual(ftokens[0].OriginalLeadingSpaces(), text.substr(0, 0)));
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_TRUE(
       BoundsEqual(ftokens[1].OriginalLeadingSpaces(), text.substr(1, 1)));
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_TRUE(
       BoundsEqual(ftokens[2].OriginalLeadingSpaces(), text.substr(3, 1)));
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_TRUE(
       BoundsEqual(ftokens[3].OriginalLeadingSpaces(), text.substr(5, 1)));
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_TRUE(
       BoundsEqual(ftokens[4].OriginalLeadingSpaces(), text.substr(7, 1)));
 }
@@ -384,26 +385,26 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
   });
   ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   ByteOffsetSet disabled_bytes{{2, 5}};  // substring "b\nc"
-  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
   auto indices = [&text](const absl::string_view& range) {
     return SubRangeIndices(range, text);
   };
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
             indices(text.substr(0, 0)));
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(  // \n was consumed
       indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 0)));
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
             indices(text.substr(3, 1)));
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
             indices(text.substr(5, 1)));
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
             indices(text.substr(7, 1)));
 }
@@ -420,26 +421,26 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
   });
   ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   ByteOffsetSet disabled_bytes{{4, 9}};  // substring "b\n  c"
-  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
   auto indices = [&text](const absl::string_view& range) {
     return SubRangeIndices(range, text);
   };
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
             indices(text.substr(0, 0)));
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(  // \n was consumed, "  " remains
       indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 2)));
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
             indices(text.substr(5, 3)));
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
             indices(text.substr(9, 1)));
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
             indices(text.substr(11, 1)));
 }
@@ -457,32 +458,32 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, MultipleOffsetRanges) {
   });
   ConnectPreFormatTokensPreservedSpaceStarts(text.begin(), &pre_format_tokens_);
   ByteOffsetSet disabled_bytes{{2, 5}, {8, 12}};  // substrings "b\nc", "e ff"
-  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
   const auto& ftokens = pre_format_tokens_;
   auto indices = [&text](const absl::string_view& range) {
     return SubRangeIndices(range, text);
   };
-  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[0].OriginalLeadingSpaces()),
             indices(text.substr(0, 0)));
-  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(  // \n was consumed
       indices(ftokens[1].OriginalLeadingSpaces()), indices(text.substr(2, 0)));
-  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(indices(ftokens[2].OriginalLeadingSpaces()),
             indices(text.substr(3, 1)));
-  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[3].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[3].OriginalLeadingSpaces()),
             indices(text.substr(5, 1)));
-  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[4].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(indices(ftokens[4].OriginalLeadingSpaces()),
             indices(text.substr(7, 1)));
-  EXPECT_EQ(ftokens[5].before.break_decision, SpacingOptions::Preserve);
+  EXPECT_EQ(ftokens[5].before.break_decision, SpacingOptions::kPreserve);
   EXPECT_EQ(indices(ftokens[5].OriginalLeadingSpaces()),
             indices(text.substr(9, 1)));
-  EXPECT_EQ(ftokens[6].before.break_decision, SpacingOptions::Undecided);
+  EXPECT_EQ(ftokens[6].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(indices(ftokens[6].OriginalLeadingSpaces()),
             indices(text.substr(12, 1)));
 }
@@ -506,14 +507,14 @@ TEST(FormattedTokenTest, FormattedText) {
   }
   {
     FormattedToken ftoken(ptoken);
-    ftoken.before.action = SpacingDecision::Wrap;
+    ftoken.before.action = SpacingDecision::kWrap;
     std::ostringstream stream;
     stream << ftoken;
     EXPECT_EQ("\nroobar", stream.str());
   }
   {
     FormattedToken ftoken(ptoken);
-    ftoken.before.action = SpacingDecision::Wrap;
+    ftoken.before.action = SpacingDecision::kWrap;
     ftoken.before.spaces = 2;
     std::ostringstream stream;
     stream << ftoken;
@@ -556,9 +557,9 @@ TEST(FormattedTokenTest, PreservedSpaces) {
   {
     FormattedToken ft1(p1), ft2(p2);
     ft1.before.spaces = 2;  // ignored
-    ft1.before.action = SpacingDecision::Preserve;
+    ft1.before.action = SpacingDecision::kPreserve;
     ft2.before.spaces = 3;  // ignored
-    ft2.before.action = SpacingDecision::Preserve;
+    ft2.before.action = SpacingDecision::kPreserve;
     // preserved_space_start takes precedence over the other attributes
     ft1.before.preserved_space_start = text.begin();
     ft2.before.preserved_space_start = tok1.text().end();
@@ -588,7 +589,7 @@ TEST(InterTokenInfoTest, StringRep) {
 TEST(InterTokenInfoTest, CompactNotationUndecided) {
   std::ostringstream stream;
   InterTokenInfo info;
-  info.break_decision = SpacingOptions::Undecided;
+  info.break_decision = SpacingOptions::kUndecided;
   info.spaces_required = 3;
   info.break_penalty = 25;
   info.CompactNotation(stream);
@@ -598,7 +599,7 @@ TEST(InterTokenInfoTest, CompactNotationUndecided) {
 TEST(InterTokenInfoTest, CompactNotationMustAppend) {
   std::ostringstream stream;
   InterTokenInfo info;
-  info.break_decision = SpacingOptions::MustAppend;
+  info.break_decision = SpacingOptions::kMustAppend;
   info.spaces_required = 2;
   info.CompactNotation(stream);
   EXPECT_EQ(stream.str(), "<+_2>");
@@ -607,7 +608,7 @@ TEST(InterTokenInfoTest, CompactNotationMustAppend) {
 TEST(InterTokenInfoTest, CompactNotationMustWrap) {
   std::ostringstream stream;
   InterTokenInfo info;
-  info.break_decision = SpacingOptions::MustWrap;
+  info.break_decision = SpacingOptions::kMustWrap;
   info.CompactNotation(stream);
   EXPECT_EQ(stream.str(), "<\\n>");
 }
@@ -615,7 +616,7 @@ TEST(InterTokenInfoTest, CompactNotationMustWrap) {
 TEST(InterTokenInfoTest, CompactNotationAppendAligned) {
   std::ostringstream stream;
   InterTokenInfo info;
-  info.break_decision = SpacingOptions::AppendAligned;
+  info.break_decision = SpacingOptions::kAppendAligned;
   info.spaces_required = 3;
   info.CompactNotation(stream);
   EXPECT_EQ(stream.str(), "<|_3>");
@@ -624,7 +625,7 @@ TEST(InterTokenInfoTest, CompactNotationAppendAligned) {
 TEST(InterTokenInfoTest, CompactNotationPreserve) {
   std::ostringstream stream;
   InterTokenInfo info;
-  info.break_decision = SpacingOptions::Preserve;
+  info.break_decision = SpacingOptions::kPreserve;
   info.CompactNotation(stream);
   EXPECT_EQ(stream.str(), "<pre>");
 }

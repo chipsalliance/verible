@@ -353,7 +353,7 @@ TEST_F(Sparse3x3MatrixAlignmentTest, IgnoreCommentLine) {
     ftoken.before.spaces_required = 1;
   }
   // Leave the 'commented' line indented.
-  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::kMustWrap;
   partition_.Children()[1].Value().SetIndentationSpaces(1);
 
   // Pretend lines that begin with "three" are to be ignored, like comments.
@@ -409,9 +409,9 @@ TEST_F(Sparse3x3MatrixAlignmentTest, CompletelyDisabledNoAlignmentWithIndent) {
   for (auto& child : partition_.Children()) {
     child.Value().SetIndentationSpaces(3);
   }
-  pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
-  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
-  pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[0].before.break_decision = SpacingOptions::kMustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::kMustWrap;
+  pre_format_tokens_[4].before.break_decision = SpacingOptions::kMustWrap;
 
   TabularAlignTokens(40, sample_,
                      // Alignment disabled over entire range.
@@ -445,9 +445,9 @@ TEST_F(Sparse3x3MatrixAlignmentMoreSpacesTest,
   for (auto& child : partition_.Children()) {
     child.Value().SetIndentationSpaces(1);
   }
-  pre_format_tokens_[0].before.break_decision = SpacingOptions::MustWrap;
-  pre_format_tokens_[2].before.break_decision = SpacingOptions::MustWrap;
-  pre_format_tokens_[4].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[0].before.break_decision = SpacingOptions::kMustWrap;
+  pre_format_tokens_[2].before.break_decision = SpacingOptions::kMustWrap;
+  pre_format_tokens_[4].before.break_decision = SpacingOptions::kMustWrap;
 
   TabularAlignTokens(
       40, sample_,
@@ -859,7 +859,7 @@ class Dense2x2MatrixAlignmentTest : public MatrixTreeAlignmentTestFixture {
       ftoken.before.spaces_required = 1;
       // Default to append, so we can see the effect of falling-back to
       // preserve-spacing behavior.
-      ftoken.before.break_decision = SpacingOptions::MustAppend;
+      ftoken.before.break_decision = SpacingOptions::kMustAppend;
     }
 
     // From the sample_ text, each pair of tokens will span a subpartition.
@@ -1326,7 +1326,7 @@ class InferSubcolumnsTreeAlignmentTest : public SubcolumnsTreeAlignmentTest {
       ftoken.before.spaces_required = 1;
       // Default to append, so we can see the effect of falling-back to
       // preserve-spacing behavior.
-      ftoken.before.break_decision = SpacingOptions::MustAppend;
+      ftoken.before.break_decision = SpacingOptions::kMustAppend;
     }
   }
 };

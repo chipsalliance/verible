@@ -170,7 +170,7 @@ TEST_F(LayoutTest, LineLayoutItemToString) {
   UnwrappedLine empty_line(0, begin);
 
   pre_format_tokens_[0].before.spaces_required = 1;
-  pre_format_tokens_[1].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
 
   {
     LayoutItem item(short_line, 0);
@@ -721,7 +721,7 @@ class LayoutFunctionFactoryTest : public ::testing::Test,
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
         if (first_on_line_must_wrap) {
-          token->before.break_decision = SpacingOptions::MustWrap;
+          token->before.break_decision = SpacingOptions::kMustWrap;
         }
         uwlines->back().SpanUpToToken(token);
         uwlines->emplace_back(0, token);
@@ -2030,7 +2030,7 @@ TEST_F(TreeReconstructorTest, HorizontalLayoutSingleLines) {
   const auto layout_tree = LayoutTree(
       LayoutItem(LayoutType::kJuxtaposition, 0,
                  left_line.TokensRange().front().before.break_decision ==
-                     SpacingOptions::MustWrap),
+                     SpacingOptions::kMustWrap),
       LayoutTree(LayoutItem(left_line)), LayoutTree(LayoutItem(right_line)));
 
   TreeReconstructor tree_reconstructor(0);
@@ -2113,7 +2113,7 @@ TEST_F(TreeReconstructorTest, VerticalLayoutSingleLines) {
   const auto layout_tree = LayoutTree(
       LayoutItem(LayoutType::kStack, 0,
                  upper_line.TokensRange().front().before.break_decision ==
-                     SpacingOptions::MustWrap),
+                     SpacingOptions::kMustWrap),
       LayoutTree(LayoutItem(upper_line)), LayoutTree(LayoutItem(lower_line)));
 
   TreeReconstructor tree_reconstructor(0);
@@ -2399,7 +2399,7 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
 
       // First token in a line
       if (absl::StrContains(leading_spaces, '\n')) {
-        token.before.break_decision = SpacingOptions::MustWrap;
+        token.before.break_decision = SpacingOptions::kMustWrap;
         auto last_non_space_offset = leading_spaces.find_last_not_of(' ');
         if (last_non_space_offset != absl::string_view::npos) {
           token.before.spaces_required =
@@ -2409,7 +2409,8 @@ class TokenPartitionsLayoutOptimizerTest : public ::testing::Test,
         token.before.spaces_required = leading_spaces.size();
       }
     }
-    pre_format_tokens_.front().before.break_decision = SpacingOptions::MustWrap;
+    pre_format_tokens_.front().before.break_decision =
+        SpacingOptions::kMustWrap;
   }
 
  protected:

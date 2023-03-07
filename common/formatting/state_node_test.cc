@@ -84,7 +84,7 @@ TEST_F(StateNodeTestFixture, ConstructionWithEmptyFormatTokens) {
   EXPECT_EQ(s.wrap_column_positions.size(), 1);
   EXPECT_EQ(s.wrap_column_positions.top(),
             s.current_column + style.wrap_spaces);
-  EXPECT_EQ(s.spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::kAppend);
   EXPECT_EQ(s.next(), nullptr);
   EXPECT_EQ(s.cumulative_cost, 0);
   EXPECT_TRUE(s.IsRootState());
@@ -103,7 +103,7 @@ TEST_F(StateNodeTestFixture, ConstructionWithOneFormatToken) {
   EXPECT_EQ(s.wrap_column_positions.size(), 1);
   EXPECT_EQ(s.wrap_column_positions.top(),
             kInitialIndent * style.indentation_spaces + style.wrap_spaces);
-  EXPECT_EQ(s.spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::kAppend);
   EXPECT_EQ(s.next(), nullptr);
   EXPECT_EQ(s.cumulative_cost, 0);
   EXPECT_TRUE(s.IsRootState());
@@ -116,11 +116,11 @@ TEST_F(StateNodeTestFixture, ConstructionWithPreserveLeadingSpace) {
   const std::vector<TokenInfo> tokens = {{0, "token1"}};
   Initialize(kInitialIndent, tokens);
   // One way of disabling formatting is setting break_decision to Preserve.
-  pre_format_tokens_.front().before.break_decision = SpacingOptions::Preserve;
+  pre_format_tokens_.front().before.break_decision = SpacingOptions::kPreserve;
   StateNode s(*uwline, style);
   EXPECT_TRUE(s.Done());  // nothing to do after first and only token
   EXPECT_EQ(s.current_column, tokens[0].text().length());
-  EXPECT_EQ(s.spacing_choice, SpacingDecision::Preserve);
+  EXPECT_EQ(s.spacing_choice, SpacingDecision::kPreserve);
   EXPECT_EQ(s.next(), nullptr);
   EXPECT_EQ(s.cumulative_cost, 0);
   EXPECT_TRUE(s.IsRootState());
@@ -150,7 +150,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
   {
     // Second token, also appended to same line as first:
     auto child2_state = std::make_shared<StateNode>(child_state, style,
-                                                    SpacingDecision::Append);
+                                                    SpacingDecision::kAppend);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 8 +
@@ -164,7 +164,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
   {
     // Second token, but wrapped onto next line:
     auto child2_state =
-        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::kWrap);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               initial_column +               // 2 +
@@ -200,7 +200,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
 
   // Appended with preserved spaces from original text.
   auto child_state = std::make_shared<StateNode>(parent_state, style,
-                                                 SpacingDecision::Preserve);
+                                                 SpacingDecision::kPreserve);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +  // 5 +
@@ -234,7 +234,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
 
   // Appended with preserved spaces from original text.
   auto child_state = std::make_shared<StateNode>(parent_state, style,
-                                                 SpacingDecision::Preserve);
+                                                 SpacingDecision::kPreserve);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +  // 5 +
@@ -268,7 +268,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
 
   // Appended with preserved spaces from original text.
   auto child_state = std::make_shared<StateNode>(parent_state, style,
-                                                 SpacingDecision::Preserve);
+                                                 SpacingDecision::kPreserve);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             1 +                            // space after last newline
@@ -290,10 +290,10 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 10;
-  ftokens[1].balancing = verible::GroupBalancing::Open;
+  ftokens[1].balancing = verible::GroupBalancing::kOpen;
   ftokens[2].before.spaces_required = 1;
   ftokens[2].before.break_penalty = 2;
-  ftokens[3].balancing = verible::GroupBalancing::Close;
+  ftokens[3].balancing = verible::GroupBalancing::kClose;
   ftokens[3].before.spaces_required = 1;
   ftokens[3].before.break_penalty = 3;
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
@@ -312,7 +312,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
     // > function_caller (
     // >     ^-- next wrap should be here
     auto child2_state = std::make_shared<StateNode>(child_state, style,
-                                                    SpacingDecision::Append);
+                                                    SpacingDecision::kAppend);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 17 +
@@ -329,7 +329,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       // > function_caller ( 11
       // >                  ^-- next wrap should be here
       auto child3_state = std::make_shared<StateNode>(child2_state, style,
-                                                      SpacingDecision::Append);
+                                                      SpacingDecision::kAppend);
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
                 child2_state->current_column +           // 19 +
@@ -346,7 +346,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // > function_caller ( 11 )
         // >     ^-- next wrap should be here, after closing balance group
         auto child4_state = std::make_shared<StateNode>(
-            child3_state, style, SpacingDecision::Append);
+            child3_state, style, SpacingDecision::kAppend);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 22 +
@@ -369,7 +369,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // As-is, it is not because we pop the column stack on close-group
         // first, which is not an unreasonable choice.
         auto child4_state = std::make_shared<StateNode>(child3_state, style,
-                                                        SpacingDecision::Wrap);
+                                                        SpacingDecision::kWrap);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child2_state->wrap_column_positions
@@ -391,7 +391,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       // >     11
       // >         ^-- next wrap should be here
       auto child3_state = std::make_shared<StateNode>(child2_state, style,
-                                                      SpacingDecision::Wrap);
+                                                      SpacingDecision::kWrap);
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
                 initial_column + style.wrap_spaces + tokens[2].text().length());
@@ -408,7 +408,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >     11 )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(
-            child3_state, style, SpacingDecision::Append);
+            child3_state, style, SpacingDecision::kAppend);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 8
@@ -430,7 +430,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >     )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(child3_state, style,
-                                                        SpacingDecision::Wrap);
+                                                        SpacingDecision::kWrap);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(
             child4_state->current_column,
@@ -454,7 +454,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
     // >     (
     // >     ^-- next wrap should be here
     auto child2_state =
-        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::kWrap);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               initial_column +               // 2 +
@@ -475,7 +475,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       // >     ( 11
       // >     ^-- next wrap should be here
       auto child3_state = std::make_shared<StateNode>(child2_state, style,
-                                                      SpacingDecision::Append);
+                                                      SpacingDecision::kAppend);
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
                 child2_state->current_column +           // 7
@@ -495,7 +495,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >     ( 11 )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(
-            child3_state, style, SpacingDecision::Append);
+            child3_state, style, SpacingDecision::kAppend);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 10
@@ -517,7 +517,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >     )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(child3_state, style,
-                                                        SpacingDecision::Wrap);
+                                                        SpacingDecision::kWrap);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child2_state->wrap_column_positions.top() +
@@ -542,7 +542,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
       // >         11
       // >         ^-- next wrap should be here
       auto child3_state = std::make_shared<StateNode>(child2_state, style,
-                                                      SpacingDecision::Wrap);
+                                                      SpacingDecision::kWrap);
       EXPECT_EQ(child3_state->next(), child2_state.get());
       EXPECT_EQ(child3_state->current_column,
                 initial_column + (style.wrap_spaces * 2) +  // 10
@@ -565,7 +565,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >         11 )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(
-            child3_state, style, SpacingDecision::Append);
+            child3_state, style, SpacingDecision::kAppend);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child3_state->current_column +           // 10
@@ -589,7 +589,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
         // >     )
         // >     ^-- next wrap should be here
         auto child4_state = std::make_shared<StateNode>(child3_state, style,
-                                                        SpacingDecision::Wrap);
+                                                        SpacingDecision::kWrap);
         EXPECT_EQ(child4_state->next(), child3_state.get());
         EXPECT_EQ(child4_state->current_column,
                   child_state->wrap_column_positions.top() +
@@ -635,7 +635,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   {
     // Second token, also appended to same line as first:
     auto child2_state = std::make_shared<StateNode>(child_state, style,
-                                                    SpacingDecision::Append);
+                                                    SpacingDecision::kAppend);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               child_state->current_column +            // 8 +
@@ -649,7 +649,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   {
     // Second token, but wrapped onto a new line:
     auto child2_state =
-        std::make_shared<StateNode>(child_state, style, SpacingDecision::Wrap);
+        std::make_shared<StateNode>(child_state, style, SpacingDecision::kWrap);
     EXPECT_EQ(child2_state->next(), child_state.get());
     EXPECT_EQ(child2_state->current_column,
               initial_column +         // 2 +
@@ -696,7 +696,7 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
   {
     // Second token, also appended to same line as first:
     auto child_state = std::make_shared<StateNode>(parent_state, style,
-                                                   SpacingDecision::Append);
+                                                   SpacingDecision::kAppend);
     EXPECT_EQ(child_state->next(), parent_state.get());
     EXPECT_EQ(child_state->current_column,
               13  // length("c2345...."), no wrapping indentation
@@ -708,8 +708,8 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
   }
   {
     // Second token, but wrapped onto a new line:
-    auto child_state =
-        std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+    auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                   SpacingDecision::kWrap);
     EXPECT_EQ(child_state->next(), parent_state.get());
     EXPECT_EQ(child_state->current_column,
               13  // length("c2345...."), no wrapping indentation
@@ -743,7 +743,7 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
   {
     // Second token, also appended to same line as first:
     auto child_state = std::make_shared<StateNode>(parent_state, style,
-                                                   SpacingDecision::Append);
+                                                   SpacingDecision::kAppend);
     EXPECT_EQ(child_state->next(), parent_state.get());
     EXPECT_EQ(child_state->current_column,
               10  // length("c2345...."), no wrapping indentation
@@ -758,8 +758,8 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
   }
   {
     // Second token, but wrapped onto a new line:
-    auto child_state =
-        std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+    auto child_state = std::make_shared<StateNode>(parent_state, style,
+                                                   SpacingDecision::kWrap);
     EXPECT_EQ(child_state->next(), parent_state.get());
     EXPECT_EQ(child_state->current_column,
               10  // length("c2345...."), no wrapping indentation
@@ -788,7 +788,7 @@ TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {
 
   // Wrap the next token onto a new line.
   auto child_state =
-      std::make_shared<StateNode>(parent_state, style, SpacingDecision::Wrap);
+      std::make_shared<StateNode>(parent_state, style, SpacingDecision::kWrap);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             initial_column + style.wrap_spaces + tokens[1].text().length());
@@ -824,7 +824,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
 
   // Second token, also appended to same line as first:
   auto child_state = StateNode::AppendIfItFits(parent_state, style);
-  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::kAppend);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             parent_state->current_column +           // 12 +
@@ -835,7 +835,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
 
   // Third token, doesn't fit, and will be wrapped.
   auto child2_state = StateNode::AppendIfItFits(child_state, style);
-  EXPECT_EQ(child2_state->spacing_choice, SpacingDecision::Wrap);
+  EXPECT_EQ(child2_state->spacing_choice, SpacingDecision::kWrap);
   EXPECT_EQ(child2_state->next(), child_state.get());
   EXPECT_EQ(child2_state->current_column,
             initial_column + style.wrap_spaces + tokens[2].text().length());
@@ -853,7 +853,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   // Tokens stay under column limit, but here, we force a wrap.
-  ftokens[1].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[1].before.break_decision = SpacingOptions::kMustWrap;
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;  // 2
   EXPECT_EQ(ABSL_DIE_IF_NULL(parent_state)->current_column,
@@ -865,7 +865,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
 
   // Second token, forced to wrap onto new line.
   auto child_state = StateNode::AppendIfItFits(parent_state, style);
-  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Wrap);
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::kWrap);
   EXPECT_EQ(child_state->next(), parent_state.get());
   EXPECT_EQ(child_state->current_column,
             initial_column + style.wrap_spaces + tokens[0].text().length());
@@ -899,11 +899,11 @@ TEST_F(StateNodeTestFixture, QuickFinish) {
 
   // Checking up the ancestry chain of previous states
   // Third token, doesn't fit, and will be wrapped.
-  EXPECT_EQ(final_state->spacing_choice, SpacingDecision::Wrap);
+  EXPECT_EQ(final_state->spacing_choice, SpacingDecision::kWrap);
 
   // Second token, also appended to same line as first:
   const auto* child_state = final_state->next();
-  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::Append);
+  EXPECT_EQ(child_state->spacing_choice, SpacingDecision::kAppend);
 
   // Second state is decended from initial state.
   EXPECT_EQ(child_state->next(), parent_state.get());
@@ -935,7 +935,7 @@ TEST_F(StateNodeTestFixture, Stringify) {
   Initialize(0, tokens);
   StateNode::path_type path;
   StateNode s(*uwline, style);
-  s.spacing_choice = SpacingDecision::Wrap;
+  s.spacing_choice = SpacingDecision::kWrap;
   s.current_column = 7;
   s.cumulative_cost = 11;
   s.wrap_column_positions.top() = 3;

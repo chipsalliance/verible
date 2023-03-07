@@ -119,7 +119,7 @@ std::ostream& FormattedExcerpt::FormattedText(
   if (tokens_.empty()) return stream;
   // Let caller print the preceding/trailing newline.
   if (indent) {
-    if (tokens_.front().before.action != SpacingDecision::Preserve) {
+    if (tokens_.front().before.action != SpacingDecision::kPreserve) {
       stream << Spacer(IndentationSpaces());
     }
   }
@@ -129,7 +129,7 @@ std::ostream& FormattedExcerpt::FormattedText(
   if (include_token_p(*front.token)) {
     VLOG(2) << "action: " << front.before.action;
     switch (front.before.action) {
-      case SpacingDecision::Align:
+      case SpacingDecision::kAlign:
         // When aligning tokens, the first token might be further indented.
         stream << Spacer(front.before.spaces) << front.token->text();
         break;

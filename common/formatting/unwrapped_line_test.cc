@@ -260,11 +260,11 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmpty) {
   AddFormatTokens(&uwline);
   auto& ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
-  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 2;
-  ftokens[2].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[2].before.break_decision = SpacingOptions::kMustWrap;
   FormattedExcerpt output(uwline);
   std::ostringstream stream;
   stream << output;
@@ -283,11 +283,11 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptySuppressIndent) {
   AddFormatTokens(&uwline);
   auto& ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
-  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 2;
-  ftokens[2].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[2].before.break_decision = SpacingOptions::kMustWrap;
   FormattedExcerpt output(uwline);
   std::ostringstream stream;
   output.FormattedText(stream, false);  // disable left indentation
@@ -304,11 +304,11 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptyWithIndent) {
   AddFormatTokens(&uwline);
   auto& ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
-  ftokens[0].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 2;
-  ftokens[2].before.break_decision = SpacingOptions::MustWrap;
+  ftokens[2].before.break_decision = SpacingOptions::kMustWrap;
   FormattedExcerpt output(uwline);
   std::ostringstream stream;
   EXPECT_EQ(output.IndentationSpaces(), 4);
@@ -389,14 +389,15 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesWithTokens) {
   auto& ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
-  ftokens[0].before.break_decision = SpacingOptions::Preserve;
+  ftokens[0].before.break_decision = SpacingOptions::kPreserve;
   ftokens[1].before.preserved_space_start = text.begin() + 5;
-  ftokens[1].before.break_decision = SpacingOptions::Preserve;
+  ftokens[1].before.break_decision = SpacingOptions::kPreserve;
   ftokens[2].before.preserved_space_start = text.begin() + 10;
-  ftokens[2].before.break_decision = SpacingOptions::Preserve;
+  ftokens[2].before.break_decision = SpacingOptions::kPreserve;
   FormattedExcerpt output(uwline);
   {
-    EXPECT_EQ(output.Tokens().front().before.action, SpacingDecision::Preserve);
+    EXPECT_EQ(output.Tokens().front().before.action,
+              SpacingDecision::kPreserve);
     EXPECT_EQ(output.IndentationSpaces(), 4);
     std::ostringstream stream;
     stream << output;
@@ -414,11 +415,11 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlines) {
   auto& ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
-  ftokens[0].before.break_decision = SpacingOptions::Preserve;
+  ftokens[0].before.break_decision = SpacingOptions::kPreserve;
   ftokens[1].before.preserved_space_start = text.begin() + 5;
-  ftokens[1].before.break_decision = SpacingOptions::Preserve;
+  ftokens[1].before.break_decision = SpacingOptions::kPreserve;
   ftokens[2].before.preserved_space_start = text.begin() + 10;
-  ftokens[2].before.break_decision = SpacingOptions::Preserve;
+  ftokens[2].before.break_decision = SpacingOptions::kPreserve;
   FormattedExcerpt output(uwline);
   {
     std::ostringstream stream;
@@ -437,11 +438,11 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlinesDropSpaces) {
   auto& ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
-  ftokens[0].before.break_decision = SpacingOptions::Preserve;
+  ftokens[0].before.break_decision = SpacingOptions::kPreserve;
   ftokens[1].before.preserved_space_start = text.begin() + 10;
-  ftokens[1].before.break_decision = SpacingOptions::Preserve;
+  ftokens[1].before.break_decision = SpacingOptions::kPreserve;
   ftokens[2].before.preserved_space_start = text.begin() + 15;
-  ftokens[2].before.break_decision = SpacingOptions::Preserve;
+  ftokens[2].before.break_decision = SpacingOptions::kPreserve;
   FormattedExcerpt output(uwline);
   {
     std::ostringstream stream;

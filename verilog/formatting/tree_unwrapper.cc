@@ -106,13 +106,13 @@ static PreFormatToken CreateFormatToken(const TokenInfo& token) {
       GetFormatTokenType(verilog_tokentype(format_token.TokenEnum()));
   switch (format_token.format_token_enum) {
     case FormatTokenType::open_group:
-      format_token.balancing = verible::GroupBalancing::Open;
+      format_token.balancing = verible::GroupBalancing::kOpen;
       break;
     case FormatTokenType::close_group:
-      format_token.balancing = verible::GroupBalancing::Close;
+      format_token.balancing = verible::GroupBalancing::kClose;
       break;
     default:
-      format_token.balancing = verible::GroupBalancing::None;
+      format_token.balancing = verible::GroupBalancing::kNone;
       break;
   }
   return format_token;
@@ -1497,7 +1497,7 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
 
   const auto ftokens = partition.Value().TokensRange();
   if (ftokens.empty()) return false;
-  return ftokens.front().before.break_decision == SpacingOptions::MustWrap;
+  return ftokens.front().before.break_decision == SpacingOptions::kMustWrap;
 }
 
 // Joins partition containing only a ',' (and optionally comments) with
@@ -2712,7 +2712,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             PartitionIsCloseParenSemi(last)) {
           auto& token = last.Value().TokensRange().front();
           if (token.before.break_decision ==
-              verible::SpacingOptions::MustWrap) {
+              verible::SpacingOptions::kMustWrap) {
             auto* group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
@@ -2736,7 +2736,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             PartitionStartsWithSemicolon(last)) {
           auto& token = last.Value().TokensRange().front();
           if (token.before.break_decision ==
-              verible::SpacingOptions::MustWrap) {
+              verible::SpacingOptions::kMustWrap) {
             auto* group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
