@@ -66,29 +66,29 @@ EOLComment {StartComment}({InputCharacter}*)
 {Command} {
   UpdateLocation();
   yy_push_state(COMMAND);
-  return CFG_TK_COMMAND;
+  return ConfigToken::kCommand;
 }
 
 <COMMAND>{Param} {
   UpdateLocation();
-  return CFG_TK_PARAM;
+  return ConfigToken::kParam;
 }
 
 <COMMAND>{Flag} {
   UpdateLocation();
-  return CFG_TK_FLAG;
+  return ConfigToken::kFlag;
 }
 
 <COMMAND>{FlagWithArg} {
   UpdateLocation();
   yy_push_state(ARG);
-  return CFG_TK_FLAG_WITH_ARG;
+  return ConfigToken::kFlagWithArg;
 }
 
 <COMMAND>{EOLComment} {
   UpdateLocation();
   yy_push_state(COMMENT);
-  return CFG_TK_COMMENT;
+  return ConfigToken::kComment;
 }
 
 <ARG>{Quote} {
@@ -98,7 +98,7 @@ EOLComment {StartComment}({InputCharacter}*)
 
 <QUOTED_ARG>{QuotedValue} {
   UpdateLocation();
-  return CFG_TK_ARG;
+  return ConfigToken::kArg;
 }
 
 <QUOTED_ARG>{Quote} {
@@ -109,19 +109,19 @@ EOLComment {StartComment}({InputCharacter}*)
 <ARG>{Value} {
   UpdateLocation();
   yy_pop_state();
-  return CFG_TK_ARG;
+  return ConfigToken::kArg;
 }
 
 <COMMAND>{LineTerminator} {
   UpdateLocation();
   yy_pop_state();
-  return CFG_TK_NEWLINE;
+  return ConfigToken::kNewline;
 }
 
 <COMMAND><<EOF>> {
   UpdateLocation();
   yy_pop_state();
-  return CFG_TK_NEWLINE;
+  return ConfigToken::kNewline;
 }
 
 <INITIAL>{LineTerminator} {
@@ -131,24 +131,24 @@ EOLComment {StartComment}({InputCharacter}*)
 {EOLComment} {
   UpdateLocation();
   yy_push_state(COMMENT);
-  return CFG_TK_COMMENT;
+  return ConfigToken::kComment;
 }
 
 <COMMENT>{LineTerminator} {
   UpdateLocation();
   yy_pop_state();
-  return CFG_TK_NEWLINE;
+  return ConfigToken::kNewline;
 }
 
 <COMMENT><<EOF>> {
   UpdateLocation();
   yy_pop_state();
-  return CFG_TK_NEWLINE;
+  return ConfigToken::kNewline;
 }
 
 <*>{LineTerminator} {
   UpdateLocation();
-  return CFG_TK_ERROR;
+  return ConfigToken::kError;
 }
 
 <*>{Space} {
@@ -157,7 +157,7 @@ EOLComment {StartComment}({InputCharacter}*)
 
 <*>. {
   UpdateLocation();
-  return CFG_TK_ERROR;
+  return ConfigToken::kError;
 }
 
 %%

@@ -34,26 +34,25 @@
 
 namespace verible {
 
-// Acceptable syntax:
-//
-// CFG_TK_COMMAND [--CFG_TK_FLAG] [--CFG_TK_FLAG_WITH_ARG=CFG_TK_ARG]
-// [CFG_TK_PARAM]
-enum ConfigTokenEnum {
-  CFG_TK_COMMAND = 1,
-  CFG_TK_FLAG,
-  CFG_TK_FLAG_WITH_ARG,
-  CFG_TK_ARG,
-  CFG_TK_PARAM,
-  CFG_TK_NEWLINE,
-  CFG_TK_COMMENT,
-  CFG_TK_ERROR,
-};
-
 class CommandFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
   using parent_lexer_type = FlexLexerAdapter<veribleCommandFileFlexLexer>;
   using parent_lexer_type::Restart;
 
  public:
+  // Acceptable syntax:
+  //
+  // kCommand [--kFlag] [--kFlagWithArg=kArg] [kParam]
+  enum ConfigToken {
+    kCommand = 1,
+    kFlag,
+    kFlagWithArg,
+    kArg,
+    kParam,
+    kNewline,
+    kComment,
+    kError,
+  };
+
   explicit CommandFileLexer(absl::string_view config);
 
   // Returns true if token is invalid.

@@ -255,22 +255,22 @@ static absl::Status WaiveCommandHandler(
         line_map.GetLineColAtOffset(waive_content, token.left(waive_content));
 
     switch (token.token_enum()) {
-      case CFG_TK_COMMAND:
+      case CommandFileLexer::ConfigToken::kCommand:
         // Verify that this command is supported by this handler
         if (token.text() != "waive") {
           return absl::InvalidArgumentError("Invalid command handler called");
         }
         break;
-      case CFG_TK_ERROR:
+      case CommandFileLexer::ConfigToken::kError:
         return WaiveCommandError(token_pos, waive_file, "Configuration error");
-      case CFG_TK_PARAM:
-      case CFG_TK_FLAG:
+      case CommandFileLexer::ConfigToken::kParam:
+      case CommandFileLexer::ConfigToken::kFlag:
         return WaiveCommandError(token_pos, waive_file,
                                  "Unsupported argument: ", token.text());
-      case CFG_TK_FLAG_WITH_ARG:
+      case CommandFileLexer::ConfigToken::kFlagWithArg:
         option = token.text();
         break;
-      case CFG_TK_ARG:
+      case CommandFileLexer::ConfigToken::kArg:
 
         val = token.text();
 
@@ -347,7 +347,7 @@ static absl::Status WaiveCommandHandler(
         return WaiveCommandError(token_pos, waive_file,
                                  "Unsupported flag: ", option);
 
-      case CFG_TK_NEWLINE:
+      case CommandFileLexer::ConfigToken::kNewline:
         if (!location_match) return absl::OkStatus();
 
         // Check if everything required has been set
@@ -391,7 +391,7 @@ static absl::Status WaiveCommandHandler(
         }
 
         return absl::OkStatus();
-      case CFG_TK_COMMENT:
+      case CommandFileLexer::ConfigToken::kComment:
         /* Ignore comments */
         break;
       default:
@@ -438,12 +438,13 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
     command_pos = line_map.GetLineColAtOffset(
         waivers_config_content, command.begin()->left(waivers_config_content));
 
-    if (command[0].token_enum() == CFG_TK_COMMENT) {
+    if (command[0].token_enum() == CommandFileLexer::ConfigToken::kComment) {
       continue;
     }
 
     // The very first Token in 'command' should be an actual command
-    if (command.empty() || command[0].token_enum() != CFG_TK_COMMAND) {
+    if (command.empty() ||
+        command[0].token_enum() != CommandFileLexer::ConfigToken::kCommand) {
       LOG(ERROR) << WaiveCommandErrorFmt(command_pos, waiver_filename,
                                          "Not a command: ", command[0].text());
       all_commands_ok = false;
