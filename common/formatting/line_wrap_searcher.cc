@@ -113,28 +113,28 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
     // break, or no break.  Calculate new penalties.
     // Push one or both branches into the worklist.
     const auto& token = next.state->GetNextToken();
-    if (token.before.break_decision == SpacingOptions::Preserve) {
+    if (token.before.break_decision == SpacingOptions::kPreserve) {
       VLOG(4) << "preserving spaces before \'" << token.token->text() << '\'';
       SearchState preserved(std::make_shared<StateNode>(
-          next.state, style, SpacingDecision::Preserve));
+          next.state, style, SpacingDecision::kPreserve));
       worklist.push(preserved);
     } else {
       // Remaining options are: Undecided, MustWrap, MustAppend
       // Explore one or both: SpacingDecision::Wrap/Append
-      if (token.before.break_decision != SpacingOptions::MustWrap) {
+      if (token.before.break_decision != SpacingOptions::kMustWrap) {
         VLOG(4) << "considering appending \'" << token.token->text() << '\'';
         // Consider cost of appending token to current line.
         SearchState appended(std::make_shared<StateNode>(
-            next.state, style, SpacingDecision::Append));
+            next.state, style, SpacingDecision::kAppend));
         worklist.push(appended);
         VLOG(4) << "  cost: " << appended.state->cumulative_cost;
         VLOG(4) << "  column: " << appended.state->current_column;
       }
-      if (token.before.break_decision != SpacingOptions::MustAppend) {
+      if (token.before.break_decision != SpacingOptions::kMustAppend) {
         VLOG(4) << "considering wrapping \'" << token.token->text() << '\'';
         // Consider cost of line wrapping here.
-        SearchState wrapped(std::make_shared<StateNode>(next.state, style,
-                                                        SpacingDecision::Wrap));
+        SearchState wrapped(std::make_shared<StateNode>(
+            next.state, style, SpacingDecision::kWrap));
         worklist.push(wrapped);
         VLOG(4) << "  cost: " << wrapped.state->cumulative_cost;
         VLOG(4) << "  column: " << wrapped.state->current_column;
@@ -194,12 +194,12 @@ FitResult FitsOnLine(const UnwrappedLine& uwline,
   while (!state->Done()) {
     const auto& token = state->GetNextToken();
     // If a line break is required before this token, return false.
-    if (token.before.break_decision == SpacingOptions::MustWrap) {
+    if (token.before.break_decision == SpacingOptions::kMustWrap) {
       return {false, state->current_column};
     }
 
     // Append token onto same line while it fits.
-    state = std::make_shared<StateNode>(state, style, SpacingDecision::Append);
+    state = std::make_shared<StateNode>(state, style, SpacingDecision::kAppend);
     if (state->current_column > style.column_limit) {
       return {false, state->current_column};
     }

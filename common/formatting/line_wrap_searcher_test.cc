@@ -83,7 +83,7 @@ TEST_F(SearchLineWrapsTestFixture, OneToken) {
   EXPECT_EQ(formatted_line.Tokens().size(), 1);
   const auto& ftokens_out = formatted_line.Tokens();
   // First token should never break.
-  EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(), "aaa");
 }
 
@@ -102,7 +102,7 @@ TEST_F(SearchLineWrapsTestFixture, OneTokenIndented) {
   EXPECT_EQ(formatted_line.Tokens().size(), 1);
   const auto& ftokens_out = formatted_line.Tokens();
   // First token should never break.
-  EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::kAppend);
   // 2 indentation levels, 3 spaces each = 6 spaces
   EXPECT_EQ(formatted_line.Render(), "      bbbb");
 }
@@ -132,10 +132,10 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnOneLine) {
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
   // Since all tokens fit on one line, expect no breaks.
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::kAppend);
   // Exactly 20 columns, which is the limit.
   EXPECT_EQ(formatted_line.Render(), "   zz yyy xxxx wwwww");
 }
@@ -165,11 +165,11 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLine) {
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
   // First token should never break.
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
   // Last token must wrap.
-  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::Wrap);
+  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::kWrap);
   // Would be 21 columns without wrapping.
   EXPECT_EQ(formatted_line.Render(),
             "   zz yyy xxxx\n"
@@ -205,14 +205,14 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultiple) {
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::Wrap);
-  EXPECT_EQ(ftokens_out[4].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[5].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[6].before.action, SpacingDecision::Wrap);
-  EXPECT_EQ(ftokens_out[7].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::kWrap);
+  EXPECT_EQ(ftokens_out[4].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[5].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[6].before.action, SpacingDecision::kWrap);
+  EXPECT_EQ(ftokens_out[7].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(),
             "   zz yyy xxxx\n"
             "         wwwwww a 1\n"
@@ -245,14 +245,14 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultipleDifferentSpaces) {
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[4].before.action, SpacingDecision::Wrap);
-  EXPECT_EQ(ftokens_out[5].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[6].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[7].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[3].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[4].before.action, SpacingDecision::kWrap);
+  EXPECT_EQ(ftokens_out[5].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[6].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[7].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(),
             "   zz===xxxx  wwwwww\n"
             "         a  1  2  3");
@@ -277,13 +277,13 @@ TEST_F(SearchLineWrapsTestFixture, ForcedJoins) {
   ftokens_in[2].before.break_penalty = 1;
   ftokens_in[2].before.spaces_required = 1;
   ftokens_in[2].before.break_decision =
-      SpacingOptions::MustAppend;  // This causes search to break earlier.
+      SpacingOptions::kMustAppend;  // This causes search to break earlier.
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Wrap);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kWrap);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(),
             "   aaaaaa\n"
             "         bbbbb ccccc");
@@ -305,15 +305,15 @@ TEST_F(SearchLineWrapsTestFixture, ForcedWraps) {
   ftokens_in[0].before.spaces_required = 11;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
   ftokens_in[1].before.spaces_required = 1;
-  ftokens_in[1].before.break_decision = SpacingOptions::MustWrap;
+  ftokens_in[1].before.break_decision = SpacingOptions::kMustWrap;
   ftokens_in[2].before.break_penalty = 1;
   ftokens_in[2].before.spaces_required = 1;
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   const auto& ftokens_out = formatted_line.Tokens();
-  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::Append);
-  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::Wrap);
-  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::Append);
+  EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kWrap);
+  EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(),
             "   aaaaaa\n"  // Force break before 'bbbbb'
             "         bbbbb ccccc");
@@ -345,8 +345,8 @@ TEST_F(SearchLineWrapsTestFixture, DisplayEquallyOptimalWrappings) {
   // However, using a tie-breaker like terminal-column position, will favor
   // equally good solutions that break earlier.
   const auto& first = formatted_lines.front();
-  EXPECT_EQ(first.Tokens()[1].before.action, SpacingDecision::Append);
-  EXPECT_EQ(first.Tokens()[2].before.action, SpacingDecision::Wrap);
+  EXPECT_EQ(first.Tokens()[1].before.action, SpacingDecision::kAppend);
+  EXPECT_EQ(first.Tokens()[2].before.action, SpacingDecision::kWrap);
   std::ostringstream stream;
   DisplayEquallyOptimalWrappings(stream, uwline_in, formatted_lines);
   // Limited output checking.
@@ -393,7 +393,7 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnLine) {
   EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 20);
 
   ftokens_in[2].before.break_decision =
-      SpacingOptions::MustWrap;  // forced break
+      SpacingOptions::kMustWrap;  // forced break
   EXPECT_FALSE(FitsOnLine(uwline_in, style_).fits);
   EXPECT_EQ(FitsOnLine(uwline_in, style_).final_column, 14);
 }

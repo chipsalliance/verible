@@ -31,19 +31,19 @@ namespace verible {
 
 std::ostream& operator<<(std::ostream& stream, SpacingOptions b) {
   switch (b) {
-    case SpacingOptions::Undecided:
+    case SpacingOptions::kUndecided:
       stream << "undecided";
       break;
-    case SpacingOptions::MustAppend:
+    case SpacingOptions::kMustAppend:
       stream << "must-append";
       break;
-    case SpacingOptions::MustWrap:
+    case SpacingOptions::kMustWrap:
       stream << "must-wrap";
       break;
-    case SpacingOptions::AppendAligned:
+    case SpacingOptions::kAppendAligned:
       stream << "append-aligned";
       break;
-    case SpacingOptions::Preserve:
+    case SpacingOptions::kPreserve:
       stream << "preserve";
       break;
   }
@@ -52,13 +52,13 @@ std::ostream& operator<<(std::ostream& stream, SpacingOptions b) {
 
 std::ostream& operator<<(std::ostream& stream, GroupBalancing b) {
   switch (b) {
-    case GroupBalancing::None:
+    case GroupBalancing::kNone:
       stream << "none";
       break;
-    case GroupBalancing::Open:
+    case GroupBalancing::kOpen:
       stream << "open";
       break;
-    case GroupBalancing::Close:
+    case GroupBalancing::kClose:
       stream << "close";
       break;
   }
@@ -79,20 +79,20 @@ std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
   // break_penalty is irrelevant when the options are constrained,
   // so don't bother showing it in those cases.
   switch (break_decision) {
-    case SpacingOptions::Undecided:
+    case SpacingOptions::kUndecided:
       stream << '_' << spaces_required << ',' << break_penalty;
       break;
-    case SpacingOptions::MustAppend:
+    case SpacingOptions::kMustAppend:
       stream << "+_" << spaces_required;
       break;
-    case SpacingOptions::MustWrap:
+    case SpacingOptions::kMustWrap:
       // spaces_required is irrelevant
       stream << "\\n";
       break;
-    case SpacingOptions::AppendAligned:
+    case SpacingOptions::kAppendAligned:
       stream << "|_" << spaces_required;
       break;
-    case SpacingOptions::Preserve:
+    case SpacingOptions::kPreserve:
       stream << "pre";
       break;
   }
@@ -101,16 +101,16 @@ std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
 
 std::ostream& operator<<(std::ostream& stream, SpacingDecision d) {
   switch (d) {
-    case SpacingDecision::Append:
+    case SpacingDecision::kAppend:
       stream << "append";
       break;
-    case SpacingDecision::Wrap:
+    case SpacingDecision::kWrap:
       stream << "wrap";
       break;
-    case SpacingDecision::Align:
+    case SpacingDecision::kAlign:
       stream << "align";
       break;
-    case SpacingDecision::Preserve:
+    case SpacingDecision::kPreserve:
       stream << "preserve";
       break;
   }
@@ -119,14 +119,14 @@ std::ostream& operator<<(std::ostream& stream, SpacingDecision d) {
 
 static SpacingDecision ConvertSpacing(SpacingOptions opt) {
   switch (opt) {
-    case SpacingOptions::MustWrap:
-      return SpacingDecision::Wrap;
-    case SpacingOptions::MustAppend:
-      return SpacingDecision::Append;
-    case SpacingOptions::AppendAligned:
-      return SpacingDecision::Align;
+    case SpacingOptions::kMustWrap:
+      return SpacingDecision::kWrap;
+    case SpacingOptions::kMustAppend:
+      return SpacingDecision::kAppend;
+    case SpacingOptions::kAppendAligned:
+      return SpacingDecision::kAlign;
     default:  // Undecided, Preserve
-      return SpacingDecision::Preserve;
+      return SpacingDecision::kPreserve;
   }
 }
 
@@ -154,7 +154,7 @@ absl::string_view FormattedToken::OriginalLeadingSpaces() const {
 
 std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
   switch (before.action) {
-    case SpacingDecision::Preserve: {
+    case SpacingDecision::kPreserve: {
       if (before.preserved_space_start != nullptr) {
         // Calculate string_view range of pre-existing spaces, and print that.
         stream << OriginalLeadingSpaces();
@@ -165,12 +165,12 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
       }
       break;
     }
-    case SpacingDecision::Wrap:
+    case SpacingDecision::kWrap:
       // Never print spaces before a newline.
       stream << '\n';
       ABSL_FALLTHROUGH_INTENDED;
-    case SpacingDecision::Align:
-    case SpacingDecision::Append:
+    case SpacingDecision::kAlign:
+    case SpacingDecision::kAppend:
       stream << Spacer(before.spaces);
       break;
   }
@@ -187,7 +187,7 @@ absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
 }
 
 size_t PreFormatToken::LeadingSpacesLength() const {
-  if (before.break_decision == SpacingOptions::Preserve &&
+  if (before.break_decision == SpacingOptions::kPreserve &&
       before.preserved_space_start != nullptr) {
     return OriginalLeadingSpaces().length();
   }
@@ -276,7 +276,7 @@ void PreserveSpacesOnDisabledTokenRanges(
     if (!disable_range.empty()) {
       auto& first = disable_range.front();
       VLOG(3) << "checking whether first ftoken in range is a must-wrap.";
-      if (first.before.break_decision == SpacingOptions::MustWrap) {
+      if (first.before.break_decision == SpacingOptions::kMustWrap) {
         VLOG(3) << "checking if spaces before first ftoken starts with \\n.";
         const absl::string_view leading_space = first.OriginalLeadingSpaces();
         // consume the first '\n' from the preceding inter-token spaces
@@ -290,7 +290,7 @@ void PreserveSpacesOnDisabledTokenRanges(
     // Mark tokens in the disabled range as preserving original spaces.
     for (auto& ft : disable_range) {
       VLOG(2) << "disable-format preserve spaces before: " << *ft.token;
-      ft.before.break_decision = SpacingOptions::Preserve;
+      ft.before.break_decision = SpacingOptions::kPreserve;
     }
 
     // start next iteration search from previous iteration's end

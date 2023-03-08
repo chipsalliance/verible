@@ -262,9 +262,9 @@ TEST_F(TokenPartitionTreePrinterTest, VectorTreeShallow) {
   // Construct three partitions, sizes: 1, 3, 2
   // Change some attributes that will appear in the verbose rendition.
   pre_format_tokens_[2].before.spaces_required = 1;
-  pre_format_tokens_[3].before.break_decision = SpacingOptions::MustAppend;
+  pre_format_tokens_[3].before.break_decision = SpacingOptions::kMustAppend;
   pre_format_tokens_[4].before.break_penalty = 22;
-  pre_format_tokens_[5].before.break_decision = SpacingOptions::MustWrap;
+  pre_format_tokens_[5].before.break_decision = SpacingOptions::kMustWrap;
   const auto& preformat_tokens = pre_format_tokens_;
   const auto begin = preformat_tokens.begin();
   UnwrappedLine all(0, begin);
@@ -1362,7 +1362,7 @@ TEST_F(IndentButPreserveOtherSpacingTest, Various) {
     if (token_range.empty()) continue;
     token_range.pop_front();
     for (const auto& ftoken : token_range) {
-      EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::Preserve);
+      EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::kPreserve);
     }
   }
 }
@@ -2990,8 +2990,8 @@ TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, EmptyTokenRange) {
 
   static const int expected_spaces[] = {0, 0, 0, 0, 0, 0};
   static const SpacingOptions expected_decision[] = {
-      SO::Undecided, SO::Undecided, SO::Undecided,
-      SO::Undecided, SO::Undecided, SO::Undecided,
+      SO::kUndecided, SO::kUndecided, SO::kUndecided,
+      SO::kUndecided, SO::kUndecided, SO::kUndecided,
   };
   for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
     const auto& token = pre_format_tokens_.at(i);
@@ -3013,8 +3013,8 @@ TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, NoInlines) {
 
   static const int expected_spaces[] = {0, 0, 0, 0, 0, 0};
   static const SpacingOptions expected_decision[] = {
-      SO::MustWrap,   SO::MustAppend, SO::MustAppend,
-      SO::MustAppend, SO::MustAppend, SO::Undecided,
+      SO::kMustWrap,   SO::kMustAppend, SO::kMustAppend,
+      SO::kMustAppend, SO::kMustAppend, SO::kUndecided,
   };
   for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
     const auto& token = pre_format_tokens_.at(i);
@@ -3040,8 +3040,8 @@ TEST_F(ApplyAlreadyFormattedPartitionPropertiesToTokensTest, TwoInlines) {
 
   static const int expected_spaces[] = {2, 0, 4, 0, 0, 0};
   static const SpacingOptions expected_decision[] = {
-      SO::AppendAligned, SO::MustAppend, SO::AppendAligned,
-      SO::MustAppend,    SO::MustAppend, SO::Undecided,
+      SO::kAppendAligned, SO::kMustAppend, SO::kAppendAligned,
+      SO::kMustAppend,    SO::kMustAppend, SO::kUndecided,
   };
   for (int i = 0; i < static_cast<int>(pre_format_tokens_.size()); ++i) {
     const auto& token = pre_format_tokens_.at(i);

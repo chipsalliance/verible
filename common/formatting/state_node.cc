@@ -37,19 +37,19 @@ static absl::string_view kNotForAlignment =
     "Aligned tokens should never use line-wrap optimization!";
 
 static SpacingDecision FrontTokenSpacing(const FormatTokenRange range) {
-  if (range.empty()) return SpacingDecision::Append;
+  if (range.empty()) return SpacingDecision::kAppend;
   const SpacingOptions opt = range.front().before.break_decision;
   // Treat first token as appended, unless explicitly preserving spaces.
   switch (opt) {
-    case SpacingOptions::Preserve:
-      return SpacingDecision::Preserve;
-    case SpacingOptions::AppendAligned:
+    case SpacingOptions::kPreserve:
+      return SpacingDecision::kPreserve;
+    case SpacingOptions::kAppendAligned:
       LOG(FATAL) << kNotForAlignment;
       break;
     default:
       break;
   }
-  return SpacingDecision::Append;
+  return SpacingDecision::kAppend;
 }
 
 StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
@@ -92,16 +92,16 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
 
   bool called_open_group_balance = false;
   bool called_close_group_balance = false;
-  if (spacing_choice == SpacingDecision::Wrap) {
+  if (spacing_choice == SpacingDecision::kWrap) {
     // When wrapping and closing a balance group, adjust wrap column stack
     // first.
-    if (current_format_token.balancing == GroupBalancing::Close) {
+    if (current_format_token.balancing == GroupBalancing::kClose) {
       CloseGroupBalance();
       called_close_group_balance = true;
     }
     // When wrapping after opening a balance group, adjust wrap column stack
     // first.
-    if (prev_state->spacing_choice == SpacingDecision::Wrap) {
+    if (prev_state->spacing_choice == SpacingDecision::kWrap) {
       OpenGroupBalance(style);
       called_open_group_balance = true;
     }
@@ -120,7 +120,7 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
 
   // When appending and closing a balance group, adjust wrap column stack last.
   if (!called_close_group_balance &&
-      (current_format_token.balancing == GroupBalancing::Close)) {
+      (current_format_token.balancing == GroupBalancing::kClose)) {
     CloseGroupBalance();
   }
 
@@ -151,7 +151,7 @@ int StateNode::UpdateColumnPosition() {
       // The position is the length of the text after the last newline.
       current_column = text.length() - last_newline_pos - 1;
       const auto first_newline_pos = text.find_first_of('\n');
-      if (spacing_choice == SpacingDecision::Wrap) {
+      if (spacing_choice == SpacingDecision::kWrap) {
         // Record the number of spaces preceding this format token because
         // it cannot be simply inferred based on current column and
         // raw text length.
@@ -169,17 +169,17 @@ int StateNode::UpdateColumnPosition() {
   }
 
   switch (spacing_choice) {
-    case SpacingDecision::Align:
+    case SpacingDecision::kAlign:
       LOG(FATAL) << kNotForAlignment;
       break;
-    case SpacingDecision::Wrap:
+    case SpacingDecision::kWrap:
       // If wrapping, new column position is based on the wrap_column_positions
       // top-of-stack.
       current_column = wrap_column_positions.top() + token_length;
       VLOG(4) << "current wrap_position = " << wrap_column_positions.top();
       VLOG(4) << "wrapping, current_column is now " << current_column;
       break;
-    case SpacingDecision::Append:
+    case SpacingDecision::kAppend:
       // If appending, new column position is added to previous state's column
       // position.
       if (!IsRootState()) {
@@ -193,7 +193,7 @@ int StateNode::UpdateColumnPosition() {
         current_column += token_length;
       }
       break;
-    case SpacingDecision::Preserve: {
+    case SpacingDecision::kPreserve: {
       const absl::string_view original_spacing_text =
           current_format_token.OriginalLeadingSpaces();
       // prev_state is null when the first token of the unwrapped line was
@@ -223,12 +223,12 @@ void StateNode::UpdateCumulativeCost(const BasicFormatStyle& style,
     CHECK_EQ(cumulative_cost, prev_state->cumulative_cost);
   }
   const PreFormatToken& current_format_token(GetCurrentToken());
-  if (spacing_choice == SpacingDecision::Wrap) {
+  if (spacing_choice == SpacingDecision::kWrap) {
     // Only incur the penalty for breaking before this token.
     // Newly wrapped, so don't bother checking line length and suppress
     // penalty if the first token on a line happens to exceed column limit.
     cumulative_cost += current_format_token.before.break_penalty;
-  } else if (spacing_choice == SpacingDecision::Append) {
+  } else if (spacing_choice == SpacingDecision::kAppend) {
     // Check for line length violation of column_for_penalty, and penalize
     // more for each column over the limit.
     if (column_for_penalty > style.column_limit) {
@@ -275,22 +275,22 @@ void StateNode::OpenGroupBalance(const BasicFormatStyle& style) {
 
   if (!IsRootState()) {
     const PreFormatToken& prev_format_token(GetPreviousToken());
-    if (prev_format_token.balancing == GroupBalancing::Open) {
+    if (prev_format_token.balancing == GroupBalancing::kOpen) {
       VLOG(4) << "previous token is open-group";
       switch (spacing_choice) {
-        case SpacingDecision::Wrap:
+        case SpacingDecision::kWrap:
           VLOG(4) << "current token is wrapped";
           wrap_column_positions.push(prev_state->wrap_column_positions.top() +
                                      style.wrap_spaces);
           break;
-        case SpacingDecision::Align:
+        case SpacingDecision::kAlign:
           LOG(FATAL) << kNotForAlignment;
           break;
-        case SpacingDecision::Append:
+        case SpacingDecision::kAppend:
           VLOG(4) << "current token is appended or aligned";
           wrap_column_positions.push(prev_state->current_column);
           break;
-        case SpacingDecision::Preserve:
+        case SpacingDecision::kPreserve:
           // TODO(b/134711965): calculate column position using original spaces
           break;
       }
@@ -324,10 +324,10 @@ std::shared_ptr<const StateNode> StateNode::AppendIfItFits(
   // In any case, this is not a critical path operation, so we're not going to
   // worry about it.
   const auto wrapped =
-      std::make_shared<StateNode>(current_state, style, SpacingDecision::Wrap);
+      std::make_shared<StateNode>(current_state, style, SpacingDecision::kWrap);
   const auto appended = std::make_shared<StateNode>(current_state, style,
-                                                    SpacingDecision::Append);
-  return (token.before.break_decision == SpacingOptions::MustWrap ||
+                                                    SpacingDecision::kAppend);
+  return (token.before.break_decision == SpacingOptions::kMustWrap ||
           appended->current_column > style.column_limit)
              ? wrapped
              : appended;
@@ -370,10 +370,10 @@ void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
       // This number of spaces can only be inferred if the token that was
       // wrapped did not contain multi-line text.
       // In this case that spacing is not deducible, and had to be recorded.
-      CHECK_EQ(reverse_iter->spacing_choice, SpacingDecision::Wrap);
+      CHECK_EQ(reverse_iter->spacing_choice, SpacingDecision::kWrap);
       format_token.before.spaces =
           reverse_iter->wrap_multiline_token_spaces_before;
-    } else if (reverse_iter->spacing_choice == SpacingDecision::Wrap) {
+    } else if (reverse_iter->spacing_choice == SpacingDecision::kWrap) {
       // Mark as inserting a line break.
       // Immediately after a line break, print out the amount of spaces
       // required to honor the indentation and wrapping.

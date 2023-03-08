@@ -733,7 +733,7 @@ class ContinuationCommentAligner {
   static void AdjustColumnUsingTokenSpacing(
       const verible::FormattedToken& token, int* column) {
     switch (token.before.action) {
-      case verible::SpacingDecision::Preserve: {
+      case verible::SpacingDecision::kPreserve: {
         if (token.before.preserved_space_start != nullptr) {
           *column += token.OriginalLeadingSpaces().length();
         } else {
@@ -741,11 +741,11 @@ class ContinuationCommentAligner {
         }
         break;
       }
-      case verible::SpacingDecision::Wrap:
+      case verible::SpacingDecision::kWrap:
         *column = 0;
         ABSL_FALLTHROUGH_INTENDED;
-      case verible::SpacingDecision::Align:
-      case verible::SpacingDecision::Append:
+      case verible::SpacingDecision::kAlign:
+      case verible::SpacingDecision::kAppend:
         *column += token.before.spaces;
         break;
     }
@@ -755,10 +755,10 @@ class ContinuationCommentAligner {
     int column = 0;
     const auto& front = line.Tokens().front();
 
-    if (front.before.action != verible::SpacingDecision::Preserve) {
+    if (front.before.action != verible::SpacingDecision::kPreserve) {
       column += line.IndentationSpaces();
     }
-    if (front.before.action == verible::SpacingDecision::Align) {
+    if (front.before.action == verible::SpacingDecision::kAlign) {
       column += front.before.spaces;
     }
     column += front.token->text().length();

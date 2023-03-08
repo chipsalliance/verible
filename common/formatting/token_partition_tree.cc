@@ -320,7 +320,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
 
   // Might be replaced with AppendAligned in the loop below.
   mutable_tokens_begin->before.break_decision =
-      verible::SpacingOptions::MustWrap;
+      verible::SpacingOptions::kMustWrap;
 
   for (auto& child : already_formatted_partition_node->Children()) {
     auto slice = child.Value();
@@ -335,7 +335,7 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
                                                    ftokens->begin());
 
     token->before.spaces_required = slice.IndentationSpaces();
-    token->before.break_decision = verible::SpacingOptions::AppendAligned;
+    token->before.break_decision = verible::SpacingOptions::kAppendAligned;
   }
 
   auto mutable_tokens_end =
@@ -343,8 +343,8 @@ void ApplyAlreadyFormattedPartitionPropertiesToTokens(
 
   for (auto& token : make_range(mutable_tokens_begin, mutable_tokens_end)) {
     auto& decision = token.before.break_decision;
-    if (decision == verible::SpacingOptions::Undecided) {
-      decision = verible::SpacingOptions::MustAppend;
+    if (decision == verible::SpacingOptions::kUndecided) {
+      decision = verible::SpacingOptions::kMustAppend;
     }
   }
   // Children are no longer needed

@@ -417,7 +417,7 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
     //   }
     CHECK(leading_tokens.empty() || first_tree_token_it == ftokens.end() ||
           first_tree_token_it->before.break_decision !=
-              SpacingOptions::MustWrap);
+              SpacingOptions::kMustWrap);
   } else {
     // All tokens are passed as leading
     leading_tokens.set_end(ftokens.end());

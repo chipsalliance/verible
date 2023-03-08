@@ -32,11 +32,11 @@ namespace verible {
 // This controls what to explore (if not pre-determined).
 // Related enum: SpacingDecision
 enum class SpacingOptions {
-  Undecided,      // unconstrained, not yet decided, to be optimized (default)
-  MustAppend,     // cannot break here
-  MustWrap,       // must break here
-  AppendAligned,  // when appending, allow for left-padding spaces
-  Preserve,       // do not optimize, use original spacing
+  kUndecided,      // unconstrained, not yet decided, to be optimized (default)
+  kMustAppend,     // cannot break here
+  kMustWrap,       // must break here
+  kAppendAligned,  // when appending, allow for left-padding spaces
+  kPreserve,       // do not optimize, use original spacing
 };
 
 std::ostream& operator<<(std::ostream&, SpacingOptions);
@@ -44,10 +44,10 @@ std::ostream& operator<<(std::ostream&, SpacingOptions);
 // Tri-state value that encodes how this token affects group balancing
 // for line-wrapping purposes.
 enum class GroupBalancing {
-  None,  // This token does not involve any grouping.
-  Open,  // This token marks the beginning of a balanced group.
-  Close  // This token marks the closing of a balanced group.
-         // TODO(fangism): Reset?  (separator)
+  kNone,  // This token does not involve any grouping.
+  kOpen,  // This token marks the beginning of a balanced group.
+  kClose  // This token marks the closing of a balanced group.
+          // TODO(fangism): Reset?  (separator)
 };
 
 std::ostream& operator<<(std::ostream&, GroupBalancing);
@@ -70,7 +70,7 @@ struct InterTokenInfo {
   int break_penalty = 0;
 
   // Encodes spacing exploration options.
-  SpacingOptions break_decision = SpacingOptions::Undecided;
+  SpacingOptions break_decision = SpacingOptions::kUndecided;
 
   // Point to previous position in string buffer before series of white space
   // tokens, for the sake of preserving space.
@@ -116,7 +116,7 @@ struct PreFormatToken {
   InterTokenInfo before;
 
   // This marks how this token is involved in group balancing for line-wrapping.
-  GroupBalancing balancing = GroupBalancing::None;
+  GroupBalancing balancing = GroupBalancing::kNone;
 
   PreFormatToken() = default;
 
@@ -180,11 +180,11 @@ using MutableFormatTokenRange =
 // These values are also used during line wrap searching and optimization.
 // Notably and intentionally, there is no undecided or default.
 enum class SpacingDecision {
-  Preserve,  // keep original inter-token spacing
-  Append,    // add onto current line, with appropriate amount of spacing
-  Wrap,      // wrap onto new line, with appropriate amount of indentation
-  Align,     // like Append, but force left-padding of spaces, even at the
-             // front of line.
+  kPreserve,  // keep original inter-token spacing
+  kAppend,    // add onto current line, with appropriate amount of spacing
+  kWrap,      // wrap onto new line, with appropriate amount of indentation
+  kAlign,     // like Append, but force left-padding of spaces, even at the
+              // front of line.
 };
 
 std::ostream& operator<<(std::ostream& stream, SpacingDecision);
@@ -196,7 +196,7 @@ struct InterTokenDecision {
   int spaces = 0;
 
   // Choice of space formatting before this token.
-  SpacingDecision action = SpacingDecision::Preserve;
+  SpacingDecision action = SpacingDecision::kPreserve;
 
   // When preserving spaces before this token, start from this offset.
   const char* preserved_space_start = nullptr;

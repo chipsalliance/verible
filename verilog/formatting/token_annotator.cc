@@ -746,23 +746,23 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     if (left.TokenEnum() != '[' && left.TokenEnum() != ']' &&
         right.TokenEnum() != '[' && right.TokenEnum() != ']' &&
         left.TokenEnum() != ':' && right.TokenEnum() != ':') {
-      return {SpacingOptions::Preserve,
+      return {SpacingOptions::kPreserve,
               "For now, leave spaces inside [] untouched."};
     }
   }
 
   if (right.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Keep \\ line continuation attached to its left neighbor."};
   }
 
   if (left.TokenEnum() == verilog_tokentype::TK_LINE_CONT) {
-    return {SpacingOptions::MustWrap,
+    return {SpacingOptions::kMustWrap,
             "Keep \\ line continuation is always followed by \\n."};
   }
 
   if (left.TokenEnum() == PP_define) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Keep `define and macro name together."};
   }
   if (right.TokenEnum() == PP_define_body) {
@@ -770,10 +770,10 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     // line-continuations.
     const absl::string_view text = right.Text();
     if (std::count(text.begin(), text.end(), '\n') >= 2) {
-      return {SpacingOptions::Preserve,
+      return {SpacingOptions::kPreserve,
               "Preserve spacing before a multi-line macro definition body."};
     }
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Macro definition body must start on same line (but may be "
             "line-continued)."};
   }
@@ -782,7 +782,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (left.format_token_enum == FTT::eol_comment ||
       left.TokenEnum() == PP_define_body  // definition excludes trailing '\n'
   ) {
-    return {SpacingOptions::MustWrap, "Token must be newline-terminated"};
+    return {SpacingOptions::kMustWrap, "Token must be newline-terminated"};
   }
 
   if (right.format_token_enum == FTT::eol_comment) {
@@ -795,7 +795,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
     auto pos = preceding_whitespace.find_first_of('\n', 0);
     if (pos == absl::string_view::npos) {
       // There are other tokens on this line
-      return {SpacingOptions::MustAppend,
+      return {SpacingOptions::kMustAppend,
               "EOL comment cannot break from "
               "tokens to the left on its line"};
     }
@@ -813,7 +813,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       // Add support for "Preserve" in Layout Optimizer.
       // Correctly split partitions before tokens with "Preserve" decision in
       // Tree Unwrapper.
-      return {SpacingOptions::MustWrap,
+      return {SpacingOptions::kMustWrap,
               "Force-preserve line break around block comment"};
     }
   }
@@ -825,55 +825,56 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   // Unary operators (context-sensitive)
   // For now, never separate unary prefix operators from their operands.
   if (IsUnaryPrefixExpressionOperand(left, right_context)) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Never separate unary prefix operator from its operand"};
   }
 
   if (IsInsideNumericLiteral(left, right)) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Never separate numeric width, base, and digits"};
   }
 
   // Preprocessor macro definitions with args: no space between ID and '('.
   if (left.TokenEnum() == PP_Identifier && right.TokenEnum() == '(') {
-    return {SpacingOptions::MustAppend, "No space between macro call id and ("};
+    return {SpacingOptions::kMustAppend,
+            "No space between macro call id and ("};
   }
 
   // TODO(fangism): No break between `define and PP_Identifier.
 
   if (IsEndKeyword(verilog_tokentype(right.TokenEnum()))) {
-    return {SpacingOptions::MustWrap, "end* keywords should start own lines"};
+    return {SpacingOptions::kMustWrap, "end* keywords should start own lines"};
   }
 
   if (right.TokenEnum() == TK_else) {
     // TODO(fangism): feels like this should be the responsibility of
     // tree_unwrapper, handled by kElseClause, kGenerateElseClause, etc.
     if (left.TokenEnum() == TK_end) {
-      return {SpacingOptions::MustAppend,
+      return {SpacingOptions::kMustAppend,
               "'end'-'else' and should be together on one line."};
     }
     if (left.TokenEnum() == '}') {
-      return {SpacingOptions::MustAppend,
+      return {SpacingOptions::kMustAppend,
               "'}'-'else' and should be together on one line."};
     }
     // TODO(fangism): Some styles prefer to start with 'else' on its own line.
-    return {SpacingOptions::MustWrap, "'else' starts its own line."};
+    return {SpacingOptions::kMustWrap, "'else' starts its own line."};
   }
 
   if ((left.TokenEnum() == TK_else) && (right.TokenEnum() == TK_begin)) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "'else'-'begin' tokens should be together on one line."};
   }
 
   if ((left.TokenEnum() == ')') && (right.TokenEnum() == TK_begin)) {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "')'-'begin' tokens should be together on one line."};
   }
 
   if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (!IsComment(FormatTokenType(right.format_token_enum)) &&
         !IsAnySemicolon(right)) {
-      return {SpacingOptions::MustWrap,
+      return {SpacingOptions::kMustWrap,
               "Macro-closing ')' should end its own line except for comments "
               "nad ';'."};
     }
@@ -881,26 +882,26 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   if (left.TokenEnum() == PP_else || left.TokenEnum() == PP_endif) {
     if (IsComment(FormatTokenType(right.format_token_enum))) {
-      return {SpacingOptions::Undecided, "Comment may follow `else and `end"};
+      return {SpacingOptions::kUndecided, "Comment may follow `else and `end"};
     }
-    return {SpacingOptions::MustWrap,
+    return {SpacingOptions::kMustWrap,
             "`end and `else should be on their own line except for comments."};
   }
 
   if (IsPreprocessorKeyword(
           static_cast<verilog_tokentype>(right.TokenEnum()))) {
     // The tree unwrapper should make sure these start their own partition.
-    return {SpacingOptions::MustWrap,
+    return {SpacingOptions::kMustWrap,
             "Preprocessor directives should start their own line."};
   }
 
   if (left.TokenEnum() == '#') {
-    return {SpacingOptions::MustAppend,
+    return {SpacingOptions::kMustAppend,
             "Never separate # from whatever follows (delay expressions)."};
   }
   if (left.TokenEnum() == verilog_tokentype::TK_TimeLiteral) {
     if (right.TokenEnum() == ';') {
-      return {SpacingOptions::MustAppend,
+      return {SpacingOptions::kMustAppend,
               "Keep delay statements together, like \"#1ps;\"."};
     }
   }
@@ -909,13 +910,13 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       right.TokenEnum() == verilog_tokentype::MacroArg) {
     const absl::string_view text(right.Text());
     if (std::find(text.begin(), text.end(), '\n') != text.end()) {
-      return {SpacingOptions::MustWrap,
+      return {SpacingOptions::kMustWrap,
               "Multi-line unlexed macro arguments start on their own line."};
     }
   }
 
   // By default, leave undecided for penalty minimization.
-  return {SpacingOptions::Undecided,
+  return {SpacingOptions::kUndecided,
           "Default: leave wrap decision to algorithm"};
 }
 
@@ -932,7 +933,7 @@ void AnnotateFormatToken(const FormatStyle& style,
   curr_token->before.spaces_required = p.spaces_required;
   if (p.force_preserve_spaces) {
     // forego all inter-token calculations
-    curr_token->before.break_decision = SpacingOptions::Preserve;
+    curr_token->before.break_decision = SpacingOptions::kPreserve;
   } else {
     // Update the break penalty and if the curr_token is allowed to
     // break before it.

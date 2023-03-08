@@ -173,7 +173,7 @@ class LayoutItem {
     if (policy == PartitionPolicyEnum::kAlreadyFormatted) return true;
 
     auto break_decision = uwline.TokensRange().front().before.break_decision;
-    return (break_decision == SpacingOptions::MustWrap);
+    return (break_decision == SpacingOptions::kMustWrap);
   }
 
   static int SpacesRequiredBeforeUnwrappedLine(const UnwrappedLine& uwline) {
