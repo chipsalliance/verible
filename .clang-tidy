@@ -67,6 +67,7 @@ Checks: >
   -modernize-raw-string-literal,
   -modernize-return-braced-init-list,
   -modernize-use-auto,
+  -modernize-use-emplace,
   -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -modernize-use-transparent-functors,
@@ -76,6 +77,3 @@ Checks: >
   -misc-non-private-member-variables-in-classes,
   -misc-redundant-expression,
   -misc-unused-parameters,
-
-WarningsAsErrors: ''
-HeaderFilterRegex: ''

@@ -148,7 +148,7 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
 int main(int argc, char *argv[]) {
   const std::string kProjectPrefix = "verible_";
   const std::string kSearchDir = ".";
-  const std::string kFileExcludeRe = "vscode/|run-clang-tidy";
+  const std::string kFileExcludeRe = "vscode/|external_libs/|.github/";
 
   const std::string kTidySymlink = kProjectPrefix + "clang-tidy.out";
   const fs::path cache_dir = GetCacheDir() / "clang-tidy";
