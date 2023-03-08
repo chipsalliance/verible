@@ -44,7 +44,7 @@ static verible::lsp::Diagnostic ViolationToDiagnostic(
                         .character = range.start.column},
               .end = {.line = range.end.line, .character = range.end.column},
           },
-      .severity = verible::lsp::DiagnosticSeverity::Warning,
+      .severity = verible::lsp::DiagnosticSeverity::kWarning,
       .has_severity = true,
       .message = absl::StrCat(violation.reason, " ", v.status->url, "[",
                               v.status->lint_rule_name, "]", fix_msg),
@@ -104,8 +104,8 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
                      .end{.line = range.end.line,  //
                           .character = range.end.column}},
               .severity = severity == verible::ErrorSeverity::kError
-                              ? verible::lsp::DiagnosticSeverity::Error
-                              : verible::lsp::DiagnosticSeverity::Warning,
+                              ? verible::lsp::DiagnosticSeverity::kError
+                              : verible::lsp::DiagnosticSeverity::kWarning,
               .has_severity = true,
               .message = message,
           });

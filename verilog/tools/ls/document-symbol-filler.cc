@@ -35,16 +35,16 @@ static constexpr int kUninitializedStartLine = -1;
 //  of a flag.
 //  Well _ideally_ the editors would just show proper icons.
 static constexpr verible::lsp::SymbolKind kVSCodeModule =
-    verible::lsp::SymbolKind::Method;
+    verible::lsp::SymbolKind::kMethod;
 
 namespace verilog {
 DocumentSymbolFiller::DocumentSymbolFiller(
     bool kate_workaround, const verible::TextStructureView &text,
     verible::lsp::DocumentSymbol *toplevel)
-    : kModuleSymbolKind(kate_workaround ? verible::lsp::SymbolKind::Method
+    : kModuleSymbolKind(kate_workaround ? verible::lsp::SymbolKind::kMethod
                                         : kVSCodeModule),
-      kBlockSymbolKind(kate_workaround ? verible::lsp::SymbolKind::Class
-                                       : verible::lsp::SymbolKind::Namespace),
+      kBlockSymbolKind(kate_workaround ? verible::lsp::SymbolKind::kClass
+                                       : verible::lsp::SymbolKind::kNamespace),
       text_view_(text),
       current_symbol_(toplevel) {
   toplevel->range.start = {.line = 0, .character = 0};
@@ -99,7 +99,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       const auto *class_name_leaf = verilog::GetClassName(node);
       if (class_name_leaf) {
         is_visible_node = true;
-        node_symbol.kind = verible::lsp::SymbolKind::Class;
+        node_symbol.kind = verible::lsp::SymbolKind::kClass;
         node_symbol.selectionRange = RangeFromToken(class_name_leaf->get());
         node_symbol.name = std::string(class_name_leaf->get().text());
       }
@@ -110,7 +110,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       const auto *package_name = verilog::GetPackageNameToken(node);
       if (package_name) {
         is_visible_node = true;
-        node_symbol.kind = verible::lsp::SymbolKind::Package;
+        node_symbol.kind = verible::lsp::SymbolKind::kPackage;
         node_symbol.selectionRange = RangeFromToken(*package_name);
         node_symbol.name = std::string(package_name->text());
       }
@@ -121,7 +121,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       const auto &function_name = verilog::GetFunctionName(node);
       if (function_name) {
         is_visible_node = true;
-        node_symbol.kind = verible::lsp::SymbolKind::Function;
+        node_symbol.kind = verible::lsp::SymbolKind::kFunction;
         node_symbol.selectionRange = RangeFromToken(function_name->get());
         node_symbol.name = std::string(function_name->get().text());
       }
