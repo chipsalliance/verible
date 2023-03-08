@@ -91,6 +91,24 @@ TEST(JsonRpcDispatcherTest, CallNotification) {
   EXPECT_EQ(dispatcher.exception_count(), 0);
 }
 
+TEST(JsonRpcDispatcherTest, CallNotification_WithoutParamsShouldBeBenign) {
+  int notification_fun_called = 0;
+
+  JsonRpcDispatcher dispatcher([&](absl::string_view s) { std::cerr << s; });
+  const bool registered =
+      dispatcher.AddNotificationHandler("foo", [&](const json &j) {
+        EXPECT_TRUE(j.empty());
+        ++notification_fun_called;
+      });
+  EXPECT_TRUE(registered);
+
+  // A message that does not contain a parameter should work fine.
+  dispatcher.DispatchMessage(R"({"jsonrpc":"2.0","method":"foo"})");
+
+  EXPECT_EQ(notification_fun_called, 1);
+  EXPECT_EQ(dispatcher.exception_count(), 0);
+}
+
 TEST(JsonRpcDispatcherTest, CallNotification_NotReportInternalError) {
   int write_fun_called = 0;
   int notification_fun_called = 0;
@@ -152,6 +170,32 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler) {
 
   dispatcher.DispatchMessage(
       R"({"jsonrpc":"2.0","id":1,"method":"foo","params":{"hello":"world"}})");
+
+  EXPECT_EQ(rpc_fun_called, 1);
+  EXPECT_EQ(write_fun_called, 1);
+  EXPECT_EQ(dispatcher.exception_count(), 0);
+}
+
+TEST(JsonRpcDispatcherTest, CallRpcHandler_WithoutParamsShouldBeBenign) {
+  int write_fun_called = 0;
+  int rpc_fun_called = 0;
+
+  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+    const json j = json::parse(s);
+    EXPECT_EQ(std::string(j["result"]["some"]), "response");
+    EXPECT_TRUE(j.find("error") == j.end());
+    ++write_fun_called;
+  });
+  const bool registered =
+      dispatcher.AddRequestHandler("foo", [&](const json &j) -> json {
+        EXPECT_TRUE(j.empty());
+        ++rpc_fun_called;
+        return json::parse(R"({ "some": "response"})");
+      });
+  EXPECT_TRUE(registered);
+
+  // Not providing a parameter object shall be interpreted as no parameters
+  dispatcher.DispatchMessage(R"({"jsonrpc":"2.0","id":1,"method":"foo"})");
 
   EXPECT_EQ(rpc_fun_called, 1);
   EXPECT_EQ(write_fun_called, 1);

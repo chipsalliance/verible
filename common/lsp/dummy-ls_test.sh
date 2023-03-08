@@ -29,7 +29,7 @@ MSG_OUT=${TEST_TMPDIR:-/tmp/}/test-lsp-out-msg.txt
 # Simple end-to-end test
 awk '{printf("Content-Length: %d\r\n\r\n%s", length($0), $0)}' > ${TMP_IN} <<EOF
 {"jsonrpc":"2.0","method":"initialize","params":null,"id":1}
-{"jsonrpc":"2.0","method":"shutdown","params":{},"id":2}
+{"jsonrpc":"2.0","method":"shutdown","id":2}
 EOF
 
 cat > "${JSON_EXPECTED}" <<EOF
