@@ -571,7 +571,7 @@ void LexicalContext::UpdateState(const TokenInfo& token) {
       if (in_initial_always_final_construct_) {
         // Exit construct for single-statement bodies.
         // e.g. initial $foo();
-        seen_delay_value_in_initial_always_final_construct_context = false;
+        seen_delay_value_in_initial_always_final_construct_context_ = false;
         if (block_stack_.empty()) {
           in_initial_always_final_construct_ = false;
         }
@@ -633,7 +633,7 @@ void LexicalContext::UpdateState(const TokenInfo& token) {
       break;
     case '#':
       if (in_initial_always_final_construct_) {
-        seen_delay_value_in_initial_always_final_construct_context = true;
+        seen_delay_value_in_initial_always_final_construct_context_ = true;
       }
       // std::cout << "Found delay" << std::endl;
       break;
@@ -751,7 +751,7 @@ WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
   }
   // return {true, "inside 'always/initial/final'"};
   // }
-  if (seen_delay_value_in_initial_always_final_construct_context) {
+  if (seen_delay_value_in_initial_always_final_construct_context_) {
     return {true, "seen a delay value, expecting another statement"};
   }
   return {false, "all other cases (default)"};
