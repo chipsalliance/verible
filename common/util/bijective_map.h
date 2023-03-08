@@ -61,26 +61,26 @@ class BijectiveMap {
       : BijectiveMap(pairs.begin(), pairs.end()) {}
 
   // Returns number of keys, which is same as number of values.
-  size_t size() const { return forward_map.size(); }
+  size_t size() const { return forward_map_.size(); }
 
-  bool empty() const { return forward_map.empty(); }
+  bool empty() const { return forward_map_.empty(); }
 
   // read-only direct access to internal maps
-  const forward_map_type& forward_view() const { return forward_map; }
-  const reverse_map_type& reverse_view() const { return reverse_map; }
+  const forward_map_type& forward_view() const { return forward_map_; }
+  const reverse_map_type& reverse_view() const { return reverse_map_; }
 
   // Lookup value given key.  Returns nullptr if not found.
   template <typename ConvertibleToKey>
   const V* find_forward(const ConvertibleToKey& k) const {
-    const auto found = forward_map.find(k);
-    return found == forward_map.end() ? nullptr : found->second;
+    const auto found = forward_map_.find(k);
+    return found == forward_map_.end() ? nullptr : found->second;
   }
 
   // Lookup key given value.  Returns nullptr if not found.
   template <typename ConvertibleToValue>
   const K* find_reverse(const ConvertibleToValue& v) const {
-    const auto found = reverse_map.find(v);
-    return found == reverse_map.end() ? nullptr : found->second;
+    const auto found = reverse_map_.find(v);
+    return found == reverse_map_.end() ? nullptr : found->second;
   }
 
   // Returns true if successfully inserted new pair.
@@ -89,8 +89,8 @@ class BijectiveMap {
   // Establishes 1-1 association between key and value.
   // Returns true if successfully inserted new pair.
   bool insert(const K& k, const V& v) {
-    const auto fwd_p = forward_map.insert(std::make_pair(k, nullptr));
-    const auto rev_p = reverse_map.insert(std::make_pair(v, nullptr));
+    const auto fwd_p = forward_map_.insert(std::make_pair(k, nullptr));
+    const auto rev_p = reverse_map_.insert(std::make_pair(v, nullptr));
     if (fwd_p.second && rev_p.second) {
       // cross-link
       // pointers are guaranteed to be stable across non-destructive map
@@ -102,10 +102,10 @@ class BijectiveMap {
     // either key or value already existed in respective set
     // undo any insertions
     if (fwd_p.second) {
-      forward_map.erase(fwd_p.first);
+      forward_map_.erase(fwd_p.first);
     }
     if (rev_p.second) {
-      reverse_map.erase(rev_p.first);
+      reverse_map_.erase(rev_p.first);
     }
     return false;
   }
@@ -116,10 +116,10 @@ class BijectiveMap {
   // in more frequent retries.  Use cases for this include randomizing generated
   // values, or using secondary hashes to avoid collisions.
   const V* insert_using_value_generator(const K& k, std::function<V()> f) {
-    const auto fwd_p = forward_map.insert(std::make_pair(k, nullptr));
+    const auto fwd_p = forward_map_.insert(std::make_pair(k, nullptr));
     if (!fwd_p.second) return fwd_p.first->second;  // key entry aleady exists
     do {
-      const auto rev_p = reverse_map.insert(std::make_pair(f(), nullptr));
+      const auto rev_p = reverse_map_.insert(std::make_pair(f(), nullptr));
       if (rev_p.second) {  // successful value insertion
         // cross-link
         fwd_p.first->second = &rev_p.first->first;
@@ -135,9 +135,9 @@ class BijectiveMap {
 
  private:
   // Internal storage of keys, and pointers to values
-  forward_map_type forward_map;
+  forward_map_type forward_map_;
   // Internal storage of values, and pointers to keys
-  reverse_map_type reverse_map;
+  reverse_map_type reverse_map_;
 };
 
 // TODO(fangism): forward and reverse view adaptors

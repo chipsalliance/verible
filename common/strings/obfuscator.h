@@ -52,9 +52,9 @@ class Obfuscator {
   // else returns false if either key or value were already mapped.
   bool encode(absl::string_view key, absl::string_view value);
 
-  void set_decode_mode(bool decode) { decode_mode = decode; }
+  void set_decode_mode(bool decode) { decode_mode_ = decode; }
 
-  bool is_decoding() const { return decode_mode; }
+  bool is_decoding() const { return decode_mode_; }
 
   // Obfuscates input string with a replacement, and records the substitution
   // for later re-use.  Returns the replacement string.
@@ -81,7 +81,7 @@ class Obfuscator {
 
   // If true, apply reverse translation of identifiers, and do not generate any
   // new obfuscation mappings.
-  bool decode_mode = false;
+  bool decode_mode_ = false;
 };
 
 class IdentifierObfuscator : public Obfuscator {

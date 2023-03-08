@@ -32,7 +32,7 @@ bool Obfuscator::encode(absl::string_view key, absl::string_view value) {
 }
 
 absl::string_view Obfuscator::operator()(absl::string_view input) {
-  if (decode_mode) {
+  if (decode_mode_) {
     const auto* p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
   }

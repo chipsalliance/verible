@@ -320,19 +320,19 @@ TEST(FindAllTest, StrSplitAfterEqual) {
 // generator that returns infinite sequence: {[false]*(N-1), true}*
 class EveryN {
  public:
-  explicit EveryN(int n, int init = 0) : i(init), n(n) {}
+  explicit EveryN(int n, int init = 0) : i_(init), n_(n) {}
 
   template <class T>
   bool operator()(const T&) {
-    const bool ret = i == n;
-    if (ret) i = 0;
-    ++i;
+    const bool ret = (i_ == n_);
+    if (ret) i_ = 0;
+    ++i_;
     return ret;
   }
 
  private:
-  int i;
-  const int n;
+  int i_;
+  const int n_;
 };
 
 TEST(FindAllTest, StrSplitEveryN) {
