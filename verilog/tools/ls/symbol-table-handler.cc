@@ -53,11 +53,12 @@ std::string FindFileList(absl::string_view current_dir) {
   if (auto status = verible::file::UpwardFileSearch(
           current_dir, absl::GetFlag(FLAGS_file_list_path), &projectpath);
       !status.ok()) {
-    VLOG(1) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
-            << " file in the project root (" << current_dir << "):  " << status;
+    LOG(INFO) << "Could not find " << absl::GetFlag(FLAGS_file_list_path)
+              << " file in the project root (" << current_dir
+              << "):  " << status;
     return "";
   }
-  VLOG(1) << "Found file list under " << projectpath;
+  LOG(INFO) << "Found file list under " << projectpath;
   return projectpath;
 }
 
@@ -117,7 +118,6 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
       last_filelist_update_ = {};
       return false;
     }
-    VLOG(1) << "Found file list under " << projectpath;
     filelist_path_ = projectpath;
   }
   if (!last_filelist_update_) {
