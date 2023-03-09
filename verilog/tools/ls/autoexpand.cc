@@ -981,6 +981,12 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
     LOG(ERROR) << "AUTOINST: No definition found for module type: " << type_id;
     return {};
   }
+  if (NodeEnum(type_def->Tag().tag) != NodeEnum::kModuleDeclaration) {
+    LOG(ERROR) << "AUTOINST: Instance type " << type_id
+               << " is not a module, but a '" << NodeEnum(type_def->Tag().tag)
+               << "'";
+    return {};
+  }
   if (!modules_.contains(type_id)) {
     modules_.insert(std::make_pair(type_id, Module(*type_def)));
   }
