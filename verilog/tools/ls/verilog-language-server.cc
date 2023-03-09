@@ -177,8 +177,9 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
   } else if (!p.rootPath.empty()) {
     ConfigureProject(p.rootPath);
   } else {
-    VLOG(1) << "No root URI given. Initialize with root='.'";
-    ConfigureProject();
+    LOG(INFO) << "No root URI provided in language server initialization "
+              << "from IDE. Assuming root='.'";
+    ConfigureProject("");
   }
   return GetCapabilities();
 }
