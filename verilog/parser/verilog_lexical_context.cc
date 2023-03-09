@@ -571,7 +571,9 @@ void LexicalContext::UpdateState(const TokenInfo& token) {
       if (in_initial_always_final_construct_) {
         // Exit construct for single-statement bodies.
         // e.g. initial $foo();
+#if 0  // Mutant testing
         seen_delay_value_in_initial_always_final_construct_context_ = false;
+#endif
         if (block_stack_.empty()) {
           in_initial_always_final_construct_ = false;
         }
@@ -633,7 +635,9 @@ void LexicalContext::UpdateState(const TokenInfo& token) {
       break;
     case '#':
       if (in_initial_always_final_construct_) {
+#if 0  // Mutant testing
         seen_delay_value_in_initial_always_final_construct_context_ = true;
+#endif
       }
       // std::cout << "Found delay" << std::endl;
       break;
