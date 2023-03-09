@@ -2398,6 +2398,52 @@ endmodule
   );
 }
 
+TEST(Autoexpand, OverlappingExpansions) {
+  TestTextEdits(GenerateFullAutoExpandTextEdits,
+                R"(
+module foo (
+    /*AUTOARG*/
+    /*AUTOINPUT*/
+    /*AUTOOUTPUT*/
+);
+  bar b (  /*AUTOINST*/);
+endmodule
+
+module bar (
+  input clk,
+  input rst,
+  output [63:0] o1,
+  output o2[16]
+);
+endmodule
+)",
+                R"(
+module foo (
+    /*AUTOARG*/
+    /*AUTOINPUT*/
+    /*AUTOOUTPUT*/
+);
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1(o1[63:0]),
+      .o2(o2  /*.[16]*/)
+  );
+endmodule
+
+module bar (
+  input clk,
+  input rst,
+  output [63:0] o1,
+  output o2[16]
+);
+endmodule
+)",
+                TestRun{.check_again = false});
+}
+
 TEST(Autoexpand, ExpandKind) {
   TestTextEdits(
       [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
