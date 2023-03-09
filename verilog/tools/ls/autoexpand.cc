@@ -1451,7 +1451,7 @@ std::vector<CodeAction> GenerateAutoExpandCodeActions(
   Interval<size_t> line_range{static_cast<size_t>(p.range.start.line),
                               static_cast<size_t>(p.range.end.line)};
   if (!tracker) return {};
-  const ParsedBuffer *const current = tracker->current();
+  const auto current = tracker->current();
   if (!current) return {};  // Can only expand if we have latest version
   const TextStructureView &text_structure = current->parser().Data();
   AutoExpander range_expander(text_structure, symbol_table_handler, line_range);

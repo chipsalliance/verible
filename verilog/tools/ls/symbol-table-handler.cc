@@ -234,7 +234,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
     LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
     return {};
   }
-  const verilog::ParsedBuffer *parsedbuffer = tracker->current();
+  const auto parsedbuffer = tracker->current();
   if (!parsedbuffer) {
     LOG(ERROR) << "Buffer not found among opened buffers:  "
                << params.textDocument.uri;
