@@ -51,6 +51,14 @@ void JsonRpcDispatcher::DispatchMessage(absl::string_view data) {
                         (is_notification ? "  ev" : " RPC")];
 }
 
+// Methods/Notifications without parameters can also send nothing for "params".
+// Make sure we handle that gracefully. (e.g. "shutdown" method call).
+static const nlohmann::json &ExtractParams(const nlohmann::json &request) {
+  static const nlohmann::json empty_params = nlohmann::json::object();
+  auto found = request.find("params");
+  return found != request.end() ? *found : empty_params;
+}
+
 bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
                                          const std::string &method) {
   const auto &found = notifications_.find(method);
@@ -58,8 +66,9 @@ bool JsonRpcDispatcher::CallNotification(const nlohmann::json &req,
     LOG(INFO) << "Ignoring notification '" << method << "'";
     return false;
   }
+  const auto &fun_to_call = found->second;
   try {
-    found->second(req["params"]);
+    fun_to_call(ExtractParams(req));
     return true;
   } catch (const std::exception &e) {
     ++exception_count_;
@@ -78,9 +87,9 @@ bool JsonRpcDispatcher::CallRequestHandler(const nlohmann::json &req,
     LOG(ERROR) << "Unhandled method '" << method << "'";
     return false;
   }
-
+  const auto &fun_to_call = found->second;
   try {
-    SendReply(MakeResponse(req, found->second(req["params"])));
+    SendReply(MakeResponse(req, fun_to_call(ExtractParams(req))));
     return true;
   } catch (const std::exception &e) {
     ++exception_count_;
