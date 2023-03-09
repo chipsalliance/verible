@@ -55,7 +55,7 @@ std::vector<verible::lsp::Diagnostic> CreateDiagnostics(
     const BufferTracker &tracker, int message_limit) {
   // Diagnostics should come from the latest state, including all the
   // syntax errors.
-  const ParsedBuffer *const current = tracker.current();
+  const auto current = tracker.current();
   if (!current) return {};
   const auto &rejected_tokens = current->parser().GetRejectedTokens();
   auto const &lint_violations =
@@ -155,7 +155,7 @@ std::vector<verible::lsp::CodeAction> GenerateLinterCodeActions(
     const BufferTracker *tracker, const verible::lsp::CodeActionParams &p) {
   std::vector<verible::lsp::CodeAction> result;
   if (!tracker) return result;
-  const ParsedBuffer *const current = tracker->current();
+  const auto current = tracker->current();
   if (!current) return result;
 
   auto const &lint_violations =
@@ -198,7 +198,7 @@ std::vector<verible::lsp::CodeAction> GenerateCodeActions(
   std::vector<verible::lsp::CodeAction> result;
 
   if (!tracker) return result;
-  const ParsedBuffer *const current = tracker->current();
+  const auto current = tracker->current();
   if (!current) return result;
 
   result = GenerateLinterCodeActions(tracker, p);
@@ -216,7 +216,7 @@ nlohmann::json CreateDocumentSymbolOutline(
     bool kate_compatible_tags) {
   if (!tracker) return nlohmann::json::array();
   // Only if the tree has been fully parsed, it makes sense to create an outline
-  const ParsedBuffer *const last_good = tracker->last_good();
+  const auto last_good = tracker->last_good();
   if (!last_good) return nlohmann::json::array();
 
   verible::lsp::DocumentSymbol toplevel;
@@ -234,7 +234,7 @@ std::vector<verible::lsp::DocumentHighlight> CreateHighlightRanges(
     const verible::lsp::DocumentHighlightParams &p) {
   std::vector<verible::lsp::DocumentHighlight> result;
   if (!tracker) return result;
-  const ParsedBuffer *const current = tracker->current();
+  const auto current = tracker->current();
   if (!current) return result;
   const verible::LineColumn cursor{p.position.line, p.position.character};
   const verible::TextStructureView &text = current->parser().Data();
@@ -266,7 +266,7 @@ std::vector<verible::lsp::TextEdit> FormatRange(
     const verible::lsp::DocumentFormattingParams &p) {
   std::vector<verible::lsp::TextEdit> result;
   if (!tracker) return result;
-  const ParsedBuffer *const current = tracker->current();
+  const auto current = tracker->current();
   if (!current) return result;  // Can only format if we have latest version.
   const verible::TextStructureView &text = current->parser().Data();
 

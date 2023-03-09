@@ -67,7 +67,7 @@ std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
 std::vector<TextEdit> GenerateFullAutoExpandTextEdits(
     SymbolTableHandler* symbol_table_handler, const BufferTracker* tracker) {
   EXPECT_TRUE(tracker);
-  const ParsedBuffer* const current = tracker->current();
+  const auto current = tracker->current();
   EXPECT_TRUE(current);
   const TextStructureView& text_structure = current->parser().Data();
   return AutoExpandCodeActionToTextEdits(
