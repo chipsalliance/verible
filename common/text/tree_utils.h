@@ -255,6 +255,10 @@ ConcreteSyntaxTree* FindFirstSubtreeMutable(ConcreteSyntaxTree* tree,
 // tree must not be null. This is for non-mutating searches.
 const Symbol* FindFirstSubtree(const Symbol*, const TreePredicate&);
 
+// Returns the last syntax tree leaf or node that matches the given predicate.
+// Tree must not be null. This is for non-mutating searches.
+const Symbol* FindLastSubtree(const Symbol*, const TreePredicate&);
+
 // Returns the first syntax tree node whose token starts at or after
 // the given first_token_offset, or nullptr if not found.
 // tree must not be null.
