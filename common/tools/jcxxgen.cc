@@ -19,7 +19,6 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <regex>
 #include <string>
 #include <unordered_map>
 
@@ -28,6 +27,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "common/util/init_command_line.h"
+#include "re2/re2.h"
 
 ABSL_FLAG(std::string, output, "",
           "Name of the output file. If empty, output is written to stdout");
@@ -96,11 +96,11 @@ static bool contains(const std::string &s, char c) {
 // Returns if successful.
 static bool ParseObjectTypesFromFile(const std::string &filename,
                                      ObjectTypeVector *parsed_out) {
-  static const std::regex emptyline_or_comment_re("^[ \t]*(#.*)?");
-  static const std::regex toplevel_object_re("^([a-zA-Z0-9_]+):");
+  static const RE2 emptyline_or_comment_re("^[ \t]*(#.*)?");
+  static const RE2 toplevel_object_re("^([a-zA-Z0-9_]+):");
 
   // For now, let's just read up to the first type and leave out alternatives
-  static const std::regex property_re(
+  static const RE2 property_re(
       "^[ \t]+([a-zA-Z_<]+)([\\?\\+]*):[ ]*([a-zA-Z0-9_]+)[ ]*(=[ \t]*(.+))?");
 
   Location current_location = {filename.c_str(), 0};
@@ -111,15 +111,16 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
     return false;
   }
   std::string line;
-  std::smatch matches;
+  std::string toplevel_name;
+  std::string p_name, p_card, p_type, p_default;
   while (!in.eof()) {
     std::getline(in, line);
     current_location.line++;
 
-    if (std::regex_match(line, emptyline_or_comment_re)) continue;
+    if (RE2::FullMatch(line, emptyline_or_comment_re)) continue;
 
-    if (std::regex_search(line, matches, toplevel_object_re)) {
-      current_model = new ObjectType(current_location, matches[1]);
+    if (RE2::PartialMatch(line, toplevel_object_re, &toplevel_name)) {
+      current_model = new ObjectType(current_location, toplevel_name);
       parsed_out->push_back(current_model);
       continue;
     }
@@ -128,20 +129,21 @@ static bool ParseObjectTypesFromFile(const std::string &filename,
       std::cerr << current_location << "No ObjectType definition\n";
       return false;
     }
-    if (!std::regex_search(line, matches, property_re)) {
+    if (!RE2::PartialMatch(line, property_re,  //
+                           &p_name, &p_card, &p_type, nullptr, &p_default)) {
       std::cerr << current_location << "This doesn't look like a property\n";
       return false;
     }
 
-    if (matches[1] == "<") {
-      current_model->extends.push_back(matches[3]);
+    if (p_name == "<") {
+      current_model->extends.push_back(p_type);
       continue;
     }
 
-    Property property(current_location, current_model, matches[1],
-                      contains(matches[2], '?'), contains(matches[2], '+'));
-    property.type = matches[3];  // TODO: allow multiple
-    property.default_value = matches[5];
+    Property property(current_location, current_model, p_name,
+                      contains(p_card, '?'), contains(p_card, '+'));
+    property.type = p_type;  // TODO: allow multiple
+    property.default_value = p_default;
     current_model->properties.push_back(property);
   }
   return true;
