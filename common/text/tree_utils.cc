@@ -178,9 +178,9 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
 };
 
 // FirstSubtreeFinder is a visitor class that supports the implementation of
-// FindFirstSubtree().  It is derived from TreeVisitorRecursive because it is
-// only intended for searching a tree given a predicate.
-class FirstSubtreeFinder : public TreeVisitorRecursive {
+// FindFirstSubtree().  It is derived from SymbolVisitor so that it's able to
+// exit early if a match is found.
+class FirstSubtreeFinder : public SymbolVisitor {
  public:
   explicit FirstSubtreeFinder(const TreePredicate& predicate)
       : predicate_(predicate) {}
