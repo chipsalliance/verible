@@ -40,6 +40,7 @@ bool SyntaxTreeNode::equals(const Symbol* symbol,
 // equal trees.
 bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
                             const TokenComparator& compare_tokens) const {
+  if (Tag().tag != node->Tag().tag) return false;
   if (children_.size() != node->children().size()) {
     return false;
   }
