@@ -220,6 +220,31 @@ class FirstSubtreeFinder : public SymbolVisitor {
   // Contains first matching result found or nullptr if no match is found.
   const Symbol* result_ = nullptr;
 };
+
+// A visitor that finds the last matching node. Inherits from
+// TreeVisitorRecursive, as it needs to visit all nodes in the tree.
+class LastSubtreeFinder : public TreeVisitorRecursive {
+ public:
+  explicit LastSubtreeFinder(const TreePredicate& predicate)
+      : predicate_(predicate) {}
+
+  void Visit(const SyntaxTreeNode& node) final {
+    if (predicate_(node)) result_ = &node;
+  }
+
+  void Visit(const SyntaxTreeLeaf& leaf) final {
+    if (predicate_(leaf)) result_ = &leaf;
+  }
+
+  const Symbol* result() const { return result_; }
+
+ private:
+  // Matching criterion.
+  TreePredicate predicate_;
+
+  // Contains last matching result found or nullptr if no match is found.
+  const Symbol* result_ = nullptr;
+};
 }  // namespace
 
 ConcreteSyntaxTree* FindFirstSubtreeMutable(ConcreteSyntaxTree* tree,
@@ -233,6 +258,13 @@ ConcreteSyntaxTree* FindFirstSubtreeMutable(ConcreteSyntaxTree* tree,
 const Symbol* FindFirstSubtree(const Symbol* tree, const TreePredicate& pred) {
   if (tree == nullptr) return nullptr;
   FirstSubtreeFinder finder(pred);
+  tree->Accept(&finder);
+  return finder.result();
+}
+
+const Symbol* FindLastSubtree(const Symbol* tree, const TreePredicate& pred) {
+  if (tree == nullptr) return nullptr;
+  LastSubtreeFinder finder(pred);
   tree->Accept(&finder);
   return finder.result();
 }

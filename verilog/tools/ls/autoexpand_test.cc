@@ -223,7 +223,9 @@ endmodule
 TEST(Autoexpand, AUTOARG_NoExpand) {
   TestTextEdits(GenerateFullAutoExpandTextEdits,
                 R"(
-module t ();
+module t (
+    .o(out  /*AUTOARG*/)
+);
   /*AUTOARG*/
   input logic clk;
   input logic rst;
@@ -231,7 +233,9 @@ module t ();
 endmodule
 )",
                 R"(
-module t ();
+module t (
+    .o(out  /*AUTOARG*/)
+);
   /*AUTOARG*/
   input logic clk;
   input logic rst;
@@ -372,6 +376,7 @@ module foo;
 
   bar b ();
   /*AUTOINST*/
+  bar c (.i1(io  /*AUTOINST*/));
 endmodule
 )",
                 R"(
@@ -388,6 +393,7 @@ module foo;
 
   bar b ();
   /*AUTOINST*/
+  bar c (.i1(io  /*AUTOINST*/));
 endmodule
 )");
 
@@ -1051,9 +1057,19 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  output o;
+
   /*AUTOINPUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOINPUT*/
+  ;
+
+  foo f (  /*AUTOINST*/);
 endmodule
 )",
                 R"(
@@ -1061,9 +1077,24 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  output o;
+
   /*AUTOINPUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOINPUT*/
+  ;
+
+  foo f (  /*AUTOINST*/
+      // Inputs
+      .i(i),
+      // Outputs
+      .o(o)
+  );
 endmodule
 )");
 }
@@ -1180,9 +1211,20 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  inout io;
+  output o;
+
   /*AUTOINOUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOINOUT*/
+  ;
+
+  foo f (  /*AUTOINST*/);
 endmodule
 )",
                 R"(
@@ -1190,9 +1232,27 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  inout io;
+  output o;
+
   /*AUTOINOUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOINOUT*/
+  ;
+
+  foo f (  /*AUTOINST*/
+      // Inputs
+      .i(i),
+      // Inouts
+      .io(io),
+      // Outputs
+      .o(o)
+  );
 endmodule
 )");
 }
@@ -1308,9 +1368,19 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  output o;
+
   /*AUTOOUTPUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOOUTPUT*/
+  ;
+
+  foo f (  /*AUTOINST*/);
 endmodule
 )",
                 R"(
@@ -1318,9 +1388,24 @@ module bar;
 endmodule
 
 module foo;
+  input i;
+  output o;
+
   /*AUTOOUTPUT*/
 
   bar b (  /*AUTOINST*/);
+endmodule
+
+module qux;
+  output o  /*AUTOOUTPUT*/
+  ;
+
+  foo f (  /*AUTOINST*/
+      // Inputs
+      .i(i),
+      // Outputs
+      .o(o)
+  );
 endmodule
 )");
 }
@@ -1817,7 +1902,8 @@ endmodule
 
 module foo (  /*AUTOWIRE*/
 );
-  wire o1;
+  wire o1  /*AUTOWIRE*/
+  ;
 
   bar b (  /*AUTOINST*/);
 endmodule
@@ -1834,7 +1920,8 @@ endmodule
 
 module foo (  /*AUTOWIRE*/
 );
-  wire o1;
+  wire o1  /*AUTOWIRE*/
+  ;
 
   bar b (  /*AUTOINST*/
       // Inputs
@@ -2001,7 +2088,8 @@ module foo (  /*AUTOREG*/
 );
   output [15:0] o1;
   output [31:0] o2[8];
-  output [3:0][3:0] o3[16];
+  output [3:0][3:0] o3[16]  /*AUTOREG*/
+  ;
 
   bar b (  /*AUTOINST*/);
 endmodule
@@ -2020,7 +2108,8 @@ module foo (  /*AUTOREG*/
 );
   output [15:0] o1;
   output [31:0] o2[8];
-  output [3:0][3:0] o3[16];
+  output [3:0][3:0] o3[16]  /*AUTOREG*/
+  ;
 
   bar b (  /*AUTOINST*/
       // Inputs

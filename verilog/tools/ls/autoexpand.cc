@@ -36,6 +36,7 @@
 #include "verilog/formatting/formatter.h"
 
 namespace verilog {
+using verible::FindLastSubtree;
 using verible::Interval;
 using verible::LineColumn;
 using verible::LineColumnRange;
@@ -931,6 +932,26 @@ std::optional<absl::string_view> FindSpanInSymbol(const Symbol &symbol,
   return {};
 }
 
+// Returns the deepest node that contains the given span
+const Symbol *FindNodeContainingSpan(const Symbol &root,
+                                     const absl::string_view span) {
+  return FindLastSubtree(&root, [span](const Symbol &sym) {
+    auto sym_span = StringSpanOfSymbol(sym);
+    return span.begin() >= sym_span.begin() && sym_span.end() >= span.end();
+  });
+}
+
+// Returns true if the given span is directly under the port declaration list
+// (or the port paren group if there is no port declaration list)
+bool IsSpanDirectlyUnderPortDeclarationList(const Symbol &port_parens,
+                                            const absl::string_view span) {
+  if (const Symbol *symbol = FindNodeContainingSpan(port_parens, span)) {
+    return symbol == &port_parens ||
+           NodeEnum(symbol->Tag().tag) == NodeEnum::kPortDeclarationList;
+  }
+  return false;
+}
+
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoarg(
     const Module &module) const {
   const SyntaxTreeNode *const port_parens =
@@ -941,6 +962,10 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoarg(
   if (!auto_span) return {};
   auto replaced_span = FindSpanToReplace(*port_parens, *auto_span);
   if (!replaced_span) return {};
+  if (!IsSpanDirectlyUnderPortDeclarationList(*port_parens, *auto_span)) {
+    LOG(ERROR) << "Not expanding AUTOARG. Incorrect context";
+    return {};
+  }
 
   // Ports listed before the comment should not be redeclared
   const auto predeclared_ports =
@@ -964,6 +989,17 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoarg(
                    .new_text = absl::StrCat(*auto_span, new_text.str())};
 }
 
+// Returns true if the given span is directly under the port actual list (or
+// instance paren group if there is no port actual list)
+bool IsSpanDirectlyUnderPortActualList(const Symbol &instance_parens,
+                                       const absl::string_view span) {
+  if (const Symbol *symbol = FindNodeContainingSpan(instance_parens, span)) {
+    return symbol == &instance_parens ||
+           NodeEnum(symbol->Tag().tag) == NodeEnum::kPortActualList;
+  }
+  return false;
+}
+
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
     Module *module, const Symbol &instance, absl::string_view type_id,
     const Template *tmpl) {
@@ -974,6 +1010,10 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
   if (!auto_span) return {};
   auto replaced_span = FindSpanToReplace(*parens, *auto_span);
   if (!replaced_span) return {};
+  if (!IsSpanDirectlyUnderPortActualList(*parens, *auto_span)) {
+    LOG(ERROR) << "Not expanding AUTOINST. Incorrect context";
+    return {};
+  }
 
   const Symbol *const type_def =
       symbol_table_handler_->FindDefinitionSymbol(type_id);
@@ -1053,6 +1093,17 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoDeclarations(
   return Expansion{.replaced_span = auto_span, .new_text = new_text.str()};
 }
 
+// Returns true if the span is directly under the module item list (or the
+// module if there is no module item list)
+bool IsSpanDirectlyUnderModule(const Symbol &module,
+                               const absl::string_view span) {
+  if (const Symbol *symbol = FindNodeContainingSpan(module, span)) {
+    return symbol == &module ||
+           NodeEnum(symbol->Tag().tag) == NodeEnum::kModuleItemList;
+  }
+  return false;
+}
+
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
     Module *module, const absl::string_view auto_span,
     const absl::string_view comment_span,
@@ -1062,15 +1113,19 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
   auto end = module_span.end();
   const SyntaxTreeNode *const port_parens =
       GetModulePortParenGroup(module->Symbol());
+
+  const bool in_header = port_parens && IsSpanDirectlyUnderPortDeclarationList(
+                                            *port_parens, auto_span);
+  if (!in_header && !IsSpanDirectlyUnderModule(module->Symbol(), auto_span)) {
+    LOG(ERROR) << "Not expanding AUTO ports. Incorrect context";
+    return {};
+  }
+
   if (port_parens) end = StringSpanOfSymbol(*port_parens).end();
   const bool last = !module->AnyPorts([begin, end](const Port &port) {
     return port.it >= begin && port.it < end;
   });
 
-  const bool in_header =
-      port_parens
-          ? SpansOverlapping(StringSpanOfSymbol(*port_parens), auto_span)
-          : false;
   const PortDeclStyle style =
       in_header ? last ? PortDeclStyle::kCommaSeparatorExceptLast
                        : PortDeclStyle::kCommaSeparator
@@ -1112,16 +1167,12 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutowire(
   if (!SpansOverlapping(auto_span, expand_span_)) {
     return {};
   }
-  const SyntaxTreeNode *const port_parens =
-      GetModulePortParenGroup(module.Symbol());
-  if (port_parens
-          ? SpansOverlapping(StringSpanOfSymbol(*port_parens), auto_span)
-          : false) {
+  if (!IsSpanDirectlyUnderModule(module.Symbol(), auto_span)) {
+    LOG(ERROR) << "Not expanding AUTOWIRE. Incorrect context";
     return {};
   }
   return ExpandAutoDeclarations(
       module, auto_span, match->str(1),  // Matched AUTO comment
-
       "wires (for undeclared instantiated-module outputs)",
       [auto_span](const Module &module, std::ostream &output) {
         module.EmitUndeclaredOutputWireDeclarations(output, auto_span);
@@ -1138,11 +1189,8 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoreg(
   if (!SpansOverlapping(auto_span, expand_span_)) {
     return {};
   }
-  const SyntaxTreeNode *const port_parens =
-      GetModulePortParenGroup(module.Symbol());
-  if (port_parens
-          ? SpansOverlapping(StringSpanOfSymbol(*port_parens), auto_span)
-          : false) {
+  if (!IsSpanDirectlyUnderModule(module.Symbol(), auto_span)) {
+    LOG(ERROR) << "Not expanding AUTOREG. Incorrect context";
     return {};
   }
   return ExpandAutoDeclarations(
