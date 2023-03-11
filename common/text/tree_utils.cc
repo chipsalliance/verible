@@ -439,7 +439,11 @@ void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
     const ValueSaver<int> value_saver(&indent_, indent_ + 2);
     const ValueSaver<int> rank_saver(&child_rank_, 0);
     for (const auto& child : node.children()) {
-      if (child) child->Accept(this);
+      if (child) {
+        child->Accept(this);
+      } else if (print_null_nodes_) {
+        auto_indent() << "NULL @" << child_rank_ << std::endl;
+      }
       // Note that nullptrs will appear as gaps in the child rank sequence.
       // nullptr nodes in tail position are not shown.
       ++child_rank_;
@@ -449,7 +453,7 @@ void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
 }
 
 std::ostream& RawTreePrinter::Print(std::ostream& stream) const {
-  RawSymbolPrinter printer(&stream);
+  RawSymbolPrinter printer(&stream, print_null_nodes_);
   root_.Accept(&printer);
   return stream;
 }

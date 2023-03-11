@@ -290,7 +290,7 @@ TEST(TreePrintTest, RawPrint) {
   EXPECT_EQ(stream.str(), expected);
 }
 
-TEST(TreePrintTest, RawPrintSkipNullptrs) {
+TEST(TreePrintTest, RawPrintNullptrPrinting) {
   constexpr absl::string_view text("leaf 1 leaf 2 leaf 3 leaf 4");
   SymbolPtr tree = Node(nullptr,                           //
                         Leaf(0, text.substr(0, 6)),        //
@@ -302,19 +302,41 @@ TEST(TreePrintTest, RawPrintSkipNullptrs) {
                         nullptr,                           //
                         Leaf(3, text.substr(21, 6)),       //
                         nullptr);
-  // Output excludes byte offsets.
-  constexpr absl::string_view expected =
-      "Node @0 {\n"
-      "  Leaf @1 (#0: \"leaf 1\")\n"
-      "  Node @3 {\n"
-      "    Leaf @0 (#1: \"leaf 2\")\n"
-      "    Leaf @2 (#2: \"leaf 3\")\n"
-      "  }\n"
-      "  Leaf @5 (#3: \"leaf 4\")\n"
-      "}\n";
-  std::ostringstream stream;
-  stream << RawTreePrinter(*tree);
-  EXPECT_EQ(stream.str(), expected);
+  {
+    // Output excludes byte offsets.
+    constexpr absl::string_view expected =
+        "Node @0 {\n"
+        "  Leaf @1 (#0: \"leaf 1\")\n"
+        "  Node @3 {\n"
+        "    Leaf @0 (#1: \"leaf 2\")\n"
+        "    Leaf @2 (#2: \"leaf 3\")\n"
+        "  }\n"
+        "  Leaf @5 (#3: \"leaf 4\")\n"
+        "}\n";
+    std::ostringstream stream;
+    stream << RawTreePrinter(*tree);
+    EXPECT_EQ(stream.str(), expected);
+  }
+  {
+    // Now the same, but with nullptr printing enabled.
+    constexpr absl::string_view expected =
+        "Node @0 {\n"
+        "  NULL @0\n"
+        "  Leaf @1 (#0: \"leaf 1\")\n"
+        "  NULL @2\n"
+        "  Node @3 {\n"
+        "    Leaf @0 (#1: \"leaf 2\")\n"
+        "    NULL @1\n"
+        "    Leaf @2 (#2: \"leaf 3\")\n"
+        "  }\n"
+        "  NULL @4\n"
+        "  Leaf @5 (#3: \"leaf 4\")\n"
+        "  NULL @6\n"
+        "}\n";
+    std::ostringstream stream;
+    stream << RawTreePrinter(*tree, true);
+    EXPECT_EQ(stream.str(), expected);
+  }
 }
 
 TEST(TreePrintTest, PrettyPrint) {
