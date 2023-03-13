@@ -1535,6 +1535,86 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPorts_AUTOARG_Order) {
+  TestTextEdits(
+
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  output [31:0] o2[8];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  input i0;
+  /*AUTOOUTPUT*/
+  output o0;
+
+  bar b (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  output [31:0] o2[8];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    i0,
+    // Outputs
+    o1,
+    o2,
+    o0
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2[4][8];  // To b of bar
+  // End of automatics
+  input i0;
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b of bar
+  output [31:0] o2[8];  // From b of bar
+  // End of automatics
+  output o0;
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+)",
+      {TestRun{.edit_fn =
+                   [](SymbolTableHandler* symbol_table_handler,
+                      BufferTracker* tracker) {
+                     return AutoExpandCodeActionToTextEdits(
+                         symbol_table_handler, tracker,
+                         {.start = {.line = 0}, .end = {.line = 16}},
+                         "Expand all AUTOs in file");
+                   }},
+       TestRun{.edit_fn = [](SymbolTableHandler* symbol_table_handler,
+                             BufferTracker* tracker) {
+         return AutoExpandCodeActionToTextEdits(
+             symbol_table_handler, tracker,
+             {.start = {.line = 7}, .end = {.line = 8}},
+             "Expand all AUTOs in selected range");
+       }}});
+}
+
 TEST(Autoexpand, AUTO_ExpandPortsInHeader) {
   TestTextEdits(
       R"(
