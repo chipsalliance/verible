@@ -147,6 +147,8 @@ TEST(FileUtil, StatusErrorReporting) {
   std::string content;
   absl::Status status = file::GetContents("does-not-exist", &content);
   EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::StartsWith(status.message(), "does-not-exist:"))
+      << "expect filename prefixed, but got " << status;
   EXPECT_EQ(status.code(), absl::StatusCode::kNotFound) << status;
 
   const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
@@ -169,6 +171,9 @@ TEST(FileUtil, StatusErrorReporting) {
     status = file::GetContents(test_file, &content);
     EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
     EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+    EXPECT_TRUE(absl::StartsWith(status.message(), test_file))
+        << "expect filename prefixed, but got " << status;
+
     EXPECT_TRUE(content.empty()) << "'" << content << "'";
   }
 #endif
