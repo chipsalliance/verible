@@ -14,6 +14,8 @@
 
 #include "verilog/tools/ls/autoexpand.h"
 
+#include <deque>
+
 #include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
 #include "verilog/formatting/format_style_init.h"
@@ -29,21 +31,6 @@ using verible::lsp::EditTextBuffer;
 using verible::lsp::Range;
 using verible::lsp::TextDocumentContentChangeEvent;
 using verible::lsp::TextEdit;
-
-// Determines how TextTextEdits* should test a function
-struct TestRun {
-  bool check_golden = true;
-  bool check_again = true;
-  bool check_formatting = true;
-  bool check_syntax = true;
-
-  std::optional<TestRun> Next() const {
-    if (!check_again) return {};
-    return TestRun{.check_again = false,
-                   .check_formatting = check_formatting,
-                   .check_syntax = check_syntax};
-  }
-};
 
 // Generate a specific code action and extract text edits from it
 std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
@@ -77,6 +64,24 @@ std::vector<TextEdit> GenerateFullAutoExpandTextEdits(
       "Expand all AUTOs in file");
 }
 
+// Determines how TextTextEdits* should test a function
+struct TestRun {
+  using EditFn =
+      std::function<std::vector<TextEdit>(SymbolTableHandler*, BufferTracker*)>;
+  const EditFn edit_fn = GenerateFullAutoExpandTextEdits;  // Function that
+                                                           // generates text
+                                                           // edits to check
+  bool check_golden = true;      // If true, the edited text is compared against
+                                 // golden
+  bool check_formatting = true;  // If true, the formatting of the edited text
+                                 // is checked
+  bool check_syntax = true;      // If true, the syntax of the edited text is
+                                 // checked
+
+  std::deque<TestRun> repeat() const { return {*this, *this}; }
+  static std::deque<TestRun> defaultRuns() { return {TestRun{}, TestRun{}}; }
+};
+
 // Checks if the given Verilog source has correct syntax
 void CheckSyntax(const absl::string_view filename,
                  const absl::string_view text) {
@@ -101,12 +106,12 @@ std::string Format(const absl::string_view filename,
 // Generate text edits using the given function and test if they had the desired
 // effect
 void TestTextEditsWithProject(
-    const std::function<std::vector<TextEdit>(SymbolTableHandler*,
-                                              BufferTracker*)>& edit_fun,
+
     const std::vector<absl::string_view>& project_file_contents,
     absl::string_view text_before, const absl::string_view text_golden,
-    const std::optional<TestRun>& run = TestRun{}) {
-  if (!run) return;
+    std::deque<TestRun> runs = TestRun::defaultRuns()) {
+  if (runs.empty()) return;
+  const auto& run = runs.front();
   static const char* TESTED_FILENAME = "<<tested-file>>";
   // Create a Verilog project with the given project file contents
   const std::shared_ptr<VerilogProject> proj =
@@ -119,7 +124,7 @@ void TestTextEditsWithProject(
   }
   // Init a text buffer which we need for the autoexpand functions
   std::string formatted_text_before;
-  if (run->check_formatting) {
+  if (run.check_formatting) {
     formatted_text_before = Format(TESTED_FILENAME, text_before);
     text_before = formatted_text_before;
   }
@@ -134,7 +139,7 @@ void TestTextEditsWithProject(
                                          &tracker.current()->parser().Data());
   symbol_table_handler.BuildProjectSymbolTable();
   // Run the tested edit function
-  std::vector<TextEdit> edits = edit_fun(&symbol_table_handler, &tracker);
+  std::vector<TextEdit> edits = run.edit_fn(&symbol_table_handler, &tracker);
   // Sort the TextEdits from the last one in the buffer to the first one. This
   // way we can apply them one by one and have the following ones still be
   // valid.
@@ -153,8 +158,8 @@ void TestTextEditsWithProject(
   }
   // Check the result and (possibly) test again to check idempotence
   buffer.RequestContent([&](const absl::string_view text_after) {
-    if (run->check_golden) {
-      if (run->check_formatting) {
+    if (run.check_golden) {
+      if (run.check_formatting) {
         // TODO: Check multiple formatting styles
         const std::string formatted_text_golden =
             Format(TESTED_FILENAME, text_golden);
@@ -162,27 +167,26 @@ void TestTextEditsWithProject(
       } else {
         EXPECT_EQ(text_golden, text_after);
       }
-      if (run->check_syntax) CheckSyntax(TESTED_FILENAME, text_after);
+      if (run.check_syntax) CheckSyntax(TESTED_FILENAME, text_after);
     }
-    if (run->check_again) {
-      TestTextEditsWithProject(edit_fun, project_file_contents, text_golden,
-                               text_golden, run->Next());
+    if (runs.size() > 1) {
+      runs.pop_front();
+      TestTextEditsWithProject(project_file_contents, text_golden, text_golden,
+                               runs);
     }
   });
 }
 
 // Same as above, without the project file parameter
-void TestTextEdits(const std::function<std::vector<TextEdit>(
-                       SymbolTableHandler*, BufferTracker*)>& edit_fun,
-                   const absl::string_view text_before,
+void TestTextEdits(const absl::string_view text_before,
                    const absl::string_view text_golden,
-                   const std::optional<TestRun> run = TestRun{}) {
-  TestTextEditsWithProject(edit_fun, {}, text_before, text_golden, run);
+                   const std::deque<TestRun>& runs = TestRun::defaultRuns()) {
+  TestTextEditsWithProject({}, text_before, text_golden, runs);
 }
 
 TEST(Autoexpand, AUTOARG_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module t1 (  /*AUTOARG*/);
   input logic clk;
   input logic rst;
@@ -194,7 +198,7 @@ module t2 (  /*AUTOARG*/);
   output reg o;
 endmodule
 )",
-                R"(
+      R"(
 module t1 (  /*AUTOARG*/
     // Inputs
     clk,
@@ -221,8 +225,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOARG_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module t (
     .o(out  /*AUTOARG*/)
 );
@@ -232,7 +236,7 @@ module t (
   output logic o;
 endmodule
 )",
-                R"(
+      R"(
 module t (
     .o(out  /*AUTOARG*/)
 );
@@ -245,8 +249,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOARG_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module t (  /*AUTOARG*/
     //Inputs
     clk,
@@ -259,7 +263,7 @@ module t (  /*AUTOARG*/
   output logic o;
 endmodule
 )",
-                R"(
+      R"(
 module t (  /*AUTOARG*/
     // Inputs
     clk,
@@ -278,8 +282,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOARG_SkipPredeclared) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module t (
     input i1,
     i2,
@@ -295,7 +299,7 @@ module t (
   output logic o2;
 endmodule
 )",
-                R"(
+      R"(
 module t (
     input i1,
     i2,
@@ -316,8 +320,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -333,7 +337,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -361,8 +365,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -379,7 +383,7 @@ module foo;
   bar c (.i1(io  /*AUTOINST*/));
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -397,13 +401,13 @@ module foo;
 endmodule
 )");
 
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   bar b (  /*AUTOINST*/);
 endmodule
@@ -411,8 +415,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -432,7 +436,7 @@ module foo;
   );
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -457,8 +461,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_SkipPreConnected) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   inout logic io;
 
@@ -477,7 +481,7 @@ module bar (
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   inout logic io;
 
@@ -504,13 +508,13 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_Missing) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   bar b (  /*AUTOINST*/);
 endmodule
@@ -518,8 +522,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_Ambiguous) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -536,7 +540,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -561,8 +565,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_Chain) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -586,7 +590,7 @@ module qux;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -629,8 +633,7 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINST_MultipleFiles) {
-  TestTextEditsWithProject(GenerateFullAutoExpandTextEdits,
-                           {R"(
+  TestTextEditsWithProject({R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -678,8 +681,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_TEMPLATE_Simple) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
          .i1(in_a[]),
@@ -696,7 +699,7 @@ module bar;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
          .i1(in_a[]),
@@ -725,8 +728,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_TEMPLATE_SkipPreConnected) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
          .i1(in_a),
@@ -747,7 +750,7 @@ module bar;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
          .i1(in_a),
@@ -778,8 +781,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_TEMPLATE_MultipleMatches) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
@@ -804,7 +807,7 @@ module qux;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
@@ -848,8 +851,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_TEMPLATE_Override) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
@@ -880,7 +883,7 @@ module qux;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   /* qux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
@@ -930,8 +933,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_TEMPLATE_Mismatch) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   /* quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
@@ -955,7 +958,7 @@ module qux;
   output [31:0] o2[8];
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   /* quux AUTO_TEMPLATE
      bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
@@ -998,8 +1001,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINPUT_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1017,7 +1020,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1051,8 +1054,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINPUT_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar;
 endmodule
 
@@ -1072,7 +1075,7 @@ module qux;
   foo f (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar;
 endmodule
 
@@ -1100,8 +1103,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINPUT_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1121,7 +1124,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1153,8 +1156,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINOUT_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1172,7 +1175,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1205,8 +1208,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINOUT_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar;
 endmodule
 
@@ -1227,7 +1230,7 @@ module qux;
   foo f (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar;
 endmodule
 
@@ -1258,8 +1261,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOINOUT_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1278,7 +1281,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1309,8 +1312,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOOUTPUT_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1328,7 +1331,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1362,8 +1365,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOOUTPUT_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar;
 endmodule
 
@@ -1383,7 +1386,7 @@ module qux;
   foo f (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar;
 endmodule
 
@@ -1411,8 +1414,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOOUTPUT_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1432,7 +1435,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1464,8 +1467,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_ExpandPorts) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1483,7 +1486,7 @@ module foo (  /*AUTOARG*/);
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1532,9 +1535,89 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPorts_AUTOARG_Order) {
+  TestTextEdits(
+
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  output [31:0] o2[8];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  input i0;
+  /*AUTOOUTPUT*/
+  output o0;
+
+  bar b (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  output [31:0] o2[8];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    i0,
+    // Outputs
+    o1,
+    o2,
+    o0
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2[4][8];  // To b of bar
+  // End of automatics
+  input i0;
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b of bar
+  output [31:0] o2[8];  // From b of bar
+  // End of automatics
+  output o0;
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+)",
+      {TestRun{.edit_fn =
+                   [](SymbolTableHandler* symbol_table_handler,
+                      BufferTracker* tracker) {
+                     return AutoExpandCodeActionToTextEdits(
+                         symbol_table_handler, tracker,
+                         {.start = {.line = 0}, .end = {.line = 16}},
+                         "Expand all AUTOs in file");
+                   }},
+       TestRun{.edit_fn = [](SymbolTableHandler* symbol_table_handler,
+                             BufferTracker* tracker) {
+         return AutoExpandCodeActionToTextEdits(
+             symbol_table_handler, tracker,
+             {.start = {.line = 7}, .end = {.line = 8}},
+             "Expand all AUTOs in selected range");
+       }}});
+}
+
 TEST(Autoexpand, AUTO_ExpandPortsInHeader) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1553,7 +1636,7 @@ module foo (
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1595,8 +1678,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_ExpandPorts_OutOfOrderModules) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo (  /*AUTOARG*/);
   /*AUTOINPUT*/
   /*AUTOOUTPUT*/
@@ -1624,7 +1707,7 @@ module qux (
 );
 endmodule
 )",
-                R"(
+      R"(
 module foo (  /*AUTOARG*/
     // Inputs
     i1,
@@ -1699,8 +1782,8 @@ endmodule
 TEST(Autoexpand, AUTO_ExpandPorts_DependencyLoop) {
   // This test is incorrect Verilog, but it checks that we don't loop forever
   // or do any other unexpected thing
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo (  /*AUTOARG*/);
   /*AUTOINPUT*/
   /*AUTOOUTPUT*/
@@ -1730,7 +1813,7 @@ module qux (
   foo f (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module foo (  /*AUTOARG*/
     // Inputs
     i1,
@@ -1811,12 +1894,12 @@ module qux (
   );
 endmodule
 )",
-                TestRun{.check_golden = false});
+      {TestRun{.check_golden = false}});
 }
 
 TEST(Autoexpand, AUTOWIRE_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1834,7 +1917,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1868,8 +1951,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOWIRE_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar;
 endmodule
 
@@ -1879,7 +1962,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar;
 endmodule
 
@@ -1889,8 +1972,8 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )");
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1908,7 +1991,7 @@ module foo (  /*AUTOWIRE*/
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -1938,8 +2021,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOWIRE_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1962,7 +2045,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -1996,8 +2079,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOREG_ExpandEmpty) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2020,7 +2103,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2058,23 +2141,23 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOREG_NoExpand) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   output o;
   reg o;
   /*AUTOREG*/
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   output o;
   reg o;
   /*AUTOREG*/
 endmodule
 )");
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2094,7 +2177,7 @@ module foo (  /*AUTOREG*/
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2126,8 +2209,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTOREG_Replace) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -2150,7 +2233,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input  i1,
     output o1
@@ -2185,8 +2268,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_ExpandVars) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2203,7 +2286,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2238,8 +2321,8 @@ module foo;
   );
 endmodule
 )");
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2259,7 +2342,7 @@ module foo;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module bar (
     input i1,
     output [15:0] o1
@@ -2299,8 +2382,8 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_ExpandPortsWithAUTOVars) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module qux (
     input [1:0][7:0] ii,
     output [3:0] oo[5][3]
@@ -2330,7 +2413,7 @@ module foo (  /*AUTOARG*/);
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module qux (
     input [1:0][7:0] ii,
     output [3:0] oo[5][3]
@@ -2401,21 +2484,15 @@ module foo (  /*AUTOARG*/
   );
 endmodule
 )",
-                TestRun{.check_formatting = false}
-                // Module net variable alignment is not handled
-                // correctly due to the formatter looking at the
-                // generated code only instead of the entire file
+      TestRun{.check_formatting = false}.repeat()
+      // Module net variable alignment is not handled
+      // correctly due to the formatter looking at the
+      // generated code only instead of the entire file
   );
 }
 
 TEST(Autoexpand, ExpandRange) {
   TestTextEdits(
-      [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
-        return AutoExpandCodeActionToTextEdits(
-            symbol_table_handler, tracker,
-            {.start = {.line = 0}, .end = {.line = 10}},
-            "Expand all AUTOs in selected range");
-      },
       R"(
 module foo (  /*AUTOARG*/);
   /*AUTOINPUT*/
@@ -2482,14 +2559,21 @@ module bar (  /*AUTOARG*/);
   /*AUTOREG*/
 endmodule
 )",
-      TestRun{.check_golden = false}  // Do not repeat: the range is incorrect
-                                      // after the first expansion
+      {TestRun{.edit_fn =
+                   [](SymbolTableHandler* symbol_table_handler,
+                      BufferTracker* tracker) {
+                     return AutoExpandCodeActionToTextEdits(
+                         symbol_table_handler, tracker,
+                         {.start = {.line = 0}, .end = {.line = 10}},
+                         "Expand all AUTOs in selected range");
+                   }}}  // Do not repeat: the range is incorrect
+                        // after the first expansion
   );
 }
 
 TEST(Autoexpand, OverlappingExpansions) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo (
     /*AUTOARG*/
     /*AUTOINPUT*/
@@ -2506,7 +2590,7 @@ module bar (
 );
 endmodule
 )",
-                R"(
+      R"(
 module foo (
     /*AUTOARG*/
     /*AUTOINPUT*/
@@ -2530,17 +2614,11 @@ module bar (
 );
 endmodule
 )",
-                TestRun{.check_again = false});
+      {TestRun{}});
 }
 
 TEST(Autoexpand, ExpandKind) {
   TestTextEdits(
-      [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
-        return AutoExpandCodeActionToTextEdits(
-            symbol_table_handler, tracker,
-            {.start = {.line = 1}, .end = {.line = 1}},
-            "Expand all AUTOs of same kind as this one");
-      },
       R"(
 module foo (  /*AUTOARG*/);
   /*AUTOINPUT*/
@@ -2591,18 +2669,113 @@ module bar (  /*AUTOARG*/
 
   /*AUTOREG*/
 endmodule
-)");
+)",
+      TestRun{.edit_fn = [](SymbolTableHandler* symbol_table_handler,
+                            BufferTracker* tracker) {
+        return AutoExpandCodeActionToTextEdits(
+            symbol_table_handler, tracker,
+            {.start = {.line = 1}, .end = {.line = 1}},
+            "Expand all AUTOs of same kind as this one");
+      }}.repeat());
+  TestTextEdits(
+      R"(
+module foo (  /*AUTOARG*/);
+  bar b (  /*AUTOINST*/);
+  /*AUTOINPUT*//*AUTOOUTPUT*/
+endmodule
+
+module bar;
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  qux q (  /*AUTOINST*/);
+endmodule
+
+module qux (
+    input clk,
+    input rst,
+    output [63:0] o1,
+    output o2[16]
+);
+endmodule
+)",
+      R"(
+module foo (  /*AUTOARG*/
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o1,
+    o2
+);
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1(o1[63:0]),
+      .o2(o2  /*.[16]*/)
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To b of bar
+  input rst;  // To b of bar
+  // End of automatics  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [63:0] o1;  // From b of bar
+  output o2[16];  // From b of bar
+  // End of automatics
+endmodule
+
+module bar;
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To q of qux
+  input rst;  // To q of qux
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [63:0] o1;  // From q of qux
+  output o2[16];  // From q of qux
+  // End of automatics
+  qux q (  /*AUTOINST*/
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1 (o1[63:0]),
+      .o2 (o2  /*.[16]*/)
+  );
+endmodule
+
+module qux (
+    input clk,
+    input rst,
+    output [63:0] o1,
+    output o2[16]
+);
+endmodule
+)",
+      {TestRun{.edit_fn =
+                   [](SymbolTableHandler* symbol_table_handler,
+                      BufferTracker* tracker) {
+                     return AutoExpandCodeActionToTextEdits(
+                         symbol_table_handler, tracker,
+                         {.start = {.line = 1}, .end = {.line = 3}},
+                         "Expand all AUTOs of same kinds as selected");
+                   }}}  // Do not repeat: the range is incorrect
+                        // after the first expansion
+  );
 }
 
 TEST(Autoexpand, InstanceNotModule) {
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo;
   wire bar;
   bar b (  /*AUTOINST*/);
 endmodule
 )",
-                R"(
+      R"(
 module foo;
   wire bar;
   bar b (  /*AUTOINST*/);
@@ -2613,8 +2786,8 @@ endmodule
   // module type. TODO: Either get a list of definitions from the symbol table
   // and use the one that is a module, or query the symbol table in a smarter
   // way
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo (
     /*AUTOINPUT*/
     /*AUTOOUTPUT*/
@@ -2630,7 +2803,7 @@ module bar (
 );
 endmodule
 )",
-                R"(
+      R"(
 module foo (
     /*AUTOINPUT*/
     /*AUTOOUTPUT*/
@@ -2651,8 +2824,8 @@ endmodule
 TEST(Autoexpand, PreserveUserCode) {
   // Check that AUTO expand's formatter invocation does not affect lines not
   // generated by it
-  TestTextEdits(GenerateFullAutoExpandTextEdits,
-                R"(
+  TestTextEdits(
+      R"(
 module foo (  /*AUTOARG*/);
 
 always @(posedge
@@ -2680,7 +2853,7 @@ module bar (  /*AUTOARG*/);
   /*AUTOREG*/
 endmodule
 )",
-                R"(
+      R"(
 module foo (  /*AUTOARG*/
     // Inputs
     clk,
@@ -2741,9 +2914,9 @@ module bar (  /*AUTOARG*/
   // End of automatics
 endmodule
 )",
-                TestRun{.check_formatting = false}
-                // Do not check formatting, as the test intentionally does not
-                // follow formatting rules
+      TestRun{.check_formatting = false}.repeat()
+      // Do not check formatting, as the test intentionally does not
+      // follow formatting rules
   );
 }
 
