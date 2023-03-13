@@ -2592,6 +2592,93 @@ module bar (  /*AUTOARG*/
   /*AUTOREG*/
 endmodule
 )");
+  TestTextEdits(
+      [](SymbolTableHandler* symbol_table_handler, BufferTracker* tracker) {
+        return AutoExpandCodeActionToTextEdits(
+            symbol_table_handler, tracker,
+            {.start = {.line = 1}, .end = {.line = 3}},
+            "Expand all AUTOs of same kinds as selected");
+      },
+      R"(
+module foo (  /*AUTOARG*/);
+  bar b (  /*AUTOINST*/);
+  /*AUTOINPUT*//*AUTOOUTPUT*/
+endmodule
+
+module bar;
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  qux q (  /*AUTOINST*/);
+endmodule
+
+module qux (
+    input clk,
+    input rst,
+    output [63:0] o1,
+    output o2[16]
+);
+endmodule
+)",
+      R"(
+module foo (  /*AUTOARG*/
+    // Inputs
+    clk,
+    rst,
+    // Outputs
+    o1,
+    o2
+);
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1(o1[63:0]),
+      .o2(o2  /*.[16]*/)
+  );
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To b of bar
+  input rst;  // To b of bar
+  // End of automatics  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [63:0] o1;  // From b of bar
+  output o2[16];  // From b of bar
+  // End of automatics
+endmodule
+
+module bar;
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input clk;  // To q of qux
+  input rst;  // To q of qux
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [63:0] o1;  // From q of qux
+  output o2[16];  // From q of qux
+  // End of automatics
+  qux q (  /*AUTOINST*/
+      // Inputs
+      .clk(clk),
+      .rst(rst),
+      // Outputs
+      .o1 (o1[63:0]),
+      .o2 (o2  /*.[16]*/)
+  );
+endmodule
+
+module qux (
+    input clk,
+    input rst,
+    output [63:0] o1,
+    output o2[16]
+);
+endmodule
+)",
+      TestRun{.check_again = false}  // Do not repeat: the range is incorrect
+                                     // after the first expansion
+  );
 }
 
 TEST(Autoexpand, InstanceNotModule) {
