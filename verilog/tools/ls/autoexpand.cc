@@ -17,12 +17,12 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <regex>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
 #include "common/text/text_structure.h"
+#include "re2/re2.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/dimensions.h"
 #include "verilog/CST/expression.h"
@@ -72,6 +72,12 @@ enum class AutoKind {
 class AutoExpander {
  public:
   // TODO: move most of these items to private
+
+  // An AUTO matched in the buffer text
+  struct Match {
+    absl::string_view auto_span;     // Span of the entire AUTO
+    absl::string_view comment_span;  // Span of the AUTO pragma comment
+  };
 
   // A single AUTO expansion in terms of the replaced span and expanded text
   struct Expansion {
@@ -322,14 +328,12 @@ class AutoExpander {
   // Limitation: this only detects ports from AUTOINST. This limitation is also
   // present in the original Emacs Verilog-mode.
   std::optional<Expansion> ExpandAutoDeclarations(
-      const Module &module, absl::string_view auto_span,
-      absl::string_view comment_span, absl::string_view description,
+      const Module &module, Match match, absl::string_view description,
       const std::function<void(const Module &, std::ostream &)> &emit) const;
 
   // Expands AUTOINPUT/AUTOINOUT/AUTOOUTPUT for the given module
   std::optional<Expansion> ExpandAutoPorts(Module *module,
-                                           absl::string_view auto_span,
-                                           absl::string_view comment_span,
+                                           std::optional<Match> match,
                                            Port::Direction direction) const;
 
   // Expands AUTOWIRE for the given module
@@ -345,44 +349,10 @@ class AutoExpander {
   absl::flat_hash_set<AutoKind> FindAutoKinds();
 
  private:
-  // Finds AUTOINPUT comment and erases ports from the module that are in the
-  // AUTOINPUT span
-  std::optional<std::cmatch> FindAutoinputAndErasePorts(
-      AutoExpander::Module *module);
-
-  // Finds AUTOINOUT comment and erases ports from the module that are in the
-  // AUTOINOUT span
-  std::optional<std::cmatch> FindAutoinoutAndErasePorts(
-      AutoExpander::Module *module);
-
-  // Finds AUTOOUTPUT comment and erases ports from the module that are in the
-  // AUTOOUTPUT span
-  std::optional<std::cmatch> FindAutooutputAndErasePorts(
-      AutoExpander::Module *module);
-
-  // Expands AUTOINPUT for the given module
-  std::optional<Expansion> ExpandAutoinput(
-      AutoExpander::Module *module, const std::optional<std::cmatch> &match);
-
-  // Expands AUTOINOUT for the given module
-  std::optional<Expansion> ExpandAutoinout(
-      AutoExpander::Module *module, const std::optional<std::cmatch> &match);
-
-  // Expands AUTOOUTPUT for the given module
-  std::optional<Expansion> ExpandAutooutput(
-      AutoExpander::Module *module, const std::optional<std::cmatch> &match);
-
-  // Sets the location of each undeclared input port
-  void SetUndeclaredInputPortLocations(AutoExpander::Module *module,
-                                       const std::optional<std::cmatch> &match);
-
-  // Sets the location of each undeclared inout port
-  void SetUndeclaredInoutPortLocations(AutoExpander::Module *module,
-                                       const std::optional<std::cmatch> &match);
-
-  // Sets the location of each undeclared output port
-  void SetUndeclaredOutputPortLocations(
-      AutoExpander::Module *module, const std::optional<std::cmatch> &match);
+  // Matches the given regex and erases ports from the module that are in the
+  // match span
+  std::optional<Match> FindMatchAndErasePorts(AutoExpander::Module *module,
+                                              AutoKind kind, const RE2 &re);
 
   // Finds the span that should be replaced in the symbol (from the start of
   // the comment span to the end of the symbol span. Used by AUTOARG and
@@ -411,48 +381,49 @@ class AutoExpander {
   absl::node_hash_map<absl::string_view, Module> modules_;
 
   // Regex for finding any AUTOs
-  static const std::regex auto_re_;
+  static const LazyRE2 auto_re_;
 
   // Regex for finding AUTOARG comments
-  static const std::regex autoarg_re_;
+  static const LazyRE2 autoarg_re_;
 
   // Regex for finding AUTOINST comments
-  static const std::regex autoinst_re_;
+  static const LazyRE2 autoinst_re_;
 
   // Regexes for AUTO_TEMPLATE comments
-  static const std::regex autotemplate_detect_re_;
-  static const std::regex autotemplate_type_re_;
-  static const std::regex autotemplate_conn_re_;
+  static const LazyRE2 autotemplate_re_;
+  static const LazyRE2 autotemplate_type_re_;
+  static const LazyRE2 autotemplate_conn_re_;
 
   // Regexes for AUTOINPUT/AUTOOUTPUT/AUTOINOUT/AUTOWIRE/AUTOREG comments
-  static const std::regex autoinput_re_;
-  static const std::regex autooutput_re_;
-  static const std::regex autoinout_re_;
-  static const std::regex autowire_re_;
-  static const std::regex autoreg_re_;
+  static const LazyRE2 autoinput_re_;
+  static const LazyRE2 autooutput_re_;
+  static const LazyRE2 autoinout_re_;
+  static const LazyRE2 autowire_re_;
+  static const LazyRE2 autoreg_re_;
 };
 
-const std::regex AutoExpander::auto_re_{
+const LazyRE2 AutoExpander::auto_re_{
     R"(/\*\s*(AUTOARG|AUTOINST|AUTOINPUT|AUTOINOUT|AUTOOUTPUT|AUTOWIRE|AUTOREG)\s*\*/)"};
 
-const std::regex AutoExpander::autoarg_re_{R"(/\*\s*AUTOARG\s*\*/)"};
+const LazyRE2 AutoExpander::autoarg_re_{R"((/\*\s*AUTOARG\s*\*/))"};
 
-const std::regex AutoExpander::autoinst_re_{R"(/\*\s*AUTOINST\s*\*/)"};
+const LazyRE2 AutoExpander::autoinst_re_{R"((/\*\s*AUTOINST\s*\*/))"};
 
 // AUTO_TEMPLATE regex breakdown:
-// /\*                             – start of comment
-// (\s*\S+\s+AUTO_TEMPLATE\s*\n)*  – optional other AUTO_TEMPLATE types, end
-//                                   with newline
-// \s*\S+\s+AUTO_TEMPLATE          – at least one AUTO_TEMPLATE is required
-// \s*(".*")?                      – optional instance name regex
-// \s*\([\s\S]*?\);                – parens with port connections
-// \s*\*/                          – end of comment
-const std::regex AutoExpander::autotemplate_detect_re_{
-    R"(/\*(\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(".*")?\s*\([\s\S]*?\);\s*\*/)"};
+// The entire expression is wrapped in () so the first capturing group is the
+// entire match.
+// /\*                               – start of comment
+// (?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*  – optional other AUTO_TEMPLATE types, end
+//                                     with newline
+// \s*\S+\s+AUTO_TEMPLATE            – at least one AUTO_TEMPLATE is required
+// \s*(".*")?                        – optional instance name regex
+// \s*\([\s\S]*?\);                  – parens with port connections
+// \s*\*/                            – end of comment
+const LazyRE2 AutoExpander::autotemplate_re_{
+    R"((/\*(?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(".*")?\s*\([\s\S]*?\);\s*\*/))"};
 
 // AUTO_TEMPLATE type regex: the first capturing group is the instance type
-const std::regex AutoExpander::autotemplate_type_re_{
-    R"((\S+)\s+AUTO_TEMPLATE)"};
+const LazyRE2 AutoExpander::autotemplate_type_re_{R"((\S+)\s+AUTO_TEMPLATE)"};
 
 // AUTO_TEMPLATE connection regex breakdown:
 // \.\s*      – starts with a dot
@@ -462,10 +433,12 @@ const std::regex AutoExpander::autotemplate_type_re_{
 // ([^\s(]+?) – second group, same as the first one
 // \s*(\[\])? – optional third group, capturing '[]'
 // \s*\)*     – optional whitespace, closing paren
-const std::regex AutoExpander::autotemplate_conn_re_{
+const LazyRE2 AutoExpander::autotemplate_conn_re_{
     R"(\.\s*([^\s(]+?)\s*\(\s*([^\s(]+?)\s*(\[\])?\s*\))"};
 
 // AUTOINPUT/OUTPUT/INOUT/WIRE/REG regex breakdown:
+// The entire expression is wrapped in () so the first capturing group is the
+// entire match.
 // (/\*\s* ... \s*\*/\s*?\n)            – starting comment
 // (?:\s*//.*\n)?                       – optional starting comment
 //                                        ("Beginning of automatic...")
@@ -475,13 +448,13 @@ const std::regex AutoExpander::autotemplate_conn_re_{
 //   [^\S\r\n]*// End of automatics.*\n – ended by an "End of automatics"
 //                                        comment
 #define MAKE_AUTODECL_REGEX(decl_kind) \
-  R"((/\*\s*AUTO)" decl_kind           \
-  R"(\s*\*/\s*?)(?:\s*//.*)?(?:[\s\S]*?[^\S\r\n]*// End of automatics.*)?)"
-const std::regex AutoExpander::autoinput_re_{MAKE_AUTODECL_REGEX("INPUT")};
-const std::regex AutoExpander::autoinout_re_{MAKE_AUTODECL_REGEX("INOUT")};
-const std::regex AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
-const std::regex AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
-const std::regex AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
+  R"(((/\*\s*AUTO)" decl_kind          \
+  R"(\s*\*/\s*?)(?:\s*//.*)?(?:[\s\S]*?[^\S\r\n]*// End of automatics.*)?))"
+const LazyRE2 AutoExpander::autoinput_re_{MAKE_AUTODECL_REGEX("INPUT")};
+const LazyRE2 AutoExpander::autoinout_re_{MAKE_AUTODECL_REGEX("INOUT")};
+const LazyRE2 AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
+const LazyRE2 AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
+const LazyRE2 AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
 
 void AutoExpander::Port::EmitDirection(std::ostream &output) const {
   switch (direction) {
@@ -682,39 +655,31 @@ void AutoExpander::Module::SortPortsByLocation() {
 }
 
 void AutoExpander::Module::RetrieveAutoTemplates() {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol_);
-  std::cmatch autotemplate_match;
-  auto autotemplate_begin = module_span.begin();
-  while (std::regex_search(autotemplate_begin, module_span.end(),
-                           autotemplate_match, autotemplate_detect_re_)) {
-    autotemplate_begin += autotemplate_match.position();
-    // The begin:end range will be searched for module types and connections
-    auto begin = autotemplate_begin;
-    const auto end = begin + autotemplate_match.length();
-    Template tmpl{.it = begin};
-    std::cmatch match;
+  absl::string_view autotmpl_search_span = StringSpanOfSymbol(symbol_);
+  absl::string_view autotmpl_span;
+  while (RE2::FindAndConsume(&autotmpl_search_span, *autotemplate_re_,
+                             &autotmpl_span)) {
+    Template tmpl{.it = autotmpl_span.begin()};
 
-    while (std::regex_search(begin, end, match, autotemplate_conn_re_)) {
-      const absl::string_view instance_port_id{
-          begin + match.position(1), static_cast<size_t>(match.length(1))};
-      const absl::string_view module_port_id{
-          begin + match.position(2), static_cast<size_t>(match.length(2))};
+    absl::string_view autotmpl_conn_search_span = autotmpl_span;
+    absl::string_view instance_port_name;
+    absl::string_view module_port_name;
+    absl::string_view dimensions;
+    while (RE2::FindAndConsume(&autotmpl_conn_search_span,
+                               *autotemplate_conn_re_, &instance_port_name,
+                               &module_port_name, &dimensions)) {
       tmpl.connections.insert(
-          std::make_pair(instance_port_id,
-                         Connection{.port_name = module_port_id,
-                                    .emit_dimensions = match.length(3) != 0}));
-      begin += match.position() + match.length();
+          std::make_pair(instance_port_name,
+                         Connection{.port_name = module_port_name,
+                                    .emit_dimensions = !dimensions.empty()}));
     }
 
-    begin = autotemplate_begin;
-    while (std::regex_search(begin, end, match, autotemplate_type_re_)) {
-      const absl::string_view type_id{begin + match.position(1),
-                                      static_cast<size_t>(match.length(1))};
-      templates_[type_id].push_back(tmpl);
-      begin += match.position() + match.length();
+    absl::string_view autotmpl_type_search_span = autotmpl_span;
+    absl::string_view instance_type_name;
+    while (RE2::FindAndConsume(&autotmpl_type_search_span,
+                               *autotemplate_type_re_, &instance_type_name)) {
+      templates_[instance_type_name].push_back(tmpl);
     }
-
-    autotemplate_begin = end;
   }
 }
 
@@ -906,29 +871,28 @@ absl::flat_hash_set<absl::string_view> AutoExpander::GetPortsConnectedBefore(
 }
 
 // Does a regex search in the span of the given symbol, returns match
-std::optional<std::cmatch> FindMatchInSymbol(const Symbol &symbol,
-                                             const std::regex &re) {
-  const absl::string_view module_span = StringSpanOfSymbol(symbol);
-  std::cmatch match;
-  if (std::regex_search(module_span.begin(), module_span.end(), match, re)) {
-    return match;
+std::optional<AutoExpander::Match> FindMatchInSymbol(const Symbol &symbol,
+                                                     const RE2 &re) {
+  const absl::string_view symbol_span = StringSpanOfSymbol(symbol);
+  absl::string_view match;
+  absl::string_view comment;
+  if (RE2::PartialMatch(symbol_span, re, &match, &comment)) {
+    return AutoExpander::Match{
+        .auto_span = {match.begin(), match.length()},
+        .comment_span = {comment.begin(), comment.length()}};
   }
   return {};
 }
 
-// Gets the span of the given match in symbol' span
-absl::string_view GetSpanOfMatchInSymbol(const Symbol &symbol,
-                                         const std::cmatch &match) {
-  return absl::string_view(
-      StringSpanOfSymbol(symbol).begin() + match.position(),
-      static_cast<size_t>(match.length()));
-}
-
 // Does a regex search in the span of the given symbol, returns matched span
 std::optional<absl::string_view> FindSpanInSymbol(const Symbol &symbol,
-                                                  const std::regex &re) {
-  auto match = FindMatchInSymbol(symbol, re);
-  if (match) return GetSpanOfMatchInSymbol(symbol, *match);
+                                                  const RE2 &re) {
+  const absl::string_view symbol_span = StringSpanOfSymbol(symbol);
+  absl::string_view match;
+  if (RE2::PartialMatch({symbol_span.data(), symbol_span.length()}, re,
+                        &match)) {
+    return absl::string_view{match.begin(), match.length()};
+  }
   return {};
 }
 
@@ -958,7 +922,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoarg(
       GetModulePortParenGroup(module.Symbol());
   if (!ShouldExpand(AutoKind::kAutoarg)) return {};
   if (!port_parens) return {};  // No port paren group, so no AUTOARG
-  auto auto_span = FindSpanInSymbol(*port_parens, autoarg_re_);
+  auto auto_span = FindSpanInSymbol(*port_parens, *autoarg_re_);
   if (!auto_span) return {};
   auto replaced_span = FindSpanToReplace(*port_parens, *auto_span);
   if (!replaced_span) return {};
@@ -1006,7 +970,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
   if (!ShouldExpand(AutoKind::kAutoinst)) return {};
   const SyntaxTreeNode *parens = GetParenGroupFromModuleInstantiation(instance);
 
-  auto auto_span = FindSpanInSymbol(*parens, autoinst_re_);
+  auto auto_span = FindSpanInSymbol(*parens, *autoinst_re_);
   if (!auto_span) return {};
   auto replaced_span = FindSpanToReplace(*parens, *auto_span);
   if (!replaced_span) return {};
@@ -1080,23 +1044,24 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
 }
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoDeclarations(
-    const Module &module, const absl::string_view auto_span,
-    const absl::string_view comment_span, const absl::string_view description,
+    const Module &module, const Match match,
+    const absl::string_view description,
     const std::function<void(const Module &, std::ostream &)> &emit) const {
   std::stringstream new_text;
-  new_text << comment_span << "\n// Beginning of automatic " << description
-           << '\n';
+  new_text << match.comment_span << "\n// Beginning of automatic "
+           << description << '\n';
   const int64_t length_before_emit = new_text.tellp();
   emit(module, new_text);
   if (length_before_emit == new_text.tellp()) {
-    if (auto_span != comment_span) {
-      return Expansion{.replaced_span = auto_span,
-                       .new_text = std::string{comment_span}};
+    if (match.auto_span != match.comment_span) {
+      return Expansion{.replaced_span = match.auto_span,
+                       .new_text = std::string{match.comment_span}};
     }
     return {};
   }
   new_text << "// End of automatics";
-  return Expansion{.replaced_span = auto_span, .new_text = new_text.str()};
+  return Expansion{.replaced_span = match.auto_span,
+                   .new_text = new_text.str()};
 }
 
 // Returns true if the span is directly under the module item list (or the
@@ -1111,18 +1076,19 @@ bool IsSpanDirectlyUnderModule(const Symbol &module,
 }
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
-    Module *module, const absl::string_view auto_span,
-    const absl::string_view comment_span,
+    Module *module, const std::optional<Match> match,
     const Port::Direction direction) const {
+  if (!match) return {};
   const absl::string_view module_span = StringSpanOfSymbol(module->Symbol());
-  const auto begin = auto_span.end();
+  const auto begin = match->auto_span.end();
   auto end = module_span.end();
   const SyntaxTreeNode *const port_parens =
       GetModulePortParenGroup(module->Symbol());
 
   const bool in_header = port_parens && IsSpanDirectlyUnderPortDeclarationList(
-                                            *port_parens, auto_span);
-  if (!in_header && !IsSpanDirectlyUnderModule(module->Symbol(), auto_span)) {
+                                            *port_parens, match->auto_span);
+  if (!in_header &&
+      !IsSpanDirectlyUnderModule(module->Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTO ports. Incorrect context";
     return {};
   }
@@ -1142,10 +1108,9 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
                                             ? "inouts (from autoinst inouts)"
                                             : "outputs (from autoinst outputs)";
 
-  if (!SpansOverlapping(auto_span, expand_span_)) return {};
+  if (!SpansOverlapping(match->auto_span, expand_span_)) return {};
   auto result = ExpandAutoDeclarations(
-      *module, auto_span, comment_span,  // Matched AUTO comment
-      description,
+      *module, *match, description,
       [direction, style](const Module &module, std::ostream &output) {
         module.EmitPortDeclarations(
             output, style, [direction](const Port &port) {
@@ -1166,145 +1131,69 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutowire(
     const Module &module) const {
   if (!ShouldExpand(AutoKind::kAutowire)) return {};
-  const auto match = FindMatchInSymbol(module.Symbol(), autowire_re_);
+  const auto match = FindMatchInSymbol(module.Symbol(), *autowire_re_);
   if (!match) return {};
-  const absl::string_view auto_span =
-      GetSpanOfMatchInSymbol(module.Symbol(), *match);
-  if (!SpansOverlapping(auto_span, expand_span_)) {
+  if (!SpansOverlapping(match->auto_span, expand_span_)) {
     return {};
   }
-  if (!IsSpanDirectlyUnderModule(module.Symbol(), auto_span)) {
+  if (!IsSpanDirectlyUnderModule(module.Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTOWIRE. Incorrect context";
     return {};
   }
   return ExpandAutoDeclarations(
-      module, auto_span, match->str(1),  // Matched AUTO comment
-      "wires (for undeclared instantiated-module outputs)",
-      [auto_span](const Module &module, std::ostream &output) {
-        module.EmitUndeclaredOutputWireDeclarations(output, auto_span);
+      module, *match, "wires (for undeclared instantiated-module outputs)",
+      [match](const Module &module, std::ostream &output) {
+        module.EmitUndeclaredOutputWireDeclarations(output, match->auto_span);
       });
 }
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoreg(
     const Module &module) const {
   if (!ShouldExpand(AutoKind::kAutoreg)) return {};
-  const auto match = FindMatchInSymbol(module.Symbol(), autoreg_re_);
+  const auto match = FindMatchInSymbol(module.Symbol(), *autoreg_re_);
   if (!match) return {};
-  const absl::string_view auto_span =
-      GetSpanOfMatchInSymbol(module.Symbol(), *match);
-  if (!SpansOverlapping(auto_span, expand_span_)) {
+  if (!SpansOverlapping(match->auto_span, expand_span_)) {
     return {};
   }
-  if (!IsSpanDirectlyUnderModule(module.Symbol(), auto_span)) {
+  if (!IsSpanDirectlyUnderModule(module.Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTOREG. Incorrect context";
     return {};
   }
   return ExpandAutoDeclarations(
-      module, auto_span, match->str(1),  // Matched AUTO comment
-      "regs (for this module's undeclared outputs)",
-      [auto_span](const Module &module, std::ostream &output) {
-        module.EmitUnconnectedOutputRegDeclarations(output, auto_span);
+      module, *match, "regs (for this module's undeclared outputs)",
+      [match](const Module &module, std::ostream &output) {
+        module.EmitUnconnectedOutputRegDeclarations(output, match->auto_span);
       });
 }
 
-// Matches the given regex and erases ports from the module that are in the
-// match span
-std::optional<std::cmatch> FindMatchAndErasePorts(AutoExpander::Module *module,
-                                                  const std::regex &re) {
-  auto match = FindMatchInSymbol(module->Symbol(), re);
+std::optional<AutoExpander::Match> AutoExpander::FindMatchAndErasePorts(
+    AutoExpander::Module *module, const AutoKind kind, const RE2 &re) {
+  if (!ShouldExpand(kind)) return {};
+  const auto match = FindMatchInSymbol(module->Symbol(), re);
   if (match) {
-    const absl::string_view auto_span =
-        GetSpanOfMatchInSymbol(module->Symbol(), *match);
-    if (SpansOverlapping(StringSpanOfSymbol(module->Symbol()), auto_span)) {
-      module->ErasePortsIf([auto_span](const AutoExpander::Port &port) {
-        return port.it >= auto_span.begin() && port.it < auto_span.end();
+    if (SpansOverlapping(StringSpanOfSymbol(module->Symbol()),
+                         match->auto_span)) {
+      module->ErasePortsIf([match](const AutoExpander::Port &port) {
+        return port.it >= match->auto_span.begin() &&
+               port.it < match->auto_span.end();
       });
     }
   }
   return match;
 }
 
-std::optional<std::cmatch> AutoExpander::FindAutoinputAndErasePorts(
-    AutoExpander::Module *module) {
-  if (!ShouldExpand(AutoKind::kAutoinput)) return {};
-  return FindMatchAndErasePorts(module, autoinput_re_);
-}
-
-std::optional<std::cmatch> AutoExpander::FindAutoinoutAndErasePorts(
-    AutoExpander::Module *module) {
-  if (!ShouldExpand(AutoKind::kAutoinout)) return {};
-  return FindMatchAndErasePorts(module, autoinout_re_);
-}
-
-std::optional<std::cmatch> AutoExpander::FindAutooutputAndErasePorts(
-    AutoExpander::Module *module) {
-  if (!ShouldExpand(AutoKind::kAutooutput)) return {};
-  return FindMatchAndErasePorts(module, autooutput_re_);
-}
-
-std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinput(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (!match) return {};
-  return ExpandAutoPorts(module,
-                         GetSpanOfMatchInSymbol(module->Symbol(), *match),
-                         match->str(1),  // Matched AUTO comment
-                         Port::Direction::kInput);
-}
-
-std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinout(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (!match) return {};
-  return ExpandAutoPorts(module,
-                         GetSpanOfMatchInSymbol(module->Symbol(), *match),
-                         match->str(1),  // Matched AUTO comment
-                         Port::Direction::kInout);
-}
-
-std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutooutput(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (!match) return {};
-  return ExpandAutoPorts(module,
-                         GetSpanOfMatchInSymbol(module->Symbol(), *match),
-                         match->str(1),  // Matched AUTO comment
-                         Port::Direction::kOutput);
-}
-
 // Constructs a function that assigns the match's source location to undeclared
 // ports of the specified direction
 auto SetUndeclaredPortLocations(AutoExpander::Module *module,
-                                const std::cmatch &match,
+                                const AutoExpander::Match match,
                                 const AutoExpander::Port::Direction direction) {
-  const auto it = GetSpanOfMatchInSymbol(module->Symbol(), match).begin();
+  const auto it = match.auto_span.begin();
   return [it, direction](AutoExpander::Port &port) {
     if (port.declaration == AutoExpander::Port::Declaration::kUndeclared &&
         port.direction == direction) {
       port.it = it;
     }
   };
-}
-
-void AutoExpander::SetUndeclaredInputPortLocations(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (match) {
-    module->ForEachPort(
-        SetUndeclaredPortLocations(module, *match, Port::Direction::kInput));
-  }
-}
-
-void AutoExpander::SetUndeclaredInoutPortLocations(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (match) {
-    module->ForEachPort(
-        SetUndeclaredPortLocations(module, *match, Port::Direction::kInout));
-  }
-}
-
-void AutoExpander::SetUndeclaredOutputPortLocations(
-    AutoExpander::Module *module, const std::optional<std::cmatch> &match) {
-  if (match) {
-    module->ForEachPort(
-        SetUndeclaredPortLocations(module, *match, Port::Direction::kOutput));
-  }
 }
 
 std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
@@ -1336,9 +1225,12 @@ std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
     // Ports declared in AUTOINPUT/AUTOINOUT/AUTOOUTPUT must be removed from
     // the module, as they should be regenerated every time (in case they get
     // removed or their names change)
-    const auto autoinput_match = FindAutoinputAndErasePorts(module);
-    const auto autoinout_match = FindAutoinoutAndErasePorts(module);
-    const auto autooutput_match = FindAutooutputAndErasePorts(module);
+    const auto autoinput_match =
+        FindMatchAndErasePorts(module, AutoKind::kAutoinput, *autoinput_re_);
+    const auto autoinout_match =
+        FindMatchAndErasePorts(module, AutoKind::kAutoinout, *autoinout_re_);
+    const auto autooutput_match =
+        FindMatchAndErasePorts(module, AutoKind::kAutooutput, *autooutput_re_);
     // Do AUTOINST expansion
     module->RetrieveAutoTemplates();
     for (const auto &data : FindAllDataDeclarations(module->Symbol())) {
@@ -1359,17 +1251,29 @@ std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
     }
     // Set AUTO port locations. This has to be done before any port expansions
     // so that ExpandAutoPorts() has the correct locations.
-    SetUndeclaredInputPortLocations(module, autoinput_match);
-    SetUndeclaredInoutPortLocations(module, autoinout_match);
-    SetUndeclaredOutputPortLocations(module, autooutput_match);
+    if (autoinput_match) {
+      module->ForEachPort(SetUndeclaredPortLocations(module, *autoinput_match,
+                                                     Port::Direction::kInput));
+    }
+    if (autoinout_match) {
+      module->ForEachPort(SetUndeclaredPortLocations(module, *autoinout_match,
+                                                     Port::Direction::kInout));
+    }
+    if (autooutput_match) {
+      module->ForEachPort(SetUndeclaredPortLocations(module, *autooutput_match,
+                                                     Port::Direction::kOutput));
+    }
     // Expand AUTO port declarations
-    if (const auto expansion = ExpandAutoinput(module, autoinput_match)) {
+    if (const auto expansion =
+            ExpandAutoPorts(module, autoinput_match, Port::Direction::kInput)) {
       expansions.push_back(*expansion);
     }
-    if (const auto expansion = ExpandAutoinout(module, autoinout_match)) {
+    if (const auto expansion =
+            ExpandAutoPorts(module, autoinout_match, Port::Direction::kInout)) {
       expansions.push_back(*expansion);
     }
-    if (const auto expansion = ExpandAutooutput(module, autooutput_match)) {
+    if (const auto expansion = ExpandAutoPorts(module, autooutput_match,
+                                               Port::Direction::kOutput)) {
       expansions.push_back(*expansion);
     }
     // Expand AUTO wire/reg declarations
@@ -1391,10 +1295,9 @@ std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
 
 absl::flat_hash_set<AutoKind> AutoExpander::FindAutoKinds() {
   absl::flat_hash_set<AutoKind> kinds;
-  std::cmatch match;
-  auto begin = expand_span_.begin();
-  while (std::regex_search(begin, expand_span_.end(), match, auto_re_)) {
-    const std::string &auto_str = match.str(1);
+  absl::string_view search_span = expand_span_;
+  absl::string_view auto_str;
+  while (RE2::FindAndConsume(&search_span, *auto_re_, &auto_str)) {
     if (auto_str == "AUTOARG") {
       kinds.insert(AutoKind::kAutoarg);
     } else if (auto_str == "AUTOINST") {
@@ -1412,7 +1315,6 @@ absl::flat_hash_set<AutoKind> AutoExpander::FindAutoKinds() {
     } else {
       LOG(ERROR) << "Invalid AUTO comment string";
     }
-    begin += match.position() + match.length();
   }
   return kinds;
 }
