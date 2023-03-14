@@ -149,6 +149,7 @@ cc_library(
         "//common/text:concrete_syntax_leaf",
         "//common/text:concrete_syntax_tree",
         "//common/text:symbol",
+        "//common/text:tree_utils",
         "//common/text:visitors",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

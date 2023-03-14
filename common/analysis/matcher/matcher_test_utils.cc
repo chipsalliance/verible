@@ -23,6 +23,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/tree_utils.h"
 #include "common/text/visitors.h"
 #include "gtest/gtest.h"
 
@@ -84,7 +85,9 @@ class MatchCounter : public TreeVisitorRecursive {
 void ExpectMatchesInAST(const Symbol& tree, const Matcher& matcher,
                         int num_matches, absl::string_view code) {
   MatchCounter counter(matcher);
-  EXPECT_EQ(num_matches, counter.Count(tree)) << "code:\n" << code;
+  EXPECT_EQ(num_matches, counter.Count(tree)) << "code:\n"
+                                              << code << "\ntree:\n"
+                                              << RawTreePrinter(tree, true);
 }
 
 }  // namespace matcher

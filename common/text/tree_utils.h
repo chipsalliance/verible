@@ -303,36 +303,40 @@ void MutateLeaves(ConcreteSyntaxTree* tree, const LeafMutator& mutator);
 // Nodes are rendered with proper indendation.
 class RawSymbolPrinter : public SymbolVisitor {
  public:
-  explicit RawSymbolPrinter(std::ostream* stream) : stream_(stream) {}
+  // Print output to stream"; include NULL nodes if "print_null_nodes" set.
+  explicit RawSymbolPrinter(std::ostream* stream, bool print_null_nodes = false)
+      : stream_(stream), print_null_nodes_(print_null_nodes) {}
 
   void Visit(const SyntaxTreeLeaf&) override;
   void Visit(const SyntaxTreeNode&) override;
 
  protected:
-  // Output stream.
-  std::ostream* stream_;
+  // Prints start of line with correct indentation.
+  std::ostream& auto_indent();
 
-  // Indentation tracks current depth in tree.
-  int indent_ = 0;
+  std::ostream* const stream_;   // Output stream.
+  const bool print_null_nodes_;  // Include empty null children.
+
+  int indent_ = 0;  // Indentation tracks current depth in tree.
 
   // Each set of siblings is enumerated starting at 0.
   // This is set by parent nodes during traversal.
   int child_rank_ = 0;
-
-  // Prints start of line with correct indentation.
-  std::ostream& auto_indent();
 };
 
 // Streamable print adapter using RawSymbolPrinter.
 // Usage: stream << RawTreePrinter(*tree_root);
 class RawTreePrinter {
  public:
-  explicit RawTreePrinter(const Symbol& root) : root_(root) {}
+  // Print tree "root"; include NULL nodes if "print_null_nodes" set.
+  explicit RawTreePrinter(const Symbol& root, bool print_null_nodes = false)
+      : root_(root), print_null_nodes_(print_null_nodes) {}
 
   std::ostream& Print(std::ostream&) const;
 
  private:
   const Symbol& root_;
+  const bool print_null_nodes_;
 };
 
 std::ostream& operator<<(std::ostream&, const RawTreePrinter&);
