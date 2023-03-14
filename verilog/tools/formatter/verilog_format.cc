@@ -142,9 +142,10 @@ static bool formatOneFile(absl::string_view filename,
 
   // Read contents into memory first.
   std::string content;
-  absl::Status status = verible::file::GetContents(filename, &content);
-  if (!status.ok()) {
-    FileMsg(filename) << status << std::endl;
+  if (absl::Status status = verible::file::GetContents(filename, &content);
+      !status.ok()) {
+    // Not using FileMsg(): file status already has filename attached.
+    std::cerr << status.message() << std::endl;
     return false;
   }
 
@@ -208,8 +209,8 @@ static bool formatOneFile(absl::string_view filename,
     // Don't write if the output is exactly as the input, so that we don't mess
     // with tools that look for timestamp changes (such as make).
     if (content != formatted_output) {
-      status = verible::file::SetContents(filename, formatted_output);
-      if (!status.ok()) {
+      if (auto status = verible::file::SetContents(filename, formatted_output);
+          !status.ok()) {
         FileMsg(filename) << "error writing result " << status << std::endl;
         return false;
       }

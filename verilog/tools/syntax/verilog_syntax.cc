@@ -297,6 +297,7 @@ int main(int argc, char** argv) {
        verible::make_range(args.begin() + 1, args.end())) {
     auto content_status = verible::file::GetContentAsMemBlock(filename);
     if (!content_status.status().ok()) {
+      std::cerr << content_status.status().message() << std::endl;
       exit_status = 1;
       continue;
     }

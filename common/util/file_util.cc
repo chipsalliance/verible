@@ -67,36 +67,44 @@ absl::string_view Stem(absl::string_view filename) {
              : filename.substr(0, last_dot_pos);
 }
 
-// This will always return an error, even if we can't determine anything
-// from errno. Returns "fallback_msg" in that case.
-static absl::Status CreateErrorStatusFromSysError(const char *fallback_msg,
-                                                  int sys_error) {
-  using absl::StatusCode;
+// Create an error message derived from "sys_error" (which contains an errno
+// number). The message includes the filename as prefix.
+// If "sys_error" can not be resolved, creates an UNKNOWN message.
+// The "filename" and "fallback_msg" will be copied, no need for them to
+// stay alive after the call.
+static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
+                                                  int sys_error,
+                                                  const char *fallback_msg) {
   const char *const system_msg =
       sys_error == 0 ? fallback_msg : strerror(sys_error);
+  const std::string msg = filename.empty()
+                              ? std::string{system_msg}
+                              : absl::StrCat(filename, ": ", system_msg);
   switch (sys_error) {
     case EPERM:
     case EACCES:
-      return {StatusCode::kPermissionDenied, system_msg};
+      return {absl::StatusCode::kPermissionDenied, msg};
     case ENOENT:
-      return {StatusCode::kNotFound, system_msg};
+      return {absl::StatusCode::kNotFound, msg};
     case EEXIST:
-      return {StatusCode::kAlreadyExists, system_msg};
+      return {absl::StatusCode::kAlreadyExists, msg};
     case EINVAL:
-      return {StatusCode::kInvalidArgument, system_msg};
+      return {absl::StatusCode::kInvalidArgument, msg};
     default:
-      return {StatusCode::kUnknown, system_msg};
+      return {absl::StatusCode::kUnknown, msg};
   }
 }
 
-static absl::Status CreateErrorStatusFromErrno(const char *fallback_msg) {
-  return CreateErrorStatusFromSysError(fallback_msg, errno);
+static absl::Status CreateErrorStatusFromErrno(absl::string_view filename,
+                                               const char *fallback_msg) {
+  return CreateErrorStatusFromSysError(filename, errno, fallback_msg);
 }
-static absl::Status CreateErrorStatusFromErr(const char *fallback_msg,
-                                             const std::error_code &err) {
+static absl::Status CreateErrorStatusFromErr(absl::string_view filename,
+                                             const std::error_code &err,
+                                             const char *fallback_msg) {
   // TODO: this assumes that err.value() returns errno-like values. Might not
   // always be the case.
-  return CreateErrorStatusFromSysError(fallback_msg, err.value());
+  return CreateErrorStatusFromSysError(filename, err.value(), fallback_msg);
 }
 
 absl::Status UpwardFileSearch(absl::string_view start,
@@ -105,7 +113,8 @@ absl::Status UpwardFileSearch(absl::string_view start,
   const std::string search_file(filename);
   fs::path absolute_path = fs::absolute(std::string(start), err);
   if (err.value() != 0) {
-    return CreateErrorStatusFromErr("invalid config path specified.", err);
+    return CreateErrorStatusFromErr(filename, err,
+                                    "invalid config path specified.");
   }
   fs::path probe_dir = absolute_path;
   for (;;) {
@@ -146,15 +155,18 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
     stream = &std::cin;
   } else {
     const std::string filename_str = std::string(filename);
-    absl::Status usable_file = FileExists(filename_str);
-    if (!usable_file.ok()) return usable_file;  // Bail
+    if (absl::Status status = FileExists(filename_str); !status.ok()) {
+      return status;  // Bail
+    }
     fs.open(filename_str.c_str());
     std::error_code err;
     const size_t prealloc = fs::file_size(filename_str, err);
     if (err.value() == 0) content->reserve(prealloc);
     stream = &fs;
   }
-  if (!stream->good()) return CreateErrorStatusFromErrno("can't read");
+  if (!stream->good()) {
+    return CreateErrorStatusFromErrno(filename, "can't read");
+  }
   char buffer[4096];
   while (stream->good() && !stream->eof()) {
     stream->read(buffer, sizeof(buffer));
@@ -183,20 +195,20 @@ static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
   const std::string nul_terminated_filename(filename);
   const int fd = open(nul_terminated_filename.c_str(), O_RDONLY);
   if (fd < 0) {
-    return CreateErrorStatusFromErrno("Can't open file");
+    return CreateErrorStatusFromErrno(filename, "Can't open file");
   }
 
   struct stat s;
   if (fstat(fd, &s) < 0) {
     close(fd);
-    return CreateErrorStatusFromErrno("can't stat");
+    return CreateErrorStatusFromErrno(filename, "can't stat");
   }
 
   const size_t file_size = s.st_size;
   void *const buffer = mmap(nullptr, file_size, PROT_READ, MAP_SHARED, fd, 0);
   close(fd);
   if (buffer == MAP_FAILED) {  // NOLINT(performance-no-int-to-ptr)
-    return CreateErrorStatusFromErrno("Can't mmap file");
+    return CreateErrorStatusFromErrno(filename, "Can't mmap file");
   }
 #ifdef POSIX_MADV_WILLNEED
   // Trigger read-ahead if possible.
@@ -230,7 +242,7 @@ absl::Status SetContents(absl::string_view filename,
                          absl::string_view content) {
   VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;
   std::ofstream f(std::string(filename).c_str());
-  if (!f.good()) return CreateErrorStatusFromErrno("can't write.");
+  if (!f.good()) return CreateErrorStatusFromErrno(filename, "can't write.");
   f << content;
   return absl::OkStatus();
 }
@@ -246,7 +258,7 @@ absl::Status CreateDir(absl::string_view dir) {
   if (fs::create_directory(path, err) || err.value() == 0) {
     return absl::OkStatus();
   }
-  return CreateErrorStatusFromErr("can't create directory", err);
+  return CreateErrorStatusFromErr(dir, err, "can't create directory");
 }
 
 absl::StatusOr<Directory> ListDir(absl::string_view dir) {
@@ -257,7 +269,7 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
 
   fs::file_status stat = fs::status(d.path, err);
   if (err.value() != 0) {
-    return CreateErrorStatusFromErr("Opening directory", err);
+    return CreateErrorStatusFromErr(d.path, err, "Opening directory");
   }
   if (!fs::is_directory(stat)) {
     return absl::InvalidArgumentError(absl::StrCat(dir, ": not a directory"));
