@@ -102,7 +102,18 @@ jobs:
         echo "::endgroup::"
         # For runtime references, use clang-tidy 11, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references"
+        if [ $? -ne 0 ]; then
+          echo "::group::Details"
+          cat verible_clang-tidy.out
+          echo "::endgroup::"
+        fi
+
         CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy-cached.cc
+        if [ $? -ne 0 ]; then
+          echo "::group:: Details"
+          cat verible_clang-tidy.out
+          echo "::endgroup::"
+        fi
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
