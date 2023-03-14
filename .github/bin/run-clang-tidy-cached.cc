@@ -153,10 +153,20 @@ int main(int argc, char *argv[]) {
   const std::string kTidySymlink = kProjectPrefix + "clang-tidy.out";
   const fs::path cache_dir = GetCacheDir() / "clang-tidy";
 
-  if (!fs::exists("compile_commands.json")) {
+  // Test that key files exist and remember their last change.
+  std::error_code ec;
+  const auto workspace_ts = fs::last_write_time("WORKSPACE", ec);
+  if (ec.value() != 0) {
+    std::cerr << "Script needs to be executed in toplevel bazel project dir\n";
+    return EXIT_FAILURE;
+  }
+  const auto compdb_ts = fs::last_write_time("compile_commands.json", ec);
+  if (ec.value() != 0) {
     std::cerr << "No compilation db found. First, run make-compilation-db.sh\n";
     return EXIT_FAILURE;
   }
+  const auto build_env_latest_change = std::max(workspace_ts, compdb_ts);
+
   const auto config = ReadAndVerifyTidyConfig(".clang-tidy");
   if (!config) return EXIT_FAILURE;
 
@@ -214,7 +224,13 @@ int main(int argc, char *argv[]) {
       f.second ^= header_hashes[header_path];
     }
     const fs::path content_hash_file = content_dir / toHex(f.second);
-    if (!exists(content_hash_file)) work_queue.emplace_back(f);
+    // Recreate if we don't have it yet or if it contains messages but is
+    // older than WORKSPACE or compilation db. Maybe something got fixed.
+    if (!fs::exists(content_hash_file) ||
+        (fs::file_size(content_hash_file) > 0 &&
+         fs::last_write_time(content_hash_file) < build_env_latest_change)) {
+      work_queue.emplace_back(f);
+    }
   }
 
   // Run clang tidy in parallel on the files to process.
