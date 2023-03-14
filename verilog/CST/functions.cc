@@ -32,7 +32,6 @@ namespace verilog {
 using verible::GetSubtreeAsNode;
 using verible::GetSubtreeAsSymbol;
 using verible::Symbol;
-using verible::SymbolCastToNode;
 using verible::SyntaxTreeNode;
 
 std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
@@ -55,8 +54,11 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
   std::vector<verible::TreeSearchMatch> names;
   auto calls = verible::SearchSyntaxTree(root, NodekFunctionCall());
   for (const auto& Call : calls) {
-    if(verible::SymbolCastToNode(*verible::SymbolCastToNode(*Call.match).children()[0]).children()[1] != nullptr)
+    if (verible::SymbolCastToNode(
+            *verible::SymbolCastToNode(*Call.match).children()[0])
+            .children()[1] != nullptr) {
       names.emplace_back(Call);
+    }
   }
   // After anonymous instantiation was introduced, anonymous data declaration
   // and function call are indistinguishable, so under strict conditions it will
@@ -175,11 +177,11 @@ const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
     const verible::Symbol& function_call) {
   const verible::Symbol* reference = nullptr;
   const verible::Symbol* identifier = nullptr;
-  if(function_call.Tag().tag == (int) NodeEnum::kFunctionCall)
-  {
-    reference = GetSubtreeAsSymbol(
-      function_call, NodeEnum::kFunctionCall, 0);
-    if (reference->Tag().tag != (int) NodeEnum::kReferenceCallBase) return nullptr;
+  if (function_call.Tag().tag == (int)NodeEnum::kFunctionCall) {
+    reference = GetSubtreeAsSymbol(function_call, NodeEnum::kFunctionCall, 0);
+    if (reference->Tag().tag != (int)NodeEnum::kReferenceCallBase) {
+      return nullptr;
+    }
     const verible::SyntaxTreeNode* local_root = GetSubtreeAsNode(
         *reference, NodeEnum::kReferenceCallBase, 0, NodeEnum::kLocalRoot);
     if (!local_root) return nullptr;
@@ -234,12 +236,13 @@ const verible::SyntaxTreeNode* GetParenGroupFromCall(
   if (function_call.Tag().tag == (int)NodeEnum::kFunctionCall) {
     const verible::Symbol* reference_or_call =
         verible::GetSubtreeAsSymbol(function_call, NodeEnum::kFunctionCall, 0);
-    if (reference_or_call->Tag().tag != (int)NodeEnum::kReferenceCallBase)
+    if (reference_or_call->Tag().tag != (int)NodeEnum::kReferenceCallBase) {
       return nullptr;
+    }
     return verible::GetSubtreeAsNode(*reference_or_call,
                                      NodeEnum::kReferenceCallBase, 1,
                                      NodeEnum::kParenGroup);
-  }
+  } 
   if (function_call.Tag().tag == (int)NodeEnum::kDataDeclaration) {
     const verible::Symbol* instantiation_base = verible::GetSubtreeAsSymbol(
         function_call, NodeEnum::kDataDeclaration, 1);
@@ -253,6 +256,7 @@ const verible::SyntaxTreeNode* GetParenGroupFromCall(
     return verible::GetSubtreeAsNode(*gate_instance, NodeEnum::kGateInstance, 2,
                                      NodeEnum::kParenGroup);
   }
+  return nullptr;
 }
 
 const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(

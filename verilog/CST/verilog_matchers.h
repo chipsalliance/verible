@@ -20,7 +20,6 @@
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
-
 namespace verilog {
 
 // These are locally defined macros (undef'd at end of header) to enable
@@ -156,7 +155,8 @@ inline constexpr auto VoidcastHasExpression =
 //   x = foo();
 //
 inline constexpr auto ExpressionHasFunctionCall =
-    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase), N(kParenGroup));
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kParenGroup));
 
 // Matches a randomize call extension, or a call to an object's randomize
 // method contained within an expression.
@@ -167,11 +167,15 @@ inline constexpr auto ExpressionHasFunctionCall =
 //   result = obj.randomize();
 //
 inline constexpr auto NonCallHasRandomizeCallExtension =
-      verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReference), N(kRandomizeMethodCallExtension));
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReference),
+                                      N(kRandomizeMethodCallExtension));
 inline constexpr auto CallHasRandomizeCallExtension =
-      verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase), N(kRandomizeMethodCallExtension));
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kRandomizeMethodCallExtension));
 inline constexpr auto ExpressionHasRandomizeCallExtension =
-      verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase), N(kReference), N(kRandomizeMethodCallExtension));
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kReference),
+                                      N(kRandomizeMethodCallExtension));
 
 // Matches a randomize function call contained within an expression.
 //

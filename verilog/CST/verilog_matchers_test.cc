@@ -115,8 +115,9 @@ TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
       // This is a method call, different from a function call:
       // {ExpressionHasFunctionCall(), EmbedInClassMethod("bar.foo();"), 0},
       // {ExpressionHasFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
-      // TODO(jbylicki): Move those tests, as now they cannot be done with just a matcher.
-      // As the reshaped tree contains call extensions below the level of paren groups.
+      // TODO(jbylicki): Move those tests, as now they cannot be done with just
+      // a matcher. As the reshaped tree contains call extensions below the
+      // level of paren groups.
   };
   for (const auto& test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
@@ -143,8 +144,8 @@ TEST(VerilogMatchers, NonCallExpressionHasRandomizeCallExtensionTests) {
       {NonCallHasRandomizeCallExtension(),
        EmbedInClassMethod("foo.randomize();"), 1},
       {NonCallHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
-      {NonCallHasRandomizeCallExtension(),
-       EmbedInClassMethod("randomize();"), 0},
+      {NonCallHasRandomizeCallExtension(), EmbedInClassMethod("randomize();"),
+       0},
       {NonCallHasRandomizeCallExtension(), EmbedInClass(""), 0},
       {NonCallHasRandomizeCallExtension(), "", 0},
   };
@@ -157,8 +158,7 @@ TEST(VerilogMatchers, CallExpressionHasRandomizeCallExtensionTests) {
       {CallHasRandomizeCallExtension(),
        EmbedInClassMethod("foo().randomize();"), 1},
       {CallHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
-      {CallHasRandomizeCallExtension(),
-       EmbedInClassMethod("randomize();"), 0},
+      {CallHasRandomizeCallExtension(), EmbedInClassMethod("randomize();"), 0},
       {CallHasRandomizeCallExtension(), EmbedInClass(""), 0},
       {CallHasRandomizeCallExtension(), "", 0},
   };
@@ -652,9 +652,10 @@ TEST(VerilogMatchers, RValueIsFunctionCallTest) {
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo(a);"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x.y = bar::foo(a);"), 1},
-      //TODO(jbylicki): This case is unrecognizable by just a plain matcher now, move it
-      // to a section where a suitable method can be created and tested
-      // {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
+      // TODO(jbylicki): This case is unrecognizable by just a plain matcher
+      // now, move it
+      //  to a section where a suitable method can be created and tested
+      //  {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("z = pkg::bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo() -12;"), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = a + bar::foo();"), 0},

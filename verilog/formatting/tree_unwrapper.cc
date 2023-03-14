@@ -726,8 +726,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     // Indent only when applying kAppendFittingSubPartitions in parents
     case NodeEnum::kArgumentList:
     case NodeEnum::kIdentifierList: {
-      if (Context().DirectParentsAre(
-              {NodeEnum::kParenGroup, NodeEnum::kFunctionCall}) &&
+      if (Context().DirectParentsAre({NodeEnum::kParenGroup,
+                                      NodeEnum::kReferenceCallBase,
+                                      NodeEnum::kFunctionCall}) &&
           Context().IsInside(NodeEnum::kAlwaysStatement) &&
           Context().IsInside(NodeEnum::kNetVariableAssignment)) {
         if (any_of(node.children().begin(), node.children().end(),
@@ -750,8 +751,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       } else if (Context().DirectParentsAre(
                      {NodeEnum::kParenGroup,
                       NodeEnum::kRandomizeFunctionCall}) ||
-                 (Context().DirectParentsAre(
-                     {NodeEnum::kParenGroup, NodeEnum::kFunctionCall})) ||
+                 (Context().DirectParentsAre({NodeEnum::kParenGroup,
+                                              NodeEnum::kReferenceCallBase,
+                                              NodeEnum::kFunctionCall})) ||
                  (Context().DirectParentsAre(
                      {NodeEnum::kParenGroup, NodeEnum::kClassNew})) ||
                  Context().DirectParentsAre(
@@ -981,9 +983,19 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
 
+    case NodeEnum::kFunctionCall: {
+      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      } else {
+        TraverseChildren(node);
+      }
+      break;
+    }
     case NodeEnum::kReferenceCallBase: {
       // TODO(fangism): Create own section only for standalone calls
-      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+      if (Context().DirectParentsAre(
+              {NodeEnum::kFunctionCall, NodeEnum::kStatement})) {
         const auto& subnode = verible::SymbolCastToNode(
             *ABSL_DIE_IF_NULL(node.children().back()));
         if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
@@ -993,7 +1005,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         } else if (subnode.MatchesTagAnyOf(
                        {NodeEnum::kMethodCallExtension,
                         NodeEnum::kRandomizeMethodCallExtension,
-                        NodeEnum::kFunctionCall})) {
+                        NodeEnum::kParenGroup, NodeEnum::kReferenceCallBase})) {
           VisitIndentedSection(
               node, 0, PartitionPolicyEnum::kAppendFittingSubPartitions);
         } else {
@@ -1061,7 +1073,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                              : 0;
 
       const auto is_nested_call = [&] {
-        return Context().DirectParentsAre(
+        return Context().DirectParentsAre({NodeEnum::kFunctionCall,
+                                           NodeEnum::kExpression,
+                                           NodeEnum::kArgumentList}) ||
+               Context().DirectParentsAre({NodeEnum::kFunctionCall,
+                                           NodeEnum::kExpression,
+                                           NodeEnum::kMacroArgList}) ||
+               Context().DirectParentsAre(
                    {NodeEnum::kExpression, NodeEnum::kArgumentList}) ||
                Context().DirectParentsAre(
                    {NodeEnum::kExpression, NodeEnum::kMacroArgList});
@@ -1075,6 +1093,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                      NodeEnum::kTaskDeclaration,
                  }) ||
                  Context().DirectParentsAre({
+                     // TODO(jbylicki): Check if LocalRoot and Reference
+                     // should be here based on other tests
                      NodeEnum::kLocalRoot,
                      NodeEnum::kReference,
                      NodeEnum::kReferenceCallBase,
@@ -1982,6 +2002,8 @@ class MacroCallReshaper {
       CreateArgumentList();
     }
 
+    // TODO(jbylicki): This part causes mismatches in the syntax tree of the
+    // formatted code.
     if (argument_list_ &&
         (is_nested_ || !PartitionIsForcedIntoNewLine(*r_paren_))) {
       // Format like a part of argument list.
@@ -2680,10 +2702,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       break;
     }
-    case NodeEnum::kReferenceCallBase: {
-      const auto& subnode = verible::SymbolCastToNode(*node.children().back());
+    case NodeEnum::kFunctionCall: {
+      const auto& reference_call_base =
+          verible::SymbolCastToNode(*node.children().front());
+      const auto& subnode =
+          verible::SymbolCastToNode(*reference_call_base.children().back());
       if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
-                                   NodeEnum::kFunctionCall,
+                                   NodeEnum::kParenGroup,
                                    NodeEnum::kRandomizeMethodCallExtension})) {
         if (partition.Value().PartitionPolicy() ==
             PartitionPolicyEnum::kAppendFittingSubPartitions) {

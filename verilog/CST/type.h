@@ -246,9 +246,6 @@ const verible::SyntaxTreeNode* GetTypeIdentifierFromBaseType(
 const verible::SyntaxTreeNode* GetLocalRootFromReference(
     const verible::Symbol& reference);
 
-const verible::Symbol* GetIdentifiersFromLocalRoot(
-    const verible::Symbol& local_root);
-
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_TYPE_H_

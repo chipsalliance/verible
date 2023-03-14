@@ -4664,6 +4664,8 @@ reference
     /* . member */
   | reference select_variable_dimension
     { $$ = ExtendNode($1, $2); }
+  | MacroCall
+    { $$ = std::move($1); }
     /* [ range ] */
   ;
 
@@ -4735,8 +4737,6 @@ local_root
    * hierarchy_extension.
    *   implicit_class_handle '.' class_id
    */
-  | MacroCall
-    { $$ = MakeTaggedNode(N::kLocalRoot, $1); }
   ;
 
 string_literal

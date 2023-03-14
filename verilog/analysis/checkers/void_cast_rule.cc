@@ -69,15 +69,9 @@ const std::set<std::string>& VoidCastRule::ForbiddenFunctionsSet() {
 // Here, the leaf representing "foo" will be bound to id
 static const Matcher& FunctionMatcher() {
   static const Matcher matcher(
-      NodekVoidcast(
-        VoidcastHasExpression(
-          verible::matcher::EachOf(
-            ExpressionHasFunctionCall(),
-            ExpressionHasReference(FunctionCallHasId().Bind("id"))
-          )
-        )
-      )
-    );
+      NodekVoidcast(VoidcastHasExpression(verible::matcher::EachOf(
+          ExpressionHasFunctionCall(),
+          ExpressionHasReference(FunctionCallHasId().Bind("id"))))));
   return matcher;
 }
 
