@@ -37,13 +37,11 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
         "Missing patchfile argument.  Use '-' for stdin.");
   }
   const absl::string_view patchfile = args[0];
-  std::string patch_contents;
-  if (auto status = verible::file::GetContents(patchfile, &patch_contents);
-      !status.ok()) {
-    return status;
-  }
+  auto patch_content_or = verible::file::GetContentAsString(patchfile);
+  if (!patch_content_or.ok()) return patch_content_or.status();
+
   verible::PatchSet patch_set;
-  if (auto status = patch_set.Parse(patch_contents); !status.ok()) {
+  if (auto status = patch_set.Parse(*patch_content_or); !status.ok()) {
     return status;
   }
   const verible::FileLineNumbersMap changed_lines(
@@ -65,13 +63,12 @@ static absl::Status ApplyPick(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError("Missing patchfile argument.");
   }
   const absl::string_view patchfile = args[0];
-  std::string patch_contents;
-  if (auto status = verible::file::GetContents(patchfile, &patch_contents);
-      !status.ok()) {
-    return status;
-  }
+  absl::StatusOr<std::string> patch_contents_or;
+  patch_contents_or = verible::file::GetContentAsString(patchfile);
+  if (!patch_contents_or.ok()) return patch_contents_or.status();
+
   verible::PatchSet patch_set;
-  if (auto status = patch_set.Parse(patch_contents); !status.ok()) {
+  if (auto status = patch_set.Parse(*patch_contents_or); !status.ok()) {
     return status;
   }
   return patch_set.PickApplyInPlace(ins, outs);
@@ -108,14 +105,13 @@ static absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
                             std::ostream& outs, std::ostream& errs) {
   size_t file_count = 0;
   for (const auto& arg : args) {
-    std::string contents;
-    if (auto status = verible::file::GetContents(arg, &contents);
-        !status.ok()) {
-      return status;
-    }
+    const absl::StatusOr<std::string> contents_or =
+        verible::file::GetContentAsString(arg);
+    if (!contents_or.ok()) return contents_or.status();
+
     outs << "<<<< contents of file[" << file_count << "] (" << arg << ") <<<<"
          << std::endl;
-    outs << contents;
+    outs << *contents_or;
     outs << ">>>> end of file[" << file_count << "] (" << arg << ") >>>>"
          << std::endl;
     ++file_count;

@@ -43,6 +43,7 @@ class MemBlock {
 class StringMemBlock final : public MemBlock {
  public:
   StringMemBlock() = default;
+  explicit StringMemBlock(std::string&& move_from) : content_(move_from) {}
   explicit StringMemBlock(absl::string_view copy_from)
       : content_(copy_from.begin(), copy_from.end()) {}
 

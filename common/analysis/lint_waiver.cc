@@ -378,15 +378,15 @@ static absl::Status WaiveCommandHandler(
         }
 
         if (!can_use_regex && !can_use_lineno) {
-          std::string content;
-          absl::Status status =
-              verible::file::GetContents(lintee_filename, &content);
-          if (!status.ok()) {
-            return WaiveCommandError(token_pos, waive_file, status.ToString());
+          absl::StatusOr<std::string> content_or =
+              verible::file::GetContentAsString(lintee_filename);
+          if (!content_or.ok()) {
+            return WaiveCommandError(token_pos, waive_file,
+                                     content_or.status().ToString());
           }
 
           const size_t number_of_lines =
-              std::count(content.begin(), content.end(), '\n');
+              std::count(content_or->begin(), content_or->end(), '\n');
           waiver->WaiveLineRange(rule, 1, number_of_lines);
         }
 

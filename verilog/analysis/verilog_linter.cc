@@ -101,12 +101,11 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
                 const LinterConfiguration& config,
                 verible::ViolationHandler* violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context) {
-  std::string content;
-  const absl::Status content_status =
-      verible::file::GetContents(filename, &content);
-  if (!content_status.ok()) {
+  const absl::StatusOr<std::string> content_or =
+      verible::file::GetContentAsString(filename);
+  if (!content_or.ok()) {
     LOG(ERROR) << "Can't read '" << filename
-               << "': " << content_status.message();
+               << "': " << content_or.status().message();
     return 2;
   }
 
@@ -117,8 +116,8 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
   // TODO(hzeller): this behavior could be configurable, but then again this
   //   is something the user is expecting to work as best as possible (which
   //   is also why we use automatic mode).
-  const auto analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(content, filename);
+  const auto analyzer = VerilogAnalyzer::AnalyzeAutomaticPreprocessFallback(
+      *content_or, filename);
   if (check_syntax) {
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
     const auto parse_status = analyzer->ParseStatus();
@@ -213,15 +212,11 @@ absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
   absl::Status rc = absl::OkStatus();
   for (const auto& waiver_file :
        absl::StrSplit(configuration.external_waivers, ',', absl::SkipEmpty())) {
-    std::string content;
-    auto status = verible::file::GetContents(waiver_file, &content);
-    if (content.empty()) {
-      continue;
-    }
-    if (status.ok()) {
-      status = lint_waiver_.ApplyExternalWaivers(
-          configuration.ActiveRuleIds(), lintee_filename, waiver_file, content);
-    }
+    auto content_or = verible::file::GetContentAsString(waiver_file);
+    if (!content_or.ok()) continue;  // Couldn't read lint file: ignore
+    auto status = lint_waiver_.ApplyExternalWaivers(
+        configuration.ActiveRuleIds(), lintee_filename, waiver_file,
+        *content_or);
     if (!status.ok()) {
       rc.Update(status);
     }

@@ -180,13 +180,6 @@ absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
   return std::move(content);
 }
 
-absl::Status GetContents(absl::string_view filename, std::string *content) {
-  absl::StatusOr<std::string> content_or = GetContentAsString(filename);
-  if (!content_or.ok()) return content_or.status();
-  *content = std::move(*content_or);
-  return absl::OkStatus();
-}
-
 static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
     absl::string_view filename) {
 #ifndef _WIN32
@@ -239,12 +232,9 @@ absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
   }
 
   // Still here ? Well, let's try the traditional way
-  auto mem_block = std::make_unique<StringMemBlock>();
-  if (auto status = GetContents(filename, mem_block->mutable_content());
-      !status.ok()) {
-    return status;
-  }
-  return mem_block;
+  auto content_or = GetContentAsString(filename);
+  if (!content_or.ok()) return content_or.status();
+  return std::make_unique<StringMemBlock>(std::move(*content_or));
 }
 
 absl::Status SetContents(absl::string_view filename,

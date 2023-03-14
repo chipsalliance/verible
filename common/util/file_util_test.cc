@@ -138,47 +138,53 @@ TEST(FileUtil, CreateDir) {
   EXPECT_OK(file::CreateDir(test_dir));  // Creating twice should succeed
 
   EXPECT_OK(file::SetContents(test_file, test_content));
-  std::string read_back_content;
-  EXPECT_OK(file::GetContents(test_file, &read_back_content));
-  EXPECT_EQ(test_content, read_back_content);
+  absl::StatusOr<std::string> read_back_content_or =
+      file::GetContentAsString(test_file);
+  ASSERT_OK(read_back_content_or.status());
+  EXPECT_EQ(test_content, *read_back_content_or);
 }
 
 TEST(FileUtil, StatusErrorReporting) {
-  std::string content;
+  absl::StatusOr<std::string> content_or;
 
   // Reading contents from a non-existent file.
-  absl::Status status = file::GetContents("does-not-exist", &content);
-  EXPECT_FALSE(status.ok());
-  EXPECT_TRUE(absl::IsNotFound(status)) << status;
-  EXPECT_TRUE(absl::StartsWith(status.message(), "does-not-exist:"))
-      << "expect filename prefixed, but got " << status;
-  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound) << status;
+  content_or = file::GetContentAsString("does-not-exist");
+  EXPECT_FALSE(content_or.ok());
+  EXPECT_TRUE(absl::IsNotFound(content_or.status())) << content_or.status();
+  EXPECT_TRUE(
+      absl::StartsWith(content_or.status().message(), "does-not-exist:"))
+      << "expect filename prefixed, but got " << content_or.status();
 
   // Write/read roundtrip
   const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
   unlink(test_file.c_str());  // Remove file if left from previous test.
   EXPECT_OK(file::SetContents(test_file, "foo"));
-  EXPECT_OK(file::GetContents(test_file, &content));
-  EXPECT_EQ(content, "foo");
+  content_or = file::GetContentAsString(test_file);
+  EXPECT_OK(content_or.status());
+  EXPECT_EQ(*content_or, "foo");
 
   const std::string test_dir = file::JoinPath(testing::TempDir(), "test-dir");
   ASSERT_OK(file::CreateDir(test_dir));
 
   // Attempt to write to a directory as file.
-  status = file::SetContents(test_dir, "shouldn't write to directory");
-  EXPECT_FALSE(status.ok()) << status;
-  EXPECT_TRUE(absl::IsInvalidArgument(status) ||  // Unix reports this
-              absl::IsPermissionDenied(status))   // Windows this
-      << status;
-  EXPECT_TRUE(absl::StartsWith(status.message(), test_dir))
-      << "expect filename prefixed, but got " << status;
+  {
+    auto status = file::SetContents(test_dir, "shouldn't write to directory");
+    EXPECT_FALSE(status.ok()) << status;
+    EXPECT_TRUE(absl::IsInvalidArgument(status) ||  // Unix reports this
+                absl::IsPermissionDenied(status))   // Windows this
+        << status;
+    EXPECT_TRUE(absl::StartsWith(status.message(), test_dir))
+        << "expect filename prefixed, but got " << status;
+  }
 
   // Attempt to read a directory as file.
-  status = file::GetContents(test_dir, &content);
-  EXPECT_FALSE(status.ok());
-  EXPECT_TRUE(absl::IsInvalidArgument(status)) << status;
-  EXPECT_TRUE(absl::StartsWith(status.message(), test_dir))
-      << "expect filename prefixed, but got " << status;
+  {
+    content_or = file::GetContentAsString(test_dir);
+    EXPECT_FALSE(content_or.status().ok());
+    EXPECT_TRUE(absl::IsInvalidArgument(content_or.status()));
+    EXPECT_TRUE(absl::StartsWith(content_or.status().message(), test_dir))
+        << "expect filename prefixed, but got " << content_or.status();
+  }
 
 #ifndef _WIN32
   // The following chmod() is not working on Win32. So let's not use
@@ -189,14 +195,13 @@ TEST(FileUtil, StatusErrorReporting) {
   // will not manifest. Also if chmod() did not succeed. Skip in this case.
   if (geteuid() != 0 && chmod(test_file.c_str(), 0) == 0) {
     // Enforce a permission denied situation
-    content.clear();
-    status = file::GetContents(test_file, &content);
-    EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
+    content_or = file::GetContentAsString(test_file);
+    EXPECT_FALSE(content_or.ok())
+        << "Expected permission denied for " << test_file;
+    const absl::Status& status = content_or.status();
     EXPECT_TRUE(absl::IsPermissionDenied(status)) << status;
     EXPECT_TRUE(absl::StartsWith(status.message(), test_file))
         << "expect filename prefixed, but got " << status;
-
-    EXPECT_TRUE(content.empty()) << "'" << content << "'";
   }
 #endif
 }
@@ -204,9 +209,9 @@ TEST(FileUtil, StatusErrorReporting) {
 TEST(FileUtil, ScopedTestFile) {
   const absl::string_view test_content = "Hello World!";
   ScopedTestFile test_file(testing::TempDir(), test_content);
-  std::string read_back_content;
-  EXPECT_OK(file::GetContents(test_file.filename(), &read_back_content));
-  EXPECT_EQ(test_content, read_back_content);
+  auto read_back_content_or = file::GetContentAsString(test_file.filename());
+  ASSERT_TRUE(read_back_content_or.ok());
+  EXPECT_EQ(test_content, *read_back_content_or);
 }
 
 static ScopedTestFile TestFileGenerator(absl::string_view content) {

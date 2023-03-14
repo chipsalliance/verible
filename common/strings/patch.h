@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/strings/position.h"
@@ -33,9 +34,9 @@ namespace internal {
 // Forward declarations
 class FilePatch;
 
-// function interface like file::GetContents()
-using FileReaderFunction = std::function<absl::Status(
-    absl::string_view filename, std::string* contents)>;
+// function interface like file::GetContentAsString()
+using FileReaderFunction =
+    std::function<absl::StatusOr<std::string>(absl::string_view filename)>;
 
 // function interface like file::SetContents()
 using FileWriterFunction = std::function<absl::Status(

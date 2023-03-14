@@ -102,16 +102,14 @@ int main(int argc, char** argv) {
   }
 
   // Open both files.
-  std::string content1;
-  absl::Status status = verible::file::GetContents(args[1], &content1);
-  if (!status.ok()) {
-    std::cerr << args[1] << ": " << status << std::endl;
+  const auto content1_or = verible::file::GetContentAsString(args[1]);
+  if (!content1_or.ok()) {
+    std::cerr << args[1] << ": " << content1_or.status() << std::endl;
     return kUserErrorCode;
   }
-  std::string content2;
-  status = verible::file::GetContents(args[2], &content2);
-  if (!status.ok()) {
-    std::cerr << args[1] << ": " << status << std::endl;
+  const auto content2_or = verible::file::GetContentAsString(args[2]);
+  if (!content2_or.ok()) {
+    std::cerr << args[1] << ": " << content1_or.status() << std::endl;
     return kUserErrorCode;
   }
 
@@ -123,7 +121,7 @@ int main(int argc, char** argv) {
 
   // Compare.
   std::ostringstream errstream;
-  const auto diff_status = diff_func(content1, content2, &errstream);
+  const auto diff_status = diff_func(*content1_or, *content2_or, &errstream);
 
   // Signal result of comparison.
   switch (diff_status) {

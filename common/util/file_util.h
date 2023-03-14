@@ -71,10 +71,6 @@ absl::Status FileExists(const std::string& filename);
 // Read file "filename" and return its content as string.
 absl::StatusOr<std::string> GetContentAsString(absl::string_view filename);
 
-// Adapter method for the one above. To be removed after all call-sites have
-// been updated. Deprecated.
-absl::Status GetContents(absl::string_view filename, std::string* content);
-
 // Read file "filename" and store its content in MemBlock. Attempts to MemMap
 // first; if that fails, reads file regularly.
 absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(

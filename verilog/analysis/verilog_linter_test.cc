@@ -49,7 +49,7 @@ using ::testing::EndsWith;
 using ::testing::StartsWith;
 using verible::ViolationFixer;
 using verible::ViolationPrinter;
-using verible::file::GetContents;
+using verible::file::GetContentAsString;
 using verible::file::testing::ScopedTestFile;
 
 class DefaultLinterConfigTestFixture {
@@ -466,7 +466,10 @@ class ViolationFixerTest : public testing::Test {
     violation_fixer->HandleViolations(violations, text_structure.Contents(),
                                       temp_file.filename());
 
-    const auto ok = GetContents(temp_file.filename(), fixed_content);
+    if (auto content_or = GetContentAsString(temp_file.filename());
+        content_or.ok()) {
+      *fixed_content = std::move(*content_or);
+    }
     return lint_result.status();
   }
 
