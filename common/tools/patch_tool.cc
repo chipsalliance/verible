@@ -23,6 +23,7 @@
 #include "common/strings/patch.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/status_macros.h"
 #include "common/util/subcommand.h"
 #include "common/util/user_interaction.h"
 
@@ -41,9 +42,8 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
   if (!patch_content_or.ok()) return patch_content_or.status();
 
   verible::PatchSet patch_set;
-  if (auto status = patch_set.Parse(*patch_content_or); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(patch_set.Parse(*patch_content_or));
+
   const verible::FileLineNumbersMap changed_lines(
       patch_set.AddedLinesMap(false));
   for (const auto& file_lines : changed_lines) {
@@ -68,9 +68,8 @@ static absl::Status ApplyPick(const SubcommandArgsRange& args,
   if (!patch_contents_or.ok()) return patch_contents_or.status();
 
   verible::PatchSet patch_set;
-  if (auto status = patch_set.Parse(*patch_contents_or); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(patch_set.Parse(*patch_contents_or));
+
   return patch_set.PickApplyInPlace(ins, outs);
 }
 

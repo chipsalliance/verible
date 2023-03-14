@@ -20,6 +20,7 @@ cc_library(
         "//common/strings:random",
         "//common/text:token_info",
         "//common/util:logging",
+        "//common/util:status_macros",
         "//verilog/analysis:verilog_equivalence",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_token_enum",

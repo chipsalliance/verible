@@ -151,6 +151,7 @@ cc_library(
         "//common/util:iterator_adaptors",
         "//common/util:iterator_range",
         "//common/util:logging",
+        "//common/util:status_macros",
         "//common/util:user_interaction",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",

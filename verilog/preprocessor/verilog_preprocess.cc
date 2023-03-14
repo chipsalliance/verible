@@ -34,6 +34,7 @@
 #include "common/util/container_util.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
@@ -299,14 +300,9 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
 
   if (config_.expand_macros) {
     verible::MacroCall macro_call;
-    if (auto status =
-            ConsumeAndParseMacroCall(iter, generator, &macro_call, *found);
-        !status.ok()) {
-      return status;
-    }
-    if (auto status = ExpandMacro(macro_call, found); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(
+        ConsumeAndParseMacroCall(iter, generator, &macro_call, *found));
+    RETURN_IF_ERROR(ExpandMacro(macro_call, found));
   }
   auto& lexed = preprocess_data_.lexed_macros_backup.back();
   if (!forward) return absl::OkStatus();
@@ -366,10 +362,7 @@ absl::Status VerilogPreprocess::ExpandText(
     if (last_token.token_enum() == MacroIdentifier ||
         last_token.token_enum() == MacroIdItem ||
         last_token.token_enum() == MacroCallId) {
-      if (auto status = HandleMacroIdentifier(iter, iter_generator, false);
-          !status.ok()) {
-        return status;
-      }
+      RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
       auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
       for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
@@ -390,11 +383,8 @@ absl::Status VerilogPreprocess::ExpandMacro(
 
   std::map<absl::string_view, verible::DefaultTokenInfo> subs_map;
   if (macro_definition->IsCallable()) {
-    if (auto status = macro_definition->PopulateSubstitutionMap(
-            actual_parameters, &subs_map);
-        !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(macro_definition->PopulateSubstitutionMap(actual_parameters,
+                                                              &subs_map));
   }
 
   VerilogLexer lexer(macro_definition->DefinitionText().text());
@@ -424,10 +414,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
     if (last_token.token_enum() == MacroIdentifier ||
         last_token.token_enum() == MacroIdItem ||
         last_token.token_enum() == MacroCallId) {
-      if (auto status = HandleMacroIdentifier(iter, iter_generator, false);
-          !status.ok()) {
-        return status;
-      }
+      RETURN_IF_ERROR(HandleMacroIdentifier(iter, iter_generator, false));
       // merge the expanded macro tokens into 'expanded_lexed_sequence'
       auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
       for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
@@ -437,9 +424,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
       // Check if the last token is a formal parameter
       const auto* replacement = FindOrNull(subs_map, last_token.text());
       if (replacement) {
-        if (auto status = ExpandText(replacement->text()); !status.ok()) {
-          return status;
-        }
+        RETURN_IF_ERROR(ExpandText(replacement->text()));
         // merge the expanded macro tokens into 'expanded_lexed_sequence'
         auto& expanded_child = preprocess_data_.lexed_macros_backup.back();
         for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
@@ -459,10 +444,7 @@ absl::Status VerilogPreprocess::HandleDefine(
     const StreamIteratorGenerator& generator) {
   TokenStreamView define_tokens;
   define_tokens.push_back(*iter);
-  if (auto status = ConsumeMacroDefinition(generator, &define_tokens);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(ConsumeMacroDefinition(generator, &define_tokens));
   CHECK_GE(define_tokens.size(), 3)
       << "Macro definition should span at least 3 tokens, but only got "
       << define_tokens.size();

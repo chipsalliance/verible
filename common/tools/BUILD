@@ -17,6 +17,7 @@ cc_binary(
         "//common/strings:patch",
         "//common/util:file_util",
         "//common/util:init_command_line",
+        "//common/util:status_macros",
         "//common/util:subcommand",
         "//common/util:user_interaction",
         "@com_google_absl//absl/flags:usage",

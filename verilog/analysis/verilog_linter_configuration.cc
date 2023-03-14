@@ -36,6 +36,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
@@ -323,9 +324,7 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   UseRuleSet(options.ruleset);
 
   if (!options.config_file.empty()) {
-    if (auto status = AppendFromFile(options.config_file); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(AppendFromFile(options.config_file));
 
     if (options.rules_config_search) {
       std::cerr << "Explicit config file " << options.config_file

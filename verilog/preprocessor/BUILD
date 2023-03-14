@@ -23,6 +23,7 @@ cc_library(
         "//common/util:container_util",
         "//common/util:file_util",
         "//common/util:logging",
+        "//common/util:status_macros",
         "//verilog/analysis:verilog_filelist",
         "//verilog/parser:verilog_lexer",
         "//verilog/parser:verilog_parser",
