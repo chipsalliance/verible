@@ -25,6 +25,11 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/mem_block.h"
 
+// TODO(hzeller): All file interfaces are using a strings to represent
+// filenames so that the actual underlying implementation does not leak outside
+// (#include <filesystem> was not available when we started this as c++11.)
+// Might be worth reconsidering.
+
 namespace verible {
 namespace file {
 
@@ -63,7 +68,11 @@ absl::Status UpwardFileSearch(absl::string_view start,
 // Determines whether the given filename exists and is a regular file or pipe.
 absl::Status FileExists(const std::string& filename);
 
-// Read file "filename" and store its content in "content"
+// Read file "filename" and return its content as string.
+absl::StatusOr<std::string> GetContentAsString(absl::string_view filename);
+
+// Adapter method for the one above. To be removed after all call-sites have
+// been updated. Deprecated.
 absl::Status GetContents(absl::string_view filename, std::string* content);
 
 // Read file "filename" and store its content in MemBlock. Attempts to MemMap

@@ -89,6 +89,7 @@ static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
     case EEXIST:
       return {absl::StatusCode::kAlreadyExists, msg};
     case EINVAL:
+    case EISDIR:
       return {absl::StatusCode::kInvalidArgument, msg};
     default:
       return {absl::StatusCode::kUnknown, msg};
@@ -147,21 +148,22 @@ absl::Status FileExists(const std::string &filename) {
       absl::StrCat(filename, ": not a regular file."));
 }
 
-absl::Status GetContents(absl::string_view filename, std::string *content) {
+absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
+  std::string content;
   std::ifstream fs;
   std::istream *stream = nullptr;
   const bool use_stdin = filename == "-";  // convention: honor "-" as stdin
   if (use_stdin) {
     stream = &std::cin;
   } else {
-    const std::string filename_str = std::string(filename);
+    const std::string filename_str = std::string{filename};
     if (absl::Status status = FileExists(filename_str); !status.ok()) {
       return status;  // Bail
     }
     fs.open(filename_str.c_str());
     std::error_code err;
     const size_t prealloc = fs::file_size(filename_str, err);
-    if (err.value() == 0) content->reserve(prealloc);
+    if (err.value() == 0) content.reserve(prealloc);
     stream = &fs;
   }
   if (!stream->good()) {
@@ -170,11 +172,18 @@ absl::Status GetContents(absl::string_view filename, std::string *content) {
   char buffer[4096];
   while (stream->good() && !stream->eof()) {
     stream->read(buffer, sizeof(buffer));
-    content->append(buffer, stream->gcount());
+    content.append(buffer, stream->gcount());
   }
 
   // Allow stdin to be reopened for more input.
   if (use_stdin && std::cin.eof()) std::cin.clear();
+  return std::move(content);
+}
+
+absl::Status GetContents(absl::string_view filename, std::string *content) {
+  absl::StatusOr<std::string> content_or = GetContentAsString(filename);
+  if (!content_or.ok()) return content_or.status();
+  *content = std::move(*content_or);
   return absl::OkStatus();
 }
 
@@ -244,6 +253,8 @@ absl::Status SetContents(absl::string_view filename,
   std::ofstream f(std::string(filename).c_str());
   if (!f.good()) return CreateErrorStatusFromErrno(filename, "can't write.");
   f << content;
+  f.close();
+  if (!f.good()) return CreateErrorStatusFromErrno(filename, "closing.");
   return absl::OkStatus();
 }
 
