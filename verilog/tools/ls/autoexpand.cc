@@ -1088,7 +1088,13 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoDeclarations(
            << '\n';
   const int64_t length_before_emit = new_text.tellp();
   emit(module, new_text);
-  if (length_before_emit == new_text.tellp()) return {};
+  if (length_before_emit == new_text.tellp()) {
+    if (auto_span != comment_span) {
+      return Expansion{.replaced_span = auto_span,
+                       .new_text = std::string{comment_span}};
+    }
+    return {};
+  }
   new_text << "// End of automatics";
   return Expansion{.replaced_span = auto_span, .new_text = new_text.str()};
 }

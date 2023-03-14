@@ -1535,6 +1535,90 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandRemovePorts) {
+  TestTextEdits(
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2[4][8];  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b of bar
+  output [31:0] o2[8];  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b of bar
+  // End of automatics
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    // Outputs
+    o1
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b of bar
+  input i2[4][8];  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b of bar
+  // End of automatics
+  /*AUTOINOUT*/
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Outputs
+      .o1(o1[15:0])
+  );
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTO_ExpandPorts_AUTOARG_Order) {
   TestTextEdits(
 
