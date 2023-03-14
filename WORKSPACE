@@ -30,7 +30,7 @@ http_archive(
     # a string_view::iterator. This patch forces the use of absl's string_view
     # implementation to solve the issue
     patch_args = ["-p1"],
-    patches = ["//bazel:absl.patch"],
+    patches = ["//bazel:absl.patch", "//bazel:fix-uninitialized-var.patch"],
     sha256 = "e46fe4fd52b94dc344429b74b9520bead577f1db622def7a69bdefae6908836c",
     strip_prefix = "abseil-cpp-35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a",
     urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],

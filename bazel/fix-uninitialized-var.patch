@@ -1,0 +1,13 @@
+diff --git a/absl/base/call_once.h b/absl/base/call_once.h
+index 96109f53..08436bac 100644
+--- a/absl/base/call_once.h
++++ b/absl/base/call_once.h
+@@ -123,7 +123,7 @@ class SchedulingHelper {
+ 
+  private:
+   base_internal::SchedulingMode mode_;
+-  bool guard_result_;
++  bool guard_result_ = false;
+ };
+ 
+ // Bit patterns for call_once state machine values.  Internal implementation
