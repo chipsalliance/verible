@@ -145,18 +145,40 @@ TEST(FileUtil, CreateDir) {
 
 TEST(FileUtil, StatusErrorReporting) {
   std::string content;
+
+  // Reading contents from a non-existent file.
   absl::Status status = file::GetContents("does-not-exist", &content);
   EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::IsNotFound(status)) << status;
   EXPECT_TRUE(absl::StartsWith(status.message(), "does-not-exist:"))
       << "expect filename prefixed, but got " << status;
   EXPECT_EQ(status.code(), absl::StatusCode::kNotFound) << status;
 
+  // Write/read roundtrip
   const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
   unlink(test_file.c_str());  // Remove file if left from previous test.
   EXPECT_OK(file::SetContents(test_file, "foo"));
-
   EXPECT_OK(file::GetContents(test_file, &content));
   EXPECT_EQ(content, "foo");
+
+  const std::string test_dir = file::JoinPath(testing::TempDir(), "test-dir");
+  ASSERT_OK(file::CreateDir(test_dir));
+
+  // Attempt to write to a directory as file.
+  status = file::SetContents(test_dir, "shouldn't write to directory");
+  EXPECT_FALSE(status.ok()) << status;
+  EXPECT_TRUE(absl::IsInvalidArgument(status) ||  // Unix reports this
+              absl::IsPermissionDenied(status))   // Windows this
+      << status;
+  EXPECT_TRUE(absl::StartsWith(status.message(), test_dir))
+      << "expect filename prefixed, but got " << status;
+
+  // Attempt to read a directory as file.
+  status = file::GetContents(test_dir, &content);
+  EXPECT_FALSE(status.ok());
+  EXPECT_TRUE(absl::IsInvalidArgument(status)) << status;
+  EXPECT_TRUE(absl::StartsWith(status.message(), test_dir))
+      << "expect filename prefixed, but got " << status;
 
 #ifndef _WIN32
   // The following chmod() is not working on Win32. So let's not use
@@ -170,7 +192,7 @@ TEST(FileUtil, StatusErrorReporting) {
     content.clear();
     status = file::GetContents(test_file, &content);
     EXPECT_FALSE(status.ok()) << "Expected permission denied for " << test_file;
-    EXPECT_EQ(status.code(), absl::StatusCode::kPermissionDenied) << status;
+    EXPECT_TRUE(absl::IsPermissionDenied(status)) << status;
     EXPECT_TRUE(absl::StartsWith(status.message(), test_file))
         << "expect filename prefixed, but got " << status;
 
