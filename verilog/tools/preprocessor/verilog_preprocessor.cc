@@ -55,9 +55,11 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
         "Missing file argument.  Use '-' for stdin.");
   }
   const absl::string_view source_file = files[0];
-  std::string source_contents;
-  RETURN_IF_ERROR(verible::file::GetContents(source_file, &source_contents));
-
+  absl::StatusOr<std::string> source_contents_or =
+      verible::file::GetContentAsString(source_file);
+  if (!source_contents_or.ok()) {
+    return source_contents_or.status();
+  }
   char replace_char;
   if (args.size() == 1) {
     replace_char = ' ';
@@ -75,7 +77,7 @@ static absl::Status StripComments(const SubcommandArgsRange& args,
     return absl::InvalidArgumentError("Too many arguments.");
   }
 
-  verilog::StripVerilogComments(source_contents, &outs, replace_char);
+  verilog::StripVerilogComments(*source_contents_or, &outs, replace_char);
 
   return absl::OkStatus();
 }
@@ -84,11 +86,11 @@ static absl::Status PreprocessSingleFile(
     absl::string_view source_file,
     const verilog::FileList::PreprocessingInfo& preprocessing_info,
     std::ostream& outs, std::ostream& message_stream) {
-  std::string source_contents;
-  if (auto status = verible::file::GetContents(source_file, &source_contents);
-      !status.ok()) {
-    message_stream << source_file << status;
-    return status;
+  absl::StatusOr<std::string> source_contents_or =
+      verible::file::GetContentAsString(source_file);
+  if (!source_contents_or.ok()) {
+    message_stream << source_file << source_contents_or.status();
+    return source_contents_or.status();
   }
   verilog::VerilogPreprocess::Config config;
   config.filter_branches = true;
@@ -109,7 +111,7 @@ static absl::Status PreprocessSingleFile(
   // Setting the preprocessing info (defines, and incdirs) in the preprocessor.
   preprocessor.setPreprocessingInfo(preprocessing_info);
 
-  verilog::VerilogLexer lexer(source_contents);
+  verilog::VerilogLexer lexer(*source_contents_or);
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
@@ -179,15 +181,15 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
         "ERROR: generate-variants only works on one file.");
   }
   const auto& source_file = files[0];
-  std::string source_contents;
-  if (auto status = verible::file::GetContents(source_file, &source_contents);
-      !status.ok()) {
-    message_stream << source_file << status;
-    return status;
+  absl::StatusOr<std::string> source_contents_or =
+      verible::file::GetContentAsString(source_file);
+  if (!source_contents_or.ok()) {
+    message_stream << source_file << source_contents_or.status();
+    return source_contents_or.status();
   }
 
   // Lexing the input SV source code.
-  verilog::VerilogLexer lexer(source_contents);
+  verilog::VerilogLexer lexer(*source_contents_or);
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {

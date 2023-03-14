@@ -295,12 +295,12 @@ absl::Status LinterConfiguration::AppendFromFile(
   // Read local configuration file
   std::string content;
 
-  absl::Status config_read_status =
-      verible::file::GetContents(config_filename, &content);
-  if (config_read_status.ok()) {
+  absl::StatusOr<std::string> config_or =
+      verible::file::GetContentAsString(config_filename);
+  if (config_or.ok()) {
     RuleBundle local_rules_bundle;
     std::string error;
-    if (local_rules_bundle.ParseConfiguration(content, '\n', &error)) {
+    if (local_rules_bundle.ParseConfiguration(*config_or, '\n', &error)) {
       if (!error.empty()) {
         std::cerr << "Warnings in parse configuration: " << error << std::endl;
       }
@@ -312,7 +312,7 @@ absl::Status LinterConfiguration::AppendFromFile(
     return absl::OkStatus();
   }
 
-  return config_read_status;
+  return config_or.status();
 }
 
 absl::Status LinterConfiguration::ConfigureFromOptions(

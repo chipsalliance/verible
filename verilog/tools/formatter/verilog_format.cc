@@ -141,11 +141,11 @@ static bool formatOneFile(absl::string_view filename,
   const auto diagnostic_filename = is_stdin ? stdin_name : filename;
 
   // Read contents into memory first.
-  std::string content;
-  if (absl::Status status = verible::file::GetContents(filename, &content);
-      !status.ok()) {
+  const absl::StatusOr<std::string> content_or =
+      verible::file::GetContentAsString(filename);
+  if (!content_or.ok()) {
     // Not using FileMsg(): file status already has filename attached.
-    std::cerr << status.message() << std::endl;
+    std::cerr << content_or.status().message() << std::endl;
     return false;
   }
 
@@ -176,14 +176,14 @@ static bool formatOneFile(absl::string_view filename,
 
   std::ostringstream stream;
   const auto format_status =
-      FormatVerilog(content, diagnostic_filename, format_style, stream,
+      FormatVerilog(*content_or, diagnostic_filename, format_style, stream,
                     lines_to_format, formatter_control);
 
   const std::string& formatted_output(stream.str());
   if (!format_status.ok()) {
     if (!inplace) {
       // Fall back to printing original content regardless of error condition.
-      std::cout << content;
+      std::cout << *content_or;
     }
     switch (format_status.code()) {
       case StatusCode::kCancelled:
@@ -208,7 +208,7 @@ static bool formatOneFile(absl::string_view filename,
   if (inplace && !is_stdin) {
     // Don't write if the output is exactly as the input, so that we don't mess
     // with tools that look for timestamp changes (such as make).
-    if (content != formatted_output) {
+    if (*content_or != formatted_output) {
       if (auto status = verible::file::SetContents(filename, formatted_output);
           !status.ok()) {
         FileMsg(filename) << "error writing result " << status << std::endl;

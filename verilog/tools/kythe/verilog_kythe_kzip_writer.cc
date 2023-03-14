@@ -69,14 +69,13 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
   }
 
   // Load file list.
-  std::string filelist_content;
-  const auto read_status =
-      verible::file::GetContents(filelist_path, &filelist_content);
-  CHECK(read_status.ok()) << "Failed to open the file list at "
-                          << filelist_path;
+  const absl::StatusOr<std::string> filelist_content_or =
+      verible::file::GetContentAsString(filelist_path);
+  CHECK(filelist_content_or.ok())
+      << "Failed to open the file list at " << filelist_path;
   verilog::FileList filelist;
   if (auto status = verilog::AppendFileListFromContent(
-          filelist_path, filelist_content, &filelist);
+          filelist_path, *filelist_content_or, &filelist);
       !status.ok()) {
     LOG(ERROR) << "Filelist parse error " << status;
     return 1;
@@ -111,14 +110,13 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
   *filelist_input->mutable_info()->mutable_path() = "filelist";
   *filelist_input->mutable_info()->mutable_digest() = filelist_digest;
   for (const std::string& file_path : file_paths) {
-    std::string content;
-    auto file_read_status = verible::file::GetContents(file_path, &content);
-    if (!file_read_status.ok()) {
+    auto content_or = verible::file::GetContentAsString(file_path);
+    if (!content_or.ok()) {
       LOG(ERROR) << "Failed to open " << file_path
-                 << ". Error: " << file_read_status;
+                 << ". Error: " << content_or.status();
       continue;
     }
-    const std::string digest = kzip.AddSourceFile(file_path, content);
+    const std::string digest = kzip.AddSourceFile(file_path, *content_or);
     auto* file_input = unit->add_required_input();
     *file_input->mutable_info()->mutable_path() = file_path;
     *file_input->mutable_info()->mutable_digest() = digest;

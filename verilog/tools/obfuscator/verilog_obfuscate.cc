@@ -88,15 +88,14 @@ Output is written to stdout.
   const auto& load_map_file = absl::GetFlag(FLAGS_load_map);
   const auto& save_map_file = absl::GetFlag(FLAGS_save_map);
   if (!load_map_file.empty()) {
-    std::string load_map_content;
-    absl::Status status =
-        verible::file::GetContents(load_map_file, &load_map_content);
-    if (!status.ok()) {
+    absl::StatusOr<std::string> load_map_content_or =
+        verible::file::GetContentAsString(load_map_file);
+    if (!load_map_content_or.ok()) {
       std::cerr << "Error reading --load_map file " << load_map_file << ": "
-                << status << std::endl;
+                << load_map_content_or.status() << std::endl;
       return 1;
     }
-    status = subst.load(load_map_content);
+    const absl::Status status = subst.load(*load_map_content_or);
     if (!status.ok()) {
       std::cerr << "Error parsing --load_map file: " << load_map_file << '\n'
                 << status.message() << std::endl;
@@ -108,8 +107,8 @@ Output is written to stdout.
   }
 
   // Read from stdin.
-  std::string content;
-  if (!verible::file::GetContents("-", &content).ok()) {
+  auto content_or = verible::file::GetContentAsString("-");
+  if (!content_or.ok()) {
     return 1;
   }
 
@@ -120,7 +119,7 @@ Output is written to stdout.
   if (preserve_interface) {
     std::set<std::string> preserved;
     const auto status = verilog::analysis::CollectInterfaceNames(
-        content, &preserved, verilog::VerilogPreprocess::Config());
+        *content_or, &preserved, verilog::VerilogPreprocess::Config());
     if (!status.ok()) {
       std::cerr << status.message();
       return 1;
@@ -138,7 +137,8 @@ Output is written to stdout.
 
   // Encode/obfuscate.  Also verifies decode-ability.
   std::ostringstream output;  // result buffer
-  const auto status = verilog::ObfuscateVerilogCode(content, &output, &subst);
+  const auto status =
+      verilog::ObfuscateVerilogCode(*content_or, &output, &subst);
   if (!status.ok()) {
     std::cerr << status.message();
     return 1;

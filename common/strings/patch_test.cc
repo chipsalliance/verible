@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -1032,10 +1033,9 @@ class FilePatchPickApplyTest : public FilePatch, public ::testing::Test {
     return Parse(range);
   }
 
-  static absl::Status NullFileReader(absl::string_view filename,
-                                     std::string* contents) {
-    contents->clear();
-    return absl::OkStatus();
+  static absl::StatusOr<std::string> NullFileReader(
+      absl::string_view filename) {
+    return "";
   }
 
   static absl::Status NullFileWriter(absl::string_view filename,
@@ -1072,8 +1072,8 @@ struct ReadStringFileSequence : public StringFileSequence {
   ReadStringFileSequence(std::initializer_list<StringFile> files)
       : StringFileSequence(files) {}
 
-  // like file::GetContents()
-  absl::Status operator()(absl::string_view filename, std::string* dest) {
+  // like file::GetContentAsString()
+  absl::StatusOr<std::string> operator()(absl::string_view filename) {
     // ASSERT_LT(i, files_.size());  // can't use ASSERT_* which returns void
     if (index_ >= files_.size()) {
       return absl::OutOfRangeError(
@@ -1081,9 +1081,8 @@ struct ReadStringFileSequence : public StringFileSequence {
     }
     const auto& file = files_[index_];
     EXPECT_EQ(filename, file.path) << " at index " << index_;
-    dest->assign(file.contents.begin(), file.contents.end());
     ++index_;
-    return absl::OkStatus();  // "file" is successfully read
+    return std::string{file.contents};
   }
 };
 
@@ -1115,9 +1114,8 @@ TEST_F(FilePatchPickApplyTest, ErrorReadingFile) {
   std::istringstream ins;
   std::ostringstream outs;
   constexpr absl::string_view kErrorMessage = "File not found.";
-  auto error_file_reader = [=](absl::string_view filename,
-                               std::string* contents) {
-    return absl::NotFoundError(kErrorMessage);
+  auto error_file_reader = [=](absl::string_view filename) {
+    return absl::StatusOr<std::string>(absl::NotFoundError(kErrorMessage));
   };
   const auto status = PickApply(ins, outs, error_file_reader, &NullFileWriter);
   EXPECT_FALSE(status.ok());

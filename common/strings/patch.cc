@@ -396,7 +396,7 @@ absl::Status FilePatch::VerifyAgainstOriginalLines(
 
 absl::Status FilePatch::PickApplyInPlace(std::istream& ins,
                                          std::ostream& outs) const {
-  return PickApply(ins, outs, &file::GetContents, &file::SetContents);
+  return PickApply(ins, outs, &file::GetContentAsString, &file::SetContents);
 }
 
 absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
@@ -410,10 +410,8 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // If we had control over diff/patch generation, then we could rely on the
   // original diff structure/stream to provide original contents.
   // Below, we VerifyAgainstOriginalLines for all hunks in this FilePatch.
-  std::string original_file;
-  if (auto status = file_reader(old_file_.path, &original_file); !status.ok()) {
-    return status;
-  }
+  const absl::StatusOr<std::string> orig_file_or = file_reader(old_file_.path);
+  if (!orig_file_or.ok()) return orig_file_or.status();
 
   if (!hunks_.empty()) {
     // Display the file being processed, if there are any hunks.
@@ -421,7 +419,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
     outs << "+++ " << new_file_.path << std::endl;
   }
 
-  const std::vector<absl::string_view> orig_lines(SplitLines(original_file));
+  const std::vector<absl::string_view> orig_lines(SplitLines(*orig_file_or));
   if (auto status = VerifyAgainstOriginalLines(orig_lines); !status.ok()) {
     return status;
   }
@@ -685,7 +683,7 @@ FileLineNumbersMap PatchSet::AddedLinesMap(bool new_file_ranges) const {
 
 absl::Status PatchSet::PickApplyInPlace(std::istream& ins,
                                         std::ostream& outs) const {
-  return PickApply(ins, outs, &file::GetContents, &file::SetContents);
+  return PickApply(ins, outs, &file::GetContentAsString, &file::SetContents);
 }
 
 absl::Status PatchSet::PickApply(

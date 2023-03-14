@@ -80,10 +80,9 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
 
 absl::Status AppendFileListFromFile(absl::string_view file_list_file,
                                     FileList* append_to) {
-  std::string content;
-  auto read_status = verible::file::GetContents(file_list_file, &content);
-  if (!read_status.ok()) return read_status;
-  return AppendFileListFromContent(file_list_file, content, append_to);
+  auto content_or = verible::file::GetContentAsString(file_list_file);
+  if (!content_or.ok()) return content_or.status();
+  return AppendFileListFromContent(file_list_file, *content_or, append_to);
 }
 
 absl::Status AppendFileListFromCommandline(
