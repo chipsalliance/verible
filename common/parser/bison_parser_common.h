@@ -57,7 +57,7 @@ namespace verible {
 int LexAdapter(SymbolPtr* value, ParserParam* param);
 
 // Calls to yyerror() in generated code will be redirected hee.
-void ParseError(const ParserParam* praram, const char* function_name,
+void ParseError(const ParserParam* param, const char* function_name,
                 const char* message);
 
 }  // namespace verible
