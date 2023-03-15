@@ -29,8 +29,10 @@
 
 namespace verible {
 
-ParserParam::ParserParam(TokenGenerator* token_stream)
+ParserParam::ParserParam(TokenGenerator* token_stream,
+                         absl::string_view filename)
     : token_stream_(token_stream),
+      filename_(filename),
       last_token_(TokenInfo::EOFToken()),
       max_used_stack_size_(0) {}
 
@@ -44,7 +46,7 @@ const TokenInfo& ParserParam::FetchToken() {
 void ParserParam::RecordSyntaxError(const SymbolPtr& symbol_ptr) {
   const auto* leaf = down_cast<const SyntaxTreeLeaf*>(symbol_ptr.get());
   const auto token = leaf->get();
-  VLOG(1) << "recovered syntax error: " << token;
+  VLOG(1) << filename_ << ": recovered syntax error: " << token;
   recovered_syntax_errors_.push_back(token);
 }
 

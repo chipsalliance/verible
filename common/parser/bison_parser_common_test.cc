@@ -52,7 +52,7 @@ class MockLexer : public Lexer {
 TEST(BisonParserCommonTest, LexTest) {
   MockLexer lexer;
   auto generator = MakeTokenGenerator(&lexer);
-  ParserParam parser_param(&generator);
+  ParserParam parser_param(&generator, "<file>");
   SymbolPtr value;
   const int token_enum = verible::LexAdapter(&value, &parser_param);
   const TokenInfo& t(parser_param.GetLastToken());

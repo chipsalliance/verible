@@ -34,12 +34,16 @@ namespace verible {
 // check it in the .yc (yacc) grammar file.
 using bison_state_int_type = int16_t;
 
+// TODO(hzeller): Naming. Very generic name; unclear what this class does from
+// the name alone (naming derived because it is passed as %param to bison).
 class ParserParam {
   using StateStack = std::vector<bison_state_int_type>;
   using ValueStack = std::vector<SymbolPtr>;
 
  public:
-  explicit ParserParam(TokenGenerator* token_stream);
+  // The "filename" is merely to have better error messages, it is purely
+  // FYI, does not change processing.
+  ParserParam(TokenGenerator* token_stream, absl::string_view filename);
 
   ~ParserParam();
 
@@ -50,6 +54,9 @@ class ParserParam {
   // Save a copy of the offending token before bison error-recovery
   // discards it.
   void RecordSyntaxError(const SymbolPtr& symbol_ptr);
+
+  // Filename being processed, if known.
+  absl::string_view filename() const { return filename_; }
 
   const std::vector<TokenInfo>& RecoveredSyntaxErrors() const {
     return recovered_syntax_errors_;
@@ -90,7 +97,9 @@ class ParserParam {
   // error-recovery is complete and parsing resumes (for diagnostic purposes).
   std::vector<TokenInfo> recovered_syntax_errors_;
 
-  TokenGenerator* token_stream_;
+  TokenGenerator* const token_stream_;
+  const std::string filename_;
+
   TokenInfo last_token_;
   ConcreteSyntaxTree root_;
 

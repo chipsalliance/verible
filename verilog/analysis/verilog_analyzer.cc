@@ -289,7 +289,7 @@ absl::Status VerilogAnalyzer::Analyze() {
   }
 
   auto generator = MakeTokenViewer(Data().GetTokenStreamView());
-  VerilogParser parser(&generator);
+  VerilogParser parser(&generator, filename_);
   parse_status_ = FileAnalyzer::Parse(&parser);
   // Here would be appropriate for analyzing the syntax tree.
   max_used_stack_size_ = parser.MaxUsedStackSize();
