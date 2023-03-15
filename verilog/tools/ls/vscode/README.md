@@ -26,5 +26,15 @@ The language server provides a couple of features from the [Verible SystemVerilo
    * **[&#x1F389; New]** `AUTOREG` – declares regs for outputs not connected to
      any module instance.
 
+## Prerequisite on your machine
+
+The Verible plug-in needs the `verible-verilog-ls` executable installed
+on your machine.
+
+Get a binary distribution for your Operating System at
+https://github.com/chipsalliance/verible/releases
+
+Alternatively, [build Verible from source](https://github.com/chipsalliance/verible#build).
+
 ## Filing Issues
 File bugs on the public [github issue tracker](https://github.com/chipsalliance/verible/issues/new/choose). Provide (sanitized) code examples if needed to illustrate an issue.
