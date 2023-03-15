@@ -57,7 +57,8 @@ namespace verible {
 int LexAdapter(SymbolPtr* value, ParserParam* param);
 
 // Calls to yyerror() in generated code will be redirected hee.
-void ParseError(const char* function_name, const char* message);
+void ParseError(const ParserParam* praram, const char* function_name,
+                const char* message);
 
 }  // namespace verible
 
@@ -80,7 +81,7 @@ inline void yyerror(verible::ParserParam* param, const char* message) {
   // TODO(fangism): record and accumulate multiple errors with error recovery.
   // TODO(fangism): pass in ParserParam reference to save errors, and analyze
   //   stack state.  This may need to be refactored per-language.
-  verible::ParseError(AS_STRING(yyparse), message);
+  verible::ParseError(param, AS_STRING(yyparse), message);
 }
 
 #endif  // VERIBLE_COMMON_PARSER_BISON_PARSER_COMMON_H_

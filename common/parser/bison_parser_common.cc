@@ -36,8 +36,10 @@ int LexAdapter(SymbolPtr* value, ParserParam* param) {
 
 // Error-reporting function.
 // Called by Bison-generated parser when a recognition error occurs.
-void ParseError(const char* function_name, const char* message) {
-  VLOG(1) << function_name << " error: " << message;
+void ParseError(const ParserParam* param, const char* function_name,
+                const char* message) {
+  VLOG(1) << param->filename() << ": " << function_name
+          << " error: " << message;
   // Bison's default and 'verbose' error messages are uninformative.
   // TODO(fangism): print information about rejected token,
   //   by examining parser stacks (have to pass in stack information).

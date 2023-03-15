@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lexer/token_generator.h"
 #include "common/parser/parse.h"
 #include "common/parser/parser_param.h"
@@ -40,8 +41,10 @@ namespace verible {
 template <int (*ParseFunc)(ParserParam*)>
 class BisonParserAdapter : public Parser {
  public:
-  explicit BisonParserAdapter(TokenGenerator* token_generator)
-      : Parser(), param_(token_generator) {}
+  // Filename purely FYI.
+  BisonParserAdapter(TokenGenerator* token_generator,
+                     absl::string_view filename)
+      : Parser(), param_(token_generator, filename) {}
 
   absl::Status Parse() final {
     int result = ParseFunc(&param_);
