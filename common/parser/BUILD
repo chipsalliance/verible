@@ -20,6 +20,7 @@ cc_library(
         "//common/text:concrete_syntax_tree",
         "//common/text:token_info",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
