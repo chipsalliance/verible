@@ -287,10 +287,18 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   // Symbol not found
   if (!node) return {};
+  std::vector<verible::lsp::Location> locations;
   std::optional<verible::lsp::Location> location =
       GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
   if (!location) return {};
-  return {*location};
+  locations.push_back(*location);
+  for (const auto &supplement_definition :
+       node->Value().supplement_definitions) {
+    std::optional<verible::lsp::Location> loc = GetLocationFromSymbolName(
+        supplement_definition, node->Value().file_origin);
+    if (loc) locations.push_back(*loc);
+  }
+  return locations;
 }
 
 const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
