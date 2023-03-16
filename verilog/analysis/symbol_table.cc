@@ -604,12 +604,6 @@ class SymbolTable::Builder : public TreeContextVisitor {
       return;
     }
     if (Context().DirectParentsAre(
-            {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration}) ||
-        Context().DirectParentsAre(
-            {NodeEnum::kUnqualifiedId,
-             NodeEnum::kDataTypeImplicitBasicIdDimensions,
-             NodeEnum::kPortItem}) ||
-        Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kModulePortDeclaration}) ||
         Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kIdentifierUnpackedDimensions,
@@ -620,6 +614,20 @@ class SymbolTable::Builder : public TreeContextVisitor {
         Context().DirectParentsAre({NodeEnum::kPortIdentifier,
                                     NodeEnum::kPortIdentifierList,
                                     NodeEnum::kModulePortDeclaration})) {
+      // This identifier declares a (non-parameter) port (of a module,
+      // function, task).
+      EmplacePortIdentifierInCurrentScope(
+          leaf, text, SymbolMetaType::kDataNetVariableInstance);
+      // TODO(fangism): Add attributes to distinguish public ports from
+      // private internals members.
+      return;
+    }
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration}) ||
+        Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId,
+             NodeEnum::kDataTypeImplicitBasicIdDimensions,
+             NodeEnum::kPortItem})) {
       // This identifier declares a (non-parameter) port (of a module,
       // function, task).
       EmplaceTypedElementInCurrentScope(
@@ -984,7 +992,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
                                                 SymbolMetaType metatype) {
     const auto p = current_scope_->TryEmplace(
         name, SymbolInfo{metatype, source_, &element});
-    if (!p.second) {
+    if (!p.second && p.first->second.Value().is_port_identifier) {
+      p.first->second.Value().supplement_definitions.push_back(name);
+    } else if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->second);
     }
     return &p.first->second;  // scope of the new (or pre-existing symbol)
@@ -1005,8 +1015,34 @@ class SymbolTable::Builder : public TreeContextVisitor {
                   // associate this instance with its declared type
                   *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
               });
-    if (!p.second) {
+    if (!p.second && p.first->second.Value().is_port_identifier) {
+      p.first->second.Value().supplement_definitions.push_back(name);
+    } else if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->second);
+    }
+    VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
+    return p.first->second;  // scope of the new (or pre-existing symbol)
+  }
+
+  // Creates a port identifier element in the current scope.
+  // Suitable for SystemVerilog module port declarations, where
+  // there are multiple lines defining the symbol.
+  SymbolTableNode& EmplacePortIdentifierInCurrentScope(
+      const verible::Symbol& element, absl::string_view name,
+      SymbolMetaType metatype) {
+    VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
+    VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
+    VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
+    const auto p = current_scope_->TryEmplace(
+        name, SymbolInfo{
+                  metatype, source_, &element,
+                  // associate this instance with its declared type
+                  *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
+              });
+    p.first->second.Value().is_port_identifier = true;
+    if (!p.second) {
+      // the symbol was already defined, add it to supplement_definitions
+      p.first->second.Value().supplement_definitions.push_back(name);
     }
     VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)

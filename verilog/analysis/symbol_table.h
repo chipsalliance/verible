@@ -280,6 +280,15 @@ struct SymbolInfo {
   // Reminder: Parts of the syntax tree may originate from included files.
   const verible::Symbol* syntax_origin = nullptr;
 
+  // vector to additional definition entries, e.g. for port definitions
+  // TODO (glatosinski): I guess we should include more information here rather
+  // than just string_view pointing to the symbol, or add string_view pointing
+  // to the symbol in the Symbol class
+  std::vector<absl::string_view> supplement_definitions;
+
+  // bool telling if the given symbol is a port identifier
+  bool is_port_identifier = false;
+
   // What is the type associated with this symbol?
   // Only applicable to typed elements: variables, nets, instances,
   // typedefs, etc.
