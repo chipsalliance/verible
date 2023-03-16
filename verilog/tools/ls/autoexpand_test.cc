@@ -1535,6 +1535,236 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPortsMultipleConnections) {
+  // This mostly works, but the dimensions are not correct: the generated ports'
+  // dimensions should be the maximum of the dimensions of all ports connected
+  // to them.
+  // TODO: Calculate proper dimensions for generated ports.
+  TestTextEdits(
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b1 (  /*AUTOINST*/);
+  bar b2 (  /*AUTOINST*/);
+  bar b3 (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b1 of bar, ...
+  input i2[4][8];  // To b1 of bar, ...
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b1 of bar, ...
+  output [31:0] o2[8];  // From b1 of bar, ...
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b1 of bar, ...
+  // End of automatics
+
+  bar b1 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+  bar b2 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+  bar b3 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandPortsMultipleConnectionsWithAUTO_TEMPLATE) {
+  TestTextEdits(
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  /* bar AUTO_TEMPLATE (
+         .i1(in_a[]),
+         .o2(out_b[])
+     ); */
+  bar b1 (  /*AUTOINST*/);
+  bar b2 (  /*AUTOINST*/);
+  bar b3 (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    in_a,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    out_b
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input in_a;  // To b1 of bar, ...
+  input i2[4][8];  // To b1 of bar, ...
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b1 of bar, ...
+  output [31:0] out_b[8];  // From b1 of bar, ...
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b1 of bar, ...
+  // End of automatics
+
+  /* bar AUTO_TEMPLATE (
+         .i1(in_a[]),
+         .o2(out_b[])
+     ); */
+  bar b1 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+  bar b2 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+  bar b3 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTO_ExpandRemovePorts) {
   TestTextEdits(
       R"(

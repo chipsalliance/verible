@@ -108,8 +108,8 @@ class AutoExpander {
     absl::string_view name;   // Name of the port
     absl::string_view::const_iterator it;  // Location of the port's declaration
                                            // in the source file
-    std::optional<ConnectedInstance> conn_inst;  // (Optional) What instance is
-                                                 // it connected to?
+    std::vector<ConnectedInstance> conn_inst;            // What instances is
+                                                         // it connected to?
     std::vector<absl::string_view> packed_dimensions;    // Spans of this port's
                                                          // packed dimensions
     std::vector<absl::string_view> unpacked_dimensions;  // Spans of this port's
@@ -126,7 +126,7 @@ class AutoExpander {
     void EmitConnectionComment(std::ostream &output) const;
 
     // Returns true if the port is connected to any instance
-    bool IsConnected() const { return conn_inst.has_value(); }
+    bool IsConnected() const { return !conn_inst.empty(); }
   };
 
   // Represents an AUTO_TEMPLATE
@@ -193,7 +193,7 @@ class AutoExpander {
     // name, direction, and connection
     void AddGeneratedConnection(
         absl::string_view port_name, Port::Direction direction,
-        const ConnectedInstance &connection,
+        const ConnectedInstance &connected,
         const std::vector<absl::string_view> &packed_dimensions,
         const std::vector<absl::string_view> &unpacked_dimensions);
 
@@ -487,23 +487,27 @@ void AutoExpander::Port::EmitIdWithDimensions(std::ostream &output) const {
 }
 
 void AutoExpander::Port::EmitConnectionComment(std::ostream &output) const {
-  if (!conn_inst) return;
+  if (conn_inst.empty()) return;
   switch (direction) {
     case Direction::kInput:
-      output << "  // To " << conn_inst->instance << " of " << conn_inst->type;
+      output << "  // To " << conn_inst[0].instance << " of "
+             << conn_inst[0].type;
       break;
     case Direction::kInout:
-      output << "  // To/From " << conn_inst->instance << " of "
-             << conn_inst->type;
+      output << "  // To/From " << conn_inst[0].instance << " of "
+             << conn_inst[0].type;
       break;
     case Direction::kOutput:
-      output << "  // From " << conn_inst->instance << " of "
-             << conn_inst->type;
+      output << "  // From " << conn_inst[0].instance << " of "
+             << conn_inst[0].type;
       break;
     default:
       LOG(ERROR) << "Incorrect port direction";
-      break;
+      return;
   }
+  if (conn_inst.size() > 1) output << ", ...";
+  // TODO: Print as many instance names as we can without going against the
+  // formatter?
 }
 
 void AutoExpander::Module::EmitNonAnsiPortList(
@@ -630,17 +634,21 @@ void AutoExpander::Module::GenerateConnections(
 
 void AutoExpander::Module::AddGeneratedConnection(
     const absl::string_view port_name, const Port::Direction direction,
-    const ConnectedInstance &connection,
+    const ConnectedInstance &connected,
     const std::vector<absl::string_view> &packed_dimensions,
     const std::vector<absl::string_view> &unpacked_dimensions) {
   for (Port &port : ports_) {
     if (port.name == port_name) {
-      port.conn_inst = connection;
+      port.conn_inst.push_back(connected);
       return;
     }
   }
-  ports_.push_back({direction, Port::Declaration::kUndeclared, port_name,
-                    nullptr, connection, packed_dimensions,
+  ports_.push_back({direction,
+                    Port::Declaration::kUndeclared,
+                    port_name,
+                    nullptr,
+                    {connected},
+                    packed_dimensions,
                     unpacked_dimensions});
 }
 
