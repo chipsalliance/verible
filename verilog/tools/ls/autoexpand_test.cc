@@ -2392,6 +2392,186 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTOWIRE_InterInstance) {
+  TestTextEdits(
+      R"(
+module bar (
+    output y
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  y
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOREG*/
+
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+  quux qu (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    output y
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  y
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire y;  // To/From q of qux, ..
+  // End of automatics
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input x;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output z;  // From qu of quux
+  // End of automatics
+  /*AUTOREG*/
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .x(x),
+      // Outputs
+      .y(y)
+  );
+  qux q (  /*AUTOINST*/
+      // Inouts
+      .y(y)
+  );
+  quux qu (  /*AUTOINST*/
+      // Inputs
+      .y(y),
+      // Outputs
+      .z(z)
+  );
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOWIRE_InterInstanceWithAUTO_TEMPLATE) {
+  TestTextEdits(
+      R"(
+module bar (
+    output a
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  b
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOREG*/
+
+  /* bar  AUTO_TEMPLATE
+     qux  AUTO_TEMPLATE
+     quux AUTO_TEMPLATE (
+         .a(y),
+         .b(y),
+     ); */
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+  quux qu (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    output a
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  b
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire y;  // To/From q of qux, ..
+  // End of automatics
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input x;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output z;  // From qu of quux
+  // End of automatics
+  /*AUTOREG*/
+
+  /* bar  AUTO_TEMPLATE
+     qux  AUTO_TEMPLATE
+     quux AUTO_TEMPLATE (
+         .a(y),
+         .b(y),
+     ); */
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .x(x),
+      // Outputs
+      .a(y)
+  );
+  qux q (  /*AUTOINST*/
+      // Inouts
+      .b(y)
+  );
+  quux qu (  /*AUTOINST*/
+      // Inputs
+      .y(y),
+      // Outputs
+      .z(z)
+  );
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTOREG_ExpandEmpty) {
   TestTextEdits(
       R"(
