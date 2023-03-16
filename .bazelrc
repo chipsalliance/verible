@@ -12,7 +12,7 @@ common:linux --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXX
 
 # https://github.com/abseil/abseil-cpp/issues/848
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
-common:macos --features=-supports_dynamic_linker --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:macos --features=-supports_dynamic_linker --linkopt=-framework --linkopt=CoreFoundation --host_linkopt=-framework --host_linkopt=CoreFoundation --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
 
 # Force the use clang-cl on Windows instead of MSVC. MSVC has some issues with
 # the codebase, so we focus the effort for now is to have a Windows Verible
@@ -27,4 +27,3 @@ build:asan --copt -O1
 build:asan --copt -g
 build:asan --copt -fno-omit-frame-pointer
 build:asan --linkopt -fsanitize=address
-
