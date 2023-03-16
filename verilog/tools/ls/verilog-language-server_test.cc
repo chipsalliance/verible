@@ -616,6 +616,16 @@ std::string ReferencesRequest(absl::string_view file, int id, int line,
                                           line, character);
 }
 
+void CheckDefinitionEntry(const json &entry, verible::LineColumn start,
+                          verible::LineColumn end,
+                          const std::string &file_uri) {
+  ASSERT_EQ(entry["range"]["start"]["line"], start.line);
+  ASSERT_EQ(entry["range"]["start"]["character"], start.column);
+  ASSERT_EQ(entry["range"]["end"]["line"], end.line);
+  ASSERT_EQ(entry["range"]["end"]["character"], end.column);
+  ASSERT_EQ(entry["uri"], file_uri);
+}
+
 // Performs assertions on textDocument/definition responses where single
 // definition is expected
 void CheckDefinitionResponseSingleDefinition(const json &response, int id,
@@ -624,11 +634,7 @@ void CheckDefinitionResponseSingleDefinition(const json &response, int id,
                                              const std::string &file_uri) {
   ASSERT_EQ(response["id"], id);
   ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], start.line);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], start.column);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], end.line);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], end.column);
-  ASSERT_EQ(response["result"][0]["uri"], file_uri);
+  CheckDefinitionEntry(response["result"][0], start, end, file_uri);
 }
 
 // Performs simple textDocument/definition request with no VerilogProject set
@@ -1687,6 +1693,58 @@ endmodule)");
   CheckDefinitionResponseSingleDefinition(
       response, 6, {.line = 4, .column = 22}, {.line = 4, .column = 25},
       "file://" + module_port_identifier.filename());
+}
+
+// Verifies the work of the go-to definition request when the
+// definition of the symbol is split into multiple lines,
+// e.g. for port module declarations.
+TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitions) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(i, o, trigger);
+  input trigger;
+  input i;
+  output o;
+
+  reg [31:0] i;
+  wire [31:0] o;
+
+  always @(posedge clock)
+    assign o = i;
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string foo_open_request = DidOpenRequest(
+      "file://" + module_port_identifier.filename(), port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  json diagnostics = json::parse(GetResponse());
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_EQ(diagnostics["params"]["uri"],
+            "file://" + module_port_identifier.filename());
+  ASSERT_EQ(diagnostics["params"]["diagnostics"].size(), 0);
+
+  // find definition for "i"
+  std::string definition_request = DefinitionRequest(
+      "file://" + module_port_identifier.filename(), 2, 9, 15);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 2);
+
+  std::sort(
+      response["result"].begin(), response["result"].end(),
+      [](const json &a, const json &b) -> bool { return a.dump() < b.dump(); });
+
+  CheckDefinitionEntry(response["result"][0], {.line = 5, .column = 13},
+                       {.line = 5, .column = 14},
+                       "file://" + module_port_identifier.filename());
+  CheckDefinitionEntry(response["result"][1], {.line = 2, .column = 8},
+                       {.line = 2, .column = 9},
+                       "file://" + module_port_identifier.filename());
 }
 
 // Tests correctness of Language Server shutdown request
