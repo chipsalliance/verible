@@ -344,7 +344,7 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
   JsonRpcDispatcher rpc_dispatcher([](absl::string_view) {});
   BufferCollection collection(&rpc_dispatcher);
 
-  EXPECT_EQ(collection.documents_open(), 0);
+  EXPECT_EQ(collection.size(), 0);
 
   int64_t last_global_version = 0;
 
@@ -375,7 +375,7 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
     }})");
 
   // We now expect one document to be open.
-  EXPECT_EQ(collection.documents_open(), 1);
+  EXPECT_EQ(collection.size(), 1);
   EXPECT_EQ(change_callback_called, 1);
 
   EXPECT_GT(collection.global_version(), last_global_version);
@@ -416,7 +416,7 @@ TEST(BufferCollection, SimulateDocumentLifecycleThroughRPC) {
      }})");
 
   // No document open anymore
-  EXPECT_EQ(collection.documents_open(), 0);
+  EXPECT_EQ(collection.size(), 0);
   EXPECT_EQ(change_callback_called, 3);
 }
 

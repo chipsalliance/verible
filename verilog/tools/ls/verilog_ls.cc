@@ -14,7 +14,6 @@
 //
 
 #include <functional>
-#include <iomanip>  // Only needed for json debugging right now
 #include <iostream>
 
 #include "common/util/init_command_line.h"
@@ -30,12 +29,6 @@
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
 
-static void FormatHeaderBodyReply(absl::string_view reply) {
-  // Output formatting as header/body chunk as required by LSP spec to stdout.
-  std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
-  std::cout << reply << std::flush;
-}
-
 int main(int argc, char *argv[]) {
   verible::InitCommandLine(argv[0], &argc, &argv);
 
@@ -48,11 +41,18 @@ int main(int argc, char *argv[]) {
   std::cerr << "Verible Verilog Language Server built at "
             << verible::GetRepositoryVersion() << "\n";
 
-  // Input and output is stdin and stdout
+  // -- Input and output is stdin and stdout.
+
+  // Output: provided write-function is called with entire response messages.
+  verilog::VerilogLanguageServer server([](absl::string_view reply) {
+    // Output formatting as header/body chunk as required by LSP spec to stdout.
+    std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
+    std::cout << reply << std::flush;
+  });
+
+  // Input: Messages received from the read function are dispatched and
+  // processed until shutdown message received.
   constexpr int kInputFD = 0;  // STDIN_FILENO, but Win does not have that macro
-
-  verilog::VerilogLanguageServer server(FormatHeaderBodyReply);
-
   absl::Status status = server.Run([](char *buf, int size) -> int {  //
     return read(kInputFD, buf, size);
   });

@@ -61,23 +61,25 @@ InitializeResult InitializeServer(const nlohmann::json &params) {
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
+  // Windows messes with newlines by default. Fix this here.
   _setmode(_fileno(stdin), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
   std::cerr << "Note: this dummy-ls is for testing." << std::endl;
 
   // Input and output is stdin and stdout
-  static constexpr int in_fd = 0;  // STDIN_FILENO
+  constexpr int kInputFD = 0;  // STDIN_FILENO, but Win does not have that macro
   JsonRpcDispatcher::WriteFun write_fun = [](absl::string_view reply) {
     // Output formatting as header/body chunk as required by LSP spec.
     std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
     std::cout << reply << std::flush;
   };
 
-  MessageStreamSplitter stream_splitter;
   JsonRpcDispatcher dispatcher(write_fun);
 
   // All bodies the stream splitter extracts are pushed to the json dispatcher
+  MessageStreamSplitter stream_splitter;
   stream_splitter.SetMessageProcessor(
       [&dispatcher](absl::string_view /*header*/, absl::string_view body) {
         return dispatcher.DispatchMessage(body);
@@ -101,7 +103,7 @@ int main(int argc, char *argv[]) {
   absl::Status status = absl::OkStatus();
   while (status.ok() && !shutdown_requested) {
     status = stream_splitter.PullFrom([](char *buf, int size) -> int {  //
-      return read(in_fd, buf, size);
+      return read(kInputFD, buf, size);
     });
   }
 
