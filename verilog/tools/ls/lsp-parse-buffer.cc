@@ -16,8 +16,8 @@
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
 #include "absl/status/status.h"
+#include "common/lsp/lsp-file-utils.h"
 #include "common/util/logging.h"
-#include "verilog/tools/ls/lsp-file-utils.h"
 
 namespace verilog {
 static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
@@ -25,7 +25,7 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
   const auto &text_structure = parser.Data();
 
   verilog::LinterConfiguration config;
-  absl::string_view file_path = verilog::LSPUriToPath(filename);
+  const absl::string_view file_path = verible::lsp::LSPUriToPath(filename);
   if (auto from_flags = LinterConfigurationFromFlags(file_path);
       from_flags.ok()) {
     config = *from_flags;

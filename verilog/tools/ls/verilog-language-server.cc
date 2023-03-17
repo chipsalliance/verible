@@ -18,10 +18,10 @@
 #include <memory>
 
 #include "absl/strings/string_view.h"
+#include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
-#include "verilog/tools/ls/lsp-file-utils.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
@@ -169,7 +169,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     const verible::lsp::InitializeParams &p) {
   // set VerilogProject for the symbol table, if possible
   if (!p.rootUri.empty()) {
-    absl::string_view path = verilog::LSPUriToPath(p.rootUri);
+    absl::string_view path = verible::lsp::LSPUriToPath(p.rootUri);
     if (path.empty()) {
       LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
                  << std::endl;
@@ -225,7 +225,7 @@ void VerilogLanguageServer::SendDiagnostics(
 
 void VerilogLanguageServer::UpdateEditedFileInProject(
     const std::string &uri, const verilog::BufferTracker *buffer_tracker) {
-  absl::string_view path = verilog::LSPUriToPath(uri);
+  const absl::string_view path = verible::lsp::LSPUriToPath(uri);
   if (path.empty()) {
     LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
     return;

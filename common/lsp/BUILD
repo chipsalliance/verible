@@ -121,6 +121,15 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "lsp-file-utils",
+    srcs = ["lsp-file-utils.cc"],
+    hdrs = ["lsp-file-utils.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_binary(
     name = "json-rpc-expect",
     srcs = ["json-rpc-expect.cc"],

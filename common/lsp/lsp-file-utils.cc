@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-#include "verilog/tools/ls/lsp-file-utils.h"
+#include "common/lsp/lsp-file-utils.h"
 
 #include <filesystem>
 
@@ -21,7 +21,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-namespace verilog {
+namespace verible::lsp {
 
 static constexpr absl::string_view kFileSchemePrefix = "file://";
 
@@ -35,4 +35,4 @@ std::string PathToLSPUri(absl::string_view path) {
   return absl::StrCat(kFileSchemePrefix, std::filesystem::absolute(p).string());
 }
 
-}  // namespace verilog
+}  // namespace verible::lsp
