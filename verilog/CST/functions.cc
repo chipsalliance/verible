@@ -242,7 +242,7 @@ const verible::SyntaxTreeNode* GetParenGroupFromCall(
     return verible::GetSubtreeAsNode(*reference_or_call,
                                      NodeEnum::kReferenceCallBase, 1,
                                      NodeEnum::kParenGroup);
-  } 
+  }
   if (function_call.Tag().tag == (int)NodeEnum::kDataDeclaration) {
     const verible::Symbol* instantiation_base = verible::GetSubtreeAsSymbol(
         function_call, NodeEnum::kDataDeclaration, 1);
