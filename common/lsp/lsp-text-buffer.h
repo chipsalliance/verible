@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 
-//
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -83,7 +83,7 @@ class EditTextBuffer {
 };
 
 // A buffer collection keeps track of various open text buffers on the
-// client side. Registers new ExitTextBuffers by subscribing to events
+// client side. Registers new EditTextBuffers by subscribing to events
 // coming from the client.
 class BufferCollection {
  public:
@@ -100,11 +100,6 @@ class BufferCollection {
 
   // Handle textDocument/didClose event. Forget about buffer.
   void didCloseEvent(const DidCloseTextDocumentParams &o);
-
-  const EditTextBuffer *findBufferByUri(const std::string &uri) const {
-    auto found = buffers_.find(uri);
-    return found == buffers_.end() ? nullptr : found->second.get();
-  }
 
   // Edits done on all buffers from all time. Allows to compare a single
   // number if there is any change since last time. Good to remember to get
@@ -127,12 +122,13 @@ class BufferCollection {
     change_listener_ = listener;
   }
 
-  size_t documents_open() const { return buffers_.size(); }
+  // Number of open documents.
+  size_t size() const { return buffers_.size(); }
 
  private:
   int64_t global_version_ = 0;
   UriBufferCallback change_listener_ = nullptr;
-  std::unordered_map<std::string, std::unique_ptr<EditTextBuffer>> buffers_;
+  absl::flat_hash_map<std::string, std::unique_ptr<EditTextBuffer>> buffers_;
 };
 }  // namespace lsp
 }  // namespace verible

@@ -105,6 +105,7 @@ cc_library(
         ":json-rpc-dispatcher",
         ":lsp-protocol",
         "//common/strings:utf8",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

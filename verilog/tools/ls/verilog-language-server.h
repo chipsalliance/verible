@@ -37,13 +37,13 @@ class VerilogLanguageServer {
   // Constructor preparing the callbacks for Language Server requests
   explicit VerilogLanguageServer(const WriteFun &write_fun);
 
-  // Reads single request and responds to it
+  // Reads single request and responds to it (public to mock in tests).
   absl::Status Step(const ReadFun &read_fun);
 
-  // Runs the Language Server
+  // Runs the Language Server, calling "read_fun" until we receive shutdown.
   absl::Status Run(const ReadFun &read_fun);
 
-  // Prints statistics of the current Language Server session
+  // Prints statistics of the current Language Server session.
   void PrintStatistics() const;
 
  private:
@@ -79,7 +79,7 @@ class VerilogLanguageServer {
   verible::lsp::JsonRpcDispatcher dispatcher_;
 
   // Object for keeping track of updates in opened buffers on client's side
-  verible::lsp::BufferCollection buffers_;
+  verible::lsp::BufferCollection text_buffers_;
 
   // Tracks changes in buffers from BufferCollection and parses their contents
   verilog::BufferTrackerContainer parsed_buffers_;

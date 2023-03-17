@@ -27,16 +27,18 @@
 namespace verilog {
 
 VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
-    : dispatcher_(write_fun), buffers_(&dispatcher_) {
+    : dispatcher_(write_fun), text_buffers_(&dispatcher_) {
   // All bodies the stream splitter extracts are pushed to the json dispatcher
   stream_splitter_.SetMessageProcessor(
       [this](absl::string_view header, absl::string_view body) {
         return dispatcher_.DispatchMessage(body);
       });
 
+  // Whenever the text changes in the editor, reparse affected code.
+  text_buffers_.SetChangeListener(parsed_buffers_.GetSubscriptionCallback());
+
   // Whenever there is a new parse result ready, use that as an opportunity
   // to send diagnostics to the client.
-  buffers_.SetChangeListener(parsed_buffers_.GetSubscriptionCallback());
   parsed_buffers_.AddChangeListener(
       [this](const std::string &uri,
              const verilog::BufferTracker *buffer_tracker) {
