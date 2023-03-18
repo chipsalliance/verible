@@ -263,7 +263,7 @@ class TextStructure {
   friend class TextStructureTokenized;
   friend class TextStructureViewPublicTest_ExpandSubtreesOneLeaf_Test;
   friend class TextStructureViewPublicTest_ExpandSubtreesMultipleLeaves_Test;
-  friend class verilog::VerilogPreprocess;
+  friend class verilog::VerilogPreprocess;  // NOLINT
 
   explicit TextStructure(std::shared_ptr<MemBlock> contents);
 

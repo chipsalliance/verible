@@ -44,7 +44,9 @@ jobs:
         clang-format --version
 
     - name: Run formatting style check
-      run: ./.github/bin/run-clang-format.sh
+      run: |
+        ./.github/bin/run-clang-format.sh
+        ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
