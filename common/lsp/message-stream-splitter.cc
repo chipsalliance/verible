@@ -14,6 +14,8 @@
 
 #include "common/lsp/message-stream-splitter.h"
 
+#include "common/util/status_macros.h"
+
 namespace verible {
 namespace lsp {
 absl::Status MessageStreamSplitter::PullFrom(const ReadFun &read_fun) {
@@ -126,9 +128,7 @@ absl::Status MessageStreamSplitter::ReadInput(const ReadFun &read_fun) {
   stats_total_bytes_read_ += bytes_read;
 
   absl::string_view data(read_buffer_.data(), write_offset + bytes_read);
-  if (auto status = ProcessContainedMessages(&data); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(ProcessContainedMessages(&data));
 
   pending_data_ = data;  // Remember for next round.
 

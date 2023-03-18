@@ -45,6 +45,7 @@
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -301,9 +302,7 @@ absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
       .waiver_files = absl::GetFlag(FLAGS_waiver_files),
   };
 
-  if (auto status = config.ConfigureFromOptions(options); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(config.ConfigureFromOptions(options));
 
   return config;
 }

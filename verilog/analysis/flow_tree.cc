@@ -21,6 +21,8 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
@@ -281,7 +283,7 @@ absl::Status FlowTree::DepthFirstSearch(
       if (auto status = DepthFirstSearch(
               receiver, edges_[current_node][!assume_condition_is_true]);
           !status.ok()) {
-        std::cerr << "ERROR: DepthFirstSearch fails.";
+        LOG(ERROR) << "ERROR: DepthFirstSearch fails. " << status;
         return status;
       }
     } else {
@@ -295,7 +297,7 @@ absl::Status FlowTree::DepthFirstSearch(
       }
       if (auto status = DepthFirstSearch(receiver, edges_[current_node][0]);
           !status.ok()) {
-        std::cerr << "ERROR: DepthFirstSearch fails.";
+        LOG(ERROR) << "ERROR: DepthFirstSearch fails. " << status;
         return status;
       }
 
@@ -307,7 +309,7 @@ absl::Status FlowTree::DepthFirstSearch(
       }
       if (auto status = DepthFirstSearch(receiver, edges_[current_node][1]);
           !status.ok()) {
-        std::cerr << "ERROR: DepthFirstSearch fails.";
+        LOG(ERROR) << "ERROR: DepthFirstSearch fails. " << status;
         return status;
       }
       // Undo the change to allow for backtracking.
@@ -319,7 +321,7 @@ absl::Status FlowTree::DepthFirstSearch(
     for (auto next_node : edges_[current_node]) {
       if (auto status = FlowTree::DepthFirstSearch(receiver, next_node);
           !status.ok()) {
-        std::cerr << "ERROR: DepthFirstSearch fails\n";
+        LOG(ERROR) << "ERROR: DepthFirstSearch fails. " << status;
         return status;
       }
     }

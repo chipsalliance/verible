@@ -24,6 +24,7 @@
 #include "absl/strings/string_view.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "common/util/subcommand.h"
 #include "verilog/analysis/dependencies.h"
 #include "verilog/analysis/symbol_table.h"
@@ -158,15 +159,11 @@ static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(config.LoadFromCommandline(args));
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  if (auto status = project_symbols.Load(); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(project_symbols.Load());
 
   // Build symbol table.
   std::vector<absl::Status> build_statuses;
@@ -190,15 +187,11 @@ static absl::Status ResolveAndShowSymbolReferences(
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(config.LoadFromCommandline(args));
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  if (auto status = project_symbols.Load(); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(project_symbols.Load());
 
   // Build symbol table.
   std::vector<absl::Status> statuses;
@@ -225,15 +218,11 @@ static absl::Status ShowFileDependencies(const SubcommandArgsRange& args,
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
-  if (auto status = config.LoadFromCommandline(args); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(config.LoadFromCommandline(args));
 
   // Load project and files.
   ProjectSymbols project_symbols(config);
-  if (auto status = project_symbols.Load(); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(project_symbols.Load());
 
   // Build symbol table.
   std::vector<absl::Status> statuses;

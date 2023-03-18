@@ -24,6 +24,7 @@
 #include "common/strings/random.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
+#include "common/util/status_macros.h"
 #include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -118,9 +119,7 @@ static absl::Status VerifyDecoding(absl::string_view original,
 
   // Copy over mappings.  Verify map reconstruction.
   const auto saved_map = subst.save();
-  if (auto status = reverse_subst.load(saved_map); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(reverse_subst.load(saved_map));
 
   // Decode and compare.
   std::ostringstream decoded_output;
@@ -164,15 +163,10 @@ absl::Status ObfuscateVerilogCode(absl::string_view content,
   ObfuscateVerilogCodeInternal(content, &buffer, subst);
 
   // Always verify equivalence.
-  if (auto status = VerifyEquivalence(content, buffer.str()); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(VerifyEquivalence(content, buffer.str()));
 
   // Always verify decoding.
-  if (auto status = VerifyDecoding(content, buffer.str(), *subst);
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(VerifyDecoding(content, buffer.str(), *subst));
 
   *output << buffer.str();
   return absl::OkStatus();

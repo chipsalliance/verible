@@ -32,6 +32,7 @@
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
+#include "common/util/status_macros.h"
 #include "common/util/user_interaction.h"
 
 namespace verible {
@@ -133,12 +134,8 @@ absl::Status HunkHeader::Parse(absl::string_view text) {
           "new-file range should start with '+', but got: ", new_range_str,
           "\"."));
     }
-    if (auto status = old_range.Parse(old_range_str); !status.ok()) {
-      return status;
-    }
-    if (auto status = new_range.Parse(new_range_str); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(old_range.Parse(old_range_str));
+    RETURN_IF_ERROR(new_range.Parse(new_range_str));
   }
 
   // Text that follows the last "@@" provides context and is optional.
@@ -289,18 +286,14 @@ std::vector<Hunk> Hunk::Split() const {
 }
 
 absl::Status Hunk::Parse(const LineRange& hunk_lines) {
-  if (auto status = header_.Parse(hunk_lines.front()); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(header_.Parse(hunk_lines.front()));
 
   LineRange body(hunk_lines);
   body.pop_front();  // remove the header
   lines_.resize(body.size());
   auto line_iter = lines_.begin();
   for (const auto& line : body) {
-    if (auto status = line_iter->Parse(line); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(line_iter->Parse(line));
     ++line_iter;
   }
   return IsValid();
@@ -386,10 +379,7 @@ static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
 absl::Status FilePatch::VerifyAgainstOriginalLines(
     const std::vector<absl::string_view>& original_lines) const {
   for (const Hunk& hunk : hunks_) {
-    if (auto status = hunk.VerifyAgainstOriginalLines(original_lines);
-        !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(hunk.VerifyAgainstOriginalLines(original_lines));
   }
   return absl::OkStatus();
 }
@@ -420,9 +410,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   }
 
   const std::vector<absl::string_view> orig_lines(SplitLines(*orig_file_or));
-  if (auto status = VerifyAgainstOriginalLines(orig_lines); !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(VerifyAgainstOriginalLines(orig_lines));
 
   // Accumulate lines to write here.
   // Needs own copy of string due to potential splitting into temporary hunks.
@@ -535,19 +523,13 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
     metadata_.emplace_back(line);
   }
 
-  if (auto status = ParseSourceInfoWithMarker(&old_file_, *line_iter, "---");
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(ParseSourceInfoWithMarker(&old_file_, *line_iter, "---"));
   ++line_iter;
   if (line_iter == lines.end()) {
     return absl::InvalidArgumentError(
         "Expected a file marker starting with \"+++\", but did not find one.");
   }
-  if (auto status = ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++");
-      !status.ok()) {
-    return status;
-  }
+  RETURN_IF_ERROR(ParseSourceInfoWithMarker(&new_file_, *line_iter, "+++"));
 
   ++line_iter;
 
@@ -569,9 +551,7 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
   hunks_.resize(hunk_ranges.size());
   auto hunk_iter = hunks_.begin();
   for (const auto& hunk_range : hunk_ranges) {
-    if (auto status = hunk_iter->Parse(hunk_range); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(hunk_iter->Parse(hunk_range));
     ++hunk_iter;
   }
   return absl::OkStatus();
@@ -646,9 +626,7 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
   file_patches_.resize(file_patch_ranges.size());
   auto iter = file_patches_.begin();
   for (const auto& range : file_patch_ranges) {
-    if (auto status = iter->Parse(range); !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(iter->Parse(range));
     ++iter;
   }
 
@@ -691,10 +669,7 @@ absl::Status PatchSet::PickApply(
     const internal::FileReaderFunction& file_reader,
     const internal::FileWriterFunction& file_writer) const {
   for (const internal::FilePatch& file_patch : file_patches_) {
-    if (auto status = file_patch.PickApply(ins, outs, file_reader, file_writer);
-        !status.ok()) {
-      return status;
-    }
+    RETURN_IF_ERROR(file_patch.PickApply(ins, outs, file_reader, file_writer));
   }
   return absl::OkStatus();
 }

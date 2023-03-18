@@ -22,6 +22,7 @@ cc_library(
     srcs = ["message-stream-splitter.cc"],
     hdrs = ["message-stream-splitter.h"],
     deps = [
+        "//common/util:status_macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

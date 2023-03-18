@@ -12,6 +12,7 @@ cc_binary(
     deps = [
         "//common/util:init_command_line",
         "//common/util:logging",
+        "//common/util:status_macros",
         "//common/util:subcommand",
         "//verilog/analysis:dependencies",
         "//verilog/analysis:symbol_table",
