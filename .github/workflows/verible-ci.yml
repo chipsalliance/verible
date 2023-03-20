@@ -194,8 +194,8 @@ jobs:
         apt -qq -y install gcc-12 g++-12
         apt -qq -y install clang-12  # clang always a particular version.
         source ./.github/settings.sh
-        # Use newer compiler for c++2x compilation
-        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* ]] && echo 12 || echo 10)
+        # Use newer compiler for c++2x compilation. Also slang needs c++20
+        ./.github/bin/set-compiler.sh $([[ "$MODE" == test-c++2* || "$MODE" == "smoke-test-analyzer" ]] && echo 12 || echo 10)
         ARCH="$ARCH" ./.github/bin/install-bazel.sh
 
     - name: Build Slang
@@ -204,6 +204,7 @@ jobs:
         pushd .
         git clone https://github.com/MikePopoloski/slang.git /tmp/slang
         cd /tmp/slang
+        git checkout v3.0  # Pin version; current head cmake files in flux
         cmake -B build
         cmake --build build
         cmake --install build --strip
