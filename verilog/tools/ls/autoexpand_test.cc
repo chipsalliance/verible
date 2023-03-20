@@ -1535,6 +1535,236 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_ExpandPortsMultipleConnections) {
+  // This mostly works, but the dimensions are not correct: the generated ports'
+  // dimensions should be the maximum of the dimensions of all ports connected
+  // to them.
+  // TODO: Calculate proper dimensions for generated ports.
+  TestTextEdits(
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  bar b1 (  /*AUTOINST*/);
+  bar b2 (  /*AUTOINST*/);
+  bar b3 (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    i1,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    o2
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input i1;  // To b1 of bar, ...
+  input i2[4][8];  // To b1 of bar, ...
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b1 of bar, ...
+  output [31:0] o2[8];  // From b1 of bar, ...
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b1 of bar, ...
+  // End of automatics
+
+  bar b1 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+  bar b2 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+  bar b3 (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_ExpandPortsMultipleConnectionsWithAUTO_TEMPLATE) {
+  TestTextEdits(
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/);
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOINOUT*/
+
+  /* bar AUTO_TEMPLATE (
+         .i1(in_a[]),
+         .o2(out_b[])
+     ); */
+  bar b1 (  /*AUTOINST*/);
+  bar b2 (  /*AUTOINST*/);
+  bar b3 (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    input i1,
+    output [15:0] o1
+);
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+
+module qux (
+    input [3:0] i1,
+    output [63:0] o1
+);
+  input i2[8][4];
+  inout [3:0][15:0] io;
+  output [15:0] o2[16];
+endmodule
+
+module foo (  /*AUTOARG*/
+    // Inputs
+    in_a,
+    i2,
+    // Inouts
+    io,
+    // Outputs
+    o1,
+    out_b
+);
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input in_a;  // To b1 of bar, ...
+  input i2[4][8];  // To b1 of bar, ...
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output [15:0] o1;  // From b1 of bar, ...
+  output [31:0] out_b[8];  // From b1 of bar, ...
+  // End of automatics
+  /*AUTOINOUT*/
+  // Beginning of automatic inouts (from autoinst inouts)
+  inout [7:0][7:0] io;  // To/From b1 of bar, ...
+  // End of automatics
+
+  /* bar AUTO_TEMPLATE (
+         .i1(in_a[]),
+         .o2(out_b[])
+     ); */
+  bar b1 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+  bar b2 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+  bar b3 (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTO_ExpandRemovePorts) {
   TestTextEdits(
       R"(
@@ -2157,6 +2387,186 @@ module foo;
       // Outputs
       .o1(o1),
       .o2(o2)
+  );
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOWIRE_InterInstance) {
+  TestTextEdits(
+      R"(
+module bar (
+    output y
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  y
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOREG*/
+
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+  quux qu (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    output y
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  y
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire y;  // To/From q of qux, ..
+  // End of automatics
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input x;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output z;  // From qu of quux
+  // End of automatics
+  /*AUTOREG*/
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .x(x),
+      // Outputs
+      .y(y)
+  );
+  qux q (  /*AUTOINST*/
+      // Inouts
+      .y(y)
+  );
+  quux qu (  /*AUTOINST*/
+      // Inputs
+      .y(y),
+      // Outputs
+      .z(z)
+  );
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTOWIRE_InterInstanceWithAUTO_TEMPLATE) {
+  TestTextEdits(
+      R"(
+module bar (
+    output a
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  b
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  /*AUTOINPUT*/
+  /*AUTOOUTPUT*/
+  /*AUTOREG*/
+
+  /* bar  AUTO_TEMPLATE
+     qux  AUTO_TEMPLATE
+     quux AUTO_TEMPLATE (
+         .a(y),
+         .b(y),
+     ); */
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+  quux qu (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar (
+    output a
+);
+  input  x;
+endmodule
+
+module qux (
+    inout  b
+);
+endmodule
+
+module quux (
+    input  y
+);
+  output z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire y;  // To/From q of qux, ..
+  // End of automatics
+  /*AUTOINPUT*/
+  // Beginning of automatic inputs (from autoinst inputs)
+  input x;  // To b of bar
+  // End of automatics
+  /*AUTOOUTPUT*/
+  // Beginning of automatic outputs (from autoinst outputs)
+  output z;  // From qu of quux
+  // End of automatics
+  /*AUTOREG*/
+
+  /* bar  AUTO_TEMPLATE
+     qux  AUTO_TEMPLATE
+     quux AUTO_TEMPLATE (
+         .a(y),
+         .b(y),
+     ); */
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .x(x),
+      // Outputs
+      .a(y)
+  );
+  qux q (  /*AUTOINST*/
+      // Inouts
+      .b(y)
+  );
+  quux qu (  /*AUTOINST*/
+      // Inputs
+      .y(y),
+      // Outputs
+      .z(z)
   );
 endmodule
 )");
