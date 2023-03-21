@@ -45,7 +45,7 @@ cc_library(
     srcs = ["lsp-parse-buffer.cc"],
     hdrs = ["lsp-parse-buffer.h"],
     deps = [
-        ":lsp-file-utils",
+        "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-text-buffer",
         "//common/util:logging",
         "//verilog/analysis:verilog_analyzer",
@@ -99,8 +99,8 @@ cc_library(
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
     deps = [
-        ":lsp-file-utils",
         ":lsp-parse-buffer",
+        "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
         "//common/strings:line_column_map",
         "//common/util:file_util",
@@ -112,15 +112,6 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
-    ],
-)
-
-cc_library(
-    name = "lsp-file-utils",
-    srcs = ["lsp-file-utils.cc"],
-    hdrs = ["lsp-file-utils.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -142,11 +133,11 @@ cc_library(
     hdrs = ["verilog-language-server.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":lsp-file-utils",
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
         "//common/lsp:json-rpc-dispatcher",
+        "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-text-buffer",
         "//common/lsp:message-stream-splitter",

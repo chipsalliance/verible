@@ -20,13 +20,16 @@
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "common/lsp/lsp-file-utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "verilog/analysis/verilog_filelist.h"
-#include "verilog/tools/ls/lsp-file-utils.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
           "Name of the file with Verible FileList for the project");
+
+using verible::lsp::LSPUriToPath;
+using verible::lsp::PathToLSPUri;
 
 namespace verilog {
 
@@ -221,7 +224,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   if (files_dirty_) {
     BuildProjectSymbolTable();
   }
-  absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
+  const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   if (filepath.empty()) {
     LOG(ERROR) << "Could not convert URI " << params.textDocument.uri
                << " to filesystem path." << std::endl;

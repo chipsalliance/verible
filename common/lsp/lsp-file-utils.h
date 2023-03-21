@@ -13,12 +13,12 @@
 // limitations under the License.
 //
 
-#ifndef VERILOG_TOOLS_LS_LSP_FILE_UTILS_H
-#define VERILOG_TOOLS_LS_LSP_FILE_UTILS_H
+#ifndef VERIBLE_COMMON_LSP_LSP_FILE_UTILS_H
+#define VERIBLE_COMMON_LSP_LSP_FILE_UTILS_H
 
 #include "absl/strings/string_view.h"
 
-namespace verilog {
+namespace verible::lsp {
 // Converts file:// scheme entries to actual system paths.
 // If other scheme is provided, method returns empty string_view.
 // TODO (glatosinski) current resolving of LSP URIs is very naive
@@ -27,6 +27,6 @@ absl::string_view LSPUriToPath(absl::string_view uri);
 
 // Converts filesystem paths to file:// scheme entries.
 std::string PathToLSPUri(absl::string_view path);
-}  // namespace verilog
+}  // namespace verible::lsp
 
-#endif  // VERILOG_TOOLS_LS_LSP_FILE_UTILS_H
+#endif  // VERIBLE_COMMON_LSP_LSP_FILE_UTILS_H
