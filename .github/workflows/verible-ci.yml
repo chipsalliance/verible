@@ -569,6 +569,18 @@ jobs:
         overwrite: true
         file_glob: true
 
+    - name: Publish VSCode extension
+      env:
+        VSC_MARKETPLACE_TOKEN: ${{ secrets.VSC_MARKETPLACE_TOKEN }}
+      run: |
+        npm install
+        cd verilog/tools/ls/vscode
+
+        # Patch the JSON file to contain our current git tag+commit
+        VERSION=$(git describe | sed 's|v\([^-]\+\)-\([[:digit:]]\+\).*|\1.\2|')
+        sed -i 's|\(.*version.*\): "\([^"]\+\)"|\1: "'${VERSION}'"|g' package.json
+        vsce publish -p ${VSC_MARKETPLACE_TOKEN}
+
   GhPages:
     name: Build and deploy GitHub pages
     needs: [Check]
