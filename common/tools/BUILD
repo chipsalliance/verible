@@ -1,6 +1,7 @@
 """This package contains language-agnostic tools in the Verible project."""
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 licenses(["notice"])
@@ -13,6 +14,7 @@ cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
     visibility = ["//:__subpackages__"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/strings:patch",
         "//common/util:file_util",
