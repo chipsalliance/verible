@@ -208,12 +208,12 @@ Alternatively modify the snippet above to use an absolute path.
 ### VSCode
 
 #### Use released extension
-You can get the extension from the [release] files and download `verible.vsix`.
+You can install the extension directly from the [VSCode marketplace](https://marketplace.visualstudio.com/items?itemName=CHIPSAlliance.verible).
 
-Then, run vscode with the following flag to install the extension:
+To install the extension launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
 
-```bash
-code --install-extension verible.vsix
+```
+ext install CHIPSAlliance.verible
 ```
 
 #### Build yourself
