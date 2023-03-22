@@ -461,21 +461,6 @@ jobs:
         apt -qqy update
         apt -qq -y install npm nodejs
 
-    - name: Build vsix
-      run: |
-        cd verilog/tools/ls/vscode
-
-        # Patch the JSON file to contain our current git tag+commit
-        VERSION=$(git describe | sed 's|v\([^-]\+\)-\([[:digit:]]\+\).*|\1.\2|')
-        sed -i 's|\(.*version.*\): "\([^"]\+\)"|\1: "'${VERSION}'"|g' package.json
-        npm install
-        npm run vsix
-
-    - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        path: verilog/tools/ls/vscode/verible.vsix
-
   WindowsBuild:
     runs-on: windows-latest
     steps:
@@ -564,7 +549,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: artifact/verible*.{tar.gz,zip,vsix}
+        file: artifact/verible*.{tar.gz,zip}
         tag: ${{ env.TAG }}
         overwrite: true
         file_glob: true
