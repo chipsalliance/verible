@@ -4,11 +4,13 @@
 licenses(["notice"])
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-project",
     srcs = ["project_tool.cc"],
     visibility = ["//:__subpackages__"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/util:init_command_line",
         "//common/util:logging",

@@ -4,11 +4,13 @@
 licenses(["notice"])
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-obfuscate",
     srcs = ["verilog_obfuscate.cc"],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/strings:obfuscator",
         "//common/util:file_util",

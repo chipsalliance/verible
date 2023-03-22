@@ -6,6 +6,7 @@ load(
     "verilog_syntax",
 )
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 licenses(["notice"])
 
@@ -225,6 +226,7 @@ cc_binary(
     name = "verible-verilog-lint",
     srcs = ["verilog_lint.cc"],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/analysis:violation_handler",
         "//common/util:enum_flags",

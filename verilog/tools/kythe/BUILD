@@ -1,6 +1,7 @@
 # 'verible-verilog-kythe-extractor' is a program for extracting Verilog/SystemVerilog to kythe facts.
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 licenses(["notice"])
 
@@ -225,6 +226,7 @@ cc_binary(
         "verilog_kythe_extractor.cc",
     ],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         ":indexing_facts_tree_extractor",
         ":kythe_facts_extractor",
@@ -288,6 +290,7 @@ cc_binary(
         "verilog_kythe_kzip_writer.cc",
     ],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         ":kzip_creator",
         "//common/util:file_util",
