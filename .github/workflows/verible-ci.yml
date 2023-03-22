@@ -558,8 +558,8 @@ jobs:
       env:
         VSC_MARKETPLACE_TOKEN: ${{ secrets.VSC_MARKETPLACE_TOKEN }}
       run: |
-        npm install
         cd verilog/tools/ls/vscode
+        npm install
 
         # Patch the JSON file to contain our current git tag+commit
         VERSION=$(git describe | sed 's|v\([^-]\+\)-\([[:digit:]]\+\).*|\1.\2|')
