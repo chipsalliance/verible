@@ -35,3 +35,13 @@ config_setting(
     name = "use_local_flex_bison_enabled",
     flag_values = {":use_local_flex_bison": "true"},
 )
+
+bool_flag(
+    name = "create_static_linked_executables",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "static_linked_executables",
+    flag_values = {":create_static_linked_executables": "true"}
+)
