@@ -33,7 +33,7 @@ jobs:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -70,7 +70,7 @@ jobs:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -166,7 +166,7 @@ jobs:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -253,7 +253,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -278,7 +278,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -309,7 +309,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - id: generate
       run: ./.github/bin/generate-matrix.py
@@ -335,7 +335,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -388,7 +388,7 @@ jobs:
         echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -426,7 +426,7 @@ jobs:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -452,7 +452,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -465,7 +465,7 @@ jobs:
     runs-on: windows-latest
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -524,13 +524,13 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
        # Download complete repository + tags
        fetch-depth: 0
 
     - name: 📥 Download artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
 
     - name: Generate and apply TAG
       run: |
