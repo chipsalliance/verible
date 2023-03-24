@@ -118,6 +118,7 @@ class ErrorContainer:
         self.category = category
         self.error = error_text
         self.slang_output = None
+        self.rg_output = None
 
     def __str__(self):
         return f"Error in project: {self.project}\
@@ -267,6 +268,18 @@ def get_slang_output(srcpath):
     return slang_output
 
 
+def get_rg_output(project_root, filename):
+    # subprocess run where the output is captured into a string
+    proc = subprocess.run(
+            ["rg", "include \""+filename, project_root],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+    )
+    # split the output into lines
+    rg_output = proc.stdout.decode('utf-8').split('\n')
+    return rg_output
+
+
 # function that given an array of strings joins them up until
 # a next regex match is detected. If there are no matches,
 # the enitre strings array will get concatenated.
@@ -319,7 +332,7 @@ def validate_slang(src, line, state, project, srcpath, err):
         # original error and if the error is not a complaint
         # about a missing macro,function, etc
         if line_number == err.line_number and \
-                abs(start_char - err.start_char) <= 3 and \
+                abs(start_char - err.start_char) <= 10 and \
                 is_slang_line_important(line):
             err.category = 'slang-verified-error'
             state = State.SLANG_VERIFIED
@@ -342,6 +355,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                 stdout=subprocess.PIPE, shell=True,
                 stderr=subprocess.DEVNULL
         )
+        p.check_returncode()
         main_path = os.getcwd()
         os.chdir(tempdirname+'/'+project_name)
         project_files = glob.glob(
@@ -401,6 +415,17 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
                                     state,
                                     project_name
                             )
+                            if err.category == 'undefined':
+                                if err.rg_output is None:
+                                    project_root = tempdirname+'/' + \
+                                            project_name+'/'
+                                    filename = source_path.split('/')[-1]
+                                    err.rg_output = get_rg_output(
+                                            project_root,
+                                            filename
+                                    )
+                                    if err.rg_output[0] != "":
+                                        err.category = 'standalone-header'
                             if err.category == 'undefined':
                                 srcpath = tempdirname+'/' + \
                                         project_name+'/' + \
