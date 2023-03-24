@@ -1121,6 +1121,88 @@ endmodule
 )");
 }
 
+TEST(Autoexpand, AUTO_TEMPLATE_Subst) {
+  TestTextEdits(
+      R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "[bq]" (
+         .i1(@_in[]),
+         .o2(@_out[])); */
+  qux q (  /*AUTOINST*/);
+
+  /* bar AUTO_TEMPLATE "c" (
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
+  bar b (  /*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [15:0] o1;
+  output [31:0] o2[8];
+endmodule
+
+module qux;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)",
+      R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "[bq]" (
+         .i1(@_in[]),
+         .o2(@_out[])); */
+  qux q (  /*AUTOINST*/
+      // Inputs
+      .i1(q_in),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(q_out  /*[31:0].[8]*/)
+  );
+
+  /* bar AUTO_TEMPLATE "c" (
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(b_in),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(b_out /*[31:0].[8]*/)
+  );
+endmodule
+
+module bar;
+  input i1;
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [15:0] o1;
+  output [31:0] o2[8];
+endmodule
+
+module qux;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)");
+}
+
 TEST(Autoexpand, AUTOINPUT_ExpandEmpty) {
   TestTextEdits(
       R"(

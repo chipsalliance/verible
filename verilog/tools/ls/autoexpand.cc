@@ -87,21 +87,22 @@ class AutoExpander {
 
   // Represents a port connection
   struct Connection {
-    absl::string_view port_name;  // The name of the port in the module instance
-    bool emit_dimensions;  // If true, when emitted, the connection should be
-                           // annotated with the signal dimensions
+    std::string port_name;  // The name of the port in the module instance
+    bool emit_dimensions;   // If true, when emitted, the connection should be
+                            // annotated with the signal dimensions
   };
 
   // Stores information about the instance the port is connected to
   struct ConnectedInstance {
-    absl::string_view instance;  // Name of the instance a port is connected to
-    absl::string_view type;      // Type of the instance a port is connected to
+    std::optional<absl::string_view> instance;  // Name of the instance a port
+                                                // is connected to
+    absl::string_view type;  // Type of the instance a port is connected to
   };
 
   // Representation of a net-like, base type for Port and Wire (you probably
   // want to use those)
   struct Net {
-    absl::string_view name;                              // Name of the net
+    std::string name;                                    // Name of the net
     std::vector<ConnectedInstance> conn_inst;            // What instances is
                                                          // it connected to?
     std::vector<absl::string_view> packed_dimensions;    // Spans of this net's
@@ -147,7 +148,8 @@ class AutoExpander {
     absl::string_view::const_iterator it;   // Location of the template in the
                                             // source file
     std::shared_ptr<RE2> instance_name_re;  // Regex for matching the instance
-                                            // name
+                                            // name. Shared between templates
+                                            // declared at the same place
     absl::flat_hash_map<absl::string_view, Connection>
         connections;  // Map of instance ports ports to connected module ports
   };
@@ -175,7 +177,9 @@ class AutoExpander {
 
     // Writes port connections to all ports to the output stream, under the
     // specified heading comment
-    void EmitPortConnections(std::ostream &output, absl::string_view header,
+    void EmitPortConnections(std::ostream &output,
+                             absl::string_view instance_name,
+                             absl::string_view header,
                              const std::function<bool(const Port &)> &pred,
                              const Template *tmpl) const;
 
@@ -199,13 +203,13 @@ class AutoExpander {
     // connected to it. If a template is given, the connected port name is taken
     // from the template, otherwise it's the same as the port name.
     void GenerateConnections(
-        const Template *tmpl,
+        absl::string_view instance_name, const Template *tmpl,
         const std::function<void(const Port &, const Connection &)> &fun) const;
 
     // Set an existing port's connection, or create a new port with the given
     // name, direction, and connection
     void AddGeneratedConnection(
-        absl::string_view port_name, Port::Direction direction,
+        const std::string &port_name, Port::Direction direction,
         const ConnectedInstance &connected,
         const std::vector<absl::string_view> &packed_dimensions,
         const std::vector<absl::string_view> &unpacked_dimensions);
@@ -222,8 +226,7 @@ class AutoExpander {
 
     // Retrieves the matching template from a typename -> template map
     const Template *GetAutoTemplate(
-        absl::string_view type_id,
-        std::optional<absl::string_view> instance_name,
+        absl::string_view type_id, absl::string_view instance_name,
         absl::string_view::const_iterator instance_it) const;
 
     // Returns true if the module depends on (uses) a given module
@@ -504,18 +507,18 @@ void AutoExpander::Port::EmitDirection(std::ostream &output) const {
 
 void AutoExpander::Port::EmitConnectionComment(std::ostream &output) const {
   if (conn_inst.empty()) return;
+  const auto &instance = conn_inst[0].instance;
+  if (!instance) return;
+  const absl::string_view type = conn_inst[0].type;
   switch (direction) {
     case Direction::kInput:
-      output << "  // To " << conn_inst[0].instance << " of "
-             << conn_inst[0].type;
+      output << "  // To " << *instance << " of " << type;
       break;
     case Direction::kInout:
-      output << "  // To/From " << conn_inst[0].instance << " of "
-             << conn_inst[0].type;
+      output << "  // To/From " << *instance << " of " << type;
       break;
     case Direction::kOutput:
-      output << "  // From " << conn_inst[0].instance << " of "
-             << conn_inst[0].type;
+      output << "  // From " << *instance << " of " << type;
       break;
     default:
       LOG(ERROR) << "Incorrect port direction";
@@ -528,8 +531,9 @@ void AutoExpander::Port::EmitConnectionComment(std::ostream &output) const {
 
 void AutoExpander::Wire::EmitConnectionComment(std::ostream &output) const {
   if (conn_inst.empty()) return;
-  output << "  // To/From " << conn_inst[0].instance << " of "
-         << conn_inst[0].type;
+  const auto &instance = conn_inst[0].instance;
+  if (!instance) return;
+  output << "  // To/From " << *instance << " of " << conn_inst[0].type;
   if (conn_inst.size() > 1) output << ", ..";
 }
 
@@ -551,41 +555,43 @@ void AutoExpander::Module::EmitNonAnsiPortList(
 }
 
 void AutoExpander::Module::EmitPortConnections(
-    std::ostream &output, const absl::string_view header,
+    std::ostream &output, const absl::string_view instance_name,
+    const absl::string_view header,
     const std::function<bool(const Port &)> &pred, const Template *tmpl) const {
   bool first = true;
-  GenerateConnections(tmpl, [&](const Port &port, const Connection &connected) {
-    if (!pred(port)) return;
-    if (first) {
-      if (output.tellp() != 0) output << ',';
-      output << '\n' << "// " << header;
-      first = false;
-    } else {
-      output << ',';
-    }
-    output << '\n' << '.' << port.name << '(' << connected.port_name;
-    if (!connected.emit_dimensions) {
-      output << ')';
-      return;
-    }
-    if (port.packed_dimensions.size() > 1 ||
-        !port.unpacked_dimensions.empty()) {
-      output << "/*";
-      for (const absl::string_view dimension : port.packed_dimensions) {
-        output << dimension;
-      }
-      if (!port.unpacked_dimensions.empty()) {
-        output << '.';
-        for (const absl::string_view dimension : port.unpacked_dimensions) {
-          output << dimension;
+  GenerateConnections(
+      instance_name, tmpl, [&](const Port &port, const Connection &connected) {
+        if (!pred(port)) return;
+        if (first) {
+          if (output.tellp() != 0) output << ',';
+          output << '\n' << "// " << header;
+          first = false;
+        } else {
+          output << ',';
         }
-      }
-      output << "*/";
-    } else if (port.packed_dimensions.size() == 1) {
-      output << port.packed_dimensions[0];
-    }
-    output << ')';
-  });
+        output << '\n' << '.' << port.name << '(' << connected.port_name;
+        if (!connected.emit_dimensions) {
+          output << ')';
+          return;
+        }
+        if (port.packed_dimensions.size() > 1 ||
+            !port.unpacked_dimensions.empty()) {
+          output << "/*";
+          for (const absl::string_view dimension : port.packed_dimensions) {
+            output << dimension;
+          }
+          if (!port.unpacked_dimensions.empty()) {
+            output << '.';
+            for (const absl::string_view dimension : port.unpacked_dimensions) {
+              output << dimension;
+            }
+          }
+          output << "*/";
+        } else if (port.packed_dimensions.size() == 1) {
+          output << port.packed_dimensions[0];
+        }
+        output << ')';
+      });
 }
 
 // Checks if two string spans are overlapping
@@ -650,7 +656,7 @@ void AutoExpander::Module::EmitUnconnectedOutputRegDeclarations(
 }
 
 void AutoExpander::Module::GenerateConnections(
-    const Template *tmpl,
+    absl::string_view instance_name, const Template *tmpl,
     const std::function<void(const Port &, const Connection &)> &fun) const {
   for (const Port &port : ports_) {
     Connection connected{.port_name = port.name, .emit_dimensions = true};
@@ -658,12 +664,19 @@ void AutoExpander::Module::GenerateConnections(
       const auto it = tmpl->connections.find(port.name);
       if (it != tmpl->connections.end()) connected = it->second;
     }
+    size_t pos = connected.port_name.find('@');
+    while (pos != std::string::npos) {
+      connected.port_name.replace(pos, 1, instance_name.begin(),
+                                  instance_name.length());
+      pos = connected.port_name.find('@', pos);
+    }
+    connected.port_name = connected.port_name;
     fun(port, connected);
   }
 }
 
 void AutoExpander::Module::AddGeneratedConnection(
-    const absl::string_view port_name, const Port::Direction direction,
+    const std::string &port_name, const Port::Direction direction,
     const ConnectedInstance &connected,
     const std::vector<absl::string_view> &packed_dimensions,
     const std::vector<absl::string_view> &unpacked_dimensions) {
@@ -732,7 +745,7 @@ void AutoExpander::Module::RetrieveAutoTemplates() {
                                &module_port_name, &dimensions)) {
       tmpl.connections.insert(
           std::make_pair(instance_port_name,
-                         Connection{.port_name = module_port_name,
+                         Connection{.port_name = std::string(module_port_name),
                                     .emit_dimensions = !dimensions.empty()}));
     }
 
@@ -761,8 +774,7 @@ void AutoExpander::Module::RetrieveDependencies(
 }
 
 const AutoExpander::Template *AutoExpander::Module::GetAutoTemplate(
-    const absl::string_view type_id,
-    const std::optional<absl::string_view> instance_name,
+    const absl::string_view type_id, const absl::string_view instance_name,
     const absl::string_view::const_iterator instance_it) const {
   const auto it = templates_.find(type_id);
   if (it == templates_.end()) return nullptr;
@@ -771,8 +783,8 @@ const AutoExpander::Template *AutoExpander::Module::GetAutoTemplate(
   // templates per type, often just one)
   for (const Template &tmpl : it->second) {
     if (instance_it < tmpl.it) break;
-    if (instance_name && tmpl.instance_name_re) {
-      if (!RE2::FullMatch(*instance_name, *tmpl.instance_name_re)) continue;
+    if (tmpl.instance_name_re) {
+      if (!RE2::FullMatch(instance_name, *tmpl.instance_name_re)) continue;
     }
     matching_tmpl = &tmpl;
   }
@@ -829,7 +841,7 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
           : GetIdentifierFromModulePortDeclaration(port_node);
   if (!dir_leaf || !id_leaf) return;
   const absl::string_view dir_span = dir_leaf->get().text();
-  const absl::string_view name = id_leaf->get().text();
+  const std::string name{id_leaf->get().text()};
 
   const auto get_dimension_spans = [](const auto &dimension_nodes) {
     std::vector<absl::string_view> dimension_spans;
@@ -1066,11 +1078,13 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
   const Module &inst_module = modules_.at(type_id);
 
   // Find an AUTO_TEMPLATE that matches this instance
-  std::optional<absl::string_view> instance_name;
-  if (const auto instance_name_token =
-          GetModuleInstanceNameTokenInfoFromGateInstance(instance)) {
-    instance_name = instance_name_token->text();
+  const verible::TokenInfo *instance_name_token =
+      GetModuleInstanceNameTokenInfoFromGateInstance(instance);
+  if (!instance_name_token) {
+    LOG(ERROR) << "AUTOINST: Instance with no name, aborting";
+    return {};
   }
+  const absl::string_view instance_name = instance_name_token->text();
   const Template *const tmpl = module->GetAutoTemplate(
       inst_module.Name(), instance_name, StringSpanOfSymbol(instance).begin());
 
@@ -1080,7 +1094,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
 
   std::ostringstream new_text;
   inst_module.EmitPortConnections(
-      new_text, "Inputs",
+      new_text, instance_name, "Inputs",
       [&](const Port &port) {
         return port.direction == Port::Direction::kInput &&
                port.declaration != Port::Declaration::kUndeclared &&
@@ -1088,7 +1102,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
       },
       tmpl);
   inst_module.EmitPortConnections(
-      new_text, "Inouts",
+      new_text, instance_name, "Inouts",
       [&](const Port &port) {
         return port.direction == Port::Direction::kInout &&
                port.declaration != Port::Declaration::kUndeclared &&
@@ -1096,7 +1110,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
       },
       tmpl);
   inst_module.EmitPortConnections(
-      new_text, "Outputs",
+      new_text, instance_name, "Outputs",
       [&](const Port &port) {
         return port.direction == Port::Direction::kOutput &&
                port.declaration != Port::Declaration::kUndeclared &&
@@ -1106,14 +1120,15 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
 
   // The module's port connections need to be updated, as new ones may have
   // been generated
-  inst_module.GenerateConnections(tmpl, [&](const Port &port,
-                                            const Connection &connected) {
-    if (port.declaration == Port::Declaration::kUndeclared) return;
-    ConnectedInstance connection{.instance = *instance_name, .type = type_id};
-    module->AddGeneratedConnection(connected.port_name, port.direction,
-                                   connection, port.packed_dimensions,
-                                   port.unpacked_dimensions);
-  });
+  inst_module.GenerateConnections(
+      instance_name, tmpl, [&](const Port &port, const Connection &connected) {
+        if (port.declaration == Port::Declaration::kUndeclared) return;
+        ConnectedInstance connection{.instance = instance_name,
+                                     .type = type_id};
+        module->AddGeneratedConnection(connected.port_name, port.direction,
+                                       connection, port.packed_dimensions,
+                                       port.unpacked_dimensions);
+      });
 
   return Expansion{.replaced_span = *replaced_span,
                    .new_text = absl::StrCat(*auto_span, new_text.str())};
