@@ -144,8 +144,10 @@ class AutoExpander {
   struct Template {
     using Map = absl::flat_hash_map<absl::string_view, std::vector<Template>>;
 
-    absl::string_view::const_iterator it;  // Location of the template in the
-                                           // source file
+    absl::string_view::const_iterator it;   // Location of the template in the
+                                            // source file
+    std::shared_ptr<RE2> instance_name_re;  // Regex for matching the instance
+                                            // name
     absl::flat_hash_map<absl::string_view, Connection>
         connections;  // Map of instance ports ports to connected module ports
   };
@@ -221,6 +223,7 @@ class AutoExpander {
     // Retrieves the matching template from a typename -> template map
     const Template *GetAutoTemplate(
         absl::string_view type_id,
+        std::optional<absl::string_view> instance_name,
         absl::string_view::const_iterator instance_it) const;
 
     // Returns true if the module depends on (uses) a given module
@@ -335,8 +338,7 @@ class AutoExpander {
   // Expands AUTOINST for the given module instance
   std::optional<Expansion> ExpandAutoinst(Module *module,
                                           const Symbol &instance,
-                                          absl::string_view type_id,
-                                          const Template *tmpl);
+                                          absl::string_view type_id);
 
   // Expands AUTO<port-direction/data-type> for the given module
   // Limitation: this only detects ports from AUTOINST. This limitation is also
@@ -430,11 +432,11 @@ const LazyRE2 AutoExpander::autoinst_re_{R"((/\*\s*AUTOINST\s*\*/))"};
 // (?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*  – optional other AUTO_TEMPLATE types, end
 //                                     with newline
 // \s*\S+\s+AUTO_TEMPLATE            – at least one AUTO_TEMPLATE is required
-// \s*(".*")?                        – optional instance name regex
-// \s*\([\s\S]*?\);                  – parens with port connections
+// \s*(?:"([^"])*")?                 – optional instance name regex
+// \s*\(?:[\s\S]*?\);                – parens with port connections
 // \s*\*/                            – end of comment
 const LazyRE2 AutoExpander::autotemplate_re_{
-    R"((/\*(?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(".*")?\s*\([\s\S]*?\);\s*\*/))"};
+    R"((/\*(?:\s*\S+\s+AUTO_TEMPLATE\s*\n)*\s*\S+\s+AUTO_TEMPLATE\s*(?:"([^"]*)\")?\s*\([\s\S]*?\);\s*\*/))"};
 
 // AUTO_TEMPLATE type regex: the first capturing group is the instance type
 const LazyRE2 AutoExpander::autotemplate_type_re_{R"((\S+)\s+AUTO_TEMPLATE)"};
@@ -709,9 +711,17 @@ void AutoExpander::Module::SortPortsByLocation() {
 void AutoExpander::Module::RetrieveAutoTemplates() {
   absl::string_view autotmpl_search_span = StringSpanOfSymbol(symbol_);
   absl::string_view autotmpl_span;
+  absl::string_view autotmpl_inst_name;
   while (RE2::FindAndConsume(&autotmpl_search_span, *autotemplate_re_,
-                             &autotmpl_span)) {
+                             &autotmpl_span, &autotmpl_inst_name)) {
     Template tmpl{.it = autotmpl_span.begin()};
+    if (!autotmpl_inst_name.empty()) {
+      tmpl.instance_name_re = std::make_shared<RE2>(autotmpl_inst_name);
+      if (!tmpl.instance_name_re->ok()) {
+        LOG(ERROR) << "Invalid regex in AUTO template: " << autotmpl_inst_name;
+        continue;
+      }
+    }
 
     absl::string_view autotmpl_conn_search_span = autotmpl_span;
     absl::string_view instance_port_name;
@@ -752,6 +762,7 @@ void AutoExpander::Module::RetrieveDependencies(
 
 const AutoExpander::Template *AutoExpander::Module::GetAutoTemplate(
     const absl::string_view type_id,
+    const std::optional<absl::string_view> instance_name,
     const absl::string_view::const_iterator instance_it) const {
   const auto it = templates_.find(type_id);
   if (it == templates_.end()) return nullptr;
@@ -760,6 +771,9 @@ const AutoExpander::Template *AutoExpander::Module::GetAutoTemplate(
   // templates per type, often just one)
   for (const Template &tmpl : it->second) {
     if (instance_it < tmpl.it) break;
+    if (instance_name && tmpl.instance_name_re) {
+      if (!RE2::FullMatch(*instance_name, *tmpl.instance_name_re)) continue;
+    }
     matching_tmpl = &tmpl;
   }
   return matching_tmpl;
@@ -1021,8 +1035,7 @@ bool IsSpanDirectlyUnderPortActualList(const Symbol &instance_parens,
 }
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
-    Module *module, const Symbol &instance, absl::string_view type_id,
-    const Template *tmpl) {
+    Module *module, const Symbol &instance, absl::string_view type_id) {
   if (!ShouldExpand(AutoKind::kAutoinst)) return {};
   const SyntaxTreeNode *parens = GetParenGroupFromModuleInstantiation(instance);
 
@@ -1051,6 +1064,15 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
     modules_.insert(std::make_pair(type_id, Module(*type_def)));
   }
   const Module &inst_module = modules_.at(type_id);
+
+  // Find an AUTO_TEMPLATE that matches this instance
+  std::optional<absl::string_view> instance_name;
+  if (const auto instance_name_token =
+          GetModuleInstanceNameTokenInfoFromGateInstance(instance)) {
+    instance_name = instance_name_token->text();
+  }
+  const Template *const tmpl = module->GetAutoTemplate(
+      inst_module.Name(), instance_name, StringSpanOfSymbol(instance).begin());
 
   // Ports connected before the AUTOINST comment should be ignored
   const auto preconnected_ports =
@@ -1084,12 +1106,10 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
 
   // The module's port connections need to be updated, as new ones may have
   // been generated
-  const absl::string_view instance_name =
-      GetModuleInstanceNameTokenInfoFromGateInstance(instance)->text();
   inst_module.GenerateConnections(tmpl, [&](const Port &port,
                                             const Connection &connected) {
     if (port.declaration == Port::Declaration::kUndeclared) return;
-    ConnectedInstance connection{.instance = instance_name, .type = type_id};
+    ConnectedInstance connection{.instance = *instance_name, .type = type_id};
     module->AddGeneratedConnection(connected.port_name, port.direction,
                                    connection, port.packed_dimensions,
                                    port.unpacked_dimensions);
@@ -1295,12 +1315,9 @@ std::vector<AutoExpander::Expansion> AutoExpander::Expand() {
       // Some data declarations do not have a type id, ignore those
       if (!type_id_node) continue;
       const absl::string_view type_id = StringSpanOfSymbol(*type_id_node);
-      // Find an AUTO_TEMPLATE that matches this instance
-      const auto instance_it = type_id.begin();
-      const Template *tmpl = module->GetAutoTemplate(type_id, instance_it);
       for (const auto &instance : FindAllGateInstances(*data.match)) {
         if (const auto expansion =
-                ExpandAutoinst(module, *instance.match, type_id, tmpl)) {
+                ExpandAutoinst(module, *instance.match, type_id)) {
           expansions.push_back(*expansion);
         }
       }

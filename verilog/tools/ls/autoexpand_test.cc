@@ -684,7 +684,7 @@ TEST(Autoexpand, AUTO_TEMPLATE_Simple) {
   TestTextEdits(
       R"(
 module foo;
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])
      ); */
@@ -701,7 +701,7 @@ endmodule
 )",
       R"(
 module foo;
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])
      ); */
@@ -731,7 +731,7 @@ TEST(Autoexpand, AUTO_TEMPLATE_SkipPreConnected) {
   TestTextEdits(
       R"(
 module foo;
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(in_a),
          .o2(out_b)
      ); */
@@ -752,7 +752,7 @@ endmodule
 )",
       R"(
 module foo;
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(in_a),
          .o2(out_b)
      ); */
@@ -786,7 +786,7 @@ TEST(Autoexpand, AUTO_TEMPLATE_MultipleMatches) {
 module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/);
@@ -811,7 +811,7 @@ endmodule
 module foo;
   /* qux AUTO_TEMPLATE
      quux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/
@@ -855,12 +855,12 @@ TEST(Autoexpand, AUTO_TEMPLATE_Override) {
       R"(
 module foo;
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/);
 
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(input_1[]),
          .o2(output_2),
          .i2(input_2[]),
@@ -886,7 +886,7 @@ endmodule
       R"(
 module foo;
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/
@@ -898,7 +898,7 @@ module foo;
       .o2(out_b  /*[31:0].[8]*/)
   );
 
-  /* bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+  /* bar AUTO_TEMPLATE (
          .i1(input_1[]),
          .o2(output_2),
          .i2(input_2[]),
@@ -937,7 +937,7 @@ TEST(Autoexpand, AUTO_TEMPLATE_Mismatch) {
       R"(
 module foo;
   /* quux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/);
@@ -961,7 +961,7 @@ endmodule
       R"(
 module foo;
   /* quux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE "some_regex_ignored_for_now" (
+     bar AUTO_TEMPLATE (
          .i1(in_a[]),
          .o2(out_b[])); */
   qux q (  /*AUTOINST*/
@@ -993,6 +993,127 @@ module bar;
 endmodule
 
 module qux;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_Regex) {
+  TestTextEdits(
+      R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "[bq]" (
+         .i1(in_a[]),
+         .o2(out_b[])); */
+  qux q (  /*AUTOINST*/);
+
+  /* bar AUTO_TEMPLATE "c" (
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
+  bar b (  /*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [15:0] o1;
+  output [31:0] o2[8];
+endmodule
+
+module qux;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)",
+      R"(
+module foo;
+  /* qux AUTO_TEMPLATE
+     bar AUTO_TEMPLATE "[bq]" (
+         .i1(in_a[]),
+         .o2(out_b[])); */
+  qux q (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(out_b  /*[31:0].[8]*/)
+  );
+
+  /* bar AUTO_TEMPLATE "c" (
+         .i1(input_1[]),
+         .o2(output_2),
+         .i2(input_2[]),
+         .io(input_output),
+         .o1(output_1[])); */
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(in_a),
+      .i2(i2  /*.[4][8]*/),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o1(o1[15:0]),
+      .o2(out_b /*[31:0].[8]*/)
+  );
+endmodule
+
+module bar;
+  input i1;
+  input i2[4][8];
+  inout [7:0][7:0] io;
+  output [15:0] o1;
+  output [31:0] o2[8];
+endmodule
+
+module qux;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)");
+}
+
+TEST(Autoexpand, AUTO_TEMPLATE_InvalidRegex) {
+  TestTextEdits(
+      R"(
+module foo;
+  /* bar AUTO_TEMPLATE "[bq" (
+         .i1(in_a[]),
+         .o2(out_b[])); */
+  bar b (  /*AUTOINST*/);
+endmodule
+
+module bar;
+  input i1;
+  inout [7:0][7:0] io;
+  output [31:0] o2[8];
+endmodule
+)",
+      R"(
+module foo;
+  /* bar AUTO_TEMPLATE "[bq" (
+         .i1(in_a[]),
+         .o2(out_b[])); */
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .i1(i1),
+      // Inouts
+      .io(io  /*[7:0][7:0]*/),
+      // Outputs
+      .o2(o2  /*[31:0].[8]*/)
+  );
+endmodule
+
+module bar;
   input i1;
   inout [7:0][7:0] io;
   output [31:0] o2[8];
@@ -2993,7 +3114,7 @@ module foo (  /*AUTOARG*/);
   /*AUTOOUTPUT*/
 
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
@@ -3030,7 +3151,7 @@ module foo (  /*AUTOARG*/
   // End of automatics
 
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
@@ -3119,7 +3240,7 @@ module foo (  /*AUTOARG*/);
   /*AUTOOUTPUT*/
 
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
@@ -3141,7 +3262,7 @@ module foo (  /*AUTOARG*/);
   /*AUTOOUTPUT*/
 
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
@@ -3331,7 +3452,7 @@ clk) $print(
   /*AUTOOUTPUT*/
   reg     [7:0]                   mem[0:255];
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
@@ -3374,7 +3495,7 @@ clk) $print(
   // End of automatics
   reg     [7:0]                   mem[0:255];
   /* qux AUTO_TEMPLATE
-     bar AUTO_TEMPLATE ".*" (
+     bar AUTO_TEMPLATE (
          .o1(out_a[]),
          .o2(out_b[])
      ); */
