@@ -48,6 +48,20 @@ class SymbolTableHandler {
   // Once the project's root is set, a new SymbolTable is created.
   void SetProject(const std::shared_ptr<VerilogProject> &project);
 
+  // prepares structures for symbol-based requests
+  void Prepare();
+
+  // Returns the token (symbol) of the file at a given position, specified
+  // in the TextDocumentPositionParams
+  absl::string_view GetTokenAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns the location of the symbol from SymbolInfo in a
+  // Location JSON format
+  std::optional<verible::lsp::Location> GetLocationFromSymbolTableNode(
+      const verilog::SymbolTableNode *node);
+
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
