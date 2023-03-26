@@ -34,6 +34,7 @@ cc_library(
         ":forbidden_anonymous_structs_unions_rule",
         ":forbidden_macro_rule",
         ":forbidden_symbol_rule",
+        ":forbid_negative_array_dim",
         ":generate_label_prefix_rule",
         ":generate_label_rule",
         ":interface_name_style_rule",
@@ -1371,6 +1372,45 @@ cc_test(
     srcs = ["unpacked_dimensions_rule_test.cc"],
     deps = [
         ":unpacked_dimensions_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:syntax_tree_linter_test_utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog_nonterminals",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "forbid_negative_array_dim",
+    srcs = ["forbid_negative_array_dim.cc"],
+    hdrs = ["forbid_negative_array_dim.h"],
+    deps = [
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:syntax_tree_lint_rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound_symbol_manager",
+        "//common/text:symbol",
+        "//common/text:syntax_tree_context",
+        "//common/text:tree_utils",
+        "//common/util:logging",
+        "//verilog/CST:context_functions",
+        "//verilog/CST:dimensions",
+        "//verilog/CST:expression",
+        "//verilog/CST:verilog_matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "forbid_negative_array_dim_test",
+    srcs = ["forbid_negative_array_dim_test.cc"],
+    deps = [
+        ":forbid_negative_array_dim",
         "//common/analysis:linter_test_utils",
         "//common/analysis:syntax_tree_linter_test_utils",
         "//common/text:symbol",
