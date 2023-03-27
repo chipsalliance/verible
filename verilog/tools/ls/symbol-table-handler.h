@@ -60,7 +60,7 @@ class SymbolTableHandler {
   // Returns the location of the symbol from SymbolInfo in a
   // Location JSON format
   std::optional<verible::lsp::Location> GetLocationFromSymbolTableNode(
-      const verilog::SymbolTableNode *node);
+      absl::string_view symbol, const VerilogSourceFile *file_origin = nullptr);
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
@@ -71,6 +71,19 @@ class SymbolTableHandler {
 
   // Finds the symbol of the definition for the given identifier.
   const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
+
+  // Finds references of a symbol provided in the ReferenceParams
+  // message delivered in textDocument/references message.
+  // Provides a list of references' locations
+  std::vector<verible::lsp::Location> FindReferencesLocations(
+      const verible::lsp::ReferenceParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Collects all references of a given symbol in the references
+  // vector.
+  void CollectReferences(const SymbolTableNode *context,
+                         const SymbolTableNode *definition_node,
+                         std::vector<verible::lsp::Location> *references);
 
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
@@ -89,6 +102,13 @@ class SymbolTableHandler {
   // returns pointer to table node with the symbol on success, else nullptr.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
       const SymbolTableNode *context, absl::string_view symbol);
+
+  // Internal function for CollectReferences that iterates over
+  // ReferenceComponentNodes
+  void CollectReferencesReferenceComponents(
+      const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
+      const SymbolTableNode *definition_node,
+      std::vector<verible::lsp::Location> *references);
 
   // Looks for verible.filelist file down in directory structure and loads data
   // to project.
