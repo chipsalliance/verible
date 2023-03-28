@@ -63,8 +63,9 @@ void ForbidNegativeArrayDim::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
   if (!context.IsInsideFirst(
           {NodeEnum::kPackedDimensions, NodeEnum::kUnpackedDimensions},
-          {NodeEnum::kBinaryExpression, NodeEnum::kUnaryPrefixExpression}))
+          {NodeEnum::kBinaryExpression, NodeEnum::kUnaryPrefixExpression})) {
     return;
+  }
 
   verible::matcher::BoundSymbolManager manager;
   if (UnaryPrefixExprMatcher().Matches(symbol, &manager)) {
