@@ -580,6 +580,19 @@ std::string DefinitionRequest(absl::string_view file, int id, int line,
   return formattingrequest.dump();
 }
 
+// Creates a textDocument/definition request
+std::string ReferencesRequest(absl::string_view file, int id, int line,
+                              int character) {
+  json formattingrequest = {
+      {"jsonrpc", "2.0"},
+      {"id", id},
+      {"method", "textDocument/references"},
+      {"params",
+       {{"textDocument", {{"uri", file}}},
+        {"position", {{"line", line}, {"character", character}}}}}};
+  return formattingrequest.dump();
+}
+
 // Performs simple textDocument/definition request with no VerilogProject set
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
   std::string definition_request = DefinitionRequest("file://b.sv", 2, 3, 18);
@@ -1226,6 +1239,188 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
       diagnostics["params"]["diagnostics"], "no-trailing-spaces"));
   ASSERT_FALSE(CheckDiagnosticsContainLinterIssue(
       diagnostics["params"]["diagnostics"], "posix-eof"));
+}
+
+// compares references returned by the VerilogLanguageServer with the list
+// of references from exemplar
+void CheckReferenceResults(json results, json exemplar) {
+  ASSERT_EQ(results.size(), exemplar.size());
+  std::sort(results.begin(), results.end(),
+            [](const json &a, const json &b) { return a.dump() < b.dump(); });
+  std::sort(exemplar.begin(), exemplar.end(),
+            [](const json &a, const json &b) { return a.dump() < b.dump(); });
+  ASSERT_EQ(results, exemplar);
+}
+
+// Creates single reference entry for comparison purposes
+json ReferenceEntry(verible::LineColumn start, verible::LineColumn end,
+                    const std::string &uri) {
+  return {{"range",
+           {{"end", {{"character", end.column}, {"line", end.line}}},
+            {"start", {{"character", start.column}, {"line", start.line}}}}},
+          {"uri", uri}};
+}
+
+// Check textDocument/references request when there are two symbols of the same
+// name (variable name) in two modules
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       ReferencesRequestSameVariablesDifferentModules) {
+  absl::string_view filelist_content = "a.sv\nb.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find references for "var1" variable in a.sv file
+  std::string references_request =
+      ReferencesRequest("file://" + module_a.filename(), 2, 1, 11);
+
+  ASSERT_OK(SendRequest(references_request));
+  json response_a = json::parse(GetResponse());
+
+  ASSERT_EQ(response_a["id"], 2);
+
+  json var1_a_refs = {
+      ReferenceEntry(
+          {
+              .line = 2,
+              .column = 16,
+          },
+          {.line = 2, .column = 20}, "file://" + module_a.filename()),
+      ReferenceEntry(
+          {
+              .line = 1,
+              .column = 9,
+          },
+          {.line = 1, .column = 13}, "file://" + module_a.filename()),
+      ReferenceEntry(
+          {
+              .line = 4,
+              .column = 14,
+          },
+          {.line = 4, .column = 18}, "file://" + module_b.filename())};
+
+  CheckReferenceResults(response_a["result"], var1_a_refs);
+
+  // find references for "var1" variable in b.sv file
+  references_request =
+      ReferencesRequest("file://" + module_b.filename(), 3, 2, 18);
+
+  ASSERT_OK(SendRequest(references_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 3);
+
+  json var1_b_refs = {
+      ReferenceEntry(
+          {
+              .line = 1,
+              .column = 9,
+          },
+          {.line = 1, .column = 13}, "file://" + module_b.filename()),
+      ReferenceEntry(
+          {
+              .line = 2,
+              .column = 16,
+          },
+          {.line = 2, .column = 20}, "file://" + module_b.filename()),
+  };
+
+  CheckReferenceResults(response_b["result"], var1_b_refs);
+}
+
+// Check textDocument/references behavior when pointing to an invalid space
+TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceInvalidLocation) {
+  absl::string_view filelist_content = "a.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find references for "var1" variable in a.sv file
+  std::string references_request =
+      ReferencesRequest("file://" + module_a.filename(), 2, 1, 0);
+
+  ASSERT_OK(SendRequest(references_request));
+  json response_a = json::parse(GetResponse());
+
+  ASSERT_EQ(response_a["id"], 2);
+  ASSERT_EQ(response_a["result"].size(), 0);
+}
+
+// Check textDocument/references behavior when pointing to a keyword
+TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceKeyword) {
+  absl::string_view filelist_content = "a.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_a(root_dir,
+                                                        kSampleModuleA, "a.sv");
+
+  const std::string module_a_open_request =
+      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+  ASSERT_OK(SendRequest(module_a_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find references for "var1" variable in a.sv file
+  std::string references_request =
+      ReferencesRequest("file://" + module_a.filename(), 2, 1, 5);
+
+  ASSERT_OK(SendRequest(references_request));
+  json response_a = json::parse(GetResponse());
+
+  ASSERT_EQ(response_a["id"], 2);
+  ASSERT_EQ(response_a["result"].size(), 0);
+}
+
+// Check textDocument/references behavior when pointing to an unknown symbol
+TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
+  absl::string_view filelist_content = "b.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_b(root_dir,
+                                                        kSampleModuleB, "b.sv");
+
+  const std::string module_b_open_request =
+      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+  ASSERT_OK(SendRequest(module_b_open_request));
+
+  // obtain diagnostics for both files
+  GetResponse();
+
+  // find references for "var1" variable in a.sv file
+  std::string references_request =
+      ReferencesRequest("file://" + module_b.filename(), 2, 4, 16);
+
+  ASSERT_OK(SendRequest(references_request));
+  json response_b = json::parse(GetResponse());
+
+  ASSERT_EQ(response_b["id"], 2);
+  ASSERT_EQ(response_b["result"].size(), 0);
 }
 
 // Tests correctness of Language Server shutdown request
