@@ -2,9 +2,8 @@
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//visibility:private",
     ],

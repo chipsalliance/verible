@@ -5,12 +5,20 @@
 #  bazel test ...
 
 load("@com_github_google_rules_install//installer:def.bzl", "installer")
+load("@rules_license//rules:license.bzl", "license")
 
-licenses(["notice"])  # Apache 2.0
+package(
+    default_applicable_licenses = [":license"],
+    default_visibility = ["//visibility:public"],
+)
 
-exports_files([
-    "LICENSE",
-])
+# More machine-readable way to specify the license
+license(
+    name = "license",
+    package_name = "verible",
+    license_kind = "@rules_license//licenses/spdx:Apache-2.0",
+    license_text = "LICENSE",
+)
 
 filegroup(
     name = "install-binaries",
@@ -70,4 +78,3 @@ action_listener(
     mnemonics = ["CppCompile"],
     visibility = ["//visibility:public"],
 )
-

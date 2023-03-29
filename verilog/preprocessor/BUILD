@@ -1,8 +1,7 @@
 # This package contains libraries related to SystemVerilog preprocessing.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog:__subpackages__",
         # TODO(b/130113490): standalone preprocessor tool

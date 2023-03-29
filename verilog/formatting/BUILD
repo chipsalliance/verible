@@ -1,8 +1,7 @@
 # This package SystemVerilog-specific code formatting functions.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog/tools/formatter:__pkg__",
     ],

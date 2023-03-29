@@ -1,7 +1,7 @@
 # 'formatting' contains functionality for language-agnostic formatting
-licenses(["notice"])
 
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog/formatting:__subpackages__",
         "//verilog/tools/formatter:__pkg__",

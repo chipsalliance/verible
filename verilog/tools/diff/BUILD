@@ -3,8 +3,6 @@
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
-licenses(["notice"])
-
 cc_binary(
     name = "verible-verilog-diff",
     srcs = ["verilog_diff.cc"],

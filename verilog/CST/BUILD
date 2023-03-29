@@ -3,9 +3,8 @@
 # Any code that relies on the internal tree structure should be isolated in
 # here.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog/analysis:__subpackages__",
         "//verilog/formatting:__subpackages__",

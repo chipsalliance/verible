@@ -4,9 +4,8 @@ Rules for adding './configure && make' style dependencies.
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
-licenses(["notice"])  # Apache v2.0
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//:__subpackages__",
     ],

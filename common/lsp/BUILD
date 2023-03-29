@@ -6,12 +6,11 @@
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 # [2]: https://www.jsonrpc.org/specification
 
-licenses(["notice"])
-
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//:__subpackages__",
     ],

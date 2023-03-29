@@ -1,9 +1,8 @@
 # 'text' contains classes for structural representations of text/code,
 # such as token streams, syntax trees.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     # library layering: common/ packages that may NOT depend on this one:
     #   strings/
     #   util/

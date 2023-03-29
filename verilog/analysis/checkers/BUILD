@@ -1,13 +1,12 @@
 # A set of linter rules to be used in analysis of verilog code.
 
-licenses(["notice"])
-
 default_visibility = [
     "//verilog/analysis:__subpackages__",
     "//verilog/tools:__subpackages__",
 ]
 
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = default_visibility,
 )
 

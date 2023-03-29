@@ -3,25 +3,36 @@ workspace(name = "com_google_verible")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
+http_archive(
+    name = "rules_license",
+    sha256 = "6157e1e68378532d0241ecd15d3c45f6e5cfd98fc10846045509fb2a7cc9e381",
+    urls = [
+        "https://github.com/bazelbuild/rules_license/releases/download/0.0.4/rules_license-0.0.4.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/0.0.4/rules_license-0.0.4.tar.gz",
+    ],
+)
+
 # Bazel platform rules, needed as dependency to absl.
 http_archive(
     name = "platforms",
+    sha256 = "5308fc1d8865406a49427ba24a9ab53087f17f5266a7aabbfc28823f3916e1ca",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.6/platforms-0.0.6.tar.gz",
         "https://github.com/bazelbuild/platforms/releases/download/0.0.6/platforms-0.0.6.tar.gz",
     ],
-    sha256 = "5308fc1d8865406a49427ba24a9ab53087f17f5266a7aabbfc28823f3916e1ca",
 )
 
 http_archive(
     name = "bazel_skylib",
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
         "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
     ],
-    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
 )
+
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
 bazel_skylib_workspace()
 
 http_archive(
@@ -30,7 +41,10 @@ http_archive(
     # a string_view::iterator. This patch forces the use of absl's string_view
     # implementation to solve the issue
     patch_args = ["-p1"],
-    patches = ["//bazel:absl.patch", "//bazel:fix-uninitialized-var.patch"],
+    patches = [
+        "//bazel:absl.patch",
+        "//bazel:fix-uninitialized-var.patch",
+    ],
     sha256 = "e46fe4fd52b94dc344429b74b9520bead577f1db622def7a69bdefae6908836c",
     strip_prefix = "abseil-cpp-35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a",
     urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],
@@ -202,7 +216,9 @@ http_archive(
     strip_prefix = "bazel-compilation-database-940cedacdb8a1acbce42093bf67f3a5ca8b265f7",
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/940cedacdb8a1acbce42093bf67f3a5ca8b265f7.tar.gz"],
 )
+
 load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
+
 bazel_compdb_deps()
 
 # zlib is imported through protobuf. Make the dependency explicit considering

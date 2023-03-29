@@ -1,7 +1,5 @@
 # 'verilog_syntax' is a program for checking Verilog/SystemVerilog syntax.
 
-licenses(["notice"])
-
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
 cc_binary(
