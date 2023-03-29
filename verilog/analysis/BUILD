@@ -1,13 +1,12 @@
 # This package contains functions and classes related to analysis of
 # structural representations of Verilog/SystemVerilog source code.
 
-licenses(["notice"])
-
 default_visibility = [
     "//verilog:__subpackages__",
 ]
 
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = default_visibility,
 )
 

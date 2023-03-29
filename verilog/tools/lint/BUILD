@@ -7,8 +7,6 @@ load(
 )
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 
-licenses(["notice"])
-
 # Integration tests for different flags and configurations
 # These tests help confirm that rules' cc_libraries are properly alwayslink-ed.
 # TODO(fangism): re-organize this into structs instead of tuples,

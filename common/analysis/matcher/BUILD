@@ -1,8 +1,7 @@
 # 'matcher' is a library of syntax tree matching utilities.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//common/analysis:__subpackages__",
         "//common/parser:__subpackages__",  # for parser_test_util

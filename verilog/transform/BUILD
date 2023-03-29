@@ -1,13 +1,12 @@
 # This library contains tools for transforming Verilog code.
 
-licenses(["notice"])
-
 default_visibility = [
     "//verilog/tools/obfuscator:__subpackages__",
     "//verilog/tools/preprocessor:__subpackages__",
 ]
 
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = default_visibility,
 )
 

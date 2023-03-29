@@ -8,9 +8,8 @@ load(
     "std_move_parser_symbols",
 )
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog:__subpackages__",
     ],

@@ -2,9 +2,8 @@
 
 load("//bazel:flex.bzl", "genlex")
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",

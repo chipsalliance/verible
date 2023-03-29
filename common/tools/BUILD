@@ -3,8 +3,6 @@
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
-licenses(["notice"])
-
 exports_files([
     "jcxxgen.bzl",
 ])

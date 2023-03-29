@@ -1,8 +1,7 @@
 # This package contains functions for dealing specifically with strings.
 
-licenses(["notice"])
-
 package(
+    default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//:__subpackages__",
     ],
