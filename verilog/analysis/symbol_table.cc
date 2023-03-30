@@ -589,6 +589,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  void HandleDirection(const SyntaxTreeLeaf& leaf) {
+    if (!declaration_type_info_) return;
+    if (Context().DirectParentIs(NodeEnum::kModulePortDeclaration) ||
+        Context().DirectParentIs(NodeEnum::kPortDeclaration)) {
+      declaration_type_info_->direction = leaf.get().text();
+    }
+  }
+
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
@@ -803,6 +811,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case '.':
         last_hierarchy_operator_ = &leaf.get();
         break;
+      case verilog_tokentype::TK_input:
+      case verilog_tokentype::TK_output:
+      case verilog_tokentype::TK_inout:
+      case verilog_tokentype::TK_ref:
+        HandleDirection(leaf);
+        break;
 
       default:
         // TODO(hzeller): use verilog::IsIdentifierLike() ?
@@ -1000,6 +1014,41 @@ class SymbolTable::Builder : public TreeContextVisitor {
     return &p.first->second;  // scope of the new (or pre-existing symbol)
   }
 
+  // Checks potential multiline declaration of port
+  // against correctness
+  void CheckMultilinePortDeclarationCorrectness(SymbolTableNode* existing_node,
+                                                absl::string_view name) {
+    DeclarationTypeInfo& new_decl_info =
+        *ABSL_DIE_IF_NULL(declaration_type_info_);
+    DeclarationTypeInfo& old_decl_info = existing_node->Value().declared_type;
+    // check if directions are consistent - if not, report that symbol already
+    // exists
+    if (!new_decl_info.direction.empty() && !old_decl_info.direction.empty() &&
+        new_decl_info.direction != old_decl_info.direction) {
+      DiagnoseSymbolAlreadyExists(name, *existing_node);
+      return;
+    }
+    // update the direction
+    if (!new_decl_info.direction.empty() && old_decl_info.direction.empty()) {
+      old_decl_info.direction = new_decl_info.direction;
+    }
+    // TODO (glatosinski) we may want more elaborate test on type
+    // inconsistencies as for now, the idea is - if you provide another type
+    // specification, fail
+    if (old_decl_info.syntax_origin && new_decl_info.syntax_origin) {
+      DiagnoseSymbolAlreadyExists(name, *existing_node);
+      return;
+    }
+    // if new information was provided, update `old_decl_info` type-related
+    // fields
+    if (new_decl_info.syntax_origin) {
+      old_decl_info.syntax_origin = new_decl_info.syntax_origin;
+      old_decl_info.implicit = new_decl_info.implicit;
+      old_decl_info.user_defined_type = new_decl_info.user_defined_type;
+    }
+    existing_node->Value().supplement_definitions.push_back(name);
+  }
+
   // Creates a named typed element in the current scope.
   // Suitable for SystemVerilog language elements: nets, parameter, variables,
   // instances, functions (using their return types).
@@ -1016,7 +1065,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
                   *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
               });
     if (!p.second && p.first->second.Value().is_port_identifier) {
-      p.first->second.Value().supplement_definitions.push_back(name);
+      CheckMultilinePortDeclarationCorrectness(&p.first->second, name);
     } else if (!p.second) {
       DiagnoseSymbolAlreadyExists(name, p.first->second);
     }
@@ -1042,7 +1091,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     p.first->second.Value().is_port_identifier = true;
     if (!p.second) {
       // the symbol was already defined, add it to supplement_definitions
-      p.first->second.Value().supplement_definitions.push_back(name);
+      CheckMultilinePortDeclarationCorrectness(&p.first->second, name);
     }
     VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
@@ -1245,6 +1294,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // declare data/variables/instances.
     const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
                                                      &decl_type_info);
+    // reset port direction
     Descend(data_decl_node);
     VLOG(2) << "end of " << __FUNCTION__;
   }

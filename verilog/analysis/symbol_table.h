@@ -231,6 +231,8 @@ struct DeclarationTypeInfo {
   // which can be recovered by StringSpanOfSymbol(const verible::Symbol&).
   const verible::Symbol* syntax_origin = nullptr;
 
+  absl::string_view direction = "";
+
   // Pointer to the reference node that represents a user-defined type, if
   // applicable.
   // For built-in and primitive types, this is left as nullptr.
