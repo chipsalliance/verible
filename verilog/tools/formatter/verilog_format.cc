@@ -36,7 +36,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/align.h"
 #include "common/strings/position.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"

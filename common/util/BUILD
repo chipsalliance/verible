@@ -628,7 +628,6 @@ cc_library(
     name = "simple_zip",
     srcs = ["simple_zip.cc"],
     hdrs = ["simple_zip.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//third_party/portable_endian",
         "@com_google_absl//absl/strings",
