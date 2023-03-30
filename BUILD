@@ -12,7 +12,7 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
-# More machine-readable way to specify the license
+# Machine-readable license specification.
 license(
     name = "license",
     package_name = "verible",

@@ -8,7 +8,6 @@ cc_binary(
     srcs = ["verilog_format.cc"],
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
-        "//common/formatting:align",
         "//common/strings:position",
         "//common/util:file_util",
         "//common/util:init_command_line",

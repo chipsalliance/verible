@@ -4,6 +4,7 @@ package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
         "//verilog/tools/formatter:__pkg__",
+        "//verilog/tools/ls:__pkg__",
     ],
 )
 
@@ -130,7 +131,6 @@ cc_library(
     hdrs = [
         "formatter.h",
     ],
-    visibility = ["//visibility:public"],
     deps = [
         ":align",
         ":comment_controls",
@@ -239,7 +239,6 @@ cc_test(
 cc_library(
     name = "format_style",
     hdrs = ["format_style.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//common/formatting:align",
         "//common/formatting:basic_format_style",
@@ -251,7 +250,6 @@ cc_library(
     name = "format_style_init",
     srcs = ["format_style_init.cc"],
     hdrs = ["format_style_init.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":format_style",
         "//common/formatting:basic_format_style_init",
