@@ -1,11 +1,13 @@
 # This package SystemVerilog-specific code formatting functions.
 
+default_visibility = [
+    "//verilog/tools/formatter:__pkg__",
+    "//verilog/tools/ls:__pkg__",
+]
+
 package(
     default_applicable_licenses = ["//:license"],
-    default_visibility = [
-        "//verilog/tools/formatter:__pkg__",
-        "//verilog/tools/ls:__pkg__",
-    ],
+    default_visibility = default_visibility,
 )
 
 # libraries
