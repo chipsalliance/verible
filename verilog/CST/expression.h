@@ -81,6 +81,12 @@ const verible::Symbol* GetConditionExpressionTrueCase(const verible::Symbol&);
 // Returns the false-case expression of a kConditionExpression.
 const verible::Symbol* GetConditionExpressionFalseCase(const verible::Symbol&);
 
+// Returns the operator of a kUnaryPrefixExpression
+const verible::TokenInfo* GetUnaryPrefixOperator(const verible::Symbol&);
+
+// Returns the operand of a kUnaryPrefixExpression
+const verible::Symbol* GetUnaryPrefixOperand(const verible::Symbol&);
+
 // From binary expression operations, e.g. "a + b".
 // Associative binary operators may span more than two operands, e.g. "a+b+c".
 std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(

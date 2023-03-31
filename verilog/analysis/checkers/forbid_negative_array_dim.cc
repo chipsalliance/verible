@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,22 +69,16 @@ void ForbidNegativeArrayDim::HandleSymbol(
 
   verible::matcher::BoundSymbolManager manager;
   if (UnaryPrefixExprMatcher().Matches(symbol, &manager)) {
-    const auto& node = SymbolCastToNode(symbol);
-    const auto& children = node.children();
-    const auto& leaf_symbol = *children[0].get();
-    const auto& term =
-        verible::down_cast<const verible::SyntaxTreeLeaf&>(leaf_symbol);
+    int value = 0;
 
-    // mandatory? {leaf, node}
-    if (children.size() <= 1) return;
+    // Extract operand and operator from kUnaryPrefixExpression
+    const auto u_operator = verilog::GetUnaryPrefixOperator(symbol);
+    const auto operand = verilog::GetUnaryPrefixOperand(symbol);
 
-    int value = -1;
-    const auto& child_node = children[1];
-    const bool is_constant = ConstantIntegerValue(*child_node.get(), &value);
-
-    const verible::TokenInfo token(TK_OTHER,
-                                   verible::StringSpanOfSymbol(symbol));
-    if (is_constant && value > 0 && term.get().text() == "-") {
+    const bool is_constant = verilog::ConstantIntegerValue(*operand, &value);
+    if (is_constant > 0 && value > 0 && u_operator->text() == "-") {
+      const verible::TokenInfo token(TK_OTHER,
+                                     verible::StringSpanOfSymbol(symbol));
       violations_.insert(verible::LintViolation(token, kMessage, context));
     }
   }

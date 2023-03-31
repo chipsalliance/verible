@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,14 +35,33 @@ TEST(ForbidNegativeArrayDim, ForbidNegativeArrayDims) {
   constexpr int kScalar = TK_OTHER;
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
+      /* Unpacked */
       {"logic l [", {kScalar, "-10"}, ":0];"},
-      {"logic [", {kScalar, "-10"}, ":-0] l;"},
-      {"logic l [0:", {kScalar, "-10"}, "];"},
       {"logic l [+1:0];"},
       {"logic l [-p:0];"},
       {"logic l [10+(-5):0];"},
       {"logic l [(", {kScalar, "-5"}, "):0];"},
       {"logic l [-(-5):0];"},
+      /* Can't detect this at the moment */
+      {"logic l [+(-5):0];"},
+      /* Packed */
+      {"logic [", {kScalar, "-10"}, ":-0] l;"},
+      {"logic [0:", {kScalar, "-10"}, "] l;"},
+      {"logic [1:0] l;"},
+      /* Packed AND Unpacked */
+      {"logic [", {kScalar, "-10"}, ":0] l [0:", {kScalar, "-10"}, "];"},
+
+      /* Inside modules, in port declarations, ... */
+      {"module k(); logic l [(", {kScalar, "-5"}, "):0]; endmodule"},
+      {"module k(); logic l [1:0]; endmodule"},
+      {"module k(logic l [(", {kScalar, "-5"}, "):0]);  endmodule"},
+      {"module k(logic l [1:0]);  endmodule"},
+      {"module k(logic l [(", {kScalar, "-5"}, "):0]);  endmodule"},
+      {"struct { bit [1:0] l; } p;"},
+      {"struct { logic [", {kScalar, "-1"}, ":0] l; } p;"},
+      {"class p; bit [1:0] l; }; endclass"},
+      {"class p; logic [", {kScalar, "-1"}, ":0] l; endclass"},
+      {"function p(); logic [", {kScalar, "-1"}, ":0] l; endfunction"},
   };
   RunLintTestCases<VerilogAnalyzer, ForbidNegativeArrayDim>(kTestCases);
 }

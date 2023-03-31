@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,16 @@
 
 namespace verilog {
 namespace analysis {
-
+/*
+ * Check for negative sizes inside array dimensions. It only
+ * detects constant literals at the moment.
+ *
+ * Examples:
+ *   logic l [-1:0];
+ *   logic [-1:0] l;
+ *
+ * See forbid_negative_array_dim_test.cc for more examples.
+ */
 class ForbidNegativeArrayDim : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;

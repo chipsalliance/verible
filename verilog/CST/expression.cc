@@ -98,6 +98,19 @@ const verible::Symbol* GetConditionExpressionFalseCase(
   return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 4);
 }
 
+const verible::TokenInfo* GetUnaryPrefixOperator(
+    const verible::Symbol& symbol) {
+  const auto& children = verible::SymbolCastToNode(symbol).children();
+  const auto leaf_symbol = children.front().get();
+  return &verible::down_cast<const verible::SyntaxTreeLeaf*>(leaf_symbol)
+              ->get();
+}
+
+const verible::Symbol* GetUnaryPrefixOperand(const verible::Symbol& symbol) {
+  const auto& children = verible::SymbolCastToNode(symbol).children();
+  return children.back().get();
+}
+
 std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(
     const verible::Symbol& root) {
   return verible::SearchSyntaxTree(root, NodekBinaryExpression());
