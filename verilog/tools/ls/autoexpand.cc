@@ -963,7 +963,7 @@ std::optional<AutoExpander::Match> FindMatchInSymbol(const Symbol &symbol,
         .auto_span = {match.begin(), match.length()},
         .comment_span = {comment.begin(), comment.length()}};
   }
-  return {};
+  return std::nullopt;
 }
 
 // Does a regex search in the span of the given symbol, returns matched span
@@ -975,7 +975,7 @@ std::optional<absl::string_view> FindSpanInSymbol(const Symbol &symbol,
                         &match)) {
     return absl::string_view{match.begin(), match.length()};
   }
-  return {};
+  return std::nullopt;
 }
 
 // Returns the deepest node that contains the given span
@@ -1002,15 +1002,15 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoarg(
     const Module &module) const {
   const SyntaxTreeNode *const port_parens =
       GetModulePortParenGroup(module.Symbol());
-  if (!ShouldExpand(AutoKind::kAutoarg)) return {};
-  if (!port_parens) return {};  // No port paren group, so no AUTOARG
+  if (!ShouldExpand(AutoKind::kAutoarg)) return std::nullopt;
+  if (!port_parens) return std::nullopt;  // No port paren group, so no AUTOARG
   auto auto_span = FindSpanInSymbol(*port_parens, *autoarg_re_);
-  if (!auto_span) return {};
+  if (!auto_span) return std::nullopt;
   auto replaced_span = FindSpanToReplace(*port_parens, *auto_span);
-  if (!replaced_span) return {};
+  if (!replaced_span) return std::nullopt;
   if (!IsSpanDirectlyUnderPortDeclarationList(*port_parens, *auto_span)) {
     LOG(ERROR) << "Not expanding AUTOARG. Incorrect context";
-    return {};
+    return std::nullopt;
   }
 
   // Ports listed before the comment should not be redeclared
@@ -1048,29 +1048,29 @@ bool IsSpanDirectlyUnderPortActualList(const Symbol &instance_parens,
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
     Module *module, const Symbol &instance, absl::string_view type_id) {
-  if (!ShouldExpand(AutoKind::kAutoinst)) return {};
+  if (!ShouldExpand(AutoKind::kAutoinst)) return std::nullopt;
   const SyntaxTreeNode *parens = GetParenGroupFromModuleInstantiation(instance);
 
   auto auto_span = FindSpanInSymbol(*parens, *autoinst_re_);
-  if (!auto_span) return {};
+  if (!auto_span) return std::nullopt;
   auto replaced_span = FindSpanToReplace(*parens, *auto_span);
-  if (!replaced_span) return {};
+  if (!replaced_span) return std::nullopt;
   if (!IsSpanDirectlyUnderPortActualList(*parens, *auto_span)) {
     LOG(ERROR) << "Not expanding AUTOINST. Incorrect context";
-    return {};
+    return std::nullopt;
   }
 
   const Symbol *const type_def =
       symbol_table_handler_->FindDefinitionSymbol(type_id);
   if (!type_def) {
     LOG(ERROR) << "AUTOINST: No definition found for module type: " << type_id;
-    return {};
+    return std::nullopt;
   }
   if (NodeEnum(type_def->Tag().tag) != NodeEnum::kModuleDeclaration) {
     LOG(ERROR) << "AUTOINST: Instance type " << type_id
                << " is not a module, but a '" << NodeEnum(type_def->Tag().tag)
                << "'";
-    return {};
+    return std::nullopt;
   }
   if (!modules_.contains(type_id)) {
     modules_.insert(std::make_pair(type_id, Module(*type_def)));
@@ -1082,7 +1082,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoinst(
       GetModuleInstanceNameTokenInfoFromGateInstance(instance);
   if (!instance_name_token) {
     LOG(ERROR) << "AUTOINST: Instance with no name, aborting";
-    return {};
+    return std::nullopt;
   }
   const absl::string_view instance_name = instance_name_token->text();
   const Template *const tmpl = module->GetAutoTemplate(
@@ -1148,7 +1148,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoDeclarations(
       return Expansion{.replaced_span = match.auto_span,
                        .new_text = std::string{match.comment_span}};
     }
-    return {};
+    return std::nullopt;
   }
   new_text << "// End of automatics";
   return Expansion{.replaced_span = match.auto_span,
@@ -1169,7 +1169,7 @@ bool IsSpanDirectlyUnderModule(const Symbol &module,
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
     Module *module, const std::optional<Match> match,
     const Port::Direction direction) const {
-  if (!match) return {};
+  if (!match) return std::nullopt;
   const absl::string_view module_span = StringSpanOfSymbol(module->Symbol());
   const auto begin = match->auto_span.end();
   auto end = module_span.end();
@@ -1181,7 +1181,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
   if (!in_header &&
       !IsSpanDirectlyUnderModule(module->Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTO ports. Incorrect context";
-    return {};
+    return std::nullopt;
   }
 
   if (port_parens) end = StringSpanOfSymbol(*port_parens).end();
@@ -1199,7 +1199,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
                                             ? "inouts (from autoinst inouts)"
                                             : "outputs (from autoinst outputs)";
 
-  if (!SpansOverlapping(match->auto_span, expand_span_)) return {};
+  if (!SpansOverlapping(match->auto_span, expand_span_)) return std::nullopt;
   auto result = ExpandAutoDeclarations(
       *module, *match, description,
       [direction, style](const Module &module, std::ostream &output) {
@@ -1221,15 +1221,15 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoPorts(
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutowire(
     const Module &module) const {
-  if (!ShouldExpand(AutoKind::kAutowire)) return {};
+  if (!ShouldExpand(AutoKind::kAutowire)) return std::nullopt;
   const auto match = FindMatchInSymbol(module.Symbol(), *autowire_re_);
-  if (!match) return {};
+  if (!match) return std::nullopt;
   if (!SpansOverlapping(match->auto_span, expand_span_)) {
-    return {};
+    return std::nullopt;
   }
   if (!IsSpanDirectlyUnderModule(module.Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTOWIRE. Incorrect context";
-    return {};
+    return std::nullopt;
   }
   return ExpandAutoDeclarations(
       module, *match, "wires (for undeclared instantiated-module outputs)",
@@ -1240,15 +1240,15 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutowire(
 
 std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoreg(
     const Module &module) const {
-  if (!ShouldExpand(AutoKind::kAutoreg)) return {};
+  if (!ShouldExpand(AutoKind::kAutoreg)) return std::nullopt;
   const auto match = FindMatchInSymbol(module.Symbol(), *autoreg_re_);
-  if (!match) return {};
+  if (!match) return std::nullopt;
   if (!SpansOverlapping(match->auto_span, expand_span_)) {
-    return {};
+    return std::nullopt;
   }
   if (!IsSpanDirectlyUnderModule(module.Symbol(), match->auto_span)) {
     LOG(ERROR) << "Not expanding AUTOREG. Incorrect context";
-    return {};
+    return std::nullopt;
   }
   return ExpandAutoDeclarations(
       module, *match, "regs (for this module's undeclared outputs)",
@@ -1259,7 +1259,7 @@ std::optional<AutoExpander::Expansion> AutoExpander::ExpandAutoreg(
 
 std::optional<AutoExpander::Match> AutoExpander::FindMatchAndErasePorts(
     AutoExpander::Module *module, const AutoKind kind, const RE2 &re) {
-  if (!ShouldExpand(kind)) return {};
+  if (!ShouldExpand(kind)) return std::nullopt;
   const auto match = FindMatchInSymbol(module->Symbol(), re);
   if (match) {
     if (SpansOverlapping(StringSpanOfSymbol(module->Symbol()),
@@ -1414,7 +1414,7 @@ std::optional<absl::string_view> AutoExpander::FindSpanToReplace(
       std::distance(auto_span.begin(), symbol_span.end() - 1));
   const absl::string_view replaced_span{auto_span.begin(), replaced_length};
   if (!SpansOverlapping(replaced_span, expand_span_)) {
-    return {};
+    return std::nullopt;
   }
   return replaced_span;
 }
