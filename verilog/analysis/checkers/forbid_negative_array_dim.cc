@@ -72,11 +72,12 @@ void ForbidNegativeArrayDim::HandleSymbol(
     int value = 0;
 
     // Extract operand and operator from kUnaryPrefixExpression
-    const auto u_operator = verilog::GetUnaryPrefixOperator(symbol);
-    const auto operand = verilog::GetUnaryPrefixOperand(symbol);
+    const verible::TokenInfo* u_operator =
+        verilog::GetUnaryPrefixOperator(symbol);
+    const verible::Symbol* operand = verilog::GetUnaryPrefixOperand(symbol);
 
     const bool is_constant = verilog::ConstantIntegerValue(*operand, &value);
-    if (is_constant > 0 && value > 0 && u_operator->text() == "-") {
+    if (is_constant && value > 0 && u_operator->text() == "-") {
       const verible::TokenInfo token(TK_OTHER,
                                      verible::StringSpanOfSymbol(symbol));
       violations_.insert(verible::LintViolation(token, kMessage, context));

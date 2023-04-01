@@ -100,15 +100,21 @@ const verible::Symbol* GetConditionExpressionFalseCase(
 
 const verible::TokenInfo* GetUnaryPrefixOperator(
     const verible::Symbol& symbol) {
-  const auto& children = verible::SymbolCastToNode(symbol).children();
-  const auto leaf_symbol = children.front().get();
+  const SyntaxTreeNode* node = &verible::SymbolCastToNode(symbol);
+  if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
+    return nullptr;
+  }
+  const verible::Symbol* leaf_symbol = node->children().front().get();
   return &verible::down_cast<const verible::SyntaxTreeLeaf*>(leaf_symbol)
               ->get();
 }
 
 const verible::Symbol* GetUnaryPrefixOperand(const verible::Symbol& symbol) {
-  const auto& children = verible::SymbolCastToNode(symbol).children();
-  return children.back().get();
+  const SyntaxTreeNode* node = &verible::SymbolCastToNode(symbol);
+  if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
+    return nullptr;
+  }
+  return node->children().back().get();
 }
 
 std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(

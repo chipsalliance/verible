@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -420,6 +420,59 @@ TEST(GetConditionExpressionFalseCaseTest, Various) {
           }
           return predicates;
         });
+  }
+}
+
+TEST(GetUnaryPrefixOperator, Exprs) {
+  const std::pair<const char*, const char*> kTestCases[] = {
+      {"-(2)", "-"},    {"-1", "-"},        {"&1", "&"},
+      {"666", nullptr}, {"1 + 2", nullptr}, {"!1", "!"},
+  };
+  for (auto test : kTestCases) {
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
+    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto tag = node->Tag();
+    EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
+    EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
+    const verible::Symbol* last_node = DescendThroughSingletons(*node);
+
+    if (test.second) {
+      const verible::SyntaxTreeNode& unary_expr =
+          verible::SymbolCastToNode(*last_node);
+      EXPECT_EQ(NodeEnum(unary_expr.Tag().tag),
+                NodeEnum::kUnaryPrefixExpression);
+      EXPECT_EQ(test.second, GetUnaryPrefixOperator(unary_expr)->text());
+    } else {
+      EXPECT_NE(NodeEnum(last_node->Tag().tag),
+                NodeEnum::kUnaryPrefixExpression);
+    }
+  }
+}
+
+TEST(GetUnaryPrefixOperand, Exprs) {
+  const std::pair<const char*, const char*> kTestCases[] = {
+      {"-1", ""}, {"&1", ""}, {"666", nullptr}, {"1 + 2", nullptr}, {"!1", ""},
+  };
+  for (auto test : kTestCases) {
+    const auto analyzer_ptr =
+        AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
+    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto tag = node->Tag();
+    EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
+    EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
+    const verible::Symbol* last_node = DescendThroughSingletons(*node);
+
+    if (test.second) {
+      const verible::SyntaxTreeNode& unary_expr =
+          verible::SymbolCastToNode(*last_node);
+      EXPECT_EQ(NodeEnum(unary_expr.Tag().tag),
+                NodeEnum::kUnaryPrefixExpression);
+      EXPECT_TRUE(GetUnaryPrefixOperand(unary_expr));
+    } else {
+      EXPECT_NE(NodeEnum(last_node->Tag().tag),
+                NodeEnum::kUnaryPrefixExpression);
+    }
   }
 }
 
