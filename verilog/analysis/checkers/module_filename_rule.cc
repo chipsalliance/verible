@@ -73,6 +73,10 @@ static bool ModuleNameMatches(const verible::Symbol& s,
 
 void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
                               absl::string_view filename) {
+  if (verible::file::IsStdin(filename)) {
+    return;
+  }
+
   const auto& tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 
@@ -94,6 +98,7 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 
   // See if any names match the stem of the filename.
   const absl::string_view basename = verible::file::Basename(filename);
+
   std::vector<absl::string_view> basename_components =
       absl::StrSplit(basename, '.');
   std::string unitname(basename_components[0].begin(),
