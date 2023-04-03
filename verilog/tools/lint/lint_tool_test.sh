@@ -231,6 +231,56 @@ status="$?"
 }
 
 ################################################################################
+echo "=== Test module filename rule for stdin"
+
+TEST_FILE="${TEST_TMPDIR}/module-filename-error.sv"
+
+cat > ${TEST_FILE} <<EOF
+module m;
+endmodule
+EOF
+
+"$lint_tool" "$TEST_FILE" --nocheck_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+cat "$TEST_FILE" | "$lint_tool" - --nocheck_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+echo "=== Test package filename rule for stdin"
+TEST_FILE="${TEST_TMPDIR}/package-filename-error.sv"
+
+cat > ${TEST_FILE} <<EOF
+package k;
+endpackage
+EOF
+
+"$lint_tool" "$TEST_FILE" --nocheck_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 1 ]] || {
+  echo "Expected exit code 1, but got $status"
+  exit 1
+}
+
+cat "$TEST_FILE" | "$lint_tool" - --nocheck_syntax > /dev/null 2> "${MY_OUTPUT_FILE}.err"
+
+status="$?"
+[[ $status == 0 ]] || {
+  echo "Expected exit code 0, but got $status"
+  exit 1
+}
+
+################################################################################
 echo "=== Test invalid rule (--rules)"
 
 # using same ${TEST_FILE}

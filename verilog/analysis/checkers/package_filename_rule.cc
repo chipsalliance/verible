@@ -65,6 +65,10 @@ const LintRuleDescriptor& PackageFilenameRule::GetDescriptor() {
 
 void PackageFilenameRule::Lint(const TextStructureView& text_structure,
                                absl::string_view filename) {
+  if (verible::file::IsStdin(filename)) {
+    return;
+  }
+
   const auto& tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 

@@ -33,6 +33,12 @@
 namespace verible {
 namespace file {
 
+// Check if the input filename corresponds to stdin.
+// Convention: honor "-" as stdin
+// Added to avoid performing lint filename rules such as
+// {package,module}_filename_rule
+bool IsStdin(absl::string_view filename);
+
 // A representation of a filesystem directory.
 struct Directory {
   // Path to the directory.

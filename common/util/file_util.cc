@@ -152,7 +152,7 @@ absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
   std::string content;
   std::ifstream fs;
   std::istream *stream = nullptr;
-  const bool use_stdin = filename == "-";  // convention: honor "-" as stdin
+  const bool use_stdin = IsStdin(filename);
   if (use_stdin) {
     stream = &std::cin;
   } else {
@@ -288,6 +288,11 @@ absl::StatusOr<Directory> ListDir(absl::string_view dir) {
   std::sort(d.files.begin(), d.files.end());
   std::sort(d.directories.begin(), d.directories.end());
   return d;
+}
+
+bool IsStdin(absl::string_view filename) {
+  static constexpr absl::string_view kStdinFilename = "-";
+  return filename == kStdinFilename;
 }
 
 namespace testing {
