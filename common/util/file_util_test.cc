@@ -366,6 +366,11 @@ TEST(FileUtil, ReadDirectory) {
   EXPECT_EQ(dir.files, test_files);
 }
 
+TEST(FileUtil, IsStdin) {
+  EXPECT_EQ(file::IsStdin("-"), true);
+  EXPECT_EQ(file::IsStdin("not stdin!"), false);
+}
+
 }  // namespace
 }  // namespace util
 }  // namespace verible
