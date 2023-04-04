@@ -822,7 +822,7 @@ static bool AlignedRowsFitUnderColumnLimit(
       const int aligned_partition_width =
           total_column_width + EffectiveCellWidth(epilog_range);
       if (aligned_partition_width > column_limit) {
-        VLOG(1) << "Total aligned partition width " << aligned_partition_width
+        VLOG(2) << "Total aligned partition width " << aligned_partition_width
                 << " exceeds limit " << column_limit
                 << ", so not aligning this group.";
         return false;
@@ -950,7 +950,7 @@ AlignablePartitionGroup::CalculateAlignmentSpacings(
     // align for now.  However, this check alone does not include text that
     // follows the last aligned column, like trailing comments and EOL comments.
     if (total_column_width > column_limit) {
-      VLOG(1) << "Total aligned column width " << total_column_width
+      VLOG(2) << "Total aligned column width " << total_column_width
               << " exceeds limit " << column_limit
               << ", so not aligning this group.";
       return result;
@@ -1277,7 +1277,7 @@ void TabularAlignTokens(
   const TokenPartitionRange subpartitions_range(subpartitions.begin(),
                                                 subpartitions.end());
   if (subpartitions_range.empty()) return;
-  VLOG(1) << "extracting alignment partition groups...";
+  VLOG(2) << "extracting alignment partition groups...";
   const std::vector<AlignablePartitionGroup> alignment_groups(
       extract_alignment_groups(subpartitions_range));
   for (const auto& alignment_group : alignment_groups) {
