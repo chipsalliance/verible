@@ -245,6 +245,13 @@ TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
   }
 }
 
+TEST_F(TokenRangeTest, CheckContainsText) {
+  const TokenInfo& token = data_.FindTokenAt({0, 7});
+  const absl::string_view other_string = "other_string";
+  EXPECT_TRUE(data_.ContainsText(token.text()));
+  EXPECT_FALSE(data_.ContainsText(other_string));
+}
+
 TEST_F(TokenRangeTest, FindTokenAtPosition) {
   EXPECT_EQ(data_.FindTokenAt({0, 0}).text(), "hello");
   EXPECT_EQ(data_.FindTokenAt({0, 4}).text(), "hello");
