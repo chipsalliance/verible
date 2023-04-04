@@ -228,22 +228,16 @@ void SymbolTableHandler::Prepare() {
 absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
     const verible::lsp::TextDocumentPositionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
-  if (filepath.empty()) {
-    LOG(ERROR) << "Could not convert URI " << params.textDocument.uri
-               << " to filesystem path." << std::endl;
-    return {};
-  }
   const verilog::BufferTracker *tracker =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
   if (!tracker) {
-    LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
+    VLOG(1) << "Could not find buffer with URI " << params.textDocument.uri;
     return {};
   }
   const auto parsedbuffer = tracker->current();
   if (!parsedbuffer) {
-    LOG(ERROR) << "Buffer not found among opened buffers:  "
-               << params.textDocument.uri;
+    VLOG(1) << "Buffer not found among opened buffers:  "
+            << params.textDocument.uri;
     return {};
   }
   const verible::LineColumn cursor{params.position.line,
@@ -255,25 +249,23 @@ absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
 }
 
 std::optional<verible::lsp::Location>
-SymbolTableHandler::GetLocationFromSymbolTableNode(
-    absl::string_view symbol, const VerilogSourceFile *file_origin) {
+SymbolTableHandler::GetLocationFromSymbolName(
+    absl::string_view symbol_name, const VerilogSourceFile *file_origin) {
   // TODO (glatosinski) add iterating over multiple definitions
-  verible::lsp::Location location;
   if (!file_origin && curr_project_) {
-    file_origin = curr_project_->LookupFileOrigin(symbol);
+    file_origin = curr_project_->LookupFileOrigin(symbol_name);
   }
-  if (!file_origin) {
-    LOG(ERROR) << "Origin file not available";
-    return {};
-  }
+  if (!file_origin) return std::nullopt;
+
+  verible::lsp::Location location;
   location.uri = PathToLSPUri(file_origin->ResolvedPath());
   auto *textstructure = file_origin->GetTextStructure();
-  if (!textstructure) {
-    LOG(ERROR) << "Origin file's text structure is not parsed";
-    return {};
-  }
+  if (!textstructure->ContainsText(symbol_name)) return std::nullopt;
+
   verible::LineColumnRange symbollocation =
-      textstructure->GetRangeForText(symbol);
+      textstructure->GetRangeForText(symbol_name);
+  // TODO (glatosinski) add method for converting verible::LineColumnRange
+  // to verible::lsp::Range
   location.range.start = {.line = symbollocation.start.line,
                           .character = symbollocation.start.column};
   location.range.end = {.line = symbollocation.end.line,
@@ -284,6 +276,7 @@ SymbolTableHandler::GetLocationFromSymbolTableNode(
 std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
     const verible::lsp::DefinitionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
+  // TODO add iterating over multiple definitions
   Prepare();
   const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
@@ -291,22 +284,18 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   VLOG(1) << "Looking for symbol:  " << symbol;
   auto reffile = curr_project_->LookupRegisteredFile(relativepath);
   if (!reffile) {
-    LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
+    VLOG(1) << "Unable to lookup " << params.textDocument.uri;
     return {};
   }
 
   auto &root = symbol_table_->Root();
 
   auto node = ScanSymbolTreeForDefinition(&root, symbol);
-  if (!node) {
-    LOG(INFO) << "Symbol " << symbol << " not found in symbol table:  " << node;
-    return {};
-  }
+  // Symbol not found
+  if (!node) return {};
   auto location =
-      GetLocationFromSymbolTableNode(*node->Key(), node->Value().file_origin);
-  if (!location) {
-    return {};
-  }
+      GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
+  if (!location) return {};
   return {*location};
 }
 
@@ -341,8 +330,8 @@ void SymbolTableHandler::CollectReferencesReferenceComponents(
     const SymbolTableNode *definition_node,
     std::vector<verible::lsp::Location> *references) {
   if (ref->Value().resolved_symbol == definition_node) {
-    auto loc = GetLocationFromSymbolTableNode(ref->Value().identifier,
-                                              ref_origin->Value().file_origin);
+    auto loc = GetLocationFromSymbolName(ref->Value().identifier,
+                                         ref_origin->Value().file_origin);
     if (loc) references->push_back(*loc);
   }
   for (const auto &childref : ref->Children()) {

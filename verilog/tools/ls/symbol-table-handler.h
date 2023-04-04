@@ -59,8 +59,8 @@ class SymbolTableHandler {
 
   // Returns the location of the symbol from SymbolInfo in a
   // Location JSON format
-  std::optional<verible::lsp::Location> GetLocationFromSymbolTableNode(
-      absl::string_view symbol, const VerilogSourceFile *file_origin = nullptr);
+  std::optional<verible::lsp::Location> GetLocationFromSymbolName(
+      absl::string_view symbol_name, const VerilogSourceFile *file_origin);
 
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
