@@ -567,30 +567,30 @@ TEST_F(VerilogLanguageServerTest, FormattingFileWithEmptyNewline_issue1667) {
  "end":  {"line":2, "character": 20}})"));
 }
 
-// Creates a textDocument/definition request
-std::string DefinitionRequest(absl::string_view file, int id, int line,
-                              int character) {
-  json formattingrequest = {
-      {"jsonrpc", "2.0"},
-      {"id", id},
-      {"method", "textDocument/definition"},
-      {"params",
-       {{"textDocument", {{"uri", file}}},
-        {"position", {{"line", line}, {"character", character}}}}}};
-  return formattingrequest.dump();
+// Creates a request based on TextDocumentPosition parameters
+std::string TextDocumentPositionBasedRequest(absl::string_view method,
+                                             absl::string_view file, int id,
+                                             int line, int character) {
+  verible::lsp::TextDocumentPositionParams params{
+      .textDocument = {.uri = {file.begin(), file.end()}},
+      .position = {.line = line, .character = character}};
+  json request = {
+      {"jsonrpc", "2.0"}, {"id", id}, {"method", method}, {"params", params}};
+  return request.dump();
 }
 
 // Creates a textDocument/definition request
+std::string DefinitionRequest(absl::string_view file, int id, int line,
+                              int character) {
+  return TextDocumentPositionBasedRequest("textDocument/definition", file, id,
+                                          line, character);
+}
+
+// Creates a textDocument/references request
 std::string ReferencesRequest(absl::string_view file, int id, int line,
                               int character) {
-  json formattingrequest = {
-      {"jsonrpc", "2.0"},
-      {"id", id},
-      {"method", "textDocument/references"},
-      {"params",
-       {{"textDocument", {{"uri", file}}},
-        {"position", {{"line", line}, {"character", character}}}}}};
-  return formattingrequest.dump();
+  return TextDocumentPositionBasedRequest("textDocument/references", file, id,
+                                          line, character);
 }
 
 // Performs simple textDocument/definition request with no VerilogProject set
