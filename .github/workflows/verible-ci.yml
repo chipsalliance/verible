@@ -134,6 +134,8 @@ jobs:
         - asan-clang
         - compile
         - compile-clang
+        - compile-static
+        - compile-static-clang
         - coverage
         - clean
         arch:
