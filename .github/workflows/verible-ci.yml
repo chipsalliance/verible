@@ -327,9 +327,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        link: [static, dynamic]
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+      LINK_TYPE: '${{ matrix.link }}'
       ARCH: '${{ matrix.arch }}'
       DOCKER_DATA_ROOT: "/root/.docker"
       GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
@@ -361,7 +363,7 @@ jobs:
 
         docker pull $MATRIX_OS
         source ./.github/settings.sh
-        ARCH="$ARCH" ./releasing/docker-run.sh $MATRIX_OS
+        ARCH="$ARCH" LINK_TYPE="$LINK_TYPE" ./releasing/docker-run.sh $MATRIX_OS
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2

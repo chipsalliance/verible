@@ -28,6 +28,7 @@ export TARGET=`echo "$1" | sed 's#:#-#g'`
 
 TARGET_VERSION=`echo $TARGET | cut -d- -f2`
 TARGET_OS=`echo $TARGET | cut -d- -f1`
+export TARGET_LINK=${LINK_TYPE:-"dynamic"}
 
 export TAG=${TAG:-$(git describe --match=v*)}
 
@@ -72,6 +73,10 @@ case "$TARGET_OS" in
     cat ${TARGET_OS}/common/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
   ;;
 esac
+
+if [ "${TARGET_LINK}" = static ]; then
+  BAZEL_OPTS="${BAZEL_OPTS} --//bazel:create_static_linked_executables"
+fi
 
 # Bazel
 cat bazel.dockerstage >> ${OUT_DIR}/Dockerfile
@@ -135,6 +140,7 @@ docker run --rm \
   -e GIT_VERSION="${GIT_VERSION:-$(git describe --match=v*)}" \
   -e GIT_DATE="${GIT_DATE:-$(git show -s --format=%ci)}" \
   -e GIT_HASH="${GIT_HASH:-$(git rev-parse HEAD)}" \
+  -e TARGET_LINK="${TARGET_LINK:-""}" \
   -v $(pwd)/out:/out \
   $IMAGE \
   ./releasing/build.sh
