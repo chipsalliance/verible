@@ -162,7 +162,6 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
                           absl::string_view) {
   size_t lineno = 0;
   for (const auto& line : text_structure.Lines()) {
-    VLOG(2) << "Examining line: " << lineno + 1;
     const int observed_line_length = verible::utf8_len(line);
     if (observed_line_length > line_length_limit_) {
       const auto token_range = text_structure.TokenRangeOnLine(lineno);

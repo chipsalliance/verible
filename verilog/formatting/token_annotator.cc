@@ -572,7 +572,7 @@ static SpacePolicy SpacesRequiredBetween(
   constexpr int kUnhandledSpacesDefault = 1;
   const auto spaces =
       SpacesRequiredBetween(left, right, left_context, right_context, style);
-  VLOG(1) << "spaces: " << spaces.value << ", reason: " << spaces.reason;
+  VLOG(2) << "spaces: " << spaces.value << ", reason: " << spaces.reason;
 
   if (spaces.value == kUnhandledSpacesRequired) {
     VLOG(1) << "Unhandled inter-token spacing between "

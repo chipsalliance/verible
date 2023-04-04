@@ -1527,10 +1527,10 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
   const auto* origin = uwline.Origin();
-  VLOG(1) << "origin is nullptr? " << (origin == nullptr);
+  VLOG(2) << "origin is nullptr? " << (origin == nullptr);
   if (origin == nullptr) return;
   const auto* node = down_cast<const SyntaxTreeNode*>(origin);
-  VLOG(1) << "origin is node? " << (node != nullptr);
+  VLOG(2) << "origin is node? " << (node != nullptr);
   if (node == nullptr) return;
   // Dispatch aligning function based on syntax tree node type.
 

@@ -313,9 +313,11 @@ using verible::TokenInfo;
 // Helper class to replace macro call argument nodes with expression trees.
 class MacroCallArgExpander : public MutableTreeVisitorRecursive {
  public:
-  explicit MacroCallArgExpander(absl::string_view text,
-                                const VerilogPreprocess::Config& pre_config)
-      : full_text_(text), preprocess_config_(pre_config) {}
+  MacroCallArgExpander(absl::string_view outer_filename, absl::string_view text,
+                       const VerilogPreprocess::Config& pre_config)
+      : outer_filename_(outer_filename),
+        full_text_(text),
+        preprocess_config_(pre_config) {}
 
   void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
 
@@ -325,15 +327,20 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
       VLOG(3) << "MacroCallArgExpander: examining token: " << token;
       // Attempt to parse text as an expression.
       std::unique_ptr<VerilogAnalyzer> expr_analyzer = AnalyzeVerilogExpression(
-          token.text(), "<macro-arg-expander>", preprocess_config_);
+          token.text(), absl::StrCat(outer_filename_, ":<macro-arg-expander>"),
+          preprocess_config_);
       if (!expr_analyzer->ParseStatus().ok()) {
         // If that failed, try to parse text as a property.
         expr_analyzer = AnalyzeVerilogPropertySpec(
-            token.text(), "<macro-arg-expander>", preprocess_config_);
+            token.text(),
+            absl::StrCat(outer_filename_, ":<macro-arg-expander-property>"),
+            preprocess_config_);
         if (!expr_analyzer->ParseStatus().ok()) {
           // If that failed: try to infer parsing mode from comments
           expr_analyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-              token.text(), "<macro-arg-expander>", preprocess_config_);
+              token.text(),
+              absl::StrCat(outer_filename_, ":<macro-arg-expander-auto>"),
+              preprocess_config_);
         }
       }
       if (ABSL_DIE_IF_NULL(expr_analyzer)->LexStatus().ok() &&
@@ -385,8 +392,11 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
   // Value: substring analysis results.
   TextStructureView::NodeExpansionMap subtrees_to_splice_;
 
+  // Filename we're processing. Purely FYI.
+  const absl::string_view outer_filename_;
+
   // Full text from which tokens were lexed, for calculating byte offsets.
-  absl::string_view full_text_;
+  const absl::string_view full_text_;
   const VerilogPreprocess::Config& preprocess_config_;
 };
 
@@ -394,7 +404,8 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
 
 void VerilogAnalyzer::ExpandMacroCallArgExpressions() {
   VLOG(2) << __FUNCTION__;
-  MacroCallArgExpander expander(Data().Contents(), preprocess_config_);
+  MacroCallArgExpander expander(filename_, Data().Contents(),
+                                preprocess_config_);
   ABSL_DIE_IF_NULL(Data().SyntaxTree())
       ->Accept(&expander, &MutableData().MutableSyntaxTree());
   expander.ExpandSubtrees(this);
