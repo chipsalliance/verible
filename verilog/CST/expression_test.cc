@@ -446,6 +446,7 @@ TEST(GetUnaryPrefixOperator, Exprs) {
     } else {
       EXPECT_NE(NodeEnum(last_node->Tag().tag),
                 NodeEnum::kUnaryPrefixExpression);
+      EXPECT_FALSE(GetUnaryPrefixOperand(*last_node));
     }
   }
 }
@@ -472,6 +473,7 @@ TEST(GetUnaryPrefixOperand, Exprs) {
     } else {
       EXPECT_NE(NodeEnum(last_node->Tag().tag),
                 NodeEnum::kUnaryPrefixExpression);
+      EXPECT_FALSE(GetUnaryPrefixOperand(*last_node));
     }
   }
 }

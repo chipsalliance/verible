@@ -100,7 +100,9 @@ const verible::Symbol* GetConditionExpressionFalseCase(
 
 const verible::TokenInfo* GetUnaryPrefixOperator(
     const verible::Symbol& symbol) {
-  const SyntaxTreeNode* node = &verible::SymbolCastToNode(symbol);
+  const SyntaxTreeNode* node = symbol.Kind() == SymbolKind::kNode
+                                   ? &verible::SymbolCastToNode(symbol)
+                                   : nullptr;
   if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
     return nullptr;
   }
@@ -110,7 +112,9 @@ const verible::TokenInfo* GetUnaryPrefixOperator(
 }
 
 const verible::Symbol* GetUnaryPrefixOperand(const verible::Symbol& symbol) {
-  const SyntaxTreeNode* node = &verible::SymbolCastToNode(symbol);
+  const SyntaxTreeNode* node = symbol.Kind() == SymbolKind::kNode
+                                   ? &verible::SymbolCastToNode(symbol)
+                                   : nullptr;
   if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
     return nullptr;
   }

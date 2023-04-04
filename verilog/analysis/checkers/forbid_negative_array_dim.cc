@@ -61,6 +61,9 @@ static const Matcher& UnaryPrefixExprMatcher() {
 
 void ForbidNegativeArrayDim::HandleSymbol(
     const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+  // This only works for simple unary expressions. They can't be nested inside
+  // other expressions. This avoids false positives of the form:
+  // logic l [10+(-5):0], logic l[-(-5):0]
   if (!context.IsInsideFirst(
           {NodeEnum::kPackedDimensions, NodeEnum::kUnpackedDimensions},
           {NodeEnum::kBinaryExpression, NodeEnum::kUnaryPrefixExpression})) {
@@ -68,20 +71,20 @@ void ForbidNegativeArrayDim::HandleSymbol(
   }
 
   verible::matcher::BoundSymbolManager manager;
-  if (UnaryPrefixExprMatcher().Matches(symbol, &manager)) {
-    int value = 0;
+  if (!UnaryPrefixExprMatcher().Matches(symbol, &manager)) return;
 
-    // Extract operand and operator from kUnaryPrefixExpression
-    const verible::TokenInfo* u_operator =
-        verilog::GetUnaryPrefixOperator(symbol);
-    const verible::Symbol* operand = verilog::GetUnaryPrefixOperand(symbol);
+  // As we've previously ensured that this symbol is a kUnaryPrefixExpression
+  // both its operator and operand are defined
+  const verible::TokenInfo* u_operator =
+      verilog::GetUnaryPrefixOperator(symbol);
+  const verible::Symbol* operand = verilog::GetUnaryPrefixOperand(symbol);
 
-    const bool is_constant = verilog::ConstantIntegerValue(*operand, &value);
-    if (is_constant && value > 0 && u_operator->text() == "-") {
-      const verible::TokenInfo token(TK_OTHER,
-                                     verible::StringSpanOfSymbol(symbol));
-      violations_.insert(verible::LintViolation(token, kMessage, context));
-    }
+  int value = 0;
+  const bool is_constant = verilog::ConstantIntegerValue(*operand, &value);
+  if (is_constant && value > 0 && u_operator->text() == "-") {
+    const verible::TokenInfo token(TK_OTHER,
+                                   verible::StringSpanOfSymbol(symbol));
+    violations_.insert(verible::LintViolation(token, kMessage, context));
   }
 }
 
