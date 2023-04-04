@@ -48,20 +48,6 @@ class SymbolTableHandler {
   // Once the project's root is set, a new SymbolTable is created.
   void SetProject(const std::shared_ptr<VerilogProject> &project);
 
-  // prepares structures for symbol-based requests
-  void Prepare();
-
-  // Returns the token (symbol) of the file at a given position, specified
-  // in the TextDocumentPositionParams
-  absl::string_view GetTokenAtTextDocumentPosition(
-      const verible::lsp::TextDocumentPositionParams &params,
-      const verilog::BufferTrackerContainer &parsed_buffers);
-
-  // Returns the location of the symbol from SymbolInfo in a
-  // Location JSON format
-  std::optional<verible::lsp::Location> GetLocationFromSymbolName(
-      absl::string_view symbol_name, const VerilogSourceFile *file_origin);
-
   // Finds the definition for a symbol provided in the DefinitionParams
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
@@ -79,12 +65,6 @@ class SymbolTableHandler {
       const verible::lsp::ReferenceParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  // Collects all references of a given symbol in the references
-  // vector.
-  void CollectReferences(const SymbolTableNode *context,
-                         const SymbolTableNode *definition_node,
-                         std::vector<verible::lsp::Location> *references);
-
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
   void UpdateFileContent(absl::string_view path,
@@ -94,9 +74,25 @@ class SymbolTableHandler {
   std::vector<absl::Status> BuildProjectSymbolTable();
 
  private:
+  // prepares structures for symbol-based requests
+  void Prepare();
+
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void ResetSymbolTable();
+
+  // Returns text pointed by the LSP request based on
+  // TextDocumentPositionParams. If text is not found, empty-initialized
+  // string_view is returned.
+  absl::string_view GetTokenAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns the Location of the symbol name in source file
+  // pointed by the file_origin.
+  // If given symbol name is not found, std::nullopt is returned.
+  std::optional<verible::lsp::Location> GetLocationFromSymbolName(
+      absl::string_view symbol_name, const VerilogSourceFile *file_origin);
 
   // Scans the symbol table tree to find a given symbol.
   // returns pointer to table node with the symbol on success, else nullptr.
@@ -109,6 +105,12 @@ class SymbolTableHandler {
       const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
       const SymbolTableNode *definition_node,
       std::vector<verible::lsp::Location> *references);
+
+  // Collects all references of a given symbol in the references
+  // vector.
+  void CollectReferences(const SymbolTableNode *context,
+                         const SymbolTableNode *definition_node,
+                         std::vector<verible::lsp::Location> *references);
 
   // Looks for verible.filelist file down in directory structure and loads data
   // to project.
