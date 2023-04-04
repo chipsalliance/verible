@@ -181,6 +181,15 @@ syntax checker will be at
 `bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
 target name `//verilog/tools/syntax:verible-verilog-syntax`).
 
+Moreover, if you need statically linked executables that don't depend on your
+shared libraries, you can use custom flag
+`--//bazel:create_static_linked_executables`.
+
+```bash
+# Generates statically linked executables
+bazel build -c opt --//bazel:create_static_linked_executables //...
+```
+
 ### Optionally using local flex/bison for build
 
 Flex and Bison, that are needed for the parser generation, are compiled as part
