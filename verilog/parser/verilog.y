@@ -3157,10 +3157,15 @@ block_item_or_statement_or_null
       { $$ = std::move($1); }
   | unqualified_id ':' /* attribute_list_opt */ statement_item
     { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
+  //TODO(jbylicki): Add as much (edge) cases as the S/R conflicts allow
+  | unqualified_id ':' reference call_base
+    { $$ = MakeTaggedNode(N::kLabeledStatement, $1, $2, $3); }
   | /* attribute_list_opt */ ';'
     { $$ = MakeTaggedNode(N::kNullStatement, $1); }
   | reference ';'
     { $$ = MakeTaggedNode(N::kStatement, $1, $2); }
+  | reference '.' builtin_array_method ';'
+    { $$ = MakeTaggedNode(N::kStatement, ExtendNode($1, MakeTaggedNode(N::kBuiltinArrayMethodCallExtension, $2, $3, nullptr), $4)); }
   ;
 block_item_or_statement_or_null_list
   : block_item_or_statement_or_null_list block_item_or_statement_or_null
@@ -4646,7 +4651,7 @@ reference_or_call
   // to handle the built-ins when there is no function call earler in the chain
     /* base of reference, including GenericIdentifier */
   | reference '.' builtin_array_method
-    { $$ = ExtendNode($1, $2, $3); }
+    { $$ = ExtendNode($1, MakeTaggedNode(N::kBuiltinArrayMethodCallExtension, $2, $3, nullptr)); }
   | reference '.' TK_randomize
     { $$ = ExtendNode($1, MakeTaggedNode(N::kRandomizeMethodCallExtension, $2, $3, nullptr, nullptr)); }
   | reference call_base select_variable_dimension
@@ -4798,6 +4803,8 @@ casting_type
     { $$ = std::move($1); }
   | TK_const
     { $$ = std::move($1); }
+  | reference
+    {$$ = std::move($1); }
   /* covered by data_type_base:
   | TK_string
   */
@@ -4926,6 +4933,9 @@ gate_instance_or_register_variable
   /* TODO(fangism): arrays should not be declared with port connections */
   /* TODO(b/36706412): support anonymous instances */
   | call_base
+    {$$ = MakeTaggedNode(N::kGateInstance, nullptr, nullptr, $1); }
+  //FIXME(jbylicki): This is cursed and it skips the call extension in the tree
+  | call_base hierarchy_or_call_extension
     {$$ = MakeTaggedNode(N::kGateInstance, nullptr, nullptr, $1); }
   ;
 gate_instance_or_register_variable_list

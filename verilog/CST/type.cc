@@ -41,6 +41,10 @@ static SymbolPtr ReinterpretLocalRootAsType(Symbol& local_root) {  // NOLINT
 
 SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
     SymbolPtr& reference_call_base) {
+  if (reference_call_base->Tag().tag ==
+      static_cast<int>(NodeEnum::kMacroCall)) {
+    return std::move(reference_call_base);
+  }
   verible::SyntaxTreeNode& base(verible::CheckSymbolAsNode(
       *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReference));
   auto& children(base.mutable_children());
@@ -48,7 +52,8 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
 
   Symbol& local_root(*children.front());
   if (local_root.Kind() != verible::SymbolKind::kNode ||
-      !verible::SymbolCastToNode(local_root).MatchesTag(NodeEnum::kLocalRoot)) {
+      verible::SymbolCastToNode(*children.back())
+          .MatchesTag(NodeEnum::kHierarchyExtension)) {
     // function call -like syntax can never be interpreted as a type,
     // so return the whole subtree unmodified.
     return std::move(reference_call_base);
