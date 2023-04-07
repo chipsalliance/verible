@@ -74,8 +74,8 @@ case "$TARGET_OS" in
   ;;
 esac
 
-if [ "${TARGET_LINK}" = static ]; then
-  BAZEL_OPTS="${BAZEL_OPTS} --//bazel:create_static_linked_executables"
+if [ "${TARGET_LINK}" = "static" ]; then
+  BAZEL_OPTS="${BAZEL_OPTS} --config=create_static_linked_executables"
 fi
 
 # Bazel

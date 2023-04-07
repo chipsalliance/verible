@@ -182,12 +182,13 @@ syntax checker will be at
 target name `//verilog/tools/syntax:verible-verilog-syntax`).
 
 Moreover, if you need statically linked executables that don't depend on your
-shared libraries, you can use custom flag
-`--//bazel:create_static_linked_executables`.
+shared libraries, you can use custom config
+`create_static_linked_executables` (with this setting `bfd` linker will be used,
+instead of default `gold` linker).
 
 ```bash
 # Generates statically linked executables
-bazel build -c opt --//bazel:create_static_linked_executables //...
+bazel build -c opt --config=create_static_linked_executables //...
 ```
 
 ### Optionally using local flex/bison for build
