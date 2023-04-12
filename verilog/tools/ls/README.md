@@ -13,7 +13,7 @@ There are a few changes in the review pipeline, so here is the current
 progress
 
   - [x] Publish diagnostics for syntax errors and lint rules
-    - [ ] Use lint configuration from `.rules.verible_lint` instead of all enabled
+    - [x] Use lint configuration from `.rules.verible_lint` instead of all enabled
   - [x] Provide code actions for autofixes provided by lint rules
   - [x] Generate file symbol outline ('navigation tree')
   - [x] Provide formatting.
@@ -21,7 +21,9 @@ progress
     - [ ] Take scope and type into account to only highlight _same_ symbols.
   - [ ] Provide useful information on hover
         ([#1187](https://github.com/chipsalliance/verible/issues/1187))
-  - [ ] Find definition of symbol even if in another file.
+  - [x] Find definition of a symbol even if in another file.
+  - [x] Find references of a symbol even if in another file.
+  - [ ] Find declaration of a symbol even if in another file.
         ([#1189](https://github.com/chipsalliance/verible/issues/1189))
   - [ ] Provide Document Links (e.g. opening include files)
         ([#1190](https://github.com/chipsalliance/verible/issues/1190))
