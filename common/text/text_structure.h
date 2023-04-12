@@ -108,6 +108,7 @@ class TextStructureView {
   }
 
   // Given a byte offset, return the line/column
+  // TODO(hzeller): this should probably be int64_t or a DocumentOffset typedef
   LineColumn GetLineColAtOffset(int bytes_offset) const {
     return GetLineColumnMap().GetLineColAtOffset(contents_, bytes_offset);
   }
