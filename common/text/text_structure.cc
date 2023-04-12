@@ -147,10 +147,10 @@ LineColumnRange TextStructureView::GetRangeForToken(
 
 LineColumnRange TextStructureView::GetRangeForText(
     absl::string_view text) const {
-  const int from = std::distance(Contents().begin(), text.begin());
-  const int to = std::distance(Contents().begin(), text.end());
+  const auto from = std::distance(Contents().begin(), text.begin());
+  const auto to = std::distance(Contents().begin(), text.end());
   CHECK_GE(from, 0) << '"' << text << '"';
-  CHECK_LE(to, static_cast<int>(Contents().length())) << '"' << text << '"';
+  CHECK_LE(to, static_cast<int64_t>(Contents().length())) << '"' << text << '"';
   return {GetLineColAtOffset(from), GetLineColAtOffset(to)};
 }
 
