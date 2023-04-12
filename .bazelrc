@@ -11,8 +11,8 @@ build:macos --workspace_status_command="bazel/build-version.py"
 build:windows --workspace_status_command="python bazel/build-version.py"
 
 common:linux --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
-common:freebsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
-common:openbsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17
+common:freebsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
+common:openbsd --cxxopt=-std=c++17 --host_cxxopt=-std=c++17 --client_env=BAZEL_CXXOPTS=-std=c++17 --linkopt=-lm --host_linkopt=-lm
 
 # https://github.com/abseil/abseil-cpp/issues/848
 # https://github.com/bazelbuild/bazel/issues/4341#issuecomment-758361769
