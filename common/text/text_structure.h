@@ -119,6 +119,9 @@ class TextStructureView {
   // of Contents(), return the range it covers.
   LineColumnRange GetRangeForText(absl::string_view text) const;
 
+  // checks if a given text belongs to the TextStructure
+  bool ContainsText(absl::string_view text) const;
+
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const;
 
   // Given line/column, find token that is available there. If this is out of

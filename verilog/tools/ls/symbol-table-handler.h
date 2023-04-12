@@ -58,6 +58,13 @@ class SymbolTableHandler {
   // Finds the symbol of the definition for the given identifier.
   const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
 
+  // Finds references of a symbol provided in the ReferenceParams
+  // message delivered in textDocument/references message.
+  // Provides a list of references' locations
+  std::vector<verible::lsp::Location> FindReferencesLocations(
+      const verible::lsp::ReferenceParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
   void UpdateFileContent(absl::string_view path,
@@ -67,14 +74,43 @@ class SymbolTableHandler {
   std::vector<absl::Status> BuildProjectSymbolTable();
 
  private:
+  // prepares structures for symbol-based requests
+  void Prepare();
+
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void ResetSymbolTable();
+
+  // Returns text pointed by the LSP request based on
+  // TextDocumentPositionParams. If text is not found, empty-initialized
+  // string_view is returned.
+  absl::string_view GetTokenAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns the Location of the symbol name in source file
+  // pointed by the file_origin.
+  // If given symbol name is not found, std::nullopt is returned.
+  std::optional<verible::lsp::Location> GetLocationFromSymbolName(
+      absl::string_view symbol_name, const VerilogSourceFile *file_origin);
 
   // Scans the symbol table tree to find a given symbol.
   // returns pointer to table node with the symbol on success, else nullptr.
   const SymbolTableNode *ScanSymbolTreeForDefinition(
       const SymbolTableNode *context, absl::string_view symbol);
+
+  // Internal function for CollectReferences that iterates over
+  // ReferenceComponentNodes
+  void CollectReferencesReferenceComponents(
+      const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
+      const SymbolTableNode *definition_node,
+      std::vector<verible::lsp::Location> *references);
+
+  // Collects all references of a given symbol in the references
+  // vector.
+  void CollectReferences(const SymbolTableNode *context,
+                         const SymbolTableNode *definition_node,
+                         std::vector<verible::lsp::Location> *references);
 
   // Looks for verible.filelist file down in directory structure and loads data
   // to project.

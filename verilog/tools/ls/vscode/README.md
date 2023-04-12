@@ -12,6 +12,7 @@ The language server provides a couple of features from the [Verible SystemVerilo
    outline tree. Labelled begin/end blocks are also included.
  * **Hover**: Highlight symbols related to the one under the cursor.
  * **Go-To-Definition**: Jump to the definition of the symbol under the cursor.
+ * **Go-To-References**: Jump to the references of the symbol under the cursor.
  * **AUTO**-expansion: Features known from [Emacs
    Verilog-mode](https://www.veripool.org/verilog-mode/), used for expanding
    various `/*AUTO...*/` pragmas in Verilog and SystemVerilog code. These

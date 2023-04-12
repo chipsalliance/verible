@@ -68,6 +68,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       {"documentFormattingProvider", true},       // Full file format
       {"documentHighlightProvider", true},        // Highlight same symbol
       {"definitionProvider", true},               // Provide going to definition
+      {"referencesProvider", true},               // Provide going to references
       {"diagnosticProvider",                      // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
@@ -130,6 +131,12 @@ void VerilogLanguageServer::SetRequestHandlers() {
       "textDocument/definition",
       [this](const verible::lsp::DefinitionParams &p) {
         return symbol_table_handler_.FindDefinitionLocation(p, parsed_buffers_);
+      });
+  dispatcher_.AddRequestHandler(  // go-to references
+      "textDocument/references",
+      [this](const verible::lsp::ReferenceParams &p) {
+        return symbol_table_handler_.FindReferencesLocations(p,
+                                                             parsed_buffers_);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {

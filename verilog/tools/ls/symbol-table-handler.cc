@@ -159,7 +159,8 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   for (const auto &file_in_project : filelist.file_paths) {
     const std::string canonicalized =
         std::filesystem::path(file_in_project).lexically_normal().string();
-    auto source = curr_project_->OpenTranslationUnit(canonicalized);
+    absl::StatusOr<VerilogSourceFile *> source =
+        curr_project_->OpenTranslationUnit(canonicalized);
     if (!source.ok()) source = curr_project_->OpenIncludedFile(canonicalized);
     if (!source.ok()) {
       VLOG(1) << "File included in " << filelist_path_
@@ -182,14 +183,14 @@ bool IsStringViewContained(absl::string_view origin, absl::string_view substr) {
   return true;
 }
 
-const SymbolTableNode *ScanReferenceComponents(
+const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
     const ReferenceComponentNode *ref, absl::string_view symbol) {
   if (IsStringViewContained(ref->Value().identifier, symbol)) {
     return ref->Value().resolved_symbol;
   }
   for (const auto &childref : ref->Children()) {
     const SymbolTableNode *resolved =
-        ScanReferenceComponents(&childref, symbol);
+        ScanSymbolTreeForDefinitionReferenceComponents(&childref, symbol);
     if (resolved) return resolved;
   }
   return nullptr;
@@ -205,11 +206,13 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   for (const auto &ref : context->Value().local_references_to_bind) {
     if (ref.Empty()) continue;
     const SymbolTableNode *resolved =
-        ScanReferenceComponents(ref.components.get(), symbol);
+        ScanSymbolTreeForDefinitionReferenceComponents(ref.components.get(),
+                                                       symbol);
     if (resolved) return resolved;
   }
   for (const auto &child : context->Children()) {
-    auto res = ScanSymbolTreeForDefinition(&child.second, symbol);
+    const SymbolTableNode *res =
+        ScanSymbolTreeForDefinition(&child.second, symbol);
     if (res) {
       return res;
     }
@@ -217,30 +220,26 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   return nullptr;
 }
 
-std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
-    const verible::lsp::DefinitionParams &params,
-    const verilog::BufferTrackerContainer &parsed_buffers) {
+void SymbolTableHandler::Prepare() {
   LoadProjectFileList(curr_project_->TranslationUnitRoot());
   if (files_dirty_) {
     BuildProjectSymbolTable();
   }
-  const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
-  if (filepath.empty()) {
-    LOG(ERROR) << "Could not convert URI " << params.textDocument.uri
-               << " to filesystem path." << std::endl;
-    return {};
-  }
-  std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
+}
+
+absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
+    const verible::lsp::TextDocumentPositionParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
   const verilog::BufferTracker *tracker =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
   if (!tracker) {
-    LOG(ERROR) << "Could not find buffer with URI " << params.textDocument.uri;
+    VLOG(1) << "Could not find buffer with URI " << params.textDocument.uri;
     return {};
   }
-  const auto parsedbuffer = tracker->current();
+  std::shared_ptr<const ParsedBuffer> parsedbuffer = tracker->current();
   if (!parsedbuffer) {
-    LOG(ERROR) << "Buffer not found among opened buffers:  "
-               << params.textDocument.uri;
+    VLOG(1) << "Buffer not found among opened buffers:  "
+            << params.textDocument.uri;
     return {};
   }
   const verible::LineColumn cursor{params.position.line,
@@ -248,41 +247,61 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
-  auto symbol = cursor_token.text();
-  VLOG(1) << "Looking for symbol:  " << symbol;
-  auto reffile = curr_project_->LookupRegisteredFile(relativepath);
-  if (!reffile) {
-    LOG(ERROR) << "Unable to lookup " << params.textDocument.uri;
-    return {};
-  }
+  return cursor_token.text();
+}
 
-  auto &root = symbol_table_->Root();
-
-  auto node = ScanSymbolTreeForDefinition(&root, symbol);
-  if (!node) {
-    LOG(INFO) << "Symbol " << symbol << " not found in symbol table:  " << node;
-    return {};
+std::optional<verible::lsp::Location>
+SymbolTableHandler::GetLocationFromSymbolName(
+    absl::string_view symbol_name, const VerilogSourceFile *file_origin) {
+  // TODO (glatosinski) add iterating over multiple definitions
+  if (!file_origin && curr_project_) {
+    file_origin = curr_project_->LookupFileOrigin(symbol_name);
   }
-  // TODO add iterating over multiple definitions?
+  if (!file_origin) return std::nullopt;
+
   verible::lsp::Location location;
-  const verilog::SymbolInfo &symbolinfo = node->Value();
-  if (!symbolinfo.file_origin) {
-    LOG(ERROR) << "Origin file not available";
-    return {};
-  }
-  location.uri = PathToLSPUri(symbolinfo.file_origin->ResolvedPath());
-  auto *textstructure = symbolinfo.file_origin->GetTextStructure();
-  if (!textstructure) {
-    LOG(ERROR) << "Origin file's text structure is not parsed";
-    return {};
-  }
+  location.uri = PathToLSPUri(file_origin->ResolvedPath());
+  const verible::TextStructureView *textstructure =
+      file_origin->GetTextStructure();
+  if (!textstructure->ContainsText(symbol_name)) return std::nullopt;
+
   verible::LineColumnRange symbollocation =
-      textstructure->GetRangeForText(*node->Key());
+      textstructure->GetRangeForText(symbol_name);
+  // TODO (glatosinski) add method for converting verible::LineColumnRange
+  // to verible::lsp::Range
   location.range.start = {.line = symbollocation.start.line,
                           .character = symbollocation.start.column};
   location.range.end = {.line = symbollocation.end.line,
                         .character = symbollocation.end.column};
-  return {location};
+  return location;
+}
+
+std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
+    const verible::lsp::DefinitionParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  // TODO add iterating over multiple definitions
+  Prepare();
+  const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
+  std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
+  absl::string_view symbol =
+      GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  VLOG(1) << "Looking for symbol:  " << symbol;
+  VerilogSourceFile *reffile =
+      curr_project_->LookupRegisteredFile(relativepath);
+  if (!reffile) {
+    VLOG(1) << "Unable to lookup " << params.textDocument.uri;
+    return {};
+  }
+
+  const SymbolTableNode &root = symbol_table_->Root();
+
+  const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
+  // Symbol not found
+  if (!node) return {};
+  std::optional<verible::lsp::Location> location =
+      GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
+  if (!location) return {};
+  return {*location};
 }
 
 const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
@@ -290,10 +309,55 @@ const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
   if (files_dirty_) {
     BuildProjectSymbolTable();
   }
-  auto symbol_table_node =
+  const SymbolTableNode *symbol_table_node =
       ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
   if (symbol_table_node) return symbol_table_node->Value().syntax_origin;
   return nullptr;
+}
+
+std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
+    const verible::lsp::ReferenceParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  Prepare();
+  absl::string_view symbol =
+      GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  const SymbolTableNode &root = symbol_table_->Root();
+  const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
+  if (!node) {
+    return {};
+  }
+  std::vector<verible::lsp::Location> locations;
+  CollectReferences(&root, node, &locations);
+  return locations;
+}
+
+void SymbolTableHandler::CollectReferencesReferenceComponents(
+    const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
+    const SymbolTableNode *definition_node,
+    std::vector<verible::lsp::Location> *references) {
+  if (ref->Value().resolved_symbol == definition_node) {
+    std::optional<verible::lsp::Location> loc = GetLocationFromSymbolName(
+        ref->Value().identifier, ref_origin->Value().file_origin);
+    if (loc) references->push_back(*loc);
+  }
+  for (const auto &childref : ref->Children()) {
+    CollectReferencesReferenceComponents(&childref, ref_origin, definition_node,
+                                         references);
+  }
+}
+
+void SymbolTableHandler::CollectReferences(
+    const SymbolTableNode *context, const SymbolTableNode *definition_node,
+    std::vector<verible::lsp::Location> *references) {
+  if (!context) return;
+  for (const auto &ref : context->Value().local_references_to_bind) {
+    if (ref.Empty()) continue;
+    CollectReferencesReferenceComponents(ref.components.get(), context,
+                                         definition_node, references);
+  }
+  for (const auto &child : context->Children()) {
+    CollectReferences(&child.second, definition_node, references);
+  }
 }
 
 void SymbolTableHandler::UpdateFileContent(
