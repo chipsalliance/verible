@@ -49,6 +49,7 @@ using verible::SyntaxTreeLeaf;
 using verible::SyntaxTreeNode;
 using verible::TextStructureView;
 using verible::TokenInfo;
+using verible::TreeSearchMatch;
 using verible::lsp::CodeAction;
 using verible::lsp::CodeActionParams;
 using verible::lsp::TextEdit;
@@ -99,16 +100,31 @@ class AutoExpander {
     absl::string_view type;  // Type of the instance a port is connected to
   };
 
+  // A SystemVerilog range [msb:lsb]
+  struct DimensionRange {
+    int64_t msb;
+    int64_t lsb;
+  };
+
+  // A dimension can be a range, an unsigned integer, or, if it cannot be
+  // interpreted as one of these, a string
+  using Dimension = std::variant<absl::string_view, size_t, DimensionRange>;
+
+  // Iterates through the given dimension vectors and returns a new one with
+  // each element being the maximum of corresponding original dimensions.
+  static std::vector<Dimension> MaxDimensions(
+      const std::vector<Dimension> &first,
+      const std::vector<Dimension> &second);
+
   // Representation of a net-like, base type for Port and Wire (you probably
   // want to use those)
   struct Net {
-    std::string name;                                    // Name of the net
-    std::vector<ConnectedInstance> conn_inst;            // What instances is
-                                                         // it connected to?
-    std::vector<absl::string_view> packed_dimensions;    // Spans of this net's
-                                                         // packed dimensions
-    std::vector<absl::string_view> unpacked_dimensions;  // Spans of this net's
-                                                         // unpacked dimensions
+    std::string name;                            // Name of the net
+    std::vector<ConnectedInstance> conn_inst;    // What instances is
+                                                 // it connected to?
+    std::vector<Dimension> packed_dimensions;    // This net's packed dimensions
+    std::vector<Dimension> unpacked_dimensions;  // This net's unpacked
+                                                 // dimensions
 
     // Writes the port's identifier with packed and unpacked dimensions to the
     // output stream
@@ -116,6 +132,16 @@ class AutoExpander {
 
     // Returns true if the port is connected to any instance
     bool IsConnected() const { return !conn_inst.empty(); }
+
+    // Adds the given connected instance to the net's list of connections, and
+    // makes the packed dimensions the max of the current dimensions and the
+    // ones provided
+    void AddConnection(const ConnectedInstance &connected,
+                       const std::vector<Dimension> &new_packed_dimensions) {
+      conn_inst.push_back(connected);
+      packed_dimensions =
+          AutoExpander::MaxDimensions(packed_dimensions, new_packed_dimensions);
+    }
   };
 
   // A port, with direction and some meta-info
@@ -211,8 +237,8 @@ class AutoExpander {
     void AddGeneratedConnection(
         const std::string &port_name, Port::Direction direction,
         const ConnectedInstance &connected,
-        const std::vector<absl::string_view> &packed_dimensions,
-        const std::vector<absl::string_view> &unpacked_dimensions);
+        const std::vector<Dimension> &packed_dimensions,
+        const std::vector<Dimension> &unpacked_dimensions);
 
     // Sort ports by location in the source
     void SortPortsByLocation();
@@ -287,7 +313,7 @@ class AutoExpander {
     std::vector<Port> ports_;
 
     // New wires to emit (if not already defined)
-    std::vector<Wire> wires_to_generate;
+    std::vector<Wire> wires_to_generate_;
 
     // This module's direct dependencies
     absl::flat_hash_set<const Module *> dependencies_;
@@ -475,15 +501,93 @@ const LazyRE2 AutoExpander::autooutput_re_{MAKE_AUTODECL_REGEX("OUTPUT")};
 const LazyRE2 AutoExpander::autowire_re_{MAKE_AUTODECL_REGEX("WIRE")};
 const LazyRE2 AutoExpander::autoreg_re_{MAKE_AUTODECL_REGEX("REG")};
 
+using Dimension = AutoExpander::Dimension;
+using DimensionRange = AutoExpander::DimensionRange;
+
+// Fallback for the case of comparing two dimensions if there is no obvious
+// maximum. Simply returns the first given dimension.
+template <typename T, typename U>
+static Dimension MaxDimension(const T first, const U second) {
+  return first;
+}
+
+// Returns the greater of the two given dimensions.
+template <>
+Dimension MaxDimension(const size_t first, const size_t second) {
+  return std::max(first, second);
+}
+
+// Returns a range that can fit the two given dimensions.
+template <>
+Dimension MaxDimension(const DimensionRange first,
+                       const DimensionRange second) {
+  int64_t max = std::max(std::max(first.msb, first.lsb),
+                         std::max(second.msb, second.lsb));
+  int64_t min = std::min(std::min(first.msb, first.lsb),
+                         std::min(second.msb, second.lsb));
+  if (first.msb >= first.lsb) {
+    return DimensionRange{.msb = max, .lsb = min};
+  }
+  return DimensionRange{.msb = min, .lsb = max};
+}
+
+// Converts the first dimension to a DimensionRange, and then returns the
+// maximum of it and the given range.
+template <>
+Dimension MaxDimension(const size_t first, const DimensionRange second) {
+  return MaxDimension(
+      DimensionRange{.msb = static_cast<int64_t>(first) - 1, .lsb = 0}, second);
+}
+
+// Converts the second dimension to a DimensionRange, and then returns the
+// maximum of it and the given range.
+template <>
+Dimension MaxDimension(const DimensionRange first, const size_t second) {
+  return MaxDimension(
+      first, DimensionRange{.msb = static_cast<int64_t>(second) - 1, .lsb = 0});
+}
+
+std::vector<Dimension> AutoExpander::MaxDimensions(
+    const std::vector<Dimension> &first, const std::vector<Dimension> &second) {
+  if (first.empty() && second.size() == 1) return second;
+  if (second.empty() && first.size() == 1) return first;
+  if (first.size() != second.size()) LOG(ERROR) << "Mismatched dimensions";
+  std::vector<Dimension> dims;
+  auto it1 = first.begin(), it2 = second.begin();
+  while (it1 != first.end() && it2 != second.end()) {
+    const auto dims1 = *it1, dims2 = *it2;
+    std::visit(
+        [&](const auto d1) {
+          std::visit(
+              [&](const auto d2) { dims.push_back(MaxDimension(d1, d2)); },
+              dims2);
+        },
+        dims1);
+    ++it1;
+    ++it2;
+  }
+  return dims;
+}
+
+std::ostream &operator<<(std::ostream &os, const DimensionRange range) {
+  os << range.msb << ":" << range.lsb;
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Dimension dim) {
+  std::visit([&os](auto &&arg) { os << '[' << arg << ']'; }, dim);
+  return os;
+}
+
 void AutoExpander::Net::EmitIdWithDimensions(std::ostream &output) const {
   if (!packed_dimensions.empty()) {
-    for (const absl::string_view dimension : packed_dimensions) {
+    for (const Dimension &dimension : packed_dimensions) {
       output << dimension;
     }
     output << ' ';
   }
   output << name;
-  for (const absl::string_view dimension : unpacked_dimensions) {
+  for (const Dimension &dimension : unpacked_dimensions) {
     output << dimension;
   }
 }
@@ -577,12 +681,12 @@ void AutoExpander::Module::EmitPortConnections(
         if (port.packed_dimensions.size() > 1 ||
             !port.unpacked_dimensions.empty()) {
           output << "/*";
-          for (const absl::string_view dimension : port.packed_dimensions) {
+          for (const Dimension &dimension : port.packed_dimensions) {
             output << dimension;
           }
           if (!port.unpacked_dimensions.empty()) {
             output << '.';
-            for (const absl::string_view dimension : port.unpacked_dimensions) {
+            for (const Dimension &dimension : port.unpacked_dimensions) {
               output << dimension;
             }
           }
@@ -623,7 +727,7 @@ void AutoExpander::Module::EmitUndeclaredWireDeclarations(
       output << '\n';
     }
   }
-  for (const Wire &wire : wires_to_generate) {
+  for (const Wire &wire : wires_to_generate_) {
     output << "wire ";
     wire.EmitIdWithDimensions(output);
     output << ';';
@@ -670,7 +774,6 @@ void AutoExpander::Module::GenerateConnections(
                                   instance_name.length());
       pos = connected.port_name.find('@', pos);
     }
-    connected.port_name = connected.port_name;
     fun(port, connected);
   }
 }
@@ -678,31 +781,40 @@ void AutoExpander::Module::GenerateConnections(
 void AutoExpander::Module::AddGeneratedConnection(
     const std::string &port_name, const Port::Direction direction,
     const ConnectedInstance &connected,
-    const std::vector<absl::string_view> &packed_dimensions,
-    const std::vector<absl::string_view> &unpacked_dimensions) {
-  auto it =
-      std::find_if(wires_to_generate.begin(), wires_to_generate.end(),
-                   [&](const Wire &wire) { return wire.name == port_name; });
-  if (it != wires_to_generate.end()) {
-    it->conn_inst.push_back(connected);
+    const std::vector<Dimension> &packed_dimensions,
+    const std::vector<Dimension> &unpacked_dimensions) {
+  const auto name_matches = [&](const Net &net) {
+    return net.name == port_name;
+  };
+  const auto wire_it = std::find_if(wires_to_generate_.begin(),
+                                    wires_to_generate_.end(), name_matches);
+  // If there is already a wire with the same name, add the connection to it.
+  // This wire is a connection between multiple instances.
+  if (wire_it != wires_to_generate_.end()) {
+    wire_it->AddConnection(connected, packed_dimensions);
     return;
   }
-  for (auto it = ports_.begin(); it != ports_.end(); ++it) {
-    Port &port = *it;
-    if (port.name == port_name) {
-      if (port.direction == direction) {
-        port.conn_inst.push_back(connected);
-      } else {
-        wires_to_generate.push_back(
-            {{.name = port_name,
-              .conn_inst = {connected},
-              .packed_dimensions = packed_dimensions,
-              .unpacked_dimensions = unpacked_dimensions}});
-        ports_.erase(it, it + 1);  // We end itration, so we can erase it
-      }
-      return;
+  const auto port_it = std::find_if(ports_.begin(), ports_.end(), name_matches);
+  // Else look for an existing port with this name. If there is one, and it has
+  // the same direction, reuse it. If its direction differs, convert it to a new
+  // wire.
+  if (port_it != ports_.end()) {
+    Port &port = *port_it;
+    if (port.direction == direction) {
+      port.AddConnection(connected, packed_dimensions);
+    } else {
+      wires_to_generate_.push_back(
+          {{.name = port_name,
+            .conn_inst = port.conn_inst,
+            .packed_dimensions = AutoExpander::MaxDimensions(
+                port.packed_dimensions, packed_dimensions),
+            .unpacked_dimensions = unpacked_dimensions}});
+      wires_to_generate_.back().AddConnection(connected, packed_dimensions);
+      ports_.erase(port_it, port_it + 1);
     }
+    return;
   }
+  // There are no wires or ports of the given name. Just make a new port.
   ports_.push_back({
       {port_name, {connected}, packed_dimensions, unpacked_dimensions},
       direction,
@@ -829,6 +941,47 @@ void AutoExpander::Module::RetrieveModuleBodyPorts() {
   }
 }
 
+// Converts kDimensionScalar and kDimensionRange nodes to Dimensions. Parses
+// them as integers or ranges if possible, falls back to a string span.
+std::vector<AutoExpander::Dimension> GetDimensionsFromNodes(
+    const std::vector<TreeSearchMatch> &dimension_nodes) {
+  using Dimension = AutoExpander::Dimension;
+  std::vector<Dimension> dimensions;
+  dimensions.reserve(dimension_nodes.size());
+  for (auto &dimension : dimension_nodes) {
+    for (const auto &scalar :
+         SearchSyntaxTree(*dimension.match, NodekDimensionScalar())) {
+      size_t size;
+      const Symbol &scalar_value =
+          *SymbolCastToNode(*scalar.match).children()[1];
+      const absl::string_view span = StringSpanOfSymbol(scalar_value);
+      const bool result = absl::SimpleAtoi(span, &size);
+      dimensions.push_back(result ? Dimension{size} : Dimension{span});
+    }
+    for (const auto &range :
+         SearchSyntaxTree(*dimension.match, NodekDimensionRange())) {
+      const Symbol *left = GetDimensionRangeLeftBound(*range.match);
+      const Symbol *right = GetDimensionRangeRightBound(*range.match);
+      int64_t msb, lsb;
+      const bool left_result =
+          absl::SimpleAtoi(StringSpanOfSymbol(*left), &msb);
+      const bool right_result =
+          absl::SimpleAtoi(StringSpanOfSymbol(*right), &lsb);
+      if (left_result && right_result) {
+        dimensions.push_back(
+            AutoExpander::DimensionRange{.msb = msb, .lsb = lsb});
+      } else {
+        const absl::string_view left_span = StringSpanOfSymbol(*left);
+        const absl::string_view right_span = StringSpanOfSymbol(*right);
+        dimensions.push_back(absl::string_view{
+            left_span.begin(), static_cast<size_t>(std::distance(
+                                   left_span.begin(), right_span.end()))});
+      }
+    }
+  }
+  return dimensions;
+}
+
 void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
   const NodeEnum tag = NodeEnum(port_node.Tag().tag);
   const SyntaxTreeLeaf *const dir_leaf =
@@ -842,26 +995,10 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
   if (!dir_leaf || !id_leaf) return;
   const absl::string_view dir_span = dir_leaf->get().text();
   const std::string name{id_leaf->get().text()};
-
-  const auto get_dimension_spans = [](const auto &dimension_nodes) {
-    std::vector<absl::string_view> dimension_spans;
-    dimension_spans.reserve(dimension_nodes.size());
-    for (auto &dimension : dimension_nodes) {
-      for (const auto &scalar :
-           SearchSyntaxTree(*dimension.match, NodekDimensionScalar())) {
-        dimension_spans.push_back(StringSpanOfSymbol(*scalar.match));
-      }
-      for (const auto &range :
-           SearchSyntaxTree(*dimension.match, NodekDimensionRange())) {
-        dimension_spans.push_back(StringSpanOfSymbol(*range.match));
-      }
-    }
-    return dimension_spans;
-  };
-  std::vector<absl::string_view> packed_dimensions =
-      get_dimension_spans(FindAllPackedDimensions(port_node));
-  std::vector<absl::string_view> unpacked_dimensions =
-      get_dimension_spans(FindAllUnpackedDimensions(port_node));
+  std::vector<Dimension> packed_dimensions =
+      GetDimensionsFromNodes(FindAllPackedDimensions(port_node));
+  std::vector<Dimension> unpacked_dimensions =
+      GetDimensionsFromNodes(FindAllUnpackedDimensions(port_node));
 
   Port::Direction direction;
   if (dir_span == "input") {

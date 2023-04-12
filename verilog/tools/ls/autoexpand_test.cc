@@ -1739,10 +1739,6 @@ endmodule
 }
 
 TEST(Autoexpand, AUTO_ExpandPortsMultipleConnections) {
-  // This mostly works, but the dimensions are not correct: the generated ports'
-  // dimensions should be the maximum of the dimensions of all ports connected
-  // to them.
-  // TODO: Calculate proper dimensions for generated ports.
   TestTextEdits(
       R"(
 module bar (
@@ -1770,7 +1766,7 @@ module foo (  /*AUTOARG*/);
 
   bar b1 (  /*AUTOINST*/);
   bar b2 (  /*AUTOINST*/);
-  bar b3 (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
 endmodule
 )",
       R"(
@@ -1804,17 +1800,17 @@ module foo (  /*AUTOARG*/
 );
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
-  input i1;  // To b1 of bar, ...
+  input [3:0] i1;  // To b1 of bar, ...
   input i2[4][8];  // To b1 of bar, ...
   // End of automatics
   /*AUTOOUTPUT*/
   // Beginning of automatic outputs (from autoinst outputs)
-  output [15:0] o1;  // From b1 of bar, ...
+  output [63:0] o1;  // From b1 of bar, ...
   output [31:0] o2[8];  // From b1 of bar, ...
   // End of automatics
   /*AUTOINOUT*/
   // Beginning of automatic inouts (from autoinst inouts)
-  inout [7:0][7:0] io;  // To/From b1 of bar, ...
+  inout [7:0][15:0] io;  // To/From b1 of bar, ...
   // End of automatics
 
   bar b1 (  /*AUTOINST*/
@@ -1837,15 +1833,15 @@ module foo (  /*AUTOARG*/
       .o1(o1[15:0]),
       .o2(o2  /*[31:0].[8]*/)
   );
-  bar b3 (  /*AUTOINST*/
+  qux q (  /*AUTOINST*/
       // Inputs
-      .i1(i1),
-      .i2(i2  /*.[4][8]*/),
+      .i1(i1[3:0]),
+      .i2(i2  /*.[8][4]*/),
       // Inouts
-      .io(io  /*[7:0][7:0]*/),
+      .io(io  /*[3:0][15:0]*/),
       // Outputs
-      .o1(o1[15:0]),
-      .o2(o2  /*[31:0].[8]*/)
+      .o1(o1[63:0]),
+      .o2(o2  /*[15:0].[16]*/)
   );
 endmodule
 )");
@@ -2605,12 +2601,12 @@ module bar (
 endmodule
 
 module qux (
-    inout  y
+    inout[1:0] y
 );
 endmodule
 
 module quux (
-    input  y
+    input[3:2] y
 );
   output z;
 endmodule
@@ -2634,12 +2630,12 @@ module bar (
 endmodule
 
 module qux (
-    inout  y
+    inout[1:0] y
 );
 endmodule
 
 module quux (
-    input  y
+    input[3:2] y
 );
   output z;
 endmodule
@@ -2647,7 +2643,7 @@ endmodule
 module foo;
   /*AUTOWIRE*/
   // Beginning of automatic wires (for undeclared instantiated-module outputs)
-  wire y;  // To/From q of qux, ..
+  wire [3:0] y;  // To/From b of bar, ..
   // End of automatics
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
@@ -2667,13 +2663,137 @@ module foo;
   );
   qux q (  /*AUTOINST*/
       // Inouts
-      .y(y)
+      .y(y[1:0])
   );
   quux qu (  /*AUTOINST*/
       // Inputs
-      .y(y),
+      .y(y[3:2]),
       // Outputs
       .z(z)
+  );
+endmodule
+)");
+  TestTextEdits(
+      R"(
+module bar;
+  output [4] x;
+  output y;
+  input [7:0] z;
+endmodule
+
+module qux;
+  localparam MAX = 1;
+  inout [4] x;
+  inout [MAX:0] y[1];
+endmodule
+
+module quux;
+  input [3:0] x;
+  localparam MAX = 3;
+  localparam MIN = 2;
+  localparam N = 4;
+  input [MAX:MIN] y[N];
+  output [8] z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+  quux qu (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar;
+  output [4] x;
+  output y;
+  input [7:0] z;
+endmodule
+
+module qux;
+  localparam MAX = 1;
+  inout [4] x;
+  inout [MAX:0] y[1];
+endmodule
+
+module quux;
+  input [3:0] x;
+  localparam MAX = 3;
+  localparam MIN = 2;
+  localparam N = 4;
+  input [MAX:MIN] y[N];
+  output [8] z;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire [3:0] x;  // To/From b of bar, ..
+  wire [MAX:0] y[1];  // To/From b of bar, ..
+  wire [7:0] z;  // To/From b of bar, ..
+  // End of automatics
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .z(z[7:0]),
+      // Outputs
+      .x(x[4]),
+      .y(y)
+  );
+  qux q (  /*AUTOINST*/
+      // Inouts
+      .x(x[4]),
+      .y(y  /*[MAX:0].[1]*/)
+  );
+  quux qu (  /*AUTOINST*/
+      // Inputs
+      .x(x[3:0]),
+      .y(y  /*[MAX:MIN].[N]*/),
+      // Outputs
+      .z(z[8])
+  );
+endmodule
+)");
+  TestTextEdits(
+      R"(
+module bar;
+  input [-4:3] x;
+endmodule
+
+module qux;
+  output [15:0] x;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+
+  bar b (  /*AUTOINST*/);
+  qux q (  /*AUTOINST*/);
+endmodule
+)",
+      R"(
+module bar;
+  input [-4:3] x;
+endmodule
+
+module qux;
+  output [15:0] x;
+endmodule
+
+module foo;
+  /*AUTOWIRE*/
+  // Beginning of automatic wires (for undeclared instantiated-module outputs)
+  wire [-4:15] x;  // To/From b of bar, ..
+  // End of automatics
+
+  bar b (  /*AUTOINST*/
+      // Inputs
+      .x(x[-4:3])
+  );
+  qux q (  /*AUTOINST*/
+      // Outputs
+      .x(x[15:0])
   );
 endmodule
 )");
@@ -2737,7 +2857,7 @@ endmodule
 module foo;
   /*AUTOWIRE*/
   // Beginning of automatic wires (for undeclared instantiated-module outputs)
-  wire y;  // To/From q of qux, ..
+  wire y;  // To/From b of bar, ..
   // End of automatics
   /*AUTOINPUT*/
   // Beginning of automatic inputs (from autoinst inputs)
@@ -3572,7 +3692,7 @@ clk) $print(
   // End of automatics
   /*AUTOOUTPUT*/
   // Beginning of automatic outputs (from autoinst outputs)
-  output [63 : 0] out_a;  // From b of bar
+  output [63:0] out_a;  // From b of bar
   output out_b[16];  // From b of bar
   // End of automatics
   reg     [7:0]                   mem[0:255];
@@ -3586,8 +3706,8 @@ clk) $print(
       .clk(clk),
       .rst(rst),
       // Outputs
-      .o1 (out_a[63 : 0]),
-      .o2 (out_b  /*.[ 16 ]*/)
+      .o1 (out_a[63:0]),
+      .o2 (out_b  /*.[16]*/)
   );
 endmodule
 
@@ -3606,7 +3726,7 @@ module bar (  /*AUTOARG*/
 
   /*AUTOREG*/
   // Beginning of automatic regs (for this module's undeclared outputs)
-  reg [63 : 0] o1;
+  reg [63:0] o1;
   reg o2[16];
   // End of automatics
 endmodule
