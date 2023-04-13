@@ -327,7 +327,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        link: [static, dynamic]
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
