@@ -53,11 +53,14 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
     const Symbol& root) {
   std::vector<verible::TreeSearchMatch> names;
   auto calls = verible::SearchSyntaxTree(root, NodekFunctionCall());
-  for (const auto& Call : calls) {
-    if (verible::SymbolCastToNode(
-            *verible::SymbolCastToNode(*Call.match).children()[0])
-            .children()[1] != nullptr) {
-      names.emplace_back(Call);
+  for (const auto& call : calls) {
+    const verible::Symbol* zeroth_child =
+        verible::GetSubtreeAsSymbol(*(call.match), NodeEnum::kFunctionCall, 0);
+    if (!zeroth_child) continue;
+    const verible::Symbol* first_child = verible::GetSubtreeAsSymbol(
+        *zeroth_child, NodeEnum::kReferenceCallBase, 1);
+    if (first_child) {
+      names.emplace_back(call);
     }
   }
   // After anonymous instantiation was introduced, anonymous data declaration
