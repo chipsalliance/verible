@@ -84,12 +84,19 @@ static bool AllowLongLineException(TokenSequence::const_iterator token_begin,
   // TODO(b/134180314): Preserve all text in lexer.
   if (token_begin == token_end) return true;  // Conservatively ignore.
   auto last_token = token_end - 1;            // Point to last token.
-  if (last_token->token_enum() == verible::TK_EOF) --last_token;
+  if (last_token > token_begin && last_token->token_enum() == verible::TK_EOF) {
+    --last_token;
+  }
+
   // Point to last non-newline.
-  if (last_token->token_enum() == TK_NEWLINE) --last_token;
+  if (last_token > token_begin && last_token->token_enum() == TK_NEWLINE) {
+    --last_token;
+  }
 
   // Ignore leading whitespace, to find first non-space token.
-  while (token_begin->token_enum() == TK_SPACE) ++token_begin;
+  while (token_begin < token_end && token_begin->token_enum() == TK_SPACE) {
+    ++token_begin;
+  }
 
   // Single token case:
   // If there is only one token on this line, forgive non-comment tokens,
