@@ -3515,9 +3515,18 @@ instantiation_type
     { $$ = MakeTaggedNode(N::kInstantiationType, $1); }
   ;
 
+hierarchy_or_call_extension_list
+  : hierarchy_or_call_extension
+    {$$ = MakeTaggedNode(N::kReference, $1); }
+  | hierarchy_or_call_extension_list hierarchy_or_call_extension
+    {$$ = ExtendNode($1, $2); }
+  ;
+
 instantiation_base
   : instantiation_type gate_instance_or_register_variable_list 
     { $$ = MakeInstantiationBase($1, $2); }
+  | instantiation_type call_base hierarchy_or_call_extension_list
+    {$$ = MakeTaggedNode(N::kFunctionCall, $1, $2, $3); }
   /* | instantiation_type %prec less_than_TK_else call_base */
   /*   { $$ = MakeInstantionBase($1, $2); } */
   /* | instantiation_type %prec less_than_TK_else call_base gate_instance_or_register_variable_list */
@@ -4935,8 +4944,6 @@ gate_instance_or_register_variable
   | call_base
     {$$ = MakeTaggedNode(N::kGateInstance, nullptr, nullptr, $1); }
   //FIXME(jbylicki): This is cursed and it skips the call extension in the tree
-  | call_base hierarchy_or_call_extension
-    {$$ = MakeTaggedNode(N::kGateInstance, nullptr, nullptr, $1); }
   ;
 gate_instance_or_register_variable_list
   : gate_instance_or_register_variable_list ',' gate_instance_or_register_variable
