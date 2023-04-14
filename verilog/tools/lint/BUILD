@@ -6,6 +6,7 @@ load(
     "verilog_syntax",
 )
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 # Integration tests for different flags and configurations
 # These tests help confirm that rules' cc_libraries are properly alwayslink-ed.
@@ -223,6 +224,15 @@ cc_binary(
     name = "verible-verilog-lint",
     srcs = ["verilog_lint.cc"],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE +
+    select({
+        "//bazel:static_linked_executables": ["-supports_start_end_lib"],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "//bazel:static_linked_executables": ["-fuse-ld=bfd"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//common/analysis:violation_handler",
         "//common/util:enum_flags",

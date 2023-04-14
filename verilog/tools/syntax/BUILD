@@ -1,11 +1,13 @@
 # 'verilog_syntax' is a program for checking Verilog/SystemVerilog syntax.
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-syntax",
     srcs = ["verilog_syntax.cc"],
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/strings:compare",
         "//common/strings:mem_block",

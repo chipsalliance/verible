@@ -3,6 +3,7 @@
 # [1]: https://microsoft.github.io/language-server-protocol/specification
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -166,6 +167,7 @@ cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
     visibility = ["//visibility:public"],
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         ":verilog-language-server",
         "//common/util:init_command_line",

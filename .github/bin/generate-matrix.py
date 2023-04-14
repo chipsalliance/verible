@@ -16,15 +16,25 @@
 
 from pathlib import Path
 
+ARCHS = ["x86_64", "arm64"]
 matrix = []
 
 with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_bases.txt').open('r') as fptr:
     for items in [line.strip().split(':') for line in fptr.readlines()]:
-        for arch in ["x86_64", "arm64"]:
+        for arch in ARCHS:
             matrix.append({
                 'os': items[0],
                 'ver': items[1],
-                'arch': arch
+                'arch': arch,
+                'link': 'dynamic',
             })
+
+for arch in ARCHS:
+    matrix.append({
+        'os': 'ubuntu',
+        'ver': 'jammy',
+        'arch': arch,
+        'link': 'static',
+    })
 
 print('::set-output name=matrix::' + str(matrix))

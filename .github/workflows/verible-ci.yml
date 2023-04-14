@@ -134,6 +134,8 @@ jobs:
         - asan-clang
         - compile
         - compile-clang
+        - compile-static
+        - compile-static-clang
         - coverage
         - clean
         arch:
@@ -321,13 +323,14 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
-    if: ${{github.event_name == 'push'}}
+    # if: ${{github.event_name == 'push'}}
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
     env:
       MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
+      LINK_TYPE: '${{ matrix.link }}'
       ARCH: '${{ matrix.arch }}'
       DOCKER_DATA_ROOT: "/root/.docker"
       GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
@@ -359,7 +362,7 @@ jobs:
 
         docker pull $MATRIX_OS
         source ./.github/settings.sh
-        ARCH="$ARCH" ./releasing/docker-run.sh $MATRIX_OS
+        ARCH="$ARCH" LINK_TYPE="$LINK_TYPE" ./releasing/docker-run.sh $MATRIX_OS
 
     - name: 📤 Upload artifact
       uses: actions/upload-artifact@v2

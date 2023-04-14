@@ -2,11 +2,13 @@
 #
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
+load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-format",
     srcs = ["verilog_format.cc"],
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
+    features = STATIC_EXECUTABLES_FEATURE,
     deps = [
         "//common/strings:position",
         "//common/util:file_util",
