@@ -589,6 +589,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  // stores the direction of the port in the current declaration type info
   void HandleDirection(const SyntaxTreeLeaf& leaf) {
     if (!declaration_type_info_) return;
     if (Context().DirectParentIs(NodeEnum::kModulePortDeclaration) ||
@@ -1014,6 +1015,110 @@ class SymbolTable::Builder : public TreeContextVisitor {
     return &p.first->second;  // scope of the new (or pre-existing symbol)
   }
 
+  // checks whether a given tag belongs to one of the listed tags
+  bool IsTagMatching(int tag, const std::vector<int>& tags) {
+    return std::find(tags.begin(), tags.end(), tag) != tags.end();
+  }
+
+  // checks if the current first leaf has conflicting information with the
+  // second symbol
+  bool IsTypeLeafConflicting(const SyntaxTreeLeaf* first,
+                             const verible::Symbol* second) {
+    if (!first || !second) return false;
+    if (IsTagMatching(second->Tag().tag,
+                      {static_cast<int>(NodeEnum::kPackedDimensions),
+                       static_cast<int>(NodeEnum::kUnpackedDimensions)})) {
+      return false;
+    }
+    if (second->Kind() == verible::SymbolKind::kLeaf) {
+      const SyntaxTreeLeaf* second_leaf =
+          verible::down_cast<const SyntaxTreeLeaf*>(second);
+      // conflict if there are multiple direction specifications
+      const std::vector<int> directiontags = {
+          verilog_tokentype::TK_input, verilog_tokentype::TK_output,
+          verilog_tokentype::TK_inout, verilog_tokentype::TK_ref};
+
+      bool is_first_direction = IsTagMatching(first->Tag().tag, directiontags);
+      bool is_second_direction =
+          IsTagMatching(second_leaf->Tag().tag, directiontags);
+
+      // conflict if there are multiple sign specifications
+      const std::vector<int> signtags = {verilog_tokentype::TK_signed,
+                                         verilog_tokentype::TK_unsigned};
+      bool is_first_sign = IsTagMatching(first->Tag().tag, signtags);
+      bool is_second_sign = IsTagMatching(second_leaf->Tag().tag, signtags);
+
+      if (is_first_direction && is_second_direction) return true;
+      if (is_first_sign && is_second_sign) return true;
+
+      // since dimensions are not handled here and
+      // there are two different leaves that are not direction or sign
+      // then we assume it is a different type on both sides (hence the
+      // conflict)
+      if (!(is_first_direction || is_second_direction || is_first_sign ||
+            is_second_sign))
+        return true;
+    }
+    if (second->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* second_node =
+          verible::down_cast<const SyntaxTreeNode*>(second);
+      for (const auto& child : second_node->children()) {
+        if (IsTypeLeafConflicting(first, child.get())) return true;
+      }
+    }
+    return false;
+  }
+
+  // checks if two nodes have conflicting information
+  bool DoesConflictingNodeExist(const SyntaxTreeNode* node,
+                                const verible::Symbol* context) {
+    if (context && context->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* second_node =
+          verible::down_cast<const SyntaxTreeNode*>(context);
+      if ((node->Tag().tag == second_node->Tag().tag) &&
+          !verible::EqualTreesByEnumString(node, second_node)) {
+        return true;
+      }
+      for (const auto& child : second_node->children()) {
+        if (DoesConflictingNodeExist(node, child.get())) return true;
+      }
+    }
+    return false;
+  }
+
+  // checks if two kDataTypes have conflicting information, used
+  // in multiline definitions of nodes
+  bool IsDataTypeNodeConflicting(const verible::Symbol* first,
+                                 const verible::Symbol* second) {
+    // if type was not specified for symbol (e.g. implicit) in any case, return
+    // true
+    if (!first || !second) return false;
+    // if the left expression is a leaf, do final checks against the right
+    // expression
+    if (first->Kind() == verible::SymbolKind::kLeaf) {
+      const SyntaxTreeLeaf* leaf =
+          verible::down_cast<const SyntaxTreeLeaf*>(first);
+      return IsTypeLeafConflicting(leaf, second);
+    }
+    // if the left expression is a node, iterate over its children and check
+    // compatibility
+    if (first->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* node =
+          verible::down_cast<const SyntaxTreeNode*>(first);
+      if (IsTagMatching(node->Tag().tag,
+                        {static_cast<int>(NodeEnum::kPackedDimensions),
+                         static_cast<int>(NodeEnum::kUnpackedDimensions)})) {
+        if (DoesConflictingNodeExist(node, second)) return true;
+        return false;
+      }
+      for (const auto& child : node->children()) {
+        // run method recursively for each child
+        if (IsDataTypeNodeConflicting(child.get(), second)) return true;
+      }
+    }
+    return false;
+  }
+
   // Checks potential multiline declaration of port
   // against correctness
   void CheckMultilinePortDeclarationCorrectness(SymbolTableNode* existing_node,
@@ -1021,32 +1126,31 @@ class SymbolTable::Builder : public TreeContextVisitor {
     DeclarationTypeInfo& new_decl_info =
         *ABSL_DIE_IF_NULL(declaration_type_info_);
     DeclarationTypeInfo& old_decl_info = existing_node->Value().declared_type;
-    // check if directions are consistent - if not, report that symbol already
-    // exists
-    if (!new_decl_info.direction.empty() && !old_decl_info.direction.empty() &&
-        new_decl_info.direction != old_decl_info.direction) {
+    // TODO (glatosinski): currently direction is kept separately from
+    // kDataTypes, that is why it is handled separately. We may want to
+    // include it in kDataType to have a full type information in one place
+    // Also, according to some entries (e.g. net_variable) it is possible
+    // to have both delay and strength, we may want to have separate fields
+    // for them in MakeDataType (currently we have delay_or_strength)
+    if (!new_decl_info.direction.empty() && !old_decl_info.direction.empty()) {
       DiagnoseSymbolAlreadyExists(name, *existing_node);
       return;
     }
-    // update the direction
-    if (!new_decl_info.direction.empty() && old_decl_info.direction.empty()) {
-      old_decl_info.direction = new_decl_info.direction;
-    }
-    // TODO (glatosinski) we may want more elaborate test on type
-    // inconsistencies as for now, the idea is - if you provide another type
-    // specification, fail
-    if (old_decl_info.syntax_origin && new_decl_info.syntax_origin) {
+    if (IsDataTypeNodeConflicting(old_decl_info.syntax_origin,
+                                  new_decl_info.syntax_origin)) {
       DiagnoseSymbolAlreadyExists(name, *existing_node);
       return;
     }
-    // if new information was provided, update `old_decl_info` type-related
-    // fields
-    if (new_decl_info.syntax_origin) {
-      old_decl_info.syntax_origin = new_decl_info.syntax_origin;
-      old_decl_info.implicit = new_decl_info.implicit;
-      old_decl_info.user_defined_type = new_decl_info.user_defined_type;
+    for (const auto& type_specification : old_decl_info.type_specifications) {
+      if (IsDataTypeNodeConflicting(type_specification,
+                                    new_decl_info.syntax_origin)) {
+        DiagnoseSymbolAlreadyExists(name, *existing_node);
+        return;
+      }
     }
     existing_node->Value().supplement_definitions.push_back(name);
+    existing_node->Value().declared_type.type_specifications.push_back(
+        declaration_type_info_->syntax_origin);
   }
 
   // Creates a named typed element in the current scope.

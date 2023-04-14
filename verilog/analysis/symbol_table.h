@@ -231,7 +231,12 @@ struct DeclarationTypeInfo {
   // which can be recovered by StringSpanOfSymbol(const verible::Symbol&).
   const verible::Symbol* syntax_origin = nullptr;
 
+  // holds optional string_view describing direction of the port
   absl::string_view direction = "";
+
+  // holds additional type specifications, used mostly in multiline definitions
+  // of ports
+  std::vector<const verible::Symbol*> type_specifications;
 
   // Pointer to the reference node that represents a user-defined type, if
   // applicable.
