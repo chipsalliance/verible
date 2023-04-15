@@ -7,8 +7,8 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 cc_binary(
     name = "verible-verilog-preprocessor",
     srcs = ["verilog_preprocessor.cc"],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//visibility:public"],
     deps = [
         "//common/util:file_util",
         "//common/util:init_command_line",

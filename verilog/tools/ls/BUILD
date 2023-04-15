@@ -166,8 +166,8 @@ cc_test(
 cc_binary(
     name = "verible-verilog-ls",
     srcs = ["verilog_ls.cc"],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//visibility:public"],
     deps = [
         ":verilog-language-server",
         "//common/util:init_command_line",

@@ -7,8 +7,8 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 cc_binary(
     name = "verible-verilog-obfuscate",
     srcs = ["verilog_obfuscate.cc"],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//visibility:public"],
     deps = [
         "//common/strings:obfuscator",
         "//common/util:file_util",
