@@ -223,16 +223,16 @@ verilog_syntax.test(
 cc_binary(
     name = "verible-verilog-lint",
     srcs = ["verilog_lint.cc"],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE +
-    select({
-        "//bazel:static_linked_executables": ["-supports_start_end_lib"],
-        "//conditions:default": [],
-    }),
+               select({
+                   "//bazel:static_linked_executables": ["-supports_start_end_lib"],
+                   "//conditions:default": [],
+               }),
     linkopts = select({
         "//bazel:static_linked_executables": ["-fuse-ld=bfd"],
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:public"],
     deps = [
         "//common/analysis:violation_handler",
         "//common/util:enum_flags",
