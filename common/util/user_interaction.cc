@@ -70,6 +70,16 @@ static constexpr absl::string_view kBoldEscape("\033[1m");
 static constexpr absl::string_view kInverseEscape("\033[7m");
 static constexpr absl::string_view kNormalEscape("\033[0m");
 
+// clang-format off
+static constexpr absl::string_view kColorsStart[Color::kNumColors] = {
+    "\033[1;32m", // GREEN
+    "\033[1;36m", // CYAN
+    "\033[1;31m", // RED
+    "\033[1;33m", // YELLOW
+    "",           // NONE
+};
+// clang-format on
+
 std::ostream& bold(std::ostream& out, absl::string_view s) {
   if (IsInteractiveTerminalSession(out)) {
     out << kBoldEscape << s << kNormalEscape;
@@ -86,5 +96,16 @@ std::ostream& inverse(std::ostream& out, absl::string_view s) {
   }
   return out;
 }
+
+absl::string_view StartColor(Color c) {
+  if (!IsInteractiveTerminalSession()) return "";
+  return kColorsStart[c];
+}
+
+absl::string_view EndColor(Color c) {
+  if (!IsInteractiveTerminalSession() || c == Color::kNone) return "";
+  return kNormalEscape;
+}
+
 }  // namespace term
 }  // namespace verible

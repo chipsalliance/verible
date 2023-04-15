@@ -25,6 +25,30 @@ namespace term {
 // is an interactive session connected to a terminal. Otherwise just plain.
 std::ostream& bold(std::ostream& out, absl::string_view s);
 std::ostream& inverse(std::ostream& out, absl::string_view s);
+
+enum Color {
+  kGreen = 0,
+  kCyan,
+  kRed,
+  kYellow,
+  kNone,
+  kNumColors,
+};
+
+// Start color string to be sent to an output stream. If we're not in an
+// interactive setting, no changes are made.
+absl::string_view StartColor(Color c);
+
+// End color string to be sent to an output stream. If we're not in an
+// interactive setting, no changes are made. If there is no color, an empty
+// string is sent. We require a color as input parameter because we might want
+// to color to Color::NONE (to simplify code, MarkedLine's operator <<), so we
+// have to if this is the case to send an empty string.
+//
+// The default color makes it so we can call EndColor() if we know 100%
+// we're coloring to SOME color.
+absl::string_view EndColor(Color c = Color::kGreen);
+
 }  // namespace term
 
 // Returns if the stream is likely a terminal session: stream is connected to
