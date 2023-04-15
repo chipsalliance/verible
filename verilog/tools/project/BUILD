@@ -7,8 +7,8 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 cc_binary(
     name = "verible-verilog-project",
     srcs = ["project_tool.cc"],
-    visibility = ["//:__subpackages__"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:init_command_line",
         "//common/util:logging",

@@ -224,8 +224,8 @@ cc_binary(
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
         "verilog_kythe_extractor.cc",
     ],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//visibility:public"],
     deps = [
         ":indexing_facts_tree_extractor",
         ":kythe_facts_extractor",
@@ -288,8 +288,8 @@ cc_binary(
     srcs = [
         "verilog_kythe_kzip_writer.cc",
     ],
-    visibility = ["//visibility:public"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//visibility:public"],
     deps = [
         ":kzip_creator",
         "//common/util:file_util",

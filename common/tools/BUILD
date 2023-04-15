@@ -11,8 +11,8 @@ exports_files([
 cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
-    visibility = ["//:__subpackages__"],
     features = STATIC_EXECUTABLES_FEATURE,
+    visibility = ["//:__subpackages__"],
     deps = [
         "//common/strings:patch",
         "//common/util:file_util",

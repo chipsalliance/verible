@@ -42,5 +42,5 @@ bool_flag(
 
 config_setting(
     name = "static_linked_executables",
-    flag_values = {":create_static_linked_executables": "true"}
+    flag_values = {":create_static_linked_executables": "true"},
 )
