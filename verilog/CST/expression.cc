@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,6 +96,29 @@ const verible::Symbol* GetConditionExpressionTrueCase(
 const verible::Symbol* GetConditionExpressionFalseCase(
     const verible::Symbol& condition_expr) {
   return GetSubtreeAsSymbol(condition_expr, NodeEnum::kConditionExpression, 4);
+}
+
+const verible::TokenInfo* GetUnaryPrefixOperator(
+    const verible::Symbol& symbol) {
+  const SyntaxTreeNode* node = symbol.Kind() == SymbolKind::kNode
+                                   ? &verible::SymbolCastToNode(symbol)
+                                   : nullptr;
+  if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
+    return nullptr;
+  }
+  const verible::Symbol* leaf_symbol = node->children().front().get();
+  return &verible::down_cast<const verible::SyntaxTreeLeaf*>(leaf_symbol)
+              ->get();
+}
+
+const verible::Symbol* GetUnaryPrefixOperand(const verible::Symbol& symbol) {
+  const SyntaxTreeNode* node = symbol.Kind() == SymbolKind::kNode
+                                   ? &verible::SymbolCastToNode(symbol)
+                                   : nullptr;
+  if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
+    return nullptr;
+  }
+  return node->children().back().get();
 }
 
 std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(
