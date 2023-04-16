@@ -267,9 +267,11 @@ std::vector<verible::lsp::TextEdit> FormatRange(
   std::vector<verible::lsp::TextEdit> result;
   if (!tracker) return result;
   const auto current = tracker->current();
-  if (!current) return result;  // Can only format if we have latest version.
-  const verible::TextStructureView &text = current->parser().Data();
 
+  // Can only format if we have latest version and it could be parsed.
+  if (!current || !current->parsed_successfully()) return result;
+
+  const verible::TextStructureView &text = current->parser().Data();
   verilog::formatter::FormatStyle format_style;
   verilog::formatter::InitializeFromFlags(&format_style);
 
