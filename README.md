@@ -32,7 +32,14 @@ languages.
 
 ### Installation
 
-For simple installation, we provide regular [binary releases].
+For simple installation, we provide regular [binary releases] for Linux and
+Windows, including statically linked binaries for x86 and Arm to run on almost
+any Linux distribution.
+
+There are also some distributions that include Verible
+
+  * [Nix] has binaries for Linux and MacOS for x86 and Arm.
+  * There is a [homebrew] package for MacOS.
 
 If you prefer to build and install the binaries locally yourself, see
 details below in the [Developers](#developers-welcome) section.
@@ -267,3 +274,5 @@ abstract syntax tree (AST) or possibly even provide more higher-level
 [binary releases]: https://github.com/chipsalliance/verible/releases
 [language server protocol]: https://microsoft.github.io/language-server-protocol/
 [UHDM]: https://github.com/chipsalliance/UHDM
+[homebrew]: https://github.com/chipsalliance/homebrew-verible
+[Nix]: https://search.nixos.org/packages?channel=unstable&query=verible
