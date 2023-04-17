@@ -364,9 +364,11 @@ const verible::Symbol* GetTypeIdentifierFromInstantiationType(
   if (NodeEnum(data_type->Tag().tag) == NodeEnum::kInterfaceType) {
     return GetTypeIdentifierFromInterfaceType(*data_type);
   }
-  // if (NodeEnum(data_type->Tag().tag) == NodeEnum::kReferenceCallBase) {
-  //   return GetTypeIdentifierFromCustomType(*data_type);
-  // }
+  if (NodeEnum(data_type->Tag().tag) == NodeEnum::kReference) {
+    const verible::SyntaxTreeNode& data_type_node = verible::SymbolCastToNode(
+        *verible::SymbolCastToNode(*data_type).children()[0].get());
+    return GetTypeIdentifierFromBaseType(data_type_node);
+  }
   return nullptr;
 }
 

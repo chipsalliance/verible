@@ -187,20 +187,20 @@ const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
     if (reference_call_base->Tag().tag != (int)NodeEnum::kReferenceCallBase) {
       return nullptr;
     }
-    const verible::SyntaxTreeNode* reference =
-        GetSubtreeAsNode(*reference_call_base, NodeEnum::kReferenceCallBase, 0,
-                         NodeEnum::kReference);
+    reference = GetSubtreeAsSymbol(*reference_call_base,
+                                   NodeEnum::kReferenceCallBase, 0);
     if (!reference) return nullptr;
-    if (reference->Tag().tag != (int)NodeEnum::kReference) {
-      return nullptr;
+    if (reference->Tag().tag == (int)NodeEnum::kReference) {
+      const verible::SyntaxTreeNode* local_root = GetSubtreeAsNode(
+          *reference, NodeEnum::kReference, 0, NodeEnum::kLocalRoot);
+      if (!local_root) return nullptr;
+      if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) {
+        return nullptr;
+      }
+      identifier = GetIdentifiersFromLocalRoot(*local_root);
+    } else if (reference->Tag().tag == (int)NodeEnum::kMacroCall) {
+      return &verible::SymbolCastToNode(*reference);
     }
-    const verible::SyntaxTreeNode* local_root = GetSubtreeAsNode(
-        *reference, NodeEnum::kReference, 0, NodeEnum::kLocalRoot);
-    if (!local_root) return nullptr;
-    if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) {
-      return nullptr;
-    }
-    identifier = GetIdentifiersFromLocalRoot(*local_root);
   } else if (function_call.Tag().tag == (int)NodeEnum::kDataDeclaration) {
     // here the reference is actually an instantiation base
     reference =

@@ -227,14 +227,14 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(
 }
 
 verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
-    verible::SymbolPtr& function_call, verible::SymbolPtr& semicolon) {
+    verible::SymbolPtr* function_call, verible::SymbolPtr* semicolon) {
   // Append the semicolon to the function call node
-  verible::SymbolCastToNode(*function_call).AppendChild(std::move(semicolon));
+  verible::SymbolCastToNode(**function_call).AppendChild(std::move(*semicolon));
 
   // Change kInstantiationType to kReferenceCallBase
   verible::SyntaxTreeNode& instantiation_base(verible::CheckSymbolAsNode(
       *ABSL_DIE_IF_NULL(
-          verible::SymbolCastToNode(*function_call).children()[0]),
+          verible::SymbolCastToNode(**function_call).children()[0]),
       NodeEnum::kInstantiationType));
   SymbolPtr reference_call_base(
       verible::MakeTaggedNode(NodeEnum::kReferenceCallBase));
@@ -254,7 +254,7 @@ verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
   // 3 children in range if they do not match this scheme, something went wrong
   // and the macro on the call will catch the null and error out
   auto& function_call_children =
-      verible::SymbolCastToNode(*function_call).mutable_children();
+      verible::SymbolCastToNode(**function_call).mutable_children();
   for (auto& child : verible::make_range(function_call_children.begin() + 1,
                                          function_call_children.end())) {
     if (child->Tag().tag == static_cast<int>(NodeEnum::kParenGroup)) {
