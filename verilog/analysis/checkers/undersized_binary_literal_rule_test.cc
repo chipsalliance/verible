@@ -234,6 +234,27 @@ TEST(UndersizedBinaryLiteralRule, AutoFixSingleDigitProvideDecimalAlternative) {
       "autofix:true");
 }
 
+TEST(UndersizedBinaryLiteralRule, AutoFixProvideInferredSize) {
+  // Alternatives the auto fix offers
+  constexpr int kFirstFix = 0;
+  constexpr int kSecondFix = 1;
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // First choice: zero expand
+      {"localparam x = 32'h10;", "localparam x = 32'h00000010;", kFirstFix},
+      {"localparam x = 3'b01;", "localparam x = 3'b001;", kFirstFix},
+      {"localparam x = 8'o77;", "localparam x = 8'o077;", kFirstFix},
+
+      // Second choice: Adjust size to inferred size
+      {"localparam x = 32'h10;", "localparam x = 8'h10;", kSecondFix},
+      {"localparam x = 3'b01;", "localparam x = 2'b01;", kSecondFix},
+      {"localparam x = 8'o77;", "localparam x = 6'o77;", kSecondFix},
+  };
+  RunApplyFixCases<VerilogAnalyzer, UndersizedBinaryLiteralRule>(
+      kTestCases,
+      "bin:true;hex:true;oct:true;"
+      "autofix:true");
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog

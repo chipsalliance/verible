@@ -125,7 +125,8 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
       LOG(FATAL) << "Unexpected base '" << base_text << "'";  // Lexer issue ?
   }
 
-  const int missing_bits = width - number.literal.length() * bits_per_digit;
+  const int inferred_size = number.literal.length() * bits_per_digit;
+  const int missing_bits = width - inferred_size;
   // if !lint_zero, "0" is an exceptions. Also "?" is always an exception
   if (missing_bits > 0 && (lint_zero_ || number.literal != "0") &&
       number.literal != "?") {
@@ -155,6 +156,10 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
         autofixes.push_back(AutoFix(desc, {{base_text.substr(0, 2), "'d"}}));
       }
     }
+
+    // Suggest inferred width.
+    autofixes.push_back(AutoFix("Adjust width to inferred width",
+                                {{width_text, std::to_string(inferred_size)}}));
 
     violations_.insert(LintViolation(
         digits_leaf->get(),
