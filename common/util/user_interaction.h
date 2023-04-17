@@ -37,7 +37,7 @@ enum Color {
 
 // Start color string to be sent to an output stream. If we're not in an
 // interactive setting, no changes are made.
-absl::string_view StartColor(Color c);
+absl::string_view StartColor(const std::ostream&, Color c);
 
 // End color string to be sent to an output stream. If we're not in an
 // interactive setting, no changes are made. If there is no color, an empty
@@ -47,7 +47,7 @@ absl::string_view StartColor(Color c);
 //
 // The default color makes it so we can call EndColor() if we know 100%
 // we're coloring to SOME color.
-absl::string_view EndColor(Color c = Color::kGreen);
+absl::string_view EndColor(const std::ostream&, Color c = Color::kGreen);
 
 }  // namespace term
 

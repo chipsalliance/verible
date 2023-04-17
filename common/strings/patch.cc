@@ -79,10 +79,10 @@ absl::Status MarkedLine::Parse(absl::string_view text) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const MarkedLine& line) {
-  term::Color c = line.IsDeleted() ? term::Color::kRed
-                  : line.IsAdded() ? term::Color::kCyan
-                                   : term::Color::kNone;
-  return stream << StartColor(c) << line.line << EndColor(c);
+  const term::Color c = line.IsDeleted() ? term::Color::kRed
+                        : line.IsAdded() ? term::Color::kCyan
+                                         : term::Color::kNone;
+  return stream << StartColor(stream, c) << line.line << EndColor(stream, c);
 }
 
 absl::Status HunkIndices::Parse(absl::string_view text) {
@@ -149,9 +149,10 @@ absl::Status HunkHeader::Parse(absl::string_view text) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const HunkHeader& header) {
-  return stream << term::StartColor(term::Color::kGreen) << "@@ -"
+  return stream << term::StartColor(stream, term::Color::kGreen) << "@@ -"
                 << header.old_range << " +" << header.new_range << " @@"
-                << header.context << term::EndColor(term::Color::kGreen);
+                << header.context
+                << term::EndColor(stream, term::Color::kGreen);
 }
 
 // Type M could be any container or range of MarkedLines.
@@ -367,8 +368,7 @@ LineNumberSet FilePatch::AddedLines() const {
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
   if (IsInteractiveTerminalSession(outs)) {
-    outs << term::StartColor(term::Color::kYellow)
-         << "Apply this hunk? [y,n,a,d,s,q,?] " << term::EndColor();
+    outs << term::bold("Apply this hunk? [y,n,a,d,s,q,?] ");
   }
   char c;
   ins >> c;  // user will need to hit <enter> after the character
@@ -410,10 +410,10 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
 
   if (!hunks_.empty()) {
     // Display the file being processed, if there are any hunks.
-    outs << term::StartColor(term::Color::kRed) << "--- " << old_file_.path
-         << term::EndColor() << '\n';
-    outs << term::StartColor(term::Color::kCyan) << "+++ " << new_file_.path
-         << term::EndColor() << '\n';
+    outs << term::StartColor(outs, term::Color::kRed) << "--- "
+         << old_file_.path << term::EndColor(outs) << '\n';
+    outs << term::StartColor(outs, term::Color::kCyan) << "+++ "
+         << new_file_.path << term::EndColor(outs) << '\n';
   }
 
   const std::vector<absl::string_view> orig_lines(SplitLines(*orig_file_or));

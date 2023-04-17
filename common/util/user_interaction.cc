@@ -97,13 +97,17 @@ std::ostream& inverse(std::ostream& out, absl::string_view s) {
   return out;
 }
 
-absl::string_view StartColor(Color c) {
-  if (!IsInteractiveTerminalSession()) return "";
+absl::string_view StartColor(const std::ostream& stream, Color c) {
+  if (!IsInteractiveTerminalSession(stream)) {
+    return "";
+  }
   return kColorsStart[c];
 }
 
-absl::string_view EndColor(Color c) {
-  if (!IsInteractiveTerminalSession() || c == Color::kNone) return "";
+absl::string_view EndColor(const std::ostream& stream, Color c) {
+  if (!IsInteractiveTerminalSession(stream) || c == Color::kNone) {
+    return "";
+  }
   return kNormalEscape;
 }
 
