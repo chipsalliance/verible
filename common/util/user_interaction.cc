@@ -30,15 +30,21 @@
 
 namespace verible {
 
-bool IsInteractiveTerminalSession() {
-  return isatty(0);  // Unix: STDIN_FILENO; windows: _fileno( stdin )
+bool IsInteractiveTerminalSession(const std::ostream& s) {
+  // Unix: STDIN_FILENO; windows: _fileno( stdin ). So just name the
+  // file descriptors by number.
+  static bool kStdinIsTerminal = isatty(0);
+  static bool kStdoutIsTerminal = isatty(1);
+  return kStdinIsTerminal &&
+         ((s.rdbuf() == std::cout.rdbuf() || s.rdbuf() == std::cerr.rdbuf()) &&
+          kStdoutIsTerminal);
 }
 
 char ReadCharFromUser(std::istream& input, std::ostream& output,
                       bool input_is_terminal, absl::string_view prompt) {
   if (input_is_terminal) {
     // Terminal input: print prompt, read whole line and return first character.
-    output << prompt << std::flush;
+    term::bold(output, prompt) << std::flush;
 
     std::string line;
     std::getline(input, line);
@@ -64,13 +70,21 @@ static constexpr absl::string_view kBoldEscape("\033[1m");
 static constexpr absl::string_view kInverseEscape("\033[7m");
 static constexpr absl::string_view kNormalEscape("\033[0m");
 
-std::string bold(absl::string_view s) {
-  if (!IsInteractiveTerminalSession()) return std::string(s);
-  return absl::StrCat(kBoldEscape, s, kNormalEscape);
+std::ostream& bold(std::ostream& out, absl::string_view s) {
+  if (IsInteractiveTerminalSession(out)) {
+    out << kBoldEscape << s << kNormalEscape;
+  } else {
+    out << s;
+  }
+  return out;
 }
-std::string inverse(absl::string_view s) {
-  if (!IsInteractiveTerminalSession()) return std::string(s);
-  return absl::StrCat(kInverseEscape, s, kNormalEscape);
+std::ostream& inverse(std::ostream& out, absl::string_view s) {
+  if (IsInteractiveTerminalSession(out)) {
+    out << kInverseEscape << s << kNormalEscape;
+  } else {
+    out << s;
+  }
+  return out;
 }
 }  // namespace term
 }  // namespace verible

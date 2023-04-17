@@ -88,7 +88,7 @@ static absl::Status StdinTest(const SubcommandArgsRange& args,
   for (; file_count < kOpenLimit; ++file_count) {
     outs << "==== file " << file_count << " ====" << std::endl;
     while (ins) {
-      if (verible::IsInteractiveTerminalSession()) outs << "enter text: ";
+      if (verible::IsInteractiveTerminalSession(outs)) outs << "enter text: ";
       std::getline(ins, line);
       outs << "echo: " << line << std::endl;
     }

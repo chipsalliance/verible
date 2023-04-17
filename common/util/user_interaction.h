@@ -21,15 +21,15 @@
 
 namespace verible {
 namespace term {
-// Convenience functions that wrap a string to output colored on screen, iff
-// this is an interactive session.
-std::string bold(absl::string_view s);
-std::string inverse(absl::string_view s);
+// Convenience functions: Print bold or inverse if and only if this
+// is an interactive session connected to a terminal. Otherwise just plain.
+std::ostream& bold(std::ostream& out, absl::string_view s);
+std::ostream& inverse(std::ostream& out, absl::string_view s);
 }  // namespace term
 
-// Returns if this is likely a terminal session (tests if stdin filedescriptor
-// is a terminal).
-bool IsInteractiveTerminalSession();
+// Returns if the stream is likely a terminal session: stream is connected to
+// terminal and stdin is a terminal.
+bool IsInteractiveTerminalSession(const std::ostream& s);
 
 // Reads single character from user.
 //
@@ -46,7 +46,7 @@ bool IsInteractiveTerminalSession();
 // Typical use:
 //
 //   const char ch = ReadCharFromUser(std::cin, std::cout,
-//                                    IsInteractiveTerminalSession(),
+//                                    IsInteractiveTerminalSession(std::cout),
 //                                    "Type a letter and confirm with ENTER: ");
 char ReadCharFromUser(std::istream& input, std::ostream& output,
                       bool input_is_terminal, absl::string_view prompt);
