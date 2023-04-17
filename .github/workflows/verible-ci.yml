@@ -323,7 +323,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     # Github actions resources are limited; don't build artifacts for all
     # platforms on every pull request, only on push.
-    # if: ${{github.event_name == 'push'}}
+    if: ${{github.event_name == 'push'}}
     strategy:
       fail-fast: false
       matrix:
@@ -334,7 +334,7 @@ jobs:
       ARCH: '${{ matrix.arch }}'
       DOCKER_DATA_ROOT: "/root/.docker"
       GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
-    name: 'Build ·${{ matrix.arch }}:${{ matrix.os }}:${{ matrix.ver }}'
+    name: "Build ·${{ matrix.arch }}:${{ matrix.os }}:${{ matrix.ver }}${{ matrix.link == 'static' && ':static' || '' }}"
 
     steps:
 
