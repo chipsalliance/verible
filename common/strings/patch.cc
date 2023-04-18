@@ -362,7 +362,7 @@ LineNumberSet FilePatch::AddedLines() const {
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
-  if (IsInteractiveTerminalSession()) {
+  if (IsInteractiveTerminalSession(outs)) {
     outs << "Apply this hunk? [y,n,a,d,s,q,?] ";
   }
   char c;
