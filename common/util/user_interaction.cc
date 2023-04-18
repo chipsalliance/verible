@@ -95,19 +95,13 @@ std::ostream& inverse(std::ostream& out, absl::string_view s) {
   }
   return out;
 }
-
-absl::string_view StartColor(const std::ostream& stream, Color c) {
-  if (!IsInteractiveTerminalSession(stream)) {
-    return "";
+std::ostream& Colored(std::ostream& out, absl::string_view s, Color c) {
+  if (IsInteractiveTerminalSession(out) && c != Color::kNone) {
+    out << kColorsStart[c] << s << kNormalEscape;
+  } else {
+    out << s;
   }
-  return kColorsStart[c];
-}
-
-absl::string_view EndColor(const std::ostream& stream, Color c) {
-  if (!IsInteractiveTerminalSession(stream) || c == Color::kNone) {
-    return "";
-  }
-  return kNormalEscape;
+  return out;
 }
 
 }  // namespace term

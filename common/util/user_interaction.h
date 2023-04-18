@@ -34,19 +34,9 @@ enum Color {
   kNumColors,
 };
 
-// Start color string to be sent to an output stream. If we're not in an
-// interactive setting, no changes are made.
-absl::string_view StartColor(const std::ostream&, Color c);
-
-// End color string to be sent to an output stream. If we're not in an
-// interactive setting, no changes are made. If there is no color, an empty
-// string is sent. We require a color as input parameter because we might want
-// to color to Color::NONE (to simplify code, MarkedLine's operator <<), so we
-// have to if this is the case to send an empty string.
-//
-// The default color makes it so we can call EndColor() if we know 100%
-// we're coloring to SOME color.
-absl::string_view EndColor(const std::ostream&, Color c = Color::kGreen);
+// Print the `s` string to `out` ostream colored with color `c`.
+// This will only apply if we're in an interactive terminal session
+std::ostream& Colored(std::ostream& out, absl::string_view s, Color c);
 
 }  // namespace term
 

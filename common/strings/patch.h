@@ -147,6 +147,8 @@ struct HunkIndices {
   }
   bool operator!=(const HunkIndices& other) const { return !(*this == other); }
 
+  std::string ToString() const;
+
   absl::Status Parse(absl::string_view);
 };
 
