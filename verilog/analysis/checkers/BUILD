@@ -23,6 +23,7 @@ cc_library(
         ":disable_statement_rule",
         ":endif_comment_rule",
         ":enum_name_style_rule",
+        ":explicit_begin_rule",
         ":explicit_function_lifetime_rule",
         ":explicit_function_task_parameter_type_rule",
         ":explicit_parameter_storage_type_rule",
@@ -1221,6 +1222,37 @@ cc_test(
         "//common/text:symbol",
         "//verilog/CST:verilog_nonterminals",
         "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/analysis:verilog_analyzer",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "explicit_begin_rule",
+    srcs = ["explicit_begin_rule.cc"],
+    hdrs = ["explicit_begin_rule.h"],
+    deps = [
+        "//common/analysis:lint_rule_status",
+        "//common/analysis:token_stream_lint_rule",
+        "//common/strings:comment_utils",
+        "//common/text:token_info",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint_rule_registry",
+        "//verilog/parser:verilog_token_enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "explicit_begin_rule_test",
+    srcs = ["explicit_begin_rule_test.cc"],
+    deps = [
+        ":explicit_begin_rule",
+        "//common/analysis:linter_test_utils",
+        "//common/analysis:token_stream_linter_test_utils",
+        "//common/text:symbol",
         "//verilog/analysis:verilog_analyzer",
         "//verilog/parser:verilog_token_enum",
         "@com_google_googletest//:gtest_main",
