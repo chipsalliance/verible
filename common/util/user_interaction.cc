@@ -75,7 +75,6 @@ static constexpr absl::string_view kColorsStart[Color::kNumColors] = {
     "\033[1;32m", // GREEN
     "\033[1;36m", // CYAN
     "\033[1;31m", // RED
-    "\033[1;33m", // YELLOW
     "",           // NONE
 };
 // clang-format on

@@ -30,7 +30,6 @@ enum Color {
   kGreen = 0,
   kCyan,
   kRed,
-  kYellow,
   kNone,
   kNumColors,
 };
