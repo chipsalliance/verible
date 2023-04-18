@@ -367,9 +367,7 @@ LineNumberSet FilePatch::AddedLines() const {
 
 static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
   // Suppress prompt in noninteractive mode.
-  if (IsInteractiveTerminalSession(outs)) {
-    outs << term::bold("Apply this hunk? [y,n,a,d,s,q,?] ");
-  }
+  term::bold(outs, "Apply this hunk? [y,n,a,d,s,q,?] ");
   char c;
   ins >> c;  // user will need to hit <enter> after the character
   if (ins.eof()) {
