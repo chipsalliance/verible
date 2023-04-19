@@ -5588,36 +5588,36 @@ module_port_declaration
    */
   : port_direction signed_unsigned_opt qualified_id decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, MakeDataType($3,
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, $3,
                           MakePackedDimensionsNode($4)),
                           $5, $6); }
   | port_direction signed_unsigned_opt unqualified_id decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, MakeDataType($3,
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, $3,
                           MakePackedDimensionsNode($4)),
                           $5, $6); }
   | port_direction signed_unsigned_opt decl_dimensions delay3_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2,
-                          MakeDataType(nullptr, nullptr, $4, MakePackedDimensionsNode($3)),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($2, nullptr, $4, MakePackedDimensionsNode($3)),
                           $5, $6);}
     /* implicit type */
   | port_direction signed_unsigned_opt delay3
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, MakeDataType(nullptr, nullptr, $3, nullptr), $4, $5); }
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, nullptr, $3, nullptr), $4, $5); }
     /* implicit type */
   | port_direction signed_unsigned_opt list_of_module_item_identifiers ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3, MakeDataType(nullptr), $4);}
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, nullptr, nullptr), $3, $4);}
     /* implicit type */
   | port_direction port_net_type signed_unsigned_opt decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $3,
-                          MakeDataType(ForwardChildren($2), MakePackedDimensionsNode($4)),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
   | dir var_type signed_unsigned_opt decl_dimensions_opt
     list_of_port_identifiers ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $3,
-                          MakeDataType(ForwardChildren($2), MakePackedDimensionsNode($4)),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
   ;
 
