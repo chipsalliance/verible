@@ -26,7 +26,7 @@ namespace term {
 std::ostream& bold(std::ostream& out, absl::string_view s);
 std::ostream& inverse(std::ostream& out, absl::string_view s);
 
-enum Color {
+enum class Color {
   kGreen = 0,
   kCyan,
   kRed,
