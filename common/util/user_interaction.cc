@@ -71,7 +71,7 @@ static constexpr absl::string_view kInverseEscape("\033[7m");
 static constexpr absl::string_view kNormalEscape("\033[0m");
 
 // clang-format off
-static constexpr absl::string_view kColorsStart[Color::kNumColors] = {
+static constexpr absl::string_view kColorsStart[static_cast<uint32_t>(Color::kNumColors)] = {
     "\033[1;32m", // GREEN
     "\033[1;36m", // CYAN
     "\033[1;31m", // RED
@@ -97,7 +97,7 @@ std::ostream& inverse(std::ostream& out, absl::string_view s) {
 }
 std::ostream& Colored(std::ostream& out, absl::string_view s, Color c) {
   if (IsInteractiveTerminalSession(out) && c != Color::kNone) {
-    out << kColorsStart[c] << s << kNormalEscape;
+    out << kColorsStart[static_cast<uint32_t>(c)] << s << kNormalEscape;
   } else {
     out << s;
   }

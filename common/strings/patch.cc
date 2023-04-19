@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream& stream, const MarkedLine& line) {
   return term::Colored(stream, line.line, c);
 }
 
-std::string HunkIndices::ToString() const {
+std::string HunkIndices::FormatToString() const {
   return absl::StrCat(start, ",", count);
 }
 
@@ -104,7 +104,7 @@ absl::Status HunkIndices::Parse(absl::string_view text) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const HunkIndices& indices) {
-  return stream << indices.ToString();
+  return stream << indices.FormatToString();
 }
 
 absl::Status HunkHeader::Parse(absl::string_view text) {
@@ -155,8 +155,8 @@ absl::Status HunkHeader::Parse(absl::string_view text) {
 std::ostream& operator<<(std::ostream& stream, const HunkHeader& header) {
   return term::Colored(
       stream,
-      absl::StrCat("@@ -", header.old_range.ToString(), " +",
-                   header.new_range.ToString(), " @@", header.context),
+      absl::StrCat("@@ -", header.old_range.FormatToString(), " +",
+                   header.new_range.FormatToString(), " @@", header.context),
       term::Color::kGreen);
 }
 
