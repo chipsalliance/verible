@@ -346,7 +346,7 @@ struct SymbolInfo {
       : metatype(metatype),
         file_origin(file_origin),
         syntax_origin(syntax_origin),
-        declared_type(declared_type) {}
+        declared_type(std::move(declared_type)) {}
 
   // move-only
   SymbolInfo(const SymbolInfo&) = delete;

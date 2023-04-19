@@ -618,6 +618,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
             {NodeEnum::kUnqualifiedId, NodeEnum::kIdentifierUnpackedDimensions,
              NodeEnum::kIdentifierList, NodeEnum::kModulePortDeclaration}) ||
         Context().DirectParentsAre({NodeEnum::kIdentifierUnpackedDimensions,
+                                    NodeEnum::kIdentifierList,
+                                    NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kIdentifierUnpackedDimensions,
                                     NodeEnum::kIdentifierUnpackedDimensionsList,
                                     NodeEnum::kModulePortDeclaration}) ||
         Context().DirectParentsAre({NodeEnum::kPortIdentifier,
@@ -1056,8 +1059,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // then we assume it is a different type on both sides (hence the
       // conflict)
       if (!(is_first_direction || is_second_direction || is_first_sign ||
-            is_second_sign))
+            is_second_sign)) {
         return true;
+      }
     }
     if (second->Kind() == verible::SymbolKind::kNode) {
       const SyntaxTreeNode* second_node =
