@@ -25,6 +25,19 @@ namespace term {
 // is an interactive session connected to a terminal. Otherwise just plain.
 std::ostream& bold(std::ostream& out, absl::string_view s);
 std::ostream& inverse(std::ostream& out, absl::string_view s);
+
+enum class Color {
+  kGreen = 0,
+  kCyan,
+  kRed,
+  kNone,
+  kNumColors,
+};
+
+// Print the `s` string to `out` ostream colored with color `c`.
+// This will only apply if we're in an interactive terminal session
+std::ostream& Colored(std::ostream& out, absl::string_view s, Color c);
+
 }  // namespace term
 
 // Returns if the stream is likely a terminal session: stream is connected to
