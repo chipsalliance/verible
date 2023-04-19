@@ -1832,14 +1832,17 @@ static void FlattenElseIfElse(const SyntaxTreeNode& else_clause,
 }
 
 static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
-                                        TokenPartitionTree* partition_ptr) {
+                                        TokenPartitionTree* partition_ptr,
+                                        const FormatStyle& style) {
   const auto* else_clause = GetAnyConditionalElseClause(conditional);
   if (else_clause == nullptr) {
     VLOG(4) << "there was no else clause";
     return;
   }
   VLOG(4) << "there was an else clause";
-  MergeEndElseWithoutLabel(conditional, partition_ptr);
+  if (!style.wrap_end_else_clauses) {
+    MergeEndElseWithoutLabel(conditional, partition_ptr);
+  }
   FlattenElseIfElse(*else_clause, partition_ptr);
 }
 
@@ -2832,7 +2835,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kConditionalGenerateConstruct:
       // Contains a kGenerateIfClause and possibly a kGenerateElseClause
       {
-        ReshapeConditionalConstruct(node, &partition);
+        ReshapeConditionalConstruct(node, &partition, style_);
         break;
       }
 
