@@ -2,3 +2,9 @@
 # https://google.github.io/styleguide/cppguide.html
 BasedOnStyle: Google
 
+# ...but switch off determining pointer alignment from
+# prevalence in file but always make it align right
+# to match the semantics of the C/C++ language.
+DerivePointerAlignment: false
+PointerAlignment: Right
+ReferenceAlignment: Right
