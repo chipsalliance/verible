@@ -11,18 +11,18 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//common/strings:obfuscator",
-        "//common/util:enum_flags",
-        "//common/util:file_util",
-        "//common/util:init_command_line",
+        "//common/util:enum-flags",
+        "//common/util:file-util",
+        "//common/util:init-command-line",
         "//common/util:logging",
-        "//verilog/analysis:verilog_equivalence",
+        "//verilog/analysis:verilog-equivalence",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_user_errors_test",
+    name = "diff-user-errors_test",
     size = "small",
     srcs = ["diff_user_errors_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
@@ -30,7 +30,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_format_match_test",
+    name = "diff-format-match_test",
     size = "small",
     srcs = ["diff_format_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
@@ -38,7 +38,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_format_mismatch_test",
+    name = "diff-format-mismatch_test",
     size = "small",
     srcs = ["diff_format_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
@@ -46,7 +46,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_format_lex_error_test",
+    name = "diff-format-lex-error_test",
     size = "small",
     srcs = ["diff_format_lex_error_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
@@ -54,7 +54,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_obfuscate_match_test",
+    name = "diff-obfuscate-match_test",
     size = "small",
     srcs = ["diff_obfuscate_match_test.sh"],
     args = ["$(location :verible-verilog-diff)"],
@@ -62,7 +62,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "diff_obfuscate_mismatch_test",
+    name = "diff-obfuscate-mismatch_test",
     size = "small",
     srcs = ["diff_obfuscate_mismatch_test.sh"],
     args = ["$(location :verible-verilog-diff)"],

@@ -11,12 +11,12 @@ cc_binary(
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
         "//common/strings:position",
-        "//common/util:file_util",
-        "//common/util:init_command_line",
-        "//common/util:interval_set",
+        "//common/util:file-util",
+        "//common/util:init-command-line",
+        "//common/util:interval-set",
         "//common/util:logging",
-        "//verilog/formatting:format_style",
-        "//verilog/formatting:format_style_init",
+        "//verilog/formatting:format-style",
+        "//verilog/formatting:format-style-init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",
@@ -45,17 +45,17 @@ filegroup(
 )
 
 sh_binary(
-    name = "diff_formatter",
+    name = "diff-formatter",
     srcs = ["diff_formatter.sh"],
 )
 
 sh_binary(
-    name = "triage_formatter",
+    name = "triage-formatter",
     srcs = ["triage_formatter.sh"],
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_file_test",
+    name = "format-file_test",
     size = "small",
     srcs = ["format_file_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -63,7 +63,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_file_lex_error_test",
+    name = "format-file-lex-error_test",
     size = "small",
     srcs = ["format_file_lex_error_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -71,7 +71,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_file_syntax_error_test",
+    name = "format-file-syntax-error_test",
     size = "small",
     srcs = ["format_file_syntax_error_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -79,7 +79,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_file_lines_test",
+    name = "format-file-lines_test",
     size = "small",
     srcs = ["format_file_lines_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -87,7 +87,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_file_badlines_test",
+    name = "format-file-badlines_test",
     size = "small",
     srcs = ["format_file_badlines_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -95,7 +95,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_inplace_test",
+    name = "format-inplace_test",
     size = "small",
     srcs = ["format_inplace_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -103,7 +103,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_stdin_test",
+    name = "format-stdin_test",
     size = "small",
     srcs = ["format_stdin_test.sh"],
     args = ["$(location :verible-verilog-format)"],
@@ -111,7 +111,7 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
-    name = "format_stdin_inplace_test",
+    name = "format-stdin-inplace_test",
     size = "small",
     srcs = ["format_stdin_inplace_test.sh"],
     args = ["$(location :verible-verilog-format)"],

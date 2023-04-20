@@ -13,31 +13,31 @@ package(
 )
 
 cc_library(
-    name = "token_generator",
+    name = "token-generator",
     hdrs = ["token_generator.h"],
-    deps = ["//common/text:token_info"],
+    deps = ["//common/text:token-info"],
 )
 
 cc_library(
-    name = "token_stream_adapter",
+    name = "token-stream-adapter",
     srcs = ["token_stream_adapter.cc"],
     hdrs = ["token_stream_adapter.h"],
     deps = [
         ":lexer",
-        ":token_generator",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
+        ":token-generator",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "flex_lexer_adapter",
+    name = "flex-lexer-adapter",
     hdrs = ["flex_lexer_adapter.h"],
     deps = [
         ":lexer",
-        "//common/text:token_info",
+        "//common/text:token-info",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
@@ -47,20 +47,20 @@ cc_library(
     name = "lexer",
     hdrs = ["lexer.h"],
     deps = [
-        "//common/text:token_info",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "lexer_test_util",
+    name = "lexer-test-util",
     testonly = 1,
     srcs = ["lexer_test_util.cc"],
     hdrs = ["lexer_test_util.h"],
     deps = [
         "//common/text:constants",
-        "//common/text:token_info",
-        "//common/text:token_info_test_util",
+        "//common/text:token-info",
+        "//common/text:token-info-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
@@ -68,12 +68,12 @@ cc_library(
 )
 
 cc_test(
-    name = "lexer_test_util_test",
+    name = "lexer-test-util_test",
     srcs = ["lexer_test_util_test.cc"],
     deps = [
-        ":lexer_test_util",
+        ":lexer-test-util",
         "//common/text:constants",
-        "//common/text:token_info",
+        "//common/text:token-info",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -81,13 +81,13 @@ cc_test(
 )
 
 cc_test(
-    name = "token_stream_adapter_test",
+    name = "token-stream-adapter_test",
     srcs = ["token_stream_adapter_test.cc"],
     deps = [
         ":lexer",
-        ":lexer_test_util",
-        ":token_stream_adapter",
-        "//common/text:token_info",
+        ":lexer-test-util",
+        ":token-stream-adapter",
+        "//common/text:token-info",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],

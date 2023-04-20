@@ -16,13 +16,13 @@ package(
 )
 
 cc_library(
-    name = "token_info",
+    name = "token-info",
     srcs = ["token_info.cc"],
     hdrs = ["token_info.h"],
     deps = [
         ":constants",
         "//common/strings:rebase",
-        "//common/util:iterator_range",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",
         "@com_google_absl//absl/strings",
@@ -30,39 +30,39 @@ cc_library(
 )
 
 cc_library(
-    name = "token_info_json",
+    name = "token-info-json",
     srcs = ["token_info_json.cc"],
     hdrs = ["token_info_json.h"],
     deps = [
-        ":token_info",
+        ":token-info",
         "@jsonhpp",
     ],
 )
 
 cc_library(
-    name = "token_info_test_util",
+    name = "token-info-test-util",
     testonly = 1,
     srcs = ["token_info_test_util.cc"],
     hdrs = ["token_info_test_util.h"],
     deps = [
-        ":token_info",
+        ":token-info",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "token_stream_view",
+    name = "token-stream-view",
     srcs = ["token_stream_view.cc"],
     hdrs = ["token_stream_view.h"],
     deps = [
-        ":token_info",
-        "//common/util:iterator_range",
+        ":token-info",
+        "//common/util:iterator-range",
     ],
 )
 
 cc_library(
-    name = "symbol_ptr",
+    name = "symbol-ptr",
     hdrs = ["symbol_ptr.h"],
 )
 
@@ -71,45 +71,45 @@ cc_library(
     srcs = ["symbol.cc"],
     hdrs = ["symbol.h"],
     deps = [
-        ":symbol_ptr",
-        ":token_info",
+        ":symbol-ptr",
+        ":token-info",
         ":visitors",
     ],
 )
 
 cc_library(
-    name = "concrete_syntax_leaf",
+    name = "concrete-syntax-leaf",
     srcs = ["concrete_syntax_leaf.cc"],
     hdrs = ["concrete_syntax_leaf.h"],
     deps = [
-        ":concrete_syntax_tree",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":token_info",
-        ":tree_compare",
+        ":token-info",
+        ":tree-compare",
         ":visitors",
         "//common/util:logging",
     ],
 )
 
 cc_test(
-    name = "concrete_syntax_leaf_test",
+    name = "concrete-syntax-leaf_test",
     srcs = ["concrete_syntax_leaf_test.cc"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":token_info",
+        ":concrete-syntax-leaf",
+        ":token-info",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "concrete_syntax_tree",
+    name = "concrete-syntax-tree",
     srcs = ["concrete_syntax_tree.cc"],
     hdrs = ["concrete_syntax_tree.h"],
     deps = [
         ":constants",
         ":symbol",
-        ":tree_compare",
+        ":tree-compare",
         ":visitors",
         "//common/util:casts",
         "//common/util:logging",
@@ -117,7 +117,7 @@ cc_library(
 )
 
 cc_library(
-    name = "config_utils",
+    name = "config-utils",
     srcs = ["config_utils.cc"],
     hdrs = ["config_utils.h"],
     deps = [
@@ -128,10 +128,10 @@ cc_library(
 )
 
 cc_test(
-    name = "config_utils_test",
+    name = "config-utils_test",
     srcs = ["config_utils_test.cc"],
     deps = [
-        ":config_utils",
+        ":config-utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -142,140 +142,140 @@ cc_library(
     name = "visitors",
     hdrs = ["visitors.h"],
     deps = [
-        ":symbol_ptr",
+        ":symbol-ptr",
     ],
 )
 
 cc_library(
-    name = "syntax_tree_context",
+    name = "syntax-tree-context",
     hdrs = ["syntax_tree_context.h"],
     deps = [
-        ":concrete_syntax_tree",
-        "//common/util:auto_pop_stack",
-        "//common/util:iterator_adaptors",
+        ":concrete-syntax-tree",
+        "//common/util:auto-pop-stack",
+        "//common/util:iterator-adaptors",
         "//common/util:logging",
     ],
 )
 
 cc_library(
-    name = "tree_compare",
+    name = "tree-compare",
     srcs = ["tree_compare.cc"],
     hdrs = ["tree_compare.h"],
     deps = [
         ":symbol",
-        ":token_info",
+        ":token-info",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "tree_compare_test",
+    name = "tree-compare_test",
     srcs = ["tree_compare_test.cc"],
     deps = [
-        ":concrete_syntax_tree",
-        ":tree_builder_test_util",
-        ":tree_compare",
+        ":concrete-syntax-tree",
+        ":tree-builder-test-util",
+        ":tree-compare",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "tree_context_visitor",
+    name = "tree-context-visitor",
     srcs = ["tree_context_visitor.cc"],
     hdrs = ["tree_context_visitor.h"],
     deps = [
-        ":syntax_tree_context",
+        ":syntax-tree-context",
         ":visitors",
-        "//common/strings:display_utils",
+        "//common/strings:display-utils",
     ],
 )
 
 cc_test(
-    name = "tree_context_visitor_test",
+    name = "tree-context-visitor_test",
     srcs = ["tree_context_visitor_test.cc"],
     deps = [
-        ":tree_builder_test_util",
-        ":tree_context_visitor",
+        ":tree-builder-test-util",
+        ":tree-context-visitor",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "tree_utils",
+    name = "tree-utils",
     srcs = ["tree_utils.cc"],
     hdrs = ["tree_utils.h"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":token_info",
+        ":token-info",
         ":visitors",
-        "//common/util:iterator_adaptors",
+        "//common/util:iterator-adaptors",
         "//common/util:logging",
         "//common/util:spacer",
-        "//common/util:type_traits",
-        "//common/util:value_saver",
+        "//common/util:type-traits",
+        "//common/util:value-saver",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "tree_builder_test_util",
+    name = "tree-builder-test-util",
     testonly = 1,
     srcs = ["tree_builder_test_util.cc"],
     hdrs = ["tree_builder_test_util.h"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":tree_utils",
+        ":tree-utils",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "tree_builder_test_util_test",
+    name = "tree-builder-test-util_test",
     srcs = ["tree_builder_test_util_test.cc"],
     deps = [
-        ":tree_builder_test_util",
-        ":tree_utils",
+        ":tree-builder-test-util",
+        ":tree-utils",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "text_structure",
+    name = "text-structure",
     srcs = ["text_structure.cc"],
     hdrs = ["text_structure.h"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":token_info",
-        ":token_stream_view",
-        ":tree_utils",
-        "//common/strings:line_column_map",
-        "//common/strings:mem_block",
-        "//common/util:iterator_range",
+        ":token-info",
+        ":token-stream-view",
+        ":tree-utils",
+        "//common/strings:line-column-map",
+        "//common/strings:mem-block",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",
-        "//common/util:status_macros",
+        "//common/util:status-macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "text_structure_test_utils",
+    name = "text-structure-test-utils",
     testonly = 1,
     srcs = ["text_structure_test_utils.cc"],
     hdrs = ["text_structure_test_utils.h"],
     deps = [
-        ":concrete_syntax_tree",
-        ":text_structure",
-        ":token_info",
-        ":token_stream_view",
-        ":tree_builder_test_util",
+        ":concrete-syntax-tree",
+        ":text-structure",
+        ":token-info",
+        ":token-stream-view",
+        ":tree-builder-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -283,28 +283,28 @@ cc_library(
 )
 
 cc_library(
-    name = "macro_definition",
+    name = "macro-definition",
     srcs = ["macro_definition.cc"],
     hdrs = ["macro_definition.h"],
     deps = [
-        ":token_info",
-        "//common/util:container_util",
+        ":token-info",
+        "//common/util:container-util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "parser_verifier",
+    name = "parser-verifier",
     srcs = ["parser_verifier.cc"],
     hdrs = ["parser_verifier.h"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":token_info",
-        ":token_stream_view",
-        ":tree_compare",
+        ":token-info",
+        ":token-stream-view",
+        ":tree-compare",
         ":visitors",
     ],
 )
@@ -325,16 +325,16 @@ cc_library(
 )
 
 cc_test(
-    name = "tree_utils_test",
+    name = "tree-utils_test",
     srcs = ["tree_utils_test.cc"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":token_info",
-        ":tree_builder_test_util",
-        ":tree_compare",
-        ":tree_utils",
+        ":token-info",
+        ":tree-builder-test-util",
+        ":tree-compare",
+        ":tree-utils",
         "//common/util:logging",
         "//common/util:range",
         "@com_google_googletest//:gtest_main",
@@ -342,25 +342,25 @@ cc_test(
 )
 
 cc_test(
-    name = "concrete_syntax_tree_test",
+    name = "concrete-syntax-tree_test",
     srcs = ["concrete_syntax_tree_test.cc"],
     deps = [
-        ":concrete_syntax_leaf",
-        ":concrete_syntax_tree",
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":tree_builder_test_util",
-        ":tree_compare",
+        ":tree-builder-test-util",
+        ":tree-compare",
         "//common/util:logging",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "token_info_test",
+    name = "token-info_test",
     srcs = ["token_info_test.cc"],
     deps = [
         ":constants",
-        ":token_info",
+        ":token-info",
         "//common/util:range",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
@@ -369,23 +369,23 @@ cc_test(
 )
 
 cc_test(
-    name = "token_info_json_test",
+    name = "token-info-json_test",
     srcs = ["token_info_json_test.cc"],
     deps = [
         ":constants",
-        ":token_info",
-        ":token_info_json",
+        ":token-info",
+        ":token-info-json",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "token_info_test_util_test",
+    name = "token-info-test-util_test",
     srcs = ["token_info_test_util_test.cc"],
     deps = [
-        ":token_info",
-        ":token_info_test_util",
+        ":token-info",
+        ":token-info-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -393,46 +393,46 @@ cc_test(
 )
 
 cc_test(
-    name = "token_stream_view_test",
+    name = "token-stream-view_test",
     srcs = ["token_stream_view_test.cc"],
     deps = [
-        ":text_structure",
-        ":text_structure_test_utils",
-        ":token_info",
-        ":token_stream_view",
-        "//common/util:iterator_range",
+        ":text-structure",
+        ":text-structure-test-utils",
+        ":token-info",
+        ":token-stream-view",
+        "//common/util:iterator-range",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "syntax_tree_context_test",
+    name = "syntax-tree-context_test",
     srcs = ["syntax_tree_context_test.cc"],
     deps = [
-        ":concrete_syntax_tree",
-        ":syntax_tree_context",
-        "//common/util:iterator_range",
+        ":concrete-syntax-tree",
+        ":syntax-tree-context",
+        "//common/util:iterator-range",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "text_structure_test",
+    name = "text-structure_test",
     srcs = ["text_structure_test.cc"],
     deps = [
-        ":concrete_syntax_tree",
+        ":concrete-syntax-tree",
         ":symbol",
-        ":text_structure",
-        ":text_structure_test_utils",
-        ":token_info",
-        ":token_stream_view",
-        ":tree_builder_test_util",
-        ":tree_compare",
-        "//common/strings:line_column_map",
-        "//common/util:iterator_range",
+        ":text-structure",
+        ":text-structure-test-utils",
+        ":token-info",
+        ":token-stream-view",
+        ":tree-builder-test-util",
+        ":tree-compare",
+        "//common/strings:line-column-map",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",
-        "//common/util:value_saver",
+        "//common/util:value-saver",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -441,26 +441,26 @@ cc_test(
 )
 
 cc_test(
-    name = "macro_definition_test",
+    name = "macro-definition_test",
     srcs = ["macro_definition_test.cc"],
     deps = [
-        ":macro_definition",
-        ":token_info",
-        "//common/util:container_util",
+        ":macro-definition",
+        ":token-info",
+        "//common/util:container-util",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "parser_verifier_test",
+    name = "parser-verifier_test",
     srcs = ["parser_verifier_test.cc"],
     deps = [
         ":constants",
-        ":parser_verifier",
-        ":token_info",
-        ":token_stream_view",
-        ":tree_builder_test_util",
+        ":parser-verifier",
+        ":token-info",
+        ":token-stream-view",
+        ":tree-builder-test-util",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
