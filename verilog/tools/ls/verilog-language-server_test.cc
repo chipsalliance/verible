@@ -1492,9 +1492,9 @@ endmodule
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, {.line = 0, .column = 7}, {.line = 0, .column = 17},
-      module_instmodule_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 0, .column = 7},
+                                          {.line = 0, .column = 17},
+                                          module_instmodule_uri);
 }
 
 // Checks the go-to definition when pointing to the definition of the symbol
@@ -1540,9 +1540,9 @@ endmodule
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  CheckDefinitionResponseSingleDefinition(
-      response, 2, {.line = 0, .column = 7}, {.line = 0, .column = 17},
-      module_instmodule_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 0, .column = 7},
+                                          {.line = 0, .column = 17},
+                                          module_instmodule_uri);
 }
 
 // Checks the definition request for module port
@@ -1643,56 +1643,54 @@ endmodule)");
   const verible::file::testing::ScopedTestFile module_port_identifier(
       root_dir, port_identifier, "port_identifier.sv");
 
-  const std::string foo_open_request = DidOpenRequest(
-      "file://" + module_port_identifier.filename(), port_identifier);
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "a"
-  std::string definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 2, 11, 24);
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 11, 24);
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
   CheckDefinitionResponseSingleDefinition(
       response, 2, {.line = 1, .column = 23}, {.line = 1, .column = 24},
-      "file://" + module_port_identifier.filename());
+      module_port_identifier_uri);
 
   // find definition for "clk"
-  definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 3, 6, 22);
+  definition_request = DefinitionRequest(module_port_identifier_uri, 3, 6, 22);
   ASSERT_OK(SendRequest(definition_request));
   response = json::parse(GetResponse());
   CheckDefinitionResponseSingleDefinition(
       response, 3, {.line = 3, .column = 16}, {.line = 3, .column = 19},
-      "file://" + module_port_identifier.filename());
+      module_port_identifier_uri);
 
   // find definition for "rst"
-  definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 4, 6, 22);
+  definition_request = DefinitionRequest(module_port_identifier_uri, 4, 6, 22);
   ASSERT_OK(SendRequest(definition_request));
   response = json::parse(GetResponse());
   CheckDefinitionResponseSingleDefinition(
       response, 4, {.line = 3, .column = 16}, {.line = 3, .column = 19},
-      "file://" + module_port_identifier.filename());
+      module_port_identifier_uri);
 
   // find first definition for "out"
-  definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 5, 8, 13);
+  definition_request = DefinitionRequest(module_port_identifier_uri, 5, 8, 13);
   ASSERT_OK(SendRequest(definition_request));
   response = json::parse(GetResponse());
   CheckDefinitionResponseSingleDefinition(
       response, 5, {.line = 4, .column = 22}, {.line = 4, .column = 25},
-      "file://" + module_port_identifier.filename());
+      module_port_identifier_uri);
 
   // find second definition for "out"
-  definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 6, 11, 18);
+  definition_request = DefinitionRequest(module_port_identifier_uri, 6, 11, 18);
   ASSERT_OK(SendRequest(definition_request));
   response = json::parse(GetResponse());
   CheckDefinitionResponseSingleDefinition(
       response, 6, {.line = 4, .column = 22}, {.line = 4, .column = 25},
-      "file://" + module_port_identifier.filename());
+      module_port_identifier_uri);
 }
 
 // Verifies the work of the go-to definition request when the
@@ -1716,19 +1714,20 @@ endmodule
   const verible::file::testing::ScopedTestFile module_port_identifier(
       root_dir, port_identifier, "port_identifier.sv");
 
-  const std::string foo_open_request = DidOpenRequest(
-      "file://" + module_port_identifier.filename(), port_identifier);
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
   ASSERT_OK(SendRequest(foo_open_request));
 
   json diagnostics = json::parse(GetResponse());
   ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
-  ASSERT_EQ(diagnostics["params"]["uri"],
-            "file://" + module_port_identifier.filename());
+  ASSERT_EQ(diagnostics["params"]["uri"], module_port_identifier_uri);
   ASSERT_EQ(diagnostics["params"]["diagnostics"].size(), 0);
 
   // find definition for "i"
-  std::string definition_request = DefinitionRequest(
-      "file://" + module_port_identifier.filename(), 2, 9, 15);
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 9, 15);
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
@@ -1740,11 +1739,59 @@ endmodule
       [](const json &a, const json &b) -> bool { return a.dump() < b.dump(); });
 
   CheckDefinitionEntry(response["result"][0], {.line = 5, .column = 13},
-                       {.line = 5, .column = 14},
-                       "file://" + module_port_identifier.filename());
+                       {.line = 5, .column = 14}, module_port_identifier_uri);
   CheckDefinitionEntry(response["result"][1], {.line = 2, .column = 8},
-                       {.line = 2, .column = 9},
-                       "file://" + module_port_identifier.filename());
+                       {.line = 2, .column = 9}, module_port_identifier_uri);
+}
+
+// Verifies the work of the go-to definition request when
+// definition of the symbol later in the definition list is requested
+TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitionsWithList) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(a, b, o, trigger);
+  input trigger;
+  input a, b;
+  output o;
+
+  reg [31:0] a, b;
+  wire [31:0] o;
+
+  always @(posedge clock)
+    assign o = a + b;
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  json diagnostics = json::parse(GetResponse());
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_EQ(diagnostics["params"]["uri"], module_port_identifier_uri);
+  ASSERT_EQ(diagnostics["params"]["diagnostics"].size(), 0);
+
+  // find definition for "i"
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 5, 16);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 2);
+
+  std::sort(
+      response["result"].begin(), response["result"].end(),
+      [](const json &a, const json &b) -> bool { return a.dump() < b.dump(); });
+
+  CheckDefinitionEntry(response["result"][0], {.line = 2, .column = 11},
+                       {.line = 2, .column = 12}, module_port_identifier_uri);
+  CheckDefinitionEntry(response["result"][1], {.line = 5, .column = 16},
+                       {.line = 5, .column = 17}, module_port_identifier_uri);
 }
 
 // Tests correctness of Language Server shutdown request
