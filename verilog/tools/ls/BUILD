@@ -77,10 +77,20 @@ cc_library(
 )
 
 cc_library(
+    name = "lsp-conversion",
+    hdrs = ["lsp-conversion.h"],
+    deps = [
+        "//common/lsp:lsp-protocol",
+        "//common/strings:line-column-map",
+    ],
+)
+
+cc_library(
     name = "document-symbol-filler",
     srcs = ["document-symbol-filler.cc"],
     hdrs = ["document-symbol-filler.h"],
     deps = [
+        ":lsp-conversion",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
         "//common/text:text-structure",
@@ -99,6 +109,7 @@ cc_library(
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
     deps = [
+        ":lsp-conversion",
         ":lsp-parse-buffer",
         "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
