@@ -155,11 +155,7 @@ LineColumnRange TextStructureView::GetRangeForText(
 }
 
 bool TextStructureView::ContainsText(absl::string_view text) const {
-  const auto from = std::distance(Contents().begin(), text.begin());
-  const auto to = std::distance(Contents().begin(), text.end());
-  if (from < 0) return false;
-  if (to > static_cast<int64_t>(Contents().length())) return false;
-  return true;
+  return IsSubRange(text, Contents());
 }
 
 TokenRange TextStructureView::TokenRangeOnLine(size_t lineno) const {

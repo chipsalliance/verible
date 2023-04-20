@@ -104,6 +104,7 @@ cc_library(
         "//common/lsp:lsp-protocol",
         "//common/strings:line-column-map",
         "//common/util:file-util",
+        "//common/util:range",
         "//verilog/analysis:symbol-table",
         "//verilog/analysis:verilog-filelist",
         "//verilog/analysis:verilog-project",

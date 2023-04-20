@@ -23,6 +23,7 @@
 #include "common/lsp/lsp-file-utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
+#include "common/util/range.h"
 #include "verilog/analysis/verilog_filelist.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
@@ -175,17 +176,9 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
   return true;
 }
 
-bool IsStringViewContained(absl::string_view origin, absl::string_view substr) {
-  const int from = std::distance(origin.begin(), substr.begin());
-  const int to = std::distance(origin.begin(), substr.end());
-  if (from < 0) return false;
-  if (to > static_cast<int>(origin.length())) return false;
-  return true;
-}
-
 const SymbolTableNode *ScanSymbolTreeForDefinitionReferenceComponents(
     const ReferenceComponentNode *ref, absl::string_view symbol) {
-  if (IsStringViewContained(ref->Value().identifier, symbol)) {
+  if (verible::IsSubRange(symbol, ref->Value().identifier)) {
     return ref->Value().resolved_symbol;
   }
   for (const auto &childref : ref->Children()) {
