@@ -200,6 +200,12 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   if (context->Key() && verible::IsSubRange(*context->Key(), symbol)) {
     return context;
   }
+  for (const auto &supplement_definition :
+       context->Value().supplement_definitions) {
+    if (verible::IsSubRange(supplement_definition, symbol)) {
+      return context;
+    }
+  }
   for (const auto &ref : context->Value().local_references_to_bind) {
     if (ref.Empty()) continue;
     const SymbolTableNode *resolved =
