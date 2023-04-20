@@ -11,13 +11,13 @@ package(
 )
 
 cc_library(
-    name = "bound_symbol_manager",
+    name = "bound-symbol-manager",
     srcs = ["bound_symbol_manager.cc"],
     hdrs = ["bound_symbol_manager.h"],
     deps = [
         "//common/text:symbol",
         "//common/util:casts",
-        "//common/util:container_util",
+        "//common/util:container-util",
         "//common/util:logging",
     ],
 )
@@ -27,7 +27,7 @@ cc_library(
     srcs = ["matcher.cc"],
     hdrs = ["matcher.h"],
     deps = [
-        ":bound_symbol_manager",
+        ":bound-symbol-manager",
         "//common/text:symbol",
         "@com_google_absl//absl/types:optional",
     ],
@@ -37,49 +37,49 @@ cc_test(
     name = "matcher_test",
     srcs = ["matcher_test.cc"],
     deps = [
-        ":bound_symbol_manager",
-        ":inner_match_handlers",
+        ":bound-symbol-manager",
+        ":inner-match-handlers",
         ":matcher",
-        ":matcher_builders",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":matcher-builders",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:tree_builder_test_util",
+        "//common/text:tree-builder-test-util",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "core_matchers",
+    name = "core-matchers",
     hdrs = ["core_matchers.h"],
     deps = [
-        ":inner_match_handlers",
+        ":inner-match-handlers",
         ":matcher",
         "//common/text:symbol",
     ],
 )
 
 cc_test(
-    name = "core_matchers_test",
+    name = "core-matchers_test",
     srcs = ["core_matchers_test.cc"],
     deps = [
-        ":bound_symbol_manager",
-        ":core_matchers",
+        ":bound-symbol-manager",
+        ":core-matchers",
         ":matcher",
-        ":matcher_builders",
-        ":matcher_test_utils",
+        ":matcher-builders",
+        ":matcher-test-utils",
         "//common/text:symbol",
-        "//common/text:tree_builder_test_util",
+        "//common/text:tree-builder-test-util",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "inner_match_handlers",
+    name = "inner-match-handlers",
     srcs = ["inner_match_handlers.cc"],
     hdrs = ["inner_match_handlers.h"],
     deps = [
-        ":bound_symbol_manager",
+        ":bound-symbol-manager",
         ":matcher",
         "//common/text:symbol",
         "//common/util:logging",
@@ -87,68 +87,68 @@ cc_library(
 )
 
 cc_library(
-    name = "matcher_builders",
+    name = "matcher-builders",
     hdrs = ["matcher_builders.h"],
     deps = [
-        ":descent_path",
-        ":inner_match_handlers",
+        ":descent-path",
+        ":inner-match-handlers",
         ":matcher",
         "//common/text:symbol",
     ],
 )
 
 cc_test(
-    name = "matcher_builders_test",
+    name = "matcher-builders_test",
     srcs = ["matcher_builders_test.cc"],
     deps = [
-        ":bound_symbol_manager",
+        ":bound-symbol-manager",
         ":matcher",
-        ":matcher_builders",
-        ":matcher_test_utils",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":matcher-builders",
+        ":matcher-test-utils",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:tree_builder_test_util",
+        "//common/text:tree-builder-test-util",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "descent_path",
+    name = "descent-path",
     srcs = ["descent_path.cc"],
     hdrs = ["descent_path.h"],
     deps = [
-        "//common/text:concrete_syntax_tree",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
     ],
 )
 
 cc_test(
-    name = "descent_path_test",
+    name = "descent-path_test",
     srcs = ["descent_path_test.cc"],
     deps = [
-        ":descent_path",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":descent-path",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:token_info",
-        "//common/text:tree_builder_test_util",
+        "//common/text:token-info",
+        "//common/text:tree-builder-test-util",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "matcher_test_utils",
+    name = "matcher-test-utils",
     testonly = 1,
     srcs = ["matcher_test_utils.cc"],
     hdrs = ["matcher_test_utils.h"],
     deps = [
-        ":bound_symbol_manager",
+        ":bound-symbol-manager",
         ":matcher",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:tree_utils",
+        "//common/text:tree-utils",
         "//common/text:visitors",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

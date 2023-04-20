@@ -17,12 +17,12 @@ cc_library(
     deps = [
         "//common/strings:obfuscator",
         "//common/strings:random",
-        "//common/text:token_info",
+        "//common/text:token-info",
         "//common/util:logging",
-        "//common/util:status_macros",
-        "//verilog/analysis:verilog_equivalence",
-        "//verilog/parser:verilog_lexer",
-        "//verilog/parser:verilog_token_enum",
+        "//common/util:status-macros",
+        "//verilog/analysis:verilog-equivalence",
+        "//verilog/parser:verilog-lexer",
+        "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -39,27 +39,27 @@ cc_test(
 )
 
 cc_library(
-    name = "strip_comments",
+    name = "strip-comments",
     srcs = ["strip_comments.cc"],
     hdrs = ["strip_comments.h"],
     deps = [
-        "//common/strings:comment_utils",
+        "//common/strings:comment-utils",
         "//common/strings:range",
-        "//common/text:token_info",
-        "//common/util:iterator_range",
+        "//common/text:token-info",
+        "//common/util:iterator-range",
         "//common/util:spacer",
-        "//verilog/parser:verilog_lexer",
-        "//verilog/parser:verilog_parser",
-        "//verilog/parser:verilog_token_enum",
+        "//verilog/parser:verilog-lexer",
+        "//verilog/parser:verilog-parser",
+        "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "strip_comments_test",
+    name = "strip-comments_test",
     srcs = ["strip_comments_test.cc"],
     deps = [
-        ":strip_comments",
+        ":strip-comments",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

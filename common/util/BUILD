@@ -14,10 +14,10 @@ cc_library(
 )
 
 cc_library(
-    name = "auto_pop_stack",
+    name = "auto-pop-stack",
     hdrs = ["auto_pop_stack.h"],
     deps = [
-        ":iterator_adaptors",
+        ":iterator-adaptors",
         ":logging",
         "@com_google_absl//absl/base:core_headers",
     ],
@@ -35,7 +35,7 @@ cc_library(
 )
 
 cc_library(
-    name = "status_macros",
+    name = "status-macros",
     hdrs = ["status_macros.h"],
     deps = ["@com_google_absl//absl/base:core_headers"],
 )
@@ -45,7 +45,7 @@ cc_library(
     srcs = ["subcommand.cc"],
     hdrs = ["subcommand.h"],
     deps = [
-        ":container_iterator_range",
+        ":container-iterator-range",
         "//common/strings:compare",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -53,7 +53,7 @@ cc_library(
 )
 
 cc_library(
-    name = "thread_pool",
+    name = "thread-pool",
     srcs = ["thread_pool.cc"],
     hdrs = ["thread_pool.h"],
     copts = select({
@@ -64,12 +64,12 @@ cc_library(
 )
 
 cc_library(
-    name = "file_util",
+    name = "file-util",
     srcs = ["file_util.cc"],
     hdrs = ["file_util.h"],
     deps = [
         ":logging",
-        "//common/strings:mem_block",
+        "//common/strings:mem-block",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -83,7 +83,7 @@ cc_library(
 # to contain a proper git timestamp, bazel has to be invoked with
 #  bazel build --workspace_status_command=bazel/build-version.py
 genrule(
-    name = "version_header",
+    name = "version-header",
     outs = ["generated_verible_build_version.h"],
     cmd = "sed -e 's/^/#define VERIBLE_/' bazel-out/volatile-status.txt > $@",
     stamp = 1,  # Tell bazel that we really are interested in the status file
@@ -91,19 +91,19 @@ genrule(
 )
 
 cc_library(
-    name = "build_version",
+    name = "build-version",
     hdrs = ["generated_verible_build_version.h"],
     visibility = ["//visibility:private"],
 )
 
 cc_library(
-    name = "init_command_line",
+    name = "init-command-line",
     srcs = ["init_command_line.cc"],
     hdrs = ["init_command_line.h"],
     deps = [
         # these deps are needed by init_command_line.cc:
         ":logging",  # buildcleaner: keep
-        ":build_version",  # buildcleaner: keep
+        ":build-version",  # buildcleaner: keep
         "@com_google_absl//absl/debugging:failure_signal_handler",  # buildcleaner: keep
         "@com_google_absl//absl/debugging:symbolize",  # buildcleaner: keep
         "@com_google_absl//absl/flags:config",  # buildcleaner: keep
@@ -127,21 +127,21 @@ cc_library(
 )
 
 cc_library(
-    name = "interval_map",
+    name = "interval-map",
     hdrs = ["interval_map.h"],
     deps = [
-        ":auto_iterator",
+        ":auto-iterator",
         ":logging",
     ],
 )
 
 cc_library(
-    name = "interval_set",
+    name = "interval-set",
     hdrs = ["interval_set.h"],
     deps = [
-        ":auto_iterator",
+        ":auto-iterator",
         ":interval",
-        ":iterator_range",
+        ":iterator-range",
         ":logging",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
@@ -168,7 +168,7 @@ cc_library(
 )
 
 cc_library(
-    name = "container_util",
+    name = "container-util",
     hdrs = ["container_util.h"],
     deps = [
         ":logging",
@@ -176,35 +176,35 @@ cc_library(
 )
 
 cc_library(
-    name = "container_iterator_range",
+    name = "container-iterator-range",
     hdrs = ["container_iterator_range.h"],
     deps = [
-        ":iterator_range",
+        ":iterator-range",
         ":range",
     ],
 )
 
 cc_library(
-    name = "type_traits",
+    name = "type-traits",
     hdrs = ["type_traits.h"],
 )
 
 cc_library(
-    name = "auto_iterator",
+    name = "auto-iterator",
     hdrs = ["auto_iterator.h"],
 )
 
 cc_library(
-    name = "iterator_adaptors",
+    name = "iterator-adaptors",
     hdrs = ["iterator_adaptors.h"],
     deps = [
-        ":auto_iterator",
-        ":iterator_range",
+        ":auto-iterator",
+        ":iterator-range",
     ],
 )
 
 cc_library(
-    name = "iterator_range",
+    name = "iterator-range",
     hdrs = ["iterator_range.h"],
     deps = [],
 )
@@ -216,27 +216,27 @@ cc_library(
 )
 
 cc_library(
-    name = "top_n",
+    name = "top-n",
     hdrs = ["top_n.h"],
 )
 
 cc_library(
-    name = "value_saver",
+    name = "value-saver",
     hdrs = ["value_saver.h"],
 )
 
 cc_library(
-    name = "enum_flags",
+    name = "enum-flags",
     hdrs = ["enum_flags.h"],
     deps = [
-        ":bijective_map",
+        ":bijective-map",
         "//common/strings:compare",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "bijective_map",
+    name = "bijective-map",
     hdrs = ["bijective_map.h"],
     deps = [
         ":forward",
@@ -245,64 +245,64 @@ cc_library(
 )
 
 cc_library(
-    name = "vector_tree",
+    name = "vector-tree",
     hdrs = ["vector_tree.h"],
     deps = [
-        ":container_proxy",
-        ":iterator_range",
+        ":container-proxy",
+        ":iterator-range",
         ":logging",
-        ":type_traits",
+        ":type-traits",
     ],
 )
 
 cc_library(
-    name = "tree_operations",
+    name = "tree-operations",
     srcs = ["tree_operations.cc"],
     hdrs = ["tree_operations.h"],
     deps = [
         ":logging",
         ":spacer",
-        ":type_traits",
+        ":type-traits",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "expandable_tree_view",
+    name = "expandable-tree-view",
     hdrs = ["expandable_tree_view.h"],
     deps = [
         ":logging",
-        ":tree_operations",
-        ":vector_tree",
+        ":tree-operations",
+        ":vector-tree",
     ],
 )
 
 cc_library(
-    name = "vector_tree_test_util",
+    name = "vector-tree-test-util",
     testonly = 1,
     srcs = ["vector_tree_test_util.cc"],
     hdrs = ["vector_tree_test_util.h"],
     deps = [
-        ":tree_operations",
-        ":vector_tree",
+        ":tree-operations",
+        ":vector-tree",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
 cc_library(
-    name = "vector_tree_iterators",
+    name = "vector-tree-iterators",
     hdrs = ["vector_tree_iterators.h"],
     deps = [
-        ":iterator_range",
+        ":iterator-range",
         ":logging",
-        ":tree_operations",
-        ":vector_tree",
+        ":tree-operations",
+        ":vector-tree",
     ],
 )
 
 cc_library(
-    name = "map_tree",
+    name = "map-tree",
     hdrs = ["map_tree.h"],
     deps = [
         ":logging",
@@ -311,12 +311,12 @@ cc_library(
 )
 
 cc_library(
-    name = "with_reason",
+    name = "with-reason",
     hdrs = ["with_reason.h"],
 )
 
 cc_library(
-    name = "user_interaction",
+    name = "user-interaction",
     srcs = ["user_interaction.cc"],
     hdrs = ["user_interaction.h"],
     deps = [
@@ -325,7 +325,7 @@ cc_library(
 )
 
 cc_library(
-    name = "container_proxy",
+    name = "container-proxy",
     hdrs = ["container_proxy.h"],
 )
 
@@ -334,36 +334,36 @@ cc_test(
     srcs = ["algorithm_test.cc"],
     deps = [
         ":algorithm",
-        ":iterator_range",
+        ":iterator-range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "auto_iterator_test",
+    name = "auto-iterator_test",
     srcs = ["auto_iterator_test.cc"],
     deps = [
-        ":auto_iterator",
+        ":auto-iterator",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "auto_pop_stack_test",
+    name = "auto-pop-stack_test",
     srcs = ["auto_pop_stack_test.cc"],
     deps = [
-        ":auto_pop_stack",
-        ":iterator_range",
+        ":auto-pop-stack",
+        ":iterator-range",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "file_util_test",
+    name = "file-util_test",
     srcs = ["file_util_test.cc"],
     deps = [
-        ":file_util",
+        ":file-util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -380,10 +380,10 @@ cc_test(
 )
 
 cc_test(
-    name = "interval_map_test",
+    name = "interval-map_test",
     srcs = ["interval_map_test.cc"],
     deps = [
-        ":interval_map",
+        ":interval-map",
         ":range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -391,10 +391,10 @@ cc_test(
 )
 
 cc_test(
-    name = "interval_set_test",
+    name = "interval-set_test",
     srcs = ["interval_set_test.cc"],
     deps = [
-        ":interval_set",
+        ":interval-set",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -413,7 +413,7 @@ cc_test(
     name = "range_test",
     srcs = ["range_test.cc"],
     deps = [
-        ":iterator_range",
+        ":iterator-range",
         ":range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -421,7 +421,7 @@ cc_test(
 )
 
 cc_test(
-    name = "thread_pool_test",
+    name = "thread-pool_test",
     srcs = ["thread_pool_test.cc"],
     copts = select({
         "@platforms//os:windows": [],
@@ -429,35 +429,35 @@ cc_test(
     }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
-        ":thread_pool",
+        ":thread-pool",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "container_iterator_range_test",
+    name = "container-iterator-range_test",
     srcs = ["container_iterator_range_test.cc"],
     deps = [
-        ":container_iterator_range",
+        ":container-iterator-range",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "iterator_adaptors_test",
+    name = "iterator-adaptors_test",
     srcs = ["iterator_adaptors_test.cc"],
     deps = [
-        ":iterator_adaptors",
+        ":iterator-adaptors",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "iterator_range_test",
+    name = "iterator-range_test",
     srcs = ["iterator_range_test.cc"],
     deps = [
-        ":iterator_range",
+        ":iterator-range",
         ":range",
         "@com_google_googletest//:gtest_main",
     ],
@@ -483,47 +483,47 @@ cc_test(
 )
 
 cc_test(
-    name = "top_n_test",
+    name = "top-n_test",
     srcs = ["top_n_test.cc"],
     deps = [
-        ":top_n",
+        ":top-n",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "type_traits_test",
+    name = "type-traits_test",
     srcs = ["type_traits_test.cc"],
     deps = [
-        ":type_traits",
+        ":type-traits",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "value_saver_test",
+    name = "value-saver_test",
     srcs = ["value_saver_test.cc"],
     deps = [
-        ":value_saver",
+        ":value-saver",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "enum_flags_test",
+    name = "enum-flags_test",
     srcs = ["enum_flags_test.cc"],
     deps = [
-        ":enum_flags",
+        ":enum-flags",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "bijective_map_test",
+    name = "bijective-map_test",
     srcs = ["bijective_map_test.cc"],
     deps = [
-        ":bijective_map",
+        ":bijective-map",
         ":logging",
         "//common/strings:compare",
         "@com_google_googletest//:gtest_main",
@@ -531,23 +531,23 @@ cc_test(
 )
 
 cc_test(
-    name = "vector_tree_test",
+    name = "vector-tree_test",
     srcs = ["vector_tree_test.cc"],
     deps = [
-        ":tree_operations",
-        ":vector_tree",
-        ":vector_tree_test_util",
+        ":tree-operations",
+        ":vector-tree",
+        ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "tree_operations_test",
+    name = "tree-operations_test",
     srcs = ["tree_operations_test.cc"],
     deps = [
         ":spacer",
-        ":tree_operations",
+        ":tree-operations",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_googletest//:gtest_main",
@@ -555,38 +555,38 @@ cc_test(
 )
 
 cc_test(
-    name = "expandable_tree_view_test",
+    name = "expandable-tree-view_test",
     srcs = ["expandable_tree_view_test.cc"],
     deps = [
-        ":expandable_tree_view",
-        ":vector_tree",
-        ":vector_tree_test_util",
+        ":expandable-tree-view",
+        ":vector-tree",
+        ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "vector_tree_iterators_test",
+    name = "vector-tree-iterators_test",
     srcs = ["vector_tree_iterators_test.cc"],
     deps = [
-        ":tree_operations",
-        ":vector_tree",
-        ":vector_tree_iterators",
+        ":tree-operations",
+        ":vector-tree",
+        ":vector-tree-iterators",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "map_tree_test",
+    name = "map-tree_test",
     srcs = ["map_tree_test.cc"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-Wno-array-bounds"],
     }),
     deps = [
-        ":map_tree",
+        ":map-tree",
         ":spacer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -594,38 +594,38 @@ cc_test(
 )
 
 cc_test(
-    name = "with_reason_test",
+    name = "with-reason_test",
     srcs = ["with_reason_test.cc"],
     deps = [
-        ":with_reason",
+        ":with-reason",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "user_interaction_test",
+    name = "user-interaction_test",
     srcs = ["user_interaction_test.cc"],
     deps = [
-        ":user_interaction",
+        ":user-interaction",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "container_proxy_test",
+    name = "container-proxy_test",
     srcs = ["container_proxy_test.cc"],
     deps = [
-        ":container_proxy",
-        ":type_traits",
-        "//common/strings:display_utils",
+        ":container-proxy",
+        ":type-traits",
+        "//common/strings:display-utils",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "simple_zip",
+    name = "simple-zip",
     srcs = ["simple_zip.cc"],
     hdrs = ["simple_zip.h"],
     deps = [
@@ -636,11 +636,11 @@ cc_library(
 )
 
 cc_test(
-    name = "simple_zip_test",
+    name = "simple-zip_test",
     srcs = ["simple_zip_test.cc"],
     deps = [
-        ":file_util",
-        ":simple_zip",
+        ":file-util",
+        ":simple-zip",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

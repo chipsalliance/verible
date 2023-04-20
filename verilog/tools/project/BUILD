@@ -10,13 +10,13 @@ cc_binary(
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//:__subpackages__"],
     deps = [
-        "//common/util:init_command_line",
+        "//common/util:init-command-line",
         "//common/util:logging",
-        "//common/util:status_macros",
+        "//common/util:status-macros",
         "//common/util:subcommand",
         "//verilog/analysis:dependencies",
-        "//verilog/analysis:symbol_table",
-        "//verilog/analysis:verilog_project",
+        "//verilog/analysis:symbol-table",
+        "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
@@ -25,7 +25,7 @@ cc_binary(
 )
 
 sh_test_with_runfiles_lib(
-    name = "project_tool_test",
+    name = "project-tool_test",
     size = "small",
     srcs = ["project_tool_test.sh"],
     args = ["$(location :verible-verilog-project)"],

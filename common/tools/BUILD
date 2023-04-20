@@ -15,11 +15,11 @@ cc_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         "//common/strings:patch",
-        "//common/util:file_util",
-        "//common/util:init_command_line",
-        "//common/util:status_macros",
+        "//common/util:file-util",
+        "//common/util:init-command-line",
+        "//common/util:status-macros",
         "//common/util:subcommand",
-        "//common/util:user_interaction",
+        "//common/util:user-interaction",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -27,7 +27,7 @@ cc_binary(
 )
 
 sh_test_with_runfiles_lib(
-    name = "patch_tool_test",
+    name = "patch-tool_test",
     size = "small",
     srcs = ["patch_tool_test.sh"],
     args = ["$(location :verible-patch-tool)"],
@@ -44,7 +44,7 @@ filegroup(
 )
 
 sh_test_with_runfiles_lib(
-    name = "verible-transform-interactive-test",
+    name = "verible-transform-interactive_test",
     size = "small",
     srcs = ["verible-transform-interactive-test.sh"],
     args = [
@@ -63,7 +63,7 @@ cc_binary(
     srcs = ["jcxxgen.cc"],
     visibility = ["//:__subpackages__"],
     deps = [
-        "//common/util:init_command_line",
+        "//common/util:init-command-line",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -72,7 +72,7 @@ cc_binary(
 )
 
 jcxxgen(
-    name = "jcxxgen_testfile",
+    name = "jcxxgen-testfile",
     src = "jcxxgen_testfile.yaml",
     out = "jcxxgen_testfile.h",
     namespace = "verible::test",
@@ -87,7 +87,7 @@ cc_test(
     }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
-        ":jcxxgen_testfile",
+        ":jcxxgen-testfile",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],

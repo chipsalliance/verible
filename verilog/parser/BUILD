@@ -16,13 +16,13 @@ package(
 )
 
 genlex(
-    name = "verilog_lex",
+    name = "verilog-lex",
     src = "verilog.lex",
     out = "verilog.yy.cc",
 )
 
 cc_library(
-    name = "verilog_lexer",
+    name = "verilog-lexer",
     srcs = [
         "verilog.yy.cc",
         "verilog_lexer.cc",
@@ -35,23 +35,23 @@ cc_library(
         ],
     }),
     deps = [
-        ":verilog_token_enum",
+        ":verilog-token-enum",
         "//bazel:flex",
-        "//common/lexer:flex_lexer_adapter",
-        "//common/text:token_info",
+        "//common/lexer:flex-lexer-adapter",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "verilog_lexer_unittest",
+    name = "verilog-lexer_unittest",
     size = "small",
     srcs = ["verilog_lexer_unittest.cc"],
     deps = [
-        ":verilog_lexer",
-        ":verilog_token_enum",
-        "//common/lexer:lexer_test_util",
-        "//common/text:token_info",
+        ":verilog-lexer",
+        ":verilog-token-enum",
+        "//common/lexer:lexer-test-util",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
@@ -64,7 +64,7 @@ cc_test(
 # Even the comments in bison-generated files suggest they may be inclined
 # to separate these headers in the future.  This is a workaround until then.
 genrule(
-    name = "gen_verilog_token_enum",
+    name = "gen-verilog-token-enum",
     srcs = ["verilog.tab.hh"],
     outs = ["verilog_token_enum.h"],
     # Needs own include-guard.
@@ -77,12 +77,12 @@ genrule(
 )
 
 cc_library(
-    name = "verilog_token_enum",
+    name = "verilog-token-enum",
     hdrs = ["verilog_token_enum.h"],
 )
 
 genrule(
-    name = "verilog_parse_interface",
+    name = "verilog-parse-interface",
     srcs = ["verilog.tab.hh"],
     outs = ["verilog_parse_interface.h"],
     # Already contains include-guard from verilog.tab.hh
@@ -92,7 +92,7 @@ genrule(
 )
 
 genyacc(
-    name = "verilog_y",
+    name = "verilog-y",
     src = "verilog.y",
     extra_options = [
         "--report-file=$(location verilog.output)",
@@ -107,19 +107,19 @@ genyacc(
 )
 
 std_move_parser_symbols(
-    name = "verilog_y_moved",
+    name = "verilog-y-moved",
     src = "verilog.tab.cc",
     out = "verilog-moved.tab.cc",
 )
 
 record_recovered_syntax_errors(
-    name = "verilog_y_final",
+    name = "verilog-y-final",
     src = "verilog-moved.tab.cc",
     out = "verilog-final.tab.cc",
 )
 
 cc_library(
-    name = "verilog_y_cc",
+    name = "verilog-y-cc",
     srcs = ["verilog-final.tab.cc"],
     hdrs = [
         "verilog.tab.hh",
@@ -134,10 +134,10 @@ cc_library(
         ],
     }),
     deps = [
-        ":verilog_token_enum",
-        "//common/parser:bison_parser_common",
-        "//common/parser:parser_param",
-        "//common/text:tree_utils",
+        ":verilog-token-enum",
+        "//common/parser:bison-parser-common",
+        "//common/parser:parser-param",
+        "//common/text:tree-utils",
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/CST:DPI",
@@ -148,54 +148,54 @@ cc_library(
         "//verilog/CST:parameters",
         "//verilog/CST:port",
         "//verilog/CST:type",
-        "//verilog/CST:verilog_nonterminals",
-        "//verilog/CST:verilog_treebuilder_utils",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/CST:verilog-treebuilder-utils",
     ],
 )
 
 cc_library(
-    name = "verilog_parser",
+    name = "verilog-parser",
     srcs = ["verilog_parser.cc"],
     hdrs = ["verilog_parser.h"],
     deps = [
-        ":verilog_y_cc",  # fixdeps: keep
-        "//common/parser:bison_parser_adapter",
+        ":verilog-y-cc",  # fixdeps: keep
+        "//common/parser:bison-parser-adapter",
         "//common/parser:parse",
-        "//common/parser:parser_param",
-        "//common/util:value_saver",
+        "//common/parser:parser-param",
+        "//common/util:value-saver",
         "@com_google_absl//absl/flags:flag",
     ],
     alwayslink = 1,
 )
 
 cc_library(
-    name = "verilog_lexical_context",
+    name = "verilog-lexical-context",
     srcs = ["verilog_lexical_context.cc"],
     hdrs = ["verilog_lexical_context.h"],
     deps = [
-        ":verilog_token_enum",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
+        ":verilog-token-enum",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
         "//common/util:logging",
-        "//common/util:with_reason",
+        "//common/util:with-reason",
     ],
 )
 
 cc_test(
-    name = "verilog_parser_unittest",
+    name = "verilog-parser_unittest",
     size = "small",
     srcs = ["verilog_parser_unittest.cc"],
     deps = [
-        ":verilog_parser",
-        ":verilog_token_enum",
-        "//common/parser:bison_parser_common",
-        "//common/parser:parser_test_util",
+        ":verilog-parser",
+        ":verilog-token-enum",
+        "//common/parser:bison-parser-common",
+        "//common/parser:parser-test-util",
         "//common/text:constants",
         "//common/text:symbol",
-        "//common/text:token_info",
-        "//common/text:token_info_test_util",
-        "//verilog/CST:verilog_nonterminals",
-        "//verilog/analysis:verilog_analyzer",
+        "//common/text:token-info",
+        "//common/text:token-info-test-util",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -203,48 +203,48 @@ cc_test(
 )
 
 cc_test(
-    name = "verilog_lexical_context_test",
+    name = "verilog-lexical-context_test",
     srcs = ["verilog_lexical_context_test.cc"],
     deps = [
-        ":verilog_lexical_context",
-        ":verilog_parser",
-        ":verilog_token_enum",
-        "//common/text:text_structure",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
+        ":verilog-lexical-context",
+        ":verilog-parser",
+        ":verilog-token-enum",
+        "//common/text:text-structure",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
         "//common/util:logging",
-        "//verilog/analysis:verilog_analyzer",
+        "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "verilog_token_classifications",
+    name = "verilog-token-classifications",
     srcs = ["verilog_token_classifications.cc"],
     hdrs = ["verilog_token_classifications.h"],
     deps = [
-        ":verilog_token_enum",
+        ":verilog-token-enum",
     ],
 )
 
 cc_test(
-    name = "verilog_token_classifications_test",
+    name = "verilog-token-classifications_test",
     srcs = ["verilog_token_classifications_test.cc"],
     deps = [
-        ":verilog_token_classifications",
-        ":verilog_token_enum",
+        ":verilog-token-classifications",
+        ":verilog-token-enum",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "verilog_token",
+    name = "verilog-token",
     srcs = ["verilog_token.cc"],
     hdrs = ["verilog_token.h"],
     deps = [
-        ":verilog_parser",
-        ":verilog_token_enum",
+        ":verilog-parser",
+        ":verilog-token-enum",
         "@com_google_absl//absl/strings",
     ],
 )

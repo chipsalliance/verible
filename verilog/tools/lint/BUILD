@@ -88,7 +88,7 @@ _linter_test_configs = [
     (
         # Verifies that with no lint rules, test case is syntactically valid.
         verilog_style_lint.test(
-            name = testfilebase + "-syntax-test",
+            name = testfilebase + "-syntax_test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             flags = ["--ruleset=none"],
         ),
@@ -96,20 +96,20 @@ _linter_test_configs = [
         # This is only relevant for rules that are not testing specific
         # configurations.
         verilog_style_lint.test(
-            name = testfilebase + "-allrules-test",
+            name = testfilebase + "-allrules_test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             expect_fail = True,
             flags = ["--ruleset=all"],
         ) if "=" not in rule else (),  # Only useful when not configured
         # Verifies that the rule is/is not enabled in the 'default' set.
         verilog_style_lint.test(
-            name = testfilebase + "-defaultrules-test",
+            name = testfilebase + "-defaultrules_test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             expect_fail = default,
         ),
         # Verifies that one specific rule alone fails this test case.
         verilog_style_lint.test(
-            name = testfilebase + "-onerule-test",
+            name = testfilebase + "-onerule_test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             expect_fail = True,
             flags = [
@@ -119,7 +119,7 @@ _linter_test_configs = [
         ),
         # Verifies that all rules *except* this one is lint clean.
         verilog_style_lint.test(
-            name = testfilebase + "-minusrule-test",
+            name = testfilebase + "-minusrule_test",
             srcs = ["testdata/{}.sv".format(testfilebase)],
             flags = [
                 "--ruleset=all",
@@ -160,7 +160,7 @@ genrule(
 # Test that waiver works on one rule, one line, and line range.
 [
     verilog_style_lint.test(
-        name = "psprintf-waive-" + variant + "-test",
+        name = "psprintf-waive-" + variant + "_test",
         srcs = [
             ":psprintf-waived-" + variant,
         ],
@@ -182,7 +182,7 @@ genrule(
 
 # Test that one long line is caught.
 verilog_style_lint.test(
-    name = "line-length-in-module-body-fail-test",
+    name = "line-length-in-module-body-fail_test",
     srcs = [
         "testdata/line-length-in-module-body.sv",
     ],
@@ -195,7 +195,7 @@ verilog_style_lint.test(
 
 # Test that one long line is caught and waived.
 verilog_style_lint.test(
-    name = "line-length-in-module-body-waived-test",
+    name = "line-length-in-module-body-waived_test",
     srcs = [
         ":line-length-in-module-body-waived",
     ],
@@ -208,13 +208,13 @@ verilog_style_lint.test(
 
 # Verifies that lexer errors are properly rejected.
 verilog_style_lint.test(
-    name = "verilog_lint-lexer-fail-test",
+    name = "verilog-lint-lexer-fail_test",
     srcs = ["testdata/bad-id-lex.sv"],
     expect_fail = True,
 )
 
 verilog_syntax.test(
-    name = "verilog_syntax-lexer-fail-test",
+    name = "verilog-syntax-lexer-fail_test",
     srcs = ["testdata/bad-id-lex.sv"],
     expect_fail = True,
 )
@@ -234,13 +234,13 @@ cc_binary(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//common/analysis:violation_handler",
-        "//common/util:enum_flags",
-        "//common/util:file_util",
-        "//common/util:init_command_line",
+        "//common/analysis:violation-handler",
+        "//common/util:enum-flags",
+        "//common/util:file-util",
+        "//common/util:init-command-line",
         "//common/util:logging",
-        "//verilog/analysis:verilog_linter",
-        "//verilog/analysis:verilog_linter_configuration",
+        "//verilog/analysis:verilog-linter",
+        "//verilog/analysis:verilog-linter-configuration",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -248,7 +248,7 @@ cc_binary(
 )
 
 sh_test_with_runfiles_lib(
-    name = "lint_tool_test",
+    name = "lint-tool_test",
     size = "small",
     srcs = ["lint_tool_test.sh"],
     args = ["$(location :verible-verilog-lint)"],

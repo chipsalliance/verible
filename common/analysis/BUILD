@@ -22,17 +22,17 @@ cc_library(
 )
 
 cc_library(
-    name = "lint_rule_status",
+    name = "lint-rule-status",
     srcs = ["lint_rule_status.cc"],
     hdrs = ["lint_rule_status.h"],
     deps = [
         ":citation",
-        "//common/strings:line_column_map",
-        "//common/text:concrete_syntax_leaf",
+        "//common/strings:line-column-map",
+        "//common/text:concrete-syntax-leaf",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
-        "//common/text:token_info",
-        "//common/text:tree_utils",
+        "//common/text:syntax-tree-context",
+        "//common/text:token-info",
+        "//common/text:tree-utils",
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
@@ -40,23 +40,23 @@ cc_library(
 )
 
 cc_library(
-    name = "lint_rule",
+    name = "lint-rule",
     hdrs = ["lint_rule.h"],
     deps = [
-        ":lint_rule_status",
+        ":lint-rule-status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
 
 genlex(
-    name = "command_file_lex",
+    name = "command-file-lex",
     src = "command_file.lex",
     out = "command_file.yy.cc",
 )
 
 cc_library(
-    name = "command_file_lexer",
+    name = "command-file-lexer",
     srcs = [
         "command_file.yy.cc",
         "command_file_lexer.cc",
@@ -71,48 +71,48 @@ cc_library(
     }),
     deps = [
         "//bazel:flex",
-        "//common/lexer:flex_lexer_adapter",
-        "//common/lexer:token_stream_adapter",
+        "//common/lexer:flex-lexer-adapter",
+        "//common/lexer:token-stream-adapter",
         "//common/strings:position",
-        "//common/text:text_structure",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
-        "//common/util:container_util",
-        "//common/util:interval_set",
+        "//common/text:text-structure",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
+        "//common/util:container-util",
+        "//common/util:interval-set",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "violation_handler",
+    name = "violation-handler",
     srcs = ["violation_handler.cc"],
     hdrs = ["violation_handler.h"],
     deps = [
-        ":lint_rule_status",
+        ":lint-rule-status",
         "//common/strings:diff",
-        "//common/util:file_util",
-        "//common/util:user_interaction",
+        "//common/util:file-util",
+        "//common/util:user-interaction",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test(
-    name = "command_file_lexer_test",
+    name = "command-file-lexer_test",
     size = "small",
     srcs = ["command_file_lexer_test.cc"],
     deps = [
-        ":command_file_lexer",
-        "//common/lexer:lexer_test_util",
-        "//common/text:token_info",
+        ":command-file-lexer",
+        "//common/lexer:lexer-test-util",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
-    name = "lint_waiver",
+    name = "lint-waiver",
     srcs = ["lint_waiver.cc"],
     hdrs = ["lint_waiver.h"],
     copts = select({
@@ -121,36 +121,36 @@ cc_library(
     }),
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
-        ":command_file_lexer",
-        "//common/strings:comment_utils",
-        "//common/strings:line_column_map",
+        ":command-file-lexer",
+        "//common/strings:comment-utils",
+        "//common/strings:line-column-map",
         "//common/strings:position",
-        "//common/text:text_structure",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
-        "//common/util:container_iterator_range",
-        "//common/util:container_util",
-        "//common/util:file_util",
-        "//common/util:interval_set",
-        "//common/util:iterator_range",
+        "//common/text:text-structure",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
+        "//common/util:container-iterator-range",
+        "//common/util:container-util",
+        "//common/util:file-util",
+        "//common/util:interval-set",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "file_analyzer",
+    name = "file-analyzer",
     srcs = ["file_analyzer.cc"],
     hdrs = ["file_analyzer.h"],
     deps = [
         "//common/lexer",
-        "//common/lexer:token_stream_adapter",
+        "//common/lexer:token-stream-adapter",
         "//common/parser:parse",
-        "//common/strings:line_column_map",
-        "//common/text:concrete_syntax_tree",
-        "//common/text:text_structure",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
+        "//common/strings:line-column-map",
+        "//common/text:concrete-syntax-tree",
+        "//common/text:text-structure",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/status",
@@ -159,14 +159,14 @@ cc_library(
 )
 
 cc_library(
-    name = "linter_test_utils",
+    name = "linter-test-utils",
     testonly = 1,
     srcs = ["linter_test_utils.cc"],
     hdrs = ["linter_test_utils.h"],
     deps = [
-        ":lint_rule_status",
-        "//common/text:token_info",
-        "//common/text:token_info_test_util",
+        ":lint-rule-status",
+        "//common/text:token-info",
+        "//common/text:token-info-test-util",
         "//common/util:algorithm",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -175,15 +175,15 @@ cc_library(
 )
 
 cc_library(
-    name = "syntax_tree_search_test_utils",
+    name = "syntax-tree-search-test-utils",
     testonly = 1,
     srcs = ["syntax_tree_search_test_utils.cc"],
     hdrs = ["syntax_tree_search_test_utils.h"],
     deps = [
-        ":syntax_tree_search",
-        "//common/lexer:lexer_test_util",
-        "//common/text:token_info",
-        "//common/text:tree_utils",
+        ":syntax-tree-search",
+        "//common/lexer:lexer-test-util",
+        "//common/text:token-info",
+        "//common/text:tree-utils",
         "//common/util:algorithm",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
@@ -192,66 +192,66 @@ cc_library(
 )
 
 cc_library(
-    name = "line_linter",
+    name = "line-linter",
     srcs = ["line_linter.cc"],
     hdrs = ["line_linter.h"],
     deps = [
-        ":line_lint_rule",
-        ":lint_rule_status",
+        ":line-lint-rule",
+        ":lint-rule-status",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "line_linter_test_utils",
+    name = "line-linter-test-utils",
     testonly = 1,
     hdrs = ["line_linter_test_utils.h"],
     deps = [
-        ":line_lint_rule",
-        ":line_linter",
-        ":lint_rule_status",
-        ":linter_test_utils",
-        "//common/text:text_structure",
+        ":line-lint-rule",
+        ":line-linter",
+        ":lint-rule-status",
+        ":linter-test-utils",
+        "//common/text:text-structure",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "line_lint_rule",
+    name = "line-lint-rule",
     hdrs = ["line_lint_rule.h"],
     deps = [
-        ":lint_rule",
+        ":lint-rule",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "syntax_tree_linter",
+    name = "syntax-tree-linter",
     srcs = ["syntax_tree_linter.cc"],
     hdrs = ["syntax_tree_linter.h"],
     deps = [
-        ":lint_rule_status",
-        ":syntax_tree_lint_rule",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":lint-rule-status",
+        ":syntax-tree-lint-rule",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
-        "//common/text:tree_context_visitor",
+        "//common/text:syntax-tree-context",
+        "//common/text:tree-context-visitor",
         "//common/util:logging",
     ],
 )
 
 cc_library(
-    name = "syntax_tree_linter_test_utils",
+    name = "syntax-tree-linter-test-utils",
     testonly = 1,
     hdrs = ["syntax_tree_linter_test_utils.h"],
     deps = [
-        ":lint_rule_status",
-        ":linter_test_utils",
-        ":syntax_tree_lint_rule",
-        ":syntax_tree_linter",
-        "//common/text:text_structure",
+        ":lint-rule-status",
+        ":linter-test-utils",
+        ":syntax-tree-lint-rule",
+        ":syntax-tree-linter",
+        "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
@@ -259,53 +259,53 @@ cc_library(
 )
 
 cc_library(
-    name = "syntax_tree_lint_rule",
+    name = "syntax-tree-lint-rule",
     hdrs = ["syntax_tree_lint_rule.h"],
     deps = [
-        ":lint_rule",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":lint-rule",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
+        "//common/text:syntax-tree-context",
     ],
 )
 
 cc_library(
-    name = "syntax_tree_search",
+    name = "syntax-tree-search",
     srcs = ["syntax_tree_search.cc"],
     hdrs = ["syntax_tree_search.h"],
     deps = [
         "//common/analysis/matcher",
-        "//common/analysis/matcher:bound_symbol_manager",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        "//common/analysis/matcher:bound-symbol-manager",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
-        "//common/text:tree_context_visitor",
+        "//common/text:syntax-tree-context",
+        "//common/text:tree-context-visitor",
     ],
 )
 
 cc_library(
-    name = "text_structure_linter",
+    name = "text-structure-linter",
     srcs = ["text_structure_linter.cc"],
     hdrs = ["text_structure_linter.h"],
     deps = [
-        ":lint_rule_status",
-        ":text_structure_lint_rule",
-        "//common/text:text_structure",
+        ":lint-rule-status",
+        ":text-structure-lint-rule",
+        "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "text_structure_linter_test_utils",
+    name = "text-structure-linter-test-utils",
     testonly = 1,
     hdrs = ["text_structure_linter_test_utils.h"],
     deps = [
-        ":lint_rule_status",
-        ":linter_test_utils",
-        ":text_structure_linter",
+        ":lint-rule-status",
+        ":linter-test-utils",
+        ":text-structure-linter",
         "//common/text:symbol",
         "//common/util:logging",
         "@com_google_absl//absl/status",
@@ -314,85 +314,85 @@ cc_library(
 )
 
 cc_library(
-    name = "text_structure_lint_rule",
+    name = "text-structure-lint-rule",
     hdrs = ["text_structure_lint_rule.h"],
     deps = [
-        ":lint_rule",
-        "//common/text:text_structure",
+        ":lint-rule",
+        "//common/text:text-structure",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "token_stream_linter",
+    name = "token-stream-linter",
     srcs = ["token_stream_linter.cc"],
     hdrs = ["token_stream_linter.h"],
     deps = [
-        ":lint_rule_status",
-        ":token_stream_lint_rule",
-        "//common/text:token_stream_view",
+        ":lint-rule-status",
+        ":token-stream-lint-rule",
+        "//common/text:token-stream-view",
         "//common/util:logging",
     ],
 )
 
 cc_library(
-    name = "token_stream_linter_test_utils",
+    name = "token-stream-linter-test-utils",
     testonly = 1,
     hdrs = ["token_stream_linter_test_utils.h"],
     deps = [
-        ":lint_rule_status",
-        ":linter_test_utils",
-        ":token_stream_lint_rule",
-        ":token_stream_linter",
-        "//common/text:text_structure",
+        ":lint-rule-status",
+        ":linter-test-utils",
+        ":token-stream-lint-rule",
+        ":token-stream-linter",
+        "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_library(
-    name = "token_stream_lint_rule",
+    name = "token-stream-lint-rule",
     hdrs = ["token_stream_lint_rule.h"],
     deps = [
-        ":lint_rule",
-        "//common/text:token_info",
+        ":lint-rule",
+        "//common/text:token-info",
     ],
 )
 
 cc_test(
-    name = "lint_rule_status_test",
+    name = "lint-rule-status_test",
     srcs = ["lint_rule_status_test.cc"],
     deps = [
-        ":lint_rule_status",
-        "//common/text:concrete_syntax_tree",
-        "//common/text:token_info",
-        "//common/text:tree_builder_test_util",
+        ":lint-rule-status",
+        "//common/text:concrete-syntax-tree",
+        "//common/text:token-info",
+        "//common/text:tree-builder-test-util",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "lint_waiver_test",
+    name = "lint-waiver_test",
     srcs = ["lint_waiver_test.cc"],
     deps = [
-        ":lint_waiver",
-        "//common/strings:line_column_map",
-        "//common/text:text_structure_test_utils",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
-        "//common/util:iterator_range",
+        ":lint-waiver",
+        "//common/strings:line-column-map",
+        "//common/text:text-structure-test-utils",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
+        "//common/util:iterator-range",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "file_analyzer_test",
+    name = "file-analyzer_test",
     srcs = ["file_analyzer_test.cc"],
     deps = [
-        ":file_analyzer",
-        "//common/text:text_structure",
-        "//common/text:token_info",
+        ":file-analyzer",
+        "//common/text:text-structure",
+        "//common/text:token-info",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -400,11 +400,11 @@ cc_test(
 )
 
 cc_test(
-    name = "linter_test_utils_test",
+    name = "linter-test-utils_test",
     srcs = ["linter_test_utils_test.cc"],
     deps = [
-        ":lint_rule_status",
-        ":linter_test_utils",
+        ":lint-rule-status",
+        ":linter-test-utils",
         "//common/util:range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -412,56 +412,56 @@ cc_test(
 )
 
 cc_test(
-    name = "line_linter_test",
+    name = "line-linter_test",
     srcs = ["line_linter_test.cc"],
     deps = [
-        ":line_lint_rule",
-        ":line_linter",
-        ":lint_rule_status",
-        "//common/text:token_info",
+        ":line-lint-rule",
+        ":line-linter",
+        ":lint-rule-status",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "syntax_tree_linter_test",
+    name = "syntax-tree-linter_test",
     srcs = ["syntax_tree_linter_test.cc"],
     deps = [
-        ":lint_rule_status",
-        ":syntax_tree_lint_rule",
-        ":syntax_tree_linter",
-        "//common/text:concrete_syntax_leaf",
-        "//common/text:concrete_syntax_tree",
+        ":lint-rule-status",
+        ":syntax-tree-lint-rule",
+        ":syntax-tree-linter",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
-        "//common/text:token_info",
-        "//common/text:tree_builder_test_util",
+        "//common/text:syntax-tree-context",
+        "//common/text:token-info",
+        "//common/text:tree-builder-test-util",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "syntax_tree_search_test",
+    name = "syntax-tree-search_test",
     srcs = ["syntax_tree_search_test.cc"],
     deps = [
-        ":syntax_tree_search",
+        ":syntax-tree-search",
         "//common/analysis/matcher",
-        "//common/analysis/matcher:matcher_builders",
+        "//common/analysis/matcher:matcher-builders",
         "//common/text:symbol",
-        "//common/text:syntax_tree_context",
-        "//common/text:tree_builder_test_util",
-        "//common/text:tree_utils",
+        "//common/text:syntax-tree-context",
+        "//common/text:tree-builder-test-util",
+        "//common/text:tree-utils",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "syntax_tree_search_test_utils_test",
+    name = "syntax-tree-search-test-utils_test",
     srcs = ["syntax_tree_search_test_utils_test.cc"],
     deps = [
-        ":syntax_tree_search_test_utils",
-        "//common/text:tree_builder_test_util",
+        ":syntax-tree-search-test-utils",
+        "//common/text:tree-builder-test-util",
         "//common/util:range",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
@@ -469,28 +469,28 @@ cc_test(
 )
 
 cc_test(
-    name = "text_structure_linter_test",
+    name = "text-structure-linter_test",
     srcs = ["text_structure_linter_test.cc"],
     deps = [
-        ":lint_rule_status",
-        ":text_structure_lint_rule",
-        ":text_structure_linter",
-        "//common/text:text_structure",
-        "//common/text:token_info",
+        ":lint-rule-status",
+        ":text-structure-lint-rule",
+        ":text-structure-linter",
+        "//common/text:text-structure",
+        "//common/text:token-info",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
-    name = "token_stream_linter_test",
+    name = "token-stream-linter_test",
     srcs = ["token_stream_linter_test.cc"],
     deps = [
-        ":lint_rule_status",
-        ":token_stream_lint_rule",
-        ":token_stream_linter",
-        "//common/text:token_info",
-        "//common/text:token_stream_view",
+        ":lint-rule-status",
+        ":token-stream-lint-rule",
+        ":token-stream-linter",
+        "//common/text:token-info",
+        "//common/text:token-stream-view",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
