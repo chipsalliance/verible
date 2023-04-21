@@ -18360,6 +18360,35 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases100ColumnsLimit) {
   }
 }
 
+static constexpr FormatterTestCase noCompactIndexingAndSelectionsTestCases[]{
+    {"module m1 ();\n"
+     "  assign s1 = msg[1 : 2 + 3];\n"
+     "  assign s2 = {<<8{msg[1 : 2 + 3]}};\n"
+     "endmodule\n",
+     "module m1 ();\n"
+     "  assign s1 = msg[1 : 2 + 3];\n"
+     "  assign s2 = {<< 8{msg[1 : 2 + 3]}};\n"
+     "endmodule\n"}};
+
+TEST(FormatterEndToEndTest, compactIndexingAndSelectionsTestCases) {
+  // Use a fixed style.
+  FormatStyle style;
+  style.column_limit = 100;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.compact_indexing_and_selections = false;
+
+  for (const auto& test_case : noCompactIndexingAndSelectionsTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 static constexpr FormatterTestCase kFunctionCallsWithComments[] = {
     {// no comments
      "module foo;\n"
