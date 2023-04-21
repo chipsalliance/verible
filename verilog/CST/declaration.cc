@@ -233,9 +233,11 @@ verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
   SymbolCastToNode(**function_call).AppendChild(std::move(*semicolon));
 
   // Change kInstantiationType to kReferenceCallBase
+  verible::SyntaxTreeNode& function_call_node =
+      SymbolCastToNode(**function_call);
+  if (function_call_node.children().empty()) return nullptr;
   verible::SyntaxTreeNode& instantiation_base(verible::CheckSymbolAsNode(
-      *ABSL_DIE_IF_NULL(SymbolCastToNode(**function_call).children()[0]),
-      NodeEnum::kInstantiationType));
+      *function_call_node.children()[0].get(), NodeEnum::kInstantiationType));
   SymbolPtr reference_call_base(MakeTaggedNode(NodeEnum::kReferenceCallBase));
   SymbolPtr new_function_call(MakeTaggedNode(NodeEnum::kFunctionCall));
   verible::SyntaxTreeNode& rcb_node(SymbolCastToNode(*reference_call_base));
@@ -250,10 +252,10 @@ verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
   // Add the rest of old kFunctionCall children to new destinations - there are
   // 3 children in range if they do not match this scheme, something went wrong
   // and the macro on the call will catch the null and error out
-  auto& function_call_children =
+  std::vector<SymbolPtr>& function_call_children =
       SymbolCastToNode(**function_call).mutable_children();
-  for (auto& child : verible::make_range(function_call_children.begin() + 1,
-                                         function_call_children.end())) {
+  for (SymbolPtr& child : verible::make_range(
+           function_call_children.begin() + 1, function_call_children.end())) {
     if (child->Tag().tag == static_cast<int>(NodeEnum::kParenGroup)) {
       rcb_node.AppendChild(std::move(child));
       continue;

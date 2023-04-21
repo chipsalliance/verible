@@ -80,8 +80,9 @@ verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
                                        T3&& semicolon) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   if (inst_base.get()->Tag().tag == (int)NodeEnum::kFunctionCall) {
-    return ABSL_DIE_IF_NULL(
-        ReshapeExtendedFunctionCallInDataDeclaration(&inst_base, &semicolon));
+    verible::SymbolPtr function_call =
+        ReshapeExtendedFunctionCallInDataDeclaration(&inst_base, &semicolon);
+    if (function_call.get() != nullptr) return function_call;
   }
   verible::CheckSymbolAsNode(*inst_base.get(), NodeEnum::kInstantiationBase);
   verible::CheckSymbolAsLeaf(*semicolon.get(), ';');

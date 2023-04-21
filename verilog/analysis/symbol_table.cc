@@ -835,7 +835,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
   bool ExtendedCallIsLast() const {
     const SyntaxTreeNode* reference_call_base =
         Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
-    for (auto& child : ABSL_DIE_IF_NULL(reference_call_base)->children()) {
+    if (reference_call_base == nullptr) return false;
+    for (auto& child : reference_call_base->children()) {
       if (SymbolCastToNode(*child).MatchesTagAnyOf(
               {NodeEnum::kHierarchyExtension})) {
         return false;
@@ -847,9 +848,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
   bool UnextendedCall() const {
     const SyntaxTreeNode* rcb =
         Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
-    for (auto& reference : ABSL_DIE_IF_NULL(rcb)->children()) {
-      if (SymbolCastToNode(*ABSL_DIE_IF_NULL(reference).get())
-              .MatchesTagAnyOf({NodeEnum::kReference})) {
+    if (rcb == nullptr) return false;
+    for (auto& reference : rcb->children()) {
+      if (reference && SymbolCastToNode(*reference)
+                           .MatchesTagAnyOf({NodeEnum::kReference})) {
         for (auto& child : SymbolCastToNode(*reference).children()) {
           if (SymbolCastToNode(*child).MatchesTagAnyOf(
                   {NodeEnum::kHierarchyExtension})) {
