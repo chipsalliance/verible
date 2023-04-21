@@ -8258,6 +8258,19 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "endmodule : foo  // C\n"
      "                 // C.1\n"
      "                 // C.2\n"},
+    {"module foo\n"
+     "#(\n"
+     "  parameter type baz_t = struct packed { `BAZ(); }\n"
+     ")\n"
+     "();\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter type\n"
+     "        baz_t = struct packed {\n"
+     "      `BAZ();\n"
+     "    }\n"
+     ") ();\n"
+     "endmodule\n"},
     // Check that comments with too large starting column difference are not
     // aligned as continuation comments.
     // Check that starting comments are not linked with a comment in
