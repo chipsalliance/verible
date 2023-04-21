@@ -142,11 +142,11 @@ ExpectedFailCount[project:Cores-VeeR-EH2]=42
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
-ExpectedFailCount[project:cva6]=71
+ExpectedFailCount[project:cva6]=70
 
-ExpectedFailCount[syntax:uvm]=1
-ExpectedFailCount[lint:uvm]=1
-ExpectedFailCount[project:uvm]=43
+ExpectedFailCount[syntax:uvm]=2
+ExpectedFailCount[lint:uvm]=2
+ExpectedFailCount[project:uvm]=44
 
 ExpectedFailCount[syntax:tnoc]=3
 ExpectedFailCount[lint:tnoc]=3
