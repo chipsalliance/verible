@@ -14,7 +14,6 @@
 
 #include "verilog/CST/expression.h"
 
-#include <iostream>
 #include <memory>
 #include <vector>
 

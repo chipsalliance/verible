@@ -925,7 +925,6 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       Visit(*paren_group);
     }
     facts_tree_context_.top().Children().push_back(std::move(function_node));
-    // ExtractFunctionOrTaskCall(data_declaration_node);
     return;
   }
   // Extract module instance type and parameters.

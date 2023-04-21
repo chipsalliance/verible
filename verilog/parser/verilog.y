@@ -2399,7 +2399,7 @@ function_declaration
   | TK_function lifetime_opt
     function_return_type_and_id ';'
     function_item_list
-    statement_or_null_list_opt 
+    statement_or_null_list_opt
     TK_endfunction endfunction_label_opt
     { $$ = MakeFunctionDeclaration(qualifier_placeholder, $1, $2,
                                    ForwardChildren($3),  // expand type id pair
