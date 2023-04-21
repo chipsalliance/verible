@@ -3685,6 +3685,11 @@ struct_union_member
     { $$ = MakeTaggedNode(N::kStructUnionMember, $1, $2, $3, $4, $5, $6); }
   | preprocessor_directive
     { $$ = std::move($1); }
+  | MacroCall
+    { $$ = std::move($1);}
+  // since the semicolon is optional, it is better to have both cases covered
+  | MacroCall ';'
+    { $$ = ExtendNode($1, $2);}
   ;
 
 case_item
