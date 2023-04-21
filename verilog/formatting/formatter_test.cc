@@ -16349,6 +16349,28 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    };\n"
        "  }\n"
        "endclass\n"},
+      {"module foo ();\n"
+       "  always @(posedge bar) begin\n"
+       "    if (1==1) begin\n"
+       "      ham();\n"
+       "    end else if (2==2) begin\n"
+       "      jam();\n"
+       "    end else begin\n"
+       "      spam();\n"
+       "    end\n"
+       "  end\n"
+       "endmodule\n",
+       "module foo ();\n"
+       "  always @(posedge bar) begin\n"
+       "    if (1 == 1) begin\n"
+       "      ham();\n"
+       "    end else if (2 == 2) begin\n"
+       "      jam();\n"
+       "    end else begin\n"
+       "      spam();\n"
+       "    end\n"
+       "  end\n"
+       "endmodule\n"},
   };
   // Use a fixed style.
   FormatStyle style;
@@ -16821,6 +16843,49 @@ TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
   style.wrap_spaces = 4;
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.named_port_indentation = IndentationStyle::kIndent;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
+TEST(FormatterEndToEndTest, WrapEndElseStatements) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"module foo ();\n"
+       "  always @(posedge bar) begin\n"
+       "    if (1==1) begin\n"
+       "      ham();\n"
+       "    end else if (2==2) begin\n"
+       "      jam();\n"
+       "    end else begin\n"
+       "      spam();\n"
+       "    end\n"
+       "  end\n"
+       "endmodule\n",
+       "module foo ();\n"
+       "  always @(posedge bar) begin\n"
+       "    if (1 == 1) begin\n"
+       "      ham();\n"
+       "    end\n"
+       "    else if (2 == 2) begin\n"
+       "      jam();\n"
+       "    end\n"
+       "    else begin\n"
+       "      spam();\n"
+       "    end\n"
+       "  end\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.wrap_end_else_clauses = true;
   for (const auto& test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
