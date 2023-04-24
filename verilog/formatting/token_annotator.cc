@@ -204,7 +204,8 @@ static WithReason<int> SpacesRequiredBetween(
     return {1, "Space between return keyword and return value"};
   }
 
-  if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {})) {
+  if (right_context.IsInsideFirst({NodeEnum::kStreamingConcatenation}, {}) &&
+      style.compact_indexing_and_selections) {
     if (left.TokenEnum() == TK_LS || left.TokenEnum() == TK_RS) {
       return {0, "No space around streaming operators"};
     }

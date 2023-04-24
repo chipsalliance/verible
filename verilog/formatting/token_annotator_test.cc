@@ -5246,6 +5246,18 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
           {0, SpacingOptions::kUndecided},
       },
       {
+          // [a + b]
+          CompactIndexSelectionStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          " ",
+          '+',
+          "+",
+          {NodeEnum::kDimensionScalar},
+          {NodeEnum::kStreamingConcatenation},
+          {1, SpacingOptions::kUndecided},
+      },
+      {
           // [a+b]
           CompactIndexSelectionStyle,
           verilog_tokentype::SymbolIdentifier,
