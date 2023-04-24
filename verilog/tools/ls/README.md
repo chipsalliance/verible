@@ -64,6 +64,35 @@ and make sure the binary is in your `$PATH` (or use full path).
 (add-hook 'verilog-mode-hook 'lsp)
 ```
 
+### Kakoune
+
+First, go to [kak-lsp](https://github.com/kak-lsp/kak-lsp) project and follow the installation and configuration steps.
+Then, either find a `kak-lsp.toml` language server configuration file or create a new one in the `~/.config/kak-lsp` directory (using [a default template](https://github.com/kak-lsp/kak-lsp/blob/master/kak-lsp.toml) from the project repository).
+
+After this, in the `kak-lsp.toml` file create a new entry:
+
+```toml
+[languages.verilog]
+filetypes = ["v", "sv"]
+roots = ["verible.filelist", ".git"]
+command = "verible-verilog-ls"
+offset_encoding = "utf-8"
+```
+
+To add additional configuration arguments to the `verible-verilog-ls`, add `args` list, e.g.:
+
+```toml
+args = ["--rules_config_search"]
+```
+
+Later, in the `kakrc` file (usually located in `~/.config/kak/kakrc`), adjust a hook for enabling Language Server to start for `verilog` language, e.g.:
+
+```kak
+hook global WinSetOption filetype=(rust|python|go|javascript|typescript|c|cpp|verilog) %{
+    lsp-enable-window
+}
+```
+
 ### Kate
 
 https://docs.kde.org/trunk5/en/kate/kate/kate-application-plugin-lspclient.html
