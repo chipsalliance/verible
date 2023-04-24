@@ -850,9 +850,12 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
   if (right.TokenEnum() == TK_else) {
     // TODO(fangism): feels like this should be the responsibility of
     // tree_unwrapper, handled by kElseClause, kGenerateElseClause, etc.
-    if (left.TokenEnum() == TK_end) {
+    if (left.TokenEnum() == TK_end && !style.wrap_end_else_clauses) {
       return {SpacingOptions::kMustAppend,
               "'end'-'else' and should be together on one line."};
+    }
+    if (left.TokenEnum() == TK_end && style.wrap_end_else_clauses) {
+      return {SpacingOptions::kMustWrap, "'end'-'else' Should be split."};
     }
     if (left.TokenEnum() == '}') {
       return {SpacingOptions::kMustAppend,

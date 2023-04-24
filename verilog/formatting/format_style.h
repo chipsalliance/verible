@@ -113,6 +113,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Compact binary expressions inside indexing / bit selection operators
   bool compact_indexing_and_selections = true;
 
+  // Split with a \n end and else clauses
+  bool wrap_end_else_clauses = false;
+
   // -- Note: when adding new fields, add them in format_style_init.cc
 
   // TODO(fangism): introduce the following knobs:
