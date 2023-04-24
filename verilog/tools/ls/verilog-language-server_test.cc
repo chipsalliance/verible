@@ -567,6 +567,25 @@ TEST_F(VerilogLanguageServerTest, FormattingFileWithEmptyNewline_issue1667) {
  "end":  {"line":2, "character": 20}})"));
 }
 
+TEST_F(VerilogLanguageServerTest, FormattingFileWithSyntaxErrors_issue1843) {
+  // Contains syntax errors. Shouldn't crash
+  const std::string file_contents =
+      "module fmt(input logic a,);\nassign a=1;\nendmodule";
+  const std::string fmt_module = DidOpenRequest("file://fmt.sv", file_contents);
+  ASSERT_OK(SendRequest(fmt_module));
+
+  GetResponse();  // Ignore diagnostics.
+
+  const absl::string_view formatting_request = R"(
+{"jsonrpc":"2.0", "id":1,
+ "method": "textDocument/formatting",
+ "params": {"textDocument":{"uri":"file://fmt.sv"}}})";
+
+  // Doesn't crash.
+  ASSERT_OK(SendRequest(formatting_request));
+  const json response = json::parse(GetResponse());
+}
+
 // Creates a request based on TextDocumentPosition parameters
 std::string TextDocumentPositionBasedRequest(absl::string_view method,
                                              absl::string_view file, int id,
