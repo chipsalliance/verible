@@ -22,6 +22,7 @@
 #include "verilog/CST/module.h"
 #include "verilog/CST/package.h"
 #include "verilog/CST/seq_block.h"
+#include "verilog/tools/ls/lsp-conversion.h"
 
 // Magic value to hint that we have to fill out the start range.
 static constexpr int kUninitializedStartLine = -1;
@@ -164,8 +165,6 @@ verible::lsp::Range DocumentSymbolFiller::RangeFromLeaf(
 
 verible::lsp::Range DocumentSymbolFiller::RangeFromToken(
     const verible::TokenInfo &token) const {
-  const verible::LineColumnRange range = text_view_.GetRangeForToken(token);
-  return {.start = {.line = range.start.line, .character = range.start.column},
-          .end = {.line = range.end.line, .character = range.end.column}};
+  return RangeFromLineColumn(text_view_.GetRangeForToken(token));
 }
 }  // namespace verilog

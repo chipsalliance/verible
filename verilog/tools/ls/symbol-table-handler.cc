@@ -25,6 +25,7 @@
 #include "common/util/file_util.h"
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/tools/ls/lsp-conversion.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
           "Name of the file with Verible FileList for the project");
@@ -254,18 +255,10 @@ SymbolTableHandler::GetLocationFromSymbolName(
 
   verible::lsp::Location location;
   location.uri = PathToLSPUri(file_origin->ResolvedPath());
-  const verible::TextStructureView *textstructure =
-      file_origin->GetTextStructure();
-  if (!textstructure->ContainsText(symbol_name)) return std::nullopt;
+  const verible::TextStructureView *text_view = file_origin->GetTextStructure();
+  if (!text_view->ContainsText(symbol_name)) return std::nullopt;
+  location.range = RangeFromLineColumn(text_view->GetRangeForText(symbol_name));
 
-  verible::LineColumnRange symbollocation =
-      textstructure->GetRangeForText(symbol_name);
-  // TODO (glatosinski) add method for converting verible::LineColumnRange
-  // to verible::lsp::Range
-  location.range.start = {.line = symbollocation.start.line,
-                          .character = symbollocation.start.column};
-  location.range.end = {.line = symbollocation.end.line,
-                        .character = symbollocation.end.column};
   return location;
 }
 
