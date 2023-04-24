@@ -167,7 +167,11 @@ DiffStatus LexicallyEquivalent(
   DiffStatus diff_status = DiffStatus::kEquivalent;
   auto recursive_comparator = [&](const TokenSequence::const_iterator l,
                                   const TokenSequence::const_iterator r) {
-    if (l->token_enum() != r->token_enum()) {
+    if (l->token_enum() != r->token_enum() &&
+        !((l->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
+           r->text() == ")") ||
+          (r->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
+           l->text() == ")"))) {
       if (errstream != nullptr) {
         *errstream << "Mismatched token enums.  got: ";
         token_printer(*l, *errstream);
@@ -246,6 +250,14 @@ DiffStatus FormatEquivalent(absl::string_view left, absl::string_view right,
         return IsWhitespace(verilog_tokentype(t.token_enum()));
       },
       [=](const TokenInfo& l, const TokenInfo& r) {
+        // MacroCallCloseToEndLine should be considered equivalent to ')', as
+        // they are whitespace dependant
+        if (((r.token_enum() == verilog_tokentype::MacroCallCloseToEndLine) &&
+             (l.text() == ")")) ||
+            ((l.token_enum() == verilog_tokentype::MacroCallCloseToEndLine) &&
+             (r.text() == ")"))) {
+          return true;
+        }
         return l.EquivalentWithoutLocation(r);
       },
       errstream);
