@@ -74,6 +74,8 @@ To pipe from stdin, use '-' as <file>.
     --try_wrap_long_lines (If true, let the formatter attempt to optimize line
       wrapping decisions where wrapping is needed, else leave them unformatted.
       This is a short-term measure to reduce risk-of-harm.); default: false;
+    --wrap_end_else_clauses (Split end and else keywords into separate lines);
+      default: false; currently: true;
 
   Flags from verilog/tools/formatter/verilog_format.cc:
     --failsafe_success (If true, always exit with 0 status, even if there were
