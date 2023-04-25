@@ -17,6 +17,7 @@
 #include <iterator>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/tree_annotator.h"
@@ -436,7 +437,13 @@ static WithReason<int> SpacesRequiredBetween(
     if (InRangeLikeContext(right_context)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
-        spaces = 1;
+        // If ExcessSpaces returns 0 if there was a newline - prevents
+        // counting indentation as spaces
+        if (!right.ExcessSpaces()) {
+          spaces = 0;
+        } else {
+          spaces = 1;
+        }
       }
       return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
     }
