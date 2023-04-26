@@ -2,11 +2,12 @@
   "name": "verible",
   "displayName": "Verible",
   "description": "Verible Language Server",
-  "version": "0.0.2700",
+  "version": "0.0.3220",
   "publisher": "chipsalliance",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chipsalliance/verible"
+    "url": "https://github.com/chipsalliance/verible",
+    "tag": "v0.0-3220-g9c63b8ad"
   },
   "engines": {
     "vscode": "^1.61.0"
@@ -67,6 +68,8 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "14.x",
     "@types/vscode": "^1.61.0",
+    "@types/decompress": "^4.2.4",
+    "@types/follow-redirects": "^1.14.1",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.1",
     "@vscode/test-electron": "^1.6.2",
@@ -80,6 +83,9 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "decompress": "^4.2.1",
+    "decompress-targz": "^4.1.1",
+    "follow-redirects": "^1.15.2",
     "vscode-languageclient": "^7.0.0"
   }
 }
