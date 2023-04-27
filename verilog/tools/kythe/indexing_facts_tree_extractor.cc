@@ -897,21 +897,18 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     {
       const verible::Symbol* instantiation_base = GetSubtreeAsSymbol(
           data_declaration_node, NodeEnum::kDataDeclaration, 1);
-      if (!instantiation_base) {
-        return;
-      }
+      if (!instantiation_base) return;
       const verible::Symbol* type = GetSubtreeAsSymbol(
           *instantiation_base, NodeEnum::kInstantiationBase, 0);
       const verible::Symbol* reference =
           GetSubtreeAsSymbol(*type, NodeEnum::kInstantiationType, 0);
-      if (reference->Tag().tag == (int)NodeEnum::kReference) {
-        if (SymbolCastToNode(*reference).children().size() > 1) {
-          const auto& children = SymbolCastToNode(*reference).children();
-          for (auto& child :
-               verible::make_range(children.begin() + 1, children.end())) {
-            if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
-              Visit(verible::SymbolCastToNode(*child));
-            }
+      if (reference->Tag().tag == (int)NodeEnum::kReference &&
+          SymbolCastToNode(*reference).children().size() > 1) {
+        const auto& children = SymbolCastToNode(*reference).children();
+        for (auto& child :
+             verible::make_range(children.begin() + 1, children.end())) {
+          if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
+            Visit(verible::SymbolCastToNode(*child));
           }
         }
       }
