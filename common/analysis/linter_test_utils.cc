@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/text/token_info.h"
 #include "common/util/algorithm.h"
 

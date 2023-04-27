@@ -12,7 +12,7 @@ package(
 
 cc_library(
     name = "default-rules",
-    hdrs = ["default_rules.h"],
+    hdrs = ["default-rules.h"],
     deps = [
         "//verilog/analysis/checkers:verilog-lint-rules",
     ],
@@ -20,7 +20,7 @@ cc_library(
 
 cc_test(
     name = "default-rules_test",
-    srcs = ["default_rules_test.cc"],
+    srcs = ["default-rules_test.cc"],
     deps = [
         ":default-rules",
         ":lint-rule-registry",
@@ -102,8 +102,8 @@ cc_test(
 
 cc_library(
     name = "lint-rule-registry",
-    srcs = ["lint_rule_registry.cc"],
-    hdrs = ["lint_rule_registry.h"],
+    srcs = ["lint-rule-registry.cc"],
+    hdrs = ["lint-rule-registry.h"],
     deps = [
         ":descriptions",
         "//common/analysis:line-lint-rule",
@@ -133,7 +133,7 @@ cc_test(
 
 cc_test(
     name = "lint-rule-registry_test",
-    srcs = ["lint_rule_registry_test.cc"],
+    srcs = ["lint-rule-registry_test.cc"],
     deps = [
         ":descriptions",
         ":lint-rule-registry",

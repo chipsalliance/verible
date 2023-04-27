@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include "common/analysis/lint_rule_status.h"
-#include "common/analysis/token_stream_lint_rule.h"
+#include "common/analysis/lint-rule-status.h"
+#include "common/analysis/token-stream-lint-rule.h"
 #include "common/text/token_stream_view.h"
 
 namespace verible {

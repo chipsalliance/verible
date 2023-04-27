@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/line-lint-rule.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/text/token_info.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

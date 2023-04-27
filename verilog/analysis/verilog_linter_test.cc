@@ -38,7 +38,7 @@
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/default_rules.h"
+#include "verilog/analysis/default-rules.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 

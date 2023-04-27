@@ -17,8 +17,8 @@
 #include <memory>
 #include <vector>
 
-#include "common/analysis/lint_rule_status.h"
-#include "common/analysis/syntax_tree_lint_rule.h"
+#include "common/analysis/lint-rule-status.h"
+#include "common/analysis/syntax-tree-lint-rule.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"

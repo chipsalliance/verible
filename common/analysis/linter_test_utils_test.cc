@@ -20,7 +20,7 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/util/range.h"
 #include "gtest/gtest.h"
 

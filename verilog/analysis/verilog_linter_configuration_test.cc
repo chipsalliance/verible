@@ -23,11 +23,11 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
-#include "common/analysis/lint_rule_status.h"
-#include "common/analysis/syntax_tree_lint_rule.h"
-#include "common/analysis/text_structure_lint_rule.h"
-#include "common/analysis/token_stream_lint_rule.h"
+#include "common/analysis/line-lint-rule.h"
+#include "common/analysis/lint-rule-status.h"
+#include "common/analysis/syntax-tree-lint-rule.h"
+#include "common/analysis/text-structure-lint-rule.h"
+#include "common/analysis/token-stream-lint-rule.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -37,9 +37,9 @@
 #include "common/text/tree_builder_test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/default_rules.h"
+#include "verilog/analysis/default-rules.h"
 #include "verilog/analysis/descriptions.h"
-#include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/analysis/lint-rule-registry.h"
 #include "verilog/analysis/verilog_linter.h"
 
 namespace verilog {

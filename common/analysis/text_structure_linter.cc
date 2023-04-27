@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/lint_rule_status.h"
-#include "common/analysis/text_structure_lint_rule.h"
+#include "common/analysis/lint-rule-status.h"
+#include "common/analysis/text-structure-lint-rule.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
 

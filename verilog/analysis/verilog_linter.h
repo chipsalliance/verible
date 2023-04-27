@@ -24,7 +24,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_linter.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/analysis/lint_waiver.h"
 #include "common/analysis/syntax_tree_linter.h"
 #include "common/analysis/text_structure_linter.h"
@@ -32,7 +32,7 @@
 #include "common/analysis/violation_handler.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
-#include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/analysis/lint-rule-registry.h"
 #include "verilog/analysis/verilog_linter_configuration.h"
 
 // Flag is declared for testing purposes (used e.g. in

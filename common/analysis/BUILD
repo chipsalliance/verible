@@ -23,8 +23,8 @@ cc_library(
 
 cc_library(
     name = "lint-rule-status",
-    srcs = ["lint_rule_status.cc"],
-    hdrs = ["lint_rule_status.h"],
+    srcs = ["lint-rule-status.cc"],
+    hdrs = ["lint-rule-status.h"],
     deps = [
         ":citation",
         "//common/strings:line-column-map",
@@ -41,7 +41,7 @@ cc_library(
 
 cc_library(
     name = "lint-rule",
-    hdrs = ["lint_rule.h"],
+    hdrs = ["lint-rule.h"],
     deps = [
         ":lint-rule-status",
         "@com_google_absl//absl/status",
@@ -219,7 +219,7 @@ cc_library(
 
 cc_library(
     name = "line-lint-rule",
-    hdrs = ["line_lint_rule.h"],
+    hdrs = ["line-lint-rule.h"],
     deps = [
         ":lint-rule",
         "@com_google_absl//absl/strings",
@@ -260,7 +260,7 @@ cc_library(
 
 cc_library(
     name = "syntax-tree-lint-rule",
-    hdrs = ["syntax_tree_lint_rule.h"],
+    hdrs = ["syntax-tree-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:concrete-syntax-leaf",
@@ -315,7 +315,7 @@ cc_library(
 
 cc_library(
     name = "text-structure-lint-rule",
-    hdrs = ["text_structure_lint_rule.h"],
+    hdrs = ["text-structure-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:text-structure",
@@ -352,7 +352,7 @@ cc_library(
 
 cc_library(
     name = "token-stream-lint-rule",
-    hdrs = ["token_stream_lint_rule.h"],
+    hdrs = ["token-stream-lint-rule.h"],
     deps = [
         ":lint-rule",
         "//common/text:token-info",
@@ -361,7 +361,7 @@ cc_library(
 
 cc_test(
     name = "lint-rule-status_test",
-    srcs = ["lint_rule_status_test.cc"],
+    srcs = ["lint-rule-status_test.cc"],
     deps = [
         ":lint-rule-status",
         "//common/text:concrete-syntax-tree",

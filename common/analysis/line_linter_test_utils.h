@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
+#include "common/analysis/line-lint-rule.h"
 #include "common/analysis/line_linter.h"
-#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/lint-rule-status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/text/text_structure.h"
 
