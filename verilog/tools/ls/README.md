@@ -21,13 +21,76 @@ progress
     - [ ] Take scope and type into account to only highlight _same_ symbols.
   - [ ] Provide useful information on hover
         ([#1187](https://github.com/chipsalliance/verible/issues/1187))
-  - [x] Find definition of a symbol even if in another file.
-  - [x] Find references of a symbol even if in another file.
+  - [x] Find definition of a symbol even if in another file (check [Configuring the Language Server for a project](#configuring-the-language-server-for-a-project)).
+  - [x] Find references of a symbol even if in another file (check [Configuring the Language Server for a project](#configuring-the-language-server-for-a-project)).
   - [ ] Find declaration of a symbol even if in another file.
         ([#1189](https://github.com/chipsalliance/verible/issues/1189))
   - [ ] Provide Document Links (e.g. opening include files)
         ([#1190](https://github.com/chipsalliance/verible/issues/1190))
   - [ ] Rename refactor a symbol
+
+## Configuring the Language Server for a project
+
+### Adding `verible.filelist` for project-wide symbol discovery
+
+`verible-verilog-ls` by default loads and analyses only currently edited files in the editor.
+To be able to utilize such features as going to definition, going to references, printing hover info project-wide, add a `verible.filelist` file to the project.
+
+`verible.filelist` is a file containing a list of design files (listed line by line).
+It is used to collect data necessary to build a symbol table and other helper structures to allow Language Server to find symbols' origin and type to support afore-mentioned features.
+
+If a list of files used in design is already present, it can just be linked in the project root under name `verible.filelist`.
+Otherwise, it can be easily created using such tools as `find`, e.g.:
+
+```bash
+find . -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > verible.filelist
+```
+
+The paths in the `verible.filelist` can be either relative to the location of the file or absolute.
+The Language Server looks for the `verible.filelist` file in the workspace directory - a directory delivered by the editor.
+The provided workspace directory can vary between editors, usually it is a directory:
+
+* the editor was started,
+* the editor found the root of the project (e.g. based on `.git` directory)
+* provided by the user in the project's settings.
+
+It is possible to change the default name of the file - it can be done with `--file_list_path <new-file-name>` flag.
+
+### Adding project-specific linter configuration
+
+By default, Language Server publishes all possible linting issues for a given document.
+It is possible to disable certain linter warnings for a given project using the `.rules.verible_lint` file.
+It is a simple file that consists of comma-separated or newline-separated settings for rules, e.g.:
+
+```
+-module-filename
++posix-eof
+-no-tabs
+```
+
+Disables the check for matching module and file name, tabs instead of spaces and enables rule disallowing ending file without an empty newline.
+For more information on linter setup and available flags, check [SystemVerilog Style Linter](../lint/README.md).
+
+Possibly the easiest way to introduce per-project linter configuration for the Language Server would be to run it with `--rules_config_search` path.
+It will search for the `.rules.verible_lint` file up in the directory hierarchy with respect to the file's current path.
+
+It is also possible to provide a direct path to the linter configuration, e.g.:
+```bash
+verible-verilog-ls --rules_config <path-to-config>
+```
+
+Or provide rules configuration directly, e.g.:
+```bash
+verible-verilog-ls --rules=+line-length=length:80,-no-tabs
+```
+
+### Other customizations of the Language Server
+
+To check other configuration options for the `verible-verilog-ls`, run:
+
+```bash
+verible-verilog-ls --helpfull
+```
 
 ## Hooking up to editor
 
@@ -64,6 +127,35 @@ and make sure the binary is in your `$PATH` (or use full path).
 (add-hook 'verilog-mode-hook 'lsp)
 ```
 
+### Kakoune
+
+First, go to [kak-lsp](https://github.com/kak-lsp/kak-lsp) project and follow the installation and configuration steps.
+Then, either find a `kak-lsp.toml` language server configuration file or create a new one in the `~/.config/kak-lsp` directory (using [a default template](https://github.com/kak-lsp/kak-lsp/blob/master/kak-lsp.toml) from the project repository).
+
+After this, in the `kak-lsp.toml` file create a new entry:
+
+```toml
+[languages.verilog]
+filetypes = ["v", "sv"]
+roots = ["verible.filelist", ".git"]
+command = "verible-verilog-ls"
+offset_encoding = "utf-8"
+```
+
+To add additional configuration arguments to the `verible-verilog-ls`, add `args` list, e.g.:
+
+```toml
+args = ["--rules_config_search"]
+```
+
+Later, in the `kakrc` file (usually located in `~/.config/kak/kakrc`), adjust a hook for enabling Language Server to start for `verilog` language, e.g.:
+
+```kak
+hook global WinSetOption filetype=(rust|python|go|javascript|typescript|c|cpp|verilog) %{
+    lsp-enable-window
+}
+```
+
 ### Kate
 
 https://docs.kde.org/trunk5/en/kate/kate/kate-application-plugin-lspclient.html
@@ -88,6 +180,8 @@ to get it started up on our Verilog/SystemVerilog projects.
     }
 }
 ```
+
+It is possible to provide additional flags and arguments in `command` entry as list, e.g. `["verible-verilog-ls", "--rules_config_search"]`.
 
 ### Neovim
 
@@ -186,6 +280,8 @@ Installation steps
 There is a `Tools > LSP > Troubleshoot Server Configuration` which might
 be helpful in case of issues.
 
+To customize the Language Server with additional flags, type the command flags in the `command` list, e.g. `["verible-verilog-ls", "--rules_config_search"]`.
+
 ### Vim
 
 To make LSP work in Vim an dedicated LSP addon is required.
@@ -206,10 +302,12 @@ endif
 
 Make sure ``verible-verilog-ls`` is available in your ``PATH`` and can be executed.
 Alternatively modify the snippet above to use an absolute path.
+To add configuration flags to customize the Language Server, add them to the list in the `server_info`.
 
 ### VSCode
 
 #### Use released extension
+
 You can install the extension directly from the [VSCode marketplace](https://marketplace.visualstudio.com/items?itemName=CHIPSAlliance.verible).
 
 To install the extension launch VS Code Quick Open (Ctrl+P), paste the following command, and press enter.
