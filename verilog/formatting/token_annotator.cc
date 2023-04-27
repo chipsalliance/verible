@@ -439,11 +439,7 @@ static WithReason<int> SpacesRequiredBetween(
       if (spaces > 1) {
         // If ExcessSpaces returns 0 if there was a newline - prevents
         // counting indentation as spaces
-        if (!right.ExcessSpaces()) {
-          spaces = 0;
-        } else {
-          spaces = 1;
-        }
+        spaces = right.ExcessSpaces() ? 1 : 0;
       }
       return {spaces, "Limit spaces before ':' in bit slice to 0 or 1"};
     }
