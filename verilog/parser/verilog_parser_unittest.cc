@@ -3771,6 +3771,9 @@ static constexpr ParserTestCaseArray kStructTests = {
     "struct packed { int i; bit b; } foo;",
     "struct packed signed { int i; bit b; } foo;",
     "struct packed unsigned { int i; bit b; } foo;",
+    "struct { `BAZ() } foo;",
+    "struct { `BAZ(); } foo;",
+    "struct { `BAZ()\n } foo;",
 };
 
 static constexpr ParserTestCaseArray kEnumTests = {

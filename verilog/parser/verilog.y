@@ -3685,11 +3685,13 @@ struct_union_member
     { $$ = MakeTaggedNode(N::kStructUnionMember, $1, $2, $3, $4, $5, $6); }
   | preprocessor_directive
     { $$ = std::move($1); }
-  | MacroCall
-    { $$ = std::move($1);}
   // since the semicolon is optional, it is better to have both cases covered
   | MacroCall ';'
     { $$ = ExtendNode($1, $2);}
+  | MacroCall
+    { $$ = std::move($1);}
+  | MacroCallId '(' macro_args_opt MacroCallCloseToEndLine
+    { $$ = MakeTaggedNode(N::kMacroCall, $1, MakeParenGroup($2, $3, $4)); }
   ;
 
 case_item

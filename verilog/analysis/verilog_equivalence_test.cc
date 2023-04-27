@@ -238,6 +238,25 @@ TEST(FormatEquivalentTest, MismatchTokenType) {
       << errs.str();
 }
 
+TEST(FormatEquivalentTest, EquivalenceOfRightParen) {
+  const char* kTestCases[] = {
+      "{`FOO()\n}\n",
+      "{`FOO()}\n",
+      "{`FOO()()}\n",
+      "{`FOO()()\n}\n",
+  };
+  {
+    std::ostringstream errs;
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                               kTestCases[0], kTestCases[1], &errs);
+    // Test the other way around too.
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                               kTestCases[1], kTestCases[0], &errs);
+    ExpectCompareWithErrstream(FormatEquivalent, DiffStatus::kEquivalent,
+                               kTestCases[2], kTestCases[3], &errs);
+  }
+}
+
 TEST(FormatEquivalentTest, DiagnosticMismatch) {
   const char* kTestCases[] = {
       "module foo;\n",

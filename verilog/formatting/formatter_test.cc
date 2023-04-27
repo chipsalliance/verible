@@ -8271,6 +8271,21 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    }\n"
      ") ();\n"
      "endmodule\n"},
+    // The same as the previous test case, but without a semicolon at the macro
+    // call
+    {"module foo\n"
+     "#(\n"
+     "  parameter type baz_t = struct packed { `BAZ() }\n"
+     ")\n"
+     "();\n"
+     "endmodule\n",
+     "module foo #(\n"
+     "    parameter type\n"
+     "        baz_t = struct packed {\n"
+     "      `BAZ()\n"
+     "    }\n"
+     ") ();\n"
+     "endmodule\n"},
     // Check that comments with too large starting column difference are not
     // aligned as continuation comments.
     // Check that starting comments are not linked with a comment in

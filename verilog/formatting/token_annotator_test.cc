@@ -5319,6 +5319,18 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
       },
       {
           DefaultStyle,
+          verilog_tokentype::SymbolIdentifier,
+          "a",
+          "\n    ",
+          ':',
+          ":",
+          {NodeEnum::kDimensionRange},
+          {NodeEnum::kDimensionRange},
+          // 0 spaces as this is an indentation, not spacing
+          {0, SpacingOptions::kUndecided},
+      },
+      {
+          DefaultStyle,
           '*',
           "*",
           "",  // 0 spaces originally
