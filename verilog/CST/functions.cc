@@ -56,6 +56,7 @@ std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
     const verible::Symbol* zeroth_child =
         verible::GetSubtreeAsSymbol(*(call.match), NodeEnum::kFunctionCall, 0);
     if (!zeroth_child) continue;
+    if (zeroth_child->Tag().tag != (int)NodeEnum::kReferenceCallBase) continue;
     const verible::Symbol* first_child = verible::GetSubtreeAsSymbol(
         *zeroth_child, NodeEnum::kReferenceCallBase, 1);
     if (first_child) {
