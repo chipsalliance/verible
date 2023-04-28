@@ -101,8 +101,8 @@ std::string LintStatusFormatter::FormatWithRelatedTokens(
   if (tokens.empty()) {
     return std::string(message);
   }
-
-  size_t end_pos = message.find("@", 0), beg_pos = 0;
+  size_t beg_pos = 0;
+  size_t end_pos = message.find("@", beg_pos);
   std::ostringstream s;
   for (const auto& token : tokens) {
     if (end_pos == absl::string_view::npos) {
