@@ -32,6 +32,9 @@ The language server provides a couple of features from the [Verible SystemVerilo
 The Verible plug-in needs the `verible-verilog-ls` executable installed
 on your machine.
 
+On Linux and Windows, the plug-in will try to download the necessary
+executable (if it's not already available).
+
 Get a binary distribution for your Operating System at
 https://github.com/chipsalliance/verible/releases
 
