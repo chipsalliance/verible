@@ -664,6 +664,33 @@ TEST(ReferenceIsSimpleTest, Simple) {
   }
 }
 
+TEST(ReferenceIsSimpleButInReferenceCallBaseTest, Simple) {
+  const char* kTestCases[] = {
+      // as this will get wrapped in the data declaration for foo(), only a will
+      // be matched
+      "foo(a);",
+  };
+  for (auto code : kTestCases) {
+    const auto analyzer_ptr =
+        AnalyzeVerilogStatements(code, "<file>", kDefaultPreprocess);
+    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    {
+      const auto status = analyzer_ptr->LexStatus();
+      ASSERT_TRUE(status.ok()) << status.message();
+    }
+    {
+      const auto status = analyzer_ptr->ParseStatus();
+      ASSERT_TRUE(status.ok()) << status.message();
+    }
+    const std::vector<TreeSearchMatch> refs(
+        FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(node)));
+    for (const auto& ref : refs) {
+      const verible::TokenInfo* token = ReferenceIsSimpleIdentifier(*ref.match);
+      ASSERT_NE(token, nullptr) << "reference: " << code;
+    }
+  }
+}
+
 TEST(ReferenceIsSimpleTest, NotSimple) {
   const char* kTestCases[] = {
       "a[0]", "a[4][6]", "bbb[3:0]", "x.y",  "x.y.z",  "x[0].y[1].z[2]",
