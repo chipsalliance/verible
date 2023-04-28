@@ -158,6 +158,14 @@ inline constexpr auto ExpressionHasFunctionCall =
     verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
                                       N(kParenGroup));
 
+inline constexpr auto ExpressionHasFunctionCallNode =
+    verible::matcher::MakePathMatcher(N(kFunctionCall));
+inline constexpr auto FunctionCallHasHierarchyExtension =
+    verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kReference),
+                                      N(kHierarchyExtension));
+inline constexpr auto FunctionCallHasParenGroup =
+    verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kParenGroup));
+
 // Matches a randomize call extension, or a call to an object's randomize
 // method contained within an expression.
 //

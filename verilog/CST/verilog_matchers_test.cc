@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog_matchers.h"
 
 namespace verilog {
 namespace {
@@ -113,32 +114,18 @@ TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
       {ExpressionHasFunctionCall(), EmbedInClassMethod("bar::foo();"), 1},
       {ExpressionHasFunctionCall(), EmbedInClassMethod("x = bar::foo();"), 1},
       // This is a method call, different from a function call:
-      // {ExpressionHasFunctionCall(), EmbedInClassMethod("bar.foo();"), 0},
-      // {ExpressionHasFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
-      // TODO(jbylicki): Move those tests, as now they cannot be done with just
-      // a matcher. As the reshaped tree contains call extensions below the
-      // level of paren groups.
+      {ExpressionHasFunctionCallNode(FunctionCallHasHierarchyExtension(),
+                                     FunctionCallHasParenGroup()),
+       EmbedInClassMethod("bar.foo();"), 1},
+      {ExpressionHasFunctionCallNode(FunctionCallHasHierarchyExtension(),
+                                     FunctionCallHasParenGroup()),
+       EmbedInClassMethod("x = bar.foo();"), 1},
   };
   for (const auto& test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
 
-// Tests for ExpressionHasRandomizeCallExtension matching
-// TEST(VerilogMatchers, ExpressionHasRandomizeCallExtensionTests) {
-//   const RawMatcherTestCase tests[] = {
-//       {ExpressionHasRandomizeCallExtension(),
-//        EmbedInClassMethod("foo().bar.randomize();"), 1},
-//       {ExpressionHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
-//       {ExpressionHasRandomizeCallExtension(),
-//        EmbedInClassMethod("randomize();"), 0},
-//       {ExpressionHasRandomizeCallExtension(), EmbedInClass(""), 0},
-//       {ExpressionHasRandomizeCallExtension(), "", 0},
-//   };
-//   for (const auto& test : tests) {
-//     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
-//   }
-// }
 TEST(VerilogMatchers, NonCallExpressionHasRandomizeCallExtensionTests) {
   const RawMatcherTestCase tests[] = {
       {NonCallHasRandomizeCallExtension(),
@@ -652,10 +639,7 @@ TEST(VerilogMatchers, RValueIsFunctionCallTest) {
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo(a);"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x.y = bar::foo(a);"), 1},
-      // TODO(jbylicki): This case is unrecognizable by just a plain matcher
-      // now, move it
-      //  to a section where a suitable method can be created and tested
-      //  {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
+      {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("z = pkg::bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo() -12;"), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = a + bar::foo();"), 0},
