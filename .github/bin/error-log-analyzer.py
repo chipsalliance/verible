@@ -74,9 +74,11 @@ and the syntax is technically invalid.
 unhandled macro was present near a syntax error
 """
 
+# Externally used binaries
+SLANG="slang"
+RIPGREP="rg"
 
 SLANG_DEBUG_OUT = False
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path")
@@ -259,7 +261,7 @@ def error_classifier(src, line, state, project):
 def get_slang_output(srcpath):
     # subprocess run where the output is captured into a string
     proc = subprocess.run(
-            ["slang", '--error-limit=0', srcpath.strip()],
+            [SLANG, '--error-limit=0', srcpath.strip()],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
     )
@@ -271,7 +273,7 @@ def get_slang_output(srcpath):
 def get_rg_output(project_root, filename):
     # subprocess run where the output is captured into a string
     proc = subprocess.run(
-            ["rg", "include \""+filename, project_root],
+            [RIPGREP, "include \""+filename, project_root],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
     )
@@ -371,6 +373,8 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
             exit_code = int(file.split('-')[0])
             if exit_code == 1:
                 tool = file_with_tool.split('_')[-1].replace(':', '-')
+                if tool == 'verible-verilog-preprocessor':
+                  continue   # error messages here are not file:line:col yet.
                 filename = '_'.join(file_with_tool.split('_')[:-1])
 
                 # if there were dashes ('-') in the file name, they
@@ -510,7 +514,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
 
 # Output the slang version string to the log
 proc = subprocess.run(
-        ["slang", '--version'],
+        [SLANG, '--version'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
 )
