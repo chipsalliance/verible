@@ -14,7 +14,6 @@
 
 #include "verilog/CST/type.h"
 
-#include <iostream>
 #include <vector>
 
 #include "common/analysis/matcher/matcher.h"

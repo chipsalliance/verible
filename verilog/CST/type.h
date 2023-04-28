@@ -227,8 +227,6 @@ const verible::SyntaxTreeLeaf* GetSymbolIdentifierFromEnumName(
 const verible::Symbol* GetTypeIdentifierFromInstantiationType(
     const verible::Symbol& instantiation_type);
 
-const verible::SyntaxTreeNode* GetTypeIdentifierFromCustomType(
-    const verible::Symbol& data_type);
 // Returns symbol identifier node for the type name from node tagged with
 // kDataType (if exists) or return nullptr if the base type is not a named
 // user-defined type.
