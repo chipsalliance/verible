@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import { platform, arch } from "os";
 import * as fs from "fs";
 import * as path from "path";
@@ -12,7 +13,7 @@ const TAG = require("../package.json").repository.tag;
 function checkIfBinaryExists(binaryPath: string) {
   let whichCommand: string, binaryExists: boolean;
   if (platform() == "win32") whichCommand = "where";
-  else whichCommand = "which";
+  else whichCommand = "command -v";
 
   binaryExists = true;
   try {
@@ -25,14 +26,19 @@ function checkIfBinaryExists(binaryPath: string) {
 }
 
 export async function checkAndDownloadBinaries(
-  binaryPath: string
+  binaryPath: string,
+  output: vscode.OutputChannel
 ): Promise<string> {
-  if (platform() === "darwin") {
-    // There is no static binaries for MacOS -- aborting
-    return binaryPath;
-  }
   if (checkIfBinaryExists(binaryPath)) {
     // Language server binary exists -- nothing to do
+    return binaryPath;
+  }
+  output.appendLine(`Set language server executable (${binaryPath}) doesn't exist or cannot be accessed`);
+  if (platform() === "darwin") {
+    // There is no static binaries for MacOS -- aborting
+    output.appendLine("GitHub release is not available for MacOS. Language server can be installed with:");
+    output.appendLine("\tbrew tap chipsalliance/verible");
+    output.appendLine("\tbrew install verible");
     return binaryPath;
   }
 
@@ -44,6 +50,7 @@ export async function checkAndDownloadBinaries(
   );
   if (checkIfBinaryExists(pluginBinaryPath)) {
     // Language server binary already downloaded
+    output.appendLine(`Using executable from path: ${pluginBinaryPath}`);
     return pluginBinaryPath;
   }
 
@@ -52,12 +59,14 @@ export async function checkAndDownloadBinaries(
     // No tag found -- aborting
     return binaryPath;
   }
+  
+  output.appendLine(`Extension will attempt to download executables (${TAG}) from GitHub Release page`);
 
   // Preparing URL
   let platformName,
     extension,
     archName = "";
-  if (platform() == "win32") {
+  if (platform() === "win32") {
     platformName = "win64";
     extension = "zip";
   } else {
@@ -104,5 +113,6 @@ export async function checkAndDownloadBinaries(
     fs.rm(archivePath, () => null);
   });
 
+  output.appendLine(`Using executable from path: ${pluginBinaryPath}`);
   return pluginBinaryPath;
 }

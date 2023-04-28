@@ -6,8 +6,9 @@ import { checkAndDownloadBinaries } from './download-ls';
 let client: undefined | vscodelc.LanguageClient = undefined;
 
 async function initLanguageClient() {
+    const output = vscode.window.createOutputChannel('Verible Language Server');
     const config = vscode.workspace.getConfiguration('verible');
-    const binary_path: string = await checkAndDownloadBinaries(config.get('path') as string);
+    const binary_path: string = await checkAndDownloadBinaries(config.get('path') as string, output);
 
     const clangd: vscodelc.Executable = {
         command: binary_path
@@ -19,7 +20,8 @@ async function initLanguageClient() {
     const clientOptions: vscodelc.LanguageClientOptions = {
         // Register the server for (System)Verilog documents
         documentSelector: [{ scheme: 'file', language: 'systemverilog' },
-                           { scheme: 'file', language: 'verilog' }]
+                           { scheme: 'file', language: 'verilog' }],
+        outputChannel: output
     };
 
     // Create the language client and start the client.
