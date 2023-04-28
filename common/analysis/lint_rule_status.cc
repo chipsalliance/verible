@@ -95,30 +95,30 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
   }
 }
 
-std::string LintStatusFormatter::ReplaceWithHelperTokens(
-    const std::vector<verible::TokenInfo>& tokens, absl::string_view reason,
+std::string LintStatusFormatter::FormatWithRelatedTokens(
+    const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
     absl::string_view path, absl::string_view base) const {
   if (tokens.empty()) {
-    return std::string(reason);
+    return std::string(message);
   }
 
-  size_t end_pos = reason.find("@", 0), beg_pos = 0;
+  size_t end_pos = message.find("@", 0), beg_pos = 0;
   std::ostringstream s;
   for (const auto& token : tokens) {
-    if (end_pos == std::string_view::npos) {
-      s << reason.substr(beg_pos);
+    if (end_pos == absl::string_view::npos) {
+      s << message.substr(beg_pos);
       break;
     }
-    if (!(end_pos != 0 && reason[end_pos - 1] == '\\')) {
-      s << reason.substr(beg_pos, end_pos - beg_pos);
+    if (!(end_pos != 0 && message[end_pos - 1] == '\\')) {
+      s << message.substr(beg_pos, end_pos - beg_pos);
       s << path << ":";
       s << line_column_map_.GetLineColAtOffset(base, token.left(base));
     } else {
-      s << reason.substr(beg_pos, end_pos - beg_pos + 1);
+      s << message.substr(beg_pos, end_pos - beg_pos + 1);
     }
 
     beg_pos = end_pos + 1;
-    end_pos = reason.find("@", beg_pos);
+    end_pos = message.find("@", beg_pos);
   }
 
   return absl::StrReplaceAll(s.str(), {{"\\@", "@"}});
@@ -167,9 +167,8 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
       line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
       line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
 
-  (*stream) << path << ':' << range << ' ' << violation.reason << ' ' << url
-            << ": "
-            << ReplaceWithHelperTokens(violation.related_tokens,
+  (*stream) << path << ':' << range << " "
+            << FormatWithRelatedTokens(violation.related_tokens,
                                        violation.reason, path, base)
             << ' ' << url << " [" << rule_name << ']';
 }

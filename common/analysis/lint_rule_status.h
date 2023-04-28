@@ -91,11 +91,10 @@ class AutoFix {
 // LintViolation is a class that represents a single rule violation.
 struct LintViolation {
   // This construct records a token stream lint violation.
-  LintViolation(const TokenInfo& token, const std::string& reason,
+  LintViolation(const TokenInfo& token, absl::string_view reason,
                 const std::vector<AutoFix>& autofixes = {},
                 const std::vector<TokenInfo>& tokens = {})
-      : root(nullptr),
-        token(token),
+      : token(token),
         reason(reason),
         context(),
         autofixes(autofixes),
@@ -103,13 +102,9 @@ struct LintViolation {
 
   // This construct records a token stream lint violation.
   // with additional tokens that might be related somehow with vulnerable token
-  LintViolation(const TokenInfo& token, const std::string& reason,
+  LintViolation(const TokenInfo& token, absl::string_view reason,
                 const std::vector<TokenInfo>& tokens)
-      : root(nullptr),
-        token(token),
-        reason(reason),
-        context(),
-        related_tokens(tokens) {}
+      : token(token), reason(reason), context(), related_tokens(tokens) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
@@ -117,8 +112,7 @@ struct LintViolation {
                 const SyntaxTreeContext& context,
                 const std::vector<AutoFix>& autofixes = {},
                 const std::vector<TokenInfo>& tokens = {})
-      : root(nullptr),
-        token(token),
+      : token(token),
         reason(reason),
         context(context),
         autofixes(autofixes),
@@ -269,10 +263,9 @@ class LintStatusFormatter {
   // this allows us to create custom reason msg
   // with different token location that are related to found
   // vulnerable token
-  std::string ReplaceWithHelperTokens(const std::vector<TokenInfo>& tokens,
-                                      absl::string_view reason,
-                                      absl::string_view path,
-                                      absl::string_view base) const;
+  std::string FormatWithRelatedTokens(
+      const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
+      absl::string_view path, absl::string_view base) const;
 
  private:
   // Translates byte offsets, which are supplied by LintViolations via

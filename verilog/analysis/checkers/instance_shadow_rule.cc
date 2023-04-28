@@ -49,12 +49,13 @@ const char InstanceShadowRule::kTopic[] = "mark-shadowed-instances";
 const char InstanceShadowRule::kMessage[] =
     "Instance shadows the already declared variable";
 
-std::string InstanceShadowRule::GetDescription(
-    DescriptionType description_type) {
-  return absl::StrCat(
-      "Checks that any defined variable does not shadow other variable in the "
-      "same scope",
-      GetStyleGuideCitation(kTopic), ".");
+const LintRuleDescriptor& InstanceShadowRule::GetDescriptor() {
+  static const LintRuleDescriptor d{
+      .name = "instance-shadowing",
+      .topic = "mark-shadowed-instances",
+      .desc = "Instance shadows the already declared variable",
+  };
+  return d;
 }
 
 static const Matcher& InstanceShadowMatcher() {
@@ -84,9 +85,7 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
   // we are looking for the potential labels that might overlap the considered
   // declaration. We are searching all the labels within the visible scope
   // until we find the node or we reach the top of the scope
-  for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
-    const auto& node = *rc;
-
+  for (auto node : rcontext) {
     for (const verible::SymbolPtr& child : node->children()) {
       if (child == nullptr) {
         continue;
