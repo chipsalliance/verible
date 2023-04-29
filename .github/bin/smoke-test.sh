@@ -66,6 +66,7 @@ readonly VERIBLE_TOOLS_TO_RUN="syntax/verible-verilog-syntax \
                                lint/verible-verilog-lint \
                                formatter/verible-verilog-format \
                                project/verible-verilog-project \
+                               preprocessor/verible-verilog-preprocessor \
                                kythe/verible-verilog-kythe-extractor"
 
 # A few projects that can be fetched from git and represent a good
@@ -127,62 +128,79 @@ declare -A ExpectedFailCount
 ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=192
+ExpectedFailCount[preprocessor:ibex]=368
 
 ExpectedFailCount[syntax:opentitan]=35
 ExpectedFailCount[lint:opentitan]=35
 ExpectedFailCount[project:opentitan]=730
+ExpectedFailCount[preprocessor:opentitan]=1950
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
+ExpectedFailCount[preprocessor:sv-tests]=139
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
 ExpectedFailCount[project:Cores-VeeR-EH2]=42
+ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=4
 ExpectedFailCount[lint:cva6]=4
 ExpectedFailCount[project:cva6]=70
+ExpectedFailCount[preprocessor:cva6]=65
 
 ExpectedFailCount[syntax:uvm]=2
 ExpectedFailCount[lint:uvm]=2
 ExpectedFailCount[project:uvm]=44
+ExpectedFailCount[preprocessor:uvm]=115
 
 ExpectedFailCount[syntax:tnoc]=3
 ExpectedFailCount[lint:tnoc]=3
 ExpectedFailCount[project:tnoc]=24
+ExpectedFailCount[preprocessor:tnoc]=57
 
 ExpectedFailCount[project:80x86]=2
+ExpectedFailCount[preprocessor:80x86]=7
 
 ExpectedFailCount[syntax:XilinxUnisimLibrary]=9
 ExpectedFailCount[lint:XilinxUnisimLibrary]=9
 ExpectedFailCount[project:XilinxUnisimLibrary]=27
+ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
 ExpectedFailCount[syntax:black-parrot]=161
 ExpectedFailCount[lint:black-parrot]=161
 ExpectedFailCount[project:black-parrot]=175
+ExpectedFailCount[preprocessor:black-parrot]=176
 
 ExpectedFailCount[syntax:ivtest]=168
 ExpectedFailCount[lint:ivtest]=168
 ExpectedFailCount[project:ivtest]=198
+ExpectedFailCount[preprocessor:ivtest]=26
 
 ExpectedFailCount[syntax:nontrivial-mips]=2
 ExpectedFailCount[lint:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
+ExpectedFailCount[preprocessor:nontrivial-mips]=78
 
 ExpectedFailCount[project:axi]=69
+ExpectedFailCount[preprocessor:axi]=66
 
 ExpectedFailCount[syntax:rsd]=5
 ExpectedFailCount[lint:rsd]=5
 ExpectedFailCount[project:rsd]=51
+ExpectedFailCount[preprocessor:rsd]=48
 
 ExpectedFailCount[project:scr1]=45
+ExpectedFailCount[preprocessor:scr1]=46
 
 ExpectedFailCount[project:serv]=1
+ExpectedFailCount[preprocessor:serv]=1
 
 ExpectedFailCount[syntax:basejump_stl]=467
 ExpectedFailCount[lint:basejump_stl]=467
 ExpectedFailCount[project:basejump_stl]=577
+ExpectedFailCount[preprocessor:basejump_stl]=610
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
@@ -256,15 +274,18 @@ function run_smoke_test() {
         # a <(echo $single_file) does not work, so use actual file.
         echo ${single_file} > ${PROJECT_FILE_LIST}
         file_param="${PROJECT_FILE_LIST}"
-       elif [[ $tool == *-extractor ]]; then
+      elif [[ $tool == *-extractor ]]; then
         EXTRA_PARAM="--file_list_root=/ --file_list_path"
         # a <(echo $single_file) does not work, so use actual file.
         echo ${single_file} > ${PROJECT_FILE_LIST}
         file_param="${PROJECT_FILE_LIST}"
-       elif [[ $tool == *-lint ]]; then
+      elif [[ $tool == *-lint ]]; then
         EXTRA_PARAM="--lint_fatal=false"
-	file_param=${single_file}
-       else
+	      file_param=${single_file}
+      elif [[ $tool == *-preprocessor ]]; then
+        EXTRA_PARAM="preprocess"
+	      file_param=${single_file}
+      else
         EXTRA_PARAM=""
         file_param=${single_file}
       fi

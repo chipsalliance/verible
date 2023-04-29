@@ -14,6 +14,10 @@ pkgs.mkShell {
       gnused
       python3
 
+      # To run error-log-analyzer
+      python3Packages.mdutils
+      ripgrep
+
       # For using --//bazel:use_local_flex_bison if desired
       flex
       bison
