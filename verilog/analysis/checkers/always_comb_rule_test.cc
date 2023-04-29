@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
 TEST(AlwaysCombTest, FunctionFailures) {
@@ -53,6 +54,33 @@ TEST(AlwaysCombTest, FunctionFailures) {
   };
 
   RunLintTestCases<VerilogAnalyzer, AlwaysCombRule>(kAlwaysCombTestCases);
+}
+
+TEST(AlwaysCombTest, AutoFixAlwaysComb) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;\nalways @* begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @(*) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @( *) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @(* ) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @( * ) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @(/*t*/*) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @(*/*t*/) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways @(/*t*/*/*t*/) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+      {"module m;\nalways \n@(/*t*/*/*t*/)\n begin end\nendmodule",
+       "module m;\nalways_comb\n begin end\nendmodule"},
+      {"module m;\nalways @(\n*\n) begin end\nendmodule",
+       "module m;\nalways_comb begin end\nendmodule"},
+  };
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysCombRule>(kTestCases, "");
 }
 
 }  // namespace

@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
@@ -31,6 +32,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
@@ -42,7 +44,7 @@ VERILOG_REGISTER_LINT_RULE(AlwaysCombRule);
 static constexpr absl::string_view kMessage =
     "Use 'always_comb' instead of 'always @*'.";
 
-const LintRuleDescriptor& AlwaysCombRule::GetDescriptor() {
+const LintRuleDescriptor &AlwaysCombRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "always-comb",
       .topic = "combinational-logic",
@@ -58,28 +60,59 @@ const LintRuleDescriptor& AlwaysCombRule::GetDescriptor() {
 //   always @* begin
 //     f = g + h;
 //   end
-static const Matcher& AlwaysStarMatcher() {
+static const Matcher &AlwaysStarMatcher() {
   static const Matcher matcher(NodekAlwaysStatement(
       AlwaysKeyword(), AlwaysStatementHasEventControlStar()));
   return matcher;
 }
 
-static const Matcher& AlwaysStarMatcherWithParentheses() {
+static const Matcher &AlwaysStarMatcherWithParentheses() {
   static const Matcher matcher(NodekAlwaysStatement(
       AlwaysKeyword(), AlwaysStatementHasEventControlStarAndParentheses()));
   return matcher;
 }
 
-void AlwaysCombRule::HandleSymbol(const verible::Symbol& symbol,
-                                  const SyntaxTreeContext& context) {
+void AlwaysCombRule::HandleSymbol(const verible::Symbol &symbol,
+                                  const SyntaxTreeContext &context) {
   // Check for offending use of always @*
   verible::matcher::BoundSymbolManager manager;
-  if (AlwaysStarMatcher().Matches(symbol, &manager)) {
-    violations_.insert(LintViolation(symbol, kMessage, context));
+
+  bool always_no_paren = AlwaysStarMatcher().Matches(symbol, &manager);
+  bool always_paren =
+      AlwaysStarMatcherWithParentheses().Matches(symbol, &manager);
+  if (!always_no_paren && !always_paren) {
+    return;
   }
-  if (AlwaysStarMatcherWithParentheses().Matches(symbol, &manager)) {
-    violations_.insert(LintViolation(symbol, kMessage, context));
-  }
+
+  const absl::string_view fix_message =
+      always_paren ? "Substitute 'always @(*)' for 'always_comb'"
+                   : "Substitute 'always @*' for 'always_comb'";
+
+  // kAlwaysStatement node
+  //	Leaf @0: 'always'
+  //	Node @1: kProceduralTimingControlStatement
+  //	    Node @0: kEventControl (We want to completely remove this!)
+  const verible::SyntaxTreeNode &always_statement_node =
+      verible::SymbolCastToNode(symbol);
+
+  // Leaf @0 of kAlwaysStatement node.
+  const verible::SyntaxTreeLeaf *always_leaf = verible::GetLeftmostLeaf(symbol);
+
+  // Get to the kEventControl symbol
+  const verible::SyntaxTreeNode *proc_ctrl_statement =
+      GetProceduralTimingControlFromAlways(always_statement_node);
+  const verible::Symbol *event_ctrl =
+      GetEventControlFromProceduralTimingControl(*proc_ctrl_statement);
+
+  // always_str will cover the 'always @(*)' (or similar), which we'll
+  // substitute for plain 'always_comb'
+  absl::string_view always_str =
+      verible::StringSpanOfSymbol(*always_leaf, *event_ctrl);
+
+  std::vector<AutoFix> autofixes{
+      AutoFix(fix_message, {always_str, "always_comb"})};
+
+  violations_.insert(LintViolation(symbol, kMessage, context, autofixes));
 }
 
 LintRuleStatus AlwaysCombRule::Report() const {
