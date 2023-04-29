@@ -33,11 +33,6 @@
 # Comment out to see syntax errors in bash while working on script.
 exec 2>/dev/null
 
-# SMOKE_LOGGING_DIR is designed to be either empty or
-# contain a path to a directory where the log files should be
-# generated. If empty, the logs are not generated.
-readonly SMOKE_LOGGING_DIR=$SMOKE_LOGGING_DIR
-
 set -u   # Be strict: only allow using a variable after it is assigned
 
 BAZEL_BUILD_OPTIONS="-c opt"
@@ -45,8 +40,11 @@ BAZEL_BUILD_OPTIONS="-c opt"
 TMPDIR="${TMPDIR:-/tmp}"
 readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
 
-# Make the directory for the logs if logs will be saved
-if [ $SMOKE_LOGGING_DIR ]; then
+# Write log files to this directory
+readonly SMOKE_LOGGING_DIR=${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}
+
+# Make the directory for the logs
+if [ ! -d "$SMOKE_LOGGING_DIR" ]; then
   mkdir -p $SMOKE_LOGGING_DIR
 fi
 
@@ -252,12 +250,14 @@ function verify_expected_non_zero_exit_count() {
 # Second parameter: name of file containing a list of {System}Verilog files
 function run_smoke_test() {
   local PROJECT_FILE_LIST=${TMPDIR}/filelist.$$.list
-  local TOOL_OUT=${TMPDIR}/tool.$$.out
   local PROJECT_NAME=$1
   local FILELIST=$2
   local GIT_URL=$3
   local NUM_FILES=$(wc -l < ${FILELIST})
   local result=0
+
+  local PROJECT_LOG_BASE="${SMOKE_LOGGING_DIR}/${PROJECT_NAME}"
+  mkdir -p ${PROJECT_LOG_BASE}
 
   echo "::group::== Running verible on ${TERM_BOLD}${PROJECT_NAME}${TERM_RESET} with ${NUM_FILES} files =="
 
@@ -265,6 +265,8 @@ function run_smoke_test() {
     printf "%-20s %-32s\n" ${PROJECT_NAME} ${tool}
     local short_tool_name=$(dirname ${tool})
     local non_zero_exit_code=0
+    local PROJECT_TOOL_LOG_BASE="${PROJECT_LOG_BASE}/${short_tool_name}"
+    mkdir -p "${PROJECT_TOOL_LOG_BASE}"
 
     while read single_file; do
       # TODO(hzeller) the project tool and kythe extractor are meant to run
@@ -289,35 +291,24 @@ function run_smoke_test() {
         EXTRA_PARAM=""
         file_param=${single_file}
       fi
-      local EXIT_CODE
-      if [ $SMOKE_LOGGING_DIR ]; then
-        local TNAME=$(basename ${tool})
-        local FNAME=$(basename ${file_param})
-        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} 2>&1
-        EXIT_CODE=$?
+      local FNAME=$(basename ${file_param})  # make hash ?
+      local PROJECT_FILE_TOOL_OUT="${PROJECT_TOOL_LOG_BASE}/${FNAME}"
+
+      ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${PROJECT_FILE_TOOL_OUT} 2>&1
+      local EXIT_CODE=$?
+
+      if [ $EXIT_CODE -eq 0 ]; then
+        rm -f "${PROJECT_FILE_TOOL_OUT}"   # not interested keeping logfiles of successful runs
       else
-        ${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} > ${TOOL_OUT} 2>&1
-        EXIT_CODE=$?
-      fi
-
-      local logging_nonzero_flag=0
-
-      # Even though we don't fail globally, let's at least count how many times
-      # our tools exit with non-zero. Long term, we'd like to have them succeed
-      # on all files
-      if [ $EXIT_CODE -ne 0 ]; then
+        # Even though we don't fail globally, let's at least count how many times
+        # our tools exit with non-zero. Long term, we'd like to have them succeed
+        # on all files
         non_zero_exit_code=$[non_zero_exit_code + 1]
-        logging_nonzero_flag=1
-      fi
-      if [ $SMOKE_LOGGING_DIR ]; then
-        if [ $logging_nonzero_flag -ne 1 ]; then
-          rm $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME}
-        fi
-        if [ $logging_nonzero_flag -ne 0 ]; then
-          mkdir -p $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros
-          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/
-          mv $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${PROJECT_NAME}_${FNAME}_${TNAME} $SMOKE_LOGGING_DIR/${PROJECT_NAME}-nonzeros/${EXIT_CODE}-${FNAME}_${TNAME}
-        fi
+
+        # The error-log-analyzer.py requires the files in a particular format
+        local ANALYZE_DIR="${SMOKE_LOGGING_DIR}/${PROJECT_NAME}-nonzeros"
+        mkdir -p "${ANALYZE_DIR}"
+        cp "${PROJECT_FILE_TOOL_OUT}" "${ANALYZE_DIR}/${EXIT_CODE}-${FNAME}_${short_tool_name}"
       fi
 
       # A regular error exit code we accept as normal operation of the tool if
@@ -343,7 +334,7 @@ function run_smoke_test() {
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
           echo "Input File URL: ${GIT_URL}/blob/master/$(echo $single_file | cut -d/ -f6-)"
-          head -15 ${TOOL_OUT}   # Might be useful in this case
+          head -15 ${PROJECT_FILE_TOOL_OUT}   # Might be useful in this case
           result=$((${result} + 1))
         fi
       fi
@@ -355,7 +346,7 @@ function run_smoke_test() {
 
   done  # for tool
 
-  rm -f ${PROJECT_FILE_LIST} ${TOOL_OUT}
+  rm -f ${PROJECT_FILE_LIST}
   return ${result}
 }
 
@@ -381,6 +372,7 @@ for git_project in ${TEST_GIT_PROJECTS} ; do
   git clone ${git_project} ${PROJECT_DIR} 2>/dev/null &
 done
 
+echo "Writing logs to $SMOKE_LOGGING_DIR"
 echo "Waiting... for compilation and project download finished"
 wait
 

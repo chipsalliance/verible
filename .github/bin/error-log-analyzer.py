@@ -373,7 +373,7 @@ for i, (url, project_name) in zip(error_dirs, urls_with_names):
             exit_code = int(file.split('-')[0])
             if exit_code == 1:
                 tool = file_with_tool.split('_')[-1].replace(':', '-')
-                if tool == 'verible-verilog-preprocessor':
+                if tool == 'preprocessor':
                   continue   # error messages here are not file:line:col yet.
                 filename = '_'.join(file_with_tool.split('_')[:-1])
 
