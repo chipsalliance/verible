@@ -208,7 +208,7 @@ jobs:
         cd /tmp/slang
         git checkout v3.0  # Pin version; current head cmake files in flux
         cmake -B build
-        cmake --build build
+        cmake --build build -j $(nproc)
         cmake --install build --strip
         popd
 
