@@ -30,19 +30,19 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
+#include "common/analysis/syntax-tree-search-test-utils.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/match-test-utils.h"
 #include "verilog/CST/type.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 #undef ASSERT_OK
 #define ASSERT_OK(value) ASSERT_TRUE((value).ok())

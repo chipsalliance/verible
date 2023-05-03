@@ -30,12 +30,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/violation_handler.h"
-#include "common/util/enum_flags.h"
-#include "common/util/file_util.h"
-#include "common/util/init_command_line.h"
+#include "common/util/enum-flags.h"
+#include "common/util/file-util.h"
+#include "common/util/init-command-line.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
+#include "verilog/analysis/verilog-linter-configuration.h"
 #include "verilog/analysis/verilog_linter.h"
-#include "verilog/analysis/verilog_linter_configuration.h"
 
 // From least to most disruptive
 enum class AutofixMode {

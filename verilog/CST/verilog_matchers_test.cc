@@ -14,13 +14,13 @@
 
 #include "verilog/CST/verilog_matchers.h"
 
-#include "common/analysis/matcher/core_matchers.h"
+#include "common/analysis/matcher/core-matchers.h"
+#include "common/analysis/matcher/matcher-builders.h"
+#include "common/analysis/matcher/matcher-test-utils.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/analysis/matcher/matcher_test_utils.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/verilog_treebuilder_utils.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/verilog-treebuilder-utils.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 namespace verilog {
 namespace {

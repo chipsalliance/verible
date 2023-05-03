@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/void_cast_rule.h"
-
 #include <set>
 #include <string>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/bound_symbol_manager.h"
-#include "common/analysis/matcher/core_matchers.h"
+#include "common/analysis/matcher/bound-symbol-manager.h"
+#include "common/analysis/matcher/core-matchers.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/token_info.h"
-#include "common/text/tree_utils.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/token-info.h"
+#include "common/text/tree-utils.h"
 #include "verilog/CST/verilog_matchers.h"
+#include "verilog/analysis/checkers/void-cast-rule.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

@@ -5,7 +5,7 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-syntax",
-    srcs = ["verilog_syntax.cc"],
+    srcs = ["verilog-syntax.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [

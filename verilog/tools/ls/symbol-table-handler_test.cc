@@ -17,9 +17,9 @@
 #include <memory>
 
 #include "absl/strings/string_view.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "gtest/gtest.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog-project.h"
 
 namespace verilog {
 namespace {

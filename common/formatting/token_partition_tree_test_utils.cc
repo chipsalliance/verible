@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/formatting/token_partition_tree_test_utils.h"
-
 #include <vector>
 
-#include "common/formatting/format_token.h"
+#include "common/formatting/format-token.h"
+#include "common/formatting/token-partition-tree-test-utils.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/tree_operations.h"

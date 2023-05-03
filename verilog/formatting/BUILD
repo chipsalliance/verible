@@ -83,7 +83,7 @@ cc_library(
 )
 
 cc_test(
-    name = "tree-unwrapper_test",
+    name = "tree_unwrapper_test",
     srcs = ["tree_unwrapper_test.cc"],
     deps = [
         ":tree-unwrapper",
@@ -107,7 +107,7 @@ cc_test(
 cc_library(
     name = "verilog-token",
     srcs = ["verilog_token.cc"],
-    hdrs = ["verilog_token.h"],
+    hdrs = ["verilog-token.h"],
     deps = [
         "//common/util:container-util",
         "//verilog/parser:verilog-token-enum",
@@ -117,7 +117,7 @@ cc_library(
 
 cc_test(
     name = "verilog-token_test",
-    srcs = ["verilog_token_test.cc"],
+    srcs = ["verilog-token_test.cc"],
     deps = [
         ":verilog-token",
         "//common/formatting:format-token",
@@ -192,7 +192,7 @@ cc_test(
 
 cc_test(
     name = "formatter-tuning_test",
-    srcs = ["formatter_tuning_test.cc"],
+    srcs = ["formatter-tuning_test.cc"],
     deps = [
         ":format-style",
         ":formatter",
@@ -206,8 +206,8 @@ cc_test(
 
 cc_library(
     name = "comment-controls",
-    srcs = ["comment_controls.cc"],
-    hdrs = ["comment_controls.h"],
+    srcs = ["comment-controls.cc"],
+    hdrs = ["comment-controls.h"],
     deps = [
         "//common/strings:comment-utils",
         "//common/strings:display-utils",
@@ -227,7 +227,7 @@ cc_library(
 
 cc_test(
     name = "comment-controls_test",
-    srcs = ["comment_controls_test.cc"],
+    srcs = ["comment-controls_test.cc"],
     deps = [
         ":comment-controls",
         "//common/strings:line-column-map",
@@ -240,7 +240,7 @@ cc_test(
 
 cc_library(
     name = "format-style",
-    hdrs = ["format_style.h"],
+    hdrs = ["format-style.h"],
     deps = [
         "//common/formatting:align",
         "//common/formatting:basic-format-style",
@@ -250,8 +250,8 @@ cc_library(
 
 cc_library(
     name = "format-style-init",
-    srcs = ["format_style_init.cc"],
-    hdrs = ["format_style_init.h"],
+    srcs = ["format-style-init.cc"],
+    hdrs = ["format-style-init.h"],
     deps = [
         ":format-style",
         "//common/formatting:basic-format-style-init",
@@ -262,7 +262,7 @@ cc_library(
 cc_library(
     name = "token-annotator",
     srcs = ["token_annotator.cc"],
-    hdrs = ["token_annotator.h"],
+    hdrs = ["token-annotator.h"],
     deps = [
         ":format-style",
         ":verilog-token",

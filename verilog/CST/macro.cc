@@ -17,9 +17,9 @@
 
 #include "verilog/CST/macro.h"
 
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
+#include "verilog/CST/verilog-nonterminals.h"
 #include "verilog/CST/verilog_matchers.h"
-#include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {
 

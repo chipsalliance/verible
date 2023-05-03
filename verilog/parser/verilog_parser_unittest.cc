@@ -21,16 +21,16 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "common/parser/bison_parser_common.h"
-#include "common/parser/parser_test_util.h"
+#include "common/parser/bison-parser-common.h"
+#include "common/parser/parser-test-util.h"
 #include "common/text/constants.h"
 #include "common/text/symbol.h"
-#include "common/text/token_info.h"
-#include "common/text/token_info_test_util.h"
+#include "common/text/token-info-test-util.h"
+#include "common/text/token-info.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_excerpt_parse.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/analysis/verilog-excerpt-parse.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

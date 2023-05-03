@@ -18,7 +18,7 @@
 
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog-analyzer.h"
 
 namespace verilog {
 namespace analysis {

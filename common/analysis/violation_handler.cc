@@ -16,8 +16,8 @@
 
 #include "absl/status/status.h"
 #include "common/strings/diff.h"
-#include "common/util/file_util.h"
-#include "common/util/user_interaction.h"
+#include "common/util/file-util.h"
+#include "common/util/user-interaction.h"
 
 namespace verible {
 namespace {

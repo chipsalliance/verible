@@ -18,20 +18,20 @@
 #include <iterator>
 #include <vector>
 
-#include "common/formatting/format_token.h"
-#include "common/formatting/line_wrap_searcher.h"
+#include "common/formatting/format-token.h"
+#include "common/formatting/line-wrap-searcher.h"
 #include "common/formatting/unwrapped_line.h"
-#include "common/strings/display_utils.h"
+#include "common/strings/display-utils.h"
 #include "common/strings/range.h"
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
 #include "common/util/algorithm.h"
-#include "common/util/container_iterator_range.h"
-#include "common/util/iterator_adaptors.h"
+#include "common/util/container-iterator-range.h"
+#include "common/util/iterator-adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
-#include "common/util/top_n.h"
+#include "common/util/top-n.h"
 #include "common/util/tree_operations.h"
-#include "common/util/vector_tree.h"
+#include "common/util/vector-tree.h"
 
 namespace verible {
 

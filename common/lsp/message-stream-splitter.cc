@@ -14,7 +14,7 @@
 
 #include "common/lsp/message-stream-splitter.h"
 
-#include "common/util/status_macros.h"
+#include "common/util/status-macros.h"
 
 namespace verible {
 namespace lsp {

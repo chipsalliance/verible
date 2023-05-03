@@ -20,7 +20,7 @@
 #include "absl/strings/match.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_linter.h"
 

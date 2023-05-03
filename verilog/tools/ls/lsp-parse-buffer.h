@@ -19,7 +19,7 @@
 #include <cstdint>
 
 #include "common/lsp/lsp-text-buffer.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/analysis/verilog-analyzer.h"
 #include "verilog/analysis/verilog_linter.h"
 
 // ParseBuffer and BufferTrackerContainer are tracking fully parsed content

@@ -24,12 +24,12 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/strings/line_column_map.h"
-#include "common/text/concrete_syntax_leaf.h"
+#include "common/strings/line-column-map.h"
+#include "common/text/concrete-syntax-leaf.h"
 #include "common/text/symbol.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/token_info.h"
-#include "common/text/tree_utils.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/token-info.h"
+#include "common/text/tree-utils.h"
 #include "common/util/spacer.h"
 
 namespace verible {

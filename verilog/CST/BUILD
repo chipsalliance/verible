@@ -20,7 +20,7 @@ package(
 # under srcs, even if they are included by headers.
 genrule(
     name = "verilog-nonterminals-foreach-gen",
-    srcs = ["verilog_nonterminals.h"],
+    srcs = ["verilog-nonterminals.h"],
     outs = ["verilog_nonterminals_foreach-gen.inc"],
     cmd = "sed -n -e '/BEGIN GENERATE/,/END GENERATE/p' $< | " +
           "grep -v GENERATE | " +
@@ -30,12 +30,12 @@ genrule(
 cc_library(
     name = "verilog-nonterminals",
     srcs = [
-        "verilog_nonterminals.cc",
+        "verilog-nonterminals.cc",
         "verilog_nonterminals_foreach.inc",
         "verilog_nonterminals_foreach-gen.inc",
     ],
     hdrs = [
-        "verilog_nonterminals.h",
+        "verilog-nonterminals.h",
     ],
     deps = [
         "//common/text:constants",
@@ -45,7 +45,7 @@ cc_library(
 
 cc_test(
     name = "verilog-nonterminals_test",
-    srcs = ["verilog_nonterminals_test.cc"],
+    srcs = ["verilog-nonterminals_test.cc"],
     deps = [
         ":verilog-nonterminals",
         "//common/text:constants",
@@ -56,7 +56,7 @@ cc_test(
 cc_library(
     name = "verilog-matchers",
     srcs = [
-        "verilog_matchers.cc",
+        "verilog-matchers.cc",
         "verilog_nonterminals_foreach.inc",
         "verilog_nonterminals_foreach-gen.inc",
     ],
@@ -88,8 +88,8 @@ cc_test(
 
 cc_library(
     name = "verilog-treebuilder-utils",
-    srcs = ["verilog_treebuilder_utils.cc"],
-    hdrs = ["verilog_treebuilder_utils.h"],
+    srcs = ["verilog-treebuilder-utils.cc"],
+    hdrs = ["verilog-treebuilder-utils.h"],
     deps = [
         ":verilog-nonterminals",
         "//common/text:concrete-syntax-leaf",
@@ -103,7 +103,7 @@ cc_library(
 
 cc_test(
     name = "verilog-treebuilder-utils_test",
-    srcs = ["verilog_treebuilder_utils_test.cc"],
+    srcs = ["verilog-treebuilder-utils_test.cc"],
     deps = [
         ":verilog-treebuilder-utils",
         "//common/text:tree-builder-test-util",
@@ -115,8 +115,8 @@ cc_test(
 cc_library(
     name = "match-test-utils",
     testonly = 1,
-    srcs = ["match_test_utils.cc"],
-    hdrs = ["match_test_utils.h"],
+    srcs = ["match-test-utils.cc"],
+    hdrs = ["match-test-utils.h"],
     deps = [
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",
@@ -707,8 +707,8 @@ cc_test(
 
 cc_library(
     name = "seq-block",
-    srcs = ["seq_block.cc"],
-    hdrs = ["seq_block.h"],
+    srcs = ["seq-block.cc"],
+    hdrs = ["seq-block.h"],
     deps = [
         ":identifier",
         ":verilog-nonterminals",
@@ -723,7 +723,7 @@ cc_library(
 
 cc_test(
     name = "seq-block_test",
-    srcs = ["seq_block_test.cc"],
+    srcs = ["seq-block_test.cc"],
     deps = [
         ":seq-block",
         ":verilog-matchers",
@@ -863,7 +863,7 @@ cc_test(
 
 cc_library(
     name = "context-functions",
-    hdrs = ["context_functions.h"],
+    hdrs = ["context-functions.h"],
     deps = [
         ":verilog-nonterminals",
         "//common/text:syntax-tree-context",
@@ -882,8 +882,8 @@ cc_library(
 
 cc_library(
     name = "verilog-tree-print",
-    srcs = ["verilog_tree_print.cc"],
-    hdrs = ["verilog_tree_print.h"],
+    srcs = ["verilog-tree-print.cc"],
+    hdrs = ["verilog-tree-print.h"],
     deps = [
         ":verilog-nonterminals",
         "//common/text:concrete-syntax-leaf",
@@ -899,8 +899,8 @@ cc_library(
 
 cc_library(
     name = "verilog-tree-json",
-    srcs = ["verilog_tree_json.cc"],
-    hdrs = ["verilog_tree_json.h"],
+    srcs = ["verilog-tree-json.cc"],
+    hdrs = ["verilog-tree-json.h"],
     deps = [
         ":verilog-nonterminals",
         "//common/text:concrete-syntax-leaf",
@@ -918,7 +918,7 @@ cc_library(
 
 cc_test(
     name = "context-functions_test",
-    srcs = ["context_functions_test.cc"],
+    srcs = ["context-functions_test.cc"],
     deps = [
         ":context-functions",
         ":verilog-nonterminals",
@@ -943,7 +943,7 @@ cc_test(
 
 cc_test(
     name = "verilog-tree-print_test",
-    srcs = ["verilog_tree_print_test.cc"],
+    srcs = ["verilog-tree-print_test.cc"],
     deps = [
         ":verilog-tree-print",
         "//common/text:symbol",
@@ -955,7 +955,7 @@ cc_test(
 
 cc_test(
     name = "verilog-tree-json_test",
-    srcs = ["verilog_tree_json_test.cc"],
+    srcs = ["verilog-tree-json_test.cc"],
     deps = [
         ":verilog-tree-json",
         "//common/text:symbol",

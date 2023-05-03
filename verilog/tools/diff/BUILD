@@ -6,7 +6,7 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-diff",
-    srcs = ["verilog_diff.cc"],
+    srcs = ["verilog-diff.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],
     deps = [

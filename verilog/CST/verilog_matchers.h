@@ -15,9 +15,9 @@
 #ifndef VERIBLE_VERILOG_CST_VERILOG_MATCHERS_H_
 #define VERIBLE_VERILOG_CST_VERILOG_MATCHERS_H_
 
-#include "common/analysis/matcher/matcher_builders.h"
+#include "common/analysis/matcher/matcher-builders.h"
 #include "common/text/symbol.h"
-#include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/CST/verilog-nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

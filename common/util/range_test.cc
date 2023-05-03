@@ -18,7 +18,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
-#include "common/util/iterator_range.h"
+#include "common/util/iterator-range.h"
 #include "gtest/gtest.h"
 
 namespace verible {

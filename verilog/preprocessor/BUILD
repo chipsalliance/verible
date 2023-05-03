@@ -35,7 +35,7 @@ cc_library(
 
 cc_test(
     name = "verilog-preprocess_test",
-    srcs = ["verilog_preprocess_test.cc"],
+    srcs = ["verilog-preprocess_test.cc"],
     deps = [
         ":verilog-preprocess",
         "//common/text:macro-definition",

@@ -18,8 +18,8 @@
 #ifndef VERIBLE_VERILOG_CST_CLASS_H_
 #define VERIBLE_VERILOG_CST_CLASS_H_
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-tree.h"
 
 namespace verilog {
 

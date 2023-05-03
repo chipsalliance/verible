@@ -15,7 +15,7 @@
 #ifndef VERIBLE_COMMON_TEXT_VISITORS_H_
 #define VERIBLE_COMMON_TEXT_VISITORS_H_
 
-#include "common/text/symbol_ptr.h"
+#include "common/text/symbol-ptr.h"
 
 namespace verible {
 

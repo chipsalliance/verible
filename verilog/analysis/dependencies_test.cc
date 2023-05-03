@@ -15,7 +15,7 @@
 #include "verilog/analysis/dependencies.h"
 
 #include "absl/status/status.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

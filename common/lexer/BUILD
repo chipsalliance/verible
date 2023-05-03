@@ -14,14 +14,14 @@ package(
 
 cc_library(
     name = "token-generator",
-    hdrs = ["token_generator.h"],
+    hdrs = ["token-generator.h"],
     deps = ["//common/text:token-info"],
 )
 
 cc_library(
     name = "token-stream-adapter",
-    srcs = ["token_stream_adapter.cc"],
-    hdrs = ["token_stream_adapter.h"],
+    srcs = ["token-stream-adapter.cc"],
+    hdrs = ["token-stream-adapter.h"],
     deps = [
         ":lexer",
         ":token-generator",
@@ -34,7 +34,7 @@ cc_library(
 
 cc_library(
     name = "flex-lexer-adapter",
-    hdrs = ["flex_lexer_adapter.h"],
+    hdrs = ["flex-lexer-adapter.h"],
     deps = [
         ":lexer",
         "//common/text:token-info",
@@ -55,8 +55,8 @@ cc_library(
 cc_library(
     name = "lexer-test-util",
     testonly = 1,
-    srcs = ["lexer_test_util.cc"],
-    hdrs = ["lexer_test_util.h"],
+    srcs = ["lexer-test-util.cc"],
+    hdrs = ["lexer-test-util.h"],
     deps = [
         "//common/text:constants",
         "//common/text:token-info",
@@ -69,7 +69,7 @@ cc_library(
 
 cc_test(
     name = "lexer-test-util_test",
-    srcs = ["lexer_test_util_test.cc"],
+    srcs = ["lexer-test-util_test.cc"],
     deps = [
         ":lexer-test-util",
         "//common/text:constants",
@@ -82,7 +82,7 @@ cc_test(
 
 cc_test(
     name = "token-stream-adapter_test",
-    srcs = ["token_stream_adapter_test.cc"],
+    srcs = ["token-stream-adapter_test.cc"],
     deps = [
         ":lexer",
         ":lexer-test-util",

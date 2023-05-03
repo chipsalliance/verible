@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "common/formatting/format_token.h"
+#include "common/formatting/format-token.h"
 #include "common/text/symbol.h"
 
 namespace verible {

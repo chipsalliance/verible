@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/formatting/verilog_token.h"
-
 #include "absl/container/node_hash_map.h"
-#include "common/util/container_util.h"
+#include "common/util/container-util.h"
+#include "verilog/formatting/verilog-token.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

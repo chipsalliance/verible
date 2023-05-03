@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/always_comb_rule.h"
-
 #include <initializer_list>
 
-#include "common/analysis/linter_test_utils.h"
-#include "common/analysis/syntax_tree_linter_test_utils.h"
+#include "common/analysis/linter-test-utils.h"
+#include "common/analysis/syntax-tree-linter-test-utils.h"
 #include "common/text/symbol.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_treebuilder_utils.h"
-#include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/CST/verilog-treebuilder-utils.h"
+#include "verilog/analysis/checkers/always-comb-rule.h"
+#include "verilog/analysis/verilog-analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

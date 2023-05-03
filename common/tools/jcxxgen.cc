@@ -26,7 +26,7 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "common/util/init_command_line.h"
+#include "common/util/init-command-line.h"
 #include "re2/re2.h"
 
 ABSL_FLAG(std::string, output, "",

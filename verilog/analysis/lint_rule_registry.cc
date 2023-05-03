@@ -20,11 +20,11 @@
 
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
-#include "common/analysis/syntax_tree_lint_rule.h"
-#include "common/analysis/text_structure_lint_rule.h"
-#include "common/analysis/token_stream_lint_rule.h"
-#include "common/util/container_util.h"
+#include "common/analysis/line-lint-rule.h"
+#include "common/analysis/syntax-tree-lint-rule.h"
+#include "common/analysis/text-structure-lint-rule.h"
+#include "common/analysis/token-stream-lint-rule.h"
+#include "common/util/container-util.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/descriptions.h"
 

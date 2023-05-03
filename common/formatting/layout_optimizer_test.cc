@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#include "common/formatting/layout_optimizer.h"
-
 #include <sstream>
 #include <string>
 #include <vector>
@@ -22,12 +20,13 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/basic_format_style.h"
-#include "common/formatting/layout_optimizer_internal.h"
+#include "common/formatting/basic-format-style.h"
+#include "common/formatting/layout-optimizer-internal.h"
+#include "common/formatting/layout-optimizer.h"
+#include "common/formatting/token-partition-tree-test-utils.h"
 #include "common/formatting/token_partition_tree.h"
-#include "common/formatting/token_partition_tree_test_utils.h"
+#include "common/formatting/unwrapped-line-test-utils.h"
 #include "common/formatting/unwrapped_line.h"
-#include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/split.h"
 #include "common/util/spacer.h"
 #include "gtest/gtest.h"

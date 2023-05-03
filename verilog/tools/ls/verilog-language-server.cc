@@ -20,8 +20,8 @@
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
-#include "common/util/file_util.h"
-#include "common/util/init_command_line.h"
+#include "common/util/file-util.h"
+#include "common/util/init-command-line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {

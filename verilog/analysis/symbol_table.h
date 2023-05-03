@@ -23,9 +23,9 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/text/symbol.h"
-#include "common/util/map_tree.h"
-#include "common/util/vector_tree.h"
-#include "verilog/analysis/verilog_project.h"
+#include "common/util/map-tree.h"
+#include "common/util/vector-tree.h"
+#include "verilog/analysis/verilog-project.h"
 
 namespace verilog {
 

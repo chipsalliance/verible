@@ -21,7 +21,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "re2/re2.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/dimensions.h"
@@ -32,7 +32,7 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
-#include "verilog/formatting/format_style_init.h"
+#include "verilog/formatting/format-style-init.h"
 #include "verilog/formatting/formatter.h"
 
 namespace verilog {

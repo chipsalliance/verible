@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/verilog_linter_configuration.h"
-
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -28,17 +26,18 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
-#include "common/analysis/syntax_tree_lint_rule.h"
-#include "common/analysis/text_structure_lint_rule.h"
-#include "common/analysis/token_stream_lint_rule.h"
-#include "common/util/container_util.h"
-#include "common/util/enum_flags.h"
-#include "common/util/file_util.h"
+#include "common/analysis/line-lint-rule.h"
+#include "common/analysis/syntax-tree-lint-rule.h"
+#include "common/analysis/text-structure-lint-rule.h"
+#include "common/analysis/token-stream-lint-rule.h"
+#include "common/util/container-util.h"
+#include "common/util/enum-flags.h"
+#include "common/util/file-util.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
+#include "common/util/status-macros.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/analysis/verilog-linter-configuration.h"
 
 namespace verilog {
 

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/verilog_linter_configuration.h"
-
 #include <cstddef>
 #include <iosfwd>
 #include <map>
@@ -23,23 +21,24 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/line_lint_rule.h"
+#include "common/analysis/line-lint-rule.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/syntax_tree_lint_rule.h"
-#include "common/analysis/text_structure_lint_rule.h"
-#include "common/analysis/token_stream_lint_rule.h"
-#include "common/strings/line_column_map.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/text/tree_builder_test_util.h"
+#include "common/analysis/syntax-tree-lint-rule.h"
+#include "common/analysis/text-structure-lint-rule.h"
+#include "common/analysis/token-stream-lint-rule.h"
+#include "common/strings/line-column-map.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
+#include "common/text/tree-builder-test-util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/default_rules.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/analysis/verilog-linter-configuration.h"
 #include "verilog/analysis/verilog_linter.h"
 
 namespace verilog {

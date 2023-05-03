@@ -18,7 +18,7 @@
 #define VERIBLE_COMMON_LEXER_LEXER_H_
 
 #include "absl/strings/string_view.h"
-#include "common/text/token_info.h"
+#include "common/text/token-info.h"
 
 namespace verible {
 

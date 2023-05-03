@@ -31,7 +31,7 @@
 
 #include <cstdio>
 
-#include "verilog/parser/verilog_lexer.h"
+#include "verilog/parser/verilog-lexer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 /* When testing unstructured sequences of tokens in the unit-tests,

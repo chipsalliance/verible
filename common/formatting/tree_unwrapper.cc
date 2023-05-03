@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/formatting/tree_unwrapper.h"
-
 #include <algorithm>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <vector>
 
-#include "common/formatting/format_token.h"
+#include "common/formatting/format-token.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/formatting/tree-unwrapper.h"
 #include "common/formatting/unwrapped_line.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
+#include "common/text/token-stream-view.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"
-#include "common/util/vector_tree.h"
+#include "common/util/vector-tree.h"
 
 namespace verible {
 

@@ -15,7 +15,7 @@ cc_library(
 
 cc_library(
     name = "auto-pop-stack",
-    hdrs = ["auto_pop_stack.h"],
+    hdrs = ["auto-pop-stack.h"],
     deps = [
         ":iterator-adaptors",
         ":logging",
@@ -36,7 +36,7 @@ cc_library(
 
 cc_library(
     name = "status-macros",
-    hdrs = ["status_macros.h"],
+    hdrs = ["status-macros.h"],
     deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
@@ -54,8 +54,8 @@ cc_library(
 
 cc_library(
     name = "thread-pool",
-    srcs = ["thread_pool.cc"],
-    hdrs = ["thread_pool.h"],
+    srcs = ["thread-pool.cc"],
+    hdrs = ["thread-pool.h"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-fexceptions"],
@@ -65,8 +65,8 @@ cc_library(
 
 cc_library(
     name = "file-util",
-    srcs = ["file_util.cc"],
-    hdrs = ["file_util.h"],
+    srcs = ["file-util.cc"],
+    hdrs = ["file-util.h"],
     deps = [
         ":logging",
         "//common/strings:mem-block",
@@ -98,8 +98,8 @@ cc_library(
 
 cc_library(
     name = "init-command-line",
-    srcs = ["init_command_line.cc"],
-    hdrs = ["init_command_line.h"],
+    srcs = ["init-command-line.cc"],
+    hdrs = ["init-command-line.h"],
     deps = [
         # these deps are needed by init_command_line.cc:
         ":logging",  # buildcleaner: keep
@@ -128,7 +128,7 @@ cc_library(
 
 cc_library(
     name = "interval-map",
-    hdrs = ["interval_map.h"],
+    hdrs = ["interval-map.h"],
     deps = [
         ":auto-iterator",
         ":logging",
@@ -137,7 +137,7 @@ cc_library(
 
 cc_library(
     name = "interval-set",
-    hdrs = ["interval_set.h"],
+    hdrs = ["interval-set.h"],
     deps = [
         ":auto-iterator",
         ":interval",
@@ -169,7 +169,7 @@ cc_library(
 
 cc_library(
     name = "container-util",
-    hdrs = ["container_util.h"],
+    hdrs = ["container-util.h"],
     deps = [
         ":logging",
     ],
@@ -177,7 +177,7 @@ cc_library(
 
 cc_library(
     name = "container-iterator-range",
-    hdrs = ["container_iterator_range.h"],
+    hdrs = ["container-iterator-range.h"],
     deps = [
         ":iterator-range",
         ":range",
@@ -191,12 +191,12 @@ cc_library(
 
 cc_library(
     name = "auto-iterator",
-    hdrs = ["auto_iterator.h"],
+    hdrs = ["auto-iterator.h"],
 )
 
 cc_library(
     name = "iterator-adaptors",
-    hdrs = ["iterator_adaptors.h"],
+    hdrs = ["iterator-adaptors.h"],
     deps = [
         ":auto-iterator",
         ":iterator-range",
@@ -205,7 +205,7 @@ cc_library(
 
 cc_library(
     name = "iterator-range",
-    hdrs = ["iterator_range.h"],
+    hdrs = ["iterator-range.h"],
     deps = [],
 )
 
@@ -217,7 +217,7 @@ cc_library(
 
 cc_library(
     name = "top-n",
-    hdrs = ["top_n.h"],
+    hdrs = ["top-n.h"],
 )
 
 cc_library(
@@ -227,7 +227,7 @@ cc_library(
 
 cc_library(
     name = "enum-flags",
-    hdrs = ["enum_flags.h"],
+    hdrs = ["enum-flags.h"],
     deps = [
         ":bijective-map",
         "//common/strings:compare",
@@ -237,7 +237,7 @@ cc_library(
 
 cc_library(
     name = "bijective-map",
-    hdrs = ["bijective_map.h"],
+    hdrs = ["bijective-map.h"],
     deps = [
         ":forward",
         ":logging",
@@ -246,7 +246,7 @@ cc_library(
 
 cc_library(
     name = "vector-tree",
-    hdrs = ["vector_tree.h"],
+    hdrs = ["vector-tree.h"],
     deps = [
         ":container-proxy",
         ":iterator-range",
@@ -257,7 +257,7 @@ cc_library(
 
 cc_library(
     name = "tree-operations",
-    srcs = ["tree_operations.cc"],
+    srcs = ["tree-operations.cc"],
     hdrs = ["tree_operations.h"],
     deps = [
         ":logging",
@@ -269,7 +269,7 @@ cc_library(
 
 cc_library(
     name = "expandable-tree-view",
-    hdrs = ["expandable_tree_view.h"],
+    hdrs = ["expandable-tree-view.h"],
     deps = [
         ":logging",
         ":tree-operations",
@@ -280,8 +280,8 @@ cc_library(
 cc_library(
     name = "vector-tree-test-util",
     testonly = 1,
-    srcs = ["vector_tree_test_util.cc"],
-    hdrs = ["vector_tree_test_util.h"],
+    srcs = ["vector-tree-test-util.cc"],
+    hdrs = ["vector-tree-test-util.h"],
     deps = [
         ":tree-operations",
         ":vector-tree",
@@ -292,7 +292,7 @@ cc_library(
 
 cc_library(
     name = "vector-tree-iterators",
-    hdrs = ["vector_tree_iterators.h"],
+    hdrs = ["vector-tree-iterators.h"],
     deps = [
         ":iterator-range",
         ":logging",
@@ -303,7 +303,7 @@ cc_library(
 
 cc_library(
     name = "map-tree",
-    hdrs = ["map_tree.h"],
+    hdrs = ["map-tree.h"],
     deps = [
         ":logging",
         ":spacer",
@@ -312,13 +312,13 @@ cc_library(
 
 cc_library(
     name = "with-reason",
-    hdrs = ["with_reason.h"],
+    hdrs = ["with-reason.h"],
 )
 
 cc_library(
     name = "user-interaction",
-    srcs = ["user_interaction.cc"],
-    hdrs = ["user_interaction.h"],
+    srcs = ["user-interaction.cc"],
+    hdrs = ["user-interaction.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -326,7 +326,7 @@ cc_library(
 
 cc_library(
     name = "container-proxy",
-    hdrs = ["container_proxy.h"],
+    hdrs = ["container-proxy.h"],
 )
 
 cc_test(
@@ -342,7 +342,7 @@ cc_test(
 
 cc_test(
     name = "auto-iterator_test",
-    srcs = ["auto_iterator_test.cc"],
+    srcs = ["auto-iterator_test.cc"],
     deps = [
         ":auto-iterator",
         "@com_google_googletest//:gtest_main",
@@ -351,7 +351,7 @@ cc_test(
 
 cc_test(
     name = "auto-pop-stack_test",
-    srcs = ["auto_pop_stack_test.cc"],
+    srcs = ["auto-pop-stack_test.cc"],
     deps = [
         ":auto-pop-stack",
         ":iterator-range",
@@ -361,7 +361,7 @@ cc_test(
 
 cc_test(
     name = "file-util_test",
-    srcs = ["file_util_test.cc"],
+    srcs = ["file-util_test.cc"],
     deps = [
         ":file-util",
         "@com_google_absl//absl/status",
@@ -381,7 +381,7 @@ cc_test(
 
 cc_test(
     name = "interval-map_test",
-    srcs = ["interval_map_test.cc"],
+    srcs = ["interval-map_test.cc"],
     deps = [
         ":interval-map",
         ":range",
@@ -392,7 +392,7 @@ cc_test(
 
 cc_test(
     name = "interval-set_test",
-    srcs = ["interval_set_test.cc"],
+    srcs = ["interval-set_test.cc"],
     deps = [
         ":interval-set",
         "@com_google_googletest//:gtest_main",
@@ -422,7 +422,7 @@ cc_test(
 
 cc_test(
     name = "thread-pool_test",
-    srcs = ["thread_pool_test.cc"],
+    srcs = ["thread-pool_test.cc"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-fexceptions"],
@@ -437,7 +437,7 @@ cc_test(
 
 cc_test(
     name = "container-iterator-range_test",
-    srcs = ["container_iterator_range_test.cc"],
+    srcs = ["container-iterator-range_test.cc"],
     deps = [
         ":container-iterator-range",
         "@com_google_googletest//:gtest_main",
@@ -446,7 +446,7 @@ cc_test(
 
 cc_test(
     name = "iterator-adaptors_test",
-    srcs = ["iterator_adaptors_test.cc"],
+    srcs = ["iterator-adaptors_test.cc"],
     deps = [
         ":iterator-adaptors",
         "@com_google_googletest//:gtest_main",
@@ -455,7 +455,7 @@ cc_test(
 
 cc_test(
     name = "iterator-range_test",
-    srcs = ["iterator_range_test.cc"],
+    srcs = ["iterator-range_test.cc"],
     deps = [
         ":iterator-range",
         ":range",
@@ -484,7 +484,7 @@ cc_test(
 
 cc_test(
     name = "top-n_test",
-    srcs = ["top_n_test.cc"],
+    srcs = ["top-n_test.cc"],
     deps = [
         ":top-n",
         "@com_google_googletest//:gtest_main",
@@ -493,7 +493,7 @@ cc_test(
 
 cc_test(
     name = "type-traits_test",
-    srcs = ["type_traits_test.cc"],
+    srcs = ["type-traits_test.cc"],
     deps = [
         ":type-traits",
         "@com_google_googletest//:gtest_main",
@@ -502,7 +502,7 @@ cc_test(
 
 cc_test(
     name = "value-saver_test",
-    srcs = ["value_saver_test.cc"],
+    srcs = ["value-saver_test.cc"],
     deps = [
         ":value-saver",
         "@com_google_googletest//:gtest_main",
@@ -511,7 +511,7 @@ cc_test(
 
 cc_test(
     name = "enum-flags_test",
-    srcs = ["enum_flags_test.cc"],
+    srcs = ["enum-flags_test.cc"],
     deps = [
         ":enum-flags",
         "@com_google_absl//absl/strings",
@@ -521,7 +521,7 @@ cc_test(
 
 cc_test(
     name = "bijective-map_test",
-    srcs = ["bijective_map_test.cc"],
+    srcs = ["bijective-map_test.cc"],
     deps = [
         ":bijective-map",
         ":logging",
@@ -532,7 +532,7 @@ cc_test(
 
 cc_test(
     name = "vector-tree_test",
-    srcs = ["vector_tree_test.cc"],
+    srcs = ["vector-tree_test.cc"],
     deps = [
         ":tree-operations",
         ":vector-tree",
@@ -556,7 +556,7 @@ cc_test(
 
 cc_test(
     name = "expandable-tree-view_test",
-    srcs = ["expandable_tree_view_test.cc"],
+    srcs = ["expandable-tree-view_test.cc"],
     deps = [
         ":expandable-tree-view",
         ":vector-tree",
@@ -568,7 +568,7 @@ cc_test(
 
 cc_test(
     name = "vector-tree-iterators_test",
-    srcs = ["vector_tree_iterators_test.cc"],
+    srcs = ["vector-tree-iterators_test.cc"],
     deps = [
         ":tree-operations",
         ":vector-tree",
@@ -580,7 +580,7 @@ cc_test(
 
 cc_test(
     name = "map-tree_test",
-    srcs = ["map_tree_test.cc"],
+    srcs = ["map-tree_test.cc"],
     copts = select({
         "@platforms//os:windows": [],
         "//conditions:default": ["-Wno-array-bounds"],
@@ -595,7 +595,7 @@ cc_test(
 
 cc_test(
     name = "with-reason_test",
-    srcs = ["with_reason_test.cc"],
+    srcs = ["with-reason_test.cc"],
     deps = [
         ":with-reason",
         "@com_google_absl//absl/strings",
@@ -605,7 +605,7 @@ cc_test(
 
 cc_test(
     name = "user-interaction_test",
-    srcs = ["user_interaction_test.cc"],
+    srcs = ["user-interaction_test.cc"],
     deps = [
         ":user-interaction",
         "@com_google_absl//absl/strings",
@@ -615,7 +615,7 @@ cc_test(
 
 cc_test(
     name = "container-proxy_test",
-    srcs = ["container_proxy_test.cc"],
+    srcs = ["container-proxy_test.cc"],
     deps = [
         ":container-proxy",
         ":type-traits",
@@ -626,8 +626,8 @@ cc_test(
 
 cc_library(
     name = "simple-zip",
-    srcs = ["simple_zip.cc"],
-    hdrs = ["simple_zip.h"],
+    srcs = ["simple-zip.cc"],
+    hdrs = ["simple-zip.h"],
     deps = [
         "//third_party/portable_endian",
         "@com_google_absl//absl/strings",
@@ -637,7 +637,7 @@ cc_library(
 
 cc_test(
     name = "simple-zip_test",
-    srcs = ["simple_zip_test.cc"],
+    srcs = ["simple-zip_test.cc"],
     deps = [
         ":file-util",
         ":simple-zip",

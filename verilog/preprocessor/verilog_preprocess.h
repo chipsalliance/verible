@@ -45,11 +45,11 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "common/text/macro_definition.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"
-#include "verilog/analysis/verilog_filelist.h"
+#include "common/text/macro-definition.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
+#include "common/text/token-stream-view.h"
+#include "verilog/analysis/verilog-filelist.h"
 
 namespace verilog {
 

@@ -14,15 +14,14 @@
 
 // verilog_lexical_context.cc implements LexicalContext.
 
-#include "verilog/parser/verilog_lexical_context.h"
-
 #include <iostream>
 #include <set>
 #include <stack>
 #include <vector>
 
-#include "common/text/token_info.h"
+#include "common/text/token-info.h"
 #include "common/util/logging.h"
+#include "verilog/parser/verilog-lexical-context.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

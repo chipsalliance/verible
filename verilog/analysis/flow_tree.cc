@@ -22,7 +22,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
+#include "common/util/status-macros.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

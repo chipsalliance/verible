@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/strip.h"
-#include "common/text/concrete_syntax_tree.h"
-#include "common/text/tree_context_visitor.h"
-#include "common/text/tree_utils.h"
-#include "common/util/file_util.h"
+#include "common/text/concrete-syntax-tree.h"
+#include "common/text/tree-context-visitor.h"
+#include "common/text/tree-utils.h"
+#include "common/util/file-util.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/CST/class.h"
@@ -39,13 +37,14 @@
 #include "verilog/CST/statement.h"
 #include "verilog/CST/tasks.h"
 #include "verilog/CST/type.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/CST/verilog-tree-print.h"
 #include "verilog/CST/verilog_matchers.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_tree_print.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_project.h"
-#include "verilog/tools/kythe/indexing_facts_tree.h"
-#include "verilog/tools/kythe/indexing_facts_tree_context.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/analysis/verilog-project.h"
+#include "verilog/tools/kythe/indexing-facts-tree-context.h"
+#include "verilog/tools/kythe/indexing-facts-tree-extractor.h"
+#include "verilog/tools/kythe/indexing-facts-tree.h"
 
 namespace verilog {
 namespace kythe {

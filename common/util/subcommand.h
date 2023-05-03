@@ -24,7 +24,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
-#include "common/util/container_iterator_range.h"
+#include "common/util/container-iterator-range.h"
 
 namespace verible {
 

@@ -6,7 +6,7 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
 cc_binary(
     name = "verible-verilog-format",
-    srcs = ["verilog_format.cc"],
+    srcs = ["verilog-format.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [

@@ -25,7 +25,7 @@
 #include "absl/types/optional.h"
 #include "common/lsp/lsp-protocol.h"
 #include "verilog/analysis/symbol_table.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog-project.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
 namespace verilog {

@@ -26,17 +26,17 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/lexer/token_generator.h"
-#include "common/lexer/token_stream_adapter.h"
-#include "common/text/macro_definition.h"
-#include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"
-#include "common/util/container_util.h"
-#include "common/util/file_util.h"
+#include "common/lexer/token-generator.h"
+#include "common/lexer/token-stream-adapter.h"
+#include "common/text/macro-definition.h"
+#include "common/text/token-info.h"
+#include "common/text/token-stream-view.h"
+#include "common/util/container-util.h"
+#include "common/util/file-util.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
-#include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_parser.h"  // for verilog_symbol_name()
+#include "common/util/status-macros.h"
+#include "verilog/parser/verilog-lexer.h"
+#include "verilog/parser/verilog-parser.h"  // for verilog_symbol_name()
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

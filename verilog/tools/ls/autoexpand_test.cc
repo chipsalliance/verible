@@ -18,7 +18,7 @@
 
 #include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
-#include "verilog/formatting/format_style_init.h"
+#include "verilog/formatting/format-style-init.h"
 #include "verilog/formatting/formatter.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 

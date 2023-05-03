@@ -17,10 +17,10 @@
 #include <iostream>
 
 #include "common/strings/compare.h"
-#include "common/strings/display_utils.h"
+#include "common/strings/display-utils.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/symbol_table.h"
-#include "verilog/analysis/verilog_project.h"
+#include "verilog/analysis/verilog-project.h"
 
 namespace verilog {
 

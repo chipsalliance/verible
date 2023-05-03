@@ -12,27 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/formatting/token_annotator.h"
-
 #include <iterator>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/format_token.h"
-#include "common/formatting/tree_annotator.h"
+#include "common/formatting/format-token.h"
+#include "common/formatting/tree-annotator.h"
 #include "common/strings/range.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/util/iterator_range.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
+#include "common/util/iterator-range.h"
 #include "common/util/logging.h"
-#include "common/util/with_reason.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/formatting/format_style.h"
-#include "verilog/formatting/verilog_token.h"
-#include "verilog/parser/verilog_parser.h"
-#include "verilog/parser/verilog_token_classifications.h"
+#include "common/util/with-reason.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/formatting/format-style.h"
+#include "verilog/formatting/token-annotator.h"
+#include "verilog/formatting/verilog-token.h"
+#include "verilog/parser/verilog-parser.h"
+#include "verilog/parser/verilog-token-classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

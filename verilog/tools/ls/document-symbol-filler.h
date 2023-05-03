@@ -16,7 +16,7 @@
 #define VERILOG_TOOLS_LS_DOCUMENT_SYMBOL_FILLER_H
 
 #include "common/lsp/lsp-protocol.h"
-#include "common/text/text_structure.h"
+#include "common/text/text-structure.h"
 #include "common/text/visitors.h"
 
 namespace verilog {

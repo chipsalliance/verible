@@ -16,17 +16,17 @@
 
 #include <vector>
 
+#include "common/analysis/matcher/matcher-builders.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/analysis/matcher/matcher_builders.h"
-#include "common/analysis/syntax_tree_search.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/analysis/syntax-tree-search.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/symbol.h"
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
-#include "verilog/parser/verilog_token_classifications.h"
+#include "verilog/parser/verilog-token-classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

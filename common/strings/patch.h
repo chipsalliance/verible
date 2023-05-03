@@ -26,7 +26,7 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/strings/position.h"
-#include "common/util/container_iterator_range.h"
+#include "common/util/container-iterator-range.h"
 #include "common/util/logging.h"
 
 namespace verible {

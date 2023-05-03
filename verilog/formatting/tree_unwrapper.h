@@ -20,17 +20,17 @@
 #include <memory>
 #include <vector>
 
-#include "common/formatting/basic_format_style.h"
-#include "common/formatting/format_token.h"
+#include "common/formatting/basic-format-style.h"
+#include "common/formatting/format-token.h"
 #include "common/formatting/token_partition_tree.h"
-#include "common/formatting/tree_unwrapper.h"
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"
-#include "verilog/formatting/format_style.h"
+#include "common/formatting/tree-unwrapper.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/text-structure.h"
+#include "common/text/token-info.h"
+#include "common/text/token-stream-view.h"
+#include "verilog/formatting/format-style.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

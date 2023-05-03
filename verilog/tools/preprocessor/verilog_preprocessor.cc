@@ -22,16 +22,16 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "common/util/file_util.h"
-#include "common/util/init_command_line.h"
-#include "common/util/status_macros.h"
+#include "common/util/file-util.h"
+#include "common/util/init-command-line.h"
+#include "common/util/status-macros.h"
 #include "common/util/subcommand.h"
 #include "verilog/analysis/flow_tree.h"
-#include "verilog/analysis/verilog_filelist.h"
-#include "verilog/analysis/verilog_project.h"
-#include "verilog/parser/verilog_lexer.h"
+#include "verilog/analysis/verilog-filelist.h"
+#include "verilog/analysis/verilog-project.h"
+#include "verilog/parser/verilog-lexer.h"
 #include "verilog/preprocessor/verilog_preprocess.h"
-#include "verilog/transform/strip_comments.h"
+#include "verilog/transform/strip-comments.h"
 
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;

@@ -21,10 +21,10 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
-#include "common/strings/line_column_map.h"
-#include "common/util/file_util.h"
+#include "common/strings/line-column-map.h"
+#include "common/util/file-util.h"
 #include "common/util/range.h"
-#include "verilog/analysis/verilog_filelist.h"
+#include "verilog/analysis/verilog-filelist.h"
 #include "verilog/tools/ls/lsp-conversion.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",

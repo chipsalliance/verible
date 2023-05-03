@@ -18,17 +18,17 @@
 #include <memory>
 #include <utility>
 
-#include "common/text/concrete_syntax_leaf.h"
-#include "common/text/concrete_syntax_tree.h"
+#include "common/text/concrete-syntax-leaf.h"
+#include "common/text/concrete-syntax-tree.h"
 #include "common/text/constants.h"
 #include "common/text/symbol.h"
-#include "common/text/token_info.h"
-#include "common/text/tree_utils.h"
-#include "common/util/container_util.h"
+#include "common/text/token-info.h"
+#include "common/text/tree-utils.h"
+#include "common/util/container-util.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/type.h"
+#include "verilog/CST/verilog-nonterminals.h"
 #include "verilog/CST/verilog_matchers.h"
-#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

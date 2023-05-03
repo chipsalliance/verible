@@ -20,12 +20,12 @@
 #include <utility>
 #include <vector>
 
-#include "common/formatting/basic_format_style.h"
-#include "common/formatting/format_token.h"
+#include "common/formatting/basic-format-style.h"
+#include "common/formatting/format-token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
-#include "common/util/container_iterator_range.h"
-#include "common/util/vector_tree.h"
+#include "common/util/container-iterator-range.h"
+#include "common/util/vector-tree.h"
 
 namespace verible {
 

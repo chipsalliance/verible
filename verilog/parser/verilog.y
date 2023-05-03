@@ -14,7 +14,7 @@
  */
 
 %code requires{
-#include "common/parser/parser_param.h"
+#include "common/parser/parser-param.h"
 }
 
 %{
@@ -30,8 +30,8 @@ Functionality that relies directly on this structure should be isolated under
 
 #include <utility>
 
-#include "common/parser/bison_parser_common.h"
-#include "common/text/tree_utils.h"
+#include "common/parser/bison-parser-common.h"
+#include "common/text/tree-utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "verilog/CST/declaration.h"
@@ -42,8 +42,8 @@ Functionality that relies directly on this structure should be isolated under
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_treebuilder_utils.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/CST/verilog-treebuilder-utils.h"
 
 /***
  * Verilog Language Standard (IEEE 1364-2005):

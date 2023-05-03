@@ -20,8 +20,8 @@
 
 #include "absl/status/status.h"
 #include "common/strings/position.h"
-#include "common/text/text_structure.h"
-#include "verilog/formatting/format_style.h"
+#include "common/text/text-structure.h"
+#include "verilog/formatting/format-style.h"
 
 namespace verilog {
 namespace formatter {

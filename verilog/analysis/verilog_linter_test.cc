@@ -34,13 +34,13 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/violation_handler.h"
-#include "common/util/file_util.h"
+#include "common/util/file-util.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/default_rules.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_linter_configuration.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/analysis/verilog-linter-configuration.h"
 
 namespace verilog {
 namespace {

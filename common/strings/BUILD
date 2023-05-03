@@ -26,8 +26,8 @@ cc_test(
 
 cc_library(
     name = "comment-utils",
-    srcs = ["comment_utils.cc"],
-    hdrs = ["comment_utils.h"],
+    srcs = ["comment-utils.cc"],
+    hdrs = ["comment-utils.h"],
     deps = [
         "//common/util:logging",
         "//common/util:range",
@@ -37,7 +37,7 @@ cc_library(
 
 cc_test(
     name = "comment-utils_test",
-    srcs = ["comment_utils_test.cc"],
+    srcs = ["comment-utils_test.cc"],
     deps = [
         ":comment-utils",
         "//common/util:range",
@@ -71,8 +71,8 @@ cc_test(
 
 cc_library(
     name = "display-utils",
-    srcs = ["display_utils.cc"],
-    hdrs = ["display_utils.h"],
+    srcs = ["display-utils.cc"],
+    hdrs = ["display-utils.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -80,7 +80,7 @@ cc_library(
 
 cc_test(
     name = "display-utils_test",
-    srcs = ["display_utils_test.cc"],
+    srcs = ["display-utils_test.cc"],
     deps = [
         ":display-utils",
         "@com_google_googletest//:gtest_main",
@@ -114,7 +114,7 @@ cc_test(
 
 cc_library(
     name = "mem-block",
-    hdrs = ["mem_block.h"],
+    hdrs = ["mem-block.h"],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -122,14 +122,14 @@ cc_library(
 
 cc_library(
     name = "naming-utils",
-    srcs = ["naming_utils.cc"],
-    hdrs = ["naming_utils.h"],
+    srcs = ["naming-utils.cc"],
+    hdrs = ["naming-utils.h"],
     deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_test(
     name = "naming-utils_test",
-    srcs = ["naming_utils_test.cc"],
+    srcs = ["naming-utils_test.cc"],
     deps = [
         ":naming-utils",
         "@com_google_googletest//:gtest_main",
@@ -284,8 +284,8 @@ cc_library(
 
 cc_library(
     name = "line-column-map",
-    srcs = ["line_column_map.cc"],
-    hdrs = ["line_column_map.h"],
+    srcs = ["line-column-map.cc"],
+    hdrs = ["line-column-map.h"],
     visibility = [
         "//common/analysis:__pkg__",
         "//common/text:__pkg__",
@@ -310,7 +310,7 @@ cc_test(
 
 cc_test(
     name = "line-column-map_test",
-    srcs = ["line_column_map_test.cc"],
+    srcs = ["line-column-map_test.cc"],
     deps = [
         ":line-column-map",
         "@com_google_absl//absl/strings",
@@ -320,7 +320,7 @@ cc_test(
 
 cc_library(
     name = "string-memory-map",
-    hdrs = ["string_memory_map.h"],
+    hdrs = ["string-memory-map.h"],
     deps = [
         ":range",
         "//common/util:interval-map",
@@ -332,7 +332,7 @@ cc_library(
 
 cc_test(
     name = "string-memory-map_test",
-    srcs = ["string_memory_map_test.cc"],
+    srcs = ["string-memory-map_test.cc"],
     deps = [
         ":range",
         ":string-memory-map",

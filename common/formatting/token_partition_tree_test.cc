@@ -21,13 +21,13 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/format_token.h"
-#include "common/formatting/token_partition_tree_test_utils.h"
+#include "common/formatting/format-token.h"
+#include "common/formatting/token-partition-tree-test-utils.h"
+#include "common/formatting/unwrapped-line-test-utils.h"
 #include "common/formatting/unwrapped_line.h"
-#include "common/formatting/unwrapped_line_test_utils.h"
-#include "common/util/container_iterator_range.h"
+#include "common/util/container-iterator-range.h"
 #include "common/util/tree_operations.h"
-#include "common/util/vector_tree.h"
+#include "common/util/vector-tree.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

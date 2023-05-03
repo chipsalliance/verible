@@ -17,17 +17,17 @@
 #include <memory>
 #include <utility>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/analysis/syntax_tree_search_test_utils.h"
+#include "common/analysis/syntax-tree-search-test-utils.h"
+#include "common/analysis/syntax-tree-search.h"
 #include "common/text/symbol.h"
-#include "common/text/tree_utils.h"
+#include "common/text/tree-utils.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/match_test_utils.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_tree_print.h"
-#include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_excerpt_parse.h"
+#include "verilog/CST/match-test-utils.h"
+#include "verilog/CST/verilog-nonterminals.h"
+#include "verilog/CST/verilog-tree-print.h"
+#include "verilog/analysis/verilog-analyzer.h"
+#include "verilog/analysis/verilog-excerpt-parse.h"
 
 namespace verilog {
 namespace {

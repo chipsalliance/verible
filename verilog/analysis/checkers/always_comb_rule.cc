@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/always_comb_rule.h"
-
 #include <set>
 #include <string>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/bound_symbol_manager.h"
+#include "common/analysis/matcher/bound-symbol-manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
-#include "common/text/syntax_tree_context.h"
+#include "common/text/syntax-tree-context.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/analysis/checkers/always-comb-rule.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

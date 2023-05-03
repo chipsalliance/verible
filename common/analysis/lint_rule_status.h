@@ -26,10 +26,10 @@
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
-#include "common/strings/line_column_map.h"
+#include "common/strings/line-column-map.h"
 #include "common/text/symbol.h"
-#include "common/text/syntax_tree_context.h"
-#include "common/text/token_info.h"
+#include "common/text/syntax-tree-context.h"
+#include "common/text/token-info.h"
 #include "common/util/logging.h"
 
 namespace verible {

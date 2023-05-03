@@ -20,9 +20,9 @@
 
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
+#include "common/analysis/syntax-tree-search.h"
 #include "common/text/symbol.h"
-#include "common/text/token_info.h"
+#include "common/text/token-info.h"
 
 namespace verilog {
 

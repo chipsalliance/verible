@@ -11,7 +11,7 @@ package(
 
 cc_library(
     name = "bison-parser-adapter",
-    hdrs = ["bison_parser_adapter.h"],
+    hdrs = ["bison-parser-adapter.h"],
     deps = [
         ":parse",
         ":parser-param",
@@ -25,8 +25,8 @@ cc_library(
 
 cc_library(
     name = "bison-parser-common",
-    srcs = ["bison_parser_common.cc"],
-    hdrs = ["bison_parser_common.h"],
+    srcs = ["bison-parser-common.cc"],
+    hdrs = ["bison-parser-common.h"],
     deps = [
         ":parser-param",
         "//common/text:concrete-syntax-leaf",
@@ -49,8 +49,8 @@ cc_library(
 
 cc_library(
     name = "parser-param",
-    srcs = ["parser_param.cc"],
-    hdrs = ["parser_param.h"],
+    srcs = ["parser-param.cc"],
+    hdrs = ["parser-param.h"],
     deps = [
         "//common/lexer:token-generator",
         "//common/text:concrete-syntax-leaf",
@@ -63,7 +63,7 @@ cc_library(
 cc_library(
     name = "parser-test-util",
     testonly = 1,
-    hdrs = ["parser_test_util.h"],
+    hdrs = ["parser-test-util.h"],
     deps = [
         "//common/analysis/matcher:descent-path",
         "//common/text:parser-verifier",
@@ -77,7 +77,7 @@ cc_library(
 
 cc_test(
     name = "bison-parser-common_test",
-    srcs = ["bison_parser_common_test.cc"],
+    srcs = ["bison-parser-common_test.cc"],
     deps = [
         ":bison-parser-common",
         ":parser-param",

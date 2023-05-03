@@ -19,15 +19,15 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/formatting/format_token.h"
+#include "common/formatting/format-token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
-#include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"  // for TokenRange
-#include "common/text/tree_context_visitor.h"
-#include "common/text/tree_utils.h"  // for GetRightmostLeaf
+#include "common/text/token-info.h"
+#include "common/text/token-stream-view.h"  // for TokenRange
+#include "common/text/tree-context-visitor.h"
+#include "common/text/tree-utils.h"  // for GetRightmostLeaf
 #include "common/util/logging.h"
-#include "common/util/vector_tree.h"
+#include "common/util/vector-tree.h"
 
 namespace verible {
 

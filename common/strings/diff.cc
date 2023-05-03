@@ -19,7 +19,7 @@
 
 #include "absl/strings/str_split.h"
 #include "common/strings/split.h"
-#include "common/util/iterator_range.h"
+#include "common/util/iterator-range.h"
 #include "external_libs/editscript.h"
 
 namespace verible {
