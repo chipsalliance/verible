@@ -61,4 +61,14 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
+# Always use fully qualified include paths.
+# Exclude zlib.h, which is the only allowed header.
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs egrep -n '#include "[^/]*"' | grep -v zlib.h
+if [ $? -eq 0 ]; then
+  echo "::error:: always use a fully qualified name for #includes"
+  echo
+  EXIT_CODE=1
+fi
+
 exit "${EXIT_CODE}"
