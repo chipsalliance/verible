@@ -262,7 +262,8 @@ class LintStatusFormatter {
   // Substitute the markers \@ with tokens location
   // this allows us to create custom reason msg
   // with different token location that are related to found
-  // vulnerable token
+  // vulnerable token. It is important to note that all the tokens
+  // must come from the same file.
   std::string FormatWithRelatedTokens(
       const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
       absl::string_view path, absl::string_view base) const;
