@@ -21,7 +21,6 @@
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_treebuilder_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
-#include "verilog_matchers.h"
 
 namespace verilog {
 namespace {

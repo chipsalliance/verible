@@ -24,12 +24,11 @@
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
-#include "declaration.h"
-#include "expression.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/expression.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
