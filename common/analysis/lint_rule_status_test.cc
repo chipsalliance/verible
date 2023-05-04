@@ -148,24 +148,25 @@ TEST(LintRuleStatusFormatterTest, HelperTokensReplacmentWithTokensLocation) {
       text,
       {{"reason1 @",
         TokenInfo(dont_care_tag, text.substr(0, 5)),
-        "some/path/to/somewhere.fvg:1:1: reason1 @ http://foobar [test-rule]",
+        "some/path/to/somewhere.fvg:1:1-5: reason1 @ http://foobar [test-rule]",
         {}},
        {"reason2",
         TokenInfo(dont_care_tag, text.substr(6, 2)),
-        "some/path/to/somewhere.fvg:1:7: reason2 http://foobar [test-rule]",
+        "some/path/to/somewhere.fvg:1:7-8: reason2 http://foobar [test-rule]",
         {TokenInfo(dont_care_tag, text.substr(0, 5))}},
        {"reason3 \\@",
         TokenInfo(dont_care_tag, text.substr(8, 2)),
-        "some/path/to/somewhere.fvg:1:9: reason3 @ http://foobar [test-rule]",
+        "some/path/to/somewhere.fvg:1:9-10: reason3 @ http://foobar "
+        "[test-rule]",
         {TokenInfo(dont_care_tag, text.substr(0, 5))}},
        {"reason4 @",
         TokenInfo(dont_care_tag, text.substr(15, 4)),
-        "some/path/to/somewhere.fvg:1:16: reason4 "
+        "some/path/to/somewhere.fvg:1:16:2:1: reason4 "
         "some/path/to/somewhere.fvg:1:1 http://foobar [test-rule]",
         {TokenInfo(dont_care_tag, text.substr(0, 5))}},
        {"@ reason5 @",
         TokenInfo(dont_care_tag, text.substr(21, 4)),
-        "some/path/to/somewhere.fvg:2:4: some/path/to/somewhere.fvg:1:10 "
+        "some/path/to/somewhere.fvg:2:4-7: some/path/to/somewhere.fvg:1:10 "
         "reason5 some/path/to/somewhere.fvg:2:4 http://foobar [test-rule]",
         {TokenInfo(dont_care_tag, text.substr(9, 4)),
          TokenInfo(dont_care_tag, text.substr(21, 4))}}}};
