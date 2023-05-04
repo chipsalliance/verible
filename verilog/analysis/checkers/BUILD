@@ -1068,6 +1068,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
         "//verilog/CST:verilog-matchers",
+        "//verilog/CST:statement",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
