@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunLintTestCases;
 
 TEST(AlwaysCombBlockingRule, FunctionFailures) {
@@ -60,6 +61,25 @@ TEST(AlwaysCombBlockingRule, FunctionFailures) {
 
   RunLintTestCases<VerilogAnalyzer, AlwaysCombBlockingRule>(
       kAlwaysCombBlockingTestCases);
+}
+
+TEST(AlwaysCombBlockingTest, AutoFixAlwaysCombBlocking) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;\nalways_comb a <= b;\nendmodule",
+       "module m;\nalways_comb a = b;\nendmodule"},
+      {"module m;\nalways_comb begin a <= b; end\nendmodule",
+       "module m;\nalways_comb begin a = b; end\nendmodule"},
+      {"module m;\nalways_comb begin if (sel == 0) a <= b; else a = 1'b0; "
+       "end\nendmodule",
+       "module m;\nalways_comb begin if (sel == 0) a = b; else a = 1'b0; "
+       "end\nendmodule"},
+      {"module m;\nalways_comb begin\n`ifdef RST\nf <= g;\n`else\nf = "
+       "1'b1;\n`endif\nend\nendmodule",
+       "module m;\nalways_comb begin\n`ifdef RST\nf = g;\n`else\nf = "
+       "1'b1;\n`endif\nend\nendmodule"},
+  };
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysCombBlockingRule>(kTestCases, "");
 }
 
 }  // namespace
