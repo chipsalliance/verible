@@ -863,6 +863,11 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kDataDeclaration: {
+      if ((GetParamListFromDataDeclaration(node) ||
+           !SearchSyntaxTree(node, NodekPortActualList()).empty()) &&
+          style_.always_wrap_module_instantiations) {
+        VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
+      } else {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kFitOnLineElseExpand);
       }
