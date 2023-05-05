@@ -1,7 +1,7 @@
 {
   "name": "verible",
   "displayName": "Verible",
-  "description": "Verible Language Server",
+  "description": "Verible SystemVerilog Language Server",
   "version": "0.0.3220",
   "publisher": "chipsalliance",
   "repository": {
