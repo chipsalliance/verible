@@ -464,10 +464,10 @@ const verible::SyntaxTreeLeaf *GetVariableNameFromForInitialization(
   }
   const verible::SyntaxTreeNode *lpvalue =
       verible::GetSubtreeAsNode(*child, NodeEnum::kLPValue, 0);
-  const verible::SyntaxTreeNode* local_root =
+  const verible::SyntaxTreeNode *local_root =
       GetLocalRootFromReference(*lpvalue);
   if (!local_root) return nullptr;
-  const verible::Symbol* identifiers = GetIdentifiersFromLocalRoot(*local_root);
+  const verible::Symbol *identifiers = GetIdentifiersFromLocalRoot(*local_root);
   return AutoUnwrapIdentifier(*identifiers);
 }
 

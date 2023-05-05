@@ -3527,10 +3527,6 @@ instantiation_base
     { $$ = MakeInstantiationBase($1, $2); }
   | instantiation_type call_base hierarchy_or_call_extension_list
     {$$ = MakeTaggedNode(N::kFunctionCall, $1, $2, $3); }
-  /* | instantiation_type %prec less_than_TK_else call_base */
-  /*   { $$ = MakeInstantionBase($1, $2); } */
-  /* | instantiation_type %prec less_than_TK_else call_base gate_instance_or_register_variable_list */
-  /*   { $$ = MakeInstantiationBase($1, ExtendNode($2, $3)); } */
   ;
 
 data_declaration_or_module_instantiation
@@ -5397,7 +5393,11 @@ lpvalue
 cont_assign
   : lpvalue '=' expression
     { $$ = MakeTaggedNode(N::kNetVariableAssignment, $1, $2, $3); }
-
+  // edge case to avoid R/R with reference_or_call
+  | reference '.' builtin_array_method '=' expression
+    { $$ = MakeTaggedNode(N::kNetVariableAssignment, MakeTaggedNode(
+      N::kLPValue,ExtendNode($1, MakeTaggedNode(N::kHierarchyExtension, $2, $3, nullptr))
+    ),$4,$5); }
   // FIXME: allow just lpvalue to permit just reference for MacroCall
   ;
 cont_assign_list
@@ -6806,6 +6806,14 @@ blocking_assignment
     { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4); }
   | lpvalue '=' class_new ';'
     { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, $1, $2, $3, $4); }
+  | reference '.' builtin_array_method '=' delay_or_event_control expression ';'
+    { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, MakeTaggedNode(
+      N::kLPValue,ExtendNode($1, MakeTaggedNode(N::kHierarchyExtension, $2, $3, nullptr))
+    ),$4,$5,$6,$7); }
+  | reference '.' builtin_array_method '=' expression ';'
+    { $$ = MakeTaggedNode(N::kBlockingAssignmentStatement, MakeTaggedNode(
+      N::kLPValue,ExtendNode($1, MakeTaggedNode(N::kHierarchyExtension, $2, $3, nullptr))
+    ),$4,$5,$6); }
   ;
 
 nonblocking_assignment
