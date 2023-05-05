@@ -116,6 +116,9 @@ struct FormatStyle : public verible::BasicFormatStyle {
   // Split with a \n end and else clauses
   bool wrap_end_else_clauses = false;
 
+  // Always split module instantiation's parameters and ports to new lines
+  bool always_wrap_module_instantiations = false;
+
   // -- Note: when adding new fields, add them in format_style_init.cc
 
   // TODO(fangism): introduce the following knobs:

@@ -50,6 +50,7 @@
 #include "verilog/CST/functions.h"
 #include "verilog/CST/macro.h"
 #include "verilog/CST/statement.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
@@ -834,7 +835,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kMacroGenericItem:
     case NodeEnum::kModuleHeader:
     case NodeEnum::kBindDirective:
-    case NodeEnum::kDataDeclaration:
     case NodeEnum::kGateInstantiation:
     case NodeEnum::kLoopHeader:
     case NodeEnum::kCovergroupHeader:
@@ -860,6 +860,12 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kAssumePropertyClause:
     case NodeEnum::kExpectPropertyClause: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+    case NodeEnum::kDataDeclaration: {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
     }
 

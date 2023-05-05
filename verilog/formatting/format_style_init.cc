@@ -88,6 +88,10 @@ ABSL_FLAG(bool, compact_indexing_and_selections, true,
 ABSL_FLAG(bool, wrap_end_else_clauses, false,
           "Split end and else keywords into separate lines");
 
+ABSL_FLAG(
+    bool, always_wrap_module_instantiations, false,
+    "Always split module instantiation's parameters and ports to new lines");
+
 ABSL_FLAG(bool, port_declarations_right_align_packed_dimensions, false,
           "If true, packed dimensions in contexts with enabled alignment are "
           "aligned to the right.");
@@ -136,6 +140,7 @@ void InitializeFromFlags(FormatStyle *style) {
   STYLE_FROM_FLAG(expand_coverpoints);
   STYLE_FROM_FLAG(compact_indexing_and_selections);
   STYLE_FROM_FLAG(wrap_end_else_clauses);
+  STYLE_FROM_FLAG(always_wrap_module_instantiations);
 
 #undef STYLE_FROM_FLAG
 }
