@@ -189,11 +189,12 @@ static verible::TokenRange SeekLastNonNewlineToken(
   // text_begin is the frontal limiter that shall not be overrun.
   // If such a token isn't found, the input range is returned
   auto found_it = std::find_if(
-      std::reverse_iterator(token_range.begin()),
-      std::reverse_iterator(text_begin),
+      std::reverse_iterator<TokenSequence::const_iterator>(token_range.begin()),
+      std::reverse_iterator<TokenSequence::const_iterator>(text_begin),
       [](const TokenInfo& t) { return t.token_enum() != TK_NEWLINE; });
 
-  if (found_it != std::reverse_iterator(text_begin)) {
+  if (found_it !=
+      std::reverse_iterator<TokenSequence::const_iterator>(text_begin)) {
     // Use the last non-newline token as a new beginning.
     auto new_begin = found_it.base() - 1;
     // We move the front backwards, so now it's possible that there are
