@@ -183,7 +183,7 @@ static verible::TokenRange StripNewlineTokens(verible::TokenRange token_range) {
   return make_range(token_range.begin(), last_non_newline);
 }
 
-static verible::TokenRange SeekTokensBackwards(
+static verible::TokenRange SeekLastNonNewlineToken(
     verible::TokenRange token_range, TokenSequence::const_iterator text_begin) {
   // Extend token_range backwards to find non-newline tokens.
   // text_begin is the frontal limiter that shall not be overrun.
@@ -203,6 +203,31 @@ static verible::TokenRange SeekTokensBackwards(
   return token_range;
 }
 
+verible::TokenRange& CheckTokenRangeForTrailingNewlines(
+    verible::TokenRange* orig_range,
+    TokenSequence::const_iterator text_structure) {
+  // Recall that token_range is *unfiltered* and may contain non-essential
+  // whitespace 'tokens'.
+  // This shrinks the range if there are leading newline tokens
+  *orig_range = StripNewlineTokens(*orig_range);
+  if (orig_range->begin() == orig_range->end()) {
+    // No tokens, even though the line exceeds the limit.
+    // The range doesn't contain tokens that start in the preceeding lines
+    // and continue in this line.
+    // A token that spans accross multiple lines is in this line
+    // and exceeds the limit.
+    // Find the last non-newline token in the preceeding lines.
+    *orig_range = SeekLastNonNewlineToken(*orig_range, text_structure);
+    // Yet again after moving the `begin` backwards, `end` may point
+    // behind newline tokens, depending on how many lines backwards
+    // the range was extended.
+    // Also, AllowLongLineException function assumes the length of the range
+    // to be 1 if there is 1 meaningful token.
+    *orig_range = StripNewlineTokens(*orig_range);
+  }
+  return *orig_range;
+}
+
 void LineLengthRule::Lint(const TextStructureView& text_structure,
                           absl::string_view) {
   size_t lineno = 0;
@@ -213,25 +238,8 @@ void LineLengthRule::Lint(const TextStructureView& text_structure,
     if (observed_line_length > line_length_limit_) {
       // range of tokens that *begin* in this line.
       auto token_range = text_structure.TokenRangeOnLine(lineno);
-      // Recall that token_range is *unfiltered* and may contain non-essential
-      // whitespace 'tokens'.
-      // This shrinks the range if there are leading newline tokens
-      token_range = StripNewlineTokens(token_range);
-      if (token_range.begin() == token_range.end()) {
-        // No tokens, even though the line exceeds the limit.
-        // The range doesn't contain tokens that start in the preceeding lines
-        // and continue in this line.
-        // A token that spans accross multiple lines is in this line
-        // and exceeds the limit.
-        // Find the last non-newline token in the preceeding lines.
-        token_range = SeekTokensBackwards(token_range, text_begin);
-        // Yet again after moving the `begin` backwards, `end` may point
-        // behind newline tokens, depending on how many lines backwards
-        // the range was extended.
-        // Also, AllowLongLineException function assumes the length of the range
-        // to be 1 if there is 1 meaningful token.
-        token_range = StripNewlineTokens(token_range);
-      }
+      token_range =
+          CheckTokenRangeForTrailingNewlines(&token_range, text_begin);
       if (!AllowLongLineException(token_range.begin(), token_range.end())) {
         // Fake a token that marks the offending range of text.
         TokenInfo token(TK_OTHER, line.substr(line_length_limit_));
