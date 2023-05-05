@@ -74,7 +74,7 @@ const LintRuleDescriptor& LineLengthRule::GetDescriptor() {
           {
               {"length", absl::StrCat(kDefaultLineLength),
                "Desired line length"},
-              {"check_comments", "false", "Check comments."},
+              {"check_comments", "true", "Check comments."},
           },
   };
   return d;
