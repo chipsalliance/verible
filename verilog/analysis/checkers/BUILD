@@ -1204,6 +1204,8 @@ cc_library(
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
         "//common/util:casts",
+        "//verilog/CST:expression",
+        "//verilog/CST:statement",
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
