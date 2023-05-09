@@ -221,9 +221,10 @@ void SymbolTableHandler::Prepare() {
   }
 }
 
-absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
+std::optional<verible::TokenInfo>
+SymbolTableHandler::GetTokenAtTextDocumentPosition(
     const verible::lsp::TextDocumentPositionParams &params,
-    const verilog::BufferTrackerContainer &parsed_buffers) {
+    const verilog::BufferTrackerContainer &parsed_buffers) const {
   const verilog::BufferTracker *tracker =
       parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
   if (!tracker) {
@@ -240,8 +241,7 @@ absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
                                    params.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
-  const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
-  return cursor_token.text();
+  return text.FindTokenAt(cursor);
 }
 
 std::optional<verible::lsp::Location>
@@ -263,14 +263,16 @@ SymbolTableHandler::GetLocationFromSymbolName(
 }
 
 std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
-    const verible::lsp::DefinitionParams &params,
+    const verible::lsp::TextDocumentPositionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   // TODO add iterating over multiple definitions
   Prepare();
   const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
   std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
-  absl::string_view symbol =
+  std::optional<verible::TokenInfo> token =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  if (!token) return {};
+  absl::string_view symbol = token->text();
   VLOG(1) << "Looking for symbol:  " << symbol;
   VerilogSourceFile *reffile =
       curr_project_->LookupRegisteredFile(relativepath);
@@ -305,8 +307,10 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
     const verible::lsp::ReferenceParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
-  absl::string_view symbol =
+  std::optional<verible::TokenInfo> token =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  if (!token) return {};
+  absl::string_view symbol = token->text();
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) {
