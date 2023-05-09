@@ -55,6 +55,9 @@ class SymbolTableHandler {
       const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
+  // Finds the node of the symbol table with definition for a given symbol.
+  const SymbolTableNode *FindDefinitionNode(absl::string_view symbol);
+
   // Finds the symbol of the definition for the given identifier.
   const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
 

@@ -292,13 +292,15 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   return {*location};
 }
 
+const SymbolTableNode *SymbolTableHandler::FindDefinitionNode(
+    absl::string_view symbol) {
+  Prepare();
+  return ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
+}
+
 const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
     absl::string_view symbol) {
-  if (files_dirty_) {
-    BuildProjectSymbolTable();
-  }
-  const SymbolTableNode *symbol_table_node =
-      ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
+  const SymbolTableNode *symbol_table_node = FindDefinitionNode(symbol);
   if (symbol_table_node) return symbol_table_node->Value().syntax_origin;
   return nullptr;
 }
