@@ -105,6 +105,18 @@ cc_library(
 )
 
 cc_library(
+  name = "hover",
+  srcs = ["hover.cc"],
+  hdrs = ["hover.h"],
+  deps = [
+      ":lsp-parse-buffer",
+      ":symbol-table-handler",
+      "//common/lsp:lsp-protocol",
+      "//verilog/parser:verilog_token_enum",
+  ],
+)
+
+cc_library(
     name = "symbol-table-handler",
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
