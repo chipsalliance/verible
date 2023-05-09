@@ -160,6 +160,7 @@ cc_library(
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
+        ":hover",
         "//common/lsp:json-rpc-dispatcher",
         "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
