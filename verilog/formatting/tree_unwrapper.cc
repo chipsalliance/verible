@@ -2714,13 +2714,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
                                    NodeEnum::kParenGroup,
                                    NodeEnum::kRandomizeMethodCallExtension})) {
-        if (partition.Value().PartitionPolicy() ==
-            PartitionPolicyEnum::kAppendFittingSubPartitions) {
-          auto& last = RightmostDescendant(partition);
-          if (PartitionStartsWithCloseParen(last) ||
-              PartitionStartsWithSemicolon(last)) {
-            verible::MergeLeafIntoPreviousLeaf(&last);
-          }
+        auto& last = RightmostDescendant(partition);
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionStartsWithSemicolon(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
         }
       }
       break;
