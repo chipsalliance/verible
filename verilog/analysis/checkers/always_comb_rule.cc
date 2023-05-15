@@ -89,9 +89,9 @@ void AlwaysCombRule::HandleSymbol(const verible::Symbol &symbol,
                    : "Substitute 'always @*' for 'always_comb'";
 
   // kAlwaysStatement node
-  //	Leaf @0: 'always'
-  //	Node @1: kProceduralTimingControlStatement
-  //	    Node @0: kEventControl (We want to completely remove this!)
+  //  Leaf @0: 'always'
+  //  Node @1: kProceduralTimingControlStatement
+  //  Node @0: kEventControl (We want to completely remove this!)
   const verible::SyntaxTreeNode &always_statement_node =
       verible::SymbolCastToNode(symbol);
 
