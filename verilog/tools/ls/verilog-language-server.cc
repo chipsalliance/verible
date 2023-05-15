@@ -144,6 +144,13 @@ void VerilogLanguageServer::SetRequestHandlers() {
       [this](const verible::lsp::PrepareRenameParams &p) {
         return symbol_table_handler_.FindRenameLocations(p, parsed_buffers_);
       });
+  dispatcher_.AddRequestHandler(
+      "textDocument/rename",
+      [this](const verible::lsp::RenameParams &p) {
+        //TODO(jbylicki): implement rename based on locations from FindRenameLocations
+        // return symbol_table_handler_.FindRenameLocations(p, parsed_buffers_);
+        return std::vector<verible::lsp::WorkspaceEdit>();
+      });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
     shutdown_requested_ = true;

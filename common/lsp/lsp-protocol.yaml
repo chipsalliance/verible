@@ -209,3 +209,10 @@ PrepareRenameParams:
 
 # Response: Range[]
 
+# -- textDocument/rename   (TODO(jbylicki): check that requires project + active symbol table #1189)
+RenameParams:
+  <: TextDocumentPositionParams
+  newName: string
+
+# Response: Range[]
+
