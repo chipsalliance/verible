@@ -202,3 +202,10 @@ DocumentLinkParams:
 DocumentLink:
   range: Range
   target?: string  # DocumentUri
+
+# -- textDocument/prepareRename   (TODO(jbylicki): check that requires project + active symbol table #1189)
+PrepareRenameParams:
+  <: TextDocumentPositionParams
+
+# Response: Range[]
+

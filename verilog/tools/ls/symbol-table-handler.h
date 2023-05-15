@@ -65,6 +65,9 @@ class SymbolTableHandler {
       const verible::lsp::ReferenceParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
+  std::vector<verible::lsp::Range> FindRenameLocations(
+      const verible::lsp::PrepareRenameParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
   void UpdateFileContent(absl::string_view path,

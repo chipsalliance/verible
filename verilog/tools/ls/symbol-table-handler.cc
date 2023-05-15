@@ -317,6 +317,34 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
   return locations;
 }
 
+std::vector<verible::lsp::Range> SymbolTableHandler::FindRenameLocations(
+    const verible::lsp::PrepareRenameParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  Prepare();
+  absl::string_view symbol =
+      GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  const SymbolTableNode &root = symbol_table_->Root();
+  const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
+  if (!node) {
+    LOG(WARNING) << "NODE empty: " << symbol << "\n";
+    return {};
+  }
+  std::vector<verible::lsp::Location> locations;
+  std::vector<verible::lsp::Range> ranges;
+  CollectReferences(&root, node, &locations);
+  if (locations.empty()) {
+    LOG(WARNING) << "locations empty\n";
+    return {};
+  }
+  for (auto &loc : locations) {
+    ranges.push_back(loc.range);
+    LOG(INFO) << "range: " << loc.range.start.line << " "
+              << loc.range.start.character << " " << loc.range.end.line << " "
+              << loc.range.end.character << "\n";
+  }
+  return ranges;
+}
+
 void SymbolTableHandler::CollectReferencesReferenceComponents(
     const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
     const SymbolTableNode *definition_node,
