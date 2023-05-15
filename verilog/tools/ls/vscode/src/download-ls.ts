@@ -59,7 +59,7 @@ export async function checkAndDownloadBinaries(
     // No tag found -- aborting
     return binaryPath;
   }
-  
+
   output.appendLine(`Extension will attempt to download executables (${TAG}) from GitHub Release page`);
 
   // Preparing URL
