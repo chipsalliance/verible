@@ -21,6 +21,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
+#include "common/lsp/lsp-protocol.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "common/util/range.h"
@@ -325,24 +326,43 @@ std::vector<verible::lsp::Range> SymbolTableHandler::FindRenameLocations(
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
-  if (!node) {
-    LOG(WARNING) << "NODE empty: " << symbol << "\n";
-    return {};
-  }
+  if (!node) return {};
   std::vector<verible::lsp::Location> locations;
   std::vector<verible::lsp::Range> ranges;
   CollectReferences(&root, node, &locations);
-  if (locations.empty()) {
-    LOG(WARNING) << "locations empty\n";
-    return {};
-  }
+  if (locations.empty()) return {};
+  ranges.reserve(locations.size());
   for (auto &loc : locations) {
     ranges.push_back(loc.range);
-    LOG(INFO) << "range: " << loc.range.start.line << " "
-              << loc.range.start.character << " " << loc.range.end.line << " "
-              << loc.range.end.character << "\n";
   }
   return ranges;
+}
+
+verible::lsp::WorkspaceEdit
+SymbolTableHandler::FindRenameLocationsAndCreateEdits(
+    const verible::lsp::RenameParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  Prepare();
+  absl::string_view symbol =
+      GetTokenAtTextDocumentPosition(params, parsed_buffers);
+  const SymbolTableNode &root = symbol_table_->Root();
+  const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
+  if (!node) return {};
+  std::vector<verible::lsp::Location> locations;
+  std::vector<verible::lsp::TextEdit> textedits;
+  CollectReferences(&root, node, &locations);
+  if (locations.empty()) return {};
+  textedits.reserve(locations.size());
+  for (auto &loc : locations) {
+    textedits.push_back(verible::lsp::TextEdit({
+        .range = loc.range,
+        .newText = params.newName,
+    }));
+  }
+  files_dirty_ = true;
+  return verible::lsp::WorkspaceEdit{
+      .changes = {{locations[0].uri, textedits}},
+  };
 }
 
 void SymbolTableHandler::CollectReferencesReferenceComponents(
