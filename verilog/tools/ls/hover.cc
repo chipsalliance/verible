@@ -17,6 +17,7 @@
 
 #include "common/text/tree_context_visitor.h"
 #include "common/util/casts.h"
+#include "common/util/range.h"
 #include "verilog/CST/seq_block.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/symbol_table.h"
@@ -52,7 +53,7 @@ class FindBeginLabel : public TreeContextVisitor {
 
  private:
   void Visit(const SyntaxTreeLeaf &leaf) override {
-    if (IsStringViewContained(leaf.get().text(), substring_)) {
+    if (verible::IsSubRange(leaf.get().text(), substring_)) {
       substring_found_ = true;
     }
   }

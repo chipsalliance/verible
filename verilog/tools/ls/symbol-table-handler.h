@@ -33,9 +33,6 @@ namespace verilog {
 // Looks for FileList file for SymbolTableHandler
 std::string FindFileList(absl::string_view current_dir);
 
-// Checks if one string_view is contained in another
-bool IsStringViewContained(absl::string_view origin, absl::string_view substr);
-
 // A class interfacing the SymbolTable with the LSP messages.
 // It manages the SymbolTable and its necessary components,
 // and provides such information as symbol definitions

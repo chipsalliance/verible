@@ -111,12 +111,13 @@ cc_library(
     deps = [
         ":lsp-parse-buffer",
         ":symbol-table-handler",
-        "//common/util:casts",
-        "//verilog/CST:seq_block",
         "//common/lsp:lsp-protocol",
-        "//verilog/CST:verilog_nonterminals",
-        "//common/text:tree_context_visitor",
-        "//verilog/parser:verilog_token_enum",
+        "//common/text:tree-context-visitor",
+        "//common/util:casts",
+        "//common/util:range",
+        "//verilog/CST:seq-block",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/parser:verilog-token-enum",
     ],
 )
 
