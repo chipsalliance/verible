@@ -105,15 +105,19 @@ cc_library(
 )
 
 cc_library(
-  name = "hover",
-  srcs = ["hover.cc"],
-  hdrs = ["hover.h"],
-  deps = [
-      ":lsp-parse-buffer",
-      ":symbol-table-handler",
-      "//common/lsp:lsp-protocol",
-      "//verilog/parser:verilog_token_enum",
-  ],
+    name = "hover",
+    srcs = ["hover.cc"],
+    hdrs = ["hover.h"],
+    deps = [
+        ":lsp-parse-buffer",
+        ":symbol-table-handler",
+        "//common/util:casts",
+        "//verilog/CST:seq_block",
+        "//common/lsp:lsp-protocol",
+        "//verilog/CST:verilog_nonterminals",
+        "//common/text:tree_context_visitor",
+        "//verilog/parser:verilog_token_enum",
+    ],
 )
 
 cc_library(
