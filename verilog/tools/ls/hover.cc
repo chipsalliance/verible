@@ -36,74 +36,77 @@ class FindBeginLabel : public TreeContextVisitor {
  public:
   explicit FindBeginLabel() = default;
 
+  // Performs search of the label for end entry, based on its location in
+  // string and tags
   absl::string_view LabelSearch(const verible::ConcreteSyntaxTree &tree,
                                 absl::string_view substring, NodeEnum endtag,
                                 NodeEnum begintag) {
-    this->substring = substring;
-    this->begintag = begintag;
-    this->endtag = endtag;
-    substring_found = false;
-    finished = false;
+    substring_ = substring;
+    begintag_ = begintag;
+    endtag_ = endtag;
+    substring_found_ = false;
+    finished_ = false;
     tree->Accept(this);
-    return label;
+    return label_;
   }
 
  private:
   void Visit(const SyntaxTreeLeaf &leaf) override {
-    if (IsStringViewContained(leaf.get().text(), substring)) {
-      substring_found = true;
+    if (IsStringViewContained(leaf.get().text(), substring_)) {
+      substring_found_ = true;
     }
   }
   void Visit(const SyntaxTreeNode &node) override {
-    if (finished) return;
+    if (finished_) return;
     const std::unique_ptr<Symbol> *lastbegin = nullptr;
     for (const std::unique_ptr<Symbol> &child : node.children()) {
       if (!child) continue;
       if (child->Kind() == verible::SymbolKind::kLeaf &&
-          node.Tag().tag == static_cast<int>(endtag)) {
+          node.Tag().tag == static_cast<int>(endtag_)) {
         Visit(verible::down_cast<const SyntaxTreeLeaf &>(*child));
-        if (substring_found) return;
-      } else if (child->Tag().tag == static_cast<int>(begintag)) {
+        if (substring_found_) return;
+      } else if (child->Tag().tag == static_cast<int>(begintag_)) {
         lastbegin = &child;
       } else if (child->Kind() == verible::SymbolKind::kNode) {
         Visit(verible::down_cast<const SyntaxTreeNode &>(*child));
-        if (!label.empty()) return;
-        if (substring_found) {
+        if (!label_.empty()) return;
+        if (substring_found_) {
           if (!lastbegin) {
-            finished = true;
+            finished_ = true;
             return;
           }
           const verible::TokenInfo *info = GetBeginLabelTokenInfo(**lastbegin);
-          finished = true;
+          finished_ = true;
           if (!info) return;
-          label = info->text();
+          label_ = info->text();
           return;
         }
       }
-      if (finished) return;
+      if (finished_) return;
     }
   }
-  absl::string_view substring;
-  NodeEnum endtag;
-  NodeEnum begintag;
-  absl::string_view label;
-  bool substring_found;
-  bool finished;
+  absl::string_view substring_;
+  NodeEnum endtag_;
+  NodeEnum begintag_;
+  absl::string_view label_;
+  bool substring_found_;
+  bool finished_;
 };
 
+// Constructs a Hover message for the given location
 class HoverBuilder {
  public:
   HoverBuilder(SymbolTableHandler *symbol_table_handler,
                const BufferTrackerContainer &tracker_container,
                const verible::lsp::HoverParams &params)
-      : symbol_table_handler(symbol_table_handler),
-        tracker_container(tracker_container),
-        params(params) {}
+      : symbol_table_handler_(symbol_table_handler),
+        tracker_container_(tracker_container),
+        params_(params) {}
 
   verible::lsp::Hover Build() {
     std::optional<verible::TokenInfo> token =
-        symbol_table_handler->GetTokenAtTextDocumentPosition(params,
-                                                             tracker_container);
+        symbol_table_handler_->GetTokenAtTextDocumentPosition(
+            params_, tracker_container_);
     if (!token) return {};
     verible::lsp::Hover response;
     switch (token->token_enum()) {
@@ -120,7 +123,7 @@ class HoverBuilder {
   void HoverInfoEndToken(verible::lsp::Hover *response,
                          const verible::TokenInfo &token) {
     const verilog::BufferTracker *tracker =
-        tracker_container.FindBufferTrackerOrNull(params.textDocument.uri);
+        tracker_container_.FindBufferTrackerOrNull(params_.textDocument.uri);
     if (!tracker) return;
     std::shared_ptr<const ParsedBuffer> parsedbuffer = tracker->current();
     if (!parsedbuffer) return;
@@ -140,7 +143,7 @@ class HoverBuilder {
                            const verible::TokenInfo &token) {
     absl::string_view symbol = token.text();
     const SymbolTableNode *node =
-        symbol_table_handler->FindDefinitionNode(symbol);
+        symbol_table_handler_->FindDefinitionNode(symbol);
     if (!node) return;
     const SymbolInfo &info = node->Value();
     response->contents.value = absl::StrCat(
@@ -155,9 +158,9 @@ class HoverBuilder {
           "\n\n---");
     }
   }
-  SymbolTableHandler *symbol_table_handler;
-  const BufferTrackerContainer &tracker_container;
-  const verible::lsp::HoverParams &params;
+  SymbolTableHandler *symbol_table_handler_;
+  const BufferTrackerContainer &tracker_container_;
+  const verible::lsp::HoverParams &params_;
 };
 
 }  // namespace

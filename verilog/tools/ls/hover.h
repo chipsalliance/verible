@@ -21,6 +21,7 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 namespace verilog {
+// Provides hover information for given location
 verible::lsp::Hover CreateHoverInformation(
     SymbolTableHandler *symbol_table_handler,
     const BufferTrackerContainer &tracker, const verible::lsp::HoverParams &p);
