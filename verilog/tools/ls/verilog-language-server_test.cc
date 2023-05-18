@@ -1490,6 +1490,48 @@ endmodule
       absl::StrContains(response["result"]["contents"]["value"], "reg [31:0]"));
 }
 
+// Checks if the hover appears on "end" token when block name is available
+TEST_F(VerilogLanguageServerSymbolTableTest, HoverOverEnd) {
+  absl::string_view filelist_content = "mod.v\n";
+  static constexpr absl::string_view  //
+      module_content(
+          R"(module mod(
+    input clk,
+    input reg [31:0] a,
+    input reg [31:0] b,
+    output reg [31:0] sum);
+  always @(posedge clk) begin : addition
+    assign sum = a + b;
+  end
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module(root_dir, module_content,
+                                                      "mod.v");
+
+  const std::string module_open_request =
+      DidOpenRequest("file://" + module.filename(), module_content);
+  ASSERT_OK(SendRequest(module_open_request));
+
+  GetResponse();
+
+  std::string hover_request =
+      HoverRequest("file://" + module.filename(), 2, 7, 3);
+
+  ASSERT_OK(SendRequest(hover_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 1);
+  ASSERT_EQ(response["result"]["contents"]["kind"], "markdown");
+  ASSERT_TRUE(absl::StrContains(response["result"]["contents"]["value"],
+                                "End of block"));
+  ASSERT_TRUE(absl::StrContains(response["result"]["contents"]["value"],
+                                "Name: addition"));
+}
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
