@@ -2530,6 +2530,14 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    a <= b.c;\n"
      "  end\n"
      "endmodule\n"},
+    {"module foo ();\nif (1) begin\n$finish(\n"
+     "      1    ); $finish    ();\n  end\nendmodule",
+     "module foo ();\n"
+     "  if (1) begin\n"
+     "    $finish(1);\n"
+     "    $finish();\n"
+     "  end\n"
+     "endmodule\n"},
     {"  module bar;for(genvar i = 0 ; i<N ; ++ i  ) begin end endmodule\n",
      "module bar;\n"
      "  for (genvar i = 0; i < N; ++i) begin\n"
