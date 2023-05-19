@@ -1047,6 +1047,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       } else if (is_standalone_call()) {
         PushContextHint(ContextHint::kInsideStandaloneMacroCall);
         VisitIndentedSection(node, 0, PartitionPolicyEnum::kStack);
+      } else if (Context().DirectParentIs(NodeEnum::kGenerateItemList)) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
       } else {
         TraverseChildren(node);
       }
