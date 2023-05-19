@@ -22,7 +22,6 @@
 #include "common/text/tree_utils.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/functions.h"
 #include "verilog/CST/match_test_utils.h"
 
 #undef ASSERT_OK
@@ -941,23 +940,6 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
                 TreeSearchMatch{packed_dimension, {/* ignored context */}});
           }
           return packed_dimensions;
-        });
-  }
-}
-TEST(ReshapeExtendedCalls, ReshapeExtendedFunctionCallInDataDeclarationTest) {
-  constexpr int kTag = 1;  // value doesn't matter
-  const SyntaxTreeSearchTestCase kTestCases[] = {
-      {""},
-      {"function a();\n  ",
-       {kTag, "foo(one,two,three).bar(one,two);"},
-       "\nendfunction"},
-      {"function a();\n  ", {kTag, "foo(one,two,three).bar;"}, "\nendfunction"},
-  };
-  for (const auto& test : kTestCases) {
-    TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          return FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
         });
   }
 }

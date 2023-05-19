@@ -32,9 +32,7 @@
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
-using verible::MakeTaggedNode;
 using verible::Symbol;
-using verible::SymbolCastToNode;
 using verible::SymbolPtr;
 using verible::SyntaxTreeNode;
 using verible::container::FindWithDefault;
@@ -225,57 +223,6 @@ const verible::SyntaxTreeNode* GetStructOrUnionOrEnumTypeFromDataDeclaration(
       GetInstantiationTypeOfDataDeclaration(data_declaration);
   if (!instantiation_type) return nullptr;
   return GetStructOrUnionOrEnumTypeFromInstantiationType(*instantiation_type);
-}
-
-verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
-    verible::SymbolPtr* function_call, verible::SymbolPtr* semicolon) {
-  // Append the semicolon to the function call node
-  SymbolCastToNode(**function_call).AppendChild(std::move(*semicolon));
-
-  // Change kInstantiationType to kReferenceCallBase
-  verible::SyntaxTreeNode& function_call_node =
-      SymbolCastToNode(**function_call);
-  if (function_call_node.children().empty()) return nullptr;
-  verible::SyntaxTreeNode& instantiation_base(verible::CheckSymbolAsNode(
-      *function_call_node.children()[0].get(), NodeEnum::kInstantiationType));
-  SymbolPtr reference_call_base(MakeTaggedNode(NodeEnum::kReferenceCallBase));
-  SymbolPtr new_function_call(MakeTaggedNode(NodeEnum::kFunctionCall));
-  verible::SyntaxTreeNode& rcb_node(SymbolCastToNode(*reference_call_base));
-  verible::SyntaxTreeNode& nfc_node(SymbolCastToNode(*new_function_call));
-
-  auto& children = instantiation_base.mutable_children();
-  for (auto& child : verible::make_range(children.begin(), children.end())) {
-    rcb_node.AppendChild(std::move(child));
-  }
-  nfc_node.AppendChild(std::move(reference_call_base));
-
-  // Add the rest of old kFunctionCall children to new destinations - there are
-  // 3 children in range if they do not match this scheme, something went wrong
-  // and the macro on the call will catch the null and error out
-  std::vector<SymbolPtr>& function_call_children =
-      SymbolCastToNode(**function_call).mutable_children();
-  for (SymbolPtr& child : verible::make_range(
-           function_call_children.begin() + 1, function_call_children.end())) {
-    if (child->Tag().tag == static_cast<int>(NodeEnum::kParenGroup)) {
-      rcb_node.AppendChild(std::move(child));
-      continue;
-    }
-    if (child->Tag().tag == static_cast<int>(NodeEnum::kReference)) {
-      auto& reference_children = SymbolCastToNode(*child).mutable_children();
-      for (auto& inner_child : verible::make_range(reference_children.begin(),
-                                                   reference_children.end())) {
-        rcb_node.AppendChild(std::move(inner_child));
-      }
-      continue;
-    }
-    if (child->Kind() == verible::SymbolKind::kLeaf) {
-      nfc_node.AppendChild(std::move(child));
-      continue;
-    }
-    return nullptr;
-  }
-
-  return new_function_call;
 }
 
 }  // namespace verilog

@@ -69,20 +69,14 @@ verible::SymbolPtr MakeInstantiationBase(T1&& type, T2&& decl_list) {
                                  std::forward<T2>(decl_list));
 }
 
-// Remaps an instantiation and extension based call to resemble
-// proper funciton call strtucture
-verible::SymbolPtr ReshapeExtendedFunctionCallInDataDeclaration(
-    verible::SymbolPtr* function_call, verible::SymbolPtr* semicolon);
-
 // Interface for consistently building a data declaration.
 template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
                                        T3&& semicolon) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   if (inst_base.get()->Tag().tag == (int)NodeEnum::kFunctionCall) {
-    verible::SymbolPtr function_call =
-        ReshapeExtendedFunctionCallInDataDeclaration(&inst_base, &semicolon);
-    if (function_call.get() != nullptr) return function_call;
+    return verible::ExtendNode(std::forward<T2>(inst_base),
+                               std::forward<T3>(semicolon));
   }
   verible::CheckSymbolAsNode(*inst_base.get(), NodeEnum::kInstantiationBase);
   verible::CheckSymbolAsLeaf(*semicolon.get(), ';');

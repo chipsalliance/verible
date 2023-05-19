@@ -1880,7 +1880,6 @@ data_type
     { $$ = std::move($1); }
   | reference
     { $$ = ReinterpretReferenceAsDataTypePackedDimensions($1); }
-    /* { $$ = std::move($1); } */
   ;
 
 interface_type
@@ -2382,7 +2381,6 @@ function_return_type_and_id
                MakeDataType($1), $2, nullptr)); }
   ;
 
-
 function_declaration
   /* This covers both in-line declarations and out-of-line class method
    * declarations.
@@ -2406,7 +2404,7 @@ function_declaration
                                    nullptr, $4, $5, $6, $7, $8); }
   | TK_function lifetime_opt
     function_return_type_and_id ';'
-    statement_or_null_list_opt 
+    statement_or_null_list_opt
     TK_endfunction endfunction_label_opt
     { $$ = MakeFunctionDeclaration(qualifier_placeholder, $1, $2,
                                    ForwardChildren($3),  // expand type id pair
@@ -3515,18 +3513,13 @@ instantiation_type
     { $$ = MakeTaggedNode(N::kInstantiationType, $1); }
   ;
 
-hierarchy_or_call_extension_list
-  : hierarchy_or_call_extension
-    {$$ = MakeTaggedNode(N::kReference, $1); }
-  | hierarchy_or_call_extension_list hierarchy_or_call_extension
-    {$$ = ExtendNode($1, $2); }
-  ;
-
 instantiation_base
-  : instantiation_type gate_instance_or_register_variable_list 
+  : instantiation_type non_anonymous_gate_instance_or_register_variable_list 
     { $$ = MakeInstantiationBase($1, $2); }
-  | instantiation_type call_base hierarchy_or_call_extension_list
-    {$$ = MakeTaggedNode(N::kFunctionCall, $1, $2, $3); }
+  | reference call_base ',' gate_instance_or_register_variable_list
+    {$$ = MakeInstantiationBase(ReinterpretReferenceAsDataTypePackedDimensions($1), ExtendNode($4,$3,$2)); }
+  | reference_or_call_base 
+    {$$ = MakeTaggedNode(N::kFunctionCall,$1); }
   ;
 
 data_declaration_or_module_instantiation
@@ -3536,8 +3529,6 @@ data_declaration_or_module_instantiation
    *   [ data_type | interface_type ] gate_instance_or_register_variable_list ';'
    * to avoid S/R conflict.
    */
-  /* : subroutine_call */
-  /*   {$$ = move($1);} */
   : instantiation_base ';'
     { $$ = MakeDataDeclaration(qualifier_placeholder, $1, $2); }
   | lifetime const_opt instantiation_base ';'
@@ -3573,7 +3564,7 @@ non_anonymous_gate_instance_or_register_variable
   ;
 
 non_anonymous_gate_instance_or_register_variable_list
-  : non_anonymous_gate_instance_or_register_variable_list ',' non_anonymous_gate_instance_or_register_variable
+  : non_anonymous_gate_instance_or_register_variable_list ',' gate_instance_or_register_variable
     { $$ = ExtendNode($1, $2, $3); }
   | non_anonymous_gate_instance_or_register_variable 
     { $$ = MakeTaggedNode(N::kGateInstanceRegisterVariableList, $1); }
@@ -4647,6 +4638,7 @@ reference_or_call_base
     { $$ = MakeTaggedNode(N::kReferenceCallBase, $1, $2); }
   | reference_or_call_base hierarchy_or_call_extension
     { $$ = ExtendNode($1,$2); }
+  ;
 
 reference_or_call
   : reference
@@ -4870,9 +4862,6 @@ function_item
     { $$ = std::move($1); }
   | function_item_data_declaration 
     { $$ = std::move($1); }
-  /* temporarily removed
-  | TK_reg data_type register_variable_list ';'
-  */
   | net_type_declaration
     { $$ = std::move($1); }
   | package_import_declaration
@@ -4939,13 +4928,10 @@ gate_instance_or_register_variable
   /* TODO(b/36706412): support anonymous instances */
   | call_base
     {$$ = MakeTaggedNode(N::kGateInstance, nullptr, nullptr, $1); }
-  //FIXME(jbylicki): This is cursed and it skips the call extension in the tree
   ;
 gate_instance_or_register_variable_list
   : gate_instance_or_register_variable_list ',' gate_instance_or_register_variable
     { $$ = ExtendNode($1, $2, $3); }
-  /* | gate_instance_or_register_variable_list ',' call_base */
-  /*   { $$ = ExtendNode($1, $2, $3); } */
   | gate_instance_or_register_variable
     { $$ = MakeTaggedNode(N::kGateInstanceRegisterVariableList, $1); }
   ;
@@ -5736,7 +5722,7 @@ conditional_generate_construct
            MakeTaggedNode(N::kGenerateElseClause,
                $3,
                MakeTaggedNode(N::kGenerateElseBody, $4))); }
-  | generate_if generate_item %prec less_than_TK_else 
+  | generate_if generate_item %prec less_than_TK_else
     { $$ = MakeTaggedNode(N::kConditionalGenerateConstruct,
              MakeTaggedNode(N::kGenerateIfClause,
                MakeTaggedNode(N::kGenerateIfHeader, $1),

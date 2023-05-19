@@ -548,7 +548,7 @@ TEST(GetIdentifiersFromDataType, GetIdentifier) {
   constexpr int kTag = 1;  // value doesn't matter
   const SyntaxTreeSearchTestCase kTestCases[] = {
       {""},
-      {"function foo();\n  ", {kTag, "test"}, "();\nendfunction"},
+      {"function foo();\n  ", {kTag, "test"}, " bar();\nendfunction"},
       {"function ", {kTag, "void"}, " foo();\nendfunction"},
       {"function foo();\n  ", {kTag, "test"}, " data = foo();\nendfunction"},
   };

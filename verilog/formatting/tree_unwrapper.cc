@@ -984,7 +984,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kFunctionCall: {
-      if (Context().DirectParentIs(NodeEnum::kStatement)) {
+      if (Context().DirectParentIsOneOf(
+              {NodeEnum::kStatement, NodeEnum::kBlockItemStatementList})) {
         VisitIndentedSection(node, 0,
                              PartitionPolicyEnum::kAppendFittingSubPartitions);
       } else {
