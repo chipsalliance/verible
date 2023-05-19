@@ -22,6 +22,9 @@ matrix = []
 with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_bases.txt').open('r') as fptr:
     for items in [line.strip().split(':') for line in fptr.readlines()]:
         for arch in ARCHS:
+            # Temporary workaround until #1926 gets properly resolved
+            if arch == ARCHS[1] and items[0] == "centos":
+                continue
             matrix.append({
                 'os': items[0],
                 'ver': items[1],
