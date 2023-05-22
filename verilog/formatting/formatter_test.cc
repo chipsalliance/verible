@@ -3717,6 +3717,15 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    lbl : y = w;\n"  // TODO(fangism): no space before ':'
      "  endtask\n"
      "endclass\n"},
+    // task with macro call
+    {"module m1;\ntask automatic t1();\n"
+     "t2(`R1(1)+ 8);endtask : t1\nendmodule",
+     "module m1;\n"
+     "  task automatic t1();\n"
+     "    t2(`R1(1) + 8);\n"
+     "  endtask : t1\n"
+     "endmodule\n"},
+
     // tasks with control statements
     {"class c; task automatic waiter;"
      "if (count == 0) begin #0; return;end "
@@ -5564,7 +5573,16 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    x = 2;\n"
      "  end\n"
      "endmodule\n"},
-
+    // Macro calls inside [...]
+    {"module foo;\nlogic [`BAR(1)\n+2] foo;\nendmodule",
+     "module foo;\n"
+     "  logic [`BAR(1)\n"
+     "  +2] foo;\n"
+     "endmodule\n"},
+    {"module foo;\nlogic [`BAR(1)+2] foo;\nendmodule",
+     "module foo;\n"
+     "  logic [`BAR(1)+2] foo;\n"
+     "endmodule\n"},
     {
         // test that alternate top-syntax mode works
         "// verilog_syntax: parse-as-module-body\n"
