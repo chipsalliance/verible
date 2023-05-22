@@ -3514,11 +3514,11 @@ instantiation_type
   ;
 
 instantiation_base
-  : instantiation_type non_anonymous_gate_instance_or_register_variable_list 
+  : instantiation_type non_anonymous_gate_instance_or_register_variable_list
     { $$ = MakeInstantiationBase($1, $2); }
   | reference call_base ',' gate_instance_or_register_variable_list
     {$$ = MakeInstantiationBase(ReinterpretReferenceAsDataTypePackedDimensions($1), ExtendNode($4,$3,$2)); }
-  | reference_or_call_base 
+  | reference_or_call_base
     {$$ = MakeTaggedNode(N::kFunctionCall,$1); }
   ;
 
@@ -3566,7 +3566,7 @@ non_anonymous_gate_instance_or_register_variable
 non_anonymous_gate_instance_or_register_variable_list
   : non_anonymous_gate_instance_or_register_variable_list ',' gate_instance_or_register_variable
     { $$ = ExtendNode($1, $2, $3); }
-  | non_anonymous_gate_instance_or_register_variable 
+  | non_anonymous_gate_instance_or_register_variable
     { $$ = MakeTaggedNode(N::kGateInstanceRegisterVariableList, $1); }
   ;
 
@@ -4634,7 +4634,7 @@ call_base
 
 //separated for chained calls (eg. foo().bar().baz())
 reference_or_call_base
-  : reference call_base 
+  : reference call_base
     { $$ = MakeTaggedNode(N::kReferenceCallBase, $1, $2); }
   | reference_or_call_base hierarchy_or_call_extension
     { $$ = ExtendNode($1,$2); }
@@ -4860,7 +4860,7 @@ function_item_list
 function_item
   : tf_port_declaration
     { $$ = std::move($1); }
-  | function_item_data_declaration 
+  | function_item_data_declaration
     { $$ = std::move($1); }
   | net_type_declaration
     { $$ = std::move($1); }
@@ -5098,7 +5098,7 @@ array_reduction_method
     { $$ = std::move($1); }
   ;
 array_method_with_predicate_opt
-  : array_method_with_predicate 
+  : array_method_with_predicate
     {$$ = std::move($1);}
   | /* empty */
     { $$ = nullptr; }
@@ -5832,7 +5832,7 @@ module_or_generate_item
     { $$ = std::move($1); }
   | gate_instantiation
     { $$ = std::move($1); }
-  | data_declaration_or_module_instantiation 
+  | data_declaration_or_module_instantiation
     { $$ = std::move($1); }
   | net_type_declaration
     { $$ = std::move($1); }
@@ -7092,7 +7092,7 @@ analog_statement
   ;
 /* same as function_item */
 task_item
-  : function_item_data_declaration 
+  : function_item_data_declaration
     { $$ = std::move($1); }
   /* temporarily removed
   | TK_reg data_type register_variable_list ';'
