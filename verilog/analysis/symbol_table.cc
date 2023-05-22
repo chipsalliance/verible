@@ -471,7 +471,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // FindAll* will also catch call arguments inside preprocessing
       // conditionals.
       const size_t num_args = FindAllNamedParams(node).size();
-      reference_branch_point_->Children().reserve(num_args);
+      // In case of an anonymous instance that would be the same point,
+      // so the reserve needs to check the capacity first to add the amount
+      // instead of allocating just the number of places
+      reference_branch_point_->Children().reserve(
+          reference_branch_point_->Children().capacity() + num_args);
     }
     Descend(node);
   }
