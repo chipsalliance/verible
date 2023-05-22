@@ -849,6 +849,7 @@ cc_test(
     deps = [
         ":context-functions",
         ":declaration",
+        ":expression",
         ":match-test-utils",
         ":type",
         "//common/analysis:syntax-tree-search",
