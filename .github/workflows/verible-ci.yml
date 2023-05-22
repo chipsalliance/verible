@@ -590,7 +590,7 @@ jobs:
         run: ./.github/bin/github-pages-setup.sh $VERIBLE_BINDIR
 
       - name: Deployment
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && matrix.mode == 'compile'
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
