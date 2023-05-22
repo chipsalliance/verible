@@ -1109,8 +1109,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                      NodeEnum::kIfBody,
                      NodeEnum::kIfClause,
                  })) &&
-                !(Context().IsInside(NodeEnum::kNetVariableAssignment)  //
-                  ));
+                !(Context().IsInside(NodeEnum::kNetVariableAssignment)) &&
+                !(Context().IsInside(NodeEnum::kUnpackedDimensions)));
       };
 
       // TODO(mglb): Format non-standalone calls with layout optimizer.
