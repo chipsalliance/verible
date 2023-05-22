@@ -6,7 +6,7 @@
 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Continuous Integration](https://github.com/chipsalliance/verible/workflows/verible-ci/badge.svg)](https://github.com/chipsalliance/verible/actions/workflows/verible-ci.yml)
+[![Continuous Integration](https://github.com/chipsalliance/verible/workflows/ci/badge.svg)](https://github.com/chipsalliance/verible/actions/workflows/verible-ci.yml)
 [![codecov](https://codecov.io/gh/chipsalliance/verible/branch/master/graph/badge.svg?token=5f656dpmDT)](https://codecov.io/gh/chipsalliance/verible)
 
 <!--*
@@ -35,7 +35,14 @@ languages.
 
 ### Installation
 
-For simple installation, we provide regular [binary releases].
+For simple installation, we provide regular [binary releases] for Linux and
+Windows, including statically linked binaries for x86 and Arm to run on almost
+any Linux distribution.
+
+There are also some distributions that include Verible
+
+  * [Nix] has binaries for Linux and MacOS for x86 and Arm.
+  * There is a [homebrew] package for MacOS.
 
 If you prefer to build and install the binaries locally yourself, see
 details below in the [Developers](#developers-welcome) section.
@@ -48,7 +55,7 @@ details below in the [Developers](#developers-welcome) section.
 
 We provide a standalone [`verible-verilog-syntax`](./verilog/tools/syntax) tool
 to help with visualizing the syntax structure as understood by the lexer and
-parser. This is very useful tor troubleshooting and understand the internal
+parser. This is very useful for troubleshooting and understand the internal
 representations seen by the other tools.
 
 The tool has an ability of exporting a concrete syntax tree in JSON format,
@@ -184,6 +191,16 @@ syntax checker will be at
 `bazel-bin/verilog/tools/syntax/verible-verilog-syntax` (corresponding to the
 target name `//verilog/tools/syntax:verible-verilog-syntax`).
 
+Moreover, if you need statically linked executables that don't depend on your
+shared libraries, you can use custom config
+`create_static_linked_executables` (with this setting `bfd` linker will be used,
+instead of default `gold` linker).
+
+```bash
+# Generates statically linked executables
+bazel build -c opt --config=create_static_linked_executables //...
+```
+
 ### Optionally using local flex/bison for build
 
 Flex and Bison, that are needed for the parser generation, are compiled as part
@@ -260,3 +277,5 @@ abstract syntax tree (AST) or possibly even provide more higher-level
 [binary releases]: https://github.com/chipsalliance/verible/releases
 [language server protocol]: https://microsoft.github.io/language-server-protocol/
 [UHDM]: https://github.com/chipsalliance/UHDM
+[homebrew]: https://github.com/chipsalliance/homebrew-verible
+[Nix]: https://search.nixos.org/packages?channel=unstable&query=verible

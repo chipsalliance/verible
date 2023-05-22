@@ -6,7 +6,7 @@
 
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Continuous Integration](https://github.com/chipsalliance/verible/workflows/verible-ci/badge.svg)](https://github.com/chipsalliance/verible/actions/workflows/verible-ci.yml)
+[![Continuous Integration](https://github.com/chipsalliance/verible/workflows/ci/badge.svg)](https://github.com/chipsalliance/verible/actions/workflows/verible-ci.yml)
 [![codecov](https://codecov.io/gh/chipsalliance/verible/branch/master/graph/badge.svg?token=5f656dpmDT)](https://codecov.io/gh/chipsalliance/verible)
 
 <!--*
@@ -58,4 +58,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2022-12-09 07:35:11 -0800 from [1b2b9e5c](https://github.com/google/verible/commit/1b2b9e5c1f01ada7b5dbd1d73ff181052c77d527)
+Generated on 2023-05-22 09:48:51 -0700 from [b4bcc55](https://github.com/google/verible/commit/b4bcc5598c9868a572ff2735f44996f12ee6e90a)

@@ -9,7 +9,7 @@ suite.
 ## Command line arguments
 
 ```
-verible-verilog-lint: usage: bazel-bin/verilog/tools/lint/verible-verilog-lint [options] <file> [<file>...]
+verible-verilog-lint: usage: /tmp/verible-bin/verible-verilog-lint [options] <file> [<file>...]
 
   Flags from external/com_google_absl/absl/flags/parse.cc:
     --flagfile (comma-separated list of files to load flags from); default: ;
@@ -160,6 +160,11 @@ Enabled by default: true
 Checks that there are no occurrences of `\` when breaking the string literal line. Use concatenation operator with braces instead. See [Style: forbid-line-continuations].
 
 Enabled by default: true
+
+### forbid-negative-array-dim
+Check for negative constant literals inside array dimensions. See [Style: forbid-negative-array-dim].
+
+Enabled by default: false
 
 ### forbidden-macro
 Checks that no forbidden macro calls are used. See [Style: uvm-logging].
@@ -385,4 +390,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2022-12-09 07:35:11 -0800 from [1b2b9e5c](https://github.com/google/verible/commit/1b2b9e5c1f01ada7b5dbd1d73ff181052c77d527)
+Generated on 2023-05-22 09:48:51 -0700 from [b4bcc55](https://github.com/google/verible/commit/b4bcc5598c9868a572ff2735f44996f12ee6e90a)

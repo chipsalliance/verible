@@ -8,7 +8,7 @@ suite.
 
 ## Command line arguments
 ```
-verible-verilog-format: usage: bazel-bin/verilog/tools/formatter/verible-verilog-format [options] <file> [<file...>]
+verible-verilog-format: usage: /tmp/verible-bin/verible-verilog-format [options] <file> [<file...>]
 To pipe from stdin, use '-' as <file>.
 
   Flags from common/formatting/basic_format_style_init.cc:
@@ -81,6 +81,8 @@ To pipe from stdin, use '-' as <file>.
     --try_wrap_long_lines (If true, let the formatter attempt to optimize line
       wrapping decisions where wrapping is needed, else leave them unformatted.
       This is a short-term measure to reduce risk-of-harm.); default: false;
+    --wrap_end_else_clauses (Split end and else keywords into separate lines);
+      default: false;
 
 
   Flags from verilog/parser/verilog_parser.cc:
@@ -124,4 +126,4 @@ path.
 
 ## Version
 
-Generated on 2022-12-09 07:35:11 -0800 from [1b2b9e5c](https://github.com/google/verible/commit/1b2b9e5c1f01ada7b5dbd1d73ff181052c77d527)
+Generated on 2023-05-22 09:48:51 -0700 from [b4bcc55](https://github.com/google/verible/commit/b4bcc5598c9868a572ff2735f44996f12ee6e90a)
