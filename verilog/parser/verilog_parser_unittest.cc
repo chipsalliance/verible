@@ -6003,11 +6003,6 @@ static const std::initializer_list<ParserTestData> kInvalidCodeTests = {
     {{TK_endprimitive, "endprimitive"}},
     {"//www\n", {TK_endprimitive, "endprimitive"}},
     {"module m;\n"
-     "  foo",
-     {'(', "("},
-     ")\n"
-     "endmodule\n"},
-    {"module m;\n"
      "  if ((",
      {')', ")"},  // empty paren is invalid expression
      "foo());"
@@ -6233,7 +6228,7 @@ static const verible::ErrorRecoveryTestCase kErrorRecoveryTests[] = {
      {NodeTag(kClassDeclaration), NodeTag(kClassItems),
       NodeTag(kCovergroupDeclaration)}},
     {"module m;\n"
-     "  foo();\n"  // invalid syntax, recover from here
+     "  foo;\n"  // invalid syntax, recover from here
      "  wire w;\n"
      "endmodule\n",
      {NodeTag(kModuleDeclaration), NodeTag(kModuleItemList),

@@ -5832,7 +5832,7 @@ module_or_generate_item
     { $$ = std::move($1); }
   | gate_instantiation
     { $$ = std::move($1); }
-  | function_item_data_declaration
+  | data_declaration_or_module_instantiation 
     { $$ = std::move($1); }
   | net_type_declaration
     { $$ = std::move($1); }
