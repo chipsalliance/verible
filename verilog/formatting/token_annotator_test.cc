@@ -2875,7 +2875,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
           DefaultStyle,
           {verilog_tokentype::SymbolIdentifier, "foo"},
           {'(', "("},
-          {/* any context */},
+          {NodeEnum::kGateInstance},
           {NodeEnum::kGateInstance},
           {1, SpacingOptions::kUndecided},
       },

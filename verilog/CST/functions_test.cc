@@ -727,6 +727,25 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
        "task_2();\ntsk",
        {kTag, "(a, b)"},
        ";\nendtask\nendclass"},
+
+      // moved from the extension argument finder since the tree structure is
+      // changed and this method always finds the first calls
+      {"module m();\n initial $display(my_class.function_name",
+       {kTag, "(x, y)"},
+       ");\nendmodule"},
+      {"module m();\n initial "
+       "$display(pkg::my_class.function_name",
+       {kTag, "()"},
+       ");\nendmodule"},
+      {"module m(); endmodule: m"},
+      {"module m();\n initial $display(class_factory",
+       {kTag, "(x, y)"},
+       ".function_name());\nendmodule"},
+      {"module m();\n initial "
+       "$display(pkg::class_factory",
+       {kTag, "()"},
+       ".function_name(foo, bar));\nendmodule"},
+
   };
 
   for (const auto& test : kTestCases) {
@@ -752,11 +771,11 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
   const SyntaxTreeSearchTestCase kTestCases[] = {
       {""},
       {"module m(); endmodule: m"},
-      {"module m();\n initial $display(my_class.function_name",
+      {"module m();\n initial $display(class_factory().function_name",
        {kTag, "(x, y)"},
        ");\nendmodule"},
       {"module m();\n initial "
-       "$display(pkg::my_class.function_name",
+       "$display(pkg::class_factory().function_name",
        {kTag, "()"},
        ");\nendmodule"},
   };

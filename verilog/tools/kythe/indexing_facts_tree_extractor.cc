@@ -874,9 +874,6 @@ void IndexingFactsTreeExtractor::ExtractModuleOrInterfaceOrProgramEnd(
 void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     const SyntaxTreeNode& data_declaration_node,
     const std::vector<TreeSearchMatch>& gate_instances) {
-  IndexingFactNode type_node(
-      IndexingNodeData{IndexingFactType::kDataTypeReference});
-
   // Extract module type name.
   const Symbol* type =
       GetTypeIdentifierFromDataDeclaration(data_declaration_node);
@@ -884,15 +881,57 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
     return;
   }
 
-  // Extract module instance type and parameters.
   type->Accept(this);
-  MoveAndDeleteLastExtractedNode(&type_node);
 
   // Module instantiations (data declarations) may declare multiple instances
   // sharing the same type in a single statement e.g. bar b1(), b2().
-  //
+
+  // Check an edge case first: if there is a data declaration with just type and
+  // paren group, it is most likely a function call, not anonymous module /
+  // primitive instantiation
+  if (gate_instances.size() == 1 &&
+      !GetModuleInstanceNameTokenInfoFromGateInstance(
+          *gate_instances[0].match)) {
+    IndexingFactNode function_node(
+        IndexingNodeData{IndexingFactType::kFunctionCall});
+    {
+      const verible::Symbol* instantiation_base = GetSubtreeAsSymbol(
+          data_declaration_node, NodeEnum::kDataDeclaration, 1);
+      if (!instantiation_base) return;
+      const verible::Symbol* type = GetSubtreeAsSymbol(
+          *instantiation_base, NodeEnum::kInstantiationBase, 0);
+      const verible::Symbol* reference =
+          GetSubtreeAsSymbol(*type, NodeEnum::kInstantiationType, 0);
+      if (reference->Tag().tag == (int)NodeEnum::kReference &&
+          SymbolCastToNode(*reference).children().size() > 1) {
+        const auto& children = SymbolCastToNode(*reference).children();
+        for (auto& child :
+             verible::make_range(children.begin() + 1, children.end())) {
+          if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
+            Visit(verible::SymbolCastToNode(*child));
+          }
+        }
+      }
+    }
+    MoveAndDeleteLastExtractedNode(&function_node);
+    const SyntaxTreeNode* paren_group =
+        GetParenGroupFromModuleInstantiation(*gate_instances[0].match);
+    if (paren_group) {
+      const IndexingFactsTreeContext::AutoPop p(&facts_tree_context_,
+                                                &function_node);
+      Visit(*paren_group);
+    }
+    facts_tree_context_.top().Children().push_back(std::move(function_node));
+    return;
+  }
+  // Extract module instance type and parameters.
+  IndexingFactNode type_node(
+      IndexingNodeData{IndexingFactType::kDataTypeReference});
+  MoveAndDeleteLastExtractedNode(&type_node);
+
   // Loop through each instance and associate each declared id with the same
   // type and create its corresponding facts tree node.
+
   for (const TreeSearchMatch& instance : gate_instances) {
     IndexingFactNode module_instance_node(
         IndexingNodeData{IndexingFactType::kModuleInstance});
@@ -1255,6 +1294,13 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
 
 void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const SyntaxTreeNode& function_call_node) {
+  // check if this node contains an actual call
+  if (!function_call_node.children().empty() &&
+      SymbolCastToNode(*function_call_node.children()[0])
+          .MatchesTagAnyOf({NodeEnum::kReference, NodeEnum::kMacroCall})) {
+    TreeContextVisitor::Visit(function_call_node);
+    return;
+  }
   IndexingFactNode function_node(
       IndexingNodeData{IndexingFactType::kFunctionCall});
 
@@ -1267,6 +1313,26 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
   }
   Visit(*identifier);
 
+  {
+    // These will resolve since `GetIdentifiersFromFunctionCall` would return
+    // nullptr if they were not present and that triggers a return above.
+    const verible::Symbol* reference_call_base = nullptr;
+    reference_call_base =
+        GetSubtreeAsSymbol(function_call_node, NodeEnum::kFunctionCall, 0);
+    const verible::Symbol* reference = GetSubtreeAsSymbol(
+        *reference_call_base, NodeEnum::kReferenceCallBase, 0);
+    if (reference->Tag().tag == (int)NodeEnum::kReference) {
+      if (SymbolCastToNode(*reference).children().size() > 1) {
+        const auto& children = SymbolCastToNode(*reference).children();
+        for (auto& child :
+             verible::make_range(children.begin() + 1, children.end())) {
+          if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
+            Visit(verible::SymbolCastToNode(*child));
+          }
+        }
+      }
+    }
+  }
   // Move the data from the last extracted node to the current node and delete
   // that last node.
   MoveAndDeleteLastExtractedNode(&function_node);

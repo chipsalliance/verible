@@ -28,6 +28,7 @@
 #include "gtest/gtest.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/declaration.h"
+#include "verilog/CST/expression.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -435,7 +436,6 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
 
           std::vector<TreeSearchMatch> inner_types;
           for (const auto& decl : types) {
-            VLOG(1) << "type: " << verible::StringSpanOfSymbol(*decl.match);
             const auto* inner_type =
                 GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
             if (inner_type == nullptr) {
@@ -544,5 +544,57 @@ TEST(GetEnumName, GetEnumNameIdentifier) {
   }
 }
 
+TEST(GetIdentifiersFromDataType, GetIdentifier) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"function foo();\n  ", {kTag, "test"}, " bar();\nendfunction"},
+      {"function ", {kTag, "void"}, " foo();\nendfunction"},
+      {"function foo();\n  ", {kTag, "test"}, " data = foo();\nendfunction"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : instances) {
+            const auto* name = GetIdentifiersFromDataType(*decl.match);
+            names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
+          }
+          return names;
+        });
+  }
+}
+
+TEST(GetLocalRootFromReference, GetLocalRoot) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"function foo();\n  ",
+       {kTag, "x"},
+       " = foo.foo();\n"
+       "endfunction"},
+  };
+  for (const auto& test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+          const auto& root = text_structure.SyntaxTree();
+          const auto& instances =
+              FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> names;
+          for (const auto& decl : instances) {
+            if (ReferenceIsSimpleIdentifier(*decl.match)) {
+              const auto* name = GetLocalRootFromReference(*decl.match);
+              names.emplace_back(
+                  TreeSearchMatch{name, {/* ignored context */}});
+            }
+          }
+          return names;
+        });
+  }
+}
 }  // namespace
 }  // namespace verilog

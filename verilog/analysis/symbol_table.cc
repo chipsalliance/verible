@@ -240,6 +240,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kDataType:
         DescendDataType(node);
         break;
+      case NodeEnum::kReference:
       case NodeEnum::kReferenceCallBase:
         DescendReferenceExpression(node);
         break;
@@ -349,10 +350,14 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
   void DescendReferenceExpression(const SyntaxTreeNode& reference) {
     // capture expressions referenced from the current scope
-    const CaptureDependentReference capture(this);
-
-    // subexpressions' references will be collected before this one
-    Descend(reference);  // no scope change
+    if (!Context().DirectParentIs(NodeEnum::kReferenceCallBase)) {
+      const CaptureDependentReference capture(this);
+      // subexpressions' references will be collected before this one
+      Descend(reference);  // no scope change
+    } else {
+      // subexpressions' references will be collected before this one
+      Descend(reference);  // no scope change
+    }
   }
 
   void DescendExtends(const SyntaxTreeNode& extends) {
@@ -418,6 +423,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
         declaration_type_info_->syntax_origin = &data_type_node;
         // Otherwise, if the type subtree contains no leaves (e.g. implicit or
         // void), then do not assign a syntax origin.
+        // StringSpanOfSymbol(*declaration_type_info_->syntax_origin) <<
+        // std::endl;
       }
 
       const DependentReferences& type_ref(capture.Ref());
@@ -464,7 +471,11 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // FindAll* will also catch call arguments inside preprocessing
       // conditionals.
       const size_t num_args = FindAllNamedParams(node).size();
-      reference_branch_point_->Children().reserve(num_args);
+      // In case of an anonymous instance that would be the same point,
+      // so the reserve needs to check the capacity first to add the amount
+      // instead of allocating just the number of places
+      reference_branch_point_->Children().reserve(
+          reference_branch_point_->Children().capacity() + num_args);
     }
     Descend(node);
   }
@@ -700,6 +711,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // This is set up when traversing references, e.g. types, expressions.
     // All of the code below takes effect inside a CaptureDependentReferences
     // RAII block.
+
+    // FIXME(jbylicki): this is the place where the handling of a and b returns
     if (reference_builders_.empty()) return;
 
     // Building a reference, possible part of a chain or qualified
@@ -823,6 +836,37 @@ class SymbolTable::Builder : public TreeContextVisitor {
            unqualified_id;
   }
 
+  bool ExtendedCallIsLast() const {
+    const SyntaxTreeNode* reference_call_base =
+        Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
+    if (reference_call_base == nullptr) return false;
+    for (auto& child : reference_call_base->children()) {
+      if (SymbolCastToNode(*child).MatchesTagAnyOf(
+              {NodeEnum::kHierarchyExtension})) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool UnextendedCall() const {
+    const SyntaxTreeNode* rcb =
+        Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
+    if (rcb == nullptr) return false;
+    for (auto& reference : rcb->children()) {
+      if (reference && SymbolCastToNode(*reference)
+                           .MatchesTagAnyOf({NodeEnum::kReference})) {
+        for (auto& child : SymbolCastToNode(*reference).children()) {
+          if (SymbolCastToNode(*child).MatchesTagAnyOf(
+                  {NodeEnum::kHierarchyExtension})) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   // Does the context necessitate that the symbol being referenced have a
   // particular metatype?
   SymbolMetaType InferMetaType() const {
@@ -861,15 +905,29 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     if (Context().DirectParentsAre({NodeEnum::kUnqualifiedId,
-                                    NodeEnum::kLocalRoot,
+                                    NodeEnum::kLocalRoot, NodeEnum::kReference,
+                                    NodeEnum::kReferenceCallBase,
                                     NodeEnum::kFunctionCall})) {
       // bare call like "function_name(...)"
-      return SymbolMetaType::kCallable;
+      if (UnextendedCall()) return SymbolMetaType::kCallable;
     }
 
     if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kHierarchyExtension,
+             NodeEnum::kReference, NodeEnum::kReferenceCallBase,
+             NodeEnum::kFunctionCall})) {
+      if (ExtendedCallIsLast()) return SymbolMetaType::kCallable;
+    }
+
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kMethodCallExtension,
+             NodeEnum::kReferenceCallBase, NodeEnum::kFunctionCall})) {
+      return SymbolMetaType::kCallable;
+    }
+    if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kQualifiedId,
-             NodeEnum::kLocalRoot, NodeEnum::kFunctionCall})) {
+             NodeEnum::kLocalRoot, NodeEnum::kReference,
+             NodeEnum::kReferenceCallBase, NodeEnum::kFunctionCall})) {
       // qualified call like "pkg_or_class::function_name(...)"
       // Only the last component needs to be callable.
       if (QualifiedIdComponentInLastPosition()) {
@@ -879,7 +937,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     if (Context().DirectParentsAre(
-            {NodeEnum::kUnqualifiedId, NodeEnum::kMethodCallExtension})) {
+            {NodeEnum::kUnqualifiedId, NodeEnum::kHierarchyExtension,
+             NodeEnum::kReference, NodeEnum::kReferenceCallBase})) {
       // method call like "obj.method_name(...)"
       return SymbolMetaType::kCallable;
       // TODO(fangism): check that method is non-static

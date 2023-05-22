@@ -113,24 +113,40 @@ TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
       {ExpressionHasFunctionCall(), EmbedInClassMethod("bar::foo();"), 1},
       {ExpressionHasFunctionCall(), EmbedInClassMethod("x = bar::foo();"), 1},
       // This is a method call, different from a function call:
-      {ExpressionHasFunctionCall(), EmbedInClassMethod("bar.foo();"), 0},
-      {ExpressionHasFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
+      {ExpressionHasFunctionCallNode(FunctionCallHasHierarchyExtension(),
+                                     FunctionCallHasParenGroup()),
+       EmbedInClassMethod("bar.foo();"), 1},
+      {ExpressionHasFunctionCallNode(FunctionCallHasHierarchyExtension(),
+                                     FunctionCallHasParenGroup()),
+       EmbedInClassMethod("x = bar.foo();"), 1},
   };
   for (const auto& test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
 
-// Tests for ExpressionHasRandomizeCallExtension matching
-TEST(VerilogMatchers, ExpressionHasRandomizeCallExtensionTests) {
+TEST(VerilogMatchers, NonCallExpressionHasRandomizeCallExtensionTests) {
   const RawMatcherTestCase tests[] = {
-      {ExpressionHasRandomizeCallExtension(),
+      {NonCallHasRandomizeCallExtension(),
+       EmbedInClassMethod("foo.randomize();"), 1},
+      {NonCallHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
+      {NonCallHasRandomizeCallExtension(), EmbedInClassMethod("randomize();"),
+       0},
+      {NonCallHasRandomizeCallExtension(), EmbedInClass(""), 0},
+      {NonCallHasRandomizeCallExtension(), "", 0},
+  };
+  for (const auto& test : tests) {
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+  }
+}
+TEST(VerilogMatchers, CallExpressionHasRandomizeCallExtensionTests) {
+  const RawMatcherTestCase tests[] = {
+      {CallHasRandomizeCallExtension(),
        EmbedInClassMethod("foo().randomize();"), 1},
-      {ExpressionHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
-      {ExpressionHasRandomizeCallExtension(),
-       EmbedInClassMethod("randomize();"), 0},
-      {ExpressionHasRandomizeCallExtension(), EmbedInClass(""), 0},
-      {ExpressionHasRandomizeCallExtension(), "", 0},
+      {CallHasRandomizeCallExtension(), EmbedInClassMethod("foo;"), 0},
+      {CallHasRandomizeCallExtension(), EmbedInClassMethod("randomize();"), 0},
+      {CallHasRandomizeCallExtension(), EmbedInClass(""), 0},
+      {CallHasRandomizeCallExtension(), "", 0},
   };
   for (const auto& test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
@@ -622,7 +638,7 @@ TEST(VerilogMatchers, RValueIsFunctionCallTest) {
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo(a);"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x.y = bar::foo(a);"), 1},
-      {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 0},
+      {RValueIsFunctionCall(), EmbedInClassMethod("x = bar.foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("z = pkg::bar::foo();"), 1},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo() -12;"), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = a + bar::foo();"), 0},

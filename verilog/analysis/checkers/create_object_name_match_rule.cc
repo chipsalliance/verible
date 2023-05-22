@@ -75,7 +75,7 @@ const LintRuleDescriptor& CreateObjectNameMatchRule::GetDescriptor() {
 static const Matcher& CreateAssignmentMatcher() {
   // function-local static to avoid initialization-ordering problems
   static const Matcher matcher(NodekNetVariableAssignment(
-      PathkLPValue(PathkReferenceCallBase().Bind("lval_ref")),
+      PathkLPValue(PathkReference().Bind("lval_ref")),
       RValueIsFunctionCall(FunctionCallIsQualified().Bind("func"),
                            FunctionCallArguments().Bind("args"))));
   return matcher;
@@ -188,6 +188,7 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
 
   const auto* lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
   if (lval_ref == nullptr) return;
+
   const TokenInfo* lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
   if (lval_id == nullptr) return;
   if (lval_id->token_enum() != SymbolIdentifier) return;

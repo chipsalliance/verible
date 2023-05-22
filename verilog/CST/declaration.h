@@ -74,6 +74,10 @@ template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeDataDeclaration(T1&& qualifiers, T2&& inst_base,
                                        T3&& semicolon) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
+  if (inst_base.get()->Tag().tag == (int)NodeEnum::kFunctionCall) {
+    return verible::ExtendNode(std::forward<T2>(inst_base),
+                               std::forward<T3>(semicolon));
+  }
   verible::CheckSymbolAsNode(*inst_base.get(), NodeEnum::kInstantiationBase);
   verible::CheckSymbolAsLeaf(*semicolon.get(), ';');
   return verible::MakeTaggedNode(

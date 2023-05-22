@@ -155,7 +155,16 @@ inline constexpr auto VoidcastHasExpression =
 //   x = foo();
 //
 inline constexpr auto ExpressionHasFunctionCall =
-    verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kFunctionCall));
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kParenGroup));
+
+inline constexpr auto ExpressionHasFunctionCallNode =
+    verible::matcher::MakePathMatcher(N(kFunctionCall));
+inline constexpr auto FunctionCallHasHierarchyExtension =
+    verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kReference),
+                                      N(kHierarchyExtension));
+inline constexpr auto FunctionCallHasParenGroup =
+    verible::matcher::MakePathMatcher(N(kReferenceCallBase), N(kParenGroup));
 
 // Matches a randomize call extension, or a call to an object's randomize
 // method contained within an expression.
@@ -165,8 +174,15 @@ inline constexpr auto ExpressionHasFunctionCall =
 // matches
 //   result = obj.randomize();
 //
+inline constexpr auto NonCallHasRandomizeCallExtension =
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReference),
+                                      N(kRandomizeMethodCallExtension));
+inline constexpr auto CallHasRandomizeCallExtension =
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kRandomizeMethodCallExtension));
 inline constexpr auto ExpressionHasRandomizeCallExtension =
-    verible::matcher::MakePathMatcher(N(kReferenceCallBase),
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kReference),
                                       N(kRandomizeMethodCallExtension));
 
 // Matches a randomize function call contained within an expression.
@@ -191,6 +207,10 @@ inline constexpr auto UnqualifiedReferenceHasId =
     verible::matcher::MakePathMatcher(N(kLocalRoot), N(kUnqualifiedId),
                                       L(SymbolIdentifier));
 inline constexpr auto FunctionCallHasId = UnqualifiedReferenceHasId;
+
+inline constexpr auto ExpressionHasReference =
+    verible::matcher::MakePathMatcher(N(kFunctionCall), N(kReferenceCallBase),
+                                      N(kReference));
 
 // Matches if the WIDTH in "WIDTH 'BASE DIGITS" is a constant (decimal).
 //
@@ -343,7 +363,7 @@ inline constexpr auto HasGenerateBlock =
 //   ... = zz::bar(...);
 //
 inline constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
-    N(kExpression), N(kReferenceCallBase), N(kFunctionCall));
+    N(kExpression), N(kFunctionCall), N(kReferenceCallBase));
 
 // Matches a function call if it is qualified.
 // For instance, matches:
@@ -355,7 +375,8 @@ inline constexpr auto RValueIsFunctionCall = verible::matcher::MakePathMatcher(
 //   bar(...);
 //
 inline constexpr auto FunctionCallIsQualified =
-    verible::matcher::MakePathMatcher(N(kLocalRoot), N(kQualifiedId));
+    verible::matcher::MakePathMatcher(N(kReference), N(kLocalRoot),
+                                      N(kQualifiedId));
 
 // Matches the arguments of a function call.
 // For instance, matches "a", "b", "c" (including commas) of:

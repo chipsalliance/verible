@@ -198,7 +198,6 @@ TEST(UvmMacroSemicolonRule, WrongUvmMacroTest) {
        "`uvm_fatal(\"msg_id\",\"message\")",
        {kToken, ";"},
        "endfunction\n"},
-
       {"task t();"
        "`uvm_info(\"msg_id\",\"message\", UVM_LOW)",
        {kToken, ";"},
