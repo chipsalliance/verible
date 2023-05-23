@@ -32,6 +32,8 @@ To pipe from stdin, use '-' as <file>.
       operator.); default: 4;
 
   Flags from verilog/formatting/format_style_init.cc:
+    --always_wrap_module_instantiations (Always split module instantiation's
+      parameters and ports to new lines); default: false;
     --assignment_statement_alignment (Format various assignments:
       {align,flush-left,preserve,infer}); default: infer;
     --case_items_alignment (Format case items:
