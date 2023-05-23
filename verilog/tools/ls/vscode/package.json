@@ -37,6 +37,14 @@
           "default": "verible-verilog-ls",
           "scope": "machine-overridable",
           "description": "The path to verible-verilog-ls executable, e.g.: /usr/bin/verible-verilog-ls."
+        },
+        "verible.arguments": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments for verible-verilog-ls server."
         }
       }
     }
