@@ -5577,7 +5577,7 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {"module foo;\nlogic [`BAR(1)\n+2] foo;\nendmodule",
      "module foo;\n"
      "  logic [`BAR(1)\n"
-     "  +2] foo;\n"
+     "+2] foo;\n"
      "endmodule\n"},
     {"module foo;\nlogic [`BAR(1)+2] foo;\nendmodule",
      "module foo;\n"

@@ -1126,6 +1126,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         PushContextHint(ContextHint::kInsideStandaloneMacroCall);
         VisitIndentedSection(node, indent, PartitionPolicyEnum::kStack);
       } else {
+        // TODO(jbylicki): Check if there is a possibility of
+        // using kFitOnLineElseExpand - seems to have no effect
         VisitIndentedSection(node, indent,
                              PartitionPolicyEnum::kAppendFittingSubPartitions);
       }

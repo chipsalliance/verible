@@ -441,7 +441,7 @@ static WithReason<int> SpacesRequiredBetween(
     if (InRangeLikeContext(right_context)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
-        // If ExcessSpaces returns 0 if there was a newline - prevents
+        // ExcessSpaces returns 0 if there was a newline - prevents
         // counting indentation as spaces
         spaces = right.ExcessSpaces() ? 1 : 0;
       }
@@ -883,7 +883,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (!IsComment(FormatTokenType(right.format_token_enum)) &&
-        !IsAnySemicolon(right)) {
+        !IsAnySemicolon(right) && !InRangeLikeContext(left_context)) {
       return {SpacingOptions::kMustWrap,
               "Macro-closing ')' should end its own line except for comments "
               "nad ';'."};
