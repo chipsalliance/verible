@@ -137,6 +137,36 @@ TEST(InstanceShadowingTest, FunctionFailures) {
       kInstanceShadowingTestCases);
 }
 
+TEST(InstanceShadowingTest, CorrectLocationTest) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kInstanceShadowingTestCases = {
+      {"module ", {kToken, "foo"}, "; logic foo;\n endmodule:foo;"},
+      {"module foo; logic ", {kToken, "a"}, "; logic a; endmodule:foo;"},
+  };
+  auto rule_generator = [&]() -> std::unique_ptr<InstanceShadowRule> {
+    std::unique_ptr<InstanceShadowRule> instance(new InstanceShadowRule());
+    absl::Status config_status = instance->Configure("");
+    CHECK(config_status.ok()) << config_status.message();
+    return instance;
+  };
+  for (const auto& test : kInstanceShadowingTestCases) {
+    VerilogAnalyzer analyzer(test.code, "<<inline-test>>");
+    absl::Status unused_parser_status = analyzer.Analyze();
+    verible::SyntaxTreeLinter linter_;
+    linter_.AddRule(rule_generator());
+    linter_.Lint(*ABSL_DIE_IF_NULL(analyzer.Data().SyntaxTree()));
+    CHECK_EQ(linter_.ReportStatus().size(), 1);
+    const auto& violations(std::move(linter_.ReportStatus()[0].violations));
+    CHECK_EQ(violations.size(), 1);
+
+    // Report detailed differences, if any.
+    const absl::string_view base_text = analyzer.Data().Contents();
+    absl::string_view foo = test.FindImportantTokens(base_text)[0].text();
+    absl::string_view bar = violations.begin()->token.text();
+    ASSERT_TRUE(foo == bar);
+  }
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog
