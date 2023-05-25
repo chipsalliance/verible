@@ -10,11 +10,12 @@ async function initLanguageClient() {
     const config = vscode.workspace.getConfiguration('verible');
     const binary_path: string = await checkAndDownloadBinaries(config.get('path') as string, output);
 
-    const clangd: vscodelc.Executable = {
-        command: binary_path
+    const verible_ls: vscodelc.Executable = {
+        command: binary_path,
+        args: await config.get<string[]>('arguments')
     };
 
-    const serverOptions: vscodelc.ServerOptions = clangd;
+    const serverOptions: vscodelc.ServerOptions = verible_ls;
 
     // Options to control the language client
     const clientOptions: vscodelc.LanguageClientOptions = {

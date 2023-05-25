@@ -334,3 +334,21 @@ code --install-extension verible.vsix
 ```
 
 [release]: https://github.com/chipsalliance/verible/releases
+
+#### Configuring Language Server arguments
+
+To configure the extension, in Extensions list select Verible, and select `Extension Settings`.
+In there you can find an `Arguments` setting, where you can add command-line arguments for `verible-verilog-ls` executable, e.g.:
+
+* `--rules_config_search` - search recursively for linter configuration, starting from edited file's directory.
+* `--rules_config="<path-to-config>"` - use linter configuration in a specified path
+* `--wrap_end_else_clauses` - splits `end else` into separate lines.
+* `--indentation_spaces=4` - indent width specified for the formatter.
+
+There should be one flag per item.
+
+For more language server options, check:
+
+```bash
+verible-verilog-ls --helpfull
+```
