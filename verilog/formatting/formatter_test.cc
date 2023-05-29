@@ -5583,6 +5583,17 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "module foo;\n"
      "  logic [`BAR(1)+2] foo;\n"
      "endmodule\n"},
+    {"module foo ();\n  function bar();\n    "
+     "logic [12:34] data[`AAAAAAAAAAAAAAAAAAAAAAAA(1) : "
+     "`BBBBBBBBBBBBBBBBBBBBBBBB(2) + 3];\n  "
+     "endfunction\nendmodule",
+     "module foo ();\n"
+     "  function bar();\n"
+     "    logic [12:34] data[\n"
+     "    `AAAAAAAAAAAAAAAAAAAAAAAA(1) :\n"
+     "    `BBBBBBBBBBBBBBBBBBBBBBBB(2) + 3];\n"
+     "  endfunction\n"
+     "endmodule\n"},
     {
         // test that alternate top-syntax mode works
         "// verilog_syntax: parse-as-module-body\n"

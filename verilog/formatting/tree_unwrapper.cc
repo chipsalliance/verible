@@ -842,7 +842,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCovergroupHeader:
     case NodeEnum::kModportDeclaration:
     case NodeEnum::kInstantiationType:
-    case NodeEnum::kRegisterVariable:
     case NodeEnum::kVariableDeclarationAssignment:
     case NodeEnum::kCaseItem:
     case NodeEnum::kDefaultItem:
@@ -862,6 +861,16 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kAssumePropertyClause:
     case NodeEnum::kExpectPropertyClause: {
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
+      break;
+    }
+    case NodeEnum::kRegisterVariable: {
+      if (node.children().size() > 1) {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kAppendFittingSubPartitions);
+      } else {
+        VisitIndentedSection(node, 0,
+                             PartitionPolicyEnum::kFitOnLineElseExpand);
+      }
       break;
     }
 
@@ -3119,6 +3128,36 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       FlattenOnlyChildrenWithChildren(partition);
       AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+      break;
+    }
+
+    case NodeEnum::kRegisterVariable:
+    case NodeEnum::kInstantiationType: {
+      size_t partition_size = partition.Children().size();
+      if (partition_size >= 4) {
+        auto subnode = verible::GetSubtreeAsNode(node, tag, 0);
+        if (!subnode) {
+          subnode = verible::GetSubtreeAsNode(node, tag, 1);
+          if (!subnode || subnode->Tag().tag !=
+                              static_cast<int>(NodeEnum::kUnpackedDimensions)) {
+            break;
+          }
+        } else {
+          subnode = verible::GetSubtreeAsNode(*subnode, subnode->Tag().tag, 3);
+          if (!subnode || subnode->Tag().tag !=
+                              static_cast<int>(NodeEnum::kPackedDimensions)) {
+            break;
+          }
+        }
+        auto& colon = partition.Children()[partition_size - 3];
+        if (colon.Value().TokensRange().begin()->Text() != ":") break;
+        AttachSeparatorToPreviousOrNextPartition(&colon);
+        verible::MergeLeafIntoPreviousLeaf(
+            &partition.Children()[partition_size - 2]);
+        verible::FlattenOneChild(partition, partition_size - 3);
+        verible::MergeLeafIntoPreviousLeaf(
+            &partition.Children()[partition_size - 2]);
+      }
       break;
     }
 

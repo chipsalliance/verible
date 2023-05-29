@@ -161,18 +161,6 @@ static WithReason<int> SpacesRequiredBetween(
             "and \"{y}\" over \"{ y }\"."};
   }
 
-  // For now, leave everything inside [dimensions] alone.
-  if (InDeclaredDimensions(right_context)) {
-    // ... except for the spacing before '[' and around ':',
-    // which are covered elsewhere.
-    if (right.TokenEnum() != '[' && left.TokenEnum() != ':' &&
-        right.TokenEnum() != ':') {
-      return {kUnhandledSpacesRequired,
-              "Leave [expressions] inside scalar and range dimensions alone "
-              "(for now)."};
-    }
-  }
-
   // Unary operators (context-sensitive)
   if (IsUnaryPrefixExpressionOperand(left, right_context) &&
       (left.format_token_enum != FormatTokenType::binary_operator ||
