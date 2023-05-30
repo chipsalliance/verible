@@ -338,7 +338,10 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
       std::make_unique<InMemoryVerilogSourceFile>(
           resolved_filename, std::make_shared<verible::StringMemBlock>(content),
           /*corpus=*/""));
-  CHECK(inserted.second);
+  if (!inserted.second) {
+    LOG(WARNING) << "The virtual file " << resolved_filename
+                 << " is already registered with the project!";
+  }
 }
 
 const VerilogSourceFile* VerilogProject::LookupFileOrigin(
