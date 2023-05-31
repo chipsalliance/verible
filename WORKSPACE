@@ -50,15 +50,11 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],
 )
 
-# Googletest
-# This requires RE2.
-# Note this must use a commit from the `abseil` branch of the RE2 project.
-# https://github.com/google/re2/tree/abseil
 http_archive(
     name = "com_googlesource_code_re2",
-    sha256 = "2adb78cf4fafccaf3b2accef15389a279b1451a7fdf65529c866166b6d6ed9f1",
-    strip_prefix = "re2-215bf4aa0bdc081862590463bc98a00bb2be48f2",
-    urls = ["https://github.com/google/re2/archive/215bf4aa0bdc081862590463bc98a00bb2be48f2.zip"],  # 2022-08-09
+    sha256 = "8b4a8175da7205df2ad02e405a950a02eaa3e3e0840947cd598e92dca453199b",
+    strip_prefix = "re2-2023-06-01",
+    urls = ["https://github.com/google/re2/archive/refs/tags/2023-06-01.tar.gz"],
 )
 
 http_archive(
