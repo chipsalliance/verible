@@ -720,8 +720,41 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         }
         break;
       }
-      case NodeEnum::kDimensionRange:
-      case NodeEnum::kDimensionScalar:
+      case NodeEnum::kDeclarationDimensions: {
+        if (current_path_ == SyntaxTreePath{1, 0, 3, 0}) {
+          SyntaxTreePath new_path{1, 0, 3};
+          const ValueSaver<SyntaxTreePath> path_saver(&current_path_, new_path);
+          TreeContextPathVisitor::Visit(node);
+          return;
+        }
+        break;
+      }
+      case NodeEnum::kDimensionScalar: {
+        CHECK_EQ(node.children().size(), 3);
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
+
+        ReserveNewColumn(column, *node[0], FlushLeft);   // '['
+        ReserveNewColumn(column, *node[1], FlushRight);  // value
+        ReserveNewColumn(column, *node[2], FlushLeft);   // ']'
+        return;
+      }
+      case NodeEnum::kDimensionRange: {
+        CHECK_EQ(node.children().size(), 5);
+        auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushRight));
+
+        // The value returned from this call can be used to
+        // center the ranges instead of right-align which
+        // was the correct way according to tests
+        ReserveNewColumn(column, *node[0], FlushLeft);  // '['
+
+        ReserveNewColumn(column, *node[1], FlushRight);
+        ReserveNewColumn(*node[1], FlushRight);  // LHS value
+        ReserveNewColumn(*node[2], FlushLeft);   // ':'
+        ReserveNewColumn(*node[3], FlushLeft);   // RHS value
+
+        ReserveNewColumn(column, *node[4], FlushLeft);  // ']'
+        return;
+      }
       case NodeEnum::kDimensionSlice:
       case NodeEnum::kDimensionAssociativeType: {
         // all of these cases cover packed and unpacked dimensions
@@ -771,22 +804,6 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
     }
     const int tag = leaf.get().token_enum();
     switch (tag) {
-      // For now, treat [...] as a single column per dimension.
-      case '[': {
-        if (ContextAtDeclarationDimensions()) {
-          // FlushLeft vs. Right doesn't matter, this is a single character.
-          ReserveNewColumn(leaf, FlushLeft);
-          new_column_after_open_bracket_ = true;
-        }
-        break;
-      }
-      case ']': {
-        if (ContextAtDeclarationDimensions()) {
-          // FlushLeft vs. Right doesn't matter, this is a single character.
-          ReserveNewColumn(leaf, FlushLeft);
-        }
-        break;
-      }
       // TODO(b/70310743): Treat "[...:...]" as 5 columns.
       // Treat "[...]" (scalar) as 3 columns.
       // TODO(b/70310743): Treat the ... as a multi-column cell w.r.t.
