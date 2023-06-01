@@ -339,8 +339,10 @@ void VerilogProject::AddVirtualFile(absl::string_view resolved_filename,
           resolved_filename, std::make_shared<verible::StringMemBlock>(content),
           /*corpus=*/""));
   if (!inserted.second) {
+    const bool same_content = inserted.first->second->GetContent() == content;
     LOG(WARNING) << "The virtual file " << resolved_filename
-                 << " is already registered with the project!";
+                 << " is already registered with the project (with "
+                 << (same_content ? "same" : "different") << " content)";
   }
 }
 
