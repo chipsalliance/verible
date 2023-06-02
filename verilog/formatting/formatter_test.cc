@@ -8241,6 +8241,17 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "                   // D.1\n"
      ");\n"
      "endmodule : foo\n"},
+    // user defined type alignment
+    {
+        "module foo();\n"
+        "  logic [5:0][5:0] net_c;\n"
+        " messy_type_name [1:0] net_e;\n"
+        "endmodule\n",
+        "module foo ();\n"
+        "  logic           [5:0][5:0] net_c;\n"
+        "  messy_type_name [1:0]      net_e;\n"
+        "endmodule\n",
+    },
     // Continuation comment's original starting column is allowed to differ from
     // starting comment's original starting column at most by 1.
     // Starting column of comments B and C will change after formatting.
