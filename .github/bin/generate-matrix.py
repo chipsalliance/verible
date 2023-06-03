@@ -23,7 +23,7 @@ with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_b
     for items in [line.strip().split(':') for line in fptr.readlines()]:
         for arch in ARCHS:
             # Temporary workaround until #1926 gets properly resolved
-            if arch == ARCHS[1] and items[0] == "centos":
+            if not (arch == ARCHS[1] and items[0] == "centos"):
                 continue
             matrix.append({
                 'os': items[0],
@@ -32,12 +32,12 @@ with (Path(__file__).parent.resolve().parent.parent / 'releasing' / 'supported_b
                 'link': 'dynamic',
             })
 
-for arch in ARCHS:
-    matrix.append({
-        'os': 'ubuntu',
-        'ver': 'jammy',
-        'arch': arch,
-        'link': 'static',
-    })
+# for arch in ARCHS:
+#     matrix.append({
+#         'os': 'ubuntu',
+#         'ver': 'jammy',
+#         'arch': arch,
+#         'link': 'static',
+#     })
 
 print('::set-output name=matrix::' + str(matrix))
