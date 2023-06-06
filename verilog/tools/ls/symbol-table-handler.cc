@@ -16,6 +16,7 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 #include <filesystem>
+#include <map>
 
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
@@ -327,7 +328,11 @@ std::vector<verible::lsp::Range> SymbolTableHandler::FindRenameLocations(
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) return {};
+  std::optional<verible::lsp::Location> location =
+      GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
+  if (!location) return {};
   std::vector<verible::lsp::Location> locations;
+  locations.push_back(location.value());
   std::vector<verible::lsp::Range> ranges;
   CollectReferences(&root, node, &locations);
   if (locations.empty()) return {};
@@ -342,29 +347,40 @@ verible::lsp::WorkspaceEdit
 SymbolTableHandler::FindRenameLocationsAndCreateEdits(
     const verible::lsp::RenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
+  if (files_dirty_) {
+    BuildProjectSymbolTable();
+  }
   Prepare();
   absl::string_view symbol =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
   if (!node) return {};
+  std::optional<verible::lsp::Location> location =
+      GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
+  if (!location) return {};
   std::vector<verible::lsp::Location> locations;
+  locations.push_back(location.value());
   std::vector<verible::lsp::TextEdit> textedits;
   CollectReferences(&root, node, &locations);
   if (locations.empty()) return {};
-  textedits.reserve(locations.size());
+  std::map<absl::string_view, std::vector<verible::lsp::TextEdit>> file_edit_pairs;
+  for(auto& loc: locations) {
+    file_edit_pairs[loc.uri].reserve(locations.size());
+  }
   for (auto &loc : locations) {
-    textedits.push_back(verible::lsp::TextEdit({
+    file_edit_pairs[loc.uri].push_back(verible::lsp::TextEdit({
         .range = loc.range,
         .newText = params.newName,
     }));
   }
   files_dirty_ = true;
-  return verible::lsp::WorkspaceEdit{
-      .changes = {{locations[0].uri, textedits}},
+  verible::lsp::WorkspaceEdit edit = verible::lsp::WorkspaceEdit{
+      .changes = {},
   };
+  edit.changes = file_edit_pairs;
+  return edit;
 }
-
 void SymbolTableHandler::CollectReferencesReferenceComponents(
     const ReferenceComponentNode *ref, const SymbolTableNode *ref_origin,
     const SymbolTableNode *definition_node,
