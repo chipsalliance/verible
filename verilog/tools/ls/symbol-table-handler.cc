@@ -338,7 +338,7 @@ std::vector<verible::lsp::Range> SymbolTableHandler::FindRenameLocations(
   if (locations.empty()) return {};
   ranges.reserve(locations.size());
   for (auto &loc : locations) {
-    ranges.push_back(loc.range);
+    if(loc.uri == params.textDocument.uri) ranges.push_back(loc.range);
   }
   return ranges;
 }
