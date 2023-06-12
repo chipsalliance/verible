@@ -1466,7 +1466,7 @@ struct RenameRequestParams {
   int line;
   int character;
 };
-  
+
 std::string RenameRequest(RenameRequestParams params) {
   json renamerq = {
 
@@ -1475,15 +1475,16 @@ std::string RenameRequest(RenameRequestParams params) {
       {"method", "textDocument/rename"},
       {"params",
        {
-        {"textDocument",
-         {
-             {"uri", params.file},
-         }},
-        {"position",{{"line", params.line},
-               {"character", params.character}},
-             },
-        {"newName",params.newName},
-      }}};
+           {"textDocument",
+            {
+                {"uri", params.file},
+            }},
+           {
+               "position",
+               {{"line", params.line}, {"character", params.character}},
+           },
+           {"newName", params.newName},
+       }}};
   return renamerq.dump();
 }
 std::string PrepareRenameRequest(RenameRequestParams params) {
@@ -1494,15 +1495,16 @@ std::string PrepareRenameRequest(RenameRequestParams params) {
       {"method", "textDocument/prepareRename"},
       {"params",
        {
-        {"textDocument",
-         {
-             {"uri", params.file},
-         }},
-        {"position",{{"line", params.line},
-               {"character", params.character}},
-             },
-        {"newName",params.newName},
-      }}};
+           {"textDocument",
+            {
+                {"uri", params.file},
+            }},
+           {
+               "position",
+               {{"line", params.line}, {"character", params.character}},
+           },
+           {"newName", params.newName},
+       }}};
   return renamerq.dump();
 }
 
@@ -1512,11 +1514,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
   RenameRequestParams params;
   params.line = 2;
   params.character = 1;
-  params.file = "file://"+root_dir+"/fmt.sv";
+  params.file = "file://" + root_dir + "/fmt.sv";
   params.newName = "foo";
   params.id = 1;
-  const std::string mini_module = DidOpenRequest(
-      params.file, "module fmt();\nfunction automatic bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
+  const std::string mini_module =
+      DidOpenRequest(params.file,
+                     "module fmt();\nfunction automatic "
+                     "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());
@@ -1531,8 +1535,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
   ASSERT_OK(SendRequest(request));
 
   const json response = json::parse(GetResponse());
-  EXPECT_EQ(response["result"].size(), 3)
-      << "Invalid result size for id:  ";
+  EXPECT_EQ(response["result"]["start"]["line"], 2)
+      << "Invalid result for id:  ";
+  EXPECT_EQ(response["result"]["start"]["character"], 0)
+      << "Invalid result for id:  ";
+  EXPECT_EQ(response["result"]["end"]["line"], 2) << "Invalid result for id:  ";
+  EXPECT_EQ(response["result"]["end"]["character"], 3)
+      << "Invalid result for id:  ";
 }
 
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
@@ -1540,11 +1549,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   RenameRequestParams params;
   params.line = 2;
   params.character = 1;
-  params.file = "file://"+root_dir+"/fmt.sv";
+  params.file = "file://" + root_dir + "/fmt.sv";
   params.newName = "foo";
   params.id = 2;
-  const std::string mini_module = DidOpenRequest(
-      params.file, "module fmt();\nfunction automatic bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
+  const std::string mini_module =
+      DidOpenRequest(params.file,
+                     "module fmt();\nfunction automatic "
+                     "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());
@@ -1559,6 +1570,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   ASSERT_OK(SendRequest(request));
 
   const json response = json::parse(GetResponse());
+  std::cout << response << std::endl;
   EXPECT_EQ(response["result"]["changes"].size(), 1)
       << "Invalid result size for id:  ";
   EXPECT_EQ(response["result"]["changes"][params.file].size(), 3)

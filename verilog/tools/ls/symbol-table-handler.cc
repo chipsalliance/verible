@@ -246,6 +246,29 @@ absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
   return cursor_token.text();
 }
 
+verible::LineColumnRange
+SymbolTableHandler::GetTokenRangeAtTextDocumentPosition(
+    const verible::lsp::TextDocumentPositionParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  const verilog::BufferTracker *tracker =
+      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
+  if (!tracker) {
+    VLOG(1) << "Could not find buffer with URI " << params.textDocument.uri;
+    return {};
+  }
+  std::shared_ptr<const ParsedBuffer> parsedbuffer = tracker->current();
+  if (!parsedbuffer) {
+    VLOG(1) << "Buffer not found among opened buffers:  "
+            << params.textDocument.uri;
+    return {};
+  }
+  const verible::LineColumn cursor{params.position.line,
+                                   params.position.character};
+  const verible::TextStructureView &text = parsedbuffer->parser().Data();
+
+  const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
+  return text.GetRangeForToken(cursor_token);
+}
 std::optional<verible::lsp::Location>
 SymbolTableHandler::GetLocationFromSymbolName(
     absl::string_view symbol_name, const VerilogSourceFile *file_origin) {
@@ -319,28 +342,18 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
   return locations;
 }
 
-std::vector<verible::lsp::Range> SymbolTableHandler::FindRenameLocations(
+verible::lsp::Range SymbolTableHandler::FindRenameLocations(
     const verible::lsp::PrepareRenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
-  absl::string_view symbol =
-      GetTokenAtTextDocumentPosition(params, parsed_buffers);
-  const SymbolTableNode &root = symbol_table_->Root();
-  const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
-  if (!node) return {};
-  std::optional<verible::lsp::Location> location =
-      GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
-  if (!location) return {};
-  std::vector<verible::lsp::Location> locations;
-  locations.push_back(location.value());
-  std::vector<verible::lsp::Range> ranges;
-  CollectReferences(&root, node, &locations);
-  if (locations.empty()) return {};
-  ranges.reserve(locations.size());
-  for (auto &loc : locations) {
-    if(loc.uri == params.textDocument.uri) ranges.push_back(loc.range);
-  }
-  return ranges;
+  verible::LineColumnRange symbol =
+      GetTokenRangeAtTextDocumentPosition(params, parsed_buffers);
+  verible::lsp::Range range;
+  range.start.line = symbol.start.line;
+  range.start.character = symbol.start.column;
+  range.end.line = symbol.end.line;
+  range.end.character = symbol.end.column;
+  return range;
 }
 
 verible::lsp::WorkspaceEdit
@@ -364,8 +377,9 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
   std::vector<verible::lsp::TextEdit> textedits;
   CollectReferences(&root, node, &locations);
   if (locations.empty()) return {};
-  std::map<absl::string_view, std::vector<verible::lsp::TextEdit>> file_edit_pairs;
-  for(auto& loc: locations) {
+  std::map<absl::string_view, std::vector<verible::lsp::TextEdit>>
+      file_edit_pairs;
+  for (auto &loc : locations) {
     file_edit_pairs[loc.uri].reserve(locations.size());
   }
   for (auto &loc : locations) {
