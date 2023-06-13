@@ -137,6 +137,7 @@ project_urls = sorted([
             "https://github.com/lowRISC/opentitan",
             "https://github.com/chipsalliance/sv-tests",
             "https://github.com/chipsalliance/Cores-VeeR-EH2",
+            "https://github.com/chipsalliance/caliptra-rtl",
             "https://github.com/openhwgroup/cva6",
             "https://github.com/SymbiFlow/uvm",
             "https://github.com/taichi-ishitani/tnoc",
