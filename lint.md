@@ -322,4 +322,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2023-06-01 16:39:50 -0700 from [d87f242](https://github.com/google/verible/commit/d87f242077e90666c967b0ea4272b51ae8d7a095)
+Generated on 2023-06-13 10:32:29 -0700 from [80d368c](https://github.com/google/verible/commit/80d368ced4eacda8f76ad8127ab59feeeff491c9)
