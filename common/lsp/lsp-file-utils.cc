@@ -15,6 +15,7 @@
 
 #include "common/lsp/lsp-file-utils.h"
 
+#include <algorithm>
 #include <filesystem>
 
 #include "absl/strings/escaping.h"
@@ -36,6 +37,7 @@ bool NeedsEscape(char c) {
     case '.':
     case '_':
     case '~':
+    case '\\':
       return false;
   }
   return true;
@@ -107,6 +109,9 @@ std::string PathToLSPUri(absl::string_view path) {
   std::filesystem::path p(path.begin(), path.end());
   std::string normalized_path;
   normalized_path = std::filesystem::absolute(p).string();
+  std::transform(normalized_path.cbegin(), normalized_path.cend(),
+                 normalized_path.begin(),
+                 [](char c) { return c == '\\' ? '/' : c; });
 #ifdef _WIN32
   if (normalized_path.length() >= 2 && isalpha(normalized_path[0]) &&
       normalized_path[1] == ':') {
