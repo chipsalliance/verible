@@ -18,6 +18,8 @@
 
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_replace.h"
+#include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
@@ -37,6 +39,7 @@ namespace {
 // TODO (glatosinski) for JSON messages use types defined in lsp-protocol.h
 
 using nlohmann::json;
+using verible::lsp::PathToLSPUri;
 
 // TODO (glatosinski) use better sample modules
 static constexpr absl::string_view  //
@@ -136,10 +139,11 @@ class VerilogLanguageServerTest : public ::testing::Test {
 class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
  public:
   absl::Status InitializeCommunication() override {
-    json initialize_request = {{"jsonrpc", "2.0"},
-                               {"id", 1},
-                               {"method", "initialize"},
-                               {"params", {{"rootUri", "file://" + root_dir}}}};
+    json initialize_request = {
+        {"jsonrpc", "2.0"},
+        {"id", 1},
+        {"method", "initialize"},
+        {"params", {{"rootUri", PathToLSPUri(root_dir)}}}};
     return SendRequest(initialize_request.dump());
   }
 
@@ -631,16 +635,16 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -651,7 +655,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request when there are two symbols of the same
@@ -667,19 +671,20 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 2, 16);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -690,11 +695,10 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_b.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_b_uri);
 
   // find definition for "var1" variable in a.sv file
-  definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 3, 2, 16);
+  definition_request = DefinitionRequest(module_a_uri, 3, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_a = json::parse(GetResponse());
@@ -705,7 +709,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_a["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_a["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_a["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_a["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_a["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -721,19 +725,20 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -744,7 +749,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -760,16 +765,17 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -780,7 +786,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -796,11 +802,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // Close a.sv from the Language Server perspective
@@ -811,7 +819,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
       {"params",
        {{"textDocument",
          {
-             {"uri", "file://" + module_a.filename()},
+             {"uri", module_a_uri},
          }}}}}.dump();
   ASSERT_OK(SendRequest(closing_request));
 
@@ -819,8 +827,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -831,7 +838,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
 
   // perform double check
   ASSERT_OK(SendRequest(definition_request));
@@ -843,7 +850,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -869,16 +876,17 @@ endmodule
   const verible::file::testing::ScopedTestFile module_b(
       root_dir, sample_module_b_with_error, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -889,7 +897,7 @@ endmodule
   ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -914,16 +922,17 @@ endmodule
   const verible::file::testing::ScopedTestFile module_b(
       root_dir, sample_module_b_with_error, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 4, 15);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 15);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -943,16 +952,17 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("https://" + module_a.filename(), 2, 2, 16);
+  std::string definition_request = DefinitionRequest(
+      absl::StrReplaceAll(module_a_uri, {{"file://", "https://"}}), 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -971,16 +981,16 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 2, 1, 10);
+  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 10);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -991,7 +1001,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition when the cursor points at nothing
@@ -1004,16 +1014,16 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 2, 1, 0);
+  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 0);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1032,16 +1042,16 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 3, 2);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 3, 2);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1056,22 +1066,22 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoFileList) {
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_a.filename(), 2, 2, 16);
+  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
   ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -1083,19 +1093,21 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
+
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request =
-      DefinitionRequest("file://" + module_b.filename(), 2, 4, 14);
+  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -1106,7 +1118,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
   ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], "file://" + module_a.filename());
+  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
 }
 
 TEST_F(VerilogLanguageServerSymbolTableTest, MultipleDefinitionsOfSameSymbol) {
@@ -1139,15 +1151,16 @@ endmodule
   const verible::file::testing::ScopedTestFile module_foo(root_dir, foo,
                                                           "foo.sv");
 
-  const std::string foo_open_request =
-      DidOpenRequest("file://" + module_foo.filename(), foo);
+  const std::string module_foo_uri = PathToLSPUri(module_foo.filename());
+  const std::string module_bar_1_uri = PathToLSPUri(module_bar_1.filename());
+
+  const std::string foo_open_request = DidOpenRequest(module_foo_uri, foo);
   ASSERT_OK(SendRequest(foo_open_request));
 
   GetResponse();
 
   // find definition for "bar" type
-  std::string definition_request =
-      DefinitionRequest("file://" + module_foo.filename(), 2, 1, 3);
+  std::string definition_request = DefinitionRequest(module_foo_uri, 2, 1, 3);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1158,7 +1171,7 @@ endmodule
   ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 7);
   ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 0);
   ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 10);
-  ASSERT_EQ(response["result"][0]["uri"], "file://" + module_bar_1.filename());
+  ASSERT_EQ(response["result"][0]["uri"], module_bar_1_uri);
 }
 
 // Sample of badly styled modle
@@ -1182,8 +1195,9 @@ bool CheckDiagnosticsContainLinterIssue(const json &diagnostics,
 TEST_F(VerilogLanguageServerSymbolTableTest, DefaultConfigurationTest) {
   const verible::file::testing::ScopedTestFile module_mod(
       root_dir, badly_styled_module, "my_mod.sv");
+
   const std::string mod_open_request =
-      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+      DidOpenRequest(PathToLSPUri(module_mod.filename()), badly_styled_module);
 
   ASSERT_OK(SendRequest(mod_open_request));
 
@@ -1211,7 +1225,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, ParsingLinterNoTabs) {
   const verible::file::testing::ScopedTestFile lint_file(root_dir, lint_config,
                                                          ".rules.verible_lint");
   const std::string mod_open_request =
-      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+      DidOpenRequest(PathToLSPUri(module_mod.filename()), badly_styled_module);
 
   ASSERT_OK(SendRequest(mod_open_request));
 
@@ -1241,7 +1255,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile lint_file(root_dir, lint_config,
                                                          ".rules.verible_lint");
   const std::string mod_open_request =
-      DidOpenRequest("file://" + module_mod.filename(), badly_styled_module);
+      DidOpenRequest(PathToLSPUri(module_mod.filename()), badly_styled_module);
 
   ASSERT_OK(SendRequest(mod_open_request));
 
@@ -1293,50 +1307,50 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
+
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find references for "var1" variable in a.sv file
-  std::string references_request =
-      ReferencesRequest("file://" + module_a.filename(), 2, 1, 11);
+  std::string references_request = ReferencesRequest(module_a_uri, 2, 1, 11);
 
   ASSERT_OK(SendRequest(references_request));
   json response_a = json::parse(GetResponse());
 
   ASSERT_EQ(response_a["id"], 2);
 
-  json var1_a_refs = {
-      ReferenceEntry(
-          {
-              .line = 2,
-              .column = 16,
-          },
-          {.line = 2, .column = 20}, "file://" + module_a.filename()),
-      ReferenceEntry(
-          {
-              .line = 1,
-              .column = 9,
-          },
-          {.line = 1, .column = 13}, "file://" + module_a.filename()),
-      ReferenceEntry(
-          {
-              .line = 4,
-              .column = 14,
-          },
-          {.line = 4, .column = 18}, "file://" + module_b.filename())};
+  json var1_a_refs = {ReferenceEntry(
+                          {
+                              .line = 2,
+                              .column = 16,
+                          },
+                          {.line = 2, .column = 20}, module_a_uri),
+                      ReferenceEntry(
+                          {
+                              .line = 1,
+                              .column = 9,
+                          },
+                          {.line = 1, .column = 13}, module_a_uri),
+                      ReferenceEntry(
+                          {
+                              .line = 4,
+                              .column = 14,
+                          },
+                          {.line = 4, .column = 18}, module_b_uri)};
 
   CheckReferenceResults(response_a["result"], var1_a_refs);
 
   // find references for "var1" variable in b.sv file
-  references_request =
-      ReferencesRequest("file://" + module_b.filename(), 3, 2, 18);
+  references_request = ReferencesRequest(module_b_uri, 3, 2, 18);
 
   ASSERT_OK(SendRequest(references_request));
   json response_b = json::parse(GetResponse());
@@ -1349,13 +1363,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
               .line = 1,
               .column = 9,
           },
-          {.line = 1, .column = 13}, "file://" + module_b.filename()),
+          {.line = 1, .column = 13}, module_b_uri),
       ReferenceEntry(
           {
               .line = 2,
               .column = 16,
           },
-          {.line = 2, .column = 20}, "file://" + module_b.filename()),
+          {.line = 2, .column = 20}, module_b_uri),
   };
 
   CheckReferenceResults(response_b["result"], var1_b_refs);
@@ -1370,16 +1384,17 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceInvalidLocation) {
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find references for "var1" variable in a.sv file
-  std::string references_request =
-      ReferencesRequest("file://" + module_a.filename(), 2, 1, 0);
+  std::string references_request = ReferencesRequest(module_a_uri, 2, 1, 0);
 
   ASSERT_OK(SendRequest(references_request));
   json response_a = json::parse(GetResponse());
@@ -1397,16 +1412,17 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceKeyword) {
   const verible::file::testing::ScopedTestFile module_a(root_dir,
                                                         kSampleModuleA, "a.sv");
 
+  const std::string module_a_uri = PathToLSPUri(module_a.filename());
+
   const std::string module_a_open_request =
-      DidOpenRequest("file://" + module_a.filename(), kSampleModuleA);
+      DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find references for "var1" variable in a.sv file
-  std::string references_request =
-      ReferencesRequest("file://" + module_a.filename(), 2, 1, 5);
+  std::string references_request = ReferencesRequest(module_a_uri, 2, 1, 5);
 
   ASSERT_OK(SendRequest(references_request));
   json response_a = json::parse(GetResponse());
@@ -1424,16 +1440,17 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
   const verible::file::testing::ScopedTestFile module_b(root_dir,
                                                         kSampleModuleB, "b.sv");
 
+  const std::string module_b_uri = PathToLSPUri(module_b.filename());
+
   const std::string module_b_open_request =
-      DidOpenRequest("file://" + module_b.filename(), kSampleModuleB);
+      DidOpenRequest(module_b_uri, kSampleModuleB);
   ASSERT_OK(SendRequest(module_b_open_request));
 
   // obtain diagnostics for both files
   GetResponse();
 
   // find references for "var1" variable in a.sv file
-  std::string references_request =
-      ReferencesRequest("file://" + module_b.filename(), 2, 4, 16);
+  std::string references_request = ReferencesRequest(module_b_uri, 2, 4, 16);
 
   ASSERT_OK(SendRequest(references_request));
   json response_b = json::parse(GetResponse());

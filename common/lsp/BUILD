@@ -130,6 +130,16 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "lsp-file-utils_test",
+    srcs = ["lsp-file-utils_test.cc"],
+    deps = [
+        ":lsp-file-utils",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "json-rpc-expect",
     srcs = ["json-rpc-expect.cc"],

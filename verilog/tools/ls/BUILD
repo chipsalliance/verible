@@ -167,6 +167,7 @@ cc_test(
         ":verilog-language-server",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
+        "//common/lsp:lsp-file-utils",
         "//common/util:file-util",
         "//verilog/analysis:verilog-linter",
         "@com_google_absl//absl/flags:flag",

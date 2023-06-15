@@ -25,7 +25,7 @@ static absl::StatusOr<std::vector<verible::LintRuleStatus>> RunLinter(
   const auto &text_structure = parser.Data();
 
   verilog::LinterConfiguration config;
-  const absl::string_view file_path = verible::lsp::LSPUriToPath(filename);
+  const std::string file_path = verible::lsp::LSPUriToPath(filename);
   if (auto from_flags = LinterConfigurationFromFlags(file_path);
       from_flags.ok()) {
     config = *from_flags;

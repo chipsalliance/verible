@@ -267,7 +267,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
     const verilog::BufferTrackerContainer &parsed_buffers) {
   // TODO add iterating over multiple definitions
   Prepare();
-  const absl::string_view filepath = LSPUriToPath(params.textDocument.uri);
+  const std::string filepath = LSPUriToPath(params.textDocument.uri);
   std::string relativepath = curr_project_->GetRelativePathToSource(filepath);
   absl::string_view symbol =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
