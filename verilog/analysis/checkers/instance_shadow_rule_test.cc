@@ -156,13 +156,13 @@ TEST(InstanceShadowingTest, CorrectLocationTest) {
     linter_.AddRule(rule_generator());
     linter_.Lint(*ABSL_DIE_IF_NULL(analyzer.Data().SyntaxTree()));
     CHECK_EQ(linter_.ReportStatus().size(), 1);
-    const auto& violations(std::move(linter_.ReportStatus()[0].violations));
-    CHECK_EQ(violations.size(), 1);
+    CHECK_EQ(linter_.ReportStatus()[0].violations.size(), 1);
 
     // Report detailed differences, if any.
     const absl::string_view base_text = analyzer.Data().Contents();
     absl::string_view foo = test.FindImportantTokens(base_text)[0].text();
-    absl::string_view bar = violations.begin()->token.text();
+    absl::string_view bar =
+        linter_.ReportStatus()[0].violations.begin()->token.text();
     ASSERT_TRUE(foo == bar);
   }
 }
