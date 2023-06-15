@@ -106,7 +106,28 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       }
       break;
     }
-
+    case verilog::NodeEnum::kRegisterVariable: {
+      const auto* variable_name =
+          GetSubtreeAsLeaf(node, NodeEnum::kRegisterVariable, 0);
+      if (variable_name) {
+        is_visible_node = true;
+        node_symbol.kind = verible::lsp::SymbolKind::kVariable;
+        node_symbol.selectionRange = RangeFromToken(variable_name->get());
+        node_symbol.name = std::string(variable_name->get().text());
+      }
+      break;
+    }
+    case verilog::NodeEnum::kGateInstance: {
+      const auto* variable_name =
+          GetSubtreeAsLeaf(node, NodeEnum::kGateInstance, 0);
+      if (variable_name) {
+        is_visible_node = true;
+        node_symbol.kind = verible::lsp::SymbolKind::kVariable;
+        node_symbol.selectionRange = RangeFromToken(variable_name->get());
+        node_symbol.name = std::string(variable_name->get().text());
+      }
+      break;
+    }
     case verilog::NodeEnum::kPackageDeclaration: {
       const auto *package_name = verilog::GetPackageNameToken(node);
       if (package_name) {
