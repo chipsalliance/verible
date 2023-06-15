@@ -1549,16 +1549,30 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   RenameRequestParams params;
   params.line = 2;
   params.character = 1;
-  params.file = "file://" + root_dir + "/fmt.sv";
+
+  absl::string_view filelist_content = "rename.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_foo(
+      root_dir,
+      "module rename();\nfunction automatic "
+      "bar();\nbar();\nbar();\nendfunction;\nendmodule\n",
+      "rename.sv");
+
+  const std::string mini_module =
+      DidOpenRequest("file://" + module_foo.filename(),
+                     "module rename();\nfunction automatic "
+                     "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
+
+  params.file = "file://" + module_foo.filename();
   params.newName = "foo";
   params.id = 2;
-  const std::string mini_module =
-      DidOpenRequest(params.file,
-                     "module fmt();\nfunction automatic "
-                     "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
+
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());
+  std::cout << diagnostics << std::endl;
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
   EXPECT_EQ(diagnostics["params"]["uri"], params.file)
