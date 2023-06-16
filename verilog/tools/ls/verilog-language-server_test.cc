@@ -33,7 +33,6 @@
   else                                               \
     EXPECT_TRUE(status__.ok()) << status__
 
-using verible::lsp::PathToLSPUri;
 namespace verilog {
 namespace {
 
@@ -1475,7 +1474,7 @@ std::string PrepareRenameRequest(verible::lsp::PrepareRenameParams params) {
   return request.dump();
 }
 // Runs tests for textDocument/rangeFormatting requests
-TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
+TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameReturnsRangeOfEditableSymbol) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
   verible::lsp::PrepareRenameParams params;
@@ -1509,7 +1508,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
       << "Invalid result for id:  ";
 }
 
-TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
+TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri =
       PathToLSPUri(absl::string_view(root_dir + "/rename.sv"));
@@ -1540,7 +1539,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   std::cout << diagnostics << std::endl;
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  EXPECT_EQ(diagnostics["params"]["uri"], verible::lsp::LSPUriToPath(file_uri))
+  EXPECT_EQ(diagnostics["params"]["uri"], PathToLSPUri(verible::lsp::LSPUriToPath(file_uri)))
       << "Diagnostics for invalid file";
 
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)

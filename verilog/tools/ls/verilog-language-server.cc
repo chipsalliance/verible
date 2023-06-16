@@ -142,7 +142,8 @@ void VerilogLanguageServer::SetRequestHandlers() {
   dispatcher_.AddRequestHandler(
       "textDocument/prepareRename",
       [this](const verible::lsp::PrepareRenameParams &p) {
-        return symbol_table_handler_.FindRenameLocations(p, parsed_buffers_);
+        return symbol_table_handler_.FindRenameableRangeAtCursor(
+            p, parsed_buffers_);
       });
   dispatcher_.AddRequestHandler(
       "textDocument/rename", [this](const verible::lsp::RenameParams &p) {

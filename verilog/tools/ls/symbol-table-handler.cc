@@ -248,22 +248,23 @@ absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
 
 verible::LineColumnRange
 SymbolTableHandler::GetTokenRangeAtTextDocumentPosition(
-    const verible::lsp::TextDocumentPositionParams &params,
+    const verible::lsp::TextDocumentPositionParams &document_cursor,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   const verilog::BufferTracker *tracker =
-      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
+      parsed_buffers.FindBufferTrackerOrNull(document_cursor.textDocument.uri);
   if (!tracker) {
-    VLOG(1) << "Could not find buffer with URI " << params.textDocument.uri;
+    VLOG(1) << "Could not find buffer with URI "
+            << document_cursor.textDocument.uri;
     return {};
   }
   std::shared_ptr<const ParsedBuffer> parsedbuffer = tracker->current();
   if (!parsedbuffer) {
     VLOG(1) << "Buffer not found among opened buffers:  "
-            << params.textDocument.uri;
+            << document_cursor.textDocument.uri;
     return {};
   }
-  const verible::LineColumn cursor{params.position.line,
-                                   params.position.character};
+  const verible::LineColumn cursor{document_cursor.position.line,
+                                   document_cursor.position.character};
   const verible::TextStructureView &text = parsedbuffer->parser().Data();
 
   const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
@@ -342,18 +343,16 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
   return locations;
 }
 
-verible::lsp::Range SymbolTableHandler::FindRenameLocations(
+verible::lsp::Range SymbolTableHandler::FindRenameableRangeAtCursor(
     const verible::lsp::PrepareRenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
+  if (files_dirty_) {
+    BuildProjectSymbolTable();
+  }
   verible::LineColumnRange symbol =
       GetTokenRangeAtTextDocumentPosition(params, parsed_buffers);
-  verible::lsp::Range range;
-  range.start.line = symbol.start.line;
-  range.start.character = symbol.start.column;
-  range.end.line = symbol.end.line;
-  range.end.character = symbol.end.column;
-  return range;
+  return RangeFromLineColumn(symbol);
 }
 
 verible::lsp::WorkspaceEdit
@@ -383,16 +382,28 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
     file_edit_pairs[loc.uri].reserve(locations.size());
   }
   for (auto &loc : locations) {
-    file_edit_pairs[loc.uri].push_back(verible::lsp::TextEdit({
-        .range = loc.range,
-        .newText = params.newName,
-    }));
+    // TODO(jbylicki): Remove this band-aid fix once #1678 is merged - it should
+    // fix
+    //  duplicate definition/references appending in modules and remove the need
+    //  for adding the definition location above.
+    if (std::none_of(
+            file_edit_pairs[loc.uri].begin(), file_edit_pairs[loc.uri].end(),
+            [&loc](const verible::lsp::TextEdit &it) {
+              return loc.range.start.character == it.range.start.character &&
+                     loc.range.start.line == it.range.end.line;
+            })) {
+      file_edit_pairs[loc.uri].push_back(verible::lsp::TextEdit({
+          .range = loc.range,
+          .newText = params.newName,
+      }));
+    }
   }
   files_dirty_ = true;
   verible::lsp::WorkspaceEdit edit = verible::lsp::WorkspaceEdit{
       .changes = {},
   };
   edit.changes = file_edit_pairs;
+  std::cerr << "SIZE: " << edit.changes[locations[0].uri].size() << std::endl;
   return edit;
 }
 void SymbolTableHandler::CollectReferencesReferenceComponents(

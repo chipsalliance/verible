@@ -203,13 +203,13 @@ DocumentLink:
   range: Range
   target?: string  # DocumentUri
 
-# -- textDocument/prepareRename   (TODO(jbylicki): check that requires project + active symbol table #1189)
+# -- textDocument/prepareRename
 PrepareRenameParams:
   <: TextDocumentPositionParams
 
-# Response: Range[]
+# Response: Range
 
-# -- textDocument/rename   (TODO(jbylicki): check that requires project + active symbol table #1189)
+# -- textDocument/rename
 RenameParams:
   <: TextDocumentPositionParams
   newName: string
