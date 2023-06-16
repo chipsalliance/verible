@@ -107,7 +107,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       break;
     }
     case verilog::NodeEnum::kRegisterVariable: {
-      const auto* variable_name =
+      const auto *variable_name =
           GetSubtreeAsLeaf(node, NodeEnum::kRegisterVariable, 0);
       if (variable_name) {
         is_visible_node = true;
@@ -118,7 +118,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       break;
     }
     case verilog::NodeEnum::kGateInstance: {
-      const auto* variable_name =
+      const auto *variable_name =
           GetSubtreeAsLeaf(node, NodeEnum::kGateInstance, 0);
       if (variable_name) {
         is_visible_node = true;

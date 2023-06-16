@@ -284,6 +284,11 @@ endpackage
 module mini(input clk);
   always@(posedge clk) begin : labelled_block
   end
+
+  reg foo;
+  net bar;
+  some_class baz();
+
 endmodule
 )");
 
@@ -331,9 +336,18 @@ endmodule
 
   // Descent tree into module and find labelled block.
   std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
-  EXPECT_EQ(module.size(), 1);
+  EXPECT_EQ(module.size(), 4);
   EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::kNamespace);
   EXPECT_EQ(module[0].name, "labelled_block");
+
+  EXPECT_EQ(module[1].kind, verible::lsp::SymbolKind::kVariable);
+  EXPECT_EQ(module[1].name, "foo");
+
+  EXPECT_EQ(module[2].kind, verible::lsp::SymbolKind::kVariable);
+  EXPECT_EQ(module[2].name, "bar");
+
+  EXPECT_EQ(module[3].kind, verible::lsp::SymbolKind::kVariable);
+  EXPECT_EQ(module[3].name, "baz");
 }
 
 // Tests closing of the file in the LS context and checks if the LS
