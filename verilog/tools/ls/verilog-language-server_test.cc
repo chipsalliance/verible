@@ -1530,7 +1530,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
       "rename.sv");
 
   const std::string mini_module =
-      DidOpenRequest("file://" + module_foo.filename(),
+      DidOpenRequest(file_uri,
                      "module rename();\nfunction automatic "
                      "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
 
@@ -1541,6 +1541,9 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
 
+  EXPECT_EQ(diagnostics["params"]["uri"],
+            PathToLSPUri(verible::lsp::LSPUriToPath(file_uri)))
+      << "Diagnostics for invalid file";
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
   std::string request = RenameRequest(params);
@@ -1550,6 +1553,70 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   EXPECT_EQ(response["result"]["changes"].size(), 1)
       << "Invalid result size for id:  ";
   EXPECT_EQ(response["result"]["changes"][file_uri].size(), 3)
+      << "Invalid result size for id:  ";
+}
+
+TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolMultipleFiles) {
+  // Create sample file and make sure diagnostics do not have errors
+  std::string top_uri = PathToLSPUri(absl::string_view(root_dir + "/top.sv"));
+  std::string foo_uri = PathToLSPUri(absl::string_view(root_dir + "/foo.sv"));
+  verible::lsp::RenameParams params;
+  params.position.line = 2;
+  params.position.character = 9;
+  params.textDocument.uri = top_uri;
+  params.newName = "foobaz";
+  std::string foosv =
+      "package foo;\n"
+      "    class foobar;\n"
+      "    endclass;\n"
+      "endpackage;\n";
+  std::string topsv =
+      "import foo::*;\n"
+      "module top;\n"
+      "  foo::foobar bar;\n"
+      "endmodule;\n";
+  absl::string_view filelist_content = "./foo.sv\n./top.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_foo(root_dir, foosv,
+                                                          "foo.sv");
+
+  const verible::file::testing::ScopedTestFile module_top(root_dir, topsv,
+                                                          "top.sv");
+  const std::string top_request = DidOpenRequest(top_uri, topsv);
+  ASSERT_OK(SendRequest(top_request));
+
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
+      << "textDocument/publishDiagnostics not received";
+  EXPECT_EQ(diagnostics["params"]["uri"],
+            PathToLSPUri(verible::lsp::LSPUriToPath(top_uri)))
+      << "Diagnostics for invalid file";
+
+  const std::string foo_request = DidOpenRequest(foo_uri, foosv);
+  ASSERT_OK(SendRequest(foo_request));
+
+  const json diagnostics_foo = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics_foo["method"], "textDocument/publishDiagnostics")
+      << "textDocument/publishDiagnostics not received";
+  EXPECT_EQ(diagnostics_foo["params"]["uri"],
+            PathToLSPUri(verible::lsp::LSPUriToPath(foo_uri)))
+      << "Diagnostics for invalid file";
+
+  // Complaints about package and file names
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
+      << "The test file has errors";
+  std::string request = RenameRequest(params);
+  ASSERT_OK(SendRequest(request));
+
+  const json response = json::parse(GetResponse());
+  std::cout << response << std::endl;
+  EXPECT_EQ(response["result"]["changes"].size(), 2)
+      << "Invalid result size for id:  ";
+  EXPECT_EQ(response["result"]["changes"][top_uri].size(), 1)
+      << "Invalid result size for id:  ";
+  EXPECT_EQ(response["result"]["changes"][foo_uri].size(), 1)
       << "Invalid result size for id:  ";
 }
 
@@ -1587,6 +1654,9 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
   const json diagnostics = json::parse(GetResponse());
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
+  EXPECT_EQ(diagnostics["params"]["uri"],
+            PathToLSPUri(verible::lsp::LSPUriToPath(file_uri)))
+      << "Diagnostics for invalid file";
 
   // Complaints about package and file names
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 2)
