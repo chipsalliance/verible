@@ -33,6 +33,7 @@
   else                                               \
     EXPECT_TRUE(status__.ok()) << status__
 
+using verible::lsp::PathToLSPUri;
 namespace verilog {
 namespace {
 
@@ -1459,66 +1460,31 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
   ASSERT_EQ(response_b["result"].size(), 0);
 }
 
-struct RenameRequestParams {
-  int id;
-  std::string file;
-  std::string newName;
-  int line;
-  int character;
-};
-
-std::string RenameRequest(RenameRequestParams params) {
-  json renamerq = {
-
-      {"jsonrpc", "2.0"},
-      {"id", params.id},
-      {"method", "textDocument/rename"},
-      {"params",
-       {
-           {"textDocument",
-            {
-                {"uri", params.file},
-            }},
-           {
-               "position",
-               {{"line", params.line}, {"character", params.character}},
-           },
-           {"newName", params.newName},
-       }}};
-  return renamerq.dump();
+std::string RenameRequest(verible::lsp::RenameParams params) {
+  json request = {{"jsonrpc", "2.0"},
+                  {"id", 2},
+                  {"method", "textDocument/rename"},
+                  {"params", params}};
+  return request.dump();
 }
-std::string PrepareRenameRequest(RenameRequestParams params) {
-  json renamerq = {
-
-      {"jsonrpc", "2.0"},
-      {"id", params.id},
-      {"method", "textDocument/prepareRename"},
-      {"params",
-       {
-           {"textDocument",
-            {
-                {"uri", params.file},
-            }},
-           {
-               "position",
-               {{"line", params.line}, {"character", params.character}},
-           },
-           {"newName", params.newName},
-       }}};
-  return renamerq.dump();
+std::string PrepareRenameRequest(verible::lsp::PrepareRenameParams params) {
+  json request = {{"jsonrpc", "2.0"},
+                  {"id", 2},
+                  {"method", "textDocument/prepareRename"},
+                  {"params", params}};
+  return request.dump();
 }
-
 // Runs tests for textDocument/rangeFormatting requests
 TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
   // Create sample file and make sure diagnostics do not have errors
-  RenameRequestParams params;
-  params.line = 2;
-  params.character = 1;
-  params.file = "file://" + root_dir + "/fmt.sv";
-  params.newName = "foo";
-  params.id = 1;
+  std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
+  verible::lsp::PrepareRenameParams params;
+  params.position.line = 2;
+  params.position.character = 1;
+  params.textDocument.uri = file_uri;
+
   const std::string mini_module =
-      DidOpenRequest(params.file,
+      DidOpenRequest(file_uri,
                      "module fmt();\nfunction automatic "
                      "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
   ASSERT_OK(SendRequest(mini_module));
@@ -1526,13 +1492,12 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
   const json diagnostics = json::parse(GetResponse());
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  EXPECT_EQ(diagnostics["params"]["uri"], params.file)
+  EXPECT_EQ(diagnostics["params"]["uri"], file_uri)
       << "Diagnostics for invalid file";
 
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
-  std::string request = PrepareRenameRequest(params);
-  ASSERT_OK(SendRequest(request));
+  ASSERT_OK(SendRequest(PrepareRenameRequest(params)));
 
   const json response = json::parse(GetResponse());
   EXPECT_EQ(response["result"]["start"]["line"], 2)
@@ -1546,9 +1511,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameTest) {
 
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   // Create sample file and make sure diagnostics do not have errors
-  RenameRequestParams params;
-  params.line = 2;
-  params.character = 1;
+  std::string file_uri =
+      PathToLSPUri(absl::string_view(root_dir + "/rename.sv"));
+  verible::lsp::RenameParams params;
+  params.position.line = 2;
+  params.position.character = 1;
+  params.textDocument.uri = file_uri;
+  params.newName = "foo";
 
   absl::string_view filelist_content = "rename.sv\n";
 
@@ -1565,17 +1534,13 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
                      "module rename();\nfunction automatic "
                      "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
 
-  params.file = "file://" + module_foo.filename();
-  params.newName = "foo";
-  params.id = 2;
-
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());
   std::cout << diagnostics << std::endl;
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  EXPECT_EQ(diagnostics["params"]["uri"], params.file)
+  EXPECT_EQ(diagnostics["params"]["uri"], verible::lsp::LSPUriToPath(file_uri))
       << "Diagnostics for invalid file";
 
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
@@ -1584,10 +1549,9 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTest) {
   ASSERT_OK(SendRequest(request));
 
   const json response = json::parse(GetResponse());
-  std::cout << response << std::endl;
   EXPECT_EQ(response["result"]["changes"].size(), 1)
       << "Invalid result size for id:  ";
-  EXPECT_EQ(response["result"]["changes"][params.file].size(), 3)
+  EXPECT_EQ(response["result"]["changes"][file_uri].size(), 3)
       << "Invalid result size for id:  ";
 }
 
