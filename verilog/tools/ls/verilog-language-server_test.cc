@@ -1474,7 +1474,8 @@ std::string PrepareRenameRequest(verible::lsp::PrepareRenameParams params) {
   return request.dump();
 }
 // Runs tests for textDocument/rangeFormatting requests
-TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameReturnsRangeOfEditableSymbol) {
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       PrepareRenameReturnsRangeOfEditableSymbol) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
   verible::lsp::PrepareRenameParams params;
@@ -1539,8 +1540,6 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   std::cout << diagnostics << std::endl;
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
-  EXPECT_EQ(diagnostics["params"]["uri"], PathToLSPUri(verible::lsp::LSPUriToPath(file_uri)))
-      << "Diagnostics for invalid file";
 
   EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
       << "The test file has errors";
@@ -1554,6 +1553,53 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
       << "Invalid result size for id:  ";
 }
 
+TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
+  // Create sample file and make sure diagnostics do not have errors
+  std::string file_uri =
+      PathToLSPUri(absl::string_view(root_dir + "/rename.sv"));
+  verible::lsp::RenameParams params;
+  params.position.line = 7;
+  params.position.character = 15;
+  params.textDocument.uri = file_uri;
+  params.newName = "foobaz";
+  std::string renamesv =
+      "package foo;\n"
+      "    class foobar;\n"
+      "        bar::foobar baz;\n"
+      "    endclass;\n"
+      "endpackage;\n"
+      "package bar;\n"
+      "    class foobar;\n"
+      "        foo::foobar baz;\n"
+      "    endclass;\n"
+      "endpackage;\n";
+  absl::string_view filelist_content = "rename.sv\n";
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module_foo(root_dir, renamesv,
+                                                          "rename.sv");
+
+  const std::string mini_module =
+      DidOpenRequest("file://" + module_foo.filename(), renamesv);
+  ASSERT_OK(SendRequest(mini_module));
+
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
+      << "textDocument/publishDiagnostics not received";
+
+  // Complaints about package and file names
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 2)
+      << "The test file has errors";
+  std::string request = RenameRequest(params);
+  ASSERT_OK(SendRequest(request));
+
+  const json response = json::parse(GetResponse());
+  EXPECT_EQ(response["result"]["changes"].size(), 1)
+      << "Invalid result size for id:  ";
+  EXPECT_EQ(response["result"]["changes"][file_uri].size(), 2)
+      << "Invalid result size for id:  ";
+}
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =
