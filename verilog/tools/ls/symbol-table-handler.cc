@@ -223,6 +223,29 @@ void SymbolTableHandler::Prepare() {
   }
 }
 
+std::optional<verible::TokenInfo>
+SymbolTableHandler::GetTokenInfoAtTextDocumentPosition(
+    const verible::lsp::TextDocumentPositionParams &params,
+    const verilog::BufferTrackerContainer &parsed_buffers) {
+  const verilog::BufferTracker *tracker =
+      parsed_buffers.FindBufferTrackerOrNull(params.textDocument.uri);
+  if (!tracker) {
+    VLOG(1) << "Could not find buffer with URI " << params.textDocument.uri;
+    return {};
+  }
+  std::shared_ptr<const ParsedBuffer> parsedbuffer = tracker->current();
+  if (!parsedbuffer) {
+    VLOG(1) << "Buffer not found among opened buffers:  "
+            << params.textDocument.uri;
+    return {};
+  }
+  const verible::LineColumn cursor{params.position.line,
+                                   params.position.character};
+  const verible::TextStructureView &text = parsedbuffer->parser().Data();
+  const verible::TokenInfo cursor_token = text.FindTokenAt(cursor);
+  return cursor_token;
+}
+
 absl::string_view SymbolTableHandler::GetTokenAtTextDocumentPosition(
     const verible::lsp::TextDocumentPositionParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
@@ -343,16 +366,26 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
   return locations;
 }
 
-verible::lsp::Range SymbolTableHandler::FindRenameableRangeAtCursor(
+std::optional<verible::lsp::Range>
+SymbolTableHandler::FindRenameableRangeAtCursor(
     const verible::lsp::PrepareRenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
   if (files_dirty_) {
     BuildProjectSymbolTable();
   }
-  verible::LineColumnRange symbol =
-      GetTokenRangeAtTextDocumentPosition(params, parsed_buffers);
-  return RangeFromLineColumn(symbol);
+  std::optional<verible::TokenInfo> symbol =
+      GetTokenInfoAtTextDocumentPosition(params, parsed_buffers);
+  if (symbol.has_value()) {
+    verible::TokenInfo token = symbol.value();
+    const SymbolTableNode &root = symbol_table_->Root();
+    const SymbolTableNode *node =
+        ScanSymbolTreeForDefinition(&root, token.text());
+    if (!node) return {};
+    return RangeFromLineColumn(
+        GetTokenRangeAtTextDocumentPosition(params, parsed_buffers));
+  }
+  return {};
 }
 
 verible::lsp::WorkspaceEdit

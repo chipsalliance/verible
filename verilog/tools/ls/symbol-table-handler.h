@@ -65,7 +65,7 @@ class SymbolTableHandler {
       const verible::lsp::ReferenceParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  verible::lsp::Range FindRenameableRangeAtCursor(
+  std::optional<verible::lsp::Range> FindRenameableRangeAtCursor(
       const verible::lsp::PrepareRenameParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
   // Provide new parsed content for the given path. If "content" is nullptr,
@@ -98,6 +98,10 @@ class SymbolTableHandler {
   // TODO(jbylicki): Add docstring
   verible::LineColumnRange GetTokenRangeAtTextDocumentPosition(
       const verible::lsp::TextDocumentPositionParams &document_cursor,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  std::optional<verible::TokenInfo> GetTokenInfoAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
   // Returns the Location of the symbol name in source file

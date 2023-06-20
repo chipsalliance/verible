@@ -1509,6 +1509,34 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
       << "Invalid result for id:  ";
 }
 
+TEST_F(VerilogLanguageServerSymbolTableTest, PrepareRenameReturnsNull) {
+  // Create sample file and make sure diagnostics do not have errors
+  std::string file_uri = PathToLSPUri(absl::string_view(root_dir + "/fmt.sv"));
+  verible::lsp::PrepareRenameParams params;
+  params.position.line = 1;
+  params.position.character = 1;
+  params.textDocument.uri = file_uri;
+
+  const std::string mini_module =
+      DidOpenRequest(file_uri,
+                     "module fmt();\nfunction automatic "
+                     "bar();\nbar();\nbar();\nendfunction;\nendmodule\n");
+  ASSERT_OK(SendRequest(mini_module));
+
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
+      << "textDocument/publishDiagnostics not received";
+  EXPECT_EQ(diagnostics["params"]["uri"], file_uri)
+      << "Diagnostics for invalid file";
+
+  EXPECT_EQ(diagnostics["params"]["diagnostics"].size(), 0)
+      << "The test file has errors";
+  ASSERT_OK(SendRequest(PrepareRenameRequest(params)));
+
+  const json response = json::parse(GetResponse());
+  EXPECT_EQ(response["result"], nullptr) << "Invalid result for id:  ";
+}
+
 TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   // Create sample file and make sure diagnostics do not have errors
   std::string file_uri =
@@ -1537,7 +1565,6 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolSingleFile) {
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());
-  std::cout << diagnostics << std::endl;
   EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
       << "textDocument/publishDiagnostics not received";
 
@@ -1611,7 +1638,6 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestSymbolMultipleFiles) {
   ASSERT_OK(SendRequest(request));
 
   const json response = json::parse(GetResponse());
-  std::cout << response << std::endl;
   EXPECT_EQ(response["result"]["changes"].size(), 2)
       << "Invalid result size for id:  ";
   EXPECT_EQ(response["result"]["changes"][top_uri].size(), 1)
@@ -1647,8 +1673,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
   const verible::file::testing::ScopedTestFile module_foo(root_dir, renamesv,
                                                           "rename.sv");
 
-  const std::string mini_module =
-      DidOpenRequest("file://" + module_foo.filename(), renamesv);
+  const std::string mini_module = DidOpenRequest(file_uri, renamesv);
   ASSERT_OK(SendRequest(mini_module));
 
   const json diagnostics = json::parse(GetResponse());

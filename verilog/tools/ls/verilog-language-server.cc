@@ -141,9 +141,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
       });
   dispatcher_.AddRequestHandler(
       "textDocument/prepareRename",
-      [this](const verible::lsp::PrepareRenameParams &p) {
-        return symbol_table_handler_.FindRenameableRangeAtCursor(
+      [this](const verible::lsp::PrepareRenameParams &p) -> nlohmann::json {
+        auto range = symbol_table_handler_.FindRenameableRangeAtCursor(
             p, parsed_buffers_);
+        if (range.has_value()) return range.value();
+        return nullptr;
       });
   dispatcher_.AddRequestHandler(
       "textDocument/rename", [this](const verible::lsp::RenameParams &p) {
