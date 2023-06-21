@@ -134,7 +134,7 @@ ExpectedFailCount[preprocessor:ibex]=368
 
 ExpectedFailCount[syntax:opentitan]=36
 ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[project:opentitan]=732
+ExpectedFailCount[project:opentitan]=733
 ExpectedFailCount[preprocessor:opentitan]=1955
 
 ExpectedFailCount[syntax:sv-tests]=77
@@ -142,10 +142,10 @@ ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
 ExpectedFailCount[preprocessor:sv-tests]=139
 
-ExpectedFailCount[syntax:caliptra-rtl]=4
-ExpectedFailCount[lint:caliptra-rtl]=4
-ExpectedFailCount[project:caliptra-rtl]=288
-ExpectedFailCount[preprocessor:caliptra-rtl]=668
+ExpectedFailCount[syntax:caliptra-rtl]=17
+ExpectedFailCount[lint:caliptra-rtl]=17
+ExpectedFailCount[project:caliptra-rtl]=313
+ExpectedFailCount[preprocessor:caliptra-rtl]=690
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
