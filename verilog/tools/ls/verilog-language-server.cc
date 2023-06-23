@@ -22,6 +22,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "verilog/tools/ls/hover.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
@@ -69,7 +70,8 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       {"documentHighlightProvider", true},        // Highlight same symbol
       {"definitionProvider", true},               // Provide going to definition
       {"referencesProvider", true},               // Provide going to references
-      {"diagnosticProvider",                      // Pull model of diagnostics.
+      {"hoverProvider", true},  // Provide hover info on cursor
+      {"diagnosticProvider",    // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
            {"workspaceDiagnostics", false},
@@ -137,6 +139,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
       [this](const verible::lsp::ReferenceParams &p) {
         return symbol_table_handler_.FindReferencesLocations(p,
                                                              parsed_buffers_);
+      });
+  dispatcher_.AddRequestHandler(
+      "textDocument/hover", [this](const verible::lsp::HoverParams &p) {
+        return CreateHoverInformation(&symbol_table_handler_, parsed_buffers_,
+                                      p);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {

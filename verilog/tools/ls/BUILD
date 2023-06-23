@@ -105,6 +105,23 @@ cc_library(
 )
 
 cc_library(
+    name = "hover",
+    srcs = ["hover.cc"],
+    hdrs = ["hover.h"],
+    deps = [
+        ":lsp-parse-buffer",
+        ":symbol-table-handler",
+        "//common/lsp:lsp-protocol",
+        "//common/text:tree-context-visitor",
+        "//common/util:casts",
+        "//common/util:range",
+        "//verilog/CST:seq-block",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/parser:verilog-token-enum",
+    ],
+)
+
+cc_library(
     name = "symbol-table-handler",
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
@@ -148,6 +165,7 @@ cc_library(
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",
+        ":hover",
         "//common/lsp:json-rpc-dispatcher",
         "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
