@@ -350,6 +350,80 @@ endmodule
   EXPECT_EQ(module[3].name, "baz");
 }
 
+TEST_F(VerilogLanguageServerTest, DocumentSymbolRequestWithoutVariablesTest) {
+  server_->include_variables = false;
+  // Create file, absorb diagnostics
+  const std::string mini_module = DidOpenRequest("file://mini_pkg.sv", R"(
+package mini;
+
+function static void fun_foo();
+endfunction
+
+class some_class;
+   function void member();
+   endfunction
+endclass
+endpackage
+
+module mini(input clk);
+  always@(posedge clk) begin : labelled_block
+  end
+
+  reg foo;
+  net bar;
+  some_class baz();
+
+endmodule
+)");
+
+  ASSERT_OK(SendRequest(mini_module));
+
+  // Expect to receive diagnostics right away. Ignore.
+  const json diagnostics = json::parse(GetResponse());
+  EXPECT_EQ(diagnostics["method"], "textDocument/publishDiagnostics")
+      << "textDocument/publishDiagnostics not received";
+
+  // Request a document symbol
+  const absl::string_view document_symbol_request =
+      R"({"jsonrpc":"2.0", "id":11, "method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"file://mini_pkg.sv"}}})";
+  ASSERT_OK(SendRequest(document_symbol_request));
+
+  // TODO: by default, the Kate workarounds are active, so
+  // Module -> Method and Namespace -> Class. Remove by default.
+  const json document_symbol = json::parse(GetResponse());
+  EXPECT_EQ(document_symbol["id"], 11);
+
+  std::vector<verible::lsp::DocumentSymbol> toplevel =
+      document_symbol["result"];
+  EXPECT_EQ(toplevel.size(), 2);
+
+  EXPECT_EQ(toplevel[0].kind, verible::lsp::SymbolKind::kPackage);
+  EXPECT_EQ(toplevel[0].name, "mini");
+
+  EXPECT_EQ(toplevel[1].kind, verible::lsp::SymbolKind::kMethod);  // module.
+  EXPECT_EQ(toplevel[1].name, "mini");
+
+  // Descend tree into package and look at expected nested symbols there.
+  std::vector<verible::lsp::DocumentSymbol> package = toplevel[0].children;
+  EXPECT_EQ(package.size(), 2);
+  EXPECT_EQ(package[0].kind, verible::lsp::SymbolKind::kFunction);
+  EXPECT_EQ(package[0].name, "fun_foo");
+
+  EXPECT_EQ(package[1].kind, verible::lsp::SymbolKind::kClass);
+  EXPECT_EQ(package[1].name, "some_class");
+
+  // Descend tree into class and find nested function.
+  std::vector<verible::lsp::DocumentSymbol> class_block = package[1].children;
+  EXPECT_EQ(class_block.size(), 1);
+  EXPECT_EQ(class_block[0].kind, verible::lsp::SymbolKind::kFunction);
+  EXPECT_EQ(class_block[0].name, "member");
+
+  // Descent tree into module and find labelled block.
+  std::vector<verible::lsp::DocumentSymbol> module = toplevel[1].children;
+  EXPECT_EQ(module.size(), 1);
+  EXPECT_EQ(module[0].kind, verible::lsp::SymbolKind::kNamespace);
+  EXPECT_EQ(module[0].name, "labelled_block");
+}
 // Tests closing of the file in the LS context and checks if the LS
 // responds gracefully to textDocument/documentSymbol request for
 // closed file.

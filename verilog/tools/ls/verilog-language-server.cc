@@ -17,12 +17,16 @@
 #include <functional>
 #include <memory>
 
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
+
+ABSL_FLAG(bool, variables_in_outline, true,
+          "Variables should be included into the symbol outline");
 
 namespace verilog {
 
@@ -50,6 +54,7 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
 verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
   // send response with information what we do.
   verible::lsp::InitializeResult result;
+  this->include_variables = absl::GetFlag(FLAGS_variables_in_outline);
   result.serverInfo = {
       .name = "Verible Verilog language server.",
       .version = verible::GetRepositoryVersion(),
@@ -104,8 +109,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
   dispatcher_.AddRequestHandler(  // Provide document outline/index
       "textDocument/documentSymbol",
       [this](const verible::lsp::DocumentSymbolParams &p) {
+        // The `false` sets the kate workaround to the set default, as it was
+        // not set here
         return verilog::CreateDocumentSymbolOutline(
-            parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p);
+            parsed_buffers_.FindBufferTrackerOrNull(p.textDocument.uri), p,
+            false, this->include_variables);
       });
 
   dispatcher_.AddRequestHandler(  // Highlight related symbols under cursor

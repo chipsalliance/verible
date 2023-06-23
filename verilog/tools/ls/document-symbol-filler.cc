@@ -14,6 +14,7 @@
 
 #include "verilog/tools/ls/document-symbol-filler.h"
 
+#include "absl/flags/flag.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/value_saver.h"
@@ -40,7 +41,8 @@ static constexpr verible::lsp::SymbolKind kVSCodeModule =
 
 namespace verilog {
 DocumentSymbolFiller::DocumentSymbolFiller(
-    bool kate_workaround, const verible::TextStructureView &text,
+    bool kate_workaround, bool include_variables,
+    const verible::TextStructureView &text,
     verible::lsp::DocumentSymbol *toplevel)
     : kModuleSymbolKind(kate_workaround ? verible::lsp::SymbolKind::kMethod
                                         : kVSCodeModule),
@@ -48,6 +50,7 @@ DocumentSymbolFiller::DocumentSymbolFiller(
                                        : verible::lsp::SymbolKind::kNamespace),
       text_view_(text),
       current_symbol_(toplevel) {
+  this->include_variables = include_variables;
   toplevel->range.start = {.line = 0, .character = 0};
 }
 
@@ -109,7 +112,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
     case verilog::NodeEnum::kRegisterVariable: {
       const auto *variable_name =
           GetSubtreeAsLeaf(node, NodeEnum::kRegisterVariable, 0);
-      if (variable_name) {
+      if (variable_name && this->include_variables) {
         is_visible_node = true;
         node_symbol.kind = verible::lsp::SymbolKind::kVariable;
         node_symbol.selectionRange = RangeFromToken(variable_name->get());
@@ -120,7 +123,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
     case verilog::NodeEnum::kGateInstance: {
       const auto *variable_name =
           GetSubtreeAsLeaf(node, NodeEnum::kGateInstance, 0);
-      if (variable_name) {
+      if (variable_name && this->include_variables) {
         is_visible_node = true;
         node_symbol.kind = verible::lsp::SymbolKind::kVariable;
         node_symbol.selectionRange = RangeFromToken(variable_name->get());
