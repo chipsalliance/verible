@@ -863,14 +863,13 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       break;
     }
     case NodeEnum::kDataDeclaration: {
-      if ((GetParamListFromDataDeclaration(node) ||
-           !SearchSyntaxTree(node, NodekPortActualList()).empty()) &&
-          style_.always_wrap_module_instantiations) {
-        VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
-      } else {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      }
+      const auto policy =
+          (style_.always_wrap_module_instantiations &&
+           (GetParamListFromDataDeclaration(node) ||
+            !SearchSyntaxTree(node, NodekPortActualList()).empty()))
+              ? PartitionPolicyEnum::kAlwaysExpand
+              : PartitionPolicyEnum::kFitOnLineElseExpand;
+      VisitIndentedSection(node, 0, policy);
       break;
     }
 
