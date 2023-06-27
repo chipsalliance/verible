@@ -200,9 +200,8 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
   if (context->Key() && verible::IsSubRange(*context->Key(), symbol)) {
     return context;
   }
-  for (const auto &supplement_definition :
-       context->Value().supplement_definitions) {
-    if (verible::IsSubRange(supplement_definition, symbol)) {
+  for (const auto &sdef : context->Value().supplement_definitions) {
+    if (verible::IsSubRange(sdef, symbol)) {
       return context;
     }
   }
@@ -294,14 +293,12 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
   // Symbol not found
   if (!node) return {};
   std::vector<verible::lsp::Location> locations;
-  std::optional<verible::lsp::Location> location =
+  const std::optional<verible::lsp::Location> location =
       GetLocationFromSymbolName(*node->Key(), node->Value().file_origin);
   if (!location) return {};
   locations.push_back(*location);
-  for (const auto &supplement_definition :
-       node->Value().supplement_definitions) {
-    std::optional<verible::lsp::Location> loc = GetLocationFromSymbolName(
-        supplement_definition, node->Value().file_origin);
+  for (const auto &sdef : node->Value().supplement_definitions) {
+    const auto loc = GetLocationFromSymbolName(sdef, node->Value().file_origin);
     if (loc) locations.push_back(*loc);
   }
   return locations;
@@ -322,7 +319,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindReferencesLocations(
     const verible::lsp::ReferenceParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
-  absl::string_view symbol =
+  const absl::string_view symbol =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   const SymbolTableNode &root = symbol_table_->Root();
   const SymbolTableNode *node = ScanSymbolTreeForDefinition(&root, symbol);
@@ -339,8 +336,8 @@ void SymbolTableHandler::CollectReferencesReferenceComponents(
     const SymbolTableNode *definition_node,
     std::vector<verible::lsp::Location> *references) {
   if (ref->Value().resolved_symbol == definition_node) {
-    std::optional<verible::lsp::Location> loc = GetLocationFromSymbolName(
-        ref->Value().identifier, ref_origin->Value().file_origin);
+    const auto loc = GetLocationFromSymbolName(ref->Value().identifier,
+                                               ref_origin->Value().file_origin);
     if (loc) references->push_back(*loc);
   }
   for (const auto &childref : ref->Children()) {
