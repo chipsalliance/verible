@@ -612,6 +612,8 @@ class SymbolTable::Builder : public TreeContextVisitor {
       EmplaceElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
       return;
     }
+    // If identifier is within ModulePortDeclaration, add port identifier to the
+    // scope
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kModulePortDeclaration}) ||
         Context().DirectParentsAre(
@@ -626,22 +628,19 @@ class SymbolTable::Builder : public TreeContextVisitor {
         Context().DirectParentsAre({NodeEnum::kPortIdentifier,
                                     NodeEnum::kPortIdentifierList,
                                     NodeEnum::kModulePortDeclaration})) {
-      // This identifier declares a (non-parameter) port (of a module,
-      // function, task).
       EmplacePortIdentifierInCurrentScope(
           leaf, text, SymbolMetaType::kDataNetVariableInstance);
       // TODO(fangism): Add attributes to distinguish public ports from
       // private internals members.
       return;
     }
+    // If identifier is within PortDeclaration/Port, add a typed element
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration}) ||
         Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId,
              NodeEnum::kDataTypeImplicitBasicIdDimensions,
              NodeEnum::kPortItem})) {
-      // This identifier declares a (non-parameter) port (of a module,
-      // function, task).
       EmplaceTypedElementInCurrentScope(
           leaf, text, SymbolMetaType::kDataNetVariableInstance);
       // TODO(fangism): Add attributes to distinguish public ports from
@@ -1008,18 +1007,20 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode* EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
                                                 SymbolMetaType metatype) {
-    const auto p = current_scope_->TryEmplace(
+    const auto [kv, did_emplace] = current_scope_->TryEmplace(
         name, SymbolInfo{metatype, source_, &element});
-    if (!p.second && p.first->second.Value().is_port_identifier) {
-      p.first->second.Value().supplement_definitions.push_back(name);
-    } else if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->second);
+    if (!did_emplace) {
+      if (kv->second.Value().is_port_identifier) {
+        kv->second.Value().supplement_definitions.push_back(name);
+      } else {
+        DiagnoseSymbolAlreadyExists(name, kv->second);
+      }
     }
-    return &p.first->second;  // scope of the new (or pre-existing symbol)
+    return &kv->second;  // scope of the new (or pre-existing symbol)
   }
 
   // checks whether a given tag belongs to one of the listed tags
-  bool IsTagMatching(int tag, const std::vector<int>& tags) {
+  bool IsTagMatching(int tag, std::initializer_list<int> tags) {
     return std::find(tags.begin(), tags.end(), tag) != tags.end();
   }
 
@@ -1037,21 +1038,24 @@ class SymbolTable::Builder : public TreeContextVisitor {
       const SyntaxTreeLeaf* second_leaf =
           verible::down_cast<const SyntaxTreeLeaf*>(second);
       // conflict if there are multiple direction specifications
-      const std::vector<int> directiontags = {
+      const std::initializer_list<int> directiontags = {
           verilog_tokentype::TK_input, verilog_tokentype::TK_output,
           verilog_tokentype::TK_inout, verilog_tokentype::TK_ref};
 
-      bool is_first_direction = IsTagMatching(first->Tag().tag, directiontags);
-      bool is_second_direction =
+      const bool is_first_direction =
+          IsTagMatching(first->Tag().tag, directiontags);
+      const bool is_second_direction =
           IsTagMatching(second_leaf->Tag().tag, directiontags);
 
-      // conflict if there are multiple sign specifications
-      const std::vector<int> signtags = {verilog_tokentype::TK_signed,
-                                         verilog_tokentype::TK_unsigned};
-      bool is_first_sign = IsTagMatching(first->Tag().tag, signtags);
-      bool is_second_sign = IsTagMatching(second_leaf->Tag().tag, signtags);
-
       if (is_first_direction && is_second_direction) return true;
+
+      // conflict if there are multiple sign specifications
+      const std::initializer_list<int> signtags = {
+          verilog_tokentype::TK_signed, verilog_tokentype::TK_unsigned};
+      const bool is_first_sign = IsTagMatching(first->Tag().tag, signtags);
+      const bool is_second_sign =
+          IsTagMatching(second_leaf->Tag().tag, signtags);
+
       if (is_first_sign && is_second_sign) return true;
 
       // since dimensions are not handled here and
@@ -1166,19 +1170,21 @@ class SymbolTable::Builder : public TreeContextVisitor {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
-    const auto p = current_scope_->TryEmplace(
+    const auto [kv, passed] = current_scope_->TryEmplace(
         name, SymbolInfo{
                   metatype, source_, &element,
                   // associate this instance with its declared type
                   *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
               });
-    if (!p.second && p.first->second.Value().is_port_identifier) {
-      CheckMultilinePortDeclarationCorrectness(&p.first->second, name);
-    } else if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->second);
+    if (!passed) {
+      if (kv->second.Value().is_port_identifier) {
+        CheckMultilinePortDeclarationCorrectness(&kv->second, name);
+      } else {
+        DiagnoseSymbolAlreadyExists(name, kv->second);
+      }
     }
     VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
-    return p.first->second;  // scope of the new (or pre-existing symbol)
+    return kv->second;  // scope of the new (or pre-existing symbol)
   }
 
   // Creates a port identifier element in the current scope.
