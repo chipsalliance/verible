@@ -15452,11 +15452,17 @@ TEST(FormatterEndToEndTest, AlwaysWrapModuleInstantiation) {
       {"module foo; bar #(.N(N)) bq (.bus(bus));endmodule\n",
        // instance parameter and port fits on line
        "module foo;\n"
-       "  bar #(\n      .N(N)\n  ) bq (\n      .bus(bus)\n  );\n"
+       "  bar #(\n"
+       "      .N(N)\n"
+       "  ) bq (\n"
+       "      .bus(bus)\n"
+       "  );\n"
        "endmodule\n"},
       {"module foo; bar bq (.bus(bus));endmodule\n",
        "module foo;\n"
-       "  bar bq (\n      .bus(bus)\n  );\n"
+       "  bar bq (\n"
+       "      .bus(bus)\n"
+       "  );\n"
        "endmodule\n"},
   };
   FormatStyle style;
