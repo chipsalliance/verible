@@ -214,7 +214,8 @@ TEST(SymbolTableHandlerTest, DefinitionNotTrackedFile) {
 TEST(SymbolTableHandlerTest,
      FindRenamableRangeAtCursorReturnsNullUntrackedFile) {
   const auto tempdir = ::testing::TempDir();
-  std::string sources_dir = verible::file::JoinPath(tempdir, __FUNCTION__);
+  const std::string sources_dir =
+      verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
   absl::string_view filelist_content = "b.sv\n";
@@ -271,7 +272,8 @@ TEST(SymbolTableHandlerTest,
 TEST(SymbolTableHandlerTest,
      FindRenamableRangeAtCursorReturnsNullDefinitionUnknown) {
   const auto tempdir = ::testing::TempDir();
-  std::string sources_dir = verible::file::JoinPath(tempdir, __FUNCTION__);
+  const std::string sources_dir =
+      verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
   absl::string_view filelist_content = "b.sv\n";
@@ -327,7 +329,8 @@ TEST(SymbolTableHandlerTest,
 
 TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
   const auto tempdir = ::testing::TempDir();
-  std::string sources_dir = verible::file::JoinPath(tempdir, __FUNCTION__);
+  const std::string sources_dir =
+      verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
   absl::string_view filelist_content =
@@ -387,7 +390,8 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
 TEST(SymbolTableHandlerTest,
      FindRenameLocationsAndCreateEditsReturnsLocationsTest) {
   const auto tempdir = ::testing::TempDir();
-  std::string sources_dir = verible::file::JoinPath(tempdir, __FUNCTION__);
+  const std::string sources_dir =
+      verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
   absl::string_view filelist_content =
@@ -451,7 +455,8 @@ TEST(SymbolTableHandlerTest,
 TEST(SymbolTableHandlerTest,
      FindRenameLocationsAndCreateEditsReturnsLocationsOnDirtyFilesTest) {
   const auto tempdir = ::testing::TempDir();
-  std::string sources_dir = verible::file::JoinPath(tempdir, __FUNCTION__);
+  const std::string sources_dir =
+      verible::file::JoinPath(tempdir, __FUNCTION__);
   ASSERT_TRUE(verible::file::CreateDir(sources_dir).ok());
 
   absl::string_view filelist_content =
