@@ -75,22 +75,22 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
   if (!InstanceShadowMatcher().Matches(symbol, &manager)) {
     return;
   }
-  const auto& labels = FindAllSymbolIdentifierLeafs(symbol);
+  const auto labels = FindAllSymbolIdentifierLeafs(symbol);
   if (labels.empty()) return;
   // if the considered symbol name is not a declaration
   if (context.IsInside(NodeEnum::kReference)) return;
 
-  const auto& rcontext = reversed_view(context);
-  const auto& rdirectParent = *std::next(rcontext.begin());
+  const auto rcontext = reversed_view(context);
+  const auto* const rdirectParent = *std::next(rcontext.begin());
   // we are looking for the potential labels that might overlap the considered
   // declaration. We are searching all the labels within the visible scope
   // until we find the node or we reach the top of the scope
-  for (auto node : rcontext) {
+  for (const auto* node : rcontext) {
     for (const verible::SymbolPtr& child : node->children()) {
       if (child == nullptr) {
         continue;
       }
-      const auto& overlappingLabels = FindAllSymbolIdentifierLeafs(*child);
+      const auto overlappingLabels = FindAllSymbolIdentifierLeafs(*child);
       for (const verible::TreeSearchMatch& omatch : overlappingLabels) {
         const auto& overlappingLabel = SymbolCastToLeaf(*omatch.match);
         // variable in different scopes or this is not a
