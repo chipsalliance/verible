@@ -95,11 +95,16 @@ class SymbolTableHandler {
       const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
-  // TODO(jbylicki): Add docstring
+  // Returns a range in which a token exists in the file by the LSP request
+  // based on TextDocumentPositionParams. If text is not found,
+  // empty-initialized LineColumnRange is returned.
   verible::LineColumnRange GetTokenRangeAtTextDocumentPosition(
       const verible::lsp::TextDocumentPositionParams &document_cursor,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
+  // Returns a TokenInfo of a token pointed at by the cursor in the file by the
+  // LSP request based on TextDocumentPositionParams. If text is not found,
+  // nullptr is returned.
   std::optional<verible::TokenInfo> GetTokenInfoAtTextDocumentPosition(
       const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);

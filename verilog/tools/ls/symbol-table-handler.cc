@@ -376,7 +376,7 @@ SymbolTableHandler::FindRenameableRangeAtCursor(
   }
   std::optional<verible::TokenInfo> symbol =
       GetTokenInfoAtTextDocumentPosition(params, parsed_buffers);
-  if (symbol.has_value()) {
+  if (symbol) {
     verible::TokenInfo token = symbol.value();
     const SymbolTableNode &root = symbol_table_->Root();
     const SymbolTableNode *node =
@@ -411,10 +411,10 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
   if (locations.empty()) return {};
   std::map<absl::string_view, std::vector<verible::lsp::TextEdit>>
       file_edit_pairs;
-  for (auto &loc : locations) {
+  for (const auto &loc : locations) {
     file_edit_pairs[loc.uri].reserve(locations.size());
   }
-  for (auto &loc : locations) {
+  for (const auto &loc : locations) {
     // TODO(jbylicki): Remove this band-aid fix once #1678 is merged - it should
     // fix
     //  duplicate definition/references appending in modules and remove the need
