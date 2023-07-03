@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_STATEMENT_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_STATEMENT_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_
 
 #include <set>
 #include <string>
@@ -27,7 +27,6 @@
 namespace verilog {
 namespace analysis {
 
-// InstanceShadowRule finds occurrences of "disable fork_label"
 class InstanceShadowRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
