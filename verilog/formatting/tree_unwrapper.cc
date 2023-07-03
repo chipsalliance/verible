@@ -849,6 +849,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
     case NodeEnum::kGateInstance:
+    case NodeEnum::kRegisterVariable:
     case NodeEnum::kGenerateIfClause:
     case NodeEnum::kGenerateElseClause:
     case NodeEnum::kGenerateIfHeader:
@@ -863,17 +864,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
-    case NodeEnum::kRegisterVariable: {
-      if (node.children().size() > 1) {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kAppendFittingSubPartitions);
-      } else {
-        VisitIndentedSection(node, 0,
-                             PartitionPolicyEnum::kFitOnLineElseExpand);
-      }
-      break;
-    }
-
       // The following cases will always expand into their constituent
       // partitions:
     case NodeEnum::kModuleDeclaration:
@@ -3134,30 +3124,35 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kRegisterVariable:
     case NodeEnum::kInstantiationType: {
       size_t partition_size = partition.Children().size();
-      if (partition_size >= 4) {
-        auto subnode = verible::GetSubtreeAsNode(node, tag, 0);
-        if (!subnode) {
-          subnode = verible::GetSubtreeAsNode(node, tag, 1);
-          if (!subnode || subnode->Tag().tag !=
-                              static_cast<int>(NodeEnum::kUnpackedDimensions)) {
-            break;
-          }
-        } else {
-          subnode = verible::GetSubtreeAsNode(*subnode, subnode->Tag().tag, 3);
-          if (!subnode || subnode->Tag().tag !=
-                              static_cast<int>(NodeEnum::kPackedDimensions)) {
-            break;
-          }
+      // Partition with complex expressions inside dimensions have at least 4
+      // children, so they are filtered
+      if (partition_size < 4) break;
+      // Then either packed or unpacked dimensions are extracted from their
+      // positions
+      auto subnode = verible::GetSubtreeAsNode(node, tag, 1);
+      if (!subnode ||
+          NodeEnum(subnode->Tag().tag) != NodeEnum::kUnpackedDimensions) {
+        subnode = verible::GetSubtreeAsNode(node, tag, 0);
+        subnode = verible::GetSubtreeAsNode(*subnode, subnode->Tag().tag, 3);
+        if (!subnode ||
+            NodeEnum(subnode->Tag().tag) != NodeEnum::kPackedDimensions) {
+          break;
         }
-        auto& colon = partition.Children()[partition_size - 3];
-        if (colon.Value().TokensRange().begin()->Text() != ":") break;
-        AttachSeparatorToPreviousOrNextPartition(&colon);
-        verible::MergeLeafIntoPreviousLeaf(
-            &partition.Children()[partition_size - 2]);
-        verible::FlattenOneChild(partition, partition_size - 3);
-        verible::MergeLeafIntoPreviousLeaf(
-            &partition.Children()[partition_size - 2]);
       }
+      // Next the colon is located and attached to the first dimension
+      auto& colon = partition.Children()[partition_size - 3];
+      // And the colon is checked to be an actual colon
+      if (colon.Value().TokensRange().begin()->Text() != ":") break;
+      AttachSeparatorToPreviousOrNextPartition(&colon);
+      // And if everything went smoothly, the latter dimensions are attached to
+      // their predecessors
+      verible::MergeLeafIntoPreviousLeaf(
+          &partition.Children()[partition_size - 2]);
+      // And flattened so that the breaks contain the whole dimension range in
+      // one line
+      verible::FlattenOneChild(partition, partition_size - 3);
+      verible::MergeLeafIntoPreviousLeaf(
+          &partition.Children()[partition_size - 2]);
       break;
     }
 
