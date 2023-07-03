@@ -15457,6 +15457,49 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   }
 }
 
+TEST(FormatterEndToEndTest, AlwaysWrapModuleInstantiation) {
+  static constexpr FormatterTestCase kTestCases[] = {
+      {"  module foo   ; bar bq();endmodule\n",
+       "module foo;\n"
+       "  bar bq ();\n"  // single instance
+       "endmodule\n"},
+      {"  module foo   ; bar bq(), bq2(  );endmodule\n",
+       "module foo;\n"
+       "  bar bq (), bq2 ();\n"  // multiple  empty instances, still fitting on
+                                 // one line
+       "endmodule\n"},
+      {"module foo; bar #(.N(N)) bq (.bus(bus));endmodule\n",
+       // instance parameter and port fits on line
+       "module foo;\n"
+       "  bar #(\n"
+       "      .N(N)\n"
+       "  ) bq (\n"
+       "      .bus(bus)\n"
+       "  );\n"
+       "endmodule\n"},
+      {"module foo; bar bq (.bus(bus));endmodule\n",
+       "module foo;\n"
+       "  bar bq (\n"
+       "      .bus(bus)\n"
+       "  );\n"
+       "endmodule\n"},
+  };
+  FormatStyle style;
+  style.column_limit = 40;
+  style.indentation_spaces = 2;
+  style.wrap_spaces = 4;
+  style.always_wrap_module_instantiations = true;
+  for (const auto& test_case : kTestCases) {
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+}
+
 TEST(FormatterEndToEndTest, AutoInferAlignment) {
   static constexpr FormatterTestCase kTestCases[] = {
       {"", ""},
