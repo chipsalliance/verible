@@ -161,18 +161,6 @@ static WithReason<int> SpacesRequiredBetween(
             "and \"{y}\" over \"{ y }\"."};
   }
 
-  // For now, leave everything inside [dimensions] alone.
-  if (InDeclaredDimensions(right_context)) {
-    // ... except for the spacing before '[' and around ':',
-    // which are covered elsewhere.
-    if (right.TokenEnum() != '[' && left.TokenEnum() != ':' &&
-        right.TokenEnum() != ':') {
-      return {kUnhandledSpacesRequired,
-              "Leave [expressions] inside scalar and range dimensions alone "
-              "(for now)."};
-    }
-  }
-
   // Unary operators (context-sensitive)
   if (IsUnaryPrefixExpressionOperand(left, right_context) &&
       (left.format_token_enum != FormatTokenType::binary_operator ||
@@ -441,7 +429,7 @@ static WithReason<int> SpacesRequiredBetween(
     if (InRangeLikeContext(right_context)) {
       int spaces = right.OriginalLeadingSpaces().length();
       if (spaces > 1) {
-        // If ExcessSpaces returns 0 if there was a newline - prevents
+        // ExcessSpaces returns 0 if there was a newline - prevents
         // counting indentation as spaces
         spaces = right.ExcessSpaces() ? 1 : 0;
       }
@@ -883,7 +871,7 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
 
   if (left.TokenEnum() == verilog_tokentype::MacroCallCloseToEndLine) {
     if (!IsComment(FormatTokenType(right.format_token_enum)) &&
-        !IsAnySemicolon(right)) {
+        !IsAnySemicolon(right) && !InRangeLikeContext(left_context)) {
       return {SpacingOptions::kMustWrap,
               "Macro-closing ')' should end its own line except for comments "
               "nad ';'."};

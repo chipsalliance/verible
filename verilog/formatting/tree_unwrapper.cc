@@ -842,7 +842,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCovergroupHeader:
     case NodeEnum::kModportDeclaration:
     case NodeEnum::kInstantiationType:
-    case NodeEnum::kRegisterVariable:
     case NodeEnum::kVariableDeclarationAssignment:
     case NodeEnum::kCaseItem:
     case NodeEnum::kDefaultItem:
@@ -850,6 +849,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kCasePatternItem:
     case NodeEnum::kGenerateCaseItem:
     case NodeEnum::kGateInstance:
+    case NodeEnum::kRegisterVariable:
     case NodeEnum::kGenerateIfClause:
     case NodeEnum::kGenerateElseClause:
     case NodeEnum::kGenerateIfHeader:
@@ -864,7 +864,6 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       VisitIndentedSection(node, 0, PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
     }
-
       // The following cases will always expand into their constituent
       // partitions:
     case NodeEnum::kModuleDeclaration:
@@ -1109,8 +1108,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
                      NodeEnum::kIfBody,
                      NodeEnum::kIfClause,
                  })) &&
-                !(Context().IsInside(NodeEnum::kNetVariableAssignment)  //
-                  ));
+                !(Context().IsInside(NodeEnum::kNetVariableAssignment)) &&
+                !(Context().IsInside(NodeEnum::kUnpackedDimensions)));
       };
 
       // TODO(mglb): Format non-standalone calls with layout optimizer.
@@ -1126,6 +1125,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         PushContextHint(ContextHint::kInsideStandaloneMacroCall);
         VisitIndentedSection(node, indent, PartitionPolicyEnum::kStack);
       } else {
+        // TODO(jbylicki): Check if there is a possibility of
+        // using kFitOnLineElseExpand - seems to have no effect
         VisitIndentedSection(node, indent,
                              PartitionPolicyEnum::kAppendFittingSubPartitions);
       }
@@ -2714,13 +2715,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
                                    NodeEnum::kParenGroup,
                                    NodeEnum::kRandomizeMethodCallExtension})) {
-        if (partition.Value().PartitionPolicy() ==
-            PartitionPolicyEnum::kAppendFittingSubPartitions) {
-          auto& last = RightmostDescendant(partition);
-          if (PartitionStartsWithCloseParen(last) ||
-              PartitionStartsWithSemicolon(last)) {
-            verible::MergeLeafIntoPreviousLeaf(&last);
-          }
+        auto& last = RightmostDescendant(partition);
+        if (PartitionStartsWithCloseParen(last) ||
+            PartitionStartsWithSemicolon(last)) {
+          verible::MergeLeafIntoPreviousLeaf(&last);
         }
       }
       break;
@@ -3120,6 +3118,41 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       }
       FlattenOnlyChildrenWithChildren(partition);
       AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
+      break;
+    }
+
+    case NodeEnum::kRegisterVariable:
+    case NodeEnum::kInstantiationType: {
+      size_t partition_size = partition.Children().size();
+      // Partition with complex expressions inside dimensions have at least 4
+      // children, so they are filtered
+      if (partition_size < 4) break;
+      // Then either packed or unpacked dimensions are extracted from their
+      // positions
+      auto subnode = verible::GetSubtreeAsNode(node, tag, 1);
+      if (!subnode ||
+          NodeEnum(subnode->Tag().tag) != NodeEnum::kUnpackedDimensions) {
+        subnode = verible::GetSubtreeAsNode(node, tag, 0);
+        subnode = verible::GetSubtreeAsNode(*subnode, subnode->Tag().tag, 3);
+        if (!subnode ||
+            NodeEnum(subnode->Tag().tag) != NodeEnum::kPackedDimensions) {
+          break;
+        }
+      }
+      // Next the colon is located and attached to the first dimension
+      auto& colon = partition.Children()[partition_size - 3];
+      // And the colon is checked to be an actual colon
+      if (colon.Value().TokensRange().begin()->Text() != ":") break;
+      AttachSeparatorToPreviousOrNextPartition(&colon);
+      // And if everything went smoothly, the latter dimensions are attached to
+      // their predecessors
+      verible::MergeLeafIntoPreviousLeaf(
+          &partition.Children()[partition_size - 2]);
+      // And flattened so that the breaks contain the whole dimension range in
+      // one line
+      verible::FlattenOneChild(partition, partition_size - 3);
+      verible::MergeLeafIntoPreviousLeaf(
+          &partition.Children()[partition_size - 2]);
       break;
     }
 
