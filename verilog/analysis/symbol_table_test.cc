@@ -9010,6 +9010,219 @@ TEST(BuildSymbolTableTest, IncludedTwiceFromDifferentFiles) {
   EXPECT_EMPTY_STATUSES(resolve_diagnostics);
 }
 
+TEST(BuildSymbolTableTest, ModulePortDeclarationMultiline) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module a; endmodule\n"
+                            "module m(mport);\n"
+                            "  input mport;\n"
+                            "  wire mport;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+}
+
+TEST(BuildSymbolTableTest, ModulePortDeclarationDirectionRedefinition) {
+  TestVerilogSourceFile src(
+      "foobar.sv",
+      "module m(mport);\n"
+      "  input mport;\n"
+      "  output mport;\n"  // direction is already declared
+      "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
+  EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err_status.message(),
+              HasSubstr("\"mport\" is already defined in the $root::m scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModulePortDeclarationTypeRedefinition) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module a; endmodule\n"
+                            "module m(mport);\n"
+                            "  input mport;\n"
+                            "  wire mport;\n"
+                            "  logic mport;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
+  EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err_status.message(),
+              HasSubstr("\"mport\" is already defined in the $root::m scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithDimensions) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m(mport);\n"
+                            "  input [10:0] mport;\n"
+                            "  reg [10:0] mport;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+}
+
+TEST(BuildSymbolTableTest,
+     ModulePortDeclarationTypeMultilineWithMismatchingDimensions) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m(mport);\n"
+                            "  input [10:0] mport;\n"
+                            "  reg [8:0] mport;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
+  EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err_status.message(),
+              HasSubstr("\"mport\" is already defined in the $root::m scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest,
+     ModulePortDeclarationTypeMultilineCorrectSignPlacements) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m(a, b, c, d);\n"
+                            "  input signed [10:0] a;\n"
+                            "  output unsigned [10:0] b;\n"
+                            "  input [10:0] c;\n"
+                            "  output [10:0] d;\n"
+                            "  wire [10:0] a;\n"
+                            "  logic [10:0] b;\n"
+                            "  logic unsigned [10:0] c;\n"
+                            "  wire signed [10:0] d;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  EXPECT_EMPTY_STATUSES(build_diagnostics);
+}
+
+TEST(BuildSymbolTableTest,
+     ModulePortDeclarationTypeMultilineWithMismatchingSigns) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m(mport);\n"
+                            "  input unsigned [10:0] mport;\n"
+                            "  reg signed [10:0] mport;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
+  EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err_status.message(),
+              HasSubstr("\"mport\" is already defined in the $root::m scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
+TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithPortList) {
+  TestVerilogSourceFile src("foobar.sv",
+                            "module m(a, b, c);\n"
+                            "  input a, b;\n"
+                            "  output b, c;\n"
+                            "endmodule\n");
+  const auto status = src.Parse();
+  ASSERT_TRUE(status.ok()) << status.message();
+  SymbolTable symbol_table(nullptr);
+  const SymbolTableNode& root_symbol(symbol_table.Root());
+
+  const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
+
+  MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, "m");
+  EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
+  EXPECT_EQ(module_node_info.file_origin, &src);
+  EXPECT_EQ(module_node_info.declared_type.syntax_origin,
+            nullptr);  // there is no module meta-type
+
+  ASSIGN_MUST_HAVE_UNIQUE(err_status, build_diagnostics);
+  EXPECT_EQ(err_status.code(), absl::StatusCode::kAlreadyExists);
+  EXPECT_THAT(err_status.message(),
+              HasSubstr("\"b\" is already defined in the $root::m scope"));
+
+  {
+    std::vector<absl::Status> resolve_diagnostics;
+    symbol_table.Resolve(&resolve_diagnostics);  // nothing to resolve
+    EXPECT_EMPTY_STATUSES(resolve_diagnostics);
+  }
+}
+
 struct FileListTestCase {
   absl::string_view contents;
   std::vector<absl::string_view> expected_files;

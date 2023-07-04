@@ -231,6 +231,13 @@ struct DeclarationTypeInfo {
   // which can be recovered by StringSpanOfSymbol(const verible::Symbol&).
   const verible::Symbol* syntax_origin = nullptr;
 
+  // holds optional string_view describing direction of the port
+  absl::string_view direction = "";
+
+  // holds additional type specifications, used mostly in multiline definitions
+  // of ports
+  std::vector<const verible::Symbol*> type_specifications;
+
   // Pointer to the reference node that represents a user-defined type, if
   // applicable.
   // For built-in and primitive types, this is left as nullptr.
@@ -279,6 +286,15 @@ struct SymbolInfo {
   // An easy way to view this text is StringSpanOfSymbol(*syntax_origin).
   // Reminder: Parts of the syntax tree may originate from included files.
   const verible::Symbol* syntax_origin = nullptr;
+
+  // vector to additional definition entries, e.g. for port definitions
+  // TODO (glatosinski): I guess we should include more information here rather
+  // than just string_view pointing to the symbol, or add string_view pointing
+  // to the symbol in the Symbol class
+  std::vector<absl::string_view> supplement_definitions;
+
+  // bool telling if the given symbol is a port identifier
+  bool is_port_identifier = false;
 
   // What is the type associated with this symbol?
   // Only applicable to typed elements: variables, nets, instances,
@@ -330,7 +346,7 @@ struct SymbolInfo {
       : metatype(metatype),
         file_origin(file_origin),
         syntax_origin(syntax_origin),
-        declared_type(declared_type) {}
+        declared_type(std::move(declared_type)) {}
 
   // move-only
   SymbolInfo(const SymbolInfo&) = delete;

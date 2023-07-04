@@ -5549,11 +5549,17 @@ module_parameter_port_list_item_last
     { $$ = MakeTaggedNode(N::kFormalParameterList, $1); }
   ;
 
+// TODO (glatosinski) MakeDataType is introduced here to mark
+// all tokens responsible for data creation for a given net
+// declaration.
+// Additional information, such as dimensions should be possibly
+// included too, for type comparison purposes (for multiline port
+// declaration)
 net_declaration
   : net_type net_variable_or_decl_assigns ';'
-    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, nullptr, $2, $3); }
+    { $$ = MakeTaggedNode(N::kNetDeclaration, MakeDataType($1), nullptr, $2, $3); }
   | net_type data_type_or_implicit net_variable_or_decl_assigns ';'
-    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2, $3, $4); }
+    { $$ = MakeTaggedNode(N::kNetDeclaration, MakeDataType($1), $2, $3, $4); }
     /* TODO(fangism): support drive_strength and charge_strength */
   // : net_type data_type_or_implicit delay3_opt net_variable_list ';'
   // : net_type data_type_or_implicit delay3 net_variable_list ';'
@@ -5566,11 +5572,11 @@ net_declaration
   //   trailing_assign_opt ',' net_decl_assigns ';'
   // | net_type data_type_or_implicit drive_strength net_decl_assigns ';'
   | TK_trireg charge_strength_opt decl_dimensions_opt delay3_opt list_of_identifiers ';'
-    { $$ = MakeTaggedNode(N::kNetDeclaration, $1, $2,
+    { $$ = MakeTaggedNode(N::kNetDeclaration, MakeDataType(nullptr, $1, $4, nullptr), $2,
                           MakePackedDimensionsNode($3),
-                          $4, $5, $6); }
+                          $5, $6); }
   | net_type delay3 net_variable_or_decl_assigns ';'
-  { $$ = MakeTaggedNode(N::kNetDeclaration, $1, nullptr, nullptr, $2, $3, $4); }
+  { $$ = MakeTaggedNode(N::kNetDeclaration, MakeDataType(nullptr, $1, $2, nullptr), nullptr, nullptr, $3, $4); }
   /* TODO(fangism): net_type_identifer [ delay_control ] list_of_net_decl_assignments */
   /* TODO(fangism): TK_interconnect ... */
   ;
@@ -5582,36 +5588,36 @@ module_port_declaration
    */
   : port_direction signed_unsigned_opt qualified_id decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3,
-                          MakePackedDimensionsNode($4),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, $3,
+                          MakePackedDimensionsNode($4)),
                           $5, $6); }
   | port_direction signed_unsigned_opt unqualified_id decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3,
-                          MakePackedDimensionsNode($4),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, $3,
+                          MakePackedDimensionsNode($4)),
                           $5, $6); }
   | port_direction signed_unsigned_opt decl_dimensions delay3_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2,
-                          MakePackedDimensionsNode($3), $4,
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($2, nullptr, $4, MakePackedDimensionsNode($3)),
                           $5, $6);}
     /* implicit type */
   | port_direction signed_unsigned_opt delay3
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3, $4, $5); }
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, nullptr, $3, nullptr), $4, $5); }
     /* implicit type */
   | port_direction signed_unsigned_opt list_of_module_item_identifiers ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3, $4);}
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, MakeDataType($2, nullptr, nullptr), $3, $4);}
     /* implicit type */
   | port_direction port_net_type signed_unsigned_opt decl_dimensions_opt
     list_of_identifiers_unpacked_dimensions ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3,
-                          MakePackedDimensionsNode($4),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
   | dir var_type signed_unsigned_opt decl_dimensions_opt
     list_of_port_identifiers ';'
-    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1, $2, $3,
-                          MakePackedDimensionsNode($4),
+    { $$ = MakeTaggedNode(N::kModulePortDeclaration, $1,
+                          MakeDataType($3, ForwardChildren($2), MakePackedDimensionsNode($4)),
                           $5, $6); }
   ;
 

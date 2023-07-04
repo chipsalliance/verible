@@ -488,7 +488,7 @@ TEST_F(VerilogLanguageServerTest, RangeFormattingTest) {
        0}};
 
   for (const auto &params : formatting_params) {
-    std::string request = FormattingRequest("file://fmt.sv", params);
+    const std::string request = FormattingRequest("file://fmt.sv", params);
     ASSERT_OK(SendRequest(request));
 
     const json response = json::parse(GetResponse());
@@ -616,6 +616,27 @@ std::string ReferencesRequest(absl::string_view file, int id, int line,
                                           line, character);
 }
 
+void CheckDefinitionEntry(const json &entry, verible::LineColumn start,
+                          verible::LineColumn end,
+                          const std::string &file_uri) {
+  ASSERT_EQ(entry["range"]["start"]["line"], start.line);
+  ASSERT_EQ(entry["range"]["start"]["character"], start.column);
+  ASSERT_EQ(entry["range"]["end"]["line"], end.line);
+  ASSERT_EQ(entry["range"]["end"]["character"], end.column);
+  ASSERT_EQ(entry["uri"], file_uri);
+}
+
+// Performs assertions on textDocument/definition responses where single
+// definition is expected
+void CheckDefinitionResponseSingleDefinition(const json &response, int id,
+                                             verible::LineColumn start,
+                                             verible::LineColumn end,
+                                             const std::string &file_uri) {
+  ASSERT_EQ(response["id"], id);
+  ASSERT_EQ(response["result"].size(), 1);
+  CheckDefinitionEntry(response["result"][0], start, end, file_uri);
+}
+
 // Performs simple textDocument/definition request with no VerilogProject set
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
   std::string definition_request = DefinitionRequest("file://b.sv", 2, 3, 18);
@@ -644,18 +665,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestTest) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 1, .column = 9},
+                                          {.line = 1, .column = 13},
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request when there are two symbols of the same
@@ -689,27 +707,20 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_b_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_b_uri);
 
   // find definition for "var1" variable in a.sv file
-  definition_request = DefinitionRequest(module_a_uri, 3, 2, 16);
+  const std::string definition_request2 =
+      DefinitionRequest(module_a_uri, 3, 2, 16);
 
-  ASSERT_OK(SendRequest(definition_request));
+  ASSERT_OK(SendRequest(definition_request2));
   json response_a = json::parse(GetResponse());
 
-  ASSERT_EQ(response_a["id"], 3);
-  ASSERT_EQ(response_a["result"].size(), 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_a["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_a["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_a["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_a, 3, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -738,18 +749,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -775,18 +783,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -827,30 +832,23 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 
   // perform double check
   ASSERT_OK(SendRequest(definition_request));
   response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -886,18 +884,15 @@ endmodule
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 1, .column = 9},
+                                          {.line = 1, .column = 13},
+                                          module_a_uri);
 }
 
 // Check textDocument/definition request where we want definition of a symbol
@@ -932,7 +927,8 @@ endmodule
   GetResponse();
 
   // find definition for "var1" variable of a module in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 15);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 15);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
@@ -961,7 +957,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestUnsupportedURI) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(
+  const std::string definition_request = DefinitionRequest(
       absl::StrReplaceAll(module_a_uri, {{"file://", "https://"}}), 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
@@ -990,18 +986,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 10);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 1, 10);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 1, .column = 9},
+                                          {.line = 1, .column = 13},
+                                          module_a_uri);
 }
 
 // Check textDocument/definition when the cursor points at nothing
@@ -1023,7 +1016,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 1, 0);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 1, 0);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1051,7 +1045,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 3, 2);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 3, 2);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1075,7 +1070,8 @@ TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoFileList) {
   GetResponse();
 
   // find definition for "var1" variable in a.sv file
-  std::string definition_request = DefinitionRequest(module_a_uri, 2, 2, 16);
+  const std::string definition_request =
+      DefinitionRequest(module_a_uri, 2, 2, 16);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
@@ -1107,18 +1103,15 @@ TEST_F(VerilogLanguageServerSymbolTableTest,
   GetResponse();
 
   // find definition for "var1" variable in b.sv file
-  std::string definition_request = DefinitionRequest(module_b_uri, 2, 4, 14);
+  const std::string definition_request =
+      DefinitionRequest(module_b_uri, 2, 4, 14);
 
   ASSERT_OK(SendRequest(definition_request));
   json response_b = json::parse(GetResponse());
 
-  ASSERT_EQ(response_b["id"], 2);
-  ASSERT_EQ(response_b["result"].size(), 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["start"]["character"], 9);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["line"], 1);
-  ASSERT_EQ(response_b["result"][0]["range"]["end"]["character"], 13);
-  ASSERT_EQ(response_b["result"][0]["uri"], module_a_uri);
+  CheckDefinitionResponseSingleDefinition(
+      response_b, 2, {.line = 1, .column = 9}, {.line = 1, .column = 13},
+      module_a_uri);
 }
 
 TEST_F(VerilogLanguageServerSymbolTableTest, MultipleDefinitionsOfSameSymbol) {
@@ -1160,21 +1153,18 @@ endmodule
   GetResponse();
 
   // find definition for "bar" type
-  std::string definition_request = DefinitionRequest(module_foo_uri, 2, 1, 3);
+  const std::string definition_request =
+      DefinitionRequest(module_foo_uri, 2, 1, 3);
 
   ASSERT_OK(SendRequest(definition_request));
   json response = json::parse(GetResponse());
 
-  ASSERT_EQ(response["id"], 2);
-  ASSERT_EQ(response["result"].size(), 1);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["line"], 0);
-  ASSERT_EQ(response["result"][0]["range"]["start"]["character"], 7);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["line"], 0);
-  ASSERT_EQ(response["result"][0]["range"]["end"]["character"], 10);
-  ASSERT_EQ(response["result"][0]["uri"], module_bar_1_uri);
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 0, .column = 7},
+                                          {.line = 0, .column = 10},
+                                          module_bar_1_uri);
 }
 
-// Sample of badly styled modle
+// Sample of badly styled module
 constexpr static absl::string_view badly_styled_module =
     "module my_module(input logic in, output logic out);\n\tassign out = in; "
     "\nendmodule";
@@ -1457,6 +1447,351 @@ TEST_F(VerilogLanguageServerSymbolTableTest, CheckReferenceUnknownSymbol) {
 
   ASSERT_EQ(response_b["id"], 2);
   ASSERT_EQ(response_b["result"].size(), 0);
+}
+
+// Checks the definition request for module type in different module
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestModule) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output [31:0] o;
+  input i;
+  wire [31:0] o = {32{i}};
+endmodule
+
+module ExampInst (
+    o,
+    i
+);
+
+  output o;
+  input i;
+
+  InstModule instName (  /*AUTOINST*/);
+
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_instmodule_uri, instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "InstModule"
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 17, 3);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 0, .column = 7},
+                                          {.line = 0, .column = 17},
+                                          module_instmodule_uri);
+}
+
+// Checks the go-to definition when pointing to the definition of the symbol
+TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestSelf) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output [31:0] o;
+  input i;
+  wire [31:0] o = {32{i}};
+endmodule
+
+module ExampInst (
+    o,
+    i
+);
+
+  output o;
+  input i;
+
+  InstModule instName (  /*AUTOINST*/);
+
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_instmodule_uri, instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "InstModule"
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 0, 8);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  CheckDefinitionResponseSingleDefinition(response, 2, {.line = 0, .column = 7},
+                                          {.line = 0, .column = 17},
+                                          module_instmodule_uri);
+}
+
+// Checks the definition request for module port
+// This check verifies ports with types defined inside port list
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortTypesInsideList) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    output logic [31:0] o,
+    input logic i
+);
+  wire [31:0] o = {32{i}};
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_instmodule_uri, instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "i"
+  std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 4, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, {.line = 2, .column = 16}, {.line = 2, .column = 17},
+      module_instmodule_uri);
+}
+
+// Checks the definition request for module port
+// This check verifies ports with types defined outside port list
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortTypesOutsideList) {
+  static constexpr absl::string_view  //
+      instmodule(
+          R"(module InstModule (
+    o,
+    i
+);
+  output logic [31:0] o;
+  input logic i;
+  wire [31:0] o = {32{i}};
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_instmodule(
+      root_dir, instmodule, "instmodule.sv");
+
+  const std::string module_instmodule_uri =
+      PathToLSPUri(module_instmodule.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_instmodule_uri, instmodule);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "bar" type
+  const std::string definition_request =
+      DefinitionRequest(module_instmodule_uri, 2, 6, 22);
+
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, {.line = 5, .column = 14}, {.line = 5, .column = 15},
+      module_instmodule_uri);
+}
+
+// Checks jumps to different variants of kModulePortDeclaration
+// * port with implicit type
+// * kPortIdentifier (reg with assignment)
+// * port with dimensions
+// * simple port
+TEST_F(VerilogLanguageServerSymbolTableTest,
+       DefinitionRequestPortPortIdentifierVariant) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(a, rst, clk, out);
+    input logic [15:0] a;
+    input rst;
+    input logic clk;
+    output reg [15:0] out = 0;
+
+    always @(posedge clk) begin
+        if (! rst) begin
+            out = 0;
+        end
+        else begin
+            out = out + a;
+        end
+    end
+endmodule)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  GetResponse();
+
+  // find definition for "a"
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 11, 24);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 2, {.line = 1, .column = 23}, {.line = 1, .column = 24},
+      module_port_identifier_uri);
+
+  // find definition for "clk"
+  definition_request = DefinitionRequest(module_port_identifier_uri, 3, 6, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 3, {.line = 3, .column = 16}, {.line = 3, .column = 19},
+      module_port_identifier_uri);
+
+  // find definition for "rst"
+  definition_request = DefinitionRequest(module_port_identifier_uri, 4, 6, 22);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 4, {.line = 3, .column = 16}, {.line = 3, .column = 19},
+      module_port_identifier_uri);
+
+  // find first definition for "out"
+  definition_request = DefinitionRequest(module_port_identifier_uri, 5, 8, 13);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 5, {.line = 4, .column = 22}, {.line = 4, .column = 25},
+      module_port_identifier_uri);
+
+  // find second definition for "out"
+  definition_request = DefinitionRequest(module_port_identifier_uri, 6, 11, 18);
+  ASSERT_OK(SendRequest(definition_request));
+  response = json::parse(GetResponse());
+  CheckDefinitionResponseSingleDefinition(
+      response, 6, {.line = 4, .column = 22}, {.line = 4, .column = 25},
+      module_port_identifier_uri);
+}
+
+// Verifies the work of the go-to definition request when the
+// definition of the symbol is split into multiple lines,
+// e.g. for port module declarations.
+TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitions) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(i, o, trigger);
+  input trigger;
+  input i;
+  output o;
+
+  reg [31:0] i;
+  wire [31:0] o;
+
+  always @(posedge clock)
+    assign o = i;
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  json diagnostics = json::parse(GetResponse());
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_EQ(diagnostics["params"]["uri"], module_port_identifier_uri);
+  ASSERT_EQ(diagnostics["params"]["diagnostics"].size(), 0);
+
+  // find definition for "i"
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 9, 15);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 2);
+
+  std::sort(
+      response["result"].begin(), response["result"].end(),
+      [](const json &a, const json &b) -> bool { return a.dump() < b.dump(); });
+
+  CheckDefinitionEntry(response["result"][0], {.line = 5, .column = 13},
+                       {.line = 5, .column = 14}, module_port_identifier_uri);
+  CheckDefinitionEntry(response["result"][1], {.line = 2, .column = 8},
+                       {.line = 2, .column = 9}, module_port_identifier_uri);
+}
+
+// Verifies the work of the go-to definition request when
+// definition of the symbol later in the definition list is requested
+TEST_F(VerilogLanguageServerSymbolTableTest, MultilinePortDefinitionsWithList) {
+  static constexpr absl::string_view  //
+      port_identifier(
+          R"(module port_identifier(a, b, o, trigger);
+  input trigger;
+  input a, b;
+  output o;
+
+  reg [31:0] a, b;
+  wire [31:0] o;
+
+  always @(posedge clock)
+    assign o = a + b;
+endmodule
+)");
+  const verible::file::testing::ScopedTestFile module_port_identifier(
+      root_dir, port_identifier, "port_identifier.sv");
+
+  const std::string module_port_identifier_uri =
+      PathToLSPUri(module_port_identifier.filename());
+  const std::string foo_open_request =
+      DidOpenRequest(module_port_identifier_uri, port_identifier);
+  ASSERT_OK(SendRequest(foo_open_request));
+
+  json diagnostics = json::parse(GetResponse());
+  ASSERT_EQ(diagnostics["method"], "textDocument/publishDiagnostics");
+  ASSERT_EQ(diagnostics["params"]["uri"], module_port_identifier_uri);
+  ASSERT_EQ(diagnostics["params"]["diagnostics"].size(), 0);
+
+  // find definition for "i"
+  std::string definition_request =
+      DefinitionRequest(module_port_identifier_uri, 2, 5, 16);
+  ASSERT_OK(SendRequest(definition_request));
+  json response = json::parse(GetResponse());
+
+  ASSERT_EQ(response["id"], 2);
+  ASSERT_EQ(response["result"].size(), 2);
+
+  std::sort(
+      response["result"].begin(), response["result"].end(),
+      [](const json &a, const json &b) -> bool { return a.dump() < b.dump(); });
+
+  CheckDefinitionEntry(response["result"][0], {.line = 2, .column = 11},
+                       {.line = 2, .column = 12}, module_port_identifier_uri);
+  CheckDefinitionEntry(response["result"][1], {.line = 5, .column = 16},
+                       {.line = 5, .column = 17}, module_port_identifier_uri);
 }
 
 // Tests correctness of Language Server shutdown request

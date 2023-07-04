@@ -224,6 +224,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case NodeEnum::kPortList:
         DeclarePorts(node);
         break;
+      case NodeEnum::kModulePortDeclaration:
       case NodeEnum::kPortItem:           // fall-through
                                           // for function/task parameters
       case NodeEnum::kPortDeclaration:    // fall-through
@@ -588,6 +589,15 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
   }
 
+  // stores the direction of the port in the current declaration type info
+  void HandleDirection(const SyntaxTreeLeaf& leaf) {
+    if (!declaration_type_info_) return;
+    if (Context().DirectParentIs(NodeEnum::kModulePortDeclaration) ||
+        Context().DirectParentIs(NodeEnum::kPortDeclaration)) {
+      declaration_type_info_->direction = leaf.get().text();
+    }
+  }
+
   void HandleIdentifier(const SyntaxTreeLeaf& leaf) {
     const absl::string_view text = leaf.get().text();
     VLOG(2) << __FUNCTION__ << ": " << text;
@@ -602,14 +612,35 @@ class SymbolTable::Builder : public TreeContextVisitor {
       EmplaceElementInCurrentScope(leaf, text, SymbolMetaType::kParameter);
       return;
     }
+    // If identifier is within ModulePortDeclaration, add port identifier to the
+    // scope
+    if (Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre(
+            {NodeEnum::kUnqualifiedId, NodeEnum::kIdentifierUnpackedDimensions,
+             NodeEnum::kIdentifierList, NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kIdentifierUnpackedDimensions,
+                                    NodeEnum::kIdentifierList,
+                                    NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kIdentifierUnpackedDimensions,
+                                    NodeEnum::kIdentifierUnpackedDimensionsList,
+                                    NodeEnum::kModulePortDeclaration}) ||
+        Context().DirectParentsAre({NodeEnum::kPortIdentifier,
+                                    NodeEnum::kPortIdentifierList,
+                                    NodeEnum::kModulePortDeclaration})) {
+      EmplacePortIdentifierInCurrentScope(
+          leaf, text, SymbolMetaType::kDataNetVariableInstance);
+      // TODO(fangism): Add attributes to distinguish public ports from
+      // private internals members.
+      return;
+    }
+    // If identifier is within PortDeclaration/Port, add a typed element
     if (Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId, NodeEnum::kPortDeclaration}) ||
         Context().DirectParentsAre(
             {NodeEnum::kUnqualifiedId,
              NodeEnum::kDataTypeImplicitBasicIdDimensions,
              NodeEnum::kPortItem})) {
-      // This identifier declares a (non-parameter) port (of a module,
-      // function, task).
       EmplaceTypedElementInCurrentScope(
           leaf, text, SymbolMetaType::kDataNetVariableInstance);
       // TODO(fangism): Add attributes to distinguish public ports from
@@ -782,6 +813,12 @@ class SymbolTable::Builder : public TreeContextVisitor {
       case verilog_tokentype::TK_SCOPE_RES:  // "::"
       case '.':
         last_hierarchy_operator_ = &leaf.get();
+        break;
+      case verilog_tokentype::TK_input:
+      case verilog_tokentype::TK_output:
+      case verilog_tokentype::TK_inout:
+      case verilog_tokentype::TK_ref:
+        HandleDirection(leaf);
         break;
 
       default:
@@ -970,12 +1007,158 @@ class SymbolTable::Builder : public TreeContextVisitor {
   SymbolTableNode* EmplaceElementInCurrentScope(const verible::Symbol& element,
                                                 absl::string_view name,
                                                 SymbolMetaType metatype) {
-    const auto p = current_scope_->TryEmplace(
+    const auto [kv, did_emplace] = current_scope_->TryEmplace(
         name, SymbolInfo{metatype, source_, &element});
-    if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->second);
+    if (!did_emplace) {
+      if (kv->second.Value().is_port_identifier) {
+        kv->second.Value().supplement_definitions.push_back(name);
+      } else {
+        DiagnoseSymbolAlreadyExists(name, kv->second);
+      }
     }
-    return &p.first->second;  // scope of the new (or pre-existing symbol)
+    return &kv->second;  // scope of the new (or pre-existing symbol)
+  }
+
+  // checks whether a given tag belongs to one of the listed tags
+  bool IsTagMatching(int tag, std::initializer_list<int> tags) {
+    return std::find(tags.begin(), tags.end(), tag) != tags.end();
+  }
+
+  // checks if the current first leaf has conflicting information with the
+  // second symbol
+  bool IsTypeLeafConflicting(const SyntaxTreeLeaf* first,
+                             const verible::Symbol* second) {
+    if (!first || !second) return false;
+    if (IsTagMatching(second->Tag().tag,
+                      {static_cast<int>(NodeEnum::kPackedDimensions),
+                       static_cast<int>(NodeEnum::kUnpackedDimensions)})) {
+      return false;
+    }
+    if (second->Kind() == verible::SymbolKind::kLeaf) {
+      const SyntaxTreeLeaf* second_leaf =
+          verible::down_cast<const SyntaxTreeLeaf*>(second);
+      // conflict if there are multiple direction specifications
+      const std::initializer_list<int> directiontags = {
+          verilog_tokentype::TK_input, verilog_tokentype::TK_output,
+          verilog_tokentype::TK_inout, verilog_tokentype::TK_ref};
+
+      const bool is_first_direction =
+          IsTagMatching(first->Tag().tag, directiontags);
+      const bool is_second_direction =
+          IsTagMatching(second_leaf->Tag().tag, directiontags);
+
+      if (is_first_direction && is_second_direction) return true;
+
+      // conflict if there are multiple sign specifications
+      const std::initializer_list<int> signtags = {
+          verilog_tokentype::TK_signed, verilog_tokentype::TK_unsigned};
+      const bool is_first_sign = IsTagMatching(first->Tag().tag, signtags);
+      const bool is_second_sign =
+          IsTagMatching(second_leaf->Tag().tag, signtags);
+
+      if (is_first_sign && is_second_sign) return true;
+
+      // since dimensions are not handled here and
+      // there are two different leaves that are not direction or sign
+      // then we assume it is a different type on both sides (hence the
+      // conflict)
+      if (!(is_first_direction || is_second_direction || is_first_sign ||
+            is_second_sign)) {
+        return true;
+      }
+    }
+    if (second->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* second_node =
+          verible::down_cast<const SyntaxTreeNode*>(second);
+      for (const auto& child : second_node->children()) {
+        if (IsTypeLeafConflicting(first, child.get())) return true;
+      }
+    }
+    return false;
+  }
+
+  // checks if two nodes have conflicting information
+  bool DoesConflictingNodeExist(const SyntaxTreeNode* node,
+                                const verible::Symbol* context) {
+    if (context && context->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* second_node =
+          verible::down_cast<const SyntaxTreeNode*>(context);
+      if ((node->Tag().tag == second_node->Tag().tag) &&
+          !verible::EqualTreesByEnumString(node, second_node)) {
+        return true;
+      }
+      for (const auto& child : second_node->children()) {
+        if (DoesConflictingNodeExist(node, child.get())) return true;
+      }
+    }
+    return false;
+  }
+
+  // checks if two kDataTypes have conflicting information, used
+  // in multiline definitions of nodes
+  bool IsDataTypeNodeConflicting(const verible::Symbol* first,
+                                 const verible::Symbol* second) {
+    // if type was not specified for symbol (e.g. implicit) in any case, return
+    // true
+    if (!first || !second) return false;
+    // if the left expression is a leaf, do final checks against the right
+    // expression
+    if (first->Kind() == verible::SymbolKind::kLeaf) {
+      const SyntaxTreeLeaf* leaf =
+          verible::down_cast<const SyntaxTreeLeaf*>(first);
+      return IsTypeLeafConflicting(leaf, second);
+    }
+    // if the left expression is a node, iterate over its children and check
+    // compatibility
+    if (first->Kind() == verible::SymbolKind::kNode) {
+      const SyntaxTreeNode* node =
+          verible::down_cast<const SyntaxTreeNode*>(first);
+      if (IsTagMatching(node->Tag().tag,
+                        {static_cast<int>(NodeEnum::kPackedDimensions),
+                         static_cast<int>(NodeEnum::kUnpackedDimensions)})) {
+        if (DoesConflictingNodeExist(node, second)) return true;
+        return false;
+      }
+      for (const auto& child : node->children()) {
+        // run method recursively for each child
+        if (IsDataTypeNodeConflicting(child.get(), second)) return true;
+      }
+    }
+    return false;
+  }
+
+  // Checks potential multiline declaration of port
+  // against correctness
+  void CheckMultilinePortDeclarationCorrectness(SymbolTableNode* existing_node,
+                                                absl::string_view name) {
+    DeclarationTypeInfo& new_decl_info =
+        *ABSL_DIE_IF_NULL(declaration_type_info_);
+    DeclarationTypeInfo& old_decl_info = existing_node->Value().declared_type;
+    // TODO (glatosinski): currently direction is kept separately from
+    // kDataTypes, that is why it is handled separately. We may want to
+    // include it in kDataType to have a full type information in one place
+    // Also, according to some entries (e.g. net_variable) it is possible
+    // to have both delay and strength, we may want to have separate fields
+    // for them in MakeDataType (currently we have delay_or_strength)
+    if (!new_decl_info.direction.empty() && !old_decl_info.direction.empty()) {
+      DiagnoseSymbolAlreadyExists(name, *existing_node);
+      return;
+    }
+    if (IsDataTypeNodeConflicting(old_decl_info.syntax_origin,
+                                  new_decl_info.syntax_origin)) {
+      DiagnoseSymbolAlreadyExists(name, *existing_node);
+      return;
+    }
+    for (const auto& type_specification : old_decl_info.type_specifications) {
+      if (IsDataTypeNodeConflicting(type_specification,
+                                    new_decl_info.syntax_origin)) {
+        DiagnoseSymbolAlreadyExists(name, *existing_node);
+        return;
+      }
+    }
+    existing_node->Value().supplement_definitions.push_back(name);
+    existing_node->Value().declared_type.type_specifications.push_back(
+        declaration_type_info_->syntax_origin);
   }
 
   // Creates a named typed element in the current scope.
@@ -987,14 +1170,42 @@ class SymbolTable::Builder : public TreeContextVisitor {
     VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
     VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
     VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
+    const auto [kv, passed] = current_scope_->TryEmplace(
+        name, SymbolInfo{
+                  metatype, source_, &element,
+                  // associate this instance with its declared type
+                  *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
+              });
+    if (!passed) {
+      if (kv->second.Value().is_port_identifier) {
+        CheckMultilinePortDeclarationCorrectness(&kv->second, name);
+      } else {
+        DiagnoseSymbolAlreadyExists(name, kv->second);
+      }
+    }
+    VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
+    return kv->second;  // scope of the new (or pre-existing symbol)
+  }
+
+  // Creates a port identifier element in the current scope.
+  // Suitable for SystemVerilog module port declarations, where
+  // there are multiple lines defining the symbol.
+  SymbolTableNode& EmplacePortIdentifierInCurrentScope(
+      const verible::Symbol& element, absl::string_view name,
+      SymbolMetaType metatype) {
+    VLOG(2) << __FUNCTION__ << ": " << name << " in " << CurrentScopeFullPath();
+    VLOG(3) << "  type info: " << *ABSL_DIE_IF_NULL(declaration_type_info_);
+    VLOG(3) << "  full text: " << AutoTruncate{StringSpanOfSymbol(element), 40};
     const auto p = current_scope_->TryEmplace(
         name, SymbolInfo{
                   metatype, source_, &element,
                   // associate this instance with its declared type
                   *ABSL_DIE_IF_NULL(declaration_type_info_),  // copy
               });
+    p.first->second.Value().is_port_identifier = true;
     if (!p.second) {
-      DiagnoseSymbolAlreadyExists(name, p.first->second);
+      // the symbol was already defined, add it to supplement_definitions
+      CheckMultilinePortDeclarationCorrectness(&p.first->second, name);
     }
     VLOG(2) << "end of " << __FUNCTION__ << ": " << name;
     return p.first->second;  // scope of the new (or pre-existing symbol)
@@ -1197,6 +1408,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // declare data/variables/instances.
     const ValueSaver<DeclarationTypeInfo*> save_type(&declaration_type_info_,
                                                      &decl_type_info);
+    // reset port direction
     Descend(data_decl_node);
     VLOG(2) << "end of " << __FUNCTION__;
   }
