@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -131,10 +131,18 @@ void RunLintAutoFixCase(const AutoFixInOut &test,
   const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), "");
   const auto &violations(rule_status.violations);
 
-  CHECK_EQ(violations.size(), 1) << "TODO: apply multi-violation fixes";
-  CHECK_GT(violations.begin()->autofixes.size(), test.fix_alternative);
-  const verible::AutoFix &fix =
-      rule_status.violations.begin()->autofixes[test.fix_alternative];
+  // Default to first violation with available autofix
+  const auto itr =
+      std::find_if(begin(violations), end(violations),
+                   [](const LintViolation &v) { return v.autofixes.size(); });
+  EXPECT_TRUE(itr != end(violations))
+      << "There must be at least one violation with an available autofix";
+
+  const LintViolation &violation = *itr;
+
+  // Extract selected fix
+  CHECK_GT(violation.autofixes.size(), test.fix_alternative);
+  const verible::AutoFix &fix = violation.autofixes[test.fix_alternative];
   std::string fix_out = fix.Apply(analyzer.Data().Contents());
 
   EXPECT_EQ(test.expected_output, fix_out) << "For input " << test.code;
