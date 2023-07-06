@@ -143,7 +143,6 @@ cc_library(
     name = "verilog-language-server",
     srcs = ["verilog-language-server.cc"],
     hdrs = ["verilog-language-server.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":lsp-parse-buffer",
         ":symbol-table-handler",
@@ -165,9 +164,9 @@ cc_test(
     srcs = ["verilog-language-server_test.cc"],
     deps = [
         ":verilog-language-server",
+        "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
-        "//common/lsp:lsp-file-utils",
         "//common/util:file-util",
         "//verilog/analysis:verilog-linter",
         "@com_google_absl//absl/flags:flag",
