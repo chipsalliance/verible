@@ -146,6 +146,9 @@ enum TokenScannerState {
   // While encountering any string of consecutive newlines
   kHaveNewline,
 
+  // While encountering tokens related to preprocessor control flow
+  kPreprocessorControlFlow,
+
   // Transition from newline to non-newline
   kNewPartition,
 
@@ -163,6 +166,8 @@ TokenScannerStateStrings() {
           {"kStart", TokenScannerState::kStart},
           {"kHaveNewline", TokenScannerState::kHaveNewline},
           {"kNewPartition", TokenScannerState::kNewPartition},
+          {"kPreprocessorControlFlow",
+           TokenScannerState::kPreprocessorControlFlow},
           {"kEndWithNewline", TokenScannerState::kEndWithNewline},
           {"kEndNoNewline", TokenScannerState::kEndNoNewline},
       });
@@ -196,14 +201,17 @@ class TreeUnwrapper::TokenScanner {
   }
 
   // Calls TransitionState using current_state_ and the tranition token_Type
-  void UpdateState(verilog_tokentype token_type) {
-    current_state_ = TransitionState(current_state_, token_type);
+  void UpdateState(verilog_tokentype token_type, int color) {
+    current_state_ = TransitionState(current_state_, token_type, color);
+    on_preproc_ident_ = token_type == PP_Identifier;
     seen_any_nonspace_ |= IsComment(token_type);
   }
 
   // Returns true if this is a state that should start a new token partition.
   bool ShouldStartNewPartition() const {
     return current_state_ == State::kNewPartition ||
+           (current_state_ == State::kPreprocessorControlFlow &&
+            !on_preproc_ident_) ||
            (current_state_ == State::kEndWithNewline && seen_any_nonspace_);
   }
 
@@ -212,12 +220,13 @@ class TreeUnwrapper::TokenScanner {
 
   // The current state of the TokenScanner.
   State current_state_ = kStart;
+  bool on_preproc_ident_ = false;
   bool seen_any_nonspace_ = false;
 
   // Transitions the TokenScanner given a TokenState and a verilog_tokentype
   // transition
   static State TransitionState(const State& old_state,
-                               verilog_tokentype token_type);
+                               verilog_tokentype token_type, int color);
 };
 
 static bool IsNewlineOrEOF(verilog_tokentype token_type) {
@@ -238,11 +247,24 @@ static bool IsNewlineOrEOF(verilog_tokentype token_type) {
  *   TreeUnwrapper::CatchUpToCurrentLeaf()
  */
 TokenScannerState TreeUnwrapper::TokenScanner::TransitionState(
-    const State& old_state, verilog_tokentype token_type) {
+    const State& old_state, verilog_tokentype token_type, int color) {
   VLOG(4) << "state transition on: " << old_state
           << ", token: " << verilog_symbol_name(token_type);
+  if (IsPreprocessorControlFlow(token_type)) {
+    const State new_state = kPreprocessorControlFlow;
+    VLOG(4) << "new state: " << new_state;
+    return new_state;
+  }
   State new_state = old_state;
   switch (old_state) {
+    case kPreprocessorControlFlow: {
+      if (IsComment(token_type)) {
+        new_state = kStart;
+      } else if (token_type != PP_Identifier) {
+        new_state = kNewPartition;
+      }
+      break;
+    }
     case kStart: {
       if (IsNewlineOrEOF(token_type)) {
         new_state = kHaveNewline;
@@ -274,6 +296,7 @@ TokenScannerState TreeUnwrapper::TokenScanner::TransitionState(
       break;
     }
     case kEndWithNewline:
+      if (!color) new_state = kEndNoNewline;
     case kEndNoNewline: {
       // Terminal states.  Must Reset() next.
       break;
@@ -313,6 +336,8 @@ TreeUnwrapper::TreeUnwrapper(const verible::TextStructureView& view,
   CHECK(back.isEOF());
   CHECK(back.text().empty());
 }
+
+TreeUnwrapper::TreeUnwrapper(TreeUnwrapper&& other) noexcept = default;
 
 TreeUnwrapper::~TreeUnwrapper() = default;
 
@@ -368,9 +393,10 @@ static bool ShouldIndentRelativeToDirectParent(
   });
 }
 
-void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type) {
+void TreeUnwrapper::UpdateInterLeafScanner(verilog_tokentype token_type,
+                                           int color) {
   VLOG(4) << __FUNCTION__ << ", token: " << verilog_symbol_name(token_type);
-  inter_leaf_scanner_->UpdateState(token_type);
+  inter_leaf_scanner_->UpdateState(token_type, color);
   if (inter_leaf_scanner_->ShouldStartNewPartition()) {
     VLOG(4) << "new partition";
     // interleaf-tokens like comments do not have corresponding syntax tree
@@ -386,7 +412,7 @@ void TreeUnwrapper::AdvanceLastVisitedLeaf() {
   const auto& next_token = *NextUnfilteredToken();
   const verilog_tokentype token_enum =
       verilog_tokentype(next_token.token_enum());
-  UpdateInterLeafScanner(token_enum);
+  UpdateInterLeafScanner(token_enum, next_token.color);
   AdvanceNextUnfilteredToken();
   VLOG(4) << "end of " << __FUNCTION__;
 }
@@ -493,6 +519,7 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
   VLOG(4) << __FUNCTION__;
   auto token_iter = token_begin;
   auto last_newline = token_begin;
+  bool always_last_newline = false;
   bool have_last_newline = false;
 
   // Find next syntax tree token or EOF.
@@ -513,12 +540,23 @@ static verible::TokenSequence::const_iterator StopAtLastNewlineBeforeTreeLeaf(
         ++token_iter;
         break;
       default:
-        break_while = true;
+        if (token_iter->color) {
+          break_while = true;
+        } else {
+          if (token_iter->token_enum() == PP_Identifier ||
+              token_iter->token_enum() == PP_else ||
+              token_iter->token_enum() == PP_endif) {
+            always_last_newline = true;
+          }
+          ++token_iter;
+        }
         break;
     }
   }
 
-  const auto result = have_last_newline ? last_newline : token_iter;
+  const auto result = always_last_newline ? token_iter
+                      : have_last_newline ? last_newline
+                                          : token_iter;
   VLOG(4) << "end of " << __FUNCTION__ << ", advanced "
           << std::distance(token_begin, result) << " tokens";
   return result;
@@ -542,7 +580,7 @@ void TreeUnwrapper::LookAheadBeyondCurrentNode() {
     VLOG(4) << "token: " << VerboseToken(next_token);
     const verilog_tokentype token_enum =
         verilog_tokentype(next_token.token_enum());
-    UpdateInterLeafScanner(token_enum);
+    UpdateInterLeafScanner(token_enum, next_token.color);
     if (next_token_iter != token_end) {
       AdvanceNextUnfilteredToken();
     } else {
@@ -1525,6 +1563,32 @@ static bool PartitionIsForcedIntoNewLine(const TokenPartitionTree& partition) {
   return ftokens.front().before.break_decision == SpacingOptions::kMustWrap;
 }
 
+bool IsPreprocessorPartition(const TokenPartitionTree& partition) {
+  auto tok = partition.Value().TokensRange().front().TokenEnum();
+  return IsPreprocessorControlFlow(verilog_tokentype(tok)) ||
+         tok == PP_Identifier;
+}
+
+TokenPartitionTree* MergeLeafIntoPreviousLeafIfNotPreprocessor(
+    TokenPartitionTree* const leaf) {
+  if (IsPreprocessorPartition(*leaf)) {
+    VLOG(5) << "  preprocessor partition; not merging into previous partition.";
+    return nullptr;
+  }
+  VLOG(5) << "  merge into previous partition.";
+  return MergeLeafIntoPreviousLeaf(leaf);
+}
+
+TokenPartitionTree* MergeLeafIntoNextLeafIfNotPreprocessor(
+    TokenPartitionTree* const leaf) {
+  if (IsPreprocessorPartition(*leaf)) {
+    VLOG(5) << "  preprocessor partition; not merging into next partition.";
+    return nullptr;
+  }
+  VLOG(5) << "  merge into next partition.";
+  return MergeLeafIntoNextLeaf(leaf);
+}
+
 // Joins partition containing only a ',' (and optionally comments) with
 // a partition preceding or following it.
 static void AttachSeparatorToPreviousOrNextPartition(
@@ -1562,6 +1626,12 @@ static void AttachSeparatorToPreviousOrNextPartition(
     return;
   }
 
+  if (IsPreprocessorPartition(partition[0])) {
+    VLOG(5) << "  preprocessor partition at [0]; not attaching to other "
+               "partitions.";
+    return;
+  }
+
   // Merge with previous partition if both partitions are in the same line in
   // original text
   const auto* previous_partition = PreviousLeaf(*partition);
@@ -1572,8 +1642,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
       absl::string_view original_text_between = verible::make_string_view_range(
           previous_token.Text().end(), separator->Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
-        VLOG(5) << "  merge into previous partition.";
-        verible::MergeLeafIntoPreviousLeaf(partition);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(partition);
         return;
       }
     }
@@ -1588,8 +1657,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
       absl::string_view original_text_between = verible::make_string_view_range(
           separator->Text().end(), next_token.Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
-        VLOG(5) << "  merge into next partition.";
-        verible::MergeLeafIntoNextLeaf(partition);
+        MergeLeafIntoNextLeafIfNotPreprocessor(partition);
         return;
       }
     }
@@ -1599,16 +1667,14 @@ static void AttachSeparatorToPreviousOrNextPartition(
   if (partition->Value().TokensRange().size() == 1) {
     // Try merging with previous partition
     if (!PartitionIsForcedIntoNewLine(*partition)) {
-      VLOG(5) << "  merge into previous partition.";
-      verible::MergeLeafIntoPreviousLeaf(partition);
+      MergeLeafIntoPreviousLeafIfNotPreprocessor(partition);
       return;
     }
 
     // Try merging with next partition
     if (next_partition != nullptr &&
         !PartitionIsForcedIntoNewLine(*next_partition)) {
-      VLOG(5) << "  merge into next partition.";
-      verible::MergeLeafIntoNextLeaf(partition);
+      MergeLeafIntoNextLeafIfNotPreprocessor(partition);
       return;
     }
   }
@@ -1657,7 +1723,7 @@ static void AttachTrailingSemicolonToPreviousPartition(
       semicolon_partition->Value().SetIndentationSpaces(
           group->Value().IndentationSpaces());
     } else {
-      verible::MergeLeafIntoPreviousLeaf(semicolon_partition);
+      MergeLeafIntoPreviousLeafIfNotPreprocessor(semicolon_partition);
     }
     VLOG(4) << "after moving semicolon:\n" << *partition;
   }
@@ -1726,7 +1792,7 @@ static void AttachOpeningBraceToDeclarationsAssignmentOperator(
     }
 
     if (!PartitionIsForcedIntoNewLine(next)) {
-      verible::MergeLeafIntoNextLeaf(&current);
+      MergeLeafIntoNextLeafIfNotPreprocessor(&current);
       // There shouldn't be more matching partitions
       return;
     }
@@ -1747,7 +1813,7 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
   // Then fuse the 'begin' partition with the preceding 'if (...)'
   auto& if_body_partition = partition.Children().back();
   auto& begin_partition = if_body_partition.Children().front();
-  verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+  MergeLeafIntoPreviousLeafIfNotPreprocessor(&begin_partition);
   partition.Value().SetPartitionPolicy(
       if_body_partition.Value().PartitionPolicy());
   // if seq_block body was empty, that leaves only 'end', so hoist.
@@ -1792,7 +1858,7 @@ static void ReshapeElseClause(const SyntaxTreeNode& node,
     return;
   }
 
-  verible::MergeLeafIntoNextLeaf(&else_partition);
+  MergeLeafIntoNextLeafIfNotPreprocessor(&else_partition);
 }
 
 static void HoistOnlyChildPartition(TokenPartitionTree* partition) {
@@ -1815,7 +1881,7 @@ static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   auto& partition = *partition_ptr;
   auto& if_clause_partition = partition.Children().front();
   auto* end_partition = &RightmostDescendant(if_clause_partition);
-  auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
+  auto* end_parent = MergeLeafIntoNextLeafIfNotPreprocessor(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
   if (end_parent != nullptr) {
     HoistOnlyChildPartition(end_parent);
@@ -1972,7 +2038,7 @@ class MacroCallReshaper {
       if (semicolon_ == NextSibling(*paren_group_)) {
         if (!PartitionIsForcedIntoNewLine(*semicolon_)) {
           // Merge with ')'
-          verible::MergeLeafIntoPreviousLeaf(semicolon_);
+          MergeLeafIntoPreviousLeafIfNotPreprocessor(semicolon_);
           semicolon_ = nullptr;
         }
       }
@@ -2225,7 +2291,7 @@ class MacroCallReshaper {
                          return IsComment(verilog_tokentype(t.TokenEnum()));
                        })) {
         // Merge
-        verible::MergeLeafIntoPreviousLeaf(r_paren_);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(r_paren_);
         r_paren_ = &argument_list_->Children().back();
       } else {
         // Group
@@ -2305,7 +2371,7 @@ class MacroCallReshaper {
     CHECK(!PartitionIsForcedIntoNewLine(*l_paren_));
     verible::AdjustIndentationAbsolute(paren_group_,
                                        main_node_->Value().IndentationSpaces());
-    verible::MergeLeafIntoNextLeaf(identifier_);
+    MergeLeafIntoNextLeafIfNotPreprocessor(identifier_);
     HoistOnlyChildPartition(main_node_);
 
     paren_group_ = main_node_;
@@ -2638,7 +2704,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // Push the "import..." down.
       {
         if (partition.Children().size() > 1) {
-          verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+          MergeLeafIntoNextLeafIfNotPreprocessor(&partition.Children().front());
           AttachTrailingSemicolonToPreviousPartition(&partition);
         }
         break;
@@ -2651,7 +2717,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       auto& target_instance_partition = partition;
       auto& children = target_instance_partition.Children();
       // Attach ')' to the instance name
-      verible::MergeLeafIntoNextLeaf(PreviousSibling(children.back()));
+      MergeLeafIntoNextLeafIfNotPreprocessor(PreviousSibling(children.back()));
 
       verible::AdjustIndentationRelative(&children.back(), -style.wrap_spaces);
       break;
@@ -2668,7 +2734,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         auto& last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
         if (PartitionStartsWithCloseParen(last) &&
             PartitionEndsWithOpenParen(last_prev)) {
-          verible::MergeLeafIntoPreviousLeaf(&last);
+          MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
         }
       }
       // If there were any parameters or ports at all, expand.
@@ -2688,7 +2754,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         auto& last_prev = *ABSL_DIE_IF_NULL(PreviousSibling(last));
         if (PartitionStartsWithCloseParen(last) &&
             PartitionEndsWithOpenParen(last_prev)) {
-          verible::MergeLeafIntoPreviousLeaf(&last);
+          MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
         }
       }
       break;
@@ -2703,7 +2769,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     case NodeEnum::kTaskPrototype: {
       auto& last = RightmostDescendant(partition);
       if (PartitionIsCloseParenSemi(last)) {
-        verible::MergeLeafIntoPreviousLeaf(&last);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
       }
       break;
     }
@@ -2746,7 +2812,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             auto* group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
-            verible::MergeLeafIntoPreviousLeaf(&last);
+            MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
           }
         }
       }
@@ -2770,7 +2836,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             auto* group = verible::GroupLeafWithPreviousLeaf(&last);
             group->Value().SetPartitionPolicy(PartitionPolicyEnum::kStack);
           } else {
-            verible::MergeLeafIntoPreviousLeaf(&last);
+            MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
           }
         }
       } else if (policy == PartitionPolicyEnum::kStack) {
@@ -2870,7 +2936,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       auto& last = RightmostDescendant(partition);
       // TODO(fangism): why does test fail without this clause?
       if (PartitionStartsWithCloseParen(last)) {
-        verible::MergeLeafIntoPreviousLeaf(&last);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
       }
       break;
     }
@@ -2880,7 +2946,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (partition.Children().size() == 2) {
         auto& last = RightmostDescendant(partition);
         if (PartitionIsCloseBrace(last)) {
-          verible::MergeLeafIntoPreviousLeaf(&last);
+          MergeLeafIntoPreviousLeafIfNotPreprocessor(&last);
         }
       }
       break;
@@ -2919,7 +2985,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       if (children.size() == 2 &&
           verible::is_leaf(children.front()) /* left side */ &&
           !PartitionIsForcedIntoNewLine(children.back())) {
-        verible::MergeLeafIntoNextLeaf(&children.front());
+        MergeLeafIntoNextLeafIfNotPreprocessor(&children.front());
         VLOG(4) << "after merge leaf (left-into-right):\n" << partition;
       }
       break;
@@ -2948,7 +3014,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       AttachSeparatorsToListElementPartitions(&partition);
       // Merge the 'assign' keyword with the (first) x=y assignment.
       // TODO(fangism): reshape for multiple assignments.
-      verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+      MergeLeafIntoNextLeafIfNotPreprocessor(&partition.Children().front());
       VLOG(4) << "after merging 'assign':\n" << partition;
       AdjustSubsequentPartitionsIndentation(&partition, style.wrap_spaces);
       VLOG(4) << "after adjusting partitions indentation:\n" << partition;
@@ -2970,10 +3036,10 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       VLOG(4) << "kForSpec got ';' at child " << dist1 << " and " << dist2;
       // Merge from back-to-front to keep indices valid.
       if (dist2 > 0 && (dist2 - dist1 > 1)) {
-        verible::MergeLeafIntoPreviousLeaf(&*iter2);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&*iter2);
       }
       if (dist1 > 0) {
-        verible::MergeLeafIntoPreviousLeaf(&*iter1);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&*iter1);
       }
       break;
     }
@@ -3017,7 +3083,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
         auto& begin_partition = LeftmostDescendant(seq_block_partition);
         VLOG(4) << "begin partition: " << begin_partition;
         CHECK(is_leaf(begin_partition));
-        verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&begin_partition);
         VLOG(4) << "after merging 'begin' to predecessor:\n" << partition;
         // Flatten only the statement block so that the control partition
         // can retain its own partition policy.
@@ -3033,11 +3099,11 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
         // merge "do" <- "begin"
         auto& begin_partition = LeftmostDescendant(seq_block_partition);
-        verible::MergeLeafIntoPreviousLeaf(&begin_partition);
+        MergeLeafIntoPreviousLeafIfNotPreprocessor(&begin_partition);
 
         // merge "end" -> "while"
         auto& end_partition = RightmostDescendant(seq_block_partition);
-        verible::MergeLeafIntoNextLeaf(&end_partition);
+        MergeLeafIntoNextLeafIfNotPreprocessor(&end_partition);
 
         // Flatten only the statement block so that the control partition
         // can retain its own partition policy.
@@ -3051,7 +3117,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
               ->MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
                                  NodeEnum::kSeqBlock})) {
         // Merge 'always' keyword with next sibling, and adjust subtree indent.
-        verible::MergeLeafIntoNextLeaf(&partition.Children().front());
+        MergeLeafIntoNextLeafIfNotPreprocessor(&partition.Children().front());
         verible::AdjustIndentationAbsolute(
             &partition.Children().front(),
             partition.Value().IndentationSpaces());
@@ -3184,7 +3250,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   VLOG(4) << "Visit leaf: after CatchUp";
 
   // Possibly start new partition (without advancing token iterator).
-  UpdateInterLeafScanner(tag);
+  UpdateInterLeafScanner(tag, leaf.get().color);
 
   // Sanity check that NextUnfilteredToken() is aligned to the current leaf.
   CHECK_EQ(NextUnfilteredToken()->text().begin(), leaf.get().text().begin());

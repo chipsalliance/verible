@@ -79,10 +79,13 @@ cc_library(
     hdrs = ["flow_tree.h"],
     deps = [
         "//common/text:token-stream-view",
+        "//common/util:interval-set",
         "//common/util:logging",
         "//common/util:status-macros",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

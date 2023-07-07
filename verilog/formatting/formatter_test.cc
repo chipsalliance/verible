@@ -48,13 +48,14 @@ namespace verilog {
 namespace formatter {
 
 // private, extern function in formatter.cc, directly tested here.
-absl::Status VerifyFormatting(const verible::TextStructureView& text_structure,
-                              absl::string_view formatted_output,
-                              absl::string_view filename);
+absl::Status VerifyFormatting(
+    absl::string_view text, absl::string_view formatted_output,
+    absl::string_view filename,
+    const PreprocessConfigVariants& preproc_config_variants = {{}});
 
 namespace {
 
-static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+static VerilogPreprocess::Config kDefaultPreprocess;
 
 using absl::StatusCode;
 using testing::HasSubstr;
@@ -68,7 +69,8 @@ TEST(VerifyFormattingTest, NoError) {
   const std::unique_ptr<VerilogAnalyzer> analyzer =
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
-  const auto status = VerifyFormatting(text_structure, code, "<filename>");
+  const auto status =
+      VerifyFormatting(text_structure.Contents(), code, "<filename>");
   EXPECT_OK(status);
 }
 
@@ -79,7 +81,8 @@ TEST(VerifyFormattingTest, LexError) {
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("1class c;endclass\n");  // lexical error
-  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  const auto status =
+      VerifyFormatting(text_structure.Contents(), bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
 }
@@ -91,7 +94,8 @@ TEST(VerifyFormattingTest, ParseError) {
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("classc;endclass\n");  // syntax error
-  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  const auto status =
+      VerifyFormatting(text_structure.Contents(), bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
 }
@@ -103,17 +107,37 @@ TEST(VerifyFormattingTest, LexicalDifference) {
       VerilogAnalyzer::AnalyzeAutomaticMode(code, "<file>", kDefaultPreprocess);
   const auto& text_structure = ABSL_DIE_IF_NULL(analyzer)->Data();
   const absl::string_view bad_code("class c;;endclass\n");  // different tokens
-  const auto status = VerifyFormatting(text_structure, bad_code, "<filename>");
+  const auto status =
+      VerifyFormatting(text_structure.Contents(), bad_code, "<filename>");
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.code(), StatusCode::kDataLoss);
 }
 
+enum class FormatTestMethod {
+  kSinglePassOnly,          // Only test the default single-pass formatting
+                            // method
+  kPreprocessVariantsOnly,  // Only test the '--preprocess_variants' method
+  kBoth                     // Test both methods
+};
+
 struct FormatterTestCase {
   absl::string_view input;
   absl::string_view expected;
+  FormatTestMethod method = FormatTestMethod::kBoth;
+
+  bool SinglePassMethod() const {
+    return method == FormatTestMethod::kSinglePassOnly ||
+           method == FormatTestMethod::kBoth;
+  }
+
+  bool PreprocessVariantsMethod() const {
+    return method == FormatTestMethod::kPreprocessVariantsOnly ||
+           method == FormatTestMethod::kBoth;
+  }
 };
 
 static const LineNumberSet kEnableAllLines;
+static const ExecutionControl kDefaultControl;
 
 // Test that the expected output is produced with the formatter using a custom
 // FormatStyle.
@@ -131,11 +155,24 @@ TEST(FormatterTest, FormatCustomStyleTest) {
   style.indentation_spaces = 10;  // unconventional indentation
   style.wrap_spaces = 4;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
     EXPECT_OK(status);
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
 }
@@ -437,7 +474,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
     {// macro call nested with function call containing an ifdef
      "`J(D(`ifdef e))\n",
      "`J(D(\n"
-     "   `ifdef e))\n"},
+     "   `ifdef e))\n",
+     FormatTestMethod::kSinglePassOnly},
 
     // `uvm macros indenting
     {
@@ -1538,7 +1576,8 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "    output reg  yy\n"
      "`endif\n"
      ");\n"
-     "endmodule : foo\n"},
+     "endmodule : foo\n",
+     FormatTestMethod::kSinglePassOnly},
     {"module foo(\n"
      "input w , \n"
      "`define   FOO BAR\n"
@@ -15464,6 +15503,46 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "end\n",
      "always @(  /*t*/ *  /*t*/) begin\n"
      "end\n"},
+    {"`ifdef FOO always  @ (*  ) begin\n"
+     "`else always_comb begin `endif\n"
+     "end\n",
+     "`ifdef FOO\n"
+     "always @(*) begin\n"
+     "`else\n"
+     "always_comb begin\n"
+     "`endif\n"
+     "end\n",
+     FormatTestMethod::kPreprocessVariantsOnly},
+    {"module\n"
+     "`ifdef FOO foo; `else bar; `endif\n"
+     "endmodule\n",
+     "module\n"
+     "`ifdef FOO\n"
+     "foo;\n"
+     "`else\n"
+     "bar;\n"
+     "`endif\n"
+     "endmodule\n",
+     FormatTestMethod::kPreprocessVariantsOnly},
+    {"`ifdef FOO function int foo;\n"
+     "foo = 42;\n"
+     "`else task bar;\n"
+     "$display(\"bar\");\n"
+     "`endif\n"
+     "`ifdef FOO endfunction `else endtask `endif",
+     "`ifdef FOO\n"
+     "function int foo;\n"
+     "  foo = 42;\n"
+     "`else\n"
+     "task bar;\n"
+     "  $display(\"bar\");\n"
+     "`endif\n"
+     "`ifdef FOO\n"
+     "endfunction\n"
+     "`else\n"
+     "endtask\n"
+     "`endif\n",
+     FormatTestMethod::kPreprocessVariantsOnly},
 
     // -----------------------------------------------------------------
 };
@@ -15476,10 +15555,23 @@ TEST(FormatterEndToEndTest, VerilogFormatTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -15555,7 +15647,8 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
        "    output reg     bar\n"   // ... and triggers alignment.
        "`endif\n"
        ");\n"
-       "endmodule : pd\n"},
+       "endmodule : pd\n",
+       FormatTestMethod::kSinglePassOnly},
       {"module pd(\n"
        "input logic [31:0] bus,\n"
        "input logic [7:0] bus2,\n"
@@ -16457,10 +16550,23 @@ TEST(FormatterEndToEndTest, AutoInferAlignment) {
   style.ApplyToAllAlignmentPolicies(AlignmentPolicy::kInferUserIntent);
 
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16559,10 +16665,23 @@ TEST(FormatterEndToEndTest, VerilogFormatWideTest) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterWideTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kFormatterWideTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16609,10 +16728,23 @@ TEST(FormatterEndToEndTest, DisableModulePortDeclarations) {
   style.wrap_spaces = 4;
   style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16703,10 +16835,23 @@ TEST(FormatterEndToEndTest, DisableModuleInstantiations) {
   style.named_parameter_alignment = AlignmentPolicy::kPreserve;
   style.named_port_alignment = AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16812,10 +16957,23 @@ TEST(FormatterEndToEndTest, DisableTryWrapLongLines) {
   style.wrap_spaces = 4;
   style.try_wrap_long_lines = false;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16872,10 +17030,23 @@ TEST(FormatterEndToEndTest, ModulePortDeclarationsIndentNotWrap) {
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.port_declarations_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16920,10 +17091,23 @@ TEST(FormatterEndToEndTest, NamedPortConnectionsIndentNotWrap) {
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.named_port_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -16963,10 +17147,23 @@ TEST(FormatterEndToEndTest, WrapEndElseStatements) {
   style.wrap_spaces = 4;
   style.wrap_end_else_clauses = true;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -17034,10 +17231,23 @@ TEST(FormatterEndToEndTest, FormalParametersIndentNotWrap) {
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.formal_parameters_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -17109,10 +17319,23 @@ TEST(FormatterEndToEndTest, NamedParametersIndentNotWrap) {
   // Indent 2 spaces instead of wrapping 4 spaces.
   style.named_parameter_indentation = IndentationStyle::kIndent;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -17123,6 +17346,17 @@ struct SelectLinesTestCase {
   absl::string_view input;
   LineNumberSet lines;  // explicit set of lines to enable formatting
   absl::string_view expected;
+  FormatTestMethod method = FormatTestMethod::kBoth;
+
+  bool SinglePassMethod() const {
+    return method == FormatTestMethod::kSinglePassOnly ||
+           method == FormatTestMethod::kBoth;
+  }
+
+  bool PreprocessVariantsMethod() const {
+    return method == FormatTestMethod::kPreprocessVariantsOnly ||
+           method == FormatTestMethod::kBoth;
+  }
 };
 
 // Tests that formatter honors selected line numbers.
@@ -17325,10 +17559,26 @@ TEST(FormatterEndToEndTest, SelectLines) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, test_case.lines);
+    EXPECT_OK(status) << status.message() << '\n'
+                      << "Lines: " << test_case.lines;
+    EXPECT_EQ(stream.str(), test_case.expected)
+        << "code:\n"
+        << test_case.input << "\nlines: " << test_case.lines;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, test_case.lines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
+    // Require these test cases to be valid.
     EXPECT_OK(status) << status.message() << '\n'
                       << "Lines: " << test_case.lines;
     EXPECT_EQ(stream.str(), test_case.expected)
@@ -17453,10 +17703,23 @@ TEST(FormatterEndToEndTest, PreserveVSpacesOnly) {
   };
   FormatStyle style;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
+    // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
@@ -17703,10 +17966,23 @@ TEST(FormatterEndToEndTest, FormatElseStatements) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCasesElseStatements) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kFormatterTestCasesElseStatements) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
+    // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
@@ -17796,10 +18072,23 @@ TEST(FormatterEndToEndTest, ConstraintExpressions) {
   style.wrap_spaces = 4;
   style.port_declarations_alignment = verible::AlignmentPolicy::kPreserve;
   for (const auto& test_case : kTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -17887,10 +18176,22 @@ TEST(FormatterEndToEndTest, FormatAlignEnumDeclarations) {
   style.wrap_spaces = 4;
   style.enum_assignment_statement_alignment = AlignmentPolicy::kInferUserIntent;
   for (const auto& test_case : kFormatterTestCasesEnumDeclarations) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kFormatterTestCasesEnumDeclarations) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
   }
@@ -17903,12 +18204,27 @@ TEST(FormatterEndToEndTest, DiagnosticShowFullTree) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_token_partition_tree = true;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_TRUE(
+        absl::StartsWith(debug_stream.str(), "Full token partition tree"));
+  }
+
+  for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    control.show_token_partition_tree = true;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control,
+                                      FormatMethod::kPreprocessVariants);
     EXPECT_EQ(status.code(), StatusCode::kCancelled);
     EXPECT_TRUE(
         absl::StartsWith(debug_stream.str(), "Full token partition tree"));
@@ -17922,12 +18238,27 @@ TEST(FormatterEndToEndTest, DiagnosticLargestPartitions) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_largest_token_partitions = 2;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
+    EXPECT_EQ(status.code(), StatusCode::kCancelled);
+    EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
+        << "got: " << debug_stream.str();
+  }
+
+  for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    control.show_largest_token_partitions = 2;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control,
+                                      FormatMethod::kPreprocessVariants);
     EXPECT_EQ(status.code(), StatusCode::kCancelled);
     EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
         << "got: " << debug_stream.str();
@@ -17941,12 +18272,30 @@ TEST(FormatterEndToEndTest, DiagnosticEquallyOptimalWrappings) {
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
   for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
     control.stream = &debug_stream;
     control.show_equally_optimal_wrappings = true;
     const auto status = FormatVerilog(test_case.input, "<filename>", style,
                                       stream, kEnableAllLines, control);
+    EXPECT_OK(status) << status.message();
+    if (!debug_stream.str().empty()) {
+      EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
+          << "got: " << debug_stream.str();
+      // Cannot guarantee among unit tests that there will be >1 solution.
+    }
+  }
+
+  for (const auto& test_case : kFormatterTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    std::ostringstream stream, debug_stream;
+    ExecutionControl control;
+    control.stream = &debug_stream;
+    control.show_equally_optimal_wrappings = true;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, control,
+                                      FormatMethod::kPreprocessVariants);
     EXPECT_OK(status) << status.message();
     if (!debug_stream.str().empty()) {
       EXPECT_TRUE(absl::StartsWith(debug_stream.str(), "Showing the "))
@@ -17969,8 +18318,13 @@ TEST(FormatterEndToEndTest, UnfinishedLineWrapSearching) {
   ExecutionControl control;
   control.max_search_states = 2;  // Cause search to abort early.
   control.stream = &debug_stream;
-  const auto status = FormatVerilog(code, "<filename>", style, stream,
-                                    kEnableAllLines, control);
+  auto status = FormatVerilog(code, "<filename>", style, stream,
+                              kEnableAllLines, control);
+  EXPECT_EQ(status.code(), StatusCode::kResourceExhausted);
+  EXPECT_TRUE(absl::StartsWith(status.message(), "***"));
+
+  status = FormatVerilog(code, "<filename>", style, stream, kEnableAllLines,
+                         control, FormatMethod::kPreprocessVariants);
   EXPECT_EQ(status.code(), StatusCode::kResourceExhausted);
   EXPECT_TRUE(absl::StartsWith(status.message(), "***"));
 }
@@ -18022,6 +18376,7 @@ TEST(FormatterEndToEndTest, OnelineFormatBaselineTest) {
   style.wrap_spaces = 4;
   style.expand_coverpoints = false;
   for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18033,6 +18388,30 @@ TEST(FormatterEndToEndTest, OnelineFormatBaselineTest) {
   // Test again with the switch, should not affect formatting
   style.expand_coverpoints = true;
   for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status =
+        FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+  // Test again with the switch, should not affect formatting
+  style.expand_coverpoints = true;
+  for (const auto& test_case : kOnelineFormatBaselineTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
@@ -18102,10 +18481,23 @@ TEST(FormatterEndToEndTest, OnelineFormatReferenceTest) {
   style.expand_coverpoints = false;
 
   for (const auto& test_case : kOnelineFormatReferenceTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kOnelineFormatReferenceTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18123,10 +18515,23 @@ TEST(FormatterEndToEndTest, OnelineFormatExpandTest) {
   style.expand_coverpoints = true;
 
   for (const auto& test_case : kOnelineFormatExpandTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kOnelineFormatExpandTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18322,10 +18727,23 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases40ColumnsLimit) {
   style.wrap_spaces = 4;
 
   for (const auto& test_case : kNestedFunctionsTestCases40ColumnsLimit) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kNestedFunctionsTestCases40ColumnsLimit) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18366,10 +18784,23 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases60ColumnsLimit) {
   style.wrap_spaces = 4;
 
   for (const auto& test_case : kNestedFunctionsTestCases60ColumnsLimit) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kNestedFunctionsTestCases60ColumnsLimit) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18420,10 +18851,23 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases80ColumnsLimit) {
   style.wrap_spaces = 4;
 
   for (const auto& test_case : kNestedFunctionsTestCases80ColumnsLimit) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kNestedFunctionsTestCases80ColumnsLimit) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18491,10 +18935,23 @@ TEST(FormatterEndToEndTest, FormatNestedFunctionsTestCases100ColumnsLimit) {
   style.wrap_spaces = 4;
 
   for (const auto& test_case : kNestedFunctionsTestCases100ColumnsLimit) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kNestedFunctionsTestCases100ColumnsLimit) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18520,10 +18977,23 @@ TEST(FormatterEndToEndTest, compactIndexingAndSelectionsTestCases) {
   style.compact_indexing_and_selections = false;
 
   for (const auto& test_case : noCompactIndexingAndSelectionsTestCases) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : noCompactIndexingAndSelectionsTestCases) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
@@ -18581,10 +19051,23 @@ TEST(FormatterEndToEndTest, FunctionCallsWithComments) {
   style.wrap_spaces = 4;
 
   for (const auto& test_case : kFunctionCallsWithComments) {
+    if (!test_case.SinglePassMethod()) continue;
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream;
     const auto status =
         FormatVerilog(test_case.input, "<filename>", style, stream);
+    // Require these test cases to be valid.
+    EXPECT_OK(status) << status.message();
+    EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;
+  }
+
+  for (const auto& test_case : kFunctionCallsWithComments) {
+    if (!test_case.PreprocessVariantsMethod()) continue;
+    VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
+    std::ostringstream stream;
+    const auto status = FormatVerilog(test_case.input, "<filename>", style,
+                                      stream, kEnableAllLines, kDefaultControl,
+                                      FormatMethod::kPreprocessVariants);
     // Require these test cases to be valid.
     EXPECT_OK(status) << status.message();
     EXPECT_EQ(stream.str(), test_case.expected) << "code:\n" << test_case.input;

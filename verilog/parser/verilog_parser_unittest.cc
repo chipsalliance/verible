@@ -39,7 +39,7 @@ using ParserTestData = verible::TokenInfoTestData;
 
 using ParserTestCaseArray = std::initializer_list<const char*>;
 
-static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+static VerilogPreprocess::Config kDefaultPreprocess;
 
 // No syntax tree expected from these inputs.
 static constexpr ParserTestCaseArray kEmptyTests = {

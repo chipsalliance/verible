@@ -36,7 +36,7 @@ namespace verilog {
 // All files we process with the verilog project, essentially applications that
 // build a symbol table (project-tool, kythe-indexer) only benefit from
 // processing the same sequence of tokens a synthesis tool sees.
-static constexpr verilog::VerilogPreprocess::Config kPreprocessConfig{
+static verilog::VerilogPreprocess::Config kPreprocessConfig{
     .filter_branches = true,
 };
 

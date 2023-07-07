@@ -21,6 +21,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/util/interval_set.h"
 #include "common/util/logging.h"
 #include "common/util/status_macros.h"
 #include "verilog/parser/verilog_token_enum.h"
@@ -125,7 +126,7 @@ absl::Status FlowTree::MacroFollows(
       conditional_iterator->token_enum() != PP_elsif) {
     return absl::InvalidArgumentError("Error macro name can't be extracted.");
   }
-  auto macro_iterator = conditional_iterator + 1;
+  auto macro_iterator = conditional_iterator + 2;
   if (macro_iterator->token_enum() != PP_Identifier) {
     return absl::InvalidArgumentError("Expected identifier for macro name.");
   }
@@ -141,7 +142,7 @@ absl::Status FlowTree::AddMacroOfConditional(
     return absl::InvalidArgumentError(
         "Error no macro follows the conditional directive.");
   }
-  auto macro_iterator = conditional_iterator + 1;
+  auto macro_iterator = conditional_iterator + 2;
   auto macro_identifier = macro_iterator->text();
   if (conditional_macro_id_.find(macro_identifier) ==
       conditional_macro_id_.end()) {
@@ -161,7 +162,7 @@ int FlowTree::GetMacroIDOfConditional(
     // TODO(karimtera): add a better error handling.
     return -1;
   }
-  auto macro_iterator = conditional_iterator + 1;
+  auto macro_iterator = conditional_iterator + 2;
   auto macro_identifier = macro_iterator->text();
   // It is always assumed that the macro already exists in the map.
   return conditional_macro_id_[macro_identifier];
@@ -174,6 +175,83 @@ absl::Status FlowTree::GenerateVariants(const VariantReceiver &receiver) {
     return status;
   }
   return DepthFirstSearch(receiver, source_sequence_.begin());
+}
+
+absl::StatusOr<FlowTree::DefineVariants> FlowTree::MinCoverDefineVariants() {
+  auto status = GenerateControlFlowTree();
+  if (!status.ok()) return status;
+  verible::IntervalSet<int64_t> covered;       // Tokens covered by
+                                               // MinCoverDefineVariants.
+  verible::IntervalSet<int64_t> last_covered;  // Tokens covered
+                                               // by the previous iterations.
+  DefineVariants define_variants;  // The result – all define variants that
+                                   // should cover the entire source
+  DefineSet visited;  // Visited defines are ones that are assumed to be defined
+                      // or undefined (decided in a previous iteration)
+  const int64_t tok_count = static_cast<int64_t>(source_sequence_.size());
+  while (!covered.Contains({0, tok_count})) {
+    DefineSet defines;  // Define sets are moved into the define variants list,
+                        // so we make a new one each iteration
+    visited.clear();    // We keep the visited set to avoid unnecessary
+                        // allocations, but clear it each iteration
+    TokenSequenceConstIterator tok_it = source_sequence_.begin();
+    while (tok_it < source_sequence_.end()) {
+      covered.Add(std::distance(source_sequence_.begin(), tok_it));
+      if (tok_it->token_enum() == PP_ifdef ||
+          tok_it->token_enum() == PP_ifndef ||
+          tok_it->token_enum() == PP_elsif) {
+        const auto macro_id_it = tok_it + 2;
+        auto macro_text = macro_id_it->text();
+        bool negated = tok_it->token_enum() == PP_ifndef;
+        // If this macro was already visited (either defined/undefined), we
+        // to stick to the same branch. TODO: handle `defines
+        if (visited.contains(macro_text)) {
+          bool assume_condition_is_true =
+              (negated ^ defines.contains(macro_text));
+          tok_it = edges_[tok_it][assume_condition_is_true ? 0 : 1];
+        } else {
+          // First time we see this macro; mark as visited
+          visited.insert(macro_text);
+          const auto if_it = edges_[tok_it][0];
+          const auto if_idx = std::distance(source_sequence_.begin(), if_it);
+          const auto else_it = edges_[tok_it][1];
+          const auto else_idx =
+              std::distance(source_sequence_.begin(), else_it);
+          if (!covered.Contains({if_idx, else_idx})) {
+            // If the `ifdef is not covered, we assume the condition is true
+            if (!negated) defines.insert(macro_text);
+            tok_it = if_it;
+          } else {
+            // Else we assume the condition is false
+            if (negated) defines.insert(macro_text);
+            tok_it = else_it;
+          }
+        }
+      } else {
+        const auto it = edges_.find(tok_it);
+        if (it == edges_.end() || it->second.empty()) {
+          // If there's no outgoing edge, just move to the next token.
+          tok_it++;
+        } else {
+          // Else jump
+          tok_it = edges_[tok_it][0];
+        }
+      }
+    }
+    define_variants.push_back(std::move(defines));
+    // To prevent an infinite loop, if nothing new was covered, break.
+    if (last_covered == covered) {
+      // TODO: If there are nested `ifdefs that contradict each other early in
+      // the source, this will prevent us from traversing the rest of the flow
+      // tree. It would be better to detect this case, assume that the
+      // contradicting part is covered, and continue the analysis.
+      VLOG(4) << "Giving up on finding all define variants";
+      break;  // Perhaps we should error?
+    }
+    last_covered = covered;
+  }
+  VLOG(4) << "Done generating define variants. Coverage: " << covered;
+  return define_variants;
 }
 
 // Constructs the control flow tree, which determines the edge from each node

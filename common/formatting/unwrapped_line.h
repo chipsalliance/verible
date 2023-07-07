@@ -162,6 +162,12 @@ class UnwrappedLine {
   // Note that this is a *copy*, and not a reference to the underlying range.
   FormatTokenRange TokensRange() const { return tokens_; }
 
+  // Sets the PreFormatToken range.
+  void SetTokensRange(std::vector<PreFormatToken>::const_iterator begin,
+                      std::vector<PreFormatToken>::const_iterator end) {
+    tokens_ = {begin, end};
+  }
+
   // Returns the number of tokens in this UnwrappedLine
   size_t Size() const { return tokens_.size(); }
 

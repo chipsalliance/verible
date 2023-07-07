@@ -811,6 +811,11 @@ static WithReason<SpacingOptions> BreakDecisionBetween(
       return {SpacingOptions::kMustWrap,
               "Force-preserve line break around block comment"};
     }
+    if (IsPreprocessorKeyword(
+            static_cast<verilog_tokentype>(left.TokenEnum()))) {
+      return {SpacingOptions::kMustAppend,
+              "Append comment blocks to preprocessor tokens"};
+    }
   }
 
   // TODO(fangism): check for all token types in verilog.lex that
@@ -968,6 +973,15 @@ void AnnotateFormattingInformation(
     // For unit testing, tokens' text snippets don't necessarily originate
     // from the same contiguous string buffer, so skip this step.
     ConnectPreFormatTokensPreservedSpaceStarts(buffer_start, format_tokens);
+
+    for (auto& ftoken : *format_tokens) {
+      // Remove spacing between an `ifdef, `ifndef, or `elseif and the following
+      // identifier.
+      // FIXME: should probably do this elsewhere
+      if (verilog_tokentype(ftoken.TokenEnum()) == PP_Identifier) {
+        ftoken.before.preserved_space_start = nullptr;
+      }
+    }
   }
 
   // Annotate inter-token information using the syntax tree for context.

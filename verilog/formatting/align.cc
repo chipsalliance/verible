@@ -584,13 +584,22 @@ enum class AlignableSyntaxSubtype {
   kDistItem,  // Distribution items.
 };
 
+int EncodeAlignableSyntaxSubtype(AlignableSyntaxSubtype subtype, int color) {
+  return color << 16 | static_cast<int>(subtype);
+}
+
+AlignableSyntaxSubtype DecodeAlignableSyntaxSubtype(int encoded) {
+  return static_cast<AlignableSyntaxSubtype>(encoded & 0xFF);
+}
+
 static AlignedPartitionClassification AlignClassify(
     AlignmentGroupAction match,
-    AlignableSyntaxSubtype subtype = AlignableSyntaxSubtype::kDontCare) {
+    AlignableSyntaxSubtype subtype = AlignableSyntaxSubtype::kDontCare,
+    int color = 0) {
   if (match == AlignmentGroupAction::kMatch) {
     CHECK(subtype != AlignableSyntaxSubtype::kDontCare);
   }
-  return {match, static_cast<int>(subtype)};
+  return {match, EncodeAlignableSyntaxSubtype(subtype, color)};
 }
 
 static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
@@ -609,13 +618,17 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align net/variable declarations.
         if (IsAlignableDeclaration(node)) {
-          return AlignClassify(AlignmentGroupAction::kMatch,
-                               AlignableSyntaxSubtype::kDataDeclaration);
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kDataDeclaration,
+              partition.Value().TokensRange().front().token->color);
         }
         // Align continuous assignment, like "assign foo = bar;"
         if (node.MatchesTag(NodeEnum::kContinuousAssignmentStatement)) {
-          return AlignClassify(AlignmentGroupAction::kMatch,
-                               AlignableSyntaxSubtype::kContinuousAssignment);
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kContinuousAssignment,
+              partition.Value().TokensRange().front().token->color);
         }
         return AlignClassify(AlignmentGroupAction::kNoMatch);
       });
@@ -636,10 +649,11 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
         }
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align class member variables.
-        return AlignClassify(IsAlignableDeclaration(node)
-                                 ? AlignmentGroupAction::kMatch
-                                 : AlignmentGroupAction::kNoMatch,
-                             AlignableSyntaxSubtype::kClassMemberVariables);
+        return AlignClassify(
+            IsAlignableDeclaration(node) ? AlignmentGroupAction::kMatch
+                                         : AlignmentGroupAction::kNoMatch,
+            AlignableSyntaxSubtype::kClassMemberVariables,
+            partition.Value().TokensRange().front().token->color);
       });
 }
 
@@ -659,19 +673,25 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
         const SyntaxTreeNode& node = verible::SymbolCastToNode(*origin);
         // Align local variable declarations.
         if (IsAlignableDeclaration(node)) {
-          return AlignClassify(AlignmentGroupAction::kMatch,
-                               AlignableSyntaxSubtype::kDataDeclaration);
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kDataDeclaration,
+              partition.Value().TokensRange().front().token->color);
         }
         // Align blocking assignments.
         if (node.MatchesTagAnyOf({NodeEnum::kBlockingAssignmentStatement,
                                   NodeEnum::kNetVariableAssignment})) {
-          return AlignClassify(AlignmentGroupAction::kMatch,
-                               AlignableSyntaxSubtype::kBlockingAssignment);
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kBlockingAssignment,
+              partition.Value().TokensRange().front().token->color);
         }
         // Align nonblocking assignments.
         if (node.MatchesTag(NodeEnum::kNonblockingAssignmentStatement)) {
-          return AlignClassify(AlignmentGroupAction::kMatch,
-                               AlignableSyntaxSubtype::kNonBlockingAssignment);
+          return AlignClassify(
+              AlignmentGroupAction::kMatch,
+              AlignableSyntaxSubtype::kNonBlockingAssignment,
+              partition.Value().TokensRange().front().token->color);
         }
         return AlignClassify(AlignmentGroupAction::kNoMatch);
       });
@@ -1416,7 +1436,7 @@ static const AlignmentHandlerMapType& AlignmentHandlerLibrary() {
 static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
     const FormatStyle& vstyle, int subtype) {
   static const auto& handler_map = AlignmentHandlerLibrary();
-  const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
+  const auto iter = handler_map.find(DecodeAlignableSyntaxSubtype(subtype));
   CHECK(iter != handler_map.end()) << "subtype: " << subtype;
   return iter->second.column_scanner_func(vstyle);
 }
@@ -1424,8 +1444,8 @@ static verible::AlignmentCellScannerFunction AlignmentColumnScannerSelector(
 static verible::AlignmentPolicy AlignmentPolicySelector(
     const FormatStyle& vstyle, int subtype) {
   static const auto& handler_map = AlignmentHandlerLibrary();
-  const auto iter = handler_map.find(AlignableSyntaxSubtype(subtype));
-  CHECK(iter != handler_map.end()) << "subtype: " << subtype;
+  const auto iter = handler_map.find(DecodeAlignableSyntaxSubtype(subtype));
+  CHECK(iter != handler_map.end()) << "subtype: " << (0xFF & subtype);
   return iter->second.policy_func(vstyle);
 }
 
@@ -1580,6 +1600,7 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
   const ExtractAlignmentGroupsFunction extract_alignment_groups =
       std::bind(alignment_partitioner, std::placeholders::_1, style);
 
+  VLOG(4) << "===> " << partition.Value() << std::endl;
   verible::TabularAlignTokens(style.column_limit, full_text,
                               disabled_byte_ranges, extract_alignment_groups,
                               &partition);

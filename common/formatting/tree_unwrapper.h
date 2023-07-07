@@ -48,7 +48,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
   TreeUnwrapper(const TreeUnwrapper&) = delete;
-  TreeUnwrapper(TreeUnwrapper&&) = delete;
+  TreeUnwrapper(TreeUnwrapper&&) noexcept;
   TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
   TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
 
@@ -57,7 +57,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   // Partitions the token stream (in text_structure_view_) into
   // unwrapped_lines_ by traversing the syntax tree representation.
   // TODO(fangism): rename this Partition.
-  const TokenPartitionTree* Unwrap();
+  void Unwrap();
 
   // Returns a flattened copy of all of the deepest nodes in the tree of
   // unwrapped lines, which represents maximal partitioning into the smallest
@@ -80,6 +80,8 @@ class TreeUnwrapper : public TreeContextVisitor {
   TokenPartitionTree* CurrentTokenPartition() {
     return active_unwrapped_lines_;
   }
+
+  TokenPartitionTree* UnwrappedLines() { return &unwrapped_lines_; }
 
   // Returns text spanned by the syntax tree being traversed.
   absl::string_view FullText() const { return text_structure_view_.Contents(); }

@@ -34,11 +34,18 @@ verible::TokenSequence LexToSequence(absl::string_view source_contents) {
   VerilogLexer lexer(source_contents);
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
-      lexed_sequence.push_back(lexer.GetLastToken());
-    }
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
   return lexed_sequence;
+}
+
+// Remove non-syntax-tree tokens from a variant.
+void FilterNonSyntaxTreeTokens(FlowTree::Variant* variant) {
+  auto it = std::remove_if(variant->sequence.begin(), variant->sequence.end(),
+                           [](const verible::TokenInfo& token) {
+                             return !VerilogLexer::KeepSyntaxTreeTokens(token);
+                           });
+  variant->sequence.erase(it, variant->sequence.end());
 }
 
 TEST(FlowTree, MultipleConditionalsSameMacro) {
@@ -67,6 +74,7 @@ TEST(FlowTree, MultipleConditionalsSameMacro) {
   auto status =
       tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
         variants.push_back(variant);
+        FilterNonSyntaxTreeTokens(&variants.back());
         return true;
       });
   EXPECT_TRUE(status.ok());
@@ -207,6 +215,7 @@ TEST(FlowTree, NestedConditionals) {
     auto status = tree_test.GenerateVariants(
         [&variants](const FlowTree::Variant& variant) {
           variants.push_back(variant);
+          FilterNonSyntaxTreeTokens(&variants.back());
           return true;
         });
     EXPECT_TRUE(status.ok());
@@ -245,6 +254,7 @@ TEST(FlowTree, MultipleElseIfs) {
   auto status =
       tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
         variants.push_back(variant);
+        FilterNonSyntaxTreeTokens(&variants.back());
         return true;
       });
   EXPECT_TRUE(status.ok());
@@ -294,6 +304,7 @@ TEST(FlowTree, SwappedNegatedIfs) {
   auto status =
       tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
         variants.push_back(variant);
+        FilterNonSyntaxTreeTokens(&variants.back());
         return true;
       });
   EXPECT_TRUE(status.ok());
@@ -333,6 +344,7 @@ TEST(FlowTree, CompleteConditional) {
   auto status =
       tree_test.GenerateVariants([&variants](const FlowTree::Variant& variant) {
         variants.push_back(variant);
+        FilterNonSyntaxTreeTokens(&variants.back());
         return true;
       });
   EXPECT_TRUE(status.ok());

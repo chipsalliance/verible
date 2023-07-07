@@ -21,7 +21,9 @@
 #include "absl/status/status.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
+#include "verilog/analysis/flow_tree.h"
 #include "verilog/formatting/format_style.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 namespace formatter {
@@ -66,6 +68,15 @@ struct ExecutionControl {
   }
 };
 
+// Used to select which formatting method to use by FormatVerilog.
+enum class FormatMethod {
+  kSinglePass,          // The default single-pass formatting
+                        // method
+  kPreprocessVariants,  // The '--preprocess_variants' method
+};
+
+using PreprocessConfigVariants = std::vector<VerilogPreprocess::Config>;
+
 // Formats Verilog/SystemVerilog source code.
 // 'lines' controls which lines have formattting explicitly enabled.
 // If this is empty, interpret as all lines enabled for formatting.
@@ -75,14 +86,16 @@ absl::Status FormatVerilog(absl::string_view text, absl::string_view filename,
                            const FormatStyle& style,
                            std::ostream& formatted_stream,
                            const verible::LineNumberSet& lines = {},
-                           const ExecutionControl& control = {});
+                           const ExecutionControl& control = {},
+                           FormatMethod preprocess = FormatMethod::kSinglePass);
 // Ditto, but with TextStructureView as input and std::string as output.
 // This does verification of the resulting format, but _no_ convergence test.
-absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
-                           absl::string_view filename, const FormatStyle& style,
-                           std::string* formatted_text,
-                           const verible::LineNumberSet& lines = {},
-                           const ExecutionControl& control = {});
+absl::Status FormatVerilog(
+    absl::string_view text, absl::string_view filename,
+    const FormatStyle& style, std::string* formatted_text,
+    const verible::LineNumberSet& lines = {},
+    const ExecutionControl& control = {},
+    const PreprocessConfigVariants& preproc_config_variants = {{}});
 
 // Format only lines in line_range interval [min, max) in "full_content"
 // using "style". Emits _only_ the formatted code in the range

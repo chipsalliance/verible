@@ -193,12 +193,7 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
   verible::TokenSequence lexed_sequence;
   for (lexer.DoNextToken(); !lexer.GetLastToken().isEOF();
        lexer.DoNextToken()) {
-    // For now we will store the syntax tree tokens only, ignoring all the
-    // white-space characters. however that should be stored to output the
-    // source code just like it was.
-    if (verilog::VerilogLexer::KeepSyntaxTreeTokens(lexer.GetLastToken())) {
-      lexed_sequence.push_back(lexer.GetLastToken());
-    }
+    lexed_sequence.push_back(lexer.GetLastToken());
   }
 
   // Control flow tree constructing.
@@ -210,7 +205,11 @@ static absl::Status GenerateVariants(const SubcommandArgsRange& args,
         if (counter == limit_variants) return false;
         counter++;
         message_stream << "Variant number " << counter << ":\n";
-        for (auto token : variant.sequence) outs << token << '\n';
+        for (auto token : variant.sequence) {
+          if (verilog::VerilogLexer::KeepSyntaxTreeTokens(token)) {
+            outs << token << '\n';
+          }
+        }
         // TODO(karimtera): Consider creating an output file per vairant,
         // Such that the files naming reflects which defines are
         // defined/undefined.

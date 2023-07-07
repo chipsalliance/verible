@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "common/text/token_stream_view.h"
 
 namespace verilog {
@@ -79,6 +81,17 @@ class FlowTree {
 
   // Generates all possible variants.
   absl::Status GenerateVariants(const VariantReceiver &receiver);
+
+  // Set of macro name defines.
+  using DefineSet = absl::flat_hash_set<absl::string_view>;
+
+  // A list of macro name sets; each set represents a variant of the source;
+  // together they should cover the entire source.
+  using DefineVariants = std::vector<DefineSet>;
+
+  // Returns the minimum set of defines needed to generate token stream variants
+  // that cover the entire source.
+  absl::StatusOr<DefineVariants> MinCoverDefineVariants();
 
   // Returns all the used macros in conditionals, ordered with the same ID as
   // used in BitSets.

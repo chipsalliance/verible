@@ -248,17 +248,13 @@ absl::Status VerilogAnalyzer::Analyze() {
   // Lex into tokens.
   RETURN_IF_ERROR(Tokenize());
 
-  // Here would be one place to analyze the raw token stream.
-  FilterTokensForSyntaxTree();
-
-  // Disambiguate tokens using lexical context.
-  ContextualizeTokens();
-
   // pseudo-preprocess token stream.
   //   Not all analyses will want to preprocess.
   {
     VerilogPreprocess preprocessor(preprocess_config_);
-    preprocessor_data_ = preprocessor.ScanStream(Data().GetTokenStreamView());
+    verible::TokenStreamView lexed_streamview;
+    InitTokenStreamView(Data().TokenStream(), &lexed_streamview);
+    preprocessor_data_ = preprocessor.ScanStream(lexed_streamview);
     if (!preprocessor_data_.errors.empty()) {
       for (const auto& error : preprocessor_data_.errors) {
         rejected_tokens_.push_back(verible::RejectedToken{
@@ -287,6 +283,12 @@ absl::Status VerilogAnalyzer::Analyze() {
         preprocessor_data_.preprocessed_token_stream;  // copy
     // TODO(fangism): could we just move, swap, or directly reference?
   }
+
+  // Here would be one place to analyze the raw token stream.
+  FilterTokensForSyntaxTree();
+
+  // Disambiguate tokens using lexical context.
+  ContextualizeTokens();
 
   auto generator = MakeTokenViewer(Data().GetTokenStreamView());
   VerilogParser parser(&generator, filename_);
