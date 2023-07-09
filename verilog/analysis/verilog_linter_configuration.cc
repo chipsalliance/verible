@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ using verible::TokenStreamLintRule;
 using verible::container::FindOrNull;
 
 template <typename List>
-static const char* MatchesAnyItem(absl::string_view filename,
-                                  const List& items) {
+static const char *MatchesAnyItem(absl::string_view filename,
+                                  const List &items) {
   for (const auto item : items) {
     if (absl::StrContains(filename, item)) {
       return item;
@@ -59,20 +59,20 @@ static const char* MatchesAnyItem(absl::string_view filename,
   return nullptr;
 }
 
-const char* ProjectPolicy::MatchesAnyPath(absl::string_view filename) const {
+const char *ProjectPolicy::MatchesAnyPath(absl::string_view filename) const {
   return MatchesAnyItem(filename, path_substrings);
 }
 
-const char* ProjectPolicy::MatchesAnyExclusions(
+const char *ProjectPolicy::MatchesAnyExclusions(
     absl::string_view filename) const {
   return MatchesAnyItem(filename, path_exclusions);
 }
 
 bool ProjectPolicy::IsValid() const {
-  for (const auto& rule : disabled_rules) {
+  for (const auto &rule : disabled_rules) {
     if (!analysis::IsRegisteredLintRule(rule)) return false;
   }
-  for (const auto& rule : enabled_rules) {
+  for (const auto &rule : enabled_rules) {
     if (!analysis::IsRegisteredLintRule(rule)) return false;
   }
   return true;
@@ -80,13 +80,13 @@ bool ProjectPolicy::IsValid() const {
 
 std::string ProjectPolicy::ListPathGlobs() const {
   return absl::StrJoin(path_substrings.begin(), path_substrings.end(), " | ",
-                       [](std::string* out, absl::string_view pattern) {
+                       [](std::string *out, absl::string_view pattern) {
                          absl::StrAppend(out, "*", pattern, "*");
                        });
 }
 
 bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
-                                    std::string* error) {
+                                    std::string *error) {
   // Clear the vector to overwrite any existing value.
   rules.clear();
 
@@ -128,7 +128,16 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
     // if there is any assignment.
     const auto equals_pos = rule_name_with_config.find('=');
     if (equals_pos != absl::string_view::npos) {
-      const auto config = rule_name_with_config.substr(equals_pos + 1);
+      auto config = rule_name_with_config.substr(equals_pos + 1);
+
+      // https://github.com/chipsalliance/verible/issues/1121
+      // Compatibility between command line and rules files
+      // Trim outer '"' if present
+      if (config.size() >= 2 && config.front() == '"' && config.back() == '"') {
+        config.remove_suffix(1);
+        config.remove_prefix(1);
+      }
+
       setting.configuration.assign(config.data(), config.size());
     }
     const auto rule_name = rule_name_with_config.substr(0, equals_pos);
@@ -152,7 +161,7 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
 std::string RuleBundle::UnparseConfiguration(const char separator) const {
   std::vector<std::string> switches;
   switches.reserve(rules.size());
-  for (const auto& rule : rules) {
+  for (const auto &rule : rules) {
     switches.push_back(absl::StrCat(
         // If rule is set off, prepend "-"
         rule.second.enabled ? "" : "-", rule.first,
@@ -165,26 +174,26 @@ std::string RuleBundle::UnparseConfiguration(const char separator) const {
                        std::string(1, separator));
 }
 
-bool LinterConfiguration::RuleIsOn(const analysis::LintRuleId& rule) const {
-  const auto* entry = FindOrNull(configuration_, rule);
+bool LinterConfiguration::RuleIsOn(const analysis::LintRuleId &rule) const {
+  const auto *entry = FindOrNull(configuration_, rule);
   if (entry == nullptr) return false;
   return entry->enabled;
 }
 
-void LinterConfiguration::UseRuleSet(const RuleSet& rules) {
+void LinterConfiguration::UseRuleSet(const RuleSet &rules) {
   configuration_.clear();
   switch (rules) {
     case RuleSet::kAll: {
-      for (const auto& rule : analysis::RegisteredTextStructureRulesNames()) {
+      for (const auto &rule : analysis::RegisteredTextStructureRulesNames()) {
         TurnOn(rule);
       }
-      for (const auto& rule : analysis::RegisteredSyntaxTreeRulesNames()) {
+      for (const auto &rule : analysis::RegisteredSyntaxTreeRulesNames()) {
         TurnOn(rule);
       }
-      for (const auto& rule : analysis::RegisteredTokenStreamRulesNames()) {
+      for (const auto &rule : analysis::RegisteredTokenStreamRulesNames()) {
         TurnOn(rule);
       }
-      for (const auto& rule : analysis::RegisteredLineRulesNames()) {
+      for (const auto &rule : analysis::RegisteredLineRulesNames()) {
         TurnOn(rule);
       }
       break;
@@ -192,31 +201,31 @@ void LinterConfiguration::UseRuleSet(const RuleSet& rules) {
     case RuleSet::kNone:
       break;
     case RuleSet::kDefault:
-      for (const auto& rule : analysis::kDefaultRuleSet) {
+      for (const auto &rule : analysis::kDefaultRuleSet) {
         TurnOn(rule);
       }
   }
 }
 
-void LinterConfiguration::UseRuleBundle(const RuleBundle& rule_bundle) {
+void LinterConfiguration::UseRuleBundle(const RuleBundle &rule_bundle) {
   const auto name_set = analysis::GetAllRegisteredLintRuleNames();
-  for (const auto& rule_pair : rule_bundle.rules) {
+  for (const auto &rule_pair : rule_bundle.rules) {
     // This needs to use the canonical registered key string_view, which has
     // guaranteed lifetime.
     configuration_[rule_pair.first] = rule_pair.second;
   }
 }
 
-void LinterConfiguration::UseProjectPolicy(const ProjectPolicy& policy,
+void LinterConfiguration::UseProjectPolicy(const ProjectPolicy &policy,
                                            absl::string_view filename) {
-  if (const char* matched_path = policy.MatchesAnyPath(filename)) {
+  if (const char *matched_path = policy.MatchesAnyPath(filename)) {
     VLOG(1) << "File \"" << filename << "\" matches path \"" << matched_path
             << "\" from project policy [" << policy.name << "], applying it.";
-    for (const auto& rule : policy.disabled_rules) {
+    for (const auto &rule : policy.disabled_rules) {
       VLOG(1) << "  disabling rule: " << rule;
       TurnOff(rule);
     }
-    for (const auto& rule : policy.enabled_rules) {
+    for (const auto &rule : policy.enabled_rules) {
       VLOG(1) << "  enabling rule: " << rule;
       TurnOn(rule);
     }
@@ -225,7 +234,7 @@ void LinterConfiguration::UseProjectPolicy(const ProjectPolicy& policy,
 
 std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
   std::set<analysis::LintRuleId> result;
-  for (const auto& rule_pair : configuration_) {
+  for (const auto &rule_pair : configuration_) {
     if (rule_pair.second.enabled) {
       result.insert(rule_pair.first);
     }
@@ -241,11 +250,11 @@ std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
 // T should be a descendant of verible::LintRule.
 template <typename T>
 static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
-    const std::map<analysis::LintRuleId, RuleSetting>& config,
-    std::function<std::unique_ptr<T>(const analysis::LintRuleId&)> factory) {
+    const std::map<analysis::LintRuleId, RuleSetting> &config,
+    std::function<std::unique_ptr<T>(const analysis::LintRuleId &)> factory) {
   std::vector<std::unique_ptr<T>> rule_instances;
-  for (const auto& rule_pair : config) {
-    const RuleSetting& setting = rule_pair.second;
+  for (const auto &rule_pair : config) {
+    const RuleSetting &setting = rule_pair.second;
     if (!setting.enabled) continue;
 
     std::unique_ptr<T> rule_ptr = factory(rule_pair.first);
@@ -287,7 +296,7 @@ LinterConfiguration::CreateTextStructureRules() const {
       configuration_, analysis::CreateTextStructureLintRule);
 }
 
-bool LinterConfiguration::operator==(const LinterConfiguration& config) const {
+bool LinterConfiguration::operator==(const LinterConfiguration &config) const {
   return ActiveRuleIds() == config.ActiveRuleIds();
 }
 
@@ -317,7 +326,7 @@ absl::Status LinterConfiguration::AppendFromFile(
 }
 
 absl::Status LinterConfiguration::ConfigureFromOptions(
-    const LinterOptions& options) {
+    const LinterOptions &options) {
   // Apply the ruleset bundle first.
   // TODO(b/170876028): reduce the number of ways to select a group of rules,
   // migrate these into hosted project configurations.
@@ -358,14 +367,14 @@ absl::Status LinterConfiguration::ConfigureFromOptions(
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const LinterConfiguration& config) {
+std::ostream &operator<<(std::ostream &stream,
+                         const LinterConfiguration &config) {
   const auto rules = config.ActiveRuleIds();
   return stream << "{ " << absl::StrJoin(rules.begin(), rules.end(), ", ")
                 << " }";
 }
 
-static const verible::EnumNameMap<RuleSet>& RuleSetEnumStringMap() {
+static const verible::EnumNameMap<RuleSet> &RuleSetEnumStringMap() {
   static const verible::EnumNameMap<RuleSet> kRuleSetEnumStringMap({
       {"all", RuleSet::kAll},
       {"none", RuleSet::kNone},
@@ -374,29 +383,29 @@ static const verible::EnumNameMap<RuleSet>& RuleSetEnumStringMap() {
   return kRuleSetEnumStringMap;
 }
 
-std::ostream& operator<<(std::ostream& stream, RuleSet rules) {
+std::ostream &operator<<(std::ostream &stream, RuleSet rules) {
   return RuleSetEnumStringMap().Unparse(rules, stream);
 }
 
 //
 // Parse and unparse for ruleset (for commandlineflags)
 //
-std::string AbslUnparseFlag(const RuleSet& rules) {
+std::string AbslUnparseFlag(const RuleSet &rules) {
   std::ostringstream stream;
   stream << rules;
   return stream.str();
 }
 
-bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error) {
+bool AbslParseFlag(absl::string_view text, RuleSet *rules, std::string *error) {
   return RuleSetEnumStringMap().Parse(text, rules, error, "--ruleset value");
 }
 
-std::string AbslUnparseFlag(const RuleBundle& bundle) {
+std::string AbslUnparseFlag(const RuleBundle &bundle) {
   return bundle.UnparseConfiguration(',');
 }
 
-bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
-                   std::string* error) {
+bool AbslParseFlag(absl::string_view text, RuleBundle *bundle,
+                   std::string *error) {
   return bundle->ParseConfiguration(text, ',', error);
 }
 
