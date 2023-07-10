@@ -12,7 +12,7 @@ load("//common/tools:jcxxgen.bzl", "jcxxgen")
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = [
-        "//:__subpackages__",
+        "//verilog/tools/ls:__subpackages__",
     ],
 )
 

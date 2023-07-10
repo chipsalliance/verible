@@ -1,5 +1,10 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:public"],  # public examples
+)
+
 py_library(
     name = "verible-verilog-syntax-py",
     srcs = ["verible_verilog_syntax.py"],

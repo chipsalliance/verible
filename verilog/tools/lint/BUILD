@@ -1,4 +1,4 @@
-# This package only contains end-to-end tests for the style linter.
+# This package contains style linter binary and end-to-end tests it
 
 load(
     ":verilog_style_lint.bzl",
@@ -7,6 +7,11 @@ load(
 )
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
+
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:private"],
+)
 
 # Integration tests for different flags and configurations
 # These tests help confirm that rules' cc_libraries are properly alwayslink-ed.

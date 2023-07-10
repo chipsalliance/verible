@@ -4,6 +4,11 @@
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = ["//visibility:private"],
+)
+
 cc_binary(
     name = "verible-verilog-preprocessor",
     srcs = ["verilog_preprocessor.cc"],
