@@ -101,6 +101,7 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/CST:package",
         "//verilog/CST:seq-block",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

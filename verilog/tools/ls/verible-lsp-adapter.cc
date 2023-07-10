@@ -213,7 +213,7 @@ std::vector<verible::lsp::CodeAction> GenerateCodeActions(
 
 nlohmann::json CreateDocumentSymbolOutline(
     const BufferTracker *tracker, const verible::lsp::DocumentSymbolParams &p,
-    bool kate_compatible_tags) {
+    bool kate_compatible_tags, bool include_variables) {
   if (!tracker) return nlohmann::json::array();
   // Only if the tree has been fully parsed, it makes sense to create an outline
   const auto last_good = tracker->last_good();
@@ -221,8 +221,8 @@ nlohmann::json CreateDocumentSymbolOutline(
 
   verible::lsp::DocumentSymbol toplevel;
   const auto &text_structure = last_good->parser().Data();
-  verilog::DocumentSymbolFiller filler(kate_compatible_tags, text_structure,
-                                       &toplevel);
+  verilog::DocumentSymbolFiller filler(kate_compatible_tags, include_variables,
+                                       text_structure, &toplevel);
   const auto &syntax_tree = text_structure.SyntaxTree();
   syntax_tree->Accept(&filler);
   // We cut down one level, not interested in toplevel file:

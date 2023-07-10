@@ -26,7 +26,7 @@ class DocumentSymbolFiller : public verible::SymbolVisitor {
   // DocumentSymbol structure.
   // The "kate_workaround" changes some emitted node-types as Kate can't
   // deal with all of them (todo: fix in kate).
-  DocumentSymbolFiller(bool kate_workaround,
+  DocumentSymbolFiller(bool kate_workaround, bool include_variables,
                        const verible::TextStructureView &text,
                        verible::lsp::DocumentSymbol *toplevel);
 
@@ -40,7 +40,7 @@ class DocumentSymbolFiller : public verible::SymbolVisitor {
 
   const int kModuleSymbolKind;  // Might be different if kate-workaround.
   const int kBlockSymbolKind;
-
+  bool include_variables;
   const verible::TextStructureView &text_view_;
   verible::lsp::DocumentSymbol *current_symbol_;
 };

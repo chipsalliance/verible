@@ -46,6 +46,9 @@ class VerilogLanguageServer {
   // Prints statistics of the current Language Server session.
   void PrintStatistics() const;
 
+  // A flag that sets inclusion of variables into documentSymbol requests
+  bool include_variables = true;
+
  private:
   // Creates callbacks for requests from Language Server Client
   void SetRequestHandlers();
