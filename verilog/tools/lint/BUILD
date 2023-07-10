@@ -1,4 +1,4 @@
-# This package contains style linter binary and end-to-end tests it
+# This package contains the style linter binary and end-to-end tests for it.
 
 load(
     ":verilog_style_lint.bzl",
