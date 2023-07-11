@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,10 +57,10 @@ using testing::SizeIs;
 
 class TestRuleBase : public SyntaxTreeLintRule {
  public:
-  void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) final {}
-  void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) final {}
+  void HandleLeaf(const verible::SyntaxTreeLeaf &leaf,
+                  const verible::SyntaxTreeContext &context) final {}
+  void HandleNode(const verible::SyntaxTreeNode &node,
+                  const verible::SyntaxTreeContext &context) final {}
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
   }
@@ -69,7 +69,7 @@ class TestRuleBase : public SyntaxTreeLintRule {
 class TestRule1 : public TestRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static const LintRuleDescriptor& GetDescriptor() {
+  static const LintRuleDescriptor &GetDescriptor() {
     static const LintRuleDescriptor d{
         .name = "test-rule-1",
         .desc = "TestRule1",
@@ -81,7 +81,7 @@ class TestRule1 : public TestRuleBase {
 class TestRule2 : public TestRuleBase {
  public:
   using rule_type = SyntaxTreeLintRule;
-  static const LintRuleDescriptor& GetDescriptor() {
+  static const LintRuleDescriptor &GetDescriptor() {
     static const LintRuleDescriptor d{
         .name = "test-rule-2",
         .desc = "TestRule2",
@@ -93,7 +93,7 @@ class TestRule2 : public TestRuleBase {
 class TestRule3 : public TokenStreamLintRule {
  public:
   using rule_type = TokenStreamLintRule;
-  static const LintRuleDescriptor& GetDescriptor() {
+  static const LintRuleDescriptor &GetDescriptor() {
     static const LintRuleDescriptor d{
         .name = "test-rule-3",
         .desc = "TestRule3",
@@ -101,7 +101,7 @@ class TestRule3 : public TokenStreamLintRule {
     return d;
   }
 
-  void HandleToken(const verible::TokenInfo&) final {}
+  void HandleToken(const verible::TokenInfo &) final {}
 
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
@@ -111,7 +111,7 @@ class TestRule3 : public TokenStreamLintRule {
 class TestRule4 : public LineLintRule {
  public:
   using rule_type = LineLintRule;
-  static const LintRuleDescriptor& GetDescriptor() {
+  static const LintRuleDescriptor &GetDescriptor() {
     static const LintRuleDescriptor d{
         .name = "test-rule-4",
         .desc = "TestRule4",
@@ -129,7 +129,7 @@ class TestRule4 : public LineLintRule {
 class TestRule5 : public TextStructureLintRule {
  public:
   using rule_type = TextStructureLintRule;
-  static const LintRuleDescriptor& GetDescriptor() {
+  static const LintRuleDescriptor &GetDescriptor() {
     static const LintRuleDescriptor d{
         .name = "test-rule-5",
         .desc = "TestRule5",
@@ -137,7 +137,7 @@ class TestRule5 : public TextStructureLintRule {
     return d;
   }
 
-  void Lint(const TextStructureView&, absl::string_view) final {}
+  void Lint(const TextStructureView &, absl::string_view) final {}
 
   verible::LintRuleStatus Report() const final {
     return verible::LintRuleStatus();
@@ -168,7 +168,7 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
   struct TestCase {
     ProjectPolicy policy;
     absl::string_view filename;
-    const char* expected_match;
+    const char *expected_match;
   };
   const TestCase kTestCases[] = {
       {{"policyX", {}, {}, {}, {}, {}}, "filename", nullptr},
@@ -179,8 +179,8 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
       {{"policyX", {"xxxx", "file"}, {}, {}, {}, {}}, "file/name.txt", "file"},
       {{"policyX", {"name", "file"}, {}, {}, {}, {}}, "file/name.txt", "name"},
   };
-  for (const auto& test : kTestCases) {
-    const char* match = test.policy.MatchesAnyPath(test.filename);
+  for (const auto &test : kTestCases) {
+    const char *match = test.policy.MatchesAnyPath(test.filename);
     if (test.expected_match != nullptr) {
       EXPECT_EQ(absl::string_view(match), test.expected_match);
     } else {
@@ -193,7 +193,7 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
   struct TestCase {
     ProjectPolicy policy;
     absl::string_view filename;
-    const char* expected_match;
+    const char *expected_match;
   };
   const TestCase kTestCases[] = {
       {{"policyX", {}, {}, {}, {}, {}}, "filename", nullptr},
@@ -204,8 +204,8 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
       {{"policyX", {}, {"xxxx", "file"}, {}, {}, {}}, "file/name.txt", "file"},
       {{"policyX", {}, {"name", "file"}, {}, {}, {}}, "file/name.txt", "name"},
   };
-  for (const auto& test : kTestCases) {
-    const char* match = test.policy.MatchesAnyExclusions(test.filename);
+  for (const auto &test : kTestCases) {
+    const char *match = test.policy.MatchesAnyExclusions(test.filename);
     if (test.expected_match != nullptr) {
       EXPECT_EQ(absl::string_view(match), test.expected_match);
     } else {
@@ -237,7 +237,7 @@ TEST(ProjectPolicyTest, IsValid) {
         {"not-a-test-rule", "test-rule-1"}},
        false},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_EQ(test.first.IsValid(), test.second);
   }
 }
@@ -250,7 +250,7 @@ TEST(ProjectPolicyTest, ListPathGlobs) {
       {{"policyX", {"pa/th1", "pa/th2"}, {}, {}, {}, {}},
        "*pa/th1* | *pa/th2*"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_EQ(test.first.ListPathGlobs(), test.second);
   }
 }
@@ -671,6 +671,29 @@ TEST(RuleBundleTest, ParseRuleBundleAcceptSeveral) {
 TEST(RuleBundleTest, ParseRuleBundleAcceptConfiguration) {
   constexpr absl::string_view text =
       "test-rule-1=foo,test-rule-2=,test-rule-3,-test-rule-4=bar";
+  RuleBundle bundle;
+  std::string error;
+  bool success = bundle.ParseConfiguration(text, ',', &error);
+  ASSERT_TRUE(success) << error;
+  ASSERT_THAT(bundle.rules, SizeIs(4));
+  EXPECT_TRUE(error.empty());
+
+  EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  EXPECT_EQ("foo", bundle.rules["test-rule-1"].configuration);
+
+  EXPECT_TRUE(bundle.rules["test-rule-2"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-2"].configuration.empty());
+
+  EXPECT_TRUE(bundle.rules["test-rule-3"].enabled);
+  EXPECT_TRUE(bundle.rules["test-rule-3"].configuration.empty());
+
+  EXPECT_FALSE(bundle.rules["test-rule-4"].enabled);
+  EXPECT_EQ("bar", bundle.rules["test-rule-4"].configuration);
+}
+
+TEST(RuleBundleTest, ParseRuleBundleWithQuotationMarks) {
+  constexpr absl::string_view text =
+      "test-rule-1=\"foo\",test-rule-2=\"\",test-rule-3,-test-rule-4=\"bar\"";
   RuleBundle bundle;
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
