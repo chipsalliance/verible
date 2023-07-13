@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::down_cast;
 using verible::LintRuleStatus;
 using verible::LintViolation;
@@ -46,7 +47,7 @@ VERILOG_REGISTER_LINT_RULE(AlwaysCombBlockingRule);
 static constexpr absl::string_view kMessage =
     "Use only blocking assignments in \'always_comb\' combinational blocks.";
 
-const LintRuleDescriptor& AlwaysCombBlockingRule::GetDescriptor() {
+const LintRuleDescriptor &AlwaysCombBlockingRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "always-comb-blocking",
       .topic = "combinational-logic",
@@ -58,27 +59,32 @@ const LintRuleDescriptor& AlwaysCombBlockingRule::GetDescriptor() {
 }
 
 // Matches always_comb blocks.
-static const Matcher& AlwaysCombMatcher() {
+static const Matcher &AlwaysCombMatcher() {
   static const Matcher matcher(NodekAlwaysStatement(AlwaysCombKeyword()));
   return matcher;
 }
 
-void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol& symbol,
-                                          const SyntaxTreeContext& context) {
+void AlwaysCombBlockingRule::HandleSymbol(const verible::Symbol &symbol,
+                                          const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
 
   if (AlwaysCombMatcher().Matches(symbol, &manager)) {
-    for (const auto& match :
+    for (const auto &match :
          SearchSyntaxTree(symbol, NodekNonblockingAssignmentStatement())) {
       if (match.match->Kind() != verible::SymbolKind::kNode) continue;
 
-      const auto* node = down_cast<const verible::SyntaxTreeNode*>(match.match);
+      const auto *node =
+          down_cast<const verible::SyntaxTreeNode *>(match.match);
 
-      const verible::SyntaxTreeLeaf* leaf = verible::GetSubtreeAsLeaf(
+      const verible::SyntaxTreeLeaf *leaf = verible::GetSubtreeAsLeaf(
           *node, NodeEnum::kNonblockingAssignmentStatement, 1);
 
       if (leaf && leaf->get().token_enum() == TK_LE) {
-        violations_.insert(LintViolation(*leaf, kMessage, match.context));
+        violations_.insert(
+            LintViolation(*leaf, kMessage, match.context,
+                          {AutoFix("Use blocking assignment '=' instead of "
+                                   "nonblocking assignment '<='",
+                                   {leaf->get(), "="})}));
       }
     }
   }
