@@ -47,9 +47,9 @@ struct SyntaxTreeSearchTestCase : public SynthesizedLexerTestData {
   // Returns true if every element is an exact match to the expected set.
   // TODO(b/141875806): Take a symbol translator function to produce a
   // human-readable, language-specific enum name.
-  bool ExactMatchFindings(const std::vector<TreeSearchMatch>& actual_findings,
+  bool ExactMatchFindings(const std::vector<TreeSearchMatch> &actual_findings,
                           absl::string_view base,
-                          std::ostream* diffstream) const;
+                          std::ostream *diffstream) const;
 };
 
 }  // namespace verible

@@ -35,16 +35,16 @@ class Parser {
   virtual ConcreteSyntaxTree TakeRoot() = 0;
 
   // Return the collection of rejected tokens from recovered syntax errors.
-  virtual const std::vector<TokenInfo>& RejectedTokens() const = 0;
+  virtual const std::vector<TokenInfo> &RejectedTokens() const = 0;
 
   virtual ~Parser() = default;
 
  protected:
   Parser() = default;
 
- public:                                      // Deleted should be public.
-  Parser(const Parser&) = delete;             // disallow copy
-  Parser& operator=(const Parser&) = delete;  // disallow assign
+ public:                                       // Deleted should be public.
+  Parser(const Parser &) = delete;             // disallow copy
+  Parser &operator=(const Parser &) = delete;  // disallow assign
 };
 
 }  // namespace verible

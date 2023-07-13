@@ -32,12 +32,12 @@ using verible::Symbol;
 using verible::TokenInfo;
 
 std::vector<verible::TreeSearchMatch> FindAllNetDeclarations(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return SearchSyntaxTree(root, NodekNetDeclaration());
 }
 
 // Helper predicate to match all types of applicable nets
-static bool ExpectedTagPredicate(const Symbol& symbol) {
+static bool ExpectedTagPredicate(const Symbol &symbol) {
   verible::SymbolTag var_symbol = {verible::SymbolKind::kNode,
                                    static_cast<int>(NodeEnum::kNetVariable)};
   verible::SymbolTag assign_symbol = {
@@ -54,22 +54,22 @@ static bool ExpectedTagPredicate(const Symbol& symbol) {
   return symbol.Tag() == var_symbol || symbol.Tag() == assign_symbol;
 }
 
-const verible::SyntaxTreeLeaf* GetNameLeafOfNetVariable(
-    const verible::Symbol& net_variable) {
+const verible::SyntaxTreeLeaf *GetNameLeafOfNetVariable(
+    const verible::Symbol &net_variable) {
   return verible::GetSubtreeAsLeaf(net_variable, NodeEnum::kNetVariable, 0);
 }
 
-const verible::SyntaxTreeLeaf* GetNameLeafOfRegisterVariable(
-    const verible::Symbol& register_variable) {
+const verible::SyntaxTreeLeaf *GetNameLeafOfRegisterVariable(
+    const verible::Symbol &register_variable) {
   return verible::GetSubtreeAsLeaf(register_variable,
                                    NodeEnum::kRegisterVariable, 0);
 }
 
-std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
-    const Symbol& symbol) {
+std::vector<const TokenInfo *> GetIdentifiersFromNetDeclaration(
+    const Symbol &symbol) {
   // TODO: re-implement this without search, instead using direct access for
   // efficiency.
-  std::vector<const TokenInfo*> identifiers;
+  std::vector<const TokenInfo *> identifiers;
 
   auto matcher = verible::matcher::Matcher(ExpectedTagPredicate,
                                            verible::matcher::InnerMatchAll);
@@ -77,10 +77,10 @@ std::vector<const TokenInfo*> GetIdentifiersFromNetDeclaration(
   std::vector<verible::TreeSearchMatch> identifier_nodes =
       SearchSyntaxTree(symbol, matcher);
 
-  for (auto& id : identifier_nodes) {
-    const auto* identifier = SymbolCastToNode(*id.match)[0].get();
+  for (auto &id : identifier_nodes) {
+    const auto *identifier = SymbolCastToNode(*id.match)[0].get();
     if (!identifier) continue;
-    const auto* identifier_leaf = AutoUnwrapIdentifier(*identifier);
+    const auto *identifier_leaf = AutoUnwrapIdentifier(*identifier);
     if (!identifier_leaf) continue;
 
     identifiers.push_back(&identifier_leaf->get());

@@ -24,26 +24,27 @@
 
 namespace verible {
 
-using TokenComparator = std::function<bool(const TokenInfo&, const TokenInfo&)>;
+using TokenComparator =
+    std::function<bool(const TokenInfo &, const TokenInfo &)>;
 
 // Compares two SyntaxTrees. Two trees are equal if they have the same
 // structure and every TokenInfo is equal under compare_tokens.
-bool EqualTrees(const Symbol* lhs, const Symbol* rhs,
-                const TokenComparator& compare_tokens);
+bool EqualTrees(const Symbol *lhs, const Symbol *rhs,
+                const TokenComparator &compare_tokens);
 // Compare two syntax trees exactly, using TokenInfo equality.
-bool EqualTrees(const Symbol* lhs, const Symbol* rhs);
+bool EqualTrees(const Symbol *lhs, const Symbol *rhs);
 
 // Compares two tree using the EqualTrees with the EqualByEnum function
-bool EqualTreesByEnum(const Symbol* lhs, const Symbol* rhs);
+bool EqualTreesByEnum(const Symbol *lhs, const Symbol *rhs);
 
 // compare two trees using EqualTrees with the EqualByEnumString function
-bool EqualTreesByEnumString(const Symbol* lhs, const Symbol* rhs);
+bool EqualTreesByEnumString(const Symbol *lhs, const Symbol *rhs);
 
 // Compare two TokenInfo by their enum
-bool EqualByEnum(const TokenInfo& lhs, const TokenInfo& rhs);
+bool EqualByEnum(const TokenInfo &lhs, const TokenInfo &rhs);
 
 // Compare two TokenInfo by both enum and text
-bool EqualByEnumString(const TokenInfo& lhs, const TokenInfo& rhs);
+bool EqualByEnumString(const TokenInfo &lhs, const TokenInfo &rhs);
 
 }  // namespace verible
 

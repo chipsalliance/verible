@@ -32,16 +32,16 @@ class NumericFormatStringStyleRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   NumericFormatStringStyleRule() = default;
 
-  void HandleToken(const verible::TokenInfo& token) final;
+  void HandleToken(const verible::TokenInfo &token) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
-  void CheckAndReportViolation(const verible::TokenInfo& token, size_t position,
+  void CheckAndReportViolation(const verible::TokenInfo &token, size_t position,
                                size_t length,
                                std::initializer_list<unsigned char> prefixes);
 

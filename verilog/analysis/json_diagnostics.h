@@ -23,7 +23,7 @@ namespace verilog {
 // Returns JSON list with information about errors. At most "limit" errors
 // are returned (zero means unlimited).
 nlohmann::json GetLinterTokenErrorsAsJson(
-    const verilog::VerilogAnalyzer* analyzer, size_t limit);
+    const verilog::VerilogAnalyzer *analyzer, size_t limit);
 
 }  // namespace verilog
 

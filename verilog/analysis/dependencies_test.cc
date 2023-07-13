@@ -74,7 +74,7 @@ TEST(FileDependenciesTest, OneFileNoDeps) {
       "localparam int bar = foo + 1;\n",
   };
 
-  for (const auto& code : kTestCases) {
+  for (const auto &code : kTestCases) {
     VLOG(1) << "code: " << code;
     VerilogProject project(sources_dir, {/* no include paths */});
 
@@ -122,11 +122,11 @@ TEST(FileDependenciesTest, TwoFilesNoDeps) {
 }
 
 struct SymbolTableDebug {
-  const SymbolTable& symbol_table;
+  const SymbolTable &symbol_table;
 };
 
-static std::ostream& operator<<(std::ostream& stream,
-                                const SymbolTableDebug& p) {
+static std::ostream &operator<<(std::ostream &stream,
+                                const SymbolTableDebug &p) {
   stream << "Definitions:" << std::endl;
   p.symbol_table.PrintSymbolDefinitions(stream) << std::endl;
   stream << "References:" << std::endl;
@@ -143,12 +143,12 @@ TEST(FileDependenciesTest, TwoFilesWithParamDepAtRootScope) {
   ScopedTestFile tf1(sources_dir, "localparam int zzz = 0;\n");
   const auto status_or_file1 =
       project.OpenTranslationUnit(Basename(tf1.filename()));
-  const VerilogSourceFile* file1 = *status_or_file1;
+  const VerilogSourceFile *file1 = *status_or_file1;
 
   ScopedTestFile tf2(sources_dir, "localparam int yyy = zzz * 2;\n");
   const auto status_or_file2 =
       project.OpenTranslationUnit(Basename(tf2.filename()));
-  const VerilogSourceFile* file2 = *status_or_file2;
+  const VerilogSourceFile *file2 = *status_or_file2;
 
   SymbolTable symbol_table(&project);
   std::vector<absl::Status> build_diagnostics;
@@ -184,14 +184,14 @@ TEST(FileDependenciesTest, TwoFilesWithParamDep) {
                      "endpackage\n");
   const auto status_or_file1 =
       project.OpenTranslationUnit(Basename(tf1.filename()));
-  const VerilogSourceFile* file1 = *status_or_file1;
+  const VerilogSourceFile *file1 = *status_or_file1;
 
   ScopedTestFile tf2(sources_dir,
                      "localparam int bar = foo - 2;\n"
                      "localparam int baz = p_pkg::goo;\n");
   const auto status_or_file2 =
       project.OpenTranslationUnit(Basename(tf2.filename()));
-  const VerilogSourceFile* file2 = *status_or_file2;
+  const VerilogSourceFile *file2 = *status_or_file2;
 
   SymbolTable symbol_table(&project);
   std::vector<absl::Status> build_diagnostics;
@@ -225,14 +225,14 @@ TEST(FileDependenciesTest, TwoFilesWithCyclicDep) {
                      "endpackage\n");
   const auto status_or_file1 =
       project.OpenTranslationUnit(Basename(tf1.filename()));
-  const VerilogSourceFile* file1 = *status_or_file1;
+  const VerilogSourceFile *file1 = *status_or_file1;
 
   ScopedTestFile tf2(sources_dir,
                      "localparam int bar = foo - 2;\n"
                      "localparam int baz = p_pkg::goo;\n");
   const auto status_or_file2 =
       project.OpenTranslationUnit(Basename(tf2.filename()));
-  const VerilogSourceFile* file2 = *status_or_file2;
+  const VerilogSourceFile *file2 = *status_or_file2;
 
   SymbolTable symbol_table(&project);
   std::vector<absl::Status> build_diagnostics;
@@ -277,7 +277,7 @@ TEST(FileDependenciesTest, ModuleDiamondDependencies) {
                      "endmodule\n");
   const auto mmm_status_or_file =
       project.OpenTranslationUnit(Basename(mmm.filename()));
-  const VerilogSourceFile* mmm_file = *mmm_status_or_file;
+  const VerilogSourceFile *mmm_file = *mmm_status_or_file;
 
   ScopedTestFile ppp(sources_dir,
                      "module ppp;\n"
@@ -285,7 +285,7 @@ TEST(FileDependenciesTest, ModuleDiamondDependencies) {
                      "endmodule\n");
   const auto ppp_status_or_file =
       project.OpenTranslationUnit(Basename(ppp.filename()));
-  const VerilogSourceFile* ppp_file = *ppp_status_or_file;
+  const VerilogSourceFile *ppp_file = *ppp_status_or_file;
 
   ScopedTestFile qqq(sources_dir,
                      "module qqq;\n"
@@ -293,7 +293,7 @@ TEST(FileDependenciesTest, ModuleDiamondDependencies) {
                      "endmodule\n");
   const auto qqq_status_or_file =
       project.OpenTranslationUnit(Basename(qqq.filename()));
-  const VerilogSourceFile* qqq_file = *qqq_status_or_file;
+  const VerilogSourceFile *qqq_file = *qqq_status_or_file;
 
   ScopedTestFile rrr(sources_dir,
                      "module rrr;\n"
@@ -301,7 +301,7 @@ TEST(FileDependenciesTest, ModuleDiamondDependencies) {
                      "endmodule\n");
   const auto rrr_status_or_file =
       project.OpenTranslationUnit(Basename(rrr.filename()));
-  const VerilogSourceFile* rrr_file = *rrr_status_or_file;
+  const VerilogSourceFile *rrr_file = *rrr_status_or_file;
 
   SymbolTable symbol_table(&project);
   std::vector<absl::Status> build_diagnostics;

@@ -35,7 +35,7 @@ SymbolPtr TNode(Enum e, Args... args) {
 }
 
 template <typename... Args>
-SymbolPtr Leaf(Args&&... args) {
+SymbolPtr Leaf(Args &&...args) {
   return SymbolPtr(new SyntaxTreeLeaf(std::forward<Args>(args)...));
 }
 
@@ -50,7 +50,7 @@ SymbolPtr XLeaf(int token_enum);
 // contents of hand-crafted trees.
 // This variant does not check node enums.
 // TODO(fangism): implement one that verifies node enums.
-const Symbol* DescendPath(const Symbol& symbol,
+const Symbol *DescendPath(const Symbol &symbol,
                           std::initializer_list<size_t> path);
 
 }  // namespace verible

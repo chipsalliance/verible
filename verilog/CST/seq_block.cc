@@ -31,8 +31,8 @@ using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 
 // kLabel could be prefix "label :" or suffix ": label".  Handle both cases.
-static const verible::SyntaxTreeLeaf& GetLabelLeafText(const Symbol& label) {
-  const auto& node = CheckSymbolAsNode(label, NodeEnum::kLabel);
+static const verible::SyntaxTreeLeaf &GetLabelLeafText(const Symbol &label) {
+  const auto &node = CheckSymbolAsNode(label, NodeEnum::kLabel);
   CHECK_EQ(node.children().size(), 2);
   if (node.children().front()->Tag() ==
       verible::SymbolTag{verible::SymbolKind::kLeaf, ':'}) {
@@ -50,8 +50,8 @@ static const verible::SyntaxTreeLeaf& GetLabelLeafText(const Symbol& label) {
 // In verilog.y, kBegin is constructed one of two ways:
 //   begin : label  (shaped as [begin [: label]])
 //   label : begin  (shaped as [[label :] begin])
-static const SyntaxTreeNode* GetBeginLabel(const Symbol& begin) {
-  const auto& node = CheckSymbolAsNode(begin, NodeEnum::kBegin);
+static const SyntaxTreeNode *GetBeginLabel(const Symbol &begin) {
+  const auto &node = CheckSymbolAsNode(begin, NodeEnum::kBegin);
   CHECK_EQ(node.children().size(), 2);
   if (node.children().front()->Tag() ==
       verible::SymbolTag{verible::SymbolKind::kLeaf,
@@ -66,26 +66,26 @@ static const SyntaxTreeNode* GetBeginLabel(const Symbol& begin) {
                                             NodeEnum::kLabel);
 }
 
-static const SyntaxTreeNode* GetEndLabel(const Symbol& end) {
-  const auto* label = verible::GetSubtreeAsSymbol(end, NodeEnum::kEnd, 1);
+static const SyntaxTreeNode *GetEndLabel(const Symbol &end) {
+  const auto *label = verible::GetSubtreeAsSymbol(end, NodeEnum::kEnd, 1);
   if (label == nullptr) return nullptr;
   return verible::CheckOptionalSymbolAsNode(label, NodeEnum::kLabel);
 }
 
-const TokenInfo* GetBeginLabelTokenInfo(const Symbol& symbol) {
-  const SyntaxTreeNode* label = GetBeginLabel(symbol);
+const TokenInfo *GetBeginLabelTokenInfo(const Symbol &symbol) {
+  const SyntaxTreeNode *label = GetBeginLabel(symbol);
   if (label == nullptr) return nullptr;
   return &GetLabelLeafText(*label).get();
 }
 
-const TokenInfo* GetEndLabelTokenInfo(const Symbol& symbol) {
-  const SyntaxTreeNode* label = GetEndLabel(symbol);
+const TokenInfo *GetEndLabelTokenInfo(const Symbol &symbol) {
+  const SyntaxTreeNode *label = GetEndLabel(symbol);
   if (label == nullptr) return nullptr;
   return &GetLabelLeafText(*label).get();
 }
 
-const Symbol* GetMatchingEnd(const Symbol& symbol,
-                             const SyntaxTreeContext& context) {
+const Symbol *GetMatchingEnd(const Symbol &symbol,
+                             const SyntaxTreeContext &context) {
   CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kBegin);
   return context.top().children().back().get();
 }

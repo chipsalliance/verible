@@ -36,16 +36,17 @@ namespace matcher {
 //
 // Discovered children are pushed back onto target
 static void AggregateAllDescendantsFromPath(
-    const Symbol& symbol, const DescentPath::const_iterator& position,
-    const DescentPath::const_iterator& end, std::vector<const Symbol*>* target);
+    const Symbol &symbol, const DescentPath::const_iterator &position,
+    const DescentPath::const_iterator &end,
+    std::vector<const Symbol *> *target);
 
-std::vector<const Symbol*> GetAllDescendantsFromPath(const Symbol& symbol,
-                                                     const DescentPath& path) {
-  std::vector<const Symbol*> target;
+std::vector<const Symbol *> GetAllDescendantsFromPath(const Symbol &symbol,
+                                                      const DescentPath &path) {
+  std::vector<const Symbol *> target;
 
   if (symbol.Kind() == SymbolKind::kNode) {
-    const auto* node = down_cast<const SyntaxTreeNode*>(&symbol);
-    for (const auto& child : node->children()) {
+    const auto *node = down_cast<const SyntaxTreeNode *>(&symbol);
+    for (const auto &child : node->children()) {
       if (child) {
         AggregateAllDescendantsFromPath(*child, path.begin(), path.end(),
                                         &target);
@@ -57,9 +58,9 @@ std::vector<const Symbol*> GetAllDescendantsFromPath(const Symbol& symbol,
 }
 
 static void AggregateAllDescendantsFromPath(
-    const Symbol& symbol, const DescentPath::const_iterator& position,
-    const DescentPath::const_iterator& end,
-    std::vector<const Symbol*>* target) {
+    const Symbol &symbol, const DescentPath::const_iterator &position,
+    const DescentPath::const_iterator &end,
+    std::vector<const Symbol *> *target) {
   // If we are somehow operating on empty vector, stop recursion.
   if (position == end) {
     return;
@@ -79,7 +80,7 @@ static void AggregateAllDescendantsFromPath(
     return;
   }
 
-  const auto* node = down_cast<const SyntaxTreeNode*>(&symbol);
+  const auto *node = down_cast<const SyntaxTreeNode *>(&symbol);
 
   // If the cast fails or the node does not have the required tag or kind,
   // then stop recursion
@@ -89,7 +90,7 @@ static void AggregateAllDescendantsFromPath(
   }
 
   // Recurse on children
-  for (const auto& child : node->children()) {
+  for (const auto &child : node->children()) {
     if (child) {
       AggregateAllDescendantsFromPath(*child, position + 1, end, target);
     }

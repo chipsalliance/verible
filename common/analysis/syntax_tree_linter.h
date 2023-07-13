@@ -51,8 +51,8 @@ class SyntaxTreeLinter : public TreeContextVisitor {
  public:
   SyntaxTreeLinter() = default;
 
-  void Visit(const SyntaxTreeLeaf& leaf) final;
-  void Visit(const SyntaxTreeNode& node) final;
+  void Visit(const SyntaxTreeLeaf &leaf) final;
+  void Visit(const SyntaxTreeNode &node) final;
 
   // Transfers ownership of rule into Linter
   void AddRule(std::unique_ptr<SyntaxTreeLintRule> rule) {
@@ -63,7 +63,7 @@ class SyntaxTreeLinter : public TreeContextVisitor {
   std::vector<LintRuleStatus> ReportStatus() const;
 
   // Performs lint analysis on root
-  void Lint(const Symbol& root);
+  void Lint(const Symbol &root);
 
  private:
   // List of rules that the linter is using. Rules are responsible for tracking

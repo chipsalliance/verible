@@ -36,7 +36,7 @@
 namespace verible {
 
 // Translates phase enum into string for diagnostic messages.
-const char* AnalysisPhaseName(const AnalysisPhase& phase) {
+const char *AnalysisPhaseName(const AnalysisPhase &phase) {
   switch (phase) {
     case AnalysisPhase::kLexPhase:
       return "lexical";
@@ -47,11 +47,11 @@ const char* AnalysisPhaseName(const AnalysisPhase& phase) {
   }
   return "UNKNOWN";
 }
-std::ostream& operator<<(std::ostream& stream, const AnalysisPhase& phase) {
+std::ostream &operator<<(std::ostream &stream, const AnalysisPhase &phase) {
   return stream << AnalysisPhaseName(phase);
 }
 
-const char* ErrorSeverityDescription(const ErrorSeverity& severity) {
+const char *ErrorSeverityDescription(const ErrorSeverity &severity) {
   switch (severity) {
     case ErrorSeverity::kError:
       return "error";
@@ -60,23 +60,23 @@ const char* ErrorSeverityDescription(const ErrorSeverity& severity) {
   }
   return "UNKNOWN";
 }
-std::ostream& operator<<(std::ostream& stream, const ErrorSeverity& severity) {
+std::ostream &operator<<(std::ostream &stream, const ErrorSeverity &severity) {
   return stream << ErrorSeverityDescription(severity);
 }
 
-std::ostream& operator<<(std::ostream& stream, const RejectedToken& r) {
+std::ostream &operator<<(std::ostream &stream, const RejectedToken &r) {
   return stream << r.token_info << " (" << r.phase << " " << r.severity
                 << "): " << r.explanation;
 }
 
 // Grab tokens until EOF, and initialize a stream view with all tokens.
-absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
+absl::Status FileAnalyzer::Tokenize(Lexer *lexer) {
   const auto buffer = Data().Contents();
-  TokenSequence& tokens = MutableData().MutableTokenStream();
+  TokenSequence &tokens = MutableData().MutableTokenStream();
 
   if (auto lex_status = MakeTokenSequence(
           lexer, buffer, &tokens,
-          [&](const TokenInfo& error_token) {
+          [&](const TokenInfo &error_token) {
             VLOG(1) << "Lexical error with token: " << error_token;
             // Save error details in rejected_tokens_.
             rejected_tokens_.push_back(
@@ -96,7 +96,7 @@ absl::Status FileAnalyzer::Tokenize(Lexer* lexer) {
 }
 
 // Runs the parser on the current TokenStreamView.
-absl::Status FileAnalyzer::Parse(Parser* parser) {
+absl::Status FileAnalyzer::Parse(Parser *parser) {
   absl::Status status = parser->Parse();
   // Transfer syntax tree root, even if there were (recovered) syntax errors,
   // because the partial tree can still be useful to analyze.
@@ -105,7 +105,7 @@ absl::Status FileAnalyzer::Parse(Parser* parser) {
     CHECK(Data().SyntaxTree().get()) << "Expected syntax tree from parsing \""
                                      << filename_ << "\", but got none.";
   } else {
-    for (const auto& token : parser->RejectedTokens()) {
+    for (const auto &token : parser->RejectedTokens()) {
       rejected_tokens_.push_back(RejectedToken{
           token, AnalysisPhase::kParsePhase, "" /* no detailed explanation */});
     }
@@ -115,7 +115,7 @@ absl::Status FileAnalyzer::Parse(Parser* parser) {
 
 // Reports human-readable token error.
 std::string FileAnalyzer::TokenErrorMessage(
-    const TokenInfo& error_token) const {
+    const TokenInfo &error_token) const {
   // TODO(fangism): accept a RejectedToken to get an explanation message.
   std::ostringstream output_stream;
   if (!error_token.isEOF()) {
@@ -131,18 +131,18 @@ std::string FileAnalyzer::TokenErrorMessage(
 std::vector<std::string> FileAnalyzer::TokenErrorMessages() const {
   std::vector<std::string> messages;
   messages.reserve(rejected_tokens_.size());
-  for (const auto& rejected_token : rejected_tokens_) {
+  for (const auto &rejected_token : rejected_tokens_) {
     messages.push_back(TokenErrorMessage(rejected_token.token_info));
   }
   return messages;
 }
 
 void FileAnalyzer::ExtractLinterTokenErrorDetail(
-    const RejectedToken& error_token,
-    const ReportLinterErrorFunction& error_report) const {
+    const RejectedToken &error_token,
+    const ReportLinterErrorFunction &error_report) const {
   const LineColumnRange range = Data().GetRangeForToken(error_token.token_info);
   absl::string_view context_line = "";
-  const auto& lines = Data().Lines();
+  const auto &lines = Data().Lines();
   if (range.start.line < static_cast<int>(lines.size())) {
     context_line = lines[range.start.line];
   }
@@ -154,14 +154,14 @@ void FileAnalyzer::ExtractLinterTokenErrorDetail(
 }
 
 std::string FileAnalyzer::LinterTokenErrorMessage(
-    const RejectedToken& error_token, bool diagnostic_context) const {
+    const RejectedToken &error_token, bool diagnostic_context) const {
   std::ostringstream out;
   ExtractLinterTokenErrorDetail(
       error_token,
-      [&](const std::string& filename, LineColumnRange range,
+      [&](const std::string &filename, LineColumnRange range,
           ErrorSeverity severity, AnalysisPhase phase,
           absl::string_view token_text, absl::string_view context_line,
-          const std::string& message) {
+          const std::string &message) {
         out << filename_ << ':' << range << " " << phase << " " << severity;
         if (error_token.token_info.isEOF()) {
           out << " (unexpected EOF)";
@@ -186,7 +186,7 @@ std::vector<std::string> FileAnalyzer::LinterTokenErrorMessages(
     bool diagnostic_context) const {
   std::vector<std::string> messages;
   messages.reserve(rejected_tokens_.size());
-  for (const auto& rejected_token : rejected_tokens_) {
+  for (const auto &rejected_token : rejected_tokens_) {
     messages.push_back(
         LinterTokenErrorMessage(rejected_token, diagnostic_context));
   }

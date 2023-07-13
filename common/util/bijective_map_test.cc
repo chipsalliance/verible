@@ -132,7 +132,7 @@ TEST(BijectiveMapTest, InsertNewPairs) {
 }
 
 static std::function<int()> LoopGeneratorGenerator(
-    const std::vector<int>& values) {
+    const std::vector<int> &values) {
   return [=]() {  // fake random generator
     static const std::vector<int> v(values);
     static std::vector<int>::const_iterator iter = v.begin();

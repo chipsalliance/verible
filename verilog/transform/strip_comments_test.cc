@@ -307,7 +307,7 @@ TEST(StripVerilogCommentsTest, Various) {
           "`define DEF `MACRO(/*...*/)\n",
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     {
       std::ostringstream stream;
       StripVerilogComments(test.input, &stream, '\0');

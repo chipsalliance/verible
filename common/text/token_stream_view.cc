@@ -24,7 +24,7 @@
 
 namespace verible {
 
-void InitTokenStreamView(const TokenSequence& tokens, TokenStreamView* view) {
+void InitTokenStreamView(const TokenSequence &tokens, TokenStreamView *view) {
   view->resize(tokens.size());
   auto iter = tokens.begin();
   const auto end = tokens.end();
@@ -34,30 +34,30 @@ void InitTokenStreamView(const TokenSequence& tokens, TokenStreamView* view) {
   }
 }
 
-void FilterTokenStreamView(const TokenFilterPredicate& keep,
-                           const TokenStreamView& src, TokenStreamView* dest) {
+void FilterTokenStreamView(const TokenFilterPredicate &keep,
+                           const TokenStreamView &src, TokenStreamView *dest) {
   dest->clear();
   dest->reserve(src.size() / 2);  // Estimate size of filtered result.
-  for (const auto& iter : src) {
+  for (const auto &iter : src) {
     if (keep(*iter)) {
       dest->push_back(iter);
     }
   }
 }
 
-void FilterTokenStreamViewInPlace(const TokenFilterPredicate& keep,
-                                  TokenStreamView* view) {
+void FilterTokenStreamViewInPlace(const TokenFilterPredicate &keep,
+                                  TokenStreamView *view) {
   TokenStreamView temp;
   FilterTokenStreamView(keep, *view, &temp);
   view->swap(temp);  // old stream view deleted at end-of-scope
 }
 
-static bool TokenLocationLess(const TokenSequence::const_iterator& token_iter,
-                              const char* offset) {
+static bool TokenLocationLess(const TokenSequence::const_iterator &token_iter,
+                              const char *offset) {
   return token_iter->text().begin() < offset;
 }
 
-TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView& view,
+TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView &view,
                                              absl::string_view range) {
   const auto lower = range.begin();
   const auto upper = range.end();

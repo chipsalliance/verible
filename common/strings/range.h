@@ -25,7 +25,7 @@ namespace verible {
 // string_view lacks the two-iterator constructor that (iterator) ranges and
 // containers do.
 // This exploits the fact that string_view's iterators are just const char*.
-absl::string_view make_string_view_range(const char* begin, const char* end);
+absl::string_view make_string_view_range(const char *begin, const char *end);
 
 // Returns [x,y] where superstring.substr(x, y-x) == substring.
 // Precondition: substring must be a sub-range of superstring.

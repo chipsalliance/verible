@@ -40,7 +40,7 @@ using verible::matcher::EqualTagPredicate;
 
 static constexpr absl::string_view kMessage = "Do not use generate regions.";
 
-const LintRuleDescriptor& LegacyGenerateRegionRule::GetDescriptor() {
+const LintRuleDescriptor &LegacyGenerateRegionRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "legacy-generate-region",
       .topic = "generate-constructs",
@@ -50,14 +50,14 @@ const LintRuleDescriptor& LegacyGenerateRegionRule::GetDescriptor() {
 }
 
 void LegacyGenerateRegionRule::HandleNode(
-    const verible::SyntaxTreeNode& node,
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeNode &node,
+    const verible::SyntaxTreeContext &context) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   if (tag == NodeEnum::kGenerateRegion) {
-    const auto* generate_keyword = ABSL_DIE_IF_NULL(FindFirstSubtree(
+    const auto *generate_keyword = ABSL_DIE_IF_NULL(FindFirstSubtree(
         &node, EqualTagPredicate<verible::SymbolKind::kLeaf, verilog_tokentype,
                                  verilog_tokentype::TK_generate>));
-    const auto& leaf = verible::SymbolCastToLeaf(*generate_keyword);
+    const auto &leaf = verible::SymbolCastToLeaf(*generate_keyword);
     violations_.insert(LintViolation(leaf.get(), kMessage));
   }
 }

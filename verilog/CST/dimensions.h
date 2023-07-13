@@ -28,24 +28,24 @@ namespace verilog {
 
 // Find all packed dimensions.
 std::vector<verible::TreeSearchMatch> FindAllPackedDimensions(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all unpacked dimensions.
 std::vector<verible::TreeSearchMatch> FindAllUnpackedDimensions(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all dimension sequences, which can appear in packed and unpacked
 // dimensions.
 std::vector<verible::TreeSearchMatch> FindAllDeclarationDimensions(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns x from [x:y] declared dimensions.  Argument must be a DimensionRange
 // node.
-const verible::Symbol* GetDimensionRangeLeftBound(const verible::Symbol&);
+const verible::Symbol *GetDimensionRangeLeftBound(const verible::Symbol &);
 
 // Returns y from [x:y] declared dimensions.  Argument must be a DimensionRange
 // node.
-const verible::Symbol* GetDimensionRangeRightBound(const verible::Symbol&);
+const verible::Symbol *GetDimensionRangeRightBound(const verible::Symbol &);
 
 }  // namespace verilog
 

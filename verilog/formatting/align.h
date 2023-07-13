@@ -30,9 +30,9 @@ namespace formatter {
 // tokens by inserting padding-spaces.
 // TODO(fangism): pass in disabled formatting ranges
 void TabularAlignTokenPartitions(
-    const FormatStyle& style, absl::string_view full_text,
-    const verible::ByteOffsetSet& disabled_byte_ranges,
-    verible::TokenPartitionTree* partition_ptr);
+    const FormatStyle &style, absl::string_view full_text,
+    const verible::ByteOffsetSet &disabled_byte_ranges,
+    verible::TokenPartitionTree *partition_ptr);
 
 }  // namespace formatter
 }  // namespace verilog

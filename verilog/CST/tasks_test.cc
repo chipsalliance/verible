@@ -79,10 +79,10 @@ TEST(FindAllTaskDeclarationsTest, Various) {
        {kTag, "task foo();\nendtask"},
        " endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -115,20 +115,20 @@ TEST(FindAllTaskPrototypesTest, Various) {
        {kTag, "task foo();"},
        "\nendclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root));
         });
   }
   // Prototype header span the same range as their enclosing prototypes.
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           std::vector<TreeSearchMatch> headers;
-          for (const auto& proto :
+          for (const auto &proto :
                FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root))) {
             headers.push_back(TreeSearchMatch{
                 GetTaskPrototypeHeader(*proto.match), /* no context */});
@@ -154,15 +154,15 @@ TEST(TaskPrototypesIdsTest, Various) {
        "();\n"
        "endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           std::vector<TreeSearchMatch> ids;
-          for (const auto& proto :
+          for (const auto &proto :
                FindAllTaskPrototypes(*ABSL_DIE_IF_NULL(root))) {
-            const auto* header = GetTaskPrototypeHeader(*proto.match);
-            const auto* id = ABSL_DIE_IF_NULL(GetTaskHeaderId(*header));
+            const auto *header = GetTaskPrototypeHeader(*proto.match);
+            const auto *id = ABSL_DIE_IF_NULL(GetTaskHeaderId(*header));
             EXPECT_TRUE(verible::SymbolCastToNode(*id).MatchesTag(
                 NodeEnum::kUnqualifiedId));
             ids.push_back(TreeSearchMatch{id, /* no context */});
@@ -205,10 +205,10 @@ TEST(FindAllTaskHeadersTest, Various) {
        {kTag, "task foo();"},
        "\nendclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllTaskHeaders(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -223,15 +223,15 @@ TEST(GetTaskHeaderTest, DeclarationsHeader) {
       {"module m; ", {kTag, "task foo();"}, " endtask endmodule"},
       {"package p; ", {kTag, "task foo();"}, " endtask endpackage"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
           // Root node is a description list, not a task.
-          const auto& root = text_structure.SyntaxTree();
+          const auto &root = text_structure.SyntaxTree();
           const auto task_declarations = FindAllTaskDeclarations(*root);
           std::vector<TreeSearchMatch> headers;
-          for (const auto& decl : task_declarations) {
-            const auto& task_node = verible::SymbolCastToNode(*decl.match);
+          for (const auto &decl : task_declarations) {
+            const auto &task_node = verible::SymbolCastToNode(*decl.match);
             headers.push_back(
                 TreeSearchMatch{GetTaskHeader(task_node), /* no context */});
           }
@@ -244,12 +244,12 @@ TEST(GetTaskLifetimeTest, NoLifetimeDeclared) {
   VerilogAnalyzer analyzer("task foo(); endtask", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a task.
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node =
+  const auto &task_node =
       verible::SymbolCastToNode(*task_declarations.front().match);
-  const auto* lifetime = GetTaskLifetime(task_node);
+  const auto *lifetime = GetTaskLifetime(task_node);
   EXPECT_EQ(lifetime, nullptr);
 }
 
@@ -257,13 +257,13 @@ TEST(GetTaskLifetimeTest, StaticLifetimeDeclared) {
   VerilogAnalyzer analyzer("task static foo(); endtask", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a task.
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node =
+  const auto &task_node =
       verible::SymbolCastToNode(*task_declarations.front().match);
-  const auto* lifetime = GetTaskLifetime(task_node);
-  const auto& leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
+  const auto *lifetime = GetTaskLifetime(task_node);
+  const auto &leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
   EXPECT_EQ(leaf.get().token_enum(), TK_static);
 }
 
@@ -271,13 +271,13 @@ TEST(GetTaskLifetimeTest, AutomaticLifetimeDeclared) {
   VerilogAnalyzer analyzer("task automatic foo(); endtask", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a task.
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto task_declarations = FindAllTaskDeclarations(*root);
   ASSERT_EQ(task_declarations.size(), 1);
-  const auto& task_node =
+  const auto &task_node =
       verible::SymbolCastToNode(*task_declarations.front().match);
-  const auto* lifetime = GetTaskLifetime(task_node);
-  const auto& leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
+  const auto *lifetime = GetTaskLifetime(task_node);
+  const auto &leaf = verible::SymbolCastToLeaf(*ABSL_DIE_IF_NULL(lifetime));
   EXPECT_EQ(leaf.get().token_enum(), TK_automatic);
 }
 
@@ -291,19 +291,19 @@ TEST(GetTaskIdTest, UnqualifiedIds) {
       {"class c; task ", {kTag, "zoo"}, "(); endtask endclass"},
       {"task ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endtask"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
           // Root node is a description list, not a task.
-          const auto& root = text_structure.SyntaxTree();
+          const auto &root = text_structure.SyntaxTree();
           const auto task_declarations = FindAllTaskDeclarations(*root);
           std::vector<TreeSearchMatch> got_ids;
-          for (const auto& task_decl : task_declarations) {
-            const auto& task_node =
-                down_cast<const verible::SyntaxTreeNode&>(*task_decl.match);
-            const auto* task_id = GetTaskId(task_node);
+          for (const auto &task_decl : task_declarations) {
+            const auto &task_node =
+                down_cast<const verible::SyntaxTreeNode &>(*task_decl.match);
+            const auto *task_id = GetTaskId(task_node);
             const auto ids = FindAllUnqualifiedIds(*task_id);
-            for (const auto& id : ids) {
+            for (const auto &id : ids) {
               got_ids.push_back(TreeSearchMatch{
                   GetIdentifier(*ABSL_DIE_IF_NULL(id.match)),
                   /* no context */});
@@ -321,17 +321,17 @@ TEST(GetTaskIdTest, QualifiedIds) {
       {"class c; task foo(); endtask endclass"},
       {"task ", {kTag, "myclass::foo"}, "(); endtask"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
           // Root node is a description list, not a task.
-          const auto& root = text_structure.SyntaxTree();
+          const auto &root = text_structure.SyntaxTree();
           const auto task_declarations = FindAllTaskDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
-          for (const auto& decl : task_declarations) {
-            const auto& task_node = verible::SymbolCastToNode(*decl.match);
-            const auto* task_id = GetTaskId(task_node);
-            for (const auto& id : FindAllQualifiedIds(*task_id)) {
+          for (const auto &decl : task_declarations) {
+            const auto &task_node = verible::SymbolCastToNode(*decl.match);
+            const auto *task_id = GetTaskId(task_node);
+            for (const auto &id : FindAllQualifiedIds(*task_id)) {
               ids.push_back(id);
             }
           }
@@ -367,16 +367,16 @@ TEST(GetTaskHeaderTest, GetTaskName) {
        {kTag, "my_task"},
        "();\n endtask\n  endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> types;
-          for (const auto& decl : decls) {
-            const auto* type = GetTaskName(*decl.match);
+          for (const auto &decl : decls) {
+            const auto *type = GetTaskName(*decl.match);
             types.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return types;
@@ -398,16 +398,16 @@ TEST(GetTaskHeaderTest, GetTaskBody) {
        {kTag, "int x = 1;"},
        "\nendtask\nendpackage"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllTaskDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> bodies;
-          for (const auto& decl : decls) {
-            const auto& body = GetTaskStatementList(*decl.match);
+          for (const auto &decl : decls) {
+            const auto &body = GetTaskStatementList(*decl.match);
             bodies.push_back(TreeSearchMatch{body, {/* ignored context */}});
           }
           return bodies;

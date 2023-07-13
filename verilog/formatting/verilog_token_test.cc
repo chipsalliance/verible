@@ -83,7 +83,7 @@ const GetFormatTokenTypeTestCase GetFormatTokenTypeTestCases[] = {
 // have actually been reviewed, whereas other entries in the map have not
 // necessarily been reviewed, and are just set to some default value.
 TEST(VerilogTokenTest, GetFormatTokenTypeTest) {
-  for (const auto& test_case : GetFormatTokenTypeTestCases) {
+  for (const auto &test_case : GetFormatTokenTypeTestCases) {
     EXPECT_EQ(test_case.format_token_type,
               GetFormatTokenType(test_case.token_info_type));
   }

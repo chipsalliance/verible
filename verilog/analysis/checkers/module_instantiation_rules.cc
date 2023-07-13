@@ -47,7 +47,7 @@ using verible::matcher::Matcher;
 VERILOG_REGISTER_LINT_RULE(ModuleParameterRule);
 VERILOG_REGISTER_LINT_RULE(ModulePortRule);
 
-const LintRuleDescriptor& ModuleParameterRule::GetDescriptor() {
+const LintRuleDescriptor &ModuleParameterRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "module-parameter",
       .topic = "module-instantiation",
@@ -59,7 +59,7 @@ const LintRuleDescriptor& ModuleParameterRule::GetDescriptor() {
   return d;
 }
 
-const LintRuleDescriptor& ModulePortRule::GetDescriptor() {
+const LintRuleDescriptor &ModulePortRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "module-port",
       .topic = "module-instantiation",
@@ -75,7 +75,7 @@ const LintRuleDescriptor& ModulePortRule::GetDescriptor() {
 // For example:
 //   foo bar (port1, port2);
 // Here, the node representing "port1, port2" will be bound to "list"
-static const Matcher& InstanceMatcher() {
+static const Matcher &InstanceMatcher() {
   static const Matcher matcher(
       NodekGateInstance(GateInstanceHasPortList().Bind("list")));
   return matcher;
@@ -85,23 +85,23 @@ static const Matcher& InstanceMatcher() {
 // For examples:
 //   foo #(1, 2) bar;
 // Here, the node representing "1, 2" will be bound to "list".
-static const Matcher& ParamsMatcher() {
+static const Matcher &ParamsMatcher() {
   static const Matcher matcher(NodekActualParameterList(
       ActualParameterListHasPositionalParameterList().Bind("list")));
   return matcher;
 }
 
-static bool IsComma(const verible::Symbol& symbol) {
+static bool IsComma(const verible::Symbol &symbol) {
   if (symbol.Kind() == verible::SymbolKind::kLeaf) {
-    const auto* leaf = down_cast<const verible::SyntaxTreeLeaf*>(&symbol);
+    const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(&symbol);
     if (leaf) return leaf->get().token_enum() == ',';
   }
   return false;
 }
 
-static bool IsAnyPort(const verible::Symbol* symbol) {
+static bool IsAnyPort(const verible::Symbol *symbol) {
   if (symbol->Kind() == verible::SymbolKind::kNode) {
-    const auto* node = down_cast<const verible::SyntaxTreeNode*>(symbol);
+    const auto *node = down_cast<const verible::SyntaxTreeNode *>(symbol);
     return node->MatchesTag(NodeEnum::kActualNamedPort) ||
            node->MatchesTag(NodeEnum::kActualPositionalPort);
   }
@@ -113,7 +113,7 @@ static bool IsAnyPort(const verible::Symbol* symbol) {
 //
 
 void ModuleParameterRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   static constexpr absl::string_view kMessage =
       "Pass named parameters for parameterized module instantiations with "
       "more than one parameter";
@@ -125,16 +125,16 @@ void ModuleParameterRule::HandleSymbol(
 
   verible::matcher::BoundSymbolManager manager;
   if (ParamsMatcher().Matches(symbol, &manager)) {
-    if (const auto* list = manager.GetAs<verible::SyntaxTreeNode>("list")) {
-      const auto& children = list->children();
+    if (const auto *list = manager.GetAs<verible::SyntaxTreeNode>("list")) {
+      const auto &children = list->children();
       auto parameter_count = std::count_if(
           children.begin(), children.end(),
-          [](const verible::SymbolPtr& n) { return n ? !IsComma(*n) : false; });
+          [](const verible::SymbolPtr &n) { return n ? !IsComma(*n) : false; });
 
       // One positional parameter is permitted, but any more require all
       // parameters to be named.
       if (parameter_count > 1) {  // Determine the spanning location
-        const auto* leaf_ptr = verible::GetLeftmostLeaf(*list);
+        const auto *leaf_ptr = verible::GetLeftmostLeaf(*list);
         const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
         violations_.insert(verible::LintViolation(token, kMessage, context));
       }
@@ -150,8 +150,8 @@ verible::LintRuleStatus ModuleParameterRule::Report() const {
 // ModulePortRule Implementation
 //
 
-void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
-                                  const verible::SyntaxTreeContext& context) {
+void ModulePortRule::HandleSymbol(const verible::Symbol &symbol,
+                                  const verible::SyntaxTreeContext &context) {
   static constexpr absl::string_view kMessage =
       "Use named ports for module instantiation with "
       "more than one port";
@@ -159,14 +159,14 @@ void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
   verible::matcher::BoundSymbolManager manager;
 
   if (InstanceMatcher().Matches(symbol, &manager)) {
-    if (const auto* port_list_node =
+    if (const auto *port_list_node =
             manager.GetAs<verible::SyntaxTreeNode>("list")) {
       // Don't know how to handle unexpected non-portlist, so proceed
       if (!port_list_node->MatchesTag(NodeEnum::kPortActualList)) return;
 
       if (!IsPortListCompliant(*port_list_node)) {
         // Determine the leftmost location
-        const auto* leaf_ptr = verible::GetLeftmostLeaf(*port_list_node);
+        const auto *leaf_ptr = verible::GetLeftmostLeaf(*port_list_node);
         const verible::TokenInfo token = ABSL_DIE_IF_NULL(leaf_ptr)->get();
         violations_.insert(verible::LintViolation(token, kMessage, context));
       }
@@ -180,24 +180,24 @@ void ModulePortRule::HandleSymbol(const verible::Symbol& symbol,
 // Returns false if node has 2 or more children and at least
 // one child is an unnamed positional port
 /* static */ bool ModulePortRule::IsPortListCompliant(
-    const verible::SyntaxTreeNode& port_list_node) {
-  const auto& children = port_list_node.children();
+    const verible::SyntaxTreeNode &port_list_node) {
+  const auto &children = port_list_node.children();
   auto port_count = std::count_if(
       children.begin(), children.end(),
-      [](const verible::SymbolPtr& n) { return IsAnyPort(n.get()); });
+      [](const verible::SymbolPtr &n) { return IsAnyPort(n.get()); });
 
   // Do not enforce rule if node has 0 or 1 ports
   if (port_count <= 1) {
     return true;
   }
 
-  for (const auto& child : port_list_node.children()) {
+  for (const auto &child : port_list_node.children()) {
     if (child == nullptr) continue;
 
     // If child is a node, then it must be a kPort
     if (child->Kind() == verible::SymbolKind::kNode) {
-      const auto* child_node =
-          down_cast<const verible::SyntaxTreeNode*>(child.get());
+      const auto *child_node =
+          down_cast<const verible::SyntaxTreeNode *>(child.get());
       if (child_node->MatchesTag(NodeEnum::kActualPositionalPort)) return false;
     }
   }

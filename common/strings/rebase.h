@@ -26,13 +26,13 @@ namespace verible {
 // This is a potentially dangerous operation, which can be validated
 // using a combination of object lifetime management and range-checking.
 // It is the caller's responsibility that it points to valid memory.
-void RebaseStringView(absl::string_view* src, absl::string_view dest);
+void RebaseStringView(absl::string_view *src, absl::string_view dest);
 
 // This overload assumes that the string of interest from other has the
 // same length as the current string_view.
 // string_view::iterator happens to be const char*, but do not rely on that
 // fact as it can be implementation-dependent.
-void RebaseStringView(absl::string_view* src, const char* dest);
+void RebaseStringView(absl::string_view *src, const char *dest);
 
 }  // namespace verible
 

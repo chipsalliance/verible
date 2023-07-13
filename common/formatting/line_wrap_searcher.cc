@@ -37,15 +37,15 @@ namespace {
 struct SearchState {
   std::shared_ptr<const StateNode> state;
 
-  explicit SearchState(const std::shared_ptr<const StateNode>& s) : state(s) {}
+  explicit SearchState(const std::shared_ptr<const StateNode> &s) : state(s) {}
 
   // Inverted to min-heap: *lowest* penalty has the highest search priority.
-  bool operator<(const SearchState& r) const { return *r.state < *state; }
+  bool operator<(const SearchState &r) const { return *r.state < *state; }
 };
 }  // namespace
 
-std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
-                                              const BasicFormatStyle& style,
+std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
+                                              const BasicFormatStyle &style,
                                               int max_search_states) {
   // Dijkstra's algorithm for now: prioritize searching minimum penalty path
   // until destination is reached.
@@ -112,7 +112,7 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
     // Consider the new penalties incurred for the next decision:
     // break, or no break.  Calculate new penalties.
     // Push one or both branches into the worklist.
-    const auto& token = next.state->GetNextToken();
+    const auto &token = next.state->GetNextToken();
     if (token.before.break_decision == SpacingOptions::kPreserve) {
       VLOG(4) << "preserving spaces before \'" << token.token->text() << '\'';
       SearchState preserved(std::make_shared<StateNode>(
@@ -153,9 +153,9 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
   // winning_paths.  Return a modified copy of the original UnwrappedLine.
   std::vector<FormattedExcerpt> results;
   results.reserve(winning_paths.size());
-  for (const auto& path : winning_paths) {
+  for (const auto &path : winning_paths) {
     results.emplace_back(uwline);
-    auto& result = results.back();
+    auto &result = results.back();
     CHECK_EQ(path->Depth(), result.Tokens().size());
     path->ReconstructFormatDecisions(&result);
     if (aborted_search) {
@@ -166,19 +166,19 @@ std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
 }
 
 void DisplayEquallyOptimalWrappings(
-    std::ostream& stream, const UnwrappedLine& uwline,
-    const std::vector<FormattedExcerpt>& solutions) {
+    std::ostream &stream, const UnwrappedLine &uwline,
+    const std::vector<FormattedExcerpt> &solutions) {
   stream << "Found " << solutions.size()
          << " equally good solutions for the partition: " << uwline
          << std::endl;
-  for (const auto& solution : solutions) {
+  for (const auto &solution : solutions) {
     stream << Spacer(40, '-') << std::endl << solution.Render() << std::endl;
   }
   stream << Spacer(40, '=') << std::endl;
 }
 
-FitResult FitsOnLine(const UnwrappedLine& uwline,
-                     const BasicFormatStyle& style) {
+FitResult FitsOnLine(const UnwrappedLine &uwline,
+                     const BasicFormatStyle &style) {
   VLOG(3) << __FUNCTION__;
   // Leverage search functionality to compute effective line length of a slice
   // of tokens, taking into account minimum spacing requirements.
@@ -192,7 +192,7 @@ FitResult FitsOnLine(const UnwrappedLine& uwline,
   auto state = std::make_shared<const StateNode>(uwline, style);
 
   while (!state->Done()) {
-    const auto& token = state->GetNextToken();
+    const auto &token = state->GetNextToken();
     // If a line break is required before this token, return false.
     if (token.before.break_decision == SpacingOptions::kMustWrap) {
       return {false, state->current_column};

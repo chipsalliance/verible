@@ -32,7 +32,7 @@ class NoTabsRule : public verible::LineLintRule {
  public:
   using rule_type = verible::LineLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   NoTabsRule() = default;
 

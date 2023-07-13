@@ -45,7 +45,7 @@ VERILOG_REGISTER_LINT_RULE(ExplicitParameterStorageTypeRule);
 static constexpr absl::string_view kMessage =
     "Explicitly define a storage type for every parameter and localparam, ";
 
-const LintRuleDescriptor& ExplicitParameterStorageTypeRule::GetDescriptor() {
+const LintRuleDescriptor &ExplicitParameterStorageTypeRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "explicit-parameter-storage-type",
       .topic = "constants",
@@ -57,13 +57,13 @@ const LintRuleDescriptor& ExplicitParameterStorageTypeRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ParamMatcher() {
+static const Matcher &ParamMatcher() {
   static const Matcher matcher(NodekParamDeclaration());
   return matcher;
 }
 
-static bool HasStringAssignment(const verible::Symbol& param_decl) {
-  const auto* s = GetParamAssignExpression(param_decl);
+static bool HasStringAssignment(const verible::Symbol &param_decl) {
+  const auto *s = GetParamAssignExpression(param_decl);
   if (s == nullptr) return false;
   // We can't really do expression evaluation and determine the type of the
   // RHS, so here we focus on the simple case in which the RHS is a
@@ -74,16 +74,16 @@ static bool HasStringAssignment(const verible::Symbol& param_decl) {
 }
 
 void ExplicitParameterStorageTypeRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ParamMatcher().Matches(symbol, &manager)) {
     // 'parameter type' declarations have a storage type declared.
     if (IsParamTypeDeclaration(symbol)) return;
 
-    const auto* type_info_symbol = GetParamTypeInfoSymbol(symbol);
+    const auto *type_info_symbol = GetParamTypeInfoSymbol(symbol);
     if (IsTypeInfoEmpty(*ABSL_DIE_IF_NULL(type_info_symbol))) {
       if (exempt_string_ && HasStringAssignment(symbol)) return;
-      const verible::TokenInfo* param_name = GetParameterNameToken(symbol);
+      const verible::TokenInfo *param_name = GetParameterNameToken(symbol);
       violations_.insert(LintViolation(
           *param_name, absl::StrCat(kMessage, "(", param_name->text(), ")."),
           context));

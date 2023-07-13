@@ -21,18 +21,18 @@
 
 namespace verible {
 
-TokenGenerator MakeTokenGenerator(Lexer* l) {
+TokenGenerator MakeTokenGenerator(Lexer *l) {
   return [=]() { return l->DoNextToken(); };
 }
 
 absl::Status MakeTokenSequence(
-    Lexer* lexer, absl::string_view text, TokenSequence* tokens,
-    const std::function<void(const TokenInfo&)>& error_token_handler) {
+    Lexer *lexer, absl::string_view text, TokenSequence *tokens,
+    const std::function<void(const TokenInfo &)> &error_token_handler) {
   // TODO(fangism): provide a Lexer interface to grab all tokens en masse,
   // which would save virtual function dispatch overhead.
   lexer->Restart(text);
   do {
-    const auto& new_token = lexer->DoNextToken();
+    const auto &new_token = lexer->DoNextToken();
     tokens->push_back(new_token);
     if (lexer->TokenIsError(new_token)) {  // one more virtual function call
       error_token_handler(new_token);

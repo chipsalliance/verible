@@ -23,7 +23,7 @@ namespace {
 
 struct TestData {
   absl::string_view input;
-  const char* expect;
+  const char *expect;
 };
 
 // Test that non-comments are left unmodified.
@@ -42,7 +42,7 @@ TEST(StripCommentTest, NotComment) {
       "**/",  // not a comment
       "/*/",
   };
-  for (const auto& data : test_cases) {
+  for (const auto &data : test_cases) {
     EXPECT_EQ(StripComment(data), data);
     EXPECT_TRUE(IsSubRange(StripComment(data), data));
   }
@@ -59,7 +59,7 @@ TEST(StripCommentTest, EndlineComment) {
       {"//foo", "foo"},
       {"//foo\nabc", "foo\nabc"},
   };
-  for (const auto& data : test_cases) {
+  for (const auto &data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
         << "input: \"" << data.input << "\"";
     EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));
@@ -77,7 +77,7 @@ TEST(StripCommentTest, BlockComment) {
       {"/* zzz */", " zzz "},        // keeps spaces
       {"/**jkl****/", "jkl"},
   };
-  for (const auto& data : test_cases) {
+  for (const auto &data : test_cases) {
     EXPECT_EQ(StripComment(data.input), data.expect)
         << "input: \"" << data.input << "\"";
     EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));
@@ -111,7 +111,7 @@ TEST(StripCommentAndSpacePaddingTest, StripsSpaces) {
       {"/****qqq bbb.******/", "qqq bbb."},
       {"/****\n** qqq\n** bbb\n******/", "** qqq\n** bbb"},
   };
-  for (const auto& data : test_cases) {
+  for (const auto &data : test_cases) {
     EXPECT_EQ(StripCommentAndSpacePadding(data.input), data.expect)
         << "input: \"" << data.input << "\"";
     EXPECT_TRUE(IsSubRange(StripComment(data.input), data.input));

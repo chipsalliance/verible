@@ -60,7 +60,7 @@ enum class IndexingFactType {
 // definition, returns a string stating this.
 std::string IndexingFactTypeEnumToString(IndexingFactType indexing_fact_type);
 
-std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e);
+std::ostream &operator<<(std::ostream &stream, const IndexingFactType &e);
 
 }  // namespace verilog
 

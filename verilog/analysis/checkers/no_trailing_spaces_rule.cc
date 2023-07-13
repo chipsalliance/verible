@@ -43,7 +43,7 @@ VERILOG_REGISTER_LINT_RULE(NoTrailingSpacesRule);
 
 static constexpr absl::string_view kMessage = "Remove trailing spaces.";
 
-const LintRuleDescriptor& NoTrailingSpacesRule::GetDescriptor() {
+const LintRuleDescriptor &NoTrailingSpacesRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "no-trailing-spaces",
       .topic = "trailing-spaces",

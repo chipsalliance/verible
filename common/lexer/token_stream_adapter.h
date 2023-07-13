@@ -31,18 +31,18 @@
 namespace verible {
 
 // Creates a TokenInfo generator from a Lexer object.
-TokenGenerator MakeTokenGenerator(Lexer* l);
+TokenGenerator MakeTokenGenerator(Lexer *l);
 
 // Populates a TokenSequence with lexed tokens.
 absl::Status MakeTokenSequence(
-    Lexer* lexer, absl::string_view text, TokenSequence* tokens,
-    const std::function<void(const TokenInfo&)>& error_token_handler);
+    Lexer *lexer, absl::string_view text, TokenSequence *tokens,
+    const std::function<void(const TokenInfo &)> &error_token_handler);
 
 // Generic container-to-iterator-generator adapter.
 // Once the end is reached, keep returning the end iterator.
 template <class Container>
 std::function<typename Container::const_iterator()> MakeConstIteratorStreamer(
-    const Container& c) {
+    const Container &c) {
   auto iter = c.begin();
   const auto end = c.end();
   return [=]() mutable {
@@ -53,7 +53,7 @@ std::function<typename Container::const_iterator()> MakeConstIteratorStreamer(
 
 // Creates a TokenInfo generator from a sequence of TokenInfo.
 template <class Container>
-TokenGenerator MakeTokenStreamer(const Container& c) {
+TokenGenerator MakeTokenStreamer(const Container &c) {
   using value_type = typename Container::value_type;
   static_assert(std::is_same<value_type, TokenInfo>::value,
                 "Container must have TokenInfo elements.");
@@ -67,7 +67,7 @@ TokenGenerator MakeTokenStreamer(const Container& c) {
 
 // Creates a TokenInfo generator from a sequence of TokenInfo iterators.
 template <class Container>
-TokenGenerator MakeTokenViewer(const Container& c) {
+TokenGenerator MakeTokenViewer(const Container &c) {
   using value_type = typename Container::value_type;
   using iter_type = std::iterator_traits<value_type>;
   using element_type = typename iter_type::value_type;

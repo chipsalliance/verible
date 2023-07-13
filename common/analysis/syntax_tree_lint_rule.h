@@ -40,12 +40,12 @@ class SyntaxTreeLintRule : public LintRule {
  public:
   ~SyntaxTreeLintRule() override = default;
 
-  virtual void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                          const SyntaxTreeContext& context) {}
-  virtual void HandleNode(const SyntaxTreeNode& node,
-                          const SyntaxTreeContext& context) {}
-  virtual void HandleSymbol(const Symbol& node,
-                            const SyntaxTreeContext& context) {}
+  virtual void HandleLeaf(const SyntaxTreeLeaf &leaf,
+                          const SyntaxTreeContext &context) {}
+  virtual void HandleNode(const SyntaxTreeNode &node,
+                          const SyntaxTreeContext &context) {}
+  virtual void HandleSymbol(const Symbol &node,
+                            const SyntaxTreeContext &context) {}
 };
 
 }  // namespace verible

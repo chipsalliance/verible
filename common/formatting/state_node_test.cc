@@ -31,8 +31,8 @@
 namespace verible {
 namespace {
 
-std::string RenderFormattedText(const StateNode& path,
-                                const UnwrappedLine& uwline) {
+std::string RenderFormattedText(const StateNode &path,
+                                const UnwrappedLine &uwline) {
   FormattedExcerpt formatted_line(uwline);
   // Discard tokens that have not yet been explored in search.
   formatted_line.MutableTokens().resize(path.Depth());
@@ -49,7 +49,7 @@ struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
     style.over_column_limit_penalty = 200;
   }
 
-  void Initialize(int d, const std::vector<TokenInfo>& tokens) {
+  void Initialize(int d, const std::vector<TokenInfo> &tokens) {
     CreateTokenInfos(tokens);
     uwline = std::make_unique<UnwrappedLine>(d * style.indentation_spaces,
                                              pre_format_tokens_.begin());
@@ -57,14 +57,14 @@ struct StateNodeTestFixture : public UnwrappedLineMemoryHandler,
   }
 
   void InitializeExternalTextBuffer(int d,
-                                    const std::vector<TokenInfo>& tokens) {
+                                    const std::vector<TokenInfo> &tokens) {
     CreateTokenInfosExternalStringBuffer(tokens);
     uwline = std::make_unique<UnwrappedLine>(d * style.indentation_spaces,
                                              pre_format_tokens_.begin());
     AddFormatTokens(uwline.get());
   }
 
-  std::string Render(const StateNode& path, const UnwrappedLine& uwline) const {
+  std::string Render(const StateNode &path, const UnwrappedLine &uwline) const {
     return RenderFormattedText(path, uwline);
   }
 
@@ -132,7 +132,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{0, "token1"}, {1, "TT2"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 5;
@@ -146,7 +146,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevState) {
             initial_column + style.wrap_spaces);
   EXPECT_TRUE(parent_state->IsRootState());
 
-  const auto& child_state = parent_state;
+  const auto &child_state = parent_state;
   {
     // Second token, also appended to same line as first:
     auto child2_state = std::make_shared<StateNode>(child_state, style,
@@ -186,7 +186,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNoGap) {
   const std::vector<TokenInfo> tokens = {{0, text.substr(0, 3)},
                                          {1, text.substr(3, 3)}};
   InitializeExternalTextBuffer(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 4;  // ignored because of preserving
   ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
@@ -219,7 +219,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateSpaces) {
   const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
                                          {2, text.substr(7, 3)}};
   InitializeExternalTextBuffer(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 2;  // ignored because of preserving
   ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
@@ -253,7 +253,7 @@ TEST_F(StateNodeTestFixture, ConstructionPreserveSpacesFromPrevStateNewline) {
   const std::vector<TokenInfo> tokens = {{1, text.substr(0, 3)},
                                          {2, text.substr(7, 3)}};
   InitializeExternalTextBuffer(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 2;  // ignored because of preserving
   ftokens[1].before.preserved_space_start = ftokens[0].Text().end();
@@ -286,7 +286,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
   const std::vector<TokenInfo> tokens = {
       {0, "function_caller"}, {1, "("}, {2, "11"}, {3, ")"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 10;
@@ -306,7 +306,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateWithGroupBalancing) {
             initial_column + style.wrap_spaces);
   EXPECT_EQ(Render(*parent_state, *uwline), "  function_caller");
 
-  const auto& child_state = parent_state;
+  const auto &child_state = parent_state;
   {
     // Second token, also appended to same line as first:
     // > function_caller (
@@ -618,7 +618,7 @@ TEST_F(StateNodeTestFixture, ConstructionAppendingPrevStateOverflow) {
   const std::vector<TokenInfo> tokens = {{0, "aaaaaaaaaaaaaaaaaaaaa"},
                                          {1, "bbbbbbbbbbbbbbbbbb"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 8;
@@ -664,7 +664,7 @@ TEST_F(StateNodeTestFixture, MultiLineTokenFront) {
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{0, "a23456789\nb234"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
 
   // First token on line:
@@ -681,7 +681,7 @@ TEST_F(StateNodeTestFixture, MultiLineToken) {
   const std::vector<TokenInfo> tokens = {{0, "a23456789012345678901"},
                                          {1, "b2345\nc234567890123"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 8;
@@ -728,7 +728,7 @@ TEST_F(StateNodeTestFixture, MultiLineTokenOverflow) {
   const std::vector<TokenInfo> tokens = {{0, "a23456789012345678901"},
                                          {1, "b234567\nc234567890"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[1].before.break_penalty = 8;
@@ -778,7 +778,7 @@ TEST_F(StateNodeTestFixture, ConstructionWrappingLinePrevState) {
   const int kInitialIndent = 1;
   const std::vector<TokenInfo> tokens = {{0, "token1"}, {1, "token2"}};
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[1].before.break_penalty = 7;
   auto parent_state = std::make_shared<StateNode>(*uwline, style);
   const int initial_column = kInitialIndent * style.indentation_spaces;
@@ -809,7 +809,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsTryToAppend) {
       {2, "zzzzzZZZZZ"},
   };
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 1;
@@ -849,7 +849,7 @@ TEST_F(StateNodeTestFixture, AppendIfItFitsForcedWrap) {
       {1, "yyyyyYYYYY"},
   };
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   // Tokens stay under column limit, but here, we force a wrap.
@@ -882,7 +882,7 @@ TEST_F(StateNodeTestFixture, QuickFinish) {
       {2, "zzzzzZZZZZ"},
   };
   Initialize(kInitialIndent, tokens);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   ftokens[0].before.spaces_required = 1;
   ftokens[1].before.spaces_required = 1;
   ftokens[2].before.spaces_required = 1;
@@ -902,7 +902,7 @@ TEST_F(StateNodeTestFixture, QuickFinish) {
   EXPECT_EQ(final_state->spacing_choice, SpacingDecision::kWrap);
 
   // Second token, also appended to same line as first:
-  const auto* child_state = final_state->next();
+  const auto *child_state = final_state->next();
   EXPECT_EQ(child_state->spacing_choice, SpacingDecision::kAppend);
 
   // Second state is decended from initial state.

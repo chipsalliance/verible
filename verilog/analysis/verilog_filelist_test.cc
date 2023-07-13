@@ -58,7 +58,7 @@ TEST(FileListTest, AppendFileListFromInvalidCommandline) {
       {"+define+"},
       {"+not_valid_define+"},
       {"+foobar+baz"}};
-  for (const auto& cmdline : test_cases) {
+  for (const auto &cmdline : test_cases) {
     FileList result;
     auto status = AppendFileListFromCommandline(cmdline, &result);
     EXPECT_FALSE(status.ok());

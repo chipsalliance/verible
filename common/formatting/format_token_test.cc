@@ -273,7 +273,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableNone) {
   ByteOffsetSet disabled_bytes;  // empty
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  for (const auto& ftoken : pre_format_tokens_) {
+  for (const auto &ftoken : pre_format_tokens_) {
     EXPECT_EQ(ftoken.before.break_decision, SpacingOptions::kUndecided);
   }
 }
@@ -290,7 +290,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceBeforeText) {
   ByteOffsetSet disabled_bytes{{5, 7}};  // substring " d"
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
+  const auto &ftokens = pre_format_tokens_;
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[2].before.break_decision, SpacingOptions::kUndecided);
@@ -311,7 +311,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpaceAfterText) {
   ByteOffsetSet disabled_bytes{{4, 6}};  // substring "c "
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
+  const auto &ftokens = pre_format_tokens_;
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[2].before.break_decision,
@@ -332,7 +332,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningTwoTokens) {
   ByteOffsetSet disabled_bytes{{4, 7}};  // substring "c d"
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
+  const auto &ftokens = pre_format_tokens_;
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[1].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_EQ(ftokens[2].before.break_decision,
@@ -355,7 +355,7 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, DisableSpanningMustWrap) {
   pre_format_tokens_[2].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
+  const auto &ftokens = pre_format_tokens_;
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
   EXPECT_TRUE(
       BoundsEqual(ftokens[0].OriginalLeadingSpaces(), text.substr(0, 0)));
@@ -388,8 +388,8 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
   pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
-  auto indices = [&text](const absl::string_view& range) {
+  const auto &ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view &range) {
     return SubRangeIndices(range, text);
   };
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
@@ -424,8 +424,8 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest,
   pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
-  auto indices = [&text](const absl::string_view& range) {
+  const auto &ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view &range) {
     return SubRangeIndices(range, text);
   };
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);
@@ -461,8 +461,8 @@ TEST_F(PreserveSpacesOnDisabledTokenRangesTest, MultipleOffsetRanges) {
   pre_format_tokens_[1].before.break_decision = SpacingOptions::kMustWrap;
   PreserveSpacesOnDisabledTokenRanges(&pre_format_tokens_, disabled_bytes,
                                       text);
-  const auto& ftokens = pre_format_tokens_;
-  auto indices = [&text](const absl::string_view& range) {
+  const auto &ftokens = pre_format_tokens_;
+  auto indices = [&text](const absl::string_view &range) {
     return SubRangeIndices(range, text);
   };
   EXPECT_EQ(ftokens[0].before.break_decision, SpacingOptions::kUndecided);

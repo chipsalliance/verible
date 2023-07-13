@@ -31,9 +31,9 @@ namespace verilog {
 // Test will terminate early if there are lexical or syntax errors.
 void TestVerilogSyntaxRangeMatches(
     absl::string_view test_name,
-    const verible::SyntaxTreeSearchTestCase& test_case,
+    const verible::SyntaxTreeSearchTestCase &test_case,
     const std::function<std::vector<verible::TreeSearchMatch>(
-        const verible::TextStructureView&)>& match_collector);
+        const verible::TextStructureView &)> &match_collector);
 
 }  // namespace verilog
 

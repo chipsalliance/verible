@@ -31,7 +31,7 @@ namespace verible {
 // The iterator categories need to be RandomAccessIterator for less-comparison.
 // This can be used to check string_view ranges and their invariants.
 template <class SubRange, class SuperRange>
-bool IsSubRange(const SubRange& sub, const SuperRange& super) {
+bool IsSubRange(const SubRange &sub, const SuperRange &super) {
   return sub.begin() >= super.begin() && sub.end() <= super.end();
 }
 
@@ -45,7 +45,7 @@ bool IsSubRange(const SubRange& sub, const SuperRange& super) {
 // std::equal_range (and other STL uses of that name).
 // Could have also been named IntervalEqual.
 template <class LRange, class RRange>
-bool BoundsEqual(const LRange& l, const RRange& r) {
+bool BoundsEqual(const LRange &l, const RRange &r) {
   return l.begin() == r.begin() && l.end() == r.end();
 }
 
@@ -80,8 +80,8 @@ bool BoundsEqual(const LRange& l, const RRange& r) {
 //     EXPECT_EQ(indices(range1), indices(range2));
 //
 template <class SubRange, class SuperRange>
-std::pair<int, int> SubRangeIndices(const SubRange& subrange,
-                                    const SuperRange& superrange) {
+std::pair<int, int> SubRangeIndices(const SubRange &subrange,
+                                    const SuperRange &superrange) {
   const int max = std::distance(superrange.begin(), superrange.end());
   const int begin = std::distance(superrange.begin(), subrange.begin());
   const int end = std::distance(superrange.begin(), subrange.end());

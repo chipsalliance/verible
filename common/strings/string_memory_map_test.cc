@@ -27,7 +27,7 @@ namespace verible {
 namespace {
 
 static void ForAllSubstringRanges(
-    absl::string_view sv, const std::function<void(absl::string_view)>& func) {
+    absl::string_view sv, const std::function<void(absl::string_view)> &func) {
   for (auto start_iter = sv.begin(); start_iter != sv.end(); ++start_iter) {
     for (auto end_iter = start_iter; end_iter != sv.end(); ++end_iter) {
       if (start_iter == end_iter) continue;  // skip empty ranges
@@ -107,7 +107,7 @@ TEST(StringViewSuperRangeMapTest, TwoStrings) {
 
 // Function to get the owned address range of the underlying string.
 static absl::string_view StringViewKey(
-    const std::unique_ptr<const std::string>& owned) {
+    const std::unique_ptr<const std::string> &owned) {
   return absl::string_view(*ABSL_DIE_IF_NULL(owned));
 }
 
@@ -119,7 +119,7 @@ TEST(StringMemoryMapTest, EmptyOwnsNothing) {
   EXPECT_EQ(sset.find("not-owned-anywhere"), nullptr);
 }
 
-static absl::string_view InsertStringCopy(StringSet* sset, const char* text) {
+static absl::string_view InsertStringCopy(StringSet *sset, const char *text) {
   const auto new_iter =
       sset->insert(std::make_unique<std::string>(text));  // copy
   return make_string_view_range(new_iter->first.first, new_iter->first.second);
@@ -131,7 +131,7 @@ TEST(StringMemoryMapTest, OneElement) {
 
   // Check all valid substring ranges
   ForAllSubstringRanges(sv, [&sset, sv](absl::string_view subrange) {
-    const auto* f = sset.find(subrange);
+    const auto *f = sset.find(subrange);
     ASSERT_NE(f, nullptr) << "subrange returned nullptr: " << subrange;
     const absl::string_view fv(**f);
     EXPECT_TRUE(BoundsEqual(fv, sv)) << "got: " << fv << " vs. " << sv;
@@ -148,21 +148,21 @@ TEST(StringMemoryMapTest, MultipleElements) {
 
   // Check all valid substring ranges
   ForAllSubstringRanges(sv1, [&sset, sv1](absl::string_view subrange) {
-    const auto* f = sset.find(subrange);
+    const auto *f = sset.find(subrange);
     ASSERT_NE(f, nullptr) << "subrange returned nullptr: " << subrange;
     const absl::string_view fv(*ABSL_DIE_IF_NULL(*f));
     EXPECT_TRUE(BoundsEqual(fv, sv1)) << "got: " << fv << " vs. " << sv1;
     EXPECT_EQ(fv, "AAA");
   });
   ForAllSubstringRanges(sv2, [&sset, sv2](absl::string_view subrange) {
-    const auto* f = sset.find(subrange);
+    const auto *f = sset.find(subrange);
     ASSERT_NE(f, nullptr) << "subrange returned nullptr: " << subrange;
     const absl::string_view fv(*ABSL_DIE_IF_NULL(*f));
     EXPECT_TRUE(BoundsEqual(fv, sv2)) << "got: " << fv << " vs. " << sv2;
     EXPECT_EQ(fv, "BBBB");
   });
   ForAllSubstringRanges(sv3, [&sset, sv3](absl::string_view subrange) {
-    const auto* f = sset.find(subrange);
+    const auto *f = sset.find(subrange);
     ASSERT_NE(f, nullptr) << "subrange returned nullptr: " << subrange;
     const absl::string_view fv(*ABSL_DIE_IF_NULL(*f));
     EXPECT_TRUE(BoundsEqual(fv, sv3)) << "got: " << fv << " vs. " << sv3;

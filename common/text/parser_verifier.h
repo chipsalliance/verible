@@ -41,11 +41,11 @@ namespace verible {
 
 class ParserVerifier : public TreeVisitorRecursive {
  public:
-  ParserVerifier(const Symbol& root, const TokenStreamView& view)
+  ParserVerifier(const Symbol &root, const TokenStreamView &view)
       : root_(root), view_(view), view_iterator_(view.begin()) {}
 
-  ParserVerifier(const Symbol& root, const TokenStreamView& view,
-                 const TokenComparator& token_comparator)
+  ParserVerifier(const Symbol &root, const TokenStreamView &view,
+                 const TokenComparator &token_comparator)
       : root_(root),
         view_(view),
         view_iterator_(view.begin()),
@@ -57,12 +57,12 @@ class ParserVerifier : public TreeVisitorRecursive {
   // Do call these methods directly. Use Verify instead
   // TODO(jeremycs): changed these to protected and make SyntaxTreeLeaf
   //                 and SyntaxTreeNode friend classes
-  void Visit(const SyntaxTreeLeaf& leaf) final;
-  void Visit(const SyntaxTreeNode& node) final{};
+  void Visit(const SyntaxTreeLeaf &leaf) final;
+  void Visit(const SyntaxTreeNode &node) final{};
 
  private:
-  const Symbol& root_;
-  const TokenStreamView& view_;
+  const Symbol &root_;
+  const TokenStreamView &view_;
 
   // Current position in view. Ensures visit once behavior for each token
   TokenStreamView::const_iterator view_iterator_;
@@ -72,7 +72,7 @@ class ParserVerifier : public TreeVisitorRecursive {
 
   TokenComparator token_comparator_ = default_comparator;
 
-  static bool default_comparator(const TokenInfo& t1, const TokenInfo& t2) {
+  static bool default_comparator(const TokenInfo &t1, const TokenInfo &t2) {
     return t1 == t2;
   }
 };

@@ -56,7 +56,7 @@ class CommandFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
   explicit CommandFileLexer(absl::string_view config);
 
   // Returns true if token is invalid.
-  bool TokenIsError(const verible::TokenInfo&) const final;
+  bool TokenIsError(const verible::TokenInfo &) const final;
 
   // Runs the Lexer and attached command handlers
   std::vector<TokenRange> GetCommandsTokenRanges();

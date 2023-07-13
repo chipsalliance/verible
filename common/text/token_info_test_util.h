@@ -53,7 +53,7 @@ struct ExpectedTokenInfo : public TokenInfo {
   // conversion through string_view, to work directly with string literals.
   // Implicit construction intentional.
   ExpectedTokenInfo(  // NOLINT(google-explicit-constructor)
-      const char* token_text)
+      const char *token_text)
       : ExpectedTokenInfo(absl::string_view(token_text)) {}  // delegating
 
   // Single-character token constructor, for the cases where the
@@ -72,9 +72,9 @@ struct ExpectedTokenInfo : public TokenInfo {
   // Deleted interfaces.
   // Deleted because the (char) constructor points the text string_view member
   // to the internal token_enum member, creating a self-pointer.
-  ExpectedTokenInfo(const ExpectedTokenInfo&) = delete;
-  ExpectedTokenInfo(ExpectedTokenInfo&&) = delete;
-  ExpectedTokenInfo& operator=(const ExpectedTokenInfo&) = delete;
+  ExpectedTokenInfo(const ExpectedTokenInfo &) = delete;
+  ExpectedTokenInfo(ExpectedTokenInfo &&) = delete;
+  ExpectedTokenInfo &operator=(const ExpectedTokenInfo &) = delete;
 };
 
 static_assert(
@@ -98,11 +98,11 @@ struct TokenInfoTestData {
 
   // disallow copy/assign because of relationship between expected_tokens'
   // string_view and code string buffer.
-  TokenInfoTestData(const TokenInfoTestData&) = delete;
-  TokenInfoTestData& operator=(const TokenInfoTestData&) = delete;
+  TokenInfoTestData(const TokenInfoTestData &) = delete;
+  TokenInfoTestData &operator=(const TokenInfoTestData &) = delete;
   // No need for moveability (yet).
-  TokenInfoTestData(TokenInfoTestData&&) = delete;
-  TokenInfoTestData& operator=(TokenInfoTestData&&) = delete;
+  TokenInfoTestData(TokenInfoTestData &&) = delete;
+  TokenInfoTestData &operator=(TokenInfoTestData &&) = delete;
 
   // Returns subset of expected_tokens that are *not* enumerated
   // ExpectedTokenInfo::kDontCare.
@@ -115,7 +115,7 @@ struct TokenInfoTestData {
 
   // Moves the locations of tokens into the range spanned by the 'base' buffer.
   // 'base' is another copy of (this) 'code' (content match is verified).
-  void RebaseToCodeCopy(std::vector<TokenInfo>* tokens,
+  void RebaseToCodeCopy(std::vector<TokenInfo> *tokens,
                         absl::string_view base) const;
 };
 

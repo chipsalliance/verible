@@ -44,7 +44,7 @@ VERILOG_REGISTER_LINT_RULE(NumericFormatStringStyleRule);
 static constexpr absl::string_view kMessage =
     "Formatting string must contain proper style-compilant numeric specifiers.";
 
-const LintRuleDescriptor& NumericFormatStringStyleRule::GetDescriptor() {
+const LintRuleDescriptor &NumericFormatStringStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "numeric-format-string-style",
       .topic = "number-formatting",
@@ -60,7 +60,7 @@ template <typename T>
 class TD;
 
 void NumericFormatStringStyleRule::CheckAndReportViolation(
-    const TokenInfo& token, size_t pos, size_t len,
+    const TokenInfo &token, size_t pos, size_t len,
     std::initializer_list<unsigned char> prefixes) {
   const absl::string_view text(token.text());
 
@@ -68,7 +68,7 @@ void NumericFormatStringStyleRule::CheckAndReportViolation(
   if (pos >= 2 && (text[pos - 2] == '0' || text[pos - 2] == '\'')) {
     const auto ch = text[pos - 1];
     if (std::none_of(prefixes.begin(), prefixes.end(),
-                     [&ch](const char& _ch) { return _ch == ch; })) {
+                     [&ch](const char &_ch) { return _ch == ch; })) {
       // Report whole prefix with a "0" or "'"
       violations_.insert(LintViolation(
           TokenInfo(token.token_enum(), text.substr(pos - 2, len + 2)),
@@ -81,21 +81,21 @@ void NumericFormatStringStyleRule::CheckAndReportViolation(
   }
 }
 
-void NumericFormatStringStyleRule::HandleToken(const TokenInfo& token) {
+void NumericFormatStringStyleRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
   const absl::string_view text(token.text());
 
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
     RecursiveLexText(
-        text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
+        text, [this](const TokenInfo &subtoken) { HandleToken(subtoken); });
     return;
   }
 
   if (token_enum != TK_StringLiteral) return;
 
   for (size_t pos = 0; pos < text.size();) {
-    const auto& ch = text[pos];
+    const auto &ch = text[pos];
 
     // Skip ordinary characters
     if (ch != '%') {

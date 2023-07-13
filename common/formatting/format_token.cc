@@ -29,7 +29,7 @@
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, SpacingOptions b) {
+std::ostream &operator<<(std::ostream &stream, SpacingOptions b) {
   switch (b) {
     case SpacingOptions::kUndecided:
       stream << "undecided";
@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& stream, SpacingOptions b) {
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, GroupBalancing b) {
+std::ostream &operator<<(std::ostream &stream, GroupBalancing b) {
   switch (b) {
     case GroupBalancing::kNone:
       stream << "none";
@@ -65,7 +65,7 @@ std::ostream& operator<<(std::ostream& stream, GroupBalancing b) {
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const InterTokenInfo& t) {
+std::ostream &operator<<(std::ostream &stream, const InterTokenInfo &t) {
   stream << "{\n  spaces_required: " << t.spaces_required
          << "\n  break_penalty: " << t.break_penalty
          << "\n  break_decision: " << t.break_decision
@@ -74,7 +74,7 @@ std::ostream& operator<<(std::ostream& stream, const InterTokenInfo& t) {
   return stream;
 }
 
-std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
+std::ostream &InterTokenInfo::CompactNotation(std::ostream &stream) const {
   stream << '<';
   // break_penalty is irrelevant when the options are constrained,
   // so don't bother showing it in those cases.
@@ -99,7 +99,7 @@ std::ostream& InterTokenInfo::CompactNotation(std::ostream& stream) const {
   return stream << '>';
 }
 
-std::ostream& operator<<(std::ostream& stream, SpacingDecision d) {
+std::ostream &operator<<(std::ostream &stream, SpacingDecision d) {
   switch (d) {
     case SpacingDecision::kAppend:
       stream << "append";
@@ -130,13 +130,13 @@ static SpacingDecision ConvertSpacing(SpacingOptions opt) {
   }
 }
 
-InterTokenDecision::InterTokenDecision(const InterTokenInfo& info)
+InterTokenDecision::InterTokenDecision(const InterTokenInfo &info)
     : spaces(info.spaces_required),
       action(ConvertSpacing(info.break_decision)),
       preserved_space_start(info.preserved_space_start) {}
 
-static absl::string_view OriginalLeadingSpacesRange(const char* begin,
-                                                    const char* end) {
+static absl::string_view OriginalLeadingSpacesRange(const char *begin,
+                                                    const char *end) {
   if (begin == nullptr) {
     VLOG(4) << "no original space range";
     return make_string_view_range(end, end);  // empty range
@@ -152,7 +152,7 @@ absl::string_view FormattedToken::OriginalLeadingSpaces() const {
                                     token->text().begin());
 }
 
-std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
+std::ostream &FormattedToken::FormattedText(std::ostream &stream) const {
   switch (before.action) {
     case SpacingDecision::kPreserve: {
       if (before.preserved_space_start != nullptr) {
@@ -177,7 +177,7 @@ std::ostream& FormattedToken::FormattedText(std::ostream& stream) const {
   return stream << token->text();
 }
 
-std::ostream& operator<<(std::ostream& stream, const FormattedToken& token) {
+std::ostream &operator<<(std::ostream &stream, const FormattedToken &token) {
   return token.FormattedText(stream);
 }
 
@@ -212,7 +212,7 @@ std::string PreFormatToken::ToString() const {
 }
 
 // Human readable token information
-std::ostream& operator<<(std::ostream& stream, const PreFormatToken& t) {
+std::ostream &operator<<(std::ostream &stream, const PreFormatToken &t) {
   // don't care about byte offsets
   return t.token->ToStream(stream << "TokenInfo: ")
          << "\nenum: " << t.format_token_enum << "\nbefore: " << t.before
@@ -220,10 +220,10 @@ std::ostream& operator<<(std::ostream& stream, const PreFormatToken& t) {
 }
 
 void ConnectPreFormatTokensPreservedSpaceStarts(
-    const char* buffer_start, std::vector<PreFormatToken>* format_tokens) {
+    const char *buffer_start, std::vector<PreFormatToken> *format_tokens) {
   VLOG(4) << __FUNCTION__;
   CHECK(buffer_start != nullptr);
-  for (auto& ftoken : *format_tokens) {
+  for (auto &ftoken : *format_tokens) {
     ftoken.before.preserved_space_start = buffer_start;
     VLOG(4) << "space: " << VisualizeWhitespace(ftoken.OriginalLeadingSpaces());
     buffer_start = ftoken.Text().end();
@@ -236,28 +236,28 @@ void ConnectPreFormatTokensPreservedSpaceStarts(
 static MutableFormatTokenRange FindFormatTokensInByteOffsetRange(
     std::vector<PreFormatToken>::iterator begin,
     std::vector<PreFormatToken>::iterator end,
-    const std::pair<int, int>& byte_offset_range, absl::string_view base_text) {
+    const std::pair<int, int> &byte_offset_range, absl::string_view base_text) {
   const auto tokens_begin =
       std::lower_bound(begin, end, byte_offset_range.first,
-                       [=](const PreFormatToken& t, int position) {
+                       [=](const PreFormatToken &t, int position) {
                          return t.token->left(base_text) < position;
                        });
   const auto tokens_end =
       std::upper_bound(tokens_begin, end, byte_offset_range.second,
-                       [=](int position, const PreFormatToken& t) {
+                       [=](int position, const PreFormatToken &t) {
                          return position < t.token->right(base_text);
                        });
   return {tokens_begin, tokens_end};
 }
 
 void PreserveSpacesOnDisabledTokenRanges(
-    std::vector<PreFormatToken>* ftokens,
-    const ByteOffsetSet& disabled_byte_ranges, absl::string_view base_text) {
+    std::vector<PreFormatToken> *ftokens,
+    const ByteOffsetSet &disabled_byte_ranges, absl::string_view base_text) {
   VLOG(2) << __FUNCTION__;
   // saved_iter: shrink bounds of binary search with every iteration,
   // due to monotonic, non-overlapping intervals.
   auto saved_iter = ftokens->begin();
-  for (const auto& byte_range : disabled_byte_ranges) {
+  for (const auto &byte_range : disabled_byte_ranges) {
     // 'disable_range' marks the range of format tokens to be
     // marked as preserving original spacing (i.e. not formatted).
     VLOG(2) << "disabling bytes: " << AsInterval(byte_range);
@@ -274,7 +274,7 @@ void PreserveSpacesOnDisabledTokenRanges(
     // token's text.  This way, rendering the start of the format-disabled
     // excerpt won't get redundant '\n's.
     if (!disable_range.empty()) {
-      auto& first = disable_range.front();
+      auto &first = disable_range.front();
       VLOG(3) << "checking whether first ftoken in range is a must-wrap.";
       if (first.before.break_decision == SpacingOptions::kMustWrap) {
         VLOG(3) << "checking if spaces before first ftoken starts with \\n.";
@@ -288,7 +288,7 @@ void PreserveSpacesOnDisabledTokenRanges(
     }
 
     // Mark tokens in the disabled range as preserving original spaces.
-    for (auto& ft : disable_range) {
+    for (auto &ft : disable_range) {
       VLOG(2) << "disable-format preserve spaces before: " << *ft.token;
       ft.before.break_decision = SpacingOptions::kPreserve;
     }

@@ -37,7 +37,7 @@ class LintRunner<SyntaxTreeLintRule> {
     linter_.AddRule(std::move(rule));
   }
 
-  LintRuleStatus Run(const TextStructureView& text_structure,
+  LintRuleStatus Run(const TextStructureView &text_structure,
                      absl::string_view) {
     linter_.Lint(*ABSL_DIE_IF_NULL(text_structure.SyntaxTree()));
     // Looking for one type of rule violation at a time.

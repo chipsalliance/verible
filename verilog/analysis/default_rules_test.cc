@@ -23,7 +23,7 @@ namespace {
 
 // Test that rules in the default set are all registered.
 TEST(DefaultRuleTest, AllDefaultValid) {
-  for (const auto& rule_id : kDefaultRuleSet) {
+  for (const auto &rule_id : kDefaultRuleSet) {
     EXPECT_TRUE(IsRegisteredLintRule(rule_id))
         << "Registry is missing rule_id: " << rule_id;
   }

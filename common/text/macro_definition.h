@@ -35,10 +35,10 @@ struct DefaultTokenInfo : public TokenInfo {
   DefaultTokenInfo() : TokenInfo(TokenInfo::EOFToken()) {}
 
   // Accept a plain TokenInfo for copy purposes.
-  explicit DefaultTokenInfo(const TokenInfo& t) : TokenInfo(t) {}
+  explicit DefaultTokenInfo(const TokenInfo &t) : TokenInfo(t) {}
 
   // Accept a plain TokenInfo for assignment purposes.
-  DefaultTokenInfo& operator=(const TokenInfo& t) {
+  DefaultTokenInfo &operator=(const TokenInfo &t) {
     TokenInfo::operator=(t);
     return *this;
   }
@@ -46,8 +46,8 @@ struct DefaultTokenInfo : public TokenInfo {
 
 // Macro formal parameter specification: name with optional default.
 struct MacroParameterInfo {
-  explicit MacroParameterInfo(const TokenInfo& n = TokenInfo::EOFToken(),
-                              const TokenInfo& d = TokenInfo::EOFToken())
+  explicit MacroParameterInfo(const TokenInfo &n = TokenInfo::EOFToken(),
+                              const TokenInfo &d = TokenInfo::EOFToken())
       : name(n), default_value(d) {}
 
   // Name of macro parameter.
@@ -75,15 +75,15 @@ struct MacroCall {
 
 class MacroDefinition {
  public:
-  MacroDefinition(const TokenInfo& header, const TokenInfo& name)
+  MacroDefinition(const TokenInfo &header, const TokenInfo &name)
       : header_(header), name_(name) {}
 
   absl::string_view Name() const { return name_.text(); }
-  const TokenInfo& NameToken() const { return name_; }
+  const TokenInfo &NameToken() const { return name_; }
 
-  const TokenInfo& DefinitionText() const { return definition_text_; }
+  const TokenInfo &DefinitionText() const { return definition_text_; }
 
-  void SetDefinitionText(const TokenInfo& t) { definition_text_ = t; }
+  void SetDefinitionText(const TokenInfo &t) { definition_text_ = t; }
 
   // Macro definitions with empty () should call this.
   void SetCallable() { is_callable_ = true; }
@@ -94,23 +94,23 @@ class MacroDefinition {
   // Returns true if parameter was successfully added.
   // Duplicate parameter names are rejected, and will return false.
   // This automatically sets is_callable_.
-  bool AppendParameter(const MacroParameterInfo&);
+  bool AppendParameter(const MacroParameterInfo &);
 
-  const std::vector<MacroParameterInfo>& Parameters() const {
+  const std::vector<MacroParameterInfo> &Parameters() const {
     return parameter_info_array_;
   }
 
   using substitution_map_type = std::map<absl::string_view, DefaultTokenInfo>;
 
   // Create a text substitution map to be used for macro expansion.
-  absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo>&,
-                                       substitution_map_type*) const;
-  absl::Status PopulateSubstitutionMap(const std::vector<DefaultTokenInfo>&,
-                                       substitution_map_type*) const;
+  absl::Status PopulateSubstitutionMap(const std::vector<TokenInfo> &,
+                                       substitution_map_type *) const;
+  absl::Status PopulateSubstitutionMap(const std::vector<DefaultTokenInfo> &,
+                                       substitution_map_type *) const;
 
   // Replace formal parameter references with actuals.
-  static const TokenInfo& SubstituteText(const substitution_map_type&,
-                                         const TokenInfo&,
+  static const TokenInfo &SubstituteText(const substitution_map_type &,
+                                         const TokenInfo &,
                                          int actual_token_enum = 0);
 
  private:

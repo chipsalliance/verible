@@ -31,7 +31,7 @@ std::string GetRepositoryVersion();
 // as flags.
 // Returns positional arguments, where element[0] is the program name.
 std::vector<absl::string_view> InitCommandLine(absl::string_view usage,
-                                               int* argc, char*** argv);
+                                               int *argc, char ***argv);
 
 }  // namespace verible
 

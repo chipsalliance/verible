@@ -62,15 +62,15 @@ enum class AnalysisPhase {
 };
 
 // String representation of phase (needed for CHECK).
-const char* AnalysisPhaseName(const AnalysisPhase& phase);
-std::ostream& operator<<(std::ostream&, const AnalysisPhase&);
+const char *AnalysisPhaseName(const AnalysisPhase &phase);
+std::ostream &operator<<(std::ostream &, const AnalysisPhase &);
 
 enum class ErrorSeverity {
   kError,
   kWarning,
 };
-const char* ErrorSeverityDescription(const ErrorSeverity& severity);
-std::ostream& operator<<(std::ostream&, const ErrorSeverity&);
+const char *ErrorSeverityDescription(const ErrorSeverity &severity);
+std::ostream &operator<<(std::ostream &, const ErrorSeverity &);
 
 // RejectedToken is a categorized warning/error token.
 // TODO(hzeller): In the presence of warnings, this probably needs to be
@@ -82,7 +82,7 @@ struct RejectedToken {
   ErrorSeverity severity = ErrorSeverity::kError;
 };
 
-std::ostream& operator<<(std::ostream&, const RejectedToken&);
+std::ostream &operator<<(std::ostream &, const RejectedToken &);
 
 // FileAnalyzer holds the results of lexing and parsing.
 class FileAnalyzer {
@@ -100,13 +100,13 @@ class FileAnalyzer {
   virtual absl::Status Tokenize() = 0;
 
   // Break file contents (string) into tokens.
-  absl::Status Tokenize(Lexer* lexer);
+  absl::Status Tokenize(Lexer *lexer);
 
   // Construct ConcreteSyntaxTree from TokenStreamView.
-  absl::Status Parse(Parser* parser);
+  absl::Status Parse(Parser *parser);
 
   // Diagnostic message for one rejected token.
-  std::string TokenErrorMessage(const TokenInfo&) const;
+  std::string TokenErrorMessage(const TokenInfo &) const;
 
   // Collect diagnostic messages for rejected tokens.
   std::vector<std::string> TokenErrorMessages() const;
@@ -124,14 +124,14 @@ class FileAnalyzer {
   // The "message" finally is a human-readable error message
   // TODO(hzeller): these are a lot of parameters, maybe a struct would be good.
   using ReportLinterErrorFunction = std::function<void(
-      const std::string& filename, LineColumnRange range,
+      const std::string &filename, LineColumnRange range,
       ErrorSeverity severity, AnalysisPhase phase, absl::string_view token_text,
-      absl::string_view context_line, const std::string& message)>;
+      absl::string_view context_line, const std::string &message)>;
 
   // Extract detailed diagnostic information for rejected token.
   void ExtractLinterTokenErrorDetail(
-      const RejectedToken& error_token,
-      const ReportLinterErrorFunction& error_report) const;
+      const RejectedToken &error_token,
+      const ReportLinterErrorFunction &error_report) const;
 
   // -- convenience functions using the above
 
@@ -139,25 +139,25 @@ class FileAnalyzer {
   // Second argument is the show_context option. When enabled
   // additional diagnostic line is concatenated to an error message
   // with marker that points to vulnerable token
-  std::string LinterTokenErrorMessage(const RejectedToken&, bool) const;
+  std::string LinterTokenErrorMessage(const RejectedToken &, bool) const;
 
   // First argument is the show_context option. When enabled
   // additional diagnostic line is concatenated to an error message
   // with marker that points to vulnerable token
   std::vector<std::string> LinterTokenErrorMessages(bool) const;
 
-  const std::vector<RejectedToken>& GetRejectedTokens() const {
+  const std::vector<RejectedToken> &GetRejectedTokens() const {
     return rejected_tokens_;
   }
 
   // Convenience methods to access text structure view.
-  const ConcreteSyntaxTree& SyntaxTree() const {
+  const ConcreteSyntaxTree &SyntaxTree() const {
     return ABSL_DIE_IF_NULL(text_structure_)->SyntaxTree();
   }
-  const TextStructureView& Data() const {
+  const TextStructureView &Data() const {
     return ABSL_DIE_IF_NULL(text_structure_)->Data();
   }
-  TextStructureView& MutableData() {
+  TextStructureView &MutableData() {
     return ABSL_DIE_IF_NULL(text_structure_)->MutableData();
   }
 

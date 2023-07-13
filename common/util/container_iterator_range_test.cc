@@ -426,7 +426,7 @@ TEST(ContainerIteratorRangeTest, WholeVectorMakePair) {
 
 TEST(ContainerIteratorRangeTest, PartArray) {
   int v[] = {2, 3, 5, 7, 11, 13};
-  container_iterator_range<int*> range(&v[1], &v[4]);  // 3, 5, 7
+  container_iterator_range<int *> range(&v[1], &v[4]);  // 3, 5, 7
   EXPECT_FALSE(range.empty());
   EXPECT_EQ(range.size(), 3);
   EXPECT_THAT(range, ElementsAre(3, 5, 7));

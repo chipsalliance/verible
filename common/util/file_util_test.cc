@@ -30,13 +30,13 @@ using testing::HasSubstr;
 #undef EXPECT_OK
 #define EXPECT_OK(value)      \
   {                           \
-    const auto& s = (value);  \
+    const auto &s = (value);  \
     EXPECT_TRUE(s.ok()) << s; \
   }
 #undef ASSERT_OK
 #define ASSERT_OK(value)      \
   {                           \
-    const auto& s = (value);  \
+    const auto &s = (value);  \
     ASSERT_TRUE(s.ok()) << s; \
   }
 
@@ -74,7 +74,7 @@ TEST(FileUtil, Stem) {
 }
 
 // Returns the forward-slashed path in platform-specific notation.
-static std::string PlatformPath(const std::string& path) {
+static std::string PlatformPath(const std::string &path) {
   return std::filesystem::path(path).lexically_normal().string();
 }
 
@@ -88,7 +88,7 @@ TEST(FileUtil, GetContentAsMemBlock) {
 
   result = file::GetContentAsMemBlock(test_file);
   EXPECT_OK(result.status());
-  auto& block = *result;
+  auto &block = *result;
   EXPECT_EQ(block->AsStringView(), test_content);
 }
 
@@ -198,7 +198,7 @@ TEST(FileUtil, StatusErrorReporting) {
     content_or = file::GetContentAsString(test_file);
     EXPECT_FALSE(content_or.ok())
         << "Expected permission denied for " << test_file;
-    const absl::Status& status = content_or.status();
+    const absl::Status &status = content_or.status();
     EXPECT_TRUE(absl::IsPermissionDenied(status)) << status;
     EXPECT_TRUE(absl::StartsWith(status.message(), test_file))
         << "expect filename prefixed, but got " << status;
@@ -218,7 +218,7 @@ static ScopedTestFile TestFileGenerator(absl::string_view content) {
   return ScopedTestFile(testing::TempDir(), content);
 }
 
-static void TestFileConsumer(ScopedTestFile&& f) {
+static void TestFileConsumer(ScopedTestFile &&f) {
   ScopedTestFile temp(std::move(f));
 }
 
@@ -238,11 +238,11 @@ TEST(FileUtil, ScopedTestFileEmplace) {
       files.emplace_back(::testing::TempDir(), "zzz");
       names.emplace_back(files.back().filename());
     }
-    for (const auto& name : names) {
+    for (const auto &name : names) {
       EXPECT_TRUE(file::FileExists(name).ok());
     }
   }
-  for (const auto& name : names) {
+  for (const auto &name : names) {
     EXPECT_FALSE(file::FileExists(name).ok());
   }
 }
@@ -255,7 +255,7 @@ TEST(FileUtil, FileExistsDirectoryErrorMessage) {
 }
 
 static bool CreateFsStructure(absl::string_view base_dir,
-                              const std::vector<absl::string_view>& tree) {
+                              const std::vector<absl::string_view> &tree) {
   for (absl::string_view path : tree) {
     const std::string full_path = file::JoinPath(base_dir, path);
     if (absl::EndsWith(path, "/")) {
@@ -310,7 +310,7 @@ TEST(FileUtil, ReadEmptyDirectory) {
   auto dir_or = file::ListDir(test_dir);
   ASSERT_TRUE(dir_or.ok());
 
-  const auto& dir = *dir_or;
+  const auto &dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
   EXPECT_TRUE(dir.directories.empty());
   EXPECT_TRUE(dir.files.empty());
@@ -356,7 +356,7 @@ TEST(FileUtil, ReadDirectory) {
   auto dir_or = file::ListDir(test_dir);
   ASSERT_TRUE(dir_or.ok()) << dir_or.status().message();
 
-  const auto& dir = *dir_or;
+  const auto &dir = *dir_or;
   EXPECT_EQ(dir.path, test_dir);
 
   EXPECT_EQ(dir.directories.size(), test_directories.size());

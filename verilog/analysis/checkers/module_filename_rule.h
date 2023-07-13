@@ -32,12 +32,12 @@ class ModuleFilenameRule : public verible::TextStructureLintRule {
  public:
   using rule_type = verible::TextStructureLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   ModuleFilenameRule() = default;
 
   absl::Status Configure(absl::string_view configuration) final;
-  void Lint(const verible::TextStructureView&, absl::string_view) final;
+  void Lint(const verible::TextStructureView &, absl::string_view) final;
 
   verible::LintRuleStatus Report() const final;
 

@@ -53,7 +53,7 @@ class Anchor {
   // Delegates construction to use only the string_view spanned by a TokenInfo.
   // Recall the TokenInfo's string point to substrings of memory owned
   // elsewhere.
-  explicit Anchor(const verible::TokenInfo& token,
+  explicit Anchor(const verible::TokenInfo &token,
                   absl::string_view source_content)
       : content_(token.text()) {
     const int token_left = token.left(source_content);
@@ -61,10 +61,10 @@ class Anchor {
     source_text_range_.emplace(token_left, token_right - token_left);
   }
 
-  Anchor(const Anchor&);  // TODO(fangism): delete, move-only
-  Anchor(Anchor&&) = default;
-  Anchor& operator=(const Anchor&) = delete;
-  Anchor& operator=(Anchor&&) = delete;
+  Anchor(const Anchor &);  // TODO(fangism): delete, move-only
+  Anchor(Anchor &&) = default;
+  Anchor &operator=(const Anchor &) = delete;
+  Anchor &operator=(Anchor &&) = delete;
 
   // Returns human readable view of this Anchor.
   std::string DebugString() const;
@@ -72,12 +72,12 @@ class Anchor {
   absl::string_view Text() const { return content_; }
 
   // Returns the location of the Anchor's content in the original string.
-  const std::optional<AnchorRange>& SourceTextRange() const {
+  const std::optional<AnchorRange> &SourceTextRange() const {
     return source_text_range_;
   }
 
-  bool operator==(const Anchor&) const;
-  bool operator!=(const Anchor& other) const { return !(*this == other); }
+  bool operator==(const Anchor &) const;
+  bool operator!=(const Anchor &other) const { return !(*this == other); }
 
  private:
   // Substring of the original text that corresponds to this Anchor.
@@ -86,7 +86,7 @@ class Anchor {
   std::optional<AnchorRange> source_text_range_;
 };
 
-std::ostream& operator<<(std::ostream&, const Anchor&);
+std::ostream &operator<<(std::ostream &, const Anchor &);
 
 // This class is a simplified representation of CST and contains information
 // that can be used for extracting indexing-facts for different indexing tools.
@@ -97,32 +97,32 @@ class IndexingNodeData {
  public:
   template <typename... Args>
   /* implicit */ IndexingNodeData(IndexingFactType language_feature,  // NOLINT
-                                  Args&&... args)
+                                  Args &&...args)
       : indexing_fact_type_(language_feature) {
     AppendAnchor(std::forward<Args>(args)...);
   }
 
-  IndexingNodeData(const IndexingNodeData&) = default;
-  IndexingNodeData& operator=(IndexingNodeData&&) = default;
+  IndexingNodeData(const IndexingNodeData &) = default;
+  IndexingNodeData &operator=(IndexingNodeData &&) = default;
 
   // TODO(fangism): delete copy-ctor to make this move-only
-  IndexingNodeData(IndexingNodeData&&) = default;
-  IndexingNodeData& operator=(const IndexingNodeData&) = delete;
+  IndexingNodeData(IndexingNodeData &&) = default;
+  IndexingNodeData &operator=(const IndexingNodeData &) = delete;
 
   // Consume an Anchor object(s), variadically.
   template <typename... Args>
-  void AppendAnchor(Anchor&& anchor, Args&&... args) {
+  void AppendAnchor(Anchor &&anchor, Args &&...args) {
     anchors_.emplace_back(std::move(anchor));
     AppendAnchor(std::forward<Args>(args)...);
   }
 
   // Swaps the anchors with the given IndexingNodeData.
-  void SwapAnchors(IndexingNodeData* other) { anchors_.swap(other->anchors_); }
+  void SwapAnchors(IndexingNodeData *other) { anchors_.swap(other->anchors_); }
 
   // Returns human readable view of this node.
-  std::ostream& DebugString(std::ostream* stream) const;
+  std::ostream &DebugString(std::ostream *stream) const;
 
-  const std::vector<Anchor>& Anchors() const { return anchors_; }
+  const std::vector<Anchor> &Anchors() const { return anchors_; }
   IndexingFactType GetIndexingFactType() const { return indexing_fact_type_; }
 
   // Redirects all non-owned string_views to point into a different copy of the
@@ -130,8 +130,8 @@ class IndexingNodeData {
   // text is copied to a different location.
   void RebaseStringViewsForTesting(std::ptrdiff_t delta);
 
-  bool operator==(const IndexingNodeData&) const;
-  bool operator!=(const IndexingNodeData& other) const {
+  bool operator==(const IndexingNodeData &) const;
+  bool operator!=(const IndexingNodeData &other) const {
     return !(*this == other);
   }
 
@@ -150,39 +150,39 @@ class IndexingNodeData {
 // Without a base string_view, this displays the base-address and length of each
 // Anchor's string_view.  See PrintableIndexingNodeData for a more readable
 // alternative using byte-offsets.
-std::ostream& operator<<(std::ostream&, const IndexingNodeData&);
+std::ostream &operator<<(std::ostream &, const IndexingNodeData &);
 
 // Pairs together IndexingNodeData and string_view to be a printable object.
 struct PrintableIndexingNodeData {
-  const IndexingNodeData& data;
+  const IndexingNodeData &data;
   // The superstring of which all string_views in this subtree is a substring.
   const absl::string_view base;
 
-  PrintableIndexingNodeData(const IndexingNodeData& data,
+  PrintableIndexingNodeData(const IndexingNodeData &data,
                             absl::string_view base)
       : data(data), base(base) {}
 };
 
 // Human-readable form for debugging, showing in-file byte offsets of
 // string_views.
-std::ostream& operator<<(std::ostream&, const PrintableIndexingNodeData&);
+std::ostream &operator<<(std::ostream &, const PrintableIndexingNodeData &);
 
 // Renaming for VectorTree; IndexingFactNode is actually a VectorTree which is a
 // class for constructing trees and dealing with them in a elegant manner.
 using IndexingFactNode = verible::VectorTree<IndexingNodeData>;
 
 struct PrintableIndexingFactNode {
-  const IndexingFactNode& data;
+  const IndexingFactNode &data;
   // The superstring of which all string_views in this subtree is a substring.
   const absl::string_view base;
 
-  PrintableIndexingFactNode(const IndexingFactNode& data,
+  PrintableIndexingFactNode(const IndexingFactNode &data,
                             absl::string_view base)
       : data(data), base(base) {}
 };
 
 // Human-readable form for debugging.
-std::ostream& operator<<(std::ostream&, const PrintableIndexingFactNode&);
+std::ostream &operator<<(std::ostream &, const PrintableIndexingFactNode &);
 
 }  // namespace kythe
 }  // namespace verilog

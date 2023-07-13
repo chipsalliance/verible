@@ -24,7 +24,7 @@
 namespace verible {
 namespace testing {
 
-std::ostream& operator<<(std::ostream& stream, const NamedInterval& i) {
+std::ostream &operator<<(std::ostream &stream, const NamedInterval &i) {
   return stream << '(' << i.left << ", " << i.right << ", " << i.name << ')';
 }
 
@@ -57,15 +57,15 @@ VectorTreeTestType MakeExampleFamilyTree() {
   );
 }
 
-void IntervalPrinter(std::ostream* stream, const NamedInterval& interval) {
+void IntervalPrinter(std::ostream *stream, const NamedInterval &interval) {
   *stream << interval << '\n';
 }
 
 // Verify the invariant that parent spans same interval range as children.
-void VerifyInterval(const VectorTreeTestType& node) {
-  const auto& children = node.Children();
+void VerifyInterval(const VectorTreeTestType &node) {
+  const auto &children = node.Children();
   if (!children.empty()) {
-    const auto& interval = node.Value();
+    const auto &interval = node.Value();
     EXPECT_EQ(interval.left, children.front().Value().left);
     EXPECT_EQ(interval.right, children.back().Value().right);
   }

@@ -29,41 +29,41 @@ namespace kythe {
 // Usage: stream << KytheFactsPrinter(IndexingFactNode);
 class KytheFactsPrinter {
  public:
-  KytheFactsPrinter(const IndexingFactNode& file_list_facts_tree,
-                    const VerilogProject& project, bool debug = false)
+  KytheFactsPrinter(const IndexingFactNode &file_list_facts_tree,
+                    const VerilogProject &project, bool debug = false)
       : file_list_facts_tree_(file_list_facts_tree),
         project_(&project),
         debug_(debug) {}
 
   // Print Kythe facts as a stream of JSON entries (one per line). Note: single
   // facts are well formatted JSON, but the overall output isn't!
-  std::ostream& PrintJsonStream(std::ostream&) const;
+  std::ostream &PrintJsonStream(std::ostream &) const;
 
   // Print Kythe facts as a single, well formatted & human readable JSON.
-  std::ostream& PrintJson(std::ostream&) const;
+  std::ostream &PrintJson(std::ostream &) const;
 
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const KytheFactsPrinter& kythe_facts_printer);
+  friend std::ostream &operator<<(std::ostream &stream,
+                                  const KytheFactsPrinter &kythe_facts_printer);
 
  private:
   // The root of the indexing facts tree to extract kythe facts from.
-  const IndexingFactNode& file_list_facts_tree_;
+  const IndexingFactNode &file_list_facts_tree_;
 
   // This project manages the opening and path resolution of referenced files.
-  const VerilogProject* const project_;
+  const VerilogProject *const project_;
 
   // When debugging is enabled, print human-readable un-encoded text.
   const bool debug_;
 };
 
-std::ostream& operator<<(std::ostream&, const KytheFactsPrinter&);
+std::ostream &operator<<(std::ostream &, const KytheFactsPrinter &);
 
 // Output sink interface for producing the Kythe output.
 class KytheOutput {
  public:
   // Output all Kythe facts from the indexing data.
-  virtual void Emit(const Fact& fact) = 0;
-  virtual void Emit(const Edge& edge) = 0;
+  virtual void Emit(const Fact &fact) = 0;
+  virtual void Emit(const Edge &edge) = 0;
   virtual ~KytheOutput() = default;
 };
 
@@ -73,9 +73,9 @@ class KytheOutput {
 // Currently, the file_list must be dependency-ordered for best results, that
 // is, definitions of symbols should be encountered earlier in the file list
 // than references to those symbols.
-void StreamKytheFactsEntries(KytheOutput* kythe_output,
-                             const IndexingFactNode& file_list_facts_tree,
-                             const VerilogProject& project);
+void StreamKytheFactsEntries(KytheOutput *kythe_output,
+                             const IndexingFactNode &file_list_facts_tree,
+                             const VerilogProject &project);
 
 }  // namespace kythe
 }  // namespace verilog

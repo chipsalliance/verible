@@ -35,17 +35,17 @@ class UnwrappedLineMemoryHandler {
   // in joined_token_text_ and token_infos_ to be used by FormatTokens.
   // This variant considers the string_views in tokens as disjoint,
   // and automatically joins them into an internal buffer.
-  void CreateTokenInfos(const std::vector<TokenInfo>& tokens);
+  void CreateTokenInfos(const std::vector<TokenInfo> &tokens);
 
   // Same as CreateTokenInfos(), except that string_views are already owned
   // externally, and do not need to be joined into an internal buffer.
   void CreateTokenInfosExternalStringBuffer(
-      const std::vector<TokenInfo>& tokens);
+      const std::vector<TokenInfo> &tokens);
 
   // Creates format tokens for each of the token info objects passed and
   // spans the entire array in the UnwrappedLine.
   // Call this after CreateTokenInfos().
-  void AddFormatTokens(UnwrappedLine* uwline);
+  void AddFormatTokens(UnwrappedLine *uwline);
 
   std::vector<PreFormatToken>::iterator GetPreFormatTokensBegin() {
     return pre_format_tokens_.begin();

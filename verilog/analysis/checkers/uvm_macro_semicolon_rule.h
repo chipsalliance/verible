@@ -46,10 +46,10 @@ class UvmMacroSemicolonRule : public verible::SyntaxTreeLintRule {
   UvmMacroSemicolonRule() = default;
 
   // Returns the description of the rule implemented
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleLeaf(const verible::SyntaxTreeLeaf& leaf,
-                  const verible::SyntaxTreeContext& context) final;
+  void HandleLeaf(const verible::SyntaxTreeLeaf &leaf,
+                  const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 

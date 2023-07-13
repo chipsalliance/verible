@@ -518,7 +518,7 @@ enum class NodeEnum {
 //       must be maintained manually as NodeEnum's are added
 std::string NodeEnumToString(NodeEnum node_enum);
 
-std::ostream& operator<<(std::ostream&, const NodeEnum&);
+std::ostream &operator<<(std::ostream &, const NodeEnum &);
 
 // Predicate which returns true if the node_enum is a preprocessing node
 bool IsPreprocessingNode(NodeEnum node_enum);

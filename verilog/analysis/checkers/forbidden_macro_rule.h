@@ -42,18 +42,18 @@ class ForbiddenMacroRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
-  static std::string FormatReason(const verible::SyntaxTreeLeaf& leaf);
+  static std::string FormatReason(const verible::SyntaxTreeLeaf &leaf);
 
   // Set of invalid macros, mapped to style guide links.
-  static const std::map<std::string, std::string>& InvalidMacrosMap();
+  static const std::map<std::string, std::string> &InvalidMacrosMap();
 
  private:
   std::set<verible::LintViolation> violations_;

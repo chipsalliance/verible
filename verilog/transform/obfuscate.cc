@@ -50,12 +50,12 @@ std::string RandomEqualLengthSymbolIdentifier(absl::string_view in) {
 // or use a shuffle/permutation to guarantee collision-free reversibility.
 
 static void ObfuscateVerilogCodeInternal(absl::string_view content,
-                                         std::ostream* output,
-                                         IdentifierObfuscator* subst) {
+                                         std::ostream *output,
+                                         IdentifierObfuscator *subst) {
   VLOG(1) << __FUNCTION__;
   verilog::VerilogLexer lexer(content);
   for (;;) {
-    const verible::TokenInfo& token(lexer.DoNextToken());
+    const verible::TokenInfo &token(lexer.DoNextToken());
     if (token.isEOF()) break;
     switch (token.token_enum()) {
       case verilog_tokentype::SymbolIdentifier:
@@ -109,7 +109,7 @@ static absl::Status ReversibilityError(absl::string_view original,
 // Internal consistency check that decoding restores original text.
 static absl::Status VerifyDecoding(absl::string_view original,
                                    absl::string_view encoded,
-                                   const verible::Obfuscator& subst) {
+                                   const verible::Obfuscator &subst) {
   VLOG(1) << __FUNCTION__;
   // Skip if original transformation was already decoding.
   if (subst.is_decoding()) return absl::OkStatus();
@@ -156,8 +156,8 @@ static absl::Status VerifyEquivalence(absl::string_view original,
 }
 
 absl::Status ObfuscateVerilogCode(absl::string_view content,
-                                  std::ostream* output,
-                                  IdentifierObfuscator* subst) {
+                                  std::ostream *output,
+                                  IdentifierObfuscator *subst) {
   VLOG(1) << __FUNCTION__;
   std::ostringstream buffer;
   ObfuscateVerilogCodeInternal(content, &buffer, subst);

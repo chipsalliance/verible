@@ -44,8 +44,8 @@ TEST(DescentPathTest, GetDescendantsFromPathEmbeddedNullPass) {
   auto descendants = GetAllDescendantsFromPath(*root, path);
   EXPECT_EQ(descendants.size(), 2);
 
-  const auto* leaf1 = down_cast<const SyntaxTreeLeaf*>(descendants[0]);
-  const auto* leaf2 = down_cast<const SyntaxTreeLeaf*>(descendants[1]);
+  const auto *leaf1 = down_cast<const SyntaxTreeLeaf *>(descendants[0]);
+  const auto *leaf2 = down_cast<const SyntaxTreeLeaf *>(descendants[1]);
 
   ASSERT_NE(leaf1, nullptr);
   ASSERT_NE(leaf2, nullptr);
@@ -59,7 +59,7 @@ TEST(DescentPathTest, GetDescendantsFromPathSingle) {
   auto descendants = GetAllDescendantsFromPath(*root, path);
   EXPECT_EQ(descendants.size(), 1);
 
-  const auto* leaf = down_cast<const SyntaxTreeLeaf*>(descendants[0]);
+  const auto *leaf = down_cast<const SyntaxTreeLeaf *>(descendants[0]);
   ASSERT_NE(leaf, nullptr);
   EXPECT_EQ(leaf->get().token_enum(), 10);
 }
@@ -70,8 +70,8 @@ TEST(DescentPathTest, GetDescendantsFromPathMultiple) {
   auto descendants = GetAllDescendantsFromPath(*root, path);
   EXPECT_EQ(descendants.size(), 2);
 
-  const auto* node1 = down_cast<const SyntaxTreeNode*>(descendants[0]);
-  const auto* node2 = down_cast<const SyntaxTreeNode*>(descendants[1]);
+  const auto *node1 = down_cast<const SyntaxTreeNode *>(descendants[0]);
+  const auto *node2 = down_cast<const SyntaxTreeNode *>(descendants[1]);
 
   ASSERT_NE(node1, nullptr);
   ASSERT_NE(node2, nullptr);
@@ -86,8 +86,8 @@ TEST(DescentPathTest, GetDescendantsFromPathMultiplePaths) {
   auto descendants = GetAllDescendantsFromPath(*root, path);
   EXPECT_EQ(descendants.size(), 2);
 
-  const auto* leaf1 = down_cast<const SyntaxTreeLeaf*>(descendants[0]);
-  const auto* leaf2 = down_cast<const SyntaxTreeLeaf*>(descendants[1]);
+  const auto *leaf1 = down_cast<const SyntaxTreeLeaf *>(descendants[0]);
+  const auto *leaf2 = down_cast<const SyntaxTreeLeaf *>(descendants[1]);
 
   ASSERT_NE(leaf1, nullptr);
   ASSERT_NE(leaf2, nullptr);

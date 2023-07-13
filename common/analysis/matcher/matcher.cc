@@ -24,7 +24,7 @@
 namespace verible {
 namespace matcher {
 
-bool Matcher::Matches(const Symbol& symbol, BoundSymbolManager* manager) const {
+bool Matcher::Matches(const Symbol &symbol, BoundSymbolManager *manager) const {
   if (predicate_(symbol)) {
     // If this matcher matches (as in, predicate succeeds), test inner matchers
     // to see if they also match.
@@ -41,7 +41,7 @@ bool Matcher::Matches(const Symbol& symbol, BoundSymbolManager* manager) const {
     // TODO(jeremycs): add branching match groups here
 
     // Try to match inner matches to every target symbol.
-    for (const auto& target_symbol : next_targets) {
+    for (const auto &target_symbol : next_targets) {
       if (!target_symbol) continue;
       bool inner_match_result =
           inner_match_handler_(*target_symbol, inner_matchers_, manager);

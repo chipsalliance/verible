@@ -63,9 +63,9 @@ static DiffStatus FlipStatus(DiffStatus status) {
 
 static void ExpectCompareWithErrstream(
     const std::function<DiffStatus(absl::string_view, absl::string_view,
-                                   std::ostream*)>& func,
+                                   std::ostream *)> &func,
     DiffStatus expect_compare, absl::string_view left, absl::string_view right,
-    std::ostream* errstream = &std::cout) {
+    std::ostream *errstream = &std::cout) {
   EXPECT_EQ(func(left, right, errstream), expect_compare)
       << "left:\n"
       << left << "\nright:\n"
@@ -78,7 +78,7 @@ static void ExpectCompareWithErrstream(
 }
 
 TEST(FormatEquivalentTest, Spaces) {
-  const std::vector<const char*> kTestCases = {
+  const std::vector<const char *> kTestCases = {
       "",
       " ",
       "\n",
@@ -93,7 +93,7 @@ TEST(FormatEquivalentTest, Spaces) {
 }
 
 TEST(FormatEquivalentTest, ShortSequences) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "1",
       "2",
       "1;",
@@ -114,7 +114,7 @@ TEST(FormatEquivalentTest, ShortSequences) {
 }
 
 TEST(FormatEquivalentTest, Identifiers) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "foo bar;",
       "   foo\t\tbar    ;   ",
       "foobar;",  // only 2 tokens
@@ -135,7 +135,7 @@ TEST(FormatEquivalentTest, Identifiers) {
 }
 
 TEST(FormatEquivalentTest, Keyword) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "wire foo;",
       "  wire  \n\t\t   foo  ;\n",
   };
@@ -144,7 +144,7 @@ TEST(FormatEquivalentTest, Keyword) {
 }
 
 TEST(FormatEquivalentTest, Comments) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "// comment1\n",        //
       "// comment1 \n",       //
       "//    comment1\n",     //
@@ -171,7 +171,7 @@ TEST(FormatEquivalentTest, Comments) {
 }
 
 TEST(FormatEquivalentTest, DiagnosticLength) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "module foo\n",
       "module foo;\n",
   };
@@ -239,7 +239,7 @@ TEST(FormatEquivalentTest, MismatchTokenType) {
 }
 
 TEST(FormatEquivalentTest, EquivalenceOfRightParen) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "{`FOO()\n}\n",
       "{`FOO()}\n",
       "{`FOO()()}\n",
@@ -258,7 +258,7 @@ TEST(FormatEquivalentTest, EquivalenceOfRightParen) {
 }
 
 TEST(FormatEquivalentTest, DiagnosticMismatch) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "module foo;\n",
       "module bar;\n",
       "module foo,\n",
@@ -479,7 +479,7 @@ TEST(ObfuscationEquivalentTest, Various) {
       {"`CAT(aa``bb, cc``dd)\n", "`DOG(jj``kk, ll``mms)\n",
        DiffStatus::kDifferent},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     ExpectCompareWithErrstream(ObfuscationEquivalent, test.expect_match,
                                test.before, test.after);
   }

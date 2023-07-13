@@ -20,35 +20,35 @@
 
 namespace verible {
 
-bool EqualTrees(const Symbol* lhs, const Symbol* rhs,
-                const TokenComparator& compare_tokens) {
+bool EqualTrees(const Symbol *lhs, const Symbol *rhs,
+                const TokenComparator &compare_tokens) {
   if (lhs == nullptr && rhs == nullptr) {
     return true;
   }
   if (lhs == nullptr || rhs == nullptr) {
     return false;
   }
-  const Symbol* rhs_pointer = rhs;
+  const Symbol *rhs_pointer = rhs;
   return lhs->equals(rhs_pointer, compare_tokens);
 }
 
-bool EqualTrees(const Symbol* lhs, const Symbol* rhs) {
+bool EqualTrees(const Symbol *lhs, const Symbol *rhs) {
   return EqualTrees(lhs, rhs, &TokenInfo::operator==);
 }
 
-bool EqualTreesByEnum(const Symbol* lhs, const Symbol* rhs) {
+bool EqualTreesByEnum(const Symbol *lhs, const Symbol *rhs) {
   return EqualTrees(lhs, rhs, EqualByEnum);
 }
 
-bool EqualTreesByEnumString(const Symbol* lhs, const Symbol* rhs) {
+bool EqualTreesByEnumString(const Symbol *lhs, const Symbol *rhs) {
   return EqualTrees(lhs, rhs, EqualByEnumString);
 }
 
-bool EqualByEnum(const TokenInfo& lhs, const TokenInfo& rhs) {
+bool EqualByEnum(const TokenInfo &lhs, const TokenInfo &rhs) {
   return lhs.token_enum() == rhs.token_enum();
 }
 
-bool EqualByEnumString(const TokenInfo& lhs, const TokenInfo& rhs) {
+bool EqualByEnumString(const TokenInfo &lhs, const TokenInfo &rhs) {
   return lhs.token_enum() == rhs.token_enum() && lhs.text() == rhs.text();
 }
 

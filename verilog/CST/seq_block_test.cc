@@ -34,7 +34,7 @@ namespace verilog {
 namespace {
 
 static std::vector<verible::TreeSearchMatch> FindAllBeginStatements(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return SearchSyntaxTree(root, NodekBegin());
 }
 
@@ -47,7 +47,7 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 1);
@@ -66,12 +66,12 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 1);
 
-  const auto* beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
+  const auto *beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
   EXPECT_EQ(ABSL_DIE_IF_NULL(beginToken)->text(), "begin_label");
 }
 
@@ -84,12 +84,12 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 1);
 
-  const auto* beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
+  const auto *beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
   EXPECT_EQ(beginToken, nullptr);
 }
 
@@ -102,12 +102,12 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 1);
 
-  const auto* beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
+  const auto *beginToken = GetBeginLabelTokenInfo(*begin_statements[0].match);
   EXPECT_EQ(ABSL_DIE_IF_NULL(beginToken)->text(), "prefix_label");
 }
 
@@ -120,16 +120,16 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto begin_statements = FindAllBeginStatements(*root);
 
   ASSERT_EQ(begin_statements.size(), 1);
 
-  const auto* matchingEnd =
+  const auto *matchingEnd =
       GetMatchingEnd(*begin_statements[0].match, begin_statements[0].context);
   ASSERT_EQ(NodeEnum(matchingEnd->Tag().tag), NodeEnum::kEnd);
 
-  const auto* endToken = GetEndLabelTokenInfo(*matchingEnd);
+  const auto *endToken = GetEndLabelTokenInfo(*matchingEnd);
   EXPECT_EQ(endToken, nullptr);
 }
 
@@ -142,16 +142,16 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 1);
 
-  const auto* matchingEnd =
+  const auto *matchingEnd =
       GetMatchingEnd(*begin_statements[0].match, begin_statements[0].context);
   ASSERT_EQ(NodeEnum(matchingEnd->Tag().tag), NodeEnum::kEnd);
 
-  const auto* endToken = GetEndLabelTokenInfo(*matchingEnd);
+  const auto *endToken = GetEndLabelTokenInfo(*matchingEnd);
   EXPECT_EQ(ABSL_DIE_IF_NULL(endToken)->text(), "end_label");
 }
 
@@ -167,29 +167,29 @@ endmodule)",
                            "");
 
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
 
   const auto begin_statements = FindAllBeginStatements(*root);
   ASSERT_EQ(begin_statements.size(), 2);
 
-  const auto* matchingOuterEnd =
+  const auto *matchingOuterEnd =
       GetMatchingEnd(*begin_statements[0].match, begin_statements[0].context);
   ASSERT_EQ(NodeEnum(matchingOuterEnd->Tag().tag), NodeEnum::kEnd);
 
-  const auto* matchingInnerEnd =
+  const auto *matchingInnerEnd =
       GetMatchingEnd(*begin_statements[1].match, begin_statements[1].context);
   ASSERT_EQ(NodeEnum(matchingInnerEnd->Tag().tag), NodeEnum::kEnd);
 
-  const auto& outerBeginToken =
+  const auto &outerBeginToken =
       *ABSL_DIE_IF_NULL(GetBeginLabelTokenInfo(*begin_statements[0].match));
 
-  const auto& innerBeginToken =
+  const auto &innerBeginToken =
       *ABSL_DIE_IF_NULL(GetBeginLabelTokenInfo(*begin_statements[1].match));
 
-  const auto& outerEndToken =
+  const auto &outerEndToken =
       *ABSL_DIE_IF_NULL(GetEndLabelTokenInfo(*matchingOuterEnd));
 
-  const auto& innerEndToken =
+  const auto &innerEndToken =
       *ABSL_DIE_IF_NULL(GetEndLabelTokenInfo(*matchingInnerEnd));
 
   EXPECT_EQ(outerBeginToken.text(), "outer_begin_label");

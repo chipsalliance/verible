@@ -26,10 +26,10 @@
 namespace verible {
 
 // Checks if this is equal to SymbolPtr node under compare_token function
-bool SyntaxTreeNode::equals(const Symbol* symbol,
-                            const TokenComparator& compare_tokens) const {
+bool SyntaxTreeNode::equals(const Symbol *symbol,
+                            const TokenComparator &compare_tokens) const {
   if (symbol->Kind() == SymbolKind::kNode) {
-    const auto* node = down_cast<const SyntaxTreeNode*>(symbol);
+    const auto *node = down_cast<const SyntaxTreeNode *>(symbol);
     return equals(node, compare_tokens);
   }
   return false;
@@ -38,8 +38,8 @@ bool SyntaxTreeNode::equals(const Symbol* symbol,
 // Checks if this is equal to a SyntaxTreeNode under compare_token function
 // Returns true if both trees have same number of children and children are
 // equal trees.
-bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
-                            const TokenComparator& compare_tokens) const {
+bool SyntaxTreeNode::equals(const SyntaxTreeNode *node,
+                            const TokenComparator &compare_tokens) const {
   if (Tag().tag != node->Tag().tag) return false;
   if (children_.size() != node->children().size()) {
     return false;
@@ -54,41 +54,41 @@ bool SyntaxTreeNode::equals(const SyntaxTreeNode* node,
   return true;
 }
 
-SymbolPtr& SyntaxTreeNode::operator[](const size_t i) {
+SymbolPtr &SyntaxTreeNode::operator[](const size_t i) {
   CHECK_LT(i, children_.size());
   return children_[i];
 }
 
-const SymbolPtr& SyntaxTreeNode::operator[](const size_t i) const {
+const SymbolPtr &SyntaxTreeNode::operator[](const size_t i) const {
   CHECK_LT(i, children_.size());
   return children_[i];
 }
 
 // visits self, then forwards visitor to every child
-void SyntaxTreeNode::Accept(TreeVisitorRecursive* visitor) const {
+void SyntaxTreeNode::Accept(TreeVisitorRecursive *visitor) const {
   visitor->Visit(*this);
-  for (const auto& child : children_) {
+  for (const auto &child : children_) {
     if (child != nullptr) child->Accept(visitor);
   }
 }
 
-void SyntaxTreeNode::Accept(MutableTreeVisitorRecursive* visitor,
-                            SymbolPtr* this_owned) {
+void SyntaxTreeNode::Accept(MutableTreeVisitorRecursive *visitor,
+                            SymbolPtr *this_owned) {
   CHECK_EQ(ABSL_DIE_IF_NULL(this_owned)->get(), this);
   visitor->Visit(*this, this_owned);
-  for (auto& child : children_) {
+  for (auto &child : children_) {
     if (child != nullptr) child->Accept(visitor, &child);
   }
 }
 
-void SyntaxTreeNode::Accept(SymbolVisitor* visitor) const {
+void SyntaxTreeNode::Accept(SymbolVisitor *visitor) const {
   visitor->Visit(*this);
 }
 
-void SetChild_(const SymbolPtr& parent, int child_index, SymbolPtr new_child) {
+void SetChild_(const SymbolPtr &parent, int child_index, SymbolPtr new_child) {
   CHECK_EQ(ABSL_DIE_IF_NULL(parent)->Kind(), SymbolKind::kNode);
 
-  auto* parent_node = down_cast<SyntaxTreeNode*>(parent.get());
+  auto *parent_node = down_cast<SyntaxTreeNode *>(parent.get());
   CHECK_LT(child_index, static_cast<int>(parent_node->children().size()));
   CHECK(parent_node->children()[child_index] == nullptr);
 

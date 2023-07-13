@@ -37,7 +37,7 @@ struct FileDependencies {
 
   // A node is represented as a source file.
   // Edges are just a pair of nodes.
-  using node_type = const VerilogSourceFile*;
+  using node_type = const VerilogSourceFile *;
 
   // A set of strings, whose memory is owned outside of this data structure.
   using SymbolNameSet = std::set<absl::string_view, verible::StringViewCompare>;
@@ -57,11 +57,11 @@ struct FileDependencies {
 
   struct SymbolData {
     // Which file defines this symbol (first)?
-    const VerilogSourceFile* definer = nullptr;
+    const VerilogSourceFile *definer = nullptr;
 
     // Which files might reference this symbol?
     // Elements are never nullptr.
-    std::set<const VerilogSourceFile*, FileCompare> referencers;
+    std::set<const VerilogSourceFile *, FileCompare> referencers;
   };
 
   // Map of symbol name to definition and references (files).
@@ -86,22 +86,22 @@ struct FileDependencies {
   // The symbol table only needs to be built (.Build()), and need not be
   // Resolve()d.
   // Once initialized, all data members are const.
-  explicit FileDependencies(const SymbolTable& symbol_table);
+  explicit FileDependencies(const SymbolTable &symbol_table);
 
   bool Empty() const;
 
   // Visit every edge with a function.
   // This can print or export data.
   void TraverseDependencyEdges(
-      const std::function<void(const node_type&, const node_type&,
-                               const SymbolNameSet&)>& edge_func) const;
+      const std::function<void(const node_type &, const node_type &,
+                               const SymbolNameSet &)> &edge_func) const;
 
-  std::ostream& PrintGraph(std::ostream&) const;
+  std::ostream &PrintGraph(std::ostream &) const;
 
   // TODO: print unresolved references (no definition found)
 };
 
-std::ostream& operator<<(std::ostream&, const FileDependencies&);
+std::ostream &operator<<(std::ostream &, const FileDependencies &);
 
 }  // namespace verilog
 

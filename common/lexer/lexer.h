@@ -26,20 +26,20 @@ class Lexer {
  public:
   virtual ~Lexer() = default;
 
-  Lexer(const Lexer&) = delete;
-  Lexer& operator=(const Lexer&) = delete;
+  Lexer(const Lexer &) = delete;
+  Lexer &operator=(const Lexer &) = delete;
 
   // Returns the last token scanned.
-  virtual const TokenInfo& GetLastToken() const = 0;
+  virtual const TokenInfo &GetLastToken() const = 0;
 
   // Scan next token and return it.
-  virtual const TokenInfo& DoNextToken() = 0;
+  virtual const TokenInfo &DoNextToken() = 0;
 
   // Reset lexer to new input.  Overrides should discard all previous state.
   virtual void Restart(absl::string_view) = 0;
 
   // Return true if token is a lexical error.
-  virtual bool TokenIsError(const TokenInfo&) const = 0;
+  virtual bool TokenIsError(const TokenInfo &) const = 0;
 
  protected:
   Lexer() = default;

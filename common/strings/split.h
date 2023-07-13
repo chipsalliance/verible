@@ -48,10 +48,10 @@ class StringSpliterator {
       : remainder_(original) {}
 
   // Copy-able, movable, assignable.
-  StringSpliterator(const StringSpliterator&) = default;
-  StringSpliterator(StringSpliterator&&) = default;
-  StringSpliterator& operator=(const StringSpliterator&) = default;
-  StringSpliterator& operator=(StringSpliterator&&) = default;
+  StringSpliterator(const StringSpliterator &) = default;
+  StringSpliterator(StringSpliterator &&) = default;
+  StringSpliterator &operator=(const StringSpliterator &) = default;
+  StringSpliterator &operator=(StringSpliterator &&) = default;
 
   // Returns true if there is at least one result to come.
   operator bool() const {  // NOLINT(google-explicit-constructor)

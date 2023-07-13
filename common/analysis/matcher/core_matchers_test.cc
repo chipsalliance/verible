@@ -45,7 +45,7 @@ TEST(MatcherBuildersTest, AnyOfSimple) {
       Node5(AnyOf(PathNode1(), PathLeaf1())),  // commutative
   };
 
-  for (const auto& matcher : matchers) {
+  for (const auto &matcher : matchers) {
     BoundSymbolManager bound_symbol_manager;
     {
       const auto should_match_leaf = TNode(5, XLeaf(1));
@@ -72,7 +72,7 @@ TEST(MatcherBuildersTest, EachOfSimple) {
       Node5(EachOf(PathNode1().Bind("node1"), PathLeaf1().Bind("leaf1"))),
   };
 
-  for (const auto& matcher : matchers) {
+  for (const auto &matcher : matchers) {
     BoundSymbolManager bound_symbol_manager;
     {
       const auto should_match_leaf = TNode(5, XLeaf(1));
@@ -102,7 +102,7 @@ TEST(MatcherBuildersTest, AllOfSimple) {
       Node5(AllOf(PathNode1(), PathLeaf1())),  // commutative
   };
 
-  for (const auto& matcher : matchers) {
+  for (const auto &matcher : matchers) {
     BoundSymbolManager bound_symbol_manager;
     {
       const auto should_match = TNode(5, XLeaf(1), XLeaf(2), TNode(1));
@@ -180,7 +180,7 @@ TEST(CoreMatchers, AnyOfManyTests) {
        {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -228,7 +228,7 @@ TEST(CoreMatchers, EachOfManyTests) {
        {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -264,7 +264,7 @@ TEST(CoreMatchers, AllOfManyTests) {
        {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -294,7 +294,7 @@ TEST(CoreMatchers, UnlessManyTests) {
        {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -346,7 +346,7 @@ TEST(CoreMatchers, AllOfAnyOfManyTests) {
        {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }

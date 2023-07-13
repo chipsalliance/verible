@@ -36,13 +36,13 @@ class MockLexer : public Lexer {
  public:
   MockLexer() : token_(13, "foo") {}
 
-  const TokenInfo& GetLastToken() const final { return token_; }
+  const TokenInfo &GetLastToken() const final { return token_; }
 
-  const TokenInfo& DoNextToken() final { return token_; }
+  const TokenInfo &DoNextToken() final { return token_; }
 
   void Restart(absl::string_view) final {}
 
-  bool TokenIsError(const TokenInfo&) const final { return false; }
+  bool TokenIsError(const TokenInfo &) const final { return false; }
 
  private:
   TokenInfo token_;
@@ -55,14 +55,14 @@ TEST(BisonParserCommonTest, LexTest) {
   ParserParam parser_param(&generator, "<file>");
   SymbolPtr value;
   const int token_enum = verible::LexAdapter(&value, &parser_param);
-  const TokenInfo& t(parser_param.GetLastToken());
+  const TokenInfo &t(parser_param.GetLastToken());
   EXPECT_EQ(13, token_enum);
   EXPECT_EQ(13, t.token_enum());
   EXPECT_EQ(t.text(), "foo");
   EXPECT_EQ(value->Kind(), SymbolKind::kLeaf);
-  const auto* value_ptr = down_cast<const SyntaxTreeLeaf*>(value.get());
+  const auto *value_ptr = down_cast<const SyntaxTreeLeaf *>(value.get());
   ASSERT_NE(value_ptr, nullptr);
-  const TokenInfo& tref(value_ptr->get());
+  const TokenInfo &tref(value_ptr->get());
   EXPECT_EQ(13, tref.token_enum());
   EXPECT_EQ(tref.text(), "foo");
 }

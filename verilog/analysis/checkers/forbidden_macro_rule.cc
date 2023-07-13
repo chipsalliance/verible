@@ -44,7 +44,7 @@ using verible::matcher::Matcher;
 VERILOG_REGISTER_LINT_RULE(ForbiddenMacroRule);
 
 // TODO(fangism): Generate table of URLs from InvalidMacrosMap().
-const LintRuleDescriptor& ForbiddenMacroRule::GetDescriptor() {
+const LintRuleDescriptor &ForbiddenMacroRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbidden-macro",
       .topic = "uvm-logging",
@@ -54,27 +54,27 @@ const LintRuleDescriptor& ForbiddenMacroRule::GetDescriptor() {
 }
 
 // Matches all macro call ids, like `foo.
-static const Matcher& MacroCallMatcher() {
+static const Matcher &MacroCallMatcher() {
   static const Matcher matcher(MacroCallIdLeaf().Bind("name"));
   return matcher;
 }
 
 // Set of invalid macros and URLs
-const std::map<std::string, std::string>&
-ForbiddenMacroRule::InvalidMacrosMap() {
+const std::map<std::string, std::string>
+    &ForbiddenMacroRule::InvalidMacrosMap() {
   // TODO(hzeller): don't use GetStyleGuideCitation here, more downstream.
-  static const auto* invalid_symbols = new std::map<std::string, std::string>({
+  static const auto *invalid_symbols = new std::map<std::string, std::string>({
       {"`uvm_warning", GetStyleGuideCitation("uvm-logging")},
   });
   return *invalid_symbols;
 }
 
 void ForbiddenMacroRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (MacroCallMatcher().Matches(symbol, &manager)) {
-    if (const auto* leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
-      const auto& imm = InvalidMacrosMap();
+    if (const auto *leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
+      const auto &imm = InvalidMacrosMap();
       if (imm.find(std::string(leaf->get().text())) != imm.end()) {
         violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
@@ -90,7 +90,7 @@ verible::LintRuleStatus ForbiddenMacroRule::Report() const {
 }
 
 /* static */ std::string ForbiddenMacroRule::FormatReason(
-    const verible::SyntaxTreeLeaf& leaf) {
+    const verible::SyntaxTreeLeaf &leaf) {
   const std::string function_name(leaf.get().text());
   const auto url = FindWithDefault(InvalidMacrosMap(), function_name, "");
   auto message = function_name + " is a forbidden macro";

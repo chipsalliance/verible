@@ -45,7 +45,7 @@ VERILOG_REGISTER_LINT_RULE(ExplicitFunctionLifetimeRule);
 static constexpr absl::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class functions";
 
-const LintRuleDescriptor& ExplicitFunctionLifetimeRule::GetDescriptor() {
+const LintRuleDescriptor &ExplicitFunctionLifetimeRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "explicit-function-lifetime",
       .topic = "function-task-explicit-lifetime",
@@ -56,13 +56,13 @@ const LintRuleDescriptor& ExplicitFunctionLifetimeRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& FunctionMatcher() {
+static const Matcher &FunctionMatcher() {
   static const Matcher matcher(NodekFunctionDeclaration());
   return matcher;
 }
 
 void ExplicitFunctionLifetimeRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   // Don't need to check for lifetime declaration if context is inside a class
   if (ContextIsInsideClass(context)) return;
 
@@ -70,7 +70,7 @@ void ExplicitFunctionLifetimeRule::HandleSymbol(
   if (FunctionMatcher().Matches(symbol, &manager)) {
     // If function id is qualified, it is an out-of-line
     // class method definition, which is also exempt.
-    const auto* function_id = ABSL_DIE_IF_NULL(GetFunctionId(symbol));
+    const auto *function_id = ABSL_DIE_IF_NULL(GetFunctionId(symbol));
     if (IdIsQualified(*function_id)) return;
 
     // Make sure the lifetime was set

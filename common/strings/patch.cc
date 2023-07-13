@@ -56,7 +56,7 @@ static bool IsValidMarkedLine(absl::string_view line) {
 namespace internal {
 
 template <typename RangeT, typename Iter>
-static std::vector<RangeT> IteratorsToRanges(const std::vector<Iter>& iters) {
+static std::vector<RangeT> IteratorsToRanges(const std::vector<Iter> &iters) {
   // TODO(fangism): This pattern appears elsewhere in the codebase, so refactor.
   CHECK_GE(iters.size(), 2);
   std::vector<RangeT> result;
@@ -78,7 +78,7 @@ absl::Status MarkedLine::Parse(absl::string_view text) {
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const MarkedLine& line) {
+std::ostream &operator<<(std::ostream &stream, const MarkedLine &line) {
   const term::Color c = line.IsDeleted() ? term::Color::kRed
                         : line.IsAdded() ? term::Color::kCyan
                                          : term::Color::kNone;
@@ -103,7 +103,7 @@ absl::Status HunkIndices::Parse(absl::string_view text) {
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const HunkIndices& indices) {
+std::ostream &operator<<(std::ostream &stream, const HunkIndices &indices) {
   return stream << indices.FormatToString();
 }
 
@@ -152,7 +152,7 @@ absl::Status HunkHeader::Parse(absl::string_view text) {
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const HunkHeader& header) {
+std::ostream &operator<<(std::ostream &stream, const HunkHeader &header) {
   return term::Colored(
       stream,
       absl::StrCat("@@ -", header.old_range.FormatToString(), " +",
@@ -162,10 +162,10 @@ std::ostream& operator<<(std::ostream& stream, const HunkHeader& header) {
 
 // Type M could be any container or range of MarkedLines.
 template <class M>
-static void CountMarkedLines(const M& lines, int* before, int* after) {
+static void CountMarkedLines(const M &lines, int *before, int *after) {
   *before = 0;
   *after = 0;
-  for (const MarkedLine& line : lines) {
+  for (const MarkedLine &line : lines) {
     switch (line.Marker()) {
       case ' ':  // line is common to both, unchanged
         ++*before;
@@ -205,7 +205,7 @@ void Hunk::UpdateHeader() {
 LineNumberSet Hunk::AddedLines() const {
   LineNumberSet line_numbers;
   int line_number = header_.new_range.start;
-  for (const MarkedLine& line : lines_) {
+  for (const MarkedLine &line : lines_) {
     if (line.IsAdded()) line_numbers.Add(line_number);
     if (!line.IsDeleted()) ++line_number;
   }
@@ -214,9 +214,9 @@ LineNumberSet Hunk::AddedLines() const {
 }
 
 absl::Status Hunk::VerifyAgainstOriginalLines(
-    const std::vector<absl::string_view>& original_lines) const {
+    const std::vector<absl::string_view> &original_lines) const {
   int line_number = header_.old_range.start;  // 1-indexed
-  for (const MarkedLine& line : lines_) {
+  for (const MarkedLine &line : lines_) {
     if (line.IsAdded()) continue;  // ignore added lines
     if (line_number > static_cast<int>(original_lines.size())) {
       return absl::OutOfRangeError(absl::StrCat(
@@ -239,7 +239,7 @@ class HunkSplitter {
  public:
   HunkSplitter() = default;
 
-  bool operator()(const MarkedLine& line) {
+  bool operator()(const MarkedLine &line) {
     if (previous_line_ == nullptr) {
       // first line
       previous_line_ = &line;
@@ -251,7 +251,7 @@ class HunkSplitter {
   }
 
  private:
-  const MarkedLine* previous_line_ = nullptr;
+  const MarkedLine *previous_line_ = nullptr;
 };
 
 std::vector<Hunk> Hunk::Split() const {
@@ -269,7 +269,7 @@ std::vector<Hunk> Hunk::Split() const {
   if (cut_points.back() != lines_.begin()) {
     const bool last_partition_has_any_changes =
         std::any_of(cut_points.back(), lines_.end(),
-                    [](const MarkedLine& m) { return !m.IsCommon(); });
+                    [](const MarkedLine &m) { return !m.IsCommon(); });
     if (!last_partition_has_any_changes) cut_points.pop_back();
   }
   cut_points.push_back(lines_.end());  // always terminate partitions with end()
@@ -283,10 +283,10 @@ std::vector<Hunk> Hunk::Split() const {
   // create sub hunks from each sub-range
   int old_starting_line = header_.old_range.start;
   int new_starting_line = header_.new_range.start;
-  for (const MarkedLineRange& marked_line_range : ranges) {
+  for (const MarkedLineRange &marked_line_range : ranges) {
     sub_hunks.emplace_back(old_starting_line, new_starting_line,
                            marked_line_range.begin(), marked_line_range.end());
-    const HunkHeader& recent_header(sub_hunks.back().Header());
+    const HunkHeader &recent_header(sub_hunks.back().Header());
     old_starting_line += recent_header.old_range.count;
     new_starting_line += recent_header.new_range.count;
   }
@@ -295,29 +295,29 @@ std::vector<Hunk> Hunk::Split() const {
   return sub_hunks;
 }
 
-absl::Status Hunk::Parse(const LineRange& hunk_lines) {
+absl::Status Hunk::Parse(const LineRange &hunk_lines) {
   RETURN_IF_ERROR(header_.Parse(hunk_lines.front()));
 
   LineRange body(hunk_lines);
   body.pop_front();  // remove the header
   lines_.resize(body.size());
   auto line_iter = lines_.begin();
-  for (const auto& line : body) {
+  for (const auto &line : body) {
     RETURN_IF_ERROR(line_iter->Parse(line));
     ++line_iter;
   }
   return IsValid();
 }
 
-std::ostream& Hunk::Print(std::ostream& stream) const {
+std::ostream &Hunk::Print(std::ostream &stream) const {
   stream << header_ << std::endl;
-  for (const MarkedLine& line : lines_) {
+  for (const MarkedLine &line : lines_) {
     stream << line << std::endl;
   }
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const Hunk& hunk) {
+std::ostream &operator<<(std::ostream &stream, const Hunk &hunk) {
   return hunk.Print(stream);
 }
 
@@ -339,14 +339,14 @@ absl::Status SourceInfo::Parse(absl::string_view text) {
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const SourceInfo& info) {
+std::ostream &operator<<(std::ostream &stream, const SourceInfo &info) {
   stream << info.path;
   if (!info.timestamp.empty()) stream << '\t' << info.timestamp;
   return stream;
 }
 
 static absl::Status ParseSourceInfoWithMarker(
-    SourceInfo* info, absl::string_view line,
+    SourceInfo *info, absl::string_view line,
     absl::string_view expected_marker) {
   StringSpliterator splitter(line);
   absl::string_view marker = splitter(' ');
@@ -364,13 +364,13 @@ bool FilePatch::IsDeletedFile() const { return new_file_.path == "/dev/null"; }
 
 LineNumberSet FilePatch::AddedLines() const {
   LineNumberSet line_numbers;
-  for (const Hunk& hunk : hunks_) {
+  for (const Hunk &hunk : hunks_) {
     line_numbers.Union(hunk.AddedLines());
   }
   return line_numbers;
 }
 
-static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
+static char PromptHunkAction(std::istream &ins, std::ostream &outs) {
   // Suppress prompt in noninteractive mode.
   term::bold(outs, "Apply this hunk? [y,n,a,d,s,q,?] ");
   char c;
@@ -385,21 +385,21 @@ static char PromptHunkAction(std::istream& ins, std::ostream& outs) {
 }
 
 absl::Status FilePatch::VerifyAgainstOriginalLines(
-    const std::vector<absl::string_view>& original_lines) const {
-  for (const Hunk& hunk : hunks_) {
+    const std::vector<absl::string_view> &original_lines) const {
+  for (const Hunk &hunk : hunks_) {
     RETURN_IF_ERROR(hunk.VerifyAgainstOriginalLines(original_lines));
   }
   return absl::OkStatus();
 }
 
-absl::Status FilePatch::PickApplyInPlace(std::istream& ins,
-                                         std::ostream& outs) const {
+absl::Status FilePatch::PickApplyInPlace(std::istream &ins,
+                                         std::ostream &outs) const {
   return PickApply(ins, outs, &file::GetContentAsString, &file::SetContents);
 }
 
-absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
-                                  const FileReaderFunction& file_reader,
-                                  const FileWriterFunction& file_writer) const {
+absl::Status FilePatch::PickApply(std::istream &ins, std::ostream &outs,
+                                  const FileReaderFunction &file_reader,
+                                  const FileWriterFunction &file_writer) const {
   if (IsDeletedFile()) return absl::OkStatus();  // ignore
   if (IsNewFile()) return absl::OkStatus();      // ignore
 
@@ -430,10 +430,10 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   std::deque<Hunk> hunks_worklist(hunks_.begin(), hunks_.end());  // copy-fill
   while (!hunks_worklist.empty()) {
     VLOG(1) << "hunks remaining: " << hunks_worklist.size();
-    const Hunk& hunk(hunks_worklist.front());
+    const Hunk &hunk(hunks_worklist.front());
 
     // Copy over unchanged lines before this hunk.
-    const auto& old_range = hunk.Header().old_range;
+    const auto &old_range = hunk.Header().old_range;
     if (old_range.start < last_consumed_line) {
       return absl::InvalidArgumentError(
           absl::StrCat("Hunks are not properly ordered.  last_consumed_line=",
@@ -442,7 +442,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
     }
     for (; last_consumed_line < old_range.start - 1; ++last_consumed_line) {
       CHECK_LT(last_consumed_line, static_cast<int>(orig_lines.size()));
-      const absl::string_view& line(orig_lines[last_consumed_line]);
+      const absl::string_view &line(orig_lines[last_consumed_line]);
       output_lines.emplace_back(line.begin(), line.end());  // copy string
     }
     VLOG(1) << "copied up to (!including) line[" << last_consumed_line << "].";
@@ -462,7 +462,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
       }
       case 'y': {
         // accept this hunk, copy lines over
-        for (const MarkedLine& marked_line : hunk.MarkedLines()) {
+        for (const MarkedLine &marked_line : hunk.MarkedLines()) {
           if (!marked_line.IsDeleted()) {
             const absl::string_view line(marked_line.Text());
             output_lines.emplace_back(line.begin(), line.end());  // copy string
@@ -485,7 +485,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
         const auto sub_hunks = hunk.Split();
         hunks_worklist.pop_front();  // replace current hunk with sub-hunks
         // maintain sequential order of sub-hunks in the queue by line number
-        for (const auto& sub_hunk : verible::reversed_view(sub_hunks)) {
+        for (const auto &sub_hunk : verible::reversed_view(sub_hunks)) {
           hunks_worklist.push_front(sub_hunk);
         }
         continue;  // for-loop
@@ -511,7 +511,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   // Copy over remaining lines after the last hunk.
   for (; last_consumed_line < static_cast<int>(orig_lines.size());
        ++last_consumed_line) {
-    const absl::string_view& line(orig_lines[last_consumed_line]);
+    const absl::string_view &line(orig_lines[last_consumed_line]);
     output_lines.emplace_back(line.begin(), line.end());  // copy string
   }
   VLOG(1) << "copied reamining lines up to [" << last_consumed_line << "].";
@@ -521,7 +521,7 @@ absl::Status FilePatch::PickApply(std::istream& ins, std::ostream& outs,
   return file_writer(old_file_.path, rewrite_contents);
 }
 
-absl::Status FilePatch::Parse(const LineRange& lines) {
+absl::Status FilePatch::Parse(const LineRange &lines) {
   LineIterator line_iter(
       std::find_if(lines.begin(), lines.end(), &LineMarksOldFile));
   if (lines.begin() == lines.end() || line_iter == lines.end()) {
@@ -529,7 +529,7 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
         "Expected a file marker starting with \"---\", but did not find one.");
   }
   // Lines leading up to the old file marker "---" are metadata.
-  for (const auto& line : make_range(lines.begin(), line_iter)) {
+  for (const auto &line : make_range(lines.begin(), line_iter)) {
     metadata_.emplace_back(line);
   }
 
@@ -560,26 +560,26 @@ absl::Status FilePatch::Parse(const LineRange& lines) {
 
   hunks_.resize(hunk_ranges.size());
   auto hunk_iter = hunks_.begin();
-  for (const auto& hunk_range : hunk_ranges) {
+  for (const auto &hunk_range : hunk_ranges) {
     RETURN_IF_ERROR(hunk_iter->Parse(hunk_range));
     ++hunk_iter;
   }
   return absl::OkStatus();
 }
 
-std::ostream& FilePatch::Print(std::ostream& stream) const {
-  for (const std::string& line : metadata_) {
+std::ostream &FilePatch::Print(std::ostream &stream) const {
+  for (const std::string &line : metadata_) {
     stream << line << std::endl;
   }
   stream << "--- " << old_file_ << '\n'  //
          << "+++ " << new_file_ << std::endl;
-  for (const Hunk& hunk : hunks_) {
+  for (const Hunk &hunk : hunks_) {
     stream << hunk;
   }
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const FilePatch& patch) {
+std::ostream &operator<<(std::ostream &stream, const FilePatch &patch) {
   return patch.Print(stream);
 }
 
@@ -611,10 +611,10 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
     if (file_patch_begins.empty()) return absl::OkStatus();
 
     // Move line iterators back to correct starting points.
-    for (auto& iter : file_patch_begins) {
+    for (auto &iter : file_patch_begins) {
       while (iter != lines_range.begin()) {
         const auto prev = std::prev(iter);
-        const absl::string_view& peek(*prev);
+        const absl::string_view &peek(*prev);
         if (LineBelongsToPreviousSection(peek)) break;
         iter = prev;
       }
@@ -625,7 +625,7 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
   }
 
   // Record metadata lines, if there are any.
-  for (const auto& line :
+  for (const auto &line :
        make_range(lines_range.begin(), file_patch_begins.front())) {
     metadata_.emplace_back(line);
   }
@@ -635,7 +635,7 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
       internal::IteratorsToRanges<internal::LineRange>(file_patch_begins));
   file_patches_.resize(file_patch_ranges.size());
   auto iter = file_patches_.begin();
-  for (const auto& range : file_patch_ranges) {
+  for (const auto &range : file_patch_ranges) {
     RETURN_IF_ERROR(iter->Parse(range));
     ++iter;
   }
@@ -645,11 +645,11 @@ absl::Status PatchSet::Parse(absl::string_view patch_contents) {
   return absl::OkStatus();
 }
 
-std::ostream& PatchSet::Render(std::ostream& stream) const {
-  for (const auto& line : metadata_) {
+std::ostream &PatchSet::Render(std::ostream &stream) const {
+  for (const auto &line : metadata_) {
     stream << line << std::endl;
   }
-  for (const internal::FilePatch& file_patch : file_patches_) {
+  for (const internal::FilePatch &file_patch : file_patches_) {
     stream << file_patch;
   }
   return stream;
@@ -657,9 +657,9 @@ std::ostream& PatchSet::Render(std::ostream& stream) const {
 
 FileLineNumbersMap PatchSet::AddedLinesMap(bool new_file_ranges) const {
   FileLineNumbersMap result;
-  for (const internal::FilePatch& file_patch : file_patches_) {
+  for (const internal::FilePatch &file_patch : file_patches_) {
     if (file_patch.IsDeletedFile()) continue;
-    LineNumberSet& entry = result[file_patch.NewFileInfo().path];
+    LineNumberSet &entry = result[file_patch.NewFileInfo().path];
     if (file_patch.IsNewFile() && !new_file_ranges) {
       entry.clear();
     } else {
@@ -669,22 +669,22 @@ FileLineNumbersMap PatchSet::AddedLinesMap(bool new_file_ranges) const {
   return result;
 }
 
-absl::Status PatchSet::PickApplyInPlace(std::istream& ins,
-                                        std::ostream& outs) const {
+absl::Status PatchSet::PickApplyInPlace(std::istream &ins,
+                                        std::ostream &outs) const {
   return PickApply(ins, outs, &file::GetContentAsString, &file::SetContents);
 }
 
 absl::Status PatchSet::PickApply(
-    std::istream& ins, std::ostream& outs,
-    const internal::FileReaderFunction& file_reader,
-    const internal::FileWriterFunction& file_writer) const {
-  for (const internal::FilePatch& file_patch : file_patches_) {
+    std::istream &ins, std::ostream &outs,
+    const internal::FileReaderFunction &file_reader,
+    const internal::FileWriterFunction &file_writer) const {
+  for (const internal::FilePatch &file_patch : file_patches_) {
     RETURN_IF_ERROR(file_patch.PickApply(ins, outs, file_reader, file_writer));
   }
   return absl::OkStatus();
 }
 
-std::ostream& operator<<(std::ostream& stream, const PatchSet& patch) {
+std::ostream &operator<<(std::ostream &stream, const PatchSet &patch) {
   return patch.Render(stream);
 }
 

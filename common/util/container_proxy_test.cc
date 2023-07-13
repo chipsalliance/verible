@@ -52,8 +52,8 @@ struct TestTrace {
   // Constructors for creating reference object in tests
 
   template <class SnapshotRange, class ValuesRange>
-  TestTrace(ContainerProxyEvent method, const SnapshotRange& snapshot,
-            int first_index, int last_index, const ValuesRange& values)
+  TestTrace(ContainerProxyEvent method, const SnapshotRange &snapshot,
+            int first_index, int last_index, const ValuesRange &values)
       : triggered_method(method),
         container_snapshot(std::begin(snapshot), std::end(snapshot)),
         first_index(first_index),
@@ -61,7 +61,7 @@ struct TestTrace {
         values(std::begin(values), std::end(values)) {}
 
   template <class SnapshotRange>
-  TestTrace(ContainerProxyEvent method, const SnapshotRange& snapshot,
+  TestTrace(ContainerProxyEvent method, const SnapshotRange &snapshot,
             int first_index, int last_index,
             std::initializer_list<value_type> values)
       : triggered_method(method),
@@ -86,12 +86,12 @@ struct TestTrace {
   // Constructors for creating trace objects in a container implementation
 
   template <class Range>
-  TestTrace(ContainerProxyEvent method, const Range& container)
+  TestTrace(ContainerProxyEvent method, const Range &container)
       : triggered_method(method),
         container_snapshot(container.begin(), container.end()) {}
 
   template <class Range>
-  TestTrace(ContainerProxyEvent method, const Range& container,
+  TestTrace(ContainerProxyEvent method, const Range &container,
             const_iterator first, const_iterator last)
       : triggered_method(method),
         container_snapshot(container.begin(), container.end()),
@@ -101,7 +101,7 @@ struct TestTrace {
 
   // Operators
 
-  bool operator==(const TestTrace& other) const {
+  bool operator==(const TestTrace &other) const {
     return triggered_method == other.triggered_method &&
            std::equal(container_snapshot.begin(), container_snapshot.end(),
                       other.container_snapshot.begin()) &&
@@ -110,7 +110,7 @@ struct TestTrace {
            std::equal(values.begin(), values.end(), other.values.begin());
   }
 
-  friend std::ostream& operator<<(std::ostream& s, TestTrace obj) {
+  friend std::ostream &operator<<(std::ostream &s, TestTrace obj) {
     switch (obj.triggered_method) {
       case ContainerProxyEvent::kUnknown:
         s << "UNKNOWN";
@@ -146,7 +146,7 @@ class ContainerProxy
   friend Base;
 
  public:
-  explicit ContainerProxy(Container& container) : container_(container) {}
+  explicit ContainerProxy(Container &container) : container_(container) {}
 
   using typename Base::container_type;
 
@@ -209,10 +209,10 @@ class ContainerProxy
   std::vector<TestTrace<ThisType>> trace_data;
 
  private:
-  Container& container_;
+  Container &container_;
 
-  Container& underlying_container() { return container_; }
-  const Container& underlying_container() const { return container_; }
+  Container &underlying_container() { return container_; }
+  const Container &underlying_container() const { return container_; }
 
   void ElementsInserted(const_iterator first, const_iterator last) {
     trace_data.push_back(TestTrace<ThisType>(ContainerProxyEvent::kInserted,
@@ -352,7 +352,7 @@ TYPED_TEST(BidirectionalContainerProxyTest, Iteration) {
   }
   {
     int i = 0;
-    for (auto& elem : this->proxy) {
+    for (auto &elem : this->proxy) {
       EXPECT_EQ(elem, *std::next(this->container.begin(), i)) << "i = " << i;
       EXPECT_EQ(&elem, &*std::next(this->container.begin(), i)) << "i = " << i;
       ++i;
@@ -404,7 +404,7 @@ TYPED_TEST(MutableBidirectionalContainerProxyTest, ModifiersPushEmplaceBack) {
   std::string four = std::string("four");
   // Make sure the string buffer is dynamically allocated.
   four.reserve(1000);
-  const auto* four_data = four.data();
+  const auto *four_data = four.data();
   this->proxy.push_back(std::move(four));
   EXPECT_EQ(this->proxy.size(), initial_size + 2);
   EXPECT_EQ(this->proxy.back(), "four");
@@ -446,7 +446,7 @@ TYPED_TEST(MutablePrependableContainerProxyTest, ModifiersPushEmplaceFront) {
   std::string minus_two = std::string("minus_two");
   // Make sure the string buffer is dynamically allocated.
   minus_two.reserve(1000);
-  const auto* minus_two_data = minus_two.data();
+  const auto *minus_two_data = minus_two.data();
   this->proxy.push_front(std::move(minus_two));
   EXPECT_EQ(this->proxy.size(), initial_size + 2);
   EXPECT_EQ(this->proxy.front(), "minus_two");
@@ -525,7 +525,7 @@ TYPED_TEST(MutableBidirectionalContainerProxyTest, ModifiersInsertEmplace) {
   std::string s = std::string("bar");
   // Make sure the string buffer is dynamically allocated.
   s.reserve(1000);
-  const auto* s_data = s.data();
+  const auto *s_data = s.data();
   this->proxy.insert(std::next(this->proxy.begin(), 1), std::move(s));
   EXPECT_EQ(this->proxy.size(), initial_size + 9);
   EXPECT_EQ(*std::next(this->proxy.begin(), 1), "bar");
@@ -709,8 +709,8 @@ TYPED_TEST(MutableBidirectionalContainerProxyTest, AssignmentOperator) {
 
   this->proxy.trace_data.clear();
 
-  auto& proxy_ref_0 = this->proxy = other_container;
-  static_assert(std::is_same_v<decltype(proxy_ref_0), TypeParam&>);
+  auto &proxy_ref_0 = this->proxy = other_container;
+  static_assert(std::is_same_v<decltype(proxy_ref_0), TypeParam &>);
   EXPECT_THAT(this->container, ElementsAre("foo", "bar", "baz"));
   EXPECT_THAT(
       this->proxy.trace_data,
@@ -720,8 +720,8 @@ TYPED_TEST(MutableBidirectionalContainerProxyTest, AssignmentOperator) {
 
   this->proxy.trace_data.clear();
 
-  auto& proxy_ref_1 = this->proxy = {"x", "y"};
-  static_assert(std::is_same_v<decltype(proxy_ref_1), TypeParam&>);
+  auto &proxy_ref_1 = this->proxy = {"x", "y"};
+  static_assert(std::is_same_v<decltype(proxy_ref_1), TypeParam &>);
   EXPECT_THAT(this->container, ElementsAre("x", "y"));
   EXPECT_THAT(
       this->proxy.trace_data,
@@ -731,9 +731,9 @@ TYPED_TEST(MutableBidirectionalContainerProxyTest, AssignmentOperator) {
 
   this->proxy.trace_data.clear();
 
-  auto* const foo_ptr = &other_container.front();
-  auto& proxy_ref_2 = this->proxy = std::move(other_container);
-  static_assert(std::is_same_v<decltype(proxy_ref_2), TypeParam&>);
+  auto *const foo_ptr = &other_container.front();
+  auto &proxy_ref_2 = this->proxy = std::move(other_container);
+  static_assert(std::is_same_v<decltype(proxy_ref_2), TypeParam &>);
   EXPECT_THAT(this->container, ElementsAre("foo", "bar", "baz"));
   // Verify that the container has been moved and not copied.
   EXPECT_EQ(&this->container.front(), foo_ptr);

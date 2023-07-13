@@ -29,7 +29,7 @@
 namespace verilog {
 
 // parser wrapper to enable debug traces
-int verilog_parse_wrapper(::verible::ParserParam*);
+int verilog_parse_wrapper(::verible::ParserParam *);
 
 // TODO(fangism): Use a pseudo-preprocessor between the lexer and parser.
 using VerilogParser = verible::BisonParserAdapter<verilog_parse_wrapper>;
@@ -39,7 +39,7 @@ using VerilogParser = verible::BisonParserAdapter<verilog_parse_wrapper>;
 // Defined in verilog.y, emitted in verilog.tab.cc.
 //
 // See also: TokenTypeToString() in verilog_token.h
-const char* verilog_symbol_name(size_t symbol_enum);
+const char *verilog_symbol_name(size_t symbol_enum);
 
 }  // namespace verilog
 

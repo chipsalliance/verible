@@ -32,7 +32,7 @@ namespace internal {
 // Suitable for use with absl::StrJoin()'s formatter arguments.
 struct FirstElementFormatter {
   template <class P>
-  void operator()(std::string* out, const P& p) const {
+  void operator()(std::string *out, const P &p) const {
     out->append(p.first.begin(), p.first.end());
   }
 };
@@ -109,13 +109,13 @@ class EnumNameMap {
       : enum_name_map_(pairs) {}
   ~EnumNameMap() = default;
 
-  EnumNameMap(const EnumNameMap&) = delete;
-  EnumNameMap(EnumNameMap&&) = delete;
-  EnumNameMap& operator=(const EnumNameMap&) = delete;
-  EnumNameMap& operator=(EnumNameMap&&) = delete;
+  EnumNameMap(const EnumNameMap &) = delete;
+  EnumNameMap(EnumNameMap &&) = delete;
+  EnumNameMap &operator=(const EnumNameMap &) = delete;
+  EnumNameMap &operator=(EnumNameMap &&) = delete;
 
   // Print a list of string representations of the enums.
-  std::ostream& ListNames(std::ostream& stream, absl::string_view sep) const {
+  std::ostream &ListNames(std::ostream &stream, absl::string_view sep) const {
     return stream << absl::StrJoin(enum_name_map_.forward_view(), sep,
                                    internal::FirstElementFormatter());
   }
@@ -124,9 +124,9 @@ class EnumNameMap {
   // 'type_name' is a text name for the enum type used in diagnostics.
   // This variant write diagnostics to the 'errstream' stream.
   // Returns true if successful.
-  bool Parse(key_type text, EnumType* enum_value, std::ostream& errstream,
+  bool Parse(key_type text, EnumType *enum_value, std::ostream &errstream,
              absl::string_view type_name) const {
-    const EnumType* found_value = enum_name_map_.find_forward(text);
+    const EnumType *found_value = enum_name_map_.find_forward(text);
     if (found_value != nullptr) {
       *enum_value = *found_value;
       return true;
@@ -139,7 +139,7 @@ class EnumNameMap {
 
   // Converts the name of an enum to its corresponding value.
   // This variant write diagnostics to the 'error' string.
-  bool Parse(key_type text, EnumType* enum_value, std::string* error,
+  bool Parse(key_type text, EnumType *enum_value, std::string *error,
              absl::string_view type_name) const {
     std::ostringstream stream;
     const bool success = Parse(text, enum_value, stream, type_name);
@@ -149,13 +149,13 @@ class EnumNameMap {
 
   // Returns the string representation of an enum.
   absl::string_view EnumName(EnumType value) const {
-    const auto* key = enum_name_map_.find_reverse(value);
+    const auto *key = enum_name_map_.find_reverse(value);
     if (key == nullptr) return "???";
     return *key;
   }
 
   // Prints the string representation of an enum to stream.
-  std::ostream& Unparse(EnumType value, std::ostream& stream) const {
+  std::ostream &Unparse(EnumType value, std::ostream &stream) const {
     return stream << EnumName(value);
   }
 

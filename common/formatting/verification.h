@@ -27,7 +27,7 @@ namespace verible {
 // 'original_text' is the text before any formatting was done.
 // 'lines' is the set of lines requested if incrementally formatting.
 absl::Status ReformatMustMatch(absl::string_view original_text,
-                               const LineNumberSet& lines,
+                               const LineNumberSet &lines,
                                absl::string_view formatted_text,
                                absl::string_view reformatted_text);
 

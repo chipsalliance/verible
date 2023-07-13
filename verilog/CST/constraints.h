@@ -33,12 +33,12 @@
 namespace verilog {
 
 std::vector<verible::TreeSearchMatch> FindAllConstraintDeclarations(
-    const verible::Symbol& root);
+    const verible::Symbol &root);
 
-bool IsOutOfLineConstraintDefinition(const verible::Symbol& symbol);
+bool IsOutOfLineConstraintDefinition(const verible::Symbol &symbol);
 
-const verible::TokenInfo* GetSymbolIdentifierFromConstraintDeclaration(
-    const verible::Symbol& symbol);
+const verible::TokenInfo *GetSymbolIdentifierFromConstraintDeclaration(
+    const verible::Symbol &symbol);
 
 }  // namespace verilog
 

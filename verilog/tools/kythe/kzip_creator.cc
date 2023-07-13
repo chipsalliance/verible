@@ -37,10 +37,10 @@ constexpr absl::string_view kFileRoot = "root/files/";
 
 std::string SHA256Digest(absl::string_view content) {
   std::array<unsigned char, SHA256_DIGEST_LENGTH> buf;
-  ::SHA256(reinterpret_cast<const unsigned char*>(content.data()),
+  ::SHA256(reinterpret_cast<const unsigned char *>(content.data()),
            content.size(), buf.data());
-  return absl::BytesToHexString(
-      absl::string_view(reinterpret_cast<const char*>(buf.data()), buf.size()));
+  return absl::BytesToHexString(absl::string_view(
+      reinterpret_cast<const char *>(buf.data()), buf.size()));
 }
 
 constexpr int kKZipCompressionLevel = 9;
@@ -66,7 +66,7 @@ std::string KzipCreator::AddSourceFile(absl::string_view path,
 }
 
 absl::Status KzipCreator::AddCompilationUnit(
-    const ::kythe::proto::IndexedCompilation& unit) {
+    const ::kythe::proto::IndexedCompilation &unit) {
   std::string content;
   if (!unit.SerializeToString(&content)) {
     return absl::InternalError("Failed to serialize the compilation unit");

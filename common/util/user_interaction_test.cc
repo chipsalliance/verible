@@ -28,7 +28,7 @@ TEST(ReadCharFromUserTest, NonTerminalInput) {
   std::ostringstream output;
   char characters[6];
 
-  for (char& c : characters) {
+  for (char &c : characters) {
     c = ReadCharFromUser(input, output, false, "A prompt.");
   }
 
@@ -46,7 +46,7 @@ TEST(ReadCharFromUserTest, TerminalInput) {
   std::ostringstream output;
   char characters[4];
 
-  for (char& c : characters) {
+  for (char &c : characters) {
     output.str("");
     output.clear();
     c = ReadCharFromUser(input, output, true, "A prompt.");

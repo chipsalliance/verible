@@ -37,8 +37,8 @@ class AutoPopStack {
   using value_type = T;
   using this_type = AutoPopStack<value_type>;
 
-  using reference = value_type&;
-  using const_reference = const value_type&;
+  using reference = value_type &;
+  using const_reference = const value_type &;
 
   using stack_type = std::vector<value_type>;
   using iterator = typename stack_type::iterator;
@@ -49,21 +49,21 @@ class AutoPopStack {
   // it's the only class that can modify number of elements in stack
   class AutoPop {
    public:
-    AutoPop(this_type* stack, value_type&& value) : stack_(stack) {
+    AutoPop(this_type *stack, value_type &&value) : stack_(stack) {
       stack->Push(std::move(value));
     }
-    AutoPop(this_type* stack, const_reference value) : stack_(stack) {
+    AutoPop(this_type *stack, const_reference value) : stack_(stack) {
       stack->Push(&value);
     }
     ~AutoPop() { stack_->Pop(); }
 
-    AutoPop& operator=(const AutoPop&) = delete;  // copy-assign
-    AutoPop& operator=(AutoPop&&) = delete;       // move-assign
-    AutoPop(const AutoPop&) = delete;             // copy-construct
-    AutoPop(AutoPop&&) = delete;                  // move-construct
+    AutoPop &operator=(const AutoPop &) = delete;  // copy-assign
+    AutoPop &operator=(AutoPop &&) = delete;       // move-assign
+    AutoPop(const AutoPop &) = delete;             // copy-construct
+    AutoPop(AutoPop &&) = delete;                  // move-construct
 
    private:
-    this_type* stack_;
+    this_type *stack_;
   };
 
   // returns depth of context stack
@@ -93,7 +93,7 @@ class AutoPopStack {
   }
 
   // Push a value_type onto the stack (takes r-value reference)
-  void Push(value_type&& value) { stack_.push_back(std::move(value)); }
+  void Push(value_type &&value) { stack_.push_back(std::move(value)); }
 
   // Push a value_type onto the stack (copy, takes reference)
   void Push(const_reference value) { stack_.push_back(value); }

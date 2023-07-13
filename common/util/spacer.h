@@ -28,7 +28,7 @@ struct Spacer {
   char repeated_char;
 };
 
-std::ostream& operator<<(std::ostream&, const Spacer&);
+std::ostream &operator<<(std::ostream &, const Spacer &);
 
 }  // namespace verible
 

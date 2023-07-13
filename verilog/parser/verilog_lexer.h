@@ -46,10 +46,10 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
   void Restart(absl::string_view) final;
 
   // Returns true if token is invalid.
-  bool TokenIsError(const verible::TokenInfo&) const final;
+  bool TokenIsError(const verible::TokenInfo &) const final;
 
   // Filter predicate that can be used for testing and parsing.
-  static bool KeepSyntaxTreeTokens(const verible::TokenInfo&);
+  static bool KeepSyntaxTreeTokens(const verible::TokenInfo &);
 
  private:
   // Main lexing function. Will be defined by Flex.
@@ -72,7 +72,7 @@ class VerilogLexer : public verible::FlexLexerAdapter<verilogFlexLexer> {
 // Recursively lex the given 'text', and apply 'func' to each subtoken.
 void RecursiveLexText(
     absl::string_view text,
-    const std::function<void(const verible::TokenInfo&)>& func);
+    const std::function<void(const verible::TokenInfo &)> &func);
 
 }  // namespace verilog
 

@@ -34,12 +34,12 @@ using verible::lsp::TextEdit;
 
 // Generate a specific code action and extract text edits from it
 std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
-    SymbolTableHandler* symbol_table_handler, const BufferTracker* tracker,
+    SymbolTableHandler *symbol_table_handler, const BufferTracker *tracker,
     Range range, absl::string_view title) {
   CodeActionParams p = {.textDocument = {tracker->current()->uri()},
                         .range = range};
   nlohmann::json changes;
-  for (const CodeAction& action :
+  for (const CodeAction &action :
        GenerateAutoExpandCodeActions(symbol_table_handler, tracker, p)) {
     if (action.title == title) {
       EXPECT_TRUE(changes.empty());
@@ -52,11 +52,11 @@ std::vector<TextEdit> AutoExpandCodeActionToTextEdits(
 
 // Generate text edits from a full AUTO expansion
 std::vector<TextEdit> GenerateFullAutoExpandTextEdits(
-    SymbolTableHandler* symbol_table_handler, const BufferTracker* tracker) {
+    SymbolTableHandler *symbol_table_handler, const BufferTracker *tracker) {
   EXPECT_TRUE(tracker);
   const auto current = tracker->current();
   EXPECT_TRUE(current);
-  const TextStructureView& text_structure = current->parser().Data();
+  const TextStructureView &text_structure = current->parser().Data();
   return AutoExpandCodeActionToTextEdits(
       symbol_table_handler, tracker,
       {.start = {.line = 0},
@@ -66,8 +66,8 @@ std::vector<TextEdit> GenerateFullAutoExpandTextEdits(
 
 // Determines how TextTextEdits* should test a function
 struct TestRun {
-  using EditFn =
-      std::function<std::vector<TextEdit>(SymbolTableHandler*, BufferTracker*)>;
+  using EditFn = std::function<std::vector<TextEdit>(SymbolTableHandler *,
+                                                     BufferTracker *)>;
   const EditFn edit_fn = GenerateFullAutoExpandTextEdits;  // Function that
                                                            // generates text
                                                            // edits to check
@@ -107,12 +107,12 @@ std::string Format(const absl::string_view filename,
 // effect
 void TestTextEditsWithProject(
 
-    const std::vector<absl::string_view>& project_file_contents,
+    const std::vector<absl::string_view> &project_file_contents,
     absl::string_view text_before, const absl::string_view text_golden,
     std::deque<TestRun> runs = TestRun::defaultRuns()) {
   if (runs.empty()) return;
-  const auto& run = runs.front();
-  static const char* TESTED_FILENAME = "<<tested-file>>";
+  const auto &run = runs.front();
+  static const char *TESTED_FILENAME = "<<tested-file>>";
   // Create a Verilog project with the given project file contents
   const std::shared_ptr<VerilogProject> proj =
       std::make_shared<VerilogProject>(".", std::vector<std::string>());
@@ -145,14 +145,14 @@ void TestTextEditsWithProject(
   // valid.
   // Note: according to the spec, TextEdits should never overlap.
   std::sort(edits.rbegin(), edits.rend(),
-            [](const TextEdit& first, const TextEdit& second) {
+            [](const TextEdit &first, const TextEdit &second) {
               if (first.range.end.line == second.range.start.line) {
                 return first.range.end.character < second.range.start.character;
               }
               return first.range.end.line < second.range.start.line;
             });
   // Apply the text edits
-  for (const TextEdit& edit : edits) {
+  for (const TextEdit &edit : edits) {
     buffer.ApplyChange(TextDocumentContentChangeEvent{
         .range = edit.range, .has_range = true, .text = edit.newText});
   }
@@ -180,7 +180,7 @@ void TestTextEditsWithProject(
 // Same as above, without the project file parameter
 void TestTextEdits(const absl::string_view text_before,
                    const absl::string_view text_golden,
-                   const std::deque<TestRun>& runs = TestRun::defaultRuns()) {
+                   const std::deque<TestRun> &runs = TestRun::defaultRuns()) {
   TestTextEditsWithProject({}, text_before, text_golden, runs);
 }
 
@@ -2112,15 +2112,15 @@ module foo (  /*AUTOARG*/
 endmodule
 )",
       {TestRun{.edit_fn =
-                   [](SymbolTableHandler* symbol_table_handler,
-                      BufferTracker* tracker) {
+                   [](SymbolTableHandler *symbol_table_handler,
+                      BufferTracker *tracker) {
                      return AutoExpandCodeActionToTextEdits(
                          symbol_table_handler, tracker,
                          {.start = {.line = 0}, .end = {.line = 16}},
                          "Expand all AUTOs in file");
                    }},
-       TestRun{.edit_fn = [](SymbolTableHandler* symbol_table_handler,
-                             BufferTracker* tracker) {
+       TestRun{.edit_fn = [](SymbolTableHandler *symbol_table_handler,
+                             BufferTracker *tracker) {
          return AutoExpandCodeActionToTextEdits(
              symbol_table_handler, tracker,
              {.start = {.line = 7}, .end = {.line = 8}},
@@ -3377,8 +3377,8 @@ module bar (  /*AUTOARG*/);
 endmodule
 )",
       {TestRun{.edit_fn =
-                   [](SymbolTableHandler* symbol_table_handler,
-                      BufferTracker* tracker) {
+                   [](SymbolTableHandler *symbol_table_handler,
+                      BufferTracker *tracker) {
                      return AutoExpandCodeActionToTextEdits(
                          symbol_table_handler, tracker,
                          {.start = {.line = 0}, .end = {.line = 10}},
@@ -3487,8 +3487,8 @@ module bar (  /*AUTOARG*/
   /*AUTOREG*/
 endmodule
 )",
-      TestRun{.edit_fn = [](SymbolTableHandler* symbol_table_handler,
-                            BufferTracker* tracker) {
+      TestRun{.edit_fn = [](SymbolTableHandler *symbol_table_handler,
+                            BufferTracker *tracker) {
         return AutoExpandCodeActionToTextEdits(
             symbol_table_handler, tracker,
             {.start = {.line = 1}, .end = {.line = 1}},
@@ -3573,8 +3573,8 @@ module qux (
 endmodule
 )",
       {TestRun{.edit_fn =
-                   [](SymbolTableHandler* symbol_table_handler,
-                      BufferTracker* tracker) {
+                   [](SymbolTableHandler *symbol_table_handler,
+                      BufferTracker *tracker) {
                      return AutoExpandCodeActionToTextEdits(
                          symbol_table_handler, tracker,
                          {.start = {.line = 1}, .end = {.line = 3}},

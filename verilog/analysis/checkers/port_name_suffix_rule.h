@@ -35,17 +35,17 @@ class PortNameSuffixRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
   // Helper functions
-  void Violation(absl::string_view direction, const verible::TokenInfo& token,
-                 const verible::SyntaxTreeContext& context);
+  void Violation(absl::string_view direction, const verible::TokenInfo &token,
+                 const verible::SyntaxTreeContext &context);
   static bool IsSuffixCorrect(absl::string_view suffix,
                               absl::string_view direction);
 

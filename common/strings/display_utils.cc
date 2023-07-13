@@ -21,7 +21,7 @@ namespace verible {
 
 static constexpr absl::string_view kEllipses = "...";
 
-std::ostream& operator<<(std::ostream& stream, const AutoTruncate& trunc) {
+std::ostream &operator<<(std::ostream &stream, const AutoTruncate &trunc) {
   const auto text = trunc.text;
   const int length = text.length();
   if (length <= trunc.max_chars) return stream << text;
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& stream, const AutoTruncate& trunc) {
                 << text.substr(tail_start, tail_length);
 }
 
-std::ostream& operator<<(std::ostream& stream, const EscapeString& vis) {
+std::ostream &operator<<(std::ostream &stream, const EscapeString &vis) {
   for (const unsigned char c : vis.text) {
     switch (c) {
       case '\a':
@@ -76,7 +76,7 @@ std::ostream& operator<<(std::ostream& stream, const EscapeString& vis) {
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const VisualizeWhitespace& vis) {
+std::ostream &operator<<(std::ostream &stream, const VisualizeWhitespace &vis) {
   for (const char c : vis.text) {
     switch (c) {
       case ' ':

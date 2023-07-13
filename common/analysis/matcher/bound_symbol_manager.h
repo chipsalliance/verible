@@ -36,29 +36,29 @@ namespace matcher {
 class BoundSymbolManager {
  public:
   // True if id is in bound_symbols. False otherwise.
-  bool ContainsSymbol(const std::string& id) const;
+  bool ContainsSymbol(const std::string &id) const;
 
   // If id is in bound_symbols, return matching Symbol*.
   // Otherwise, returns nullptr.
-  const Symbol* FindSymbol(const std::string& id) const;
+  const Symbol *FindSymbol(const std::string &id) const;
 
   // Adds symbol to bound_symbols with id as key.
-  void BindSymbol(const std::string& id, const Symbol* symbol);
+  void BindSymbol(const std::string &id, const Symbol *symbol);
 
   void Clear() { bound_symbols_.clear(); }
   int Size() const { return bound_symbols_.size(); }
 
-  const std::map<std::string, const Symbol*>& GetBoundMap() const {
+  const std::map<std::string, const Symbol *> &GetBoundMap() const {
     return bound_symbols_;
   }
 
   template <typename T>
-  const T* GetAs(const std::string& key) const {
-    return down_cast<const T*>(FindSymbol(key));
+  const T *GetAs(const std::string &key) const {
+    return down_cast<const T *>(FindSymbol(key));
   }
 
  private:
-  std::map<std::string, const Symbol*> bound_symbols_;
+  std::map<std::string, const Symbol *> bound_symbols_;
 };
 
 }  // namespace matcher

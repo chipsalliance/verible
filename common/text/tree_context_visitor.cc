@@ -20,9 +20,9 @@
 
 namespace verible {
 
-void TreeContextVisitor::Visit(const SyntaxTreeNode& node) {
+void TreeContextVisitor::Visit(const SyntaxTreeNode &node) {
   const SyntaxTreeContext::AutoPop p(&current_context_, &node);
-  for (const auto& child : node.children()) {
+  for (const auto &child : node.children()) {
     if (child) child->Accept(this);
   }
 }
@@ -31,37 +31,37 @@ namespace {
 template <class V>
 class AutoPopBack {
  public:
-  explicit AutoPopBack(V* v) : vec_(v) { vec_->push_back(0); }
+  explicit AutoPopBack(V *v) : vec_(v) { vec_->push_back(0); }
   ~AutoPopBack() { vec_->pop_back(); }
 
  private:
-  V* vec_;
+  V *vec_;
 };
 }  // namespace
 
-void TreeContextPathVisitor::Visit(const SyntaxTreeNode& node) {
+void TreeContextPathVisitor::Visit(const SyntaxTreeNode &node) {
   const SyntaxTreeContext::AutoPop c(&current_context_, &node);
   const AutoPopBack<SyntaxTreePath> p(&current_path_);
-  for (const auto& child : node.children()) {
+  for (const auto &child : node.children()) {
     if (child) child->Accept(this);
     ++current_path_.back();
   }
 }
 
 SequenceStreamFormatter<SyntaxTreePath> TreePathFormatter(
-    const SyntaxTreePath& path) {
+    const SyntaxTreePath &path) {
   return SequenceFormatter(path, ",", "[", "]");
 }
 
-SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path) {
+SyntaxTreePath NextSiblingPath(const SyntaxTreePath &path) {
   CHECK(!path.empty());
   auto next = path;
   ++next.back();
   return next;
 }
 
-static int CompareSyntaxTreePath(const SyntaxTreePath& a,
-                                 const SyntaxTreePath& b, int index) {
+static int CompareSyntaxTreePath(const SyntaxTreePath &a,
+                                 const SyntaxTreePath &b, int index) {
   // a[index] ? b[index]
   if (int(a.size()) > index && int(b.size()) > index) {
     if (a[index] < b[index]) return -1;
@@ -76,7 +76,7 @@ static int CompareSyntaxTreePath(const SyntaxTreePath& a,
   return 0;
 }
 
-int CompareSyntaxTreePath(const SyntaxTreePath& a, const SyntaxTreePath& b) {
+int CompareSyntaxTreePath(const SyntaxTreePath &a, const SyntaxTreePath &b) {
   return CompareSyntaxTreePath(a, b, 0);
 }
 

@@ -18,13 +18,13 @@
 
 namespace verible {
 
-void RebaseStringView(absl::string_view* src, absl::string_view dest) {
+void RebaseStringView(absl::string_view *src, absl::string_view dest) {
   CHECK_EQ(*src, dest) << "RebaseStringView() is only valid when the "
                           "new text referenced matches the old text.";
   *src = dest;
 }
 
-void RebaseStringView(absl::string_view* src, const char* dest) {
+void RebaseStringView(absl::string_view *src, const char *dest) {
   RebaseStringView(src, absl::string_view(dest, src->length()));
 }
 

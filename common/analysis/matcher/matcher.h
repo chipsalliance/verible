@@ -30,14 +30,14 @@ namespace matcher {
 // Forward declaration of Matcher class
 class Matcher;
 
-using SymbolPredicate = std::function<bool(const Symbol&)>;
+using SymbolPredicate = std::function<bool(const Symbol &)>;
 using SymbolTransformer =
-    std::function<std::vector<const Symbol*>(const Symbol&)>;
+    std::function<std::vector<const Symbol *>(const Symbol &)>;
 
 // Manages recursion on symbol for inner_matchers
 using InnerMatchHandler = std::function<bool(
-    const Symbol& symbol, const std::vector<Matcher>& inner_matchers,
-    BoundSymbolManager* manager)>;
+    const Symbol &symbol, const std::vector<Matcher> &inner_matchers,
+    BoundSymbolManager *manager)>;
 
 // Matcher provides an interface for creating nested tree pattern matchers.
 //
@@ -54,11 +54,11 @@ using InnerMatchHandler = std::function<bool(
 //
 class Matcher {
  public:
-  Matcher(const SymbolPredicate& p, const InnerMatchHandler& handler)
+  Matcher(const SymbolPredicate &p, const InnerMatchHandler &handler)
       : predicate_(p), inner_match_handler_(handler) {}
 
-  Matcher(const SymbolPredicate& p, const InnerMatchHandler& handler,
-          const SymbolTransformer& t)
+  Matcher(const SymbolPredicate &p, const InnerMatchHandler &handler,
+          const SymbolTransformer &t)
       : predicate_(p), inner_match_handler_(handler), transformer_(t) {}
 
   // Returns true if this and all submatchers match on symbol.
@@ -66,14 +66,14 @@ class Matcher {
   // If this and all submatchers match, adds their bound symbols to manager
   // If bind_id_ is not nullopt, then bind symbol to bind_id_
   // TODO(jeremycs): implement match branching behavior here.
-  bool Matches(const Symbol& symbol, BoundSymbolManager* manager) const;
+  bool Matches(const Symbol &symbol, BoundSymbolManager *manager) const;
 
   // No-op case for variadic AddMatcher.
   void AddMatchers() const {}
 
   // Adds an arbitrary number of matchers to this as submatchers
   template <typename... Args>
-  void AddMatchers(const Matcher& matcher, Args&&... args) {
+  void AddMatchers(const Matcher &matcher, Args &&...args) {
     inner_matchers_.push_back(matcher);
     AddMatchers(std::forward<Args>(args)...);
   }
@@ -93,7 +93,7 @@ class Matcher {
   // to inner matchers.
   // Default transformation does not modify symbol.
   SymbolTransformer transformer_ =
-      [](const Symbol& symbol) -> std::vector<const Symbol*> {
+      [](const Symbol &symbol) -> std::vector<const Symbol *> {
     return {&symbol};
   };
 
@@ -125,7 +125,7 @@ class BindableMatcher : public Matcher {
   // Inherit constructors from Matcher
   using Matcher::Matcher;
 
-  BindableMatcher& Bind(const std::string& id) {
+  BindableMatcher &Bind(const std::string &id) {
     bind_id_ = id;
     return *this;
   }

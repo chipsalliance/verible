@@ -26,17 +26,17 @@
 
 namespace verible {
 
-void FakeLexer::SetTokensData(const std::vector<TokenInfo>& tokens) {
+void FakeLexer::SetTokensData(const std::vector<TokenInfo> &tokens) {
   tokens_ = tokens;
   tokens_iter_ = tokens_.begin();
 }
 
-const TokenInfo& FakeLexer::DoNextToken() {
+const TokenInfo &FakeLexer::DoNextToken() {
   CHECK(tokens_iter_ != tokens_.cend());
   return *tokens_iter_++;
 }
 
-std::ostream& operator<<(std::ostream& stream, const ShowCode& code) {
+std::ostream &operator<<(std::ostream &stream, const ShowCode &code) {
   return stream << " from code:\n" << code.text << "<<EOF>>";
 }
 

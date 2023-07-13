@@ -44,7 +44,7 @@ ABSL_RETIRED_FLAG(
     "The absolute location which we prepend to the files in the file "
     "list (where listed files are relative to).");
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] --filelist_path FILE "
                                   R"(
@@ -82,10 +82,10 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
   }
   // Normalize the file list
   absl::string_view filelist_root = verible::file::Dirname(filelist_path);
-  for (std::string& file_path : filelist.file_paths) {
+  for (std::string &file_path : filelist.file_paths) {
     file_path = verible::file::JoinPath(filelist_root, file_path);
   }
-  for (std::string& include : filelist.preprocessing.include_dirs) {
+  for (std::string &include : filelist.preprocessing.include_dirs) {
     include = verible::file::JoinPath(filelist_root, include);
   }
 
@@ -95,21 +95,21 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
     compilation.mutable_index()->add_revisions(code_revision);
   }
 
-  auto* unit = compilation.mutable_unit();
+  auto *unit = compilation.mutable_unit();
   *unit->mutable_v_name()->mutable_corpus() = absl::GetFlag(FLAGS_corpus);
   *unit->mutable_v_name()->mutable_language() = "verilog";
   *unit->add_argument() = "--f=filelist";
 
   // Construct Verible project
-  const std::vector<std::string>& file_paths(filelist.file_paths);
+  const std::vector<std::string> &file_paths(filelist.file_paths);
 
   verilog::kythe::KzipCreator kzip(output_path);
   const std::string filelist_digest =
       kzip.AddSourceFile("filelist", filelist.ToString());
-  auto* filelist_input = unit->add_required_input();
+  auto *filelist_input = unit->add_required_input();
   *filelist_input->mutable_info()->mutable_path() = "filelist";
   *filelist_input->mutable_info()->mutable_digest() = filelist_digest;
-  for (const std::string& file_path : file_paths) {
+  for (const std::string &file_path : file_paths) {
     auto content_or = verible::file::GetContentAsString(file_path);
     if (!content_or.ok()) {
       LOG(ERROR) << "Failed to open " << file_path
@@ -117,7 +117,7 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
       continue;
     }
     const std::string digest = kzip.AddSourceFile(file_path, *content_or);
-    auto* file_input = unit->add_required_input();
+    auto *file_input = unit->add_required_input();
     *file_input->mutable_info()->mutable_path() = file_path;
     *file_input->mutable_info()->mutable_digest() = digest;
     *file_input->mutable_v_name()->mutable_path() = file_path;

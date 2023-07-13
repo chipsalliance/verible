@@ -48,11 +48,11 @@ class EndifCommentRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   EndifCommentRule() = default;
 
-  void HandleToken(const verible::TokenInfo& token) final;
+  void HandleToken(const verible::TokenInfo &token) final;
 
   verible::LintRuleStatus Report() const final;
 

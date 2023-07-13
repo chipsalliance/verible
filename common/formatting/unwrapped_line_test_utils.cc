@@ -25,12 +25,12 @@
 namespace verible {
 
 void UnwrappedLineMemoryHandler::CreateTokenInfosExternalStringBuffer(
-    const std::vector<TokenInfo>& tokens) {
+    const std::vector<TokenInfo> &tokens) {
   // pre-allocate to guarantee address stability, prevent realloc.
   const size_t N = tokens.size();
   token_infos_.reserve(N);
   pre_format_tokens_.reserve(N);
-  for (const auto& token : tokens) {
+  for (const auto &token : tokens) {
     token_infos_.emplace_back(token.token_enum(), token.text());
     pre_format_tokens_.emplace_back(&token_infos_.back());
   }
@@ -38,14 +38,14 @@ void UnwrappedLineMemoryHandler::CreateTokenInfosExternalStringBuffer(
 }
 
 void UnwrappedLineMemoryHandler::CreateTokenInfos(
-    const std::vector<TokenInfo>& tokens) {
+    const std::vector<TokenInfo> &tokens) {
   CreateTokenInfosExternalStringBuffer(tokens);
   // Join the token string_view fragments into a single contiguous string buffer
   // and rebase the ranges to point into the new buffer.
   TokenInfo::Concatenate(&joined_token_text_, &token_infos_);
 }
 
-void UnwrappedLineMemoryHandler::AddFormatTokens(UnwrappedLine* uwline) {
+void UnwrappedLineMemoryHandler::AddFormatTokens(UnwrappedLine *uwline) {
   for (size_t i = 0; i < pre_format_tokens_.size(); ++i) {
     uwline->SpanNextToken();
     // Note: this leaves PreFormatToken::format_token_enum unset.

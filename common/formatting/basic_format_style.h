@@ -58,11 +58,11 @@ enum class IndentationStyle {
   kWrap,
 };
 
-std::ostream& operator<<(std::ostream&, IndentationStyle);
+std::ostream &operator<<(std::ostream &, IndentationStyle);
 
-bool AbslParseFlag(absl::string_view, IndentationStyle*, std::string*);
+bool AbslParseFlag(absl::string_view, IndentationStyle *, std::string *);
 
-std::string AbslUnparseFlag(const IndentationStyle&);
+std::string AbslUnparseFlag(const IndentationStyle &);
 
 }  // namespace verible
 

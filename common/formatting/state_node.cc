@@ -52,7 +52,7 @@ static SpacingDecision FrontTokenSpacing(const FormatTokenRange range) {
   return SpacingDecision::kAppend;
 }
 
-StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
+StateNode::StateNode(const UnwrappedLine &uwline, const BasicFormatStyle &style)
     : prev_state(nullptr),
       undecided_path(uwline.TokensRange().begin(), uwline.TokensRange().end()),
       spacing_choice(FrontTokenSpacing(uwline.TokensRange())),
@@ -75,8 +75,8 @@ StateNode::StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style)
   VLOG(4) << "root: " << *this;
 }
 
-StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
-                     const BasicFormatStyle& style,
+StateNode::StateNode(const std::shared_ptr<const StateNode> &parent,
+                     const BasicFormatStyle &style,
                      SpacingDecision spacing_choice)
     : prev_state(ABSL_DIE_IF_NULL(parent)),
       undecided_path(prev_state->undecided_path.begin() + 1,  // pop_front()
@@ -87,7 +87,7 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
       wrap_column_positions(prev_state->wrap_column_positions) {
   CHECK(!prev_state->Done());
 
-  const PreFormatToken& current_format_token(GetCurrentToken());
+  const PreFormatToken &current_format_token(GetCurrentToken());
   VLOG(4) << "token.text: \'" << current_format_token.token->text() << '\'';
 
   bool called_open_group_balance = false;
@@ -127,7 +127,7 @@ StateNode::StateNode(const std::shared_ptr<const StateNode>& parent,
   VLOG(4) << "new state_node: " << *this;
 }
 
-const PreFormatToken& StateNode::GetPreviousToken() const {
+const PreFormatToken &StateNode::GetPreviousToken() const {
   CHECK(!ABSL_DIE_IF_NULL(prev_state)->Done());
   return prev_state->GetCurrentToken();
 }
@@ -137,7 +137,7 @@ const PreFormatToken& StateNode::GetPreviousToken() const {
 // current_column for multi-line tokens.
 int StateNode::UpdateColumnPosition() {
   VLOG(4) << __FUNCTION__ << " spacing decision: " << spacing_choice;
-  const PreFormatToken& current_format_token(GetCurrentToken());
+  const PreFormatToken &current_format_token(GetCurrentToken());
   const int token_length = current_format_token.Length();
 
   {
@@ -212,7 +212,7 @@ int StateNode::UpdateColumnPosition() {
   return current_column;
 }
 
-void StateNode::UpdateCumulativeCost(const BasicFormatStyle& style,
+void StateNode::UpdateCumulativeCost(const BasicFormatStyle &style,
                                      int column_for_penalty) {
   // This must be called after UpdateColumnPosition() to account for
   // the updated current_column.
@@ -222,7 +222,7 @@ void StateNode::UpdateCumulativeCost(const BasicFormatStyle& style,
   if (!IsRootState()) {
     CHECK_EQ(cumulative_cost, prev_state->cumulative_cost);
   }
-  const PreFormatToken& current_format_token(GetCurrentToken());
+  const PreFormatToken &current_format_token(GetCurrentToken());
   if (spacing_choice == SpacingDecision::kWrap) {
     // Only incur the penalty for breaking before this token.
     // Newly wrapped, so don't bother checking line length and suppress
@@ -239,7 +239,7 @@ void StateNode::UpdateCumulativeCost(const BasicFormatStyle& style,
   // no additional cost if Spacing::Preserve
 }
 
-void StateNode::OpenGroupBalance(const BasicFormatStyle& style) {
+void StateNode::OpenGroupBalance(const BasicFormatStyle &style) {
   VLOG(4) << __FUNCTION__;
   // The adjustment to the wrap_column_positions stack based on a token's
   // balance type is delayed until we see the token *after*.
@@ -274,7 +274,7 @@ void StateNode::OpenGroupBalance(const BasicFormatStyle& style) {
   CHECK(!wrap_column_positions.empty());
 
   if (!IsRootState()) {
-    const PreFormatToken& prev_format_token(GetPreviousToken());
+    const PreFormatToken &prev_format_token(GetPreviousToken());
     if (prev_format_token.balancing == GroupBalancing::kOpen) {
       VLOG(4) << "previous token is open-group";
       switch (spacing_choice) {
@@ -315,10 +315,10 @@ void StateNode::CloseGroupBalance() {
 }
 
 std::shared_ptr<const StateNode> StateNode::AppendIfItFits(
-    const std::shared_ptr<const StateNode>& current_state,
-    const verible::BasicFormatStyle& style) {
+    const std::shared_ptr<const StateNode> &current_state,
+    const verible::BasicFormatStyle &style) {
   if (current_state->Done()) return current_state;
-  const auto& token = current_state->GetNextToken();
+  const auto &token = current_state->GetNextToken();
   // It seems little wasteful to always create both states when only one is
   // returned, but compiler optimization should be able to leverage this.
   // In any case, this is not a critical path operation, so we're not going to
@@ -334,8 +334,8 @@ std::shared_ptr<const StateNode> StateNode::AppendIfItFits(
 }
 
 std::shared_ptr<const StateNode> StateNode::QuickFinish(
-    const std::shared_ptr<const StateNode>& current_state,
-    const verible::BasicFormatStyle& style) {
+    const std::shared_ptr<const StateNode> &current_state,
+    const verible::BasicFormatStyle &style) {
   std::shared_ptr<const StateNode> latest(current_state);
   // Construct a chain of reference-counted states where the returned pointer
   // "holds on" to all of its ancestors like a singly-linked-list.
@@ -345,7 +345,7 @@ std::shared_ptr<const StateNode> StateNode::QuickFinish(
   return latest;
 }
 
-void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
+void StateNode::ReconstructFormatDecisions(FormattedExcerpt *result) const {
   // Find all wrap decisions from the greatest ancestor state to this state.
 
   // This is allowed to work on any intermediate state in the search process,
@@ -354,11 +354,11 @@ void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
   const size_t depth = Depth();
   CHECK_LE(depth, result->Tokens().size());
 
-  const StateNode* reverse_iter = this;
-  auto& format_tokens = result->MutableTokens();
+  const StateNode *reverse_iter = this;
+  auto &format_tokens = result->MutableTokens();
   const auto format_tokens_slice =
       make_range(format_tokens.begin(), format_tokens.begin() + depth);
-  for (auto& format_token : reversed_view(format_tokens_slice)) {
+  for (auto &format_token : reversed_view(format_tokens_slice)) {
     const auto text = format_token.token->text();
     VLOG(3) << "reconstructing: " << text;
     // Apply decision at reverse_iter to (formatted) FormatToken.
@@ -386,7 +386,7 @@ void StateNode::ReconstructFormatDecisions(FormattedExcerpt* result) const {
   }
 }
 
-std::ostream& operator<<(std::ostream& stream, const StateNode& state) {
+std::ostream &operator<<(std::ostream &stream, const StateNode &state) {
   // Omit information about remaining decisions and parent state.
   CHECK(!state.wrap_column_positions.empty());
   return stream << "spacing:" << state.spacing_choice <<  // noformat

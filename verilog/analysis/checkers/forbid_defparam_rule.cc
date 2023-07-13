@@ -37,7 +37,7 @@ VERILOG_REGISTER_LINT_RULE(ForbidDefparamRule);
 
 static constexpr absl::string_view kMessage = "Do not use defparam.";
 
-const LintRuleDescriptor& ForbidDefparamRule::GetDescriptor() {
+const LintRuleDescriptor &ForbidDefparamRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-defparam",
       .topic = "module-instantiation",
@@ -47,19 +47,19 @@ const LintRuleDescriptor& ForbidDefparamRule::GetDescriptor() {
 }
 
 // Matches the defparam construct.
-static const Matcher& OverrideMatcher() {
+static const Matcher &OverrideMatcher() {
   static const Matcher matcher(NodekParameterOverride());
   return matcher;
 }
 
 void ForbidDefparamRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (OverrideMatcher().Matches(symbol, &manager)) {
-    const verible::SyntaxTreeLeaf* defparam =
+    const verible::SyntaxTreeLeaf *defparam =
         GetSubtreeAsLeaf(symbol, NodeEnum::kParameterOverride, 0);
     if (defparam) {
-      const auto& defparam_token = defparam->get();
+      const auto &defparam_token = defparam->get();
       CHECK_EQ(defparam_token.token_enum(), TK_defparam);
       violations_.insert(
           verible::LintViolation(defparam_token, kMessage, context));

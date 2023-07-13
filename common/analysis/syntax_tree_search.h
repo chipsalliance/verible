@@ -33,7 +33,7 @@ namespace verible {
 struct TreeSearchMatch {
   // Note: The syntax tree to which the matching node belongs must outlive
   // this pointer.
-  const Symbol* match;
+  const Symbol *match;
   // A copy of the stack of syntax tree nodes that are ancestors of
   // the match node/leaf.  Note: This is needed because syntax tree nodes
   // don't have upward links to parents.
@@ -44,12 +44,12 @@ struct TreeSearchMatch {
 // vector.  This is useful for analyses that need to look at a collection
 // of related nodes together, rather than as each one is encountered.
 std::vector<TreeSearchMatch> SearchSyntaxTree(
-    const Symbol& root, const verible::matcher::Matcher& matcher,
-    const std::function<bool(const SyntaxTreeContext&)>& context_predicate);
+    const Symbol &root, const verible::matcher::Matcher &matcher,
+    const std::function<bool(const SyntaxTreeContext &)> &context_predicate);
 
 // This overload treats the missing context_predicate as always returning true.
 std::vector<TreeSearchMatch> SearchSyntaxTree(
-    const Symbol& root, const verible::matcher::Matcher& matcher);
+    const Symbol &root, const verible::matcher::Matcher &matcher);
 
 }  // namespace verible
 

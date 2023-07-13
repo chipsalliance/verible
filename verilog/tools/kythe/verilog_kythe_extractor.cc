@@ -48,7 +48,7 @@ enum class PrintMode {
   kNone,
 };
 
-static const verible::EnumNameMap<PrintMode>& PrintModeStringMap() {
+static const verible::EnumNameMap<PrintMode> &PrintModeStringMap() {
   static const verible::EnumNameMap<PrintMode> kPrintModeStringMap({
       {"json", PrintMode::kJSON},
       {"json_debug", PrintMode::kJSONDebug},
@@ -58,17 +58,17 @@ static const verible::EnumNameMap<PrintMode>& PrintModeStringMap() {
   return kPrintModeStringMap;
 }
 
-static std::ostream& operator<<(std::ostream& stream, PrintMode mode) {
+static std::ostream &operator<<(std::ostream &stream, PrintMode mode) {
   return PrintModeStringMap().Unparse(mode, stream);
 }
 
-static bool AbslParseFlag(absl::string_view text, PrintMode* mode,
-                          std::string* error) {
+static bool AbslParseFlag(absl::string_view text, PrintMode *mode,
+                          std::string *error) {
   return PrintModeStringMap().Parse(text, mode, error,
                                     "--print_kythe_facts value");
 }
 
-static std::string AbslUnparseFlag(const PrintMode& mode) {
+static std::string AbslUnparseFlag(const PrintMode &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();
@@ -114,7 +114,7 @@ namespace kythe {
 
 // Prints Kythe facts in proto format to stdout.
 static void PrintKytheFactsProtoEntries(
-    const IndexingFactNode& file_list_facts_tree, const VerilogProject& project,
+    const IndexingFactNode &file_list_facts_tree, const VerilogProject &project,
     int fd) {
   KytheProtoOutput proto_output(fd);
   StreamKytheFactsEntries(&proto_output, file_list_facts_tree, project);
@@ -122,19 +122,19 @@ static void PrintKytheFactsProtoEntries(
 
 // Just collect the facts, but don't print anything. Mostly useful for
 // debugging error checking or performance.
-static void KytheFactsNullPrinter(const IndexingFactNode& file_list_facts_tree,
-                                  const VerilogProject& project) {
+static void KytheFactsNullPrinter(const IndexingFactNode &file_list_facts_tree,
+                                  const VerilogProject &project) {
   class NullPrinter final : public KytheOutput {
    public:
-    void Emit(const Fact& fact) final {}
-    void Emit(const Edge& edge) final {}
+    void Emit(const Fact &fact) final {}
+    void Emit(const Edge &edge) final {}
   } printer;
   StreamKytheFactsEntries(&printer, file_list_facts_tree, project);
 }
 
 static std::vector<absl::Status> ExtractTranslationUnits(
-    absl::string_view file_list_path, VerilogProject* project,
-    const std::vector<std::string>& file_names) {
+    absl::string_view file_list_path, VerilogProject *project,
+    const std::vector<std::string> &file_names) {
   std::vector<absl::Status> errors;
   const verilog::kythe::IndexingFactNode file_list_facts_tree(
       verilog::kythe::ExtractFiles(file_list_path, project, file_names,
@@ -172,7 +172,7 @@ static std::vector<absl::Status> ExtractTranslationUnits(
 }  // namespace kythe
 }  // namespace verilog
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] --file_list_path FILE\n", R"(
 Extracts kythe indexing facts from the given SystemVerilog source files.
@@ -198,7 +198,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     LOG(ERROR) << "Error while reading file list: " << status;
     return 1;
   }
-  const std::vector<std::string>& file_paths(file_list.file_paths);
+  const std::vector<std::string> &file_paths(file_list.file_paths);
 
   // List of the directories for where to look for included files.
   std::vector<std::string> include_dir_paths =
@@ -218,7 +218,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
     LOG(ERROR) << "Encountered some issues while indexing files (could result "
                   "in missing indexing data):"
                << std::endl;
-    for (const auto& error : errors) {
+    for (const auto &error : errors) {
       LOG(ERROR) << error.message();
     }
     // TODO(ikr): option to cause any errors to exit non-zero, like

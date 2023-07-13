@@ -34,8 +34,8 @@ using DescentPath = std::vector<SymbolTag>;
 // entire subtree and return a very large vector if symbol's subtree contains
 // path in many different ways.
 //
-std::vector<const Symbol*> GetAllDescendantsFromPath(const Symbol& symbol,
-                                                     const DescentPath& path);
+std::vector<const Symbol *> GetAllDescendantsFromPath(const Symbol &symbol,
+                                                      const DescentPath &path);
 
 }  // namespace matcher
 }  // namespace verible

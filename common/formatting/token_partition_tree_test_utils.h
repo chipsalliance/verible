@@ -90,7 +90,7 @@ class TokenPartitionTreeBuilder {
   // Builds TokenPartitionTree. Token indexes used during construction are
   // replaced with iterators from 'tokens' vector.
   TokenPartitionTree build(
-      const std::vector<verible::PreFormatToken>& tokens) const;
+      const std::vector<verible::PreFormatToken> &tokens) const;
 
  private:
   int indent_ = 0;
@@ -108,8 +108,8 @@ class TokenPartitionTreeBuilder {
 //                       expected_tree);
 //
 ::testing::AssertionResult TokenPartitionTreesEqualPredFormat(
-    const char* actual_expr, const char* expected_expr,
-    const TokenPartitionTree& actual, const TokenPartitionTree& expected);
+    const char *actual_expr, const char *expected_expr,
+    const TokenPartitionTree &actual, const TokenPartitionTree &expected);
 
 }  // namespace verible
 

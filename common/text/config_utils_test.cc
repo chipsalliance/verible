@@ -134,7 +134,7 @@ TEST(ConfigUtilsTest, ParseNamedBitmap) {
   };
 
   absl::Status s;
-  for (const auto& testcase : kTestCases) {
+  for (const auto &testcase : kTestCases) {
     uint32_t bitmap = 0x12345678;
     s = ParseNameValues(testcase.first,
                         {{"baz", SetNamedBits(&bitmap, kBitNames)}});

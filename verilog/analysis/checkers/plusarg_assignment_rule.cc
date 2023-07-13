@@ -40,7 +40,7 @@ VERILOG_REGISTER_LINT_RULE(PlusargAssignmentRule);
 static constexpr absl::string_view kForbiddenFunctionName = "$test$plusargs";
 static constexpr absl::string_view kCorrectFunctionName = "$value$plusargs";
 
-const LintRuleDescriptor& PlusargAssignmentRule::GetDescriptor() {
+const LintRuleDescriptor &PlusargAssignmentRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "plusarg-assignment",
       .topic = "plusarg-value-assignment",
@@ -52,16 +52,16 @@ const LintRuleDescriptor& PlusargAssignmentRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& IdMatcher() {
+static const Matcher &IdMatcher() {
   static const Matcher matcher(SystemTFIdentifierLeaf().Bind("name"));
   return matcher;
 }
 
 void PlusargAssignmentRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (IdMatcher().Matches(symbol, &manager)) {
-    if (const auto* leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
+    if (const auto *leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
       if (kForbiddenFunctionName == leaf->get().text()) {
         violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(), context));

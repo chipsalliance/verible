@@ -33,23 +33,23 @@ class MemBlock {
   MemBlock() = default;
 
  public:
-  MemBlock(const MemBlock&) = delete;
-  MemBlock(MemBlock&&) = delete;
-  MemBlock& operator=(const MemBlock&) = delete;
-  MemBlock& operator=(MemBlock&&) = delete;
+  MemBlock(const MemBlock &) = delete;
+  MemBlock(MemBlock &&) = delete;
+  MemBlock &operator=(const MemBlock &) = delete;
+  MemBlock &operator=(MemBlock &&) = delete;
 };
 
 // An implementation of MemBlock backed by a std::string
 class StringMemBlock final : public MemBlock {
  public:
   StringMemBlock() = default;
-  explicit StringMemBlock(std::string&& move_from) : content_(move_from) {}
+  explicit StringMemBlock(std::string &&move_from) : content_(move_from) {}
   explicit StringMemBlock(absl::string_view copy_from)
       : content_(copy_from.begin(), copy_from.end()) {}
 
   // Assign/modify content. Use sparingly, ideally only in initialization
   // as the expectation of the MemBlock is that it won't change later.
-  std::string* mutable_content() { return &content_; }
+  std::string *mutable_content() { return &content_; }
 
   absl::string_view AsStringView() const final { return content_; }
 

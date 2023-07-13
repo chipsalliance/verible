@@ -68,7 +68,7 @@ static constexpr absl::string_view kBuiltinFunctions[] = {
     "pow",  "sin",  "sinh",  "sqrt", "tan",   "tanh",
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] < original > output\n"
                                   R"(
@@ -85,8 +85,8 @@ Output is written to stdout.
   const bool decode = absl::GetFlag(FLAGS_decode);
   subst.set_decode_mode(decode);
 
-  const auto& load_map_file = absl::GetFlag(FLAGS_load_map);
-  const auto& save_map_file = absl::GetFlag(FLAGS_save_map);
+  const auto &load_map_file = absl::GetFlag(FLAGS_load_map);
+  const auto &save_map_file = absl::GetFlag(FLAGS_save_map);
   if (!load_map_file.empty()) {
     absl::StatusOr<std::string> load_map_content_or =
         verible::file::GetContentAsString(load_map_file);
@@ -124,7 +124,7 @@ Output is written to stdout.
       std::cerr << status.message();
       return 1;
     }
-    for (auto const& preserved_name : preserved) {
+    for (auto const &preserved_name : preserved) {
       subst.encode(preserved_name, preserved_name);
     }
   }

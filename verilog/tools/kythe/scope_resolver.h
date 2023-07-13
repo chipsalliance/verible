@@ -38,14 +38,14 @@ struct ScopedVname {
   // type_scope in case this VName is a type definition).
   SignatureDigest instantiation_scope;
   VName vname;
-  bool operator==(const ScopedVname& other) const {
+  bool operator==(const ScopedVname &other) const {
     return type_scope == other.type_scope &&
            instantiation_scope == other.instantiation_scope &&
            vname == other.vname;
   }
 };
 template <typename H>
-H AbslHashValue(H state, const ScopedVname& v) {
+H AbslHashValue(H state, const ScopedVname &v) {
   return H::combine(std::move(state), v.type_scope, v.instantiation_scope,
                     v.vname.signature.Digest());
 }
@@ -79,18 +79,18 @@ H AbslHashValue(H state, const ScopedVname& v) {
 // up and comparing the substrings).
 class ScopeResolver {
  public:
-  explicit ScopeResolver(const Signature& top_scope) {
+  explicit ScopeResolver(const Signature &top_scope) {
     SetCurrentScope(top_scope);
   }
 
-  ScopeResolver(const ScopeResolver&) = delete;
-  ScopeResolver(ScopeResolver&&) = delete;
-  ScopeResolver& operator=(const ScopeResolver&) = delete;
-  ScopeResolver& operator=(ScopeResolver&&) = delete;
+  ScopeResolver(const ScopeResolver &) = delete;
+  ScopeResolver(ScopeResolver &&) = delete;
+  ScopeResolver &operator=(const ScopeResolver &) = delete;
+  ScopeResolver &operator=(ScopeResolver &&) = delete;
 
-  void SetCurrentScope(const Signature& scope);
+  void SetCurrentScope(const Signature &scope);
 
-  const Signature& CurrentScope() { return current_scope_; }
+  const Signature &CurrentScope() { return current_scope_; }
 
   // Returns the scope and definition of the symbol under the given name. The
   // search is restricted to the current scope.
@@ -99,34 +99,34 @@ class ScopeResolver {
   // Returns the scope and definition of the symbol under the given name. The
   // search is restricted to the provided scope.
   std::optional<ScopedVname> FindScopeAndDefinition(
-      absl::string_view name, const SignatureDigest& scope);
+      absl::string_view name, const SignatureDigest &scope);
 
   static SignatureDigest GlobalScope() { return Signature("").Digest(); }
 
   // Adds the members of the given scope to the current scope.
-  void AppendScopeToCurrentScope(const SignatureDigest& source_scope);
+  void AppendScopeToCurrentScope(const SignatureDigest &source_scope);
 
   // Adds the members of the source scope to the destination scope.
-  void AppendScopeToScope(const SignatureDigest& source_scope,
-                          const SignatureDigest& destination_scope);
+  void AppendScopeToScope(const SignatureDigest &source_scope,
+                          const SignatureDigest &destination_scope);
 
   // Removes the given VName from the current scope.
-  void RemoveDefinitionFromCurrentScope(const VName& vname);
+  void RemoveDefinitionFromCurrentScope(const VName &vname);
 
   // Adds a definition & its type to the current scope.
-  void AddDefinitionToCurrentScope(const VName& new_member,
-                                   const SignatureDigest& type_scope);
+  void AddDefinitionToCurrentScope(const VName &new_member,
+                                   const SignatureDigest &type_scope);
 
   // Adds a definition without external type to the current scope.
-  void AddDefinitionToCurrentScope(const VName& new_member);
+  void AddDefinitionToCurrentScope(const VName &new_member);
 
-  const absl::flat_hash_set<VName>& ListScopeMembers(
-      const SignatureDigest& scope_digest) const;
+  const absl::flat_hash_set<VName> &ListScopeMembers(
+      const SignatureDigest &scope_digest) const;
 
   // Returns human readable description of the scope.
-  std::string ScopeDebug(const SignatureDigest& scope) const;
+  std::string ScopeDebug(const SignatureDigest &scope) const;
 
-  const SignatureDigest& CurrentScopeDigest() const {
+  const SignatureDigest &CurrentScopeDigest() const {
     return current_scope_digest_;
   }
 

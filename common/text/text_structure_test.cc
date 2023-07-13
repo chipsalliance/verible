@@ -51,8 +51,8 @@ using ::testing::SizeIs;
 
 // Test constructor and initial state.
 TEST(TextStructureViewCtorTest, InitializeContents) {
-  const char* inputs[] = {"", "<ANY>", "hello world", "foo\nbar\n"};
-  for (const auto* input : inputs) {
+  const char *inputs[] = {"", "<ANY>", "hello world", "foo\nbar\n"};
+  for (const auto *input : inputs) {
     TextStructureView test_view(input);
     EXPECT_EQ(test_view.Contents(), input);
     EXPECT_THAT(test_view.TokenStream(), IsEmpty());
@@ -66,12 +66,12 @@ TEST(TextStructureViewCtorTest, InitializeContents) {
 TEST(FilterTokensTest, EmptyTokens) {
   TextStructureView test_view("blah");
   EXPECT_THAT(test_view.GetTokenStreamView(), IsEmpty());
-  test_view.FilterTokens([](const TokenInfo& token) { return true; });
+  test_view.FilterTokens([](const TokenInfo &token) { return true; });
   EXPECT_THAT(test_view.GetTokenStreamView(), IsEmpty());
 }
 
 // Create a one-token token stream and syntax tree.
-void OneTokenTextStructureView(TextStructureView* view) {
+void OneTokenTextStructureView(TextStructureView *view) {
   TokenInfo token(1, view->Contents());
   view->MutableTokenStream().push_back(token);
   view->MutableTokenStreamView().push_back(view->TokenStream().begin());
@@ -79,14 +79,14 @@ void OneTokenTextStructureView(TextStructureView* view) {
 }
 
 // Create a two-token token stream, no syntax tree.
-void MultiTokenTextStructureViewNoTree(TextStructureView* view) {
+void MultiTokenTextStructureViewNoTree(TextStructureView *view) {
   const auto contents = view->Contents();
   CHECK_GE(contents.length(), 5);
-  auto& stream = view->MutableTokenStream();
+  auto &stream = view->MutableTokenStream();
   for (int i = 0; i < 5; ++i) {  // Populate with 5 single-char tokens.
     stream.emplace_back(i + 1, contents.substr(i, 1));
   }
-  auto& stream_view = view->MutableTokenStreamView();
+  auto &stream_view = view->MutableTokenStreamView();
   // Populate view with 2 tokens.
   stream_view.emplace_back(stream.begin() + 1);
   stream_view.emplace_back(stream.begin() + 3);
@@ -99,7 +99,7 @@ TEST(FilterTokensTest, OneTokenKept) {
   // Pretend to lex and parse text.
   OneTokenTextStructureView(&test_view);
   EXPECT_THAT(test_view.GetTokenStreamView(), SizeIs(1));
-  test_view.FilterTokens([](const TokenInfo& token) { return true; });
+  test_view.FilterTokens([](const TokenInfo &token) { return true; });
   EXPECT_THAT(test_view.GetTokenStreamView(), SizeIs(1));
 }
 
@@ -110,14 +110,14 @@ TEST(FilterTokensTest, OneTokenRemoved) {
   // Pretend to lex and parse text.
   OneTokenTextStructureView(&test_view);
   EXPECT_THAT(test_view.GetTokenStreamView(), SizeIs(1));
-  test_view.FilterTokens([](const TokenInfo& token) { return false; });
+  test_view.FilterTokens([](const TokenInfo &token) { return false; });
   EXPECT_THAT(test_view.GetTokenStreamView(), IsEmpty());
 }
 
 // Test that mutating nothing works.
 TEST(MutateTokensTest, EmptyTokensNoOp) {
   TextStructureView test_view("");
-  test_view.MutateTokens([](TokenInfo*) {});
+  test_view.MutateTokens([](TokenInfo *) {});
   EXPECT_THAT(test_view.TokenStream(), IsEmpty());
   EXPECT_THAT(test_view.GetTokenStreamView(), IsEmpty());
   EXPECT_THAT(test_view.SyntaxTree(), IsNull());
@@ -128,7 +128,7 @@ TEST(TokenStreamReferenceViewTest, ShiftRight) {
   TextStructureView test_view("hello");
   MultiTokenTextStructureViewNoTree(&test_view);
   auto iterators = test_view.MakeTokenStreamReferenceView();
-  const auto& stream_view = test_view.GetTokenStreamView();
+  const auto &stream_view = test_view.GetTokenStreamView();
   auto view_iter = stream_view.begin();
   for (auto iter : iterators) {
     EXPECT_EQ(iter, *view_iter);  // write-iterators same as read-iterators
@@ -190,12 +190,12 @@ class TokenRangeTest : public ::testing::Test, public TextStructureTokenized {
 // Checks for consistency between beginning-of-line offset map and the
 // beginning-of-line token iterator map.
 TEST_F(TokenRangeTest, CalculateFirstTokensPerLineTest) {
-  const auto& line_token_map = data_.GetLineTokenMap();
-  const auto& line_column_map = data_.GetLineColumnMap();
+  const auto &line_token_map = data_.GetLineTokenMap();
+  const auto &line_column_map = data_.GetLineColumnMap();
   // There is always one more entry in the line_token_map that points to end().
   EXPECT_EQ(line_column_map.GetBeginningOfLineOffsets().size() + 1,
             line_token_map.size());
-  const auto& tokens = data_.TokenStream();
+  const auto &tokens = data_.TokenStream();
   EXPECT_EQ(line_token_map.front(), tokens.begin());
   EXPECT_EQ(line_token_map.back(), tokens.end());
   EXPECT_EQ(line_token_map[1], tokens.begin() + 5);
@@ -206,7 +206,7 @@ TEST_F(TokenRangeTest, CalculateFirstTokensPerLineTest) {
 TEST_F(TokenRangeTest, GetRangeOfTokenVerifyAllRangesExclusive) {
   // Bulk testing: let's see that we constantly progress in emitted ranges.
   LineColumnRange previous{{0, 0}, {0, 0}};
-  for (const TokenInfo& token : data_.TokenStream()) {
+  for (const TokenInfo &token : data_.TokenStream()) {
     LineColumnRange token_range = data_.GetRangeForToken(token);
     EXPECT_EQ(token_range.start, previous.end);
     EXPECT_LT(previous.end, token_range.end);
@@ -223,7 +223,7 @@ TEST_F(TokenRangeTest, GetRangeOfTokenEofTokenAcceptedUniversally) {
 }
 
 TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
-  const TokenInfo& token = data_.FindTokenAt({0, 7});
+  const TokenInfo &token = data_.FindTokenAt({0, 7});
   EXPECT_EQ(token.text(), "world");
   {  // Extract from token
     const LineColumnRange range = data_.GetRangeForToken(token);
@@ -246,7 +246,7 @@ TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
 }
 
 TEST_F(TokenRangeTest, CheckContainsText) {
-  const TokenInfo& token = data_.FindTokenAt({0, 7});
+  const TokenInfo &token = data_.FindTokenAt({0, 7});
   const absl::string_view other_string = "other_string";
   EXPECT_TRUE(data_.ContainsText(token.text()));
   EXPECT_FALSE(data_.ContainsText(other_string));
@@ -299,7 +299,7 @@ TEST_F(TokenRangeTest, TokenRangeSpanningOffsetsNonEmpty) {
       {9, 12, 4, 4},     // empty, does not span a whole token
       {9, 19, 4, 7},
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     const auto token_range = data_.TokenRangeSpanningOffsets(
         test_case.left_offset, test_case.right_offset);
     EXPECT_EQ(std::distance(data_.TokenStream().cbegin(), token_range.begin()),
@@ -322,7 +322,7 @@ TEST_F(TokenRangeTest, TokenRangeOnLine) {
       {2, 6, 11},
       {3, 11, 11},  // There is no line[3], this represents an empty range.
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     const auto token_range = data_.TokenRangeOnLine(test_case.lineno);
     EXPECT_EQ(std::distance(data_.TokenStream().cbegin(), token_range.begin()),
               test_case.left_index);
@@ -392,7 +392,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepEverything) {
   TrimTokensToSubstring(0, contents_.length());
   EXPECT_THAT(tokens_, SizeIs(5));
   EXPECT_THAT(tokens_view_, SizeIs(3));
-  const TokenInfo& back(tokens_.back());
+  const TokenInfo &back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(
       BoundsEqual(back.text(), make_range(contents_.end(), contents_.end())));
@@ -410,7 +410,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepSubset) {
   TrimTokensToSubstring(3, 12);
   EXPECT_THAT(tokens_, SizeIs(4));
   EXPECT_THAT(tokens_view_, SizeIs(2));
-  const TokenInfo& back(tokens_.back());
+  const TokenInfo &back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(BoundsEqual(
       back.text(), make_range(contents_.begin() + 12, contents_.begin() + 12)));
@@ -421,7 +421,7 @@ TEST_F(TextStructureViewInternalsTest, TrimTokensToSubstringKeepLeaf) {
   TrimTokensToSubstring(0, 6);
   EXPECT_THAT(tokens_, SizeIs(3));
   EXPECT_THAT(tokens_view_, SizeIs(2));
-  const TokenInfo& back(tokens_.back());
+  const TokenInfo &back(tokens_.back());
   EXPECT_TRUE(back.isEOF());
   EXPECT_TRUE(BoundsEqual(
       back.text(), make_range(contents_.begin() + 6, contents_.begin() + 6)));
@@ -466,11 +466,11 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesEmpty) {
 }
 
 // Splits a single token into a syntax tree node with two leaves.
-void FakeParseToken(TextStructureView* data, int offset, int node_tag) {
-  TokenSequence& tokens = data->MutableTokenStream();
+void FakeParseToken(TextStructureView *data, int offset, int node_tag) {
+  TokenSequence &tokens = data->MutableTokenStream();
   tokens.push_back(TokenInfo(11, data->Contents().substr(0, offset)));
   tokens.push_back(TokenInfo(12, data->Contents().substr(offset)));
-  TokenStreamView& tokens_view = data->MutableTokenStreamView();
+  TokenStreamView &tokens_view = data->MutableTokenStreamView();
   tokens_view.push_back(tokens.begin());
   tokens_view.push_back(tokens.begin() + 1);
   data->MutableSyntaxTree() = TNode(node_tag, Leaf(tokens[0]), Leaf(tokens[1]));
@@ -484,7 +484,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
   std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
   FakeParseToken(&subanalysis->MutableData(), divide, new_node_tag);
-  auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
+  auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
                                ->mutable_children()
                                .front();
   TextStructureView::DeferredExpansion expansion{&replacement_node,
@@ -518,7 +518,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
     std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide1, new_node_tag1);
-    auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
+    auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
                                  ->mutable_children()
                                  .front();
     TextStructureView::DeferredExpansion expansion{&replacement_node,
@@ -530,7 +530,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     std::string subtext(tokens_[3].text().data(), tokens_[3].text().length());
     std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide2, new_node_tag2);
-    auto& replacement_node = down_cast<SyntaxTreeNode*>(syntax_tree_.get())
+    auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
                                  ->mutable_children()
                                  .back();
     TextStructureView::DeferredExpansion expansion{&replacement_node,

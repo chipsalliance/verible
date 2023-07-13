@@ -45,14 +45,14 @@ class VerilogSourceFile {
   // When a file is not found among a set of paths, remember it with an
   // error status.
   VerilogSourceFile(absl::string_view referenced_path,
-                    const absl::Status& status);
+                    const absl::Status &status);
 
-  VerilogSourceFile(const VerilogSourceFile&) = delete;
-  VerilogSourceFile& operator=(const VerilogSourceFile&) = delete;
+  VerilogSourceFile(const VerilogSourceFile &) = delete;
+  VerilogSourceFile &operator=(const VerilogSourceFile &) = delete;
 
-  VerilogSourceFile(VerilogSourceFile&&) =
+  VerilogSourceFile(VerilogSourceFile &&) =
       default;  // need for std::map::emplace
-  VerilogSourceFile& operator=(VerilogSourceFile&&) = delete;
+  VerilogSourceFile &operator=(VerilogSourceFile &&) = delete;
 
   virtual ~VerilogSourceFile() = default;
 
@@ -76,7 +76,7 @@ class VerilogSourceFile {
 
   // After Parse(), text structure may contain other analyzed structural forms.
   // Before successful Parse(), this is not initialized and returns nullptr.
-  virtual const verible::TextStructureView* GetTextStructure() const;
+  virtual const verible::TextStructureView *GetTextStructure() const;
 
   // Returns the first non-Ok status if there is one, else OkStatus().
   absl::Status Status() const { return status_; }
@@ -101,10 +101,10 @@ class VerilogSourceFile {
     using is_transparent = void;  // hetergenous compare
 
     static absl::string_view to_string_view(absl::string_view s) { return s; }
-    static absl::string_view to_string_view(const VerilogSourceFile& f) {
+    static absl::string_view to_string_view(const VerilogSourceFile &f) {
       return f.ReferencedPath();
     }
-    static absl::string_view to_string_view(const VerilogSourceFile* f) {
+    static absl::string_view to_string_view(const VerilogSourceFile *f) {
       return f->ReferencedPath();
     }
 
@@ -162,7 +162,7 @@ class VerilogSourceFile {
 };
 
 // Printable representation for debugging.
-std::ostream& operator<<(std::ostream&, const VerilogSourceFile&);
+std::ostream &operator<<(std::ostream &, const VerilogSourceFile &);
 
 // An in-memory source file that doesn't require file-system access,
 // nor create temporary files.
@@ -196,7 +196,7 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
   // it sets referenced_path and resolved_path based on URI from language server
   ParsedVerilogSourceFile(absl::string_view referenced_path,
                           absl::string_view resolved_path,
-                          const verible::TextStructureView* text_structure,
+                          const verible::TextStructureView *text_structure,
                           absl::string_view corpus = "")
       : VerilogSourceFile(referenced_path, resolved_path, corpus),
         text_structure_(text_structure) {}
@@ -207,7 +207,7 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
   //     copy of it and expects it will be available for the lifetime of
   //     object of this class.
   ParsedVerilogSourceFile(absl::string_view filename,
-                          const verible::TextStructureView* text_structure,
+                          const verible::TextStructureView *text_structure,
                           absl::string_view corpus = "")
       : VerilogSourceFile(filename, filename, corpus),
         text_structure_(text_structure) {}
@@ -219,14 +219,14 @@ class ParsedVerilogSourceFile final : public VerilogSourceFile {
   absl::Status Parse() final;
 
   // Return TextStructureView provided previously in constructor
-  const verible::TextStructureView* GetTextStructure() const final;
+  const verible::TextStructureView *GetTextStructure() const final;
 
   absl::string_view GetContent() const final {
     return text_structure_->Contents();
   }
 
  private:
-  const verible::TextStructureView* const text_structure_;
+  const verible::TextStructureView *const text_structure_;
 };
 
 // VerilogProject represents a set of files as a cohesive unit of compilation.
@@ -248,7 +248,7 @@ class VerilogProject {
   // view maps) fragments the class's usage. Enabling it prevents removing files
   // from the project (which is required for Kythe facts extraction).
   VerilogProject(absl::string_view root,
-                 const std::vector<std::string>& include_paths,
+                 const std::vector<std::string> &include_paths,
                  absl::string_view corpus = "",
                  bool populate_string_maps = true)
       : translation_unit_root_(root),
@@ -256,10 +256,10 @@ class VerilogProject {
         corpus_(corpus),
         populate_string_maps_(populate_string_maps) {}
 
-  VerilogProject(const VerilogProject&) = delete;
-  VerilogProject(VerilogProject&&) = delete;
-  VerilogProject& operator=(const VerilogProject&) = delete;
-  VerilogProject& operator=(VerilogProject&&) = delete;
+  VerilogProject(const VerilogProject &) = delete;
+  VerilogProject(VerilogProject &&) = delete;
+  VerilogProject &operator=(const VerilogProject &) = delete;
+  VerilogProject &operator=(VerilogProject &&) = delete;
 
   const_iterator begin() const { return files_.begin(); }
   iterator begin() { return files_.begin(); }
@@ -277,12 +277,12 @@ class VerilogProject {
   // Opens a single top-level file, known as a "translation unit".
   // This uses translation_unit_root_ directory to calculate the file's path.
   // If the file was previously opened, that data is returned.
-  absl::StatusOr<VerilogSourceFile*> OpenTranslationUnit(
+  absl::StatusOr<VerilogSourceFile *> OpenTranslationUnit(
       absl::string_view referenced_filename);
 
   // Opens a file that was `included.
   // If the file was previously opened, that data is returned.
-  absl::StatusOr<VerilogSourceFile*> OpenIncludedFile(
+  absl::StatusOr<VerilogSourceFile *> OpenIncludedFile(
       absl::string_view referenced_filename);
 
   // Adds an already opened file by directly passing its content.
@@ -291,7 +291,7 @@ class VerilogProject {
                       absl::string_view content);
 
   // Returns a previously referenced file, or else nullptr.
-  VerilogSourceFile* LookupRegisteredFile(
+  VerilogSourceFile *LookupRegisteredFile(
       absl::string_view referenced_filename) {
     return LookupRegisteredFileInternal(referenced_filename);
   }
@@ -301,14 +301,14 @@ class VerilogProject {
   bool RemoveRegisteredFile(absl::string_view referenced_filename);
 
   // Non-modifying variant of lookup.
-  const VerilogSourceFile* LookupRegisteredFile(
+  const VerilogSourceFile *LookupRegisteredFile(
       absl::string_view referenced_filename) const {
     return LookupRegisteredFileInternal(referenced_filename);
   }
 
   // Find the source file that a particular string_view came from.
   // Returns nullptr if lookup failed for any reason.
-  const VerilogSourceFile* LookupFileOrigin(
+  const VerilogSourceFile *LookupFileOrigin(
       absl::string_view content_substring) const;
 
   // Returns relative path to the VerilogProject
@@ -316,7 +316,7 @@ class VerilogProject {
 
   // Updates file from external source, e.g. Language Server
   void UpdateFileContents(absl::string_view path,
-                          const verible::TextStructureView* updatedtext);
+                          const verible::TextStructureView *updatedtext);
 
   // Adds include directory to the project
   void AddIncludePath(absl::string_view includepath) {
@@ -328,7 +328,7 @@ class VerilogProject {
   }
 
  private:
-  absl::StatusOr<VerilogSourceFile*> OpenFile(
+  absl::StatusOr<VerilogSourceFile *> OpenFile(
       absl::string_view referenced_filename,
       absl::string_view resolved_filename, absl::string_view corpus);
 
@@ -337,12 +337,12 @@ class VerilogProject {
       absl::string_view referenced_filename) const;
 
   // Returns a previously referenced file, or else nullptr.
-  VerilogSourceFile* LookupRegisteredFileInternal(
+  VerilogSourceFile *LookupRegisteredFileInternal(
       absl::string_view referenced_filename) const;
 
   // Returns the opened file or parse/not found error. If the file is not
   // opened, returns nullopt.
-  absl::optional<absl::StatusOr<VerilogSourceFile*>> FindOpenedFile(
+  absl::optional<absl::StatusOr<VerilogSourceFile *>> FindOpenedFile(
       absl::string_view filename) const;
 
   // The path from which top-level translation units are referenced relatively

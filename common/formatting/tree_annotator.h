@@ -29,16 +29,16 @@ namespace verible {
 // left token's syntax tree context,
 // right token's syntax tree context.
 using ContextTokenAnnotatorFunction =
-    std::function<void(const PreFormatToken&, PreFormatToken*,
-                       const SyntaxTreeContext&, const SyntaxTreeContext&)>;
+    std::function<void(const PreFormatToken &, PreFormatToken *,
+                       const SyntaxTreeContext &, const SyntaxTreeContext &)>;
 
 // Applies inter-token formatting annotations, using syntactic context
 // at every token.
 void AnnotateFormatTokensUsingSyntaxContext(
-    const Symbol* syntax_tree_root, const TokenInfo& eof_token,
+    const Symbol *syntax_tree_root, const TokenInfo &eof_token,
     std::vector<PreFormatToken>::iterator tokens_begin,
     std::vector<PreFormatToken>::iterator tokens_end,
-    const ContextTokenAnnotatorFunction& annotator);
+    const ContextTokenAnnotatorFunction &annotator);
 
 }  // namespace verible
 

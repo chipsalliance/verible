@@ -29,54 +29,54 @@ using verible::SyntaxTreeNode;
 using verible::TokenInfo;
 
 std::vector<verible::TreeSearchMatch> FindAllMacroDefinitions(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return SearchSyntaxTree(root, NodekPreprocessorDefine());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllPreprocessorInclude(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return SearchSyntaxTree(root, NodekPreprocessorInclude());
 }
 
-std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol& root) {
+std::vector<verible::TreeSearchMatch> FindAllMacroCalls(const Symbol &root) {
   return SearchSyntaxTree(root, NodekMacroCall());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllMacroGenericItems(
-    const Symbol& root) {
+    const Symbol &root) {
   return SearchSyntaxTree(root, NodekMacroGenericItem());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllMacroDefinitionsArgs(
-    const verible::Symbol& macro_definition) {
+    const verible::Symbol &macro_definition) {
   return SearchSyntaxTree(macro_definition, NodekMacroFormalArg());
 }
 
-const TokenInfo* GetMacroCallId(const Symbol& s) {
-  const SyntaxTreeLeaf* call = GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0);
+const TokenInfo *GetMacroCallId(const Symbol &s) {
+  const SyntaxTreeLeaf *call = GetSubtreeAsLeaf(s, NodeEnum::kMacroCall, 0);
   return call ? &call->get() : nullptr;
 }
 
-const TokenInfo* GetMacroGenericItemId(const Symbol& s) {
-  const SyntaxTreeLeaf* generic =
+const TokenInfo *GetMacroGenericItemId(const Symbol &s) {
+  const SyntaxTreeLeaf *generic =
       GetSubtreeAsLeaf(s, NodeEnum::kMacroGenericItem, 0);
   return generic ? &generic->get() : nullptr;
 }
 
-const SyntaxTreeNode* GetMacroCallParenGroup(const Symbol& s) {
+const SyntaxTreeNode *GetMacroCallParenGroup(const Symbol &s) {
   return GetSubtreeAsNode(s, NodeEnum::kMacroCall, 1, NodeEnum::kParenGroup);
 }
 
-const SyntaxTreeNode* GetMacroCallArgs(const Symbol& s) {
+const SyntaxTreeNode *GetMacroCallArgs(const Symbol &s) {
   // See structure of (CST) MakeParenGroup().
-  const SyntaxTreeNode* parent = GetMacroCallParenGroup(s);
+  const SyntaxTreeNode *parent = GetMacroCallParenGroup(s);
   if (!parent) return nullptr;
   return GetSubtreeAsNode(*parent, NodeEnum::kParenGroup, 1,
                           NodeEnum::kMacroArgList);
 }
 
-bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
-  const auto& sub =
+bool MacroCallArgsIsEmpty(const SyntaxTreeNode &args) {
+  const auto &sub =
       ABSL_DIE_IF_NULL(MatchNodeEnumOrNull(args, NodeEnum::kMacroArgList))
           ->children();
   // Empty macro args are always constructed with one nullptr child in
@@ -85,20 +85,20 @@ bool MacroCallArgsIsEmpty(const SyntaxTreeNode& args) {
   return sub.front() == nullptr;
 }
 
-const verible::SyntaxTreeLeaf* GetMacroName(
-    const verible::Symbol& preprocessor_define) {
+const verible::SyntaxTreeLeaf *GetMacroName(
+    const verible::Symbol &preprocessor_define) {
   return GetSubtreeAsLeaf(preprocessor_define, NodeEnum::kPreprocessorDefine,
                           1);
 }
 
-const verible::SyntaxTreeLeaf* GetMacroArgName(
-    const verible::Symbol& macro_formal_arg) {
+const verible::SyntaxTreeLeaf *GetMacroArgName(
+    const verible::Symbol &macro_formal_arg) {
   return GetSubtreeAsLeaf(macro_formal_arg, NodeEnum::kMacroFormalArg, 0);
 }
 
-const verible::SyntaxTreeLeaf* GetFileFromPreprocessorInclude(
-    const verible::Symbol& preprocessor_include) {
-  const verible::Symbol* included_filename = verible::GetSubtreeAsSymbol(
+const verible::SyntaxTreeLeaf *GetFileFromPreprocessorInclude(
+    const verible::Symbol &preprocessor_include) {
+  const verible::Symbol *included_filename = verible::GetSubtreeAsSymbol(
       preprocessor_include, NodeEnum::kPreprocessorInclude, 1);
   if (!included_filename) return nullptr;
   // Terminate if this isn't a string literal.

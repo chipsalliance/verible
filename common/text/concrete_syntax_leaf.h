@@ -32,31 +32,31 @@ class SyntaxTreeLeaf final : public Symbol {
  public:
   SyntaxTreeLeaf() = delete;
 
-  explicit SyntaxTreeLeaf(const TokenInfo& token) : token_(token) {}
+  explicit SyntaxTreeLeaf(const TokenInfo &token) : token_(token) {}
 
   // All passed arguments will be forwarded to T's constructor
   template <typename... Args>
-  explicit SyntaxTreeLeaf(Args&&... args)
+  explicit SyntaxTreeLeaf(Args &&...args)
       : token_(std::forward<Args>(args)...) {}
 
-  const TokenInfo& get() const { return token_; }
+  const TokenInfo &get() const { return token_; }
 
-  TokenInfo* get_mutable() { return &token_; }
+  TokenInfo *get_mutable() { return &token_; }
 
   // Compares this to an arbitrary symbol using compare_tokens
-  bool equals(const Symbol* symbol,
-              const TokenComparator& compare_tokens) const final;
+  bool equals(const Symbol *symbol,
+              const TokenComparator &compare_tokens) const final;
 
   // Compares this to another leaf using compare_tokens
-  bool equals(const SyntaxTreeLeaf* leaf,
-              const TokenComparator& compare_tokens) const;
+  bool equals(const SyntaxTreeLeaf *leaf,
+              const TokenComparator &compare_tokens) const;
 
   // The Accept() methods have the visitor visit this leaf and perform no
   // other actions.
-  void Accept(TreeVisitorRecursive* visitor) const final;
-  void Accept(SymbolVisitor* visitor) const final;
-  void Accept(MutableTreeVisitorRecursive* visitor,
-              SymbolPtr* this_owned) final;
+  void Accept(TreeVisitorRecursive *visitor) const final;
+  void Accept(SymbolVisitor *visitor) const final;
+  void Accept(MutableTreeVisitorRecursive *visitor,
+              SymbolPtr *this_owned) final;
 
   // Method override that returns the Kind of SyntaxTreeLeaf
   SymbolKind Kind() const final { return SymbolKind::kLeaf; }
@@ -66,7 +66,7 @@ class SyntaxTreeLeaf final : public Symbol {
   TokenInfo token_;
 };
 
-std::ostream& operator<<(std::ostream& os, const SyntaxTreeLeaf& l);
+std::ostream &operator<<(std::ostream &os, const SyntaxTreeLeaf &l);
 
 }  // namespace verible
 

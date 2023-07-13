@@ -37,7 +37,7 @@ using ExpandableTreeViewTestType =
 // Test that basic Tree View operations work on a singleton node.
 TEST(ExpandableTreeViewTest, RootOnly) {
   const VectorTreeTestType tree(verible::testing::MakeRootOnlyExampleTree());
-  const auto& value = tree.Value();
+  const auto &value = tree.Value();
 
   // View testing.
   const ExpandableTreeViewTestType tree_view(tree);
@@ -252,7 +252,7 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPreOrder) {
   std::vector<absl::string_view> visit_order;
   tree_view.ApplyPreOrder(
       [=, &visit_order](
-          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>>& node) {
+          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>> &node) {
         const absl::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p') {
@@ -285,7 +285,7 @@ TEST(ExpandableTreeViewTest, FamilyTreeApplyPostOrder) {
   std::vector<absl::string_view> visit_order;
   tree_view.ApplyPostOrder(
       [=, &visit_order](
-          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>>& node) {
+          VectorTree<TreeViewNodeInfo<VectorTree<NamedInterval>>> &node) {
         const absl::string_view name = node.Value().Value().name;
         visit_order.push_back(name);
         if (name[0] == 'p' && name.back() == '1') {

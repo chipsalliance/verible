@@ -25,38 +25,38 @@ namespace verilog {
 
 // Returns all sub-nodes tagged with kIdentifierUnpackedDimensions
 std::vector<verible::TreeSearchMatch> FindAllIdentifierUnpackedDimensions(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns all sub-nodes tagged with kPortIdentifier
 std::vector<verible::TreeSearchMatch> FindAllPortIdentifiers(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns all sub-nodes tagged with kUnqualifiedId
 std::vector<verible::TreeSearchMatch> FindAllUnqualifiedIds(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns all sub-nodes tagged with kQualifiedId
 std::vector<verible::TreeSearchMatch> FindAllQualifiedIds(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns all leafs with token type SymbolIdentifier
 std::vector<verible::TreeSearchMatch> FindAllSymbolIdentifierLeafs(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns true if identifier node is qualified/scoped.
-bool IdIsQualified(const verible::Symbol&);
+bool IdIsQualified(const verible::Symbol &);
 
 // Extracts identifier leaf from a kUnqualifiedId node.
-const verible::SyntaxTreeLeaf* GetIdentifier(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetIdentifier(const verible::Symbol &);
 
 // Extracts identifier leaf from a kUnqualifiedId node, or returns the leaf
 // as-is.  This automatically peels away the kUnqualifiedId node layer.
-const verible::SyntaxTreeLeaf* AutoUnwrapIdentifier(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *AutoUnwrapIdentifier(const verible::Symbol &);
 
 // Extracts SymbolIdentifier leaf from a kIdentifierUnpackedDimensions node.
 // e.g. extracts "a" from "a[0:1]"
-const verible::SyntaxTreeLeaf*
-GetSymbolIdentifierFromIdentifierUnpackedDimensions(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *
+GetSymbolIdentifierFromIdentifierUnpackedDimensions(const verible::Symbol &);
 
 }  // namespace verilog
 

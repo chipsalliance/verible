@@ -60,7 +60,7 @@ using ConcreteSyntaxTree = SymbolPtr;
 // This takes over ownership of the symbol pointer.
 //    $$ = MakeNode($1, $2, ForwardChildren($3), $4);
 struct ForwardChildren {
-  explicit ForwardChildren(SymbolPtr& symbol)  // NOLINT
+  explicit ForwardChildren(SymbolPtr &symbol)  // NOLINT
       : node(std::move(symbol)) {}
   SymbolPtr node;
 };
@@ -72,8 +72,8 @@ class SyntaxTreeNode final : public Symbol {
  public:
   explicit SyntaxTreeNode(const int tag = kUntagged) : tag_(tag) {}
 
-  const std::vector<SymbolPtr>& children() const { return children_; }
-  std::vector<SymbolPtr>& mutable_children() { return children_; }
+  const std::vector<SymbolPtr> &children() const { return children_; }
+  std::vector<SymbolPtr> &mutable_children() { return children_; }
 
   // Transfer ownership of argument to this object.
   // Call MakeNode or ExtendNode instead of calling this directly.
@@ -88,10 +88,10 @@ class SyntaxTreeNode final : public Symbol {
       children_.push_back(std::move(forwarded_children.node));
       return;
     }
-    auto* node = down_cast<SyntaxTreeNode*>(forwarded_children.node.get());
+    auto *node = down_cast<SyntaxTreeNode *>(forwarded_children.node.get());
     const auto new_size = children_.size() + node->children_.size();
     children_.reserve(new_size);
-    for (auto& child : node->children_) {
+    for (auto &child : node->children_) {
       children_.push_back(std::move(child));
     }
     // Remove all the vacated children slots left in the parent.
@@ -104,35 +104,35 @@ class SyntaxTreeNode final : public Symbol {
   // Ownership of all arguments is transferred to this object.
   // Call MakeNode or ExtendNode instead of calling Append directly.
   template <typename T, typename... Args>
-  void Append(T&& t, Args&&... args) {
+  void Append(T &&t, Args &&...args) {
     AppendChild(std::move(t));            // Append the first.
     Append(std::forward<Args>(args)...);  // Append the rest.
   }
 
   // Children accessor (mutable).
-  SymbolPtr& operator[](size_t i);
+  SymbolPtr &operator[](size_t i);
 
   // Children accessor (const).
-  const SymbolPtr& operator[](size_t i) const;
+  const SymbolPtr &operator[](size_t i) const;
 
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.
-  bool equals(const Symbol* symbol,
-              const TokenComparator& compare_tokens) const final;
+  bool equals(const Symbol *symbol,
+              const TokenComparator &compare_tokens) const final;
 
   // Compares this node to another node.
   // Checks for recursive equality among all children of both nodes.
-  bool equals(const SyntaxTreeNode* node,
-              const TokenComparator& compare_tokens) const;
+  bool equals(const SyntaxTreeNode *node,
+              const TokenComparator &compare_tokens) const;
 
   // Uses passed TreeVisitorRecursive to visit all children recursively,
   // then visit itself.
-  void Accept(TreeVisitorRecursive* visitor) const final;
-  void Accept(MutableTreeVisitorRecursive* visitor,
-              SymbolPtr* this_owned) final;
+  void Accept(TreeVisitorRecursive *visitor) const final;
+  void Accept(MutableTreeVisitorRecursive *visitor,
+              SymbolPtr *this_owned) final;
 
   // Accepting a symbol visitor does not recursively visit children.
-  void Accept(SymbolVisitor* visitor) const final;
+  void Accept(SymbolVisitor *visitor) const final;
 
   // Method override that returns the Kind of Symbol
   SymbolKind Kind() const final { return SymbolKind::kNode; }
@@ -188,8 +188,8 @@ class SyntaxTreeNode final : public Symbol {
 // Ownership of all args is transferred, and consumed by the new node.
 // Sample usage: $$ = MakeNode(TAG, $1, $2, $3);
 template <typename... Args>
-SymbolPtr MakeNode(Args&&... args) {
-  auto* const node_pointer = new SyntaxTreeNode();
+SymbolPtr MakeNode(Args &&...args) {
+  auto *const node_pointer = new SyntaxTreeNode();
   node_pointer->Append(std::forward<Args>(args)...);
   return SymbolPtr(node_pointer);
 }
@@ -200,8 +200,8 @@ SymbolPtr MakeNode(Args&&... args) {
 //   $$ = MakeTaggedNode(TAG);  // empty, no children
 //   $$ = MakeTaggedNode(TAG, $1, $2, $3);
 template <typename Enum, typename... Args>
-SymbolPtr MakeTaggedNode(const Enum tag, Args&&... args) {
-  auto* const node_pointer = new SyntaxTreeNode(static_cast<int>(tag));
+SymbolPtr MakeTaggedNode(const Enum tag, Args &&...args) {
+  auto *const node_pointer = new SyntaxTreeNode(static_cast<int>(tag));
   node_pointer->Append(std::forward<Args>(args)...);
   return SymbolPtr(node_pointer);
 }
@@ -212,21 +212,21 @@ SymbolPtr MakeTaggedNode(const Enum tag, Args&&... args) {
 // $1 is transferred to $$.
 // Sample usage: $$ = ExtendNode($1, $2, $3);
 template <typename T, typename... Args>
-SymbolPtr ExtendNode(T&& list_ptr, Args&&... args) {
+SymbolPtr ExtendNode(T &&list_ptr, Args &&...args) {
   return ExtendNodeMoved(std::move(list_ptr), std::forward<Args>(args)...);
 }
 
 // Implementation detail, call ExtendNode instead for automatic std::move.
 template <typename... Args>
-SymbolPtr ExtendNodeMoved(SymbolPtr list_ptr, Args&&... args) {
+SymbolPtr ExtendNodeMoved(SymbolPtr list_ptr, Args &&...args) {
   CHECK(list_ptr->Kind() == SymbolKind::kNode);
-  auto* const node_pointer = down_cast<SyntaxTreeNode*>(list_ptr.get());
+  auto *const node_pointer = down_cast<SyntaxTreeNode *>(list_ptr.get());
   node_pointer->Append(std::forward<Args>(args)...);
   return list_ptr;
 }
 
 // Helper function to deal with move semantics and argument forwarding
-void SetChild_(const SymbolPtr& parent, int child_index, SymbolPtr new_child);
+void SetChild_(const SymbolPtr &parent, int child_index, SymbolPtr new_child);
 
 // Sets the child at child_index of parent to new_child.
 // SetChild will crash when:
@@ -235,7 +235,7 @@ void SetChild_(const SymbolPtr& parent, int child_index, SymbolPtr new_child);
 //   Preexisting data at target index is not a nullptr
 // Equivalent to: parent->children[child_index] = std::move(new_child);
 template <typename T>
-void SetChild(const SymbolPtr& parent, int child_index, T&& new_child) {
+void SetChild(const SymbolPtr &parent, int child_index, T &&new_child) {
   SetChild_(parent, child_index, std::move(new_child));
 }
 

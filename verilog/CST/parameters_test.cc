@@ -70,10 +70,10 @@ TEST(FindAllParamDeclarationsTest, BasicParams) {
       {{kTag, "parameter int Bar = 1;"}},
       {{kTag, "parameter Bar = 1;"}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -87,13 +87,13 @@ TEST(GetParamKeywordTest, LocalParamDeclared) {
       {"class foo; localparam int Bar = 1; endclass", 1},
       {"module foo; localparam Bar = 1; endmodule", 1},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     ASSERT_EQ(param_declarations.size(), test.second);
-    const auto& param_node = down_cast<const verible::SyntaxTreeNode&>(
+    const auto &param_node = down_cast<const verible::SyntaxTreeNode &>(
         *param_declarations.front().match);
     const auto param_keyword = GetParamKeyword(param_node);
     EXPECT_EQ(param_keyword, TK_localparam);
@@ -115,13 +115,13 @@ TEST(GetParamKeywordTest, ParameterDeclared) {
       {"parameter int Bar = 1;", 1},
       {"parameter Bar = 1;", 1},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     ASSERT_EQ(param_declarations.size(), test.second);
-    const auto& param_node = down_cast<const verible::SyntaxTreeNode&>(
+    const auto &param_node = down_cast<const verible::SyntaxTreeNode &>(
         *param_declarations.front().match);
     const auto param_keyword = GetParamKeyword(param_node);
     EXPECT_EQ(param_keyword, TK_parameter);
@@ -136,21 +136,21 @@ TEST(GetParamKeywordTest, MultipleParamsDeclared) {
        "endmodule"},
       {"class foo; parameter int Bar = 1; localparam int Bar_2 = 2; endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
 
     // Make sure the first one is TK_parameter.
-    const auto& param_node =
-        down_cast<const verible::SyntaxTreeNode&>(*param_declarations[0].match);
+    const auto &param_node = down_cast<const verible::SyntaxTreeNode &>(
+        *param_declarations[0].match);
     const auto param_keyword = GetParamKeyword(param_node);
     EXPECT_EQ(param_keyword, TK_parameter);
 
     // Make sure the second one is TK_localparam.
-    const auto& localparam_node =
-        down_cast<const verible::SyntaxTreeNode&>(*param_declarations[1].match);
+    const auto &localparam_node = down_cast<const verible::SyntaxTreeNode &>(
+        *param_declarations[1].match);
     const auto localparam_keyword = GetParamKeyword(localparam_node);
     EXPECT_EQ(localparam_keyword, TK_localparam);
   }
@@ -168,12 +168,12 @@ TEST(GetParamTypeSymbolTest, BasicTests) {
       {"package foo; parameter int Bar = 1; endpackage"},
       {"parameter int Bar = 1;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* param_type_symbol =
+    const auto *param_type_symbol =
         GetParamTypeSymbol(*param_declarations.front().match);
     const auto t = param_type_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
@@ -196,10 +196,10 @@ TEST(GetParameterNameTokenTest, BasicTests) {
       {"package foo; parameter int HELLO_WORLD = 1; endpackage", "HELLO_WORLD"},
       {"parameter int Bar = 1;", "Bar"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token =
         GetParameterNameToken(*param_declarations.front().match);
@@ -227,10 +227,10 @@ TEST(GetAllParameterNameTokensTest, BasicTests) {
       {"module foo; parameter int Bar = 1, Foo = 1, Baz = 1; endmodule;", 3},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_tokens =
         GetAllParameterNameTokens(*param_declarations.front().match);
@@ -259,10 +259,10 @@ TEST(GetAllAssignedParameterSymbolsTest, BasicTests) {
       {"module foo; parameter int Bar = 1, Foo = 1, Baz = 1; endmodule;", 2},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto assigned_parameters =
         GetAllAssignedParameterSymbols(*param_declarations.front().match);
@@ -276,10 +276,10 @@ TEST(GetAssignedParameterNameToken, BasicTests) {
       {"module foo; parameter int Bar = 1, Fox = 1; endmodule;", "Fox"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto assigned_parameters =
         GetAllAssignedParameterSymbols(*param_declarations.front().match);
@@ -304,10 +304,10 @@ TEST(GetSymbolIdentifierFromParamDeclarationTest, BasicTests) {
       {"package foo; parameter type HELLO_WORLD; endpackage", "HELLO_WORLD"},
       {"parameter type Bar;", "Bar"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto name_token = GetSymbolIdentifierFromParamDeclaration(
         *param_declarations.front().match);
@@ -334,10 +334,10 @@ TEST(IsParamTypeDeclarationTest, BasicTests) {
       {"class foo; localparam FooBar = 1; endclass", false},
       {"package foo; parameter int HELLO_WORLD = 1; endpackage", false},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto is_param_type =
         IsParamTypeDeclaration(*param_declarations.front().match);
@@ -359,12 +359,12 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
       {"module m#(parameter type Bar)();\nendmodule"},
       {"module m#(parameter Bar)();\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
+    const auto *type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
         *param_declarations.front().match);
     if (type_assignment_symbol == nullptr) {
       continue;
@@ -389,14 +389,14 @@ TEST(GetIdentifierLeafFromTypeAssignmentTest, BasicTests) {
       {"package foo; parameter type ", {kTag, "HELLO_WORLD"}, "; endpackage"},
       {"parameter type ", {kTag, "Bar"}, ";"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto param_declarations = FindAllParamDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
-          for (const auto& decl : param_declarations) {
-            const auto* type_assignment_symbol =
+          for (const auto &decl : param_declarations) {
+            const auto *type_assignment_symbol =
                 GetTypeAssignmentFromParamDeclaration(*decl.match);
             ids.push_back(TreeSearchMatch{
                 GetIdentifierLeafFromTypeAssignment(*type_assignment_symbol),
@@ -419,12 +419,12 @@ TEST(GetParamTypeInfoSymbolTest, BasicTests) {
       {"package foo; parameter int Bar = 1; endpackage"},
       {"parameter int Bar = 1;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* type_info_symbol =
+    const auto *type_info_symbol =
         GetParamTypeInfoSymbol(*param_declarations.front().match);
     const auto t = type_info_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
@@ -442,12 +442,12 @@ TEST(IsTypeInfoEmptyTest, EmptyTests) {
       {"package foo; parameter Bar = 1; endpackage"},
       {"parameter Bar = 1;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* type_info_symbol =
+    const auto *type_info_symbol =
         GetParamTypeInfoSymbol(*param_declarations.front().match);
     const auto t = type_info_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
@@ -479,12 +479,12 @@ TEST(IsTypeInfoEmptyTest, NonEmptyTests) {
       {"class foo #(parameter pkg::Other_t Bar); endclass"},
       {"class foo #(parameter pkg::Other_t Bar = enum_e::value); endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto param_declarations = FindAllParamDeclarations(*root);
-    const auto* type_info_symbol =
+    const auto *type_info_symbol =
         GetParamTypeInfoSymbol(*param_declarations.front().match);
     const auto t = type_info_symbol->Tag();
     EXPECT_EQ(t.kind, verible::SymbolKind::kNode);
@@ -511,15 +511,15 @@ TEST(FindAllParamByNameTest, FindNamesOfParams) {
        "(3)) y1();\nendmodule"},
       {"module m;\n module_type #(x, y) y1();\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> params;
-          for (const auto& instance : instances) {
-            const auto* decl = GetNamedParamFromActualParam(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *decl = GetNamedParamFromActualParam(*instance.match);
 
             params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
           }
@@ -547,15 +547,15 @@ TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
       {"module m;\n module_type #(x, y) y1();\nendmodule"},
       {"module m;\n module_type #(.x, .y) y1();\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances = FindAllNamedParams(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> paren_groups;
-          for (const auto& instance : instances) {
-            const auto* paren_group =
+          for (const auto &instance : instances) {
+            const auto *paren_group =
                 GetParenGroupFromActualParam(*instance.match);
             if (paren_group == nullptr) {
               continue;
@@ -589,20 +589,20 @@ TEST(FindAllParamTest, FindExpressionFromParameterType) {
        {kTag, "Foo#(Baz#(int))"},
        "); endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& types = FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &types = FindAllParamDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> expressions;
-          for (const auto& type : types) {
-            const auto* type_assignment =
+          for (const auto &type : types) {
+            const auto *type_assignment =
                 GetTypeAssignmentFromParamDeclaration(*type.match);
             if (type_assignment == nullptr) {
               continue;
             }
-            const auto* expression =
+            const auto *expression =
                 GetExpressionFromTypeAssignment(*type_assignment);
             if (expression == nullptr) {
               continue;

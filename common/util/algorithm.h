@@ -77,7 +77,7 @@ struct LexicographicalLess {
 
   // Compare two sequences lexicographically, element-by-element.
   template <class T1, class T2>
-  bool operator()(const T1& left, const T2& right) const {
+  bool operator()(const T1 &left, const T2 &right) const {
     return std::lexicographical_compare(left.begin(), left.end(), right.begin(),
                                         right.end());
   }

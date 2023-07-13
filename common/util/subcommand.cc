@@ -27,17 +27,17 @@ SubcommandRegistry::SubcommandRegistry()
           // Every registry comes initialized with its own generic 'help'
           // command.
           {"help",
-           {[this](const SubcommandArgsRange& args, std::istream& ins,
-                   std::ostream& outs,
-                   std::ostream& errs) { return Help(args, ins, outs, errs); },
+           {[this](const SubcommandArgsRange &args, std::istream &ins,
+                   std::ostream &outs,
+                   std::ostream &errs) { return Help(args, ins, outs, errs); },
             "help [command]\n"
             "Prints command help.  "
             "With no command or unknown command, this lists available "
             "commands.\n"}},
 
           {"error",
-           {[this](const SubcommandArgsRange& args, std::istream& ins,
-                   std::ostream& outs, std::ostream& errs) {
+           {[this](const SubcommandArgsRange &args, std::istream &ins,
+                   std::ostream &outs, std::ostream &errs) {
               // Call with empty arguments to just get the command listing.
               const auto unused_status = Help({}, ins, outs, errs);
               return absl::InvalidArgumentError("Unknown subcommand.");
@@ -47,9 +47,9 @@ SubcommandRegistry::SubcommandRegistry()
   command_listing_.emplace_back("help");
 }
 
-const SubcommandEntry& SubcommandRegistry::GetSubcommandEntry(
+const SubcommandEntry &SubcommandRegistry::GetSubcommandEntry(
     absl::string_view command) const {
-  const SubcommandMap& commands(subcommand_map_);
+  const SubcommandMap &commands(subcommand_map_);
   const auto iter = commands.find(command);
   if (iter == commands.end()) {
     // Command not found, print help and exit non-zero.
@@ -59,7 +59,7 @@ const SubcommandEntry& SubcommandRegistry::GetSubcommandEntry(
 }
 
 absl::Status SubcommandRegistry::RegisterCommand(
-    absl::string_view name, const SubcommandEntry& command) {
+    absl::string_view name, const SubcommandEntry &command) {
   const auto p = subcommand_map_.emplace(name, command);
   if (!p.second) {
     return absl::InvalidArgumentError(absl::StrCat(
@@ -71,15 +71,15 @@ absl::Status SubcommandRegistry::RegisterCommand(
   return absl::OkStatus();
 }
 
-absl::Status SubcommandRegistry::Help(const SubcommandArgsRange& args,
-                                      std::istream&, std::ostream&,
-                                      std::ostream& errs) const {
+absl::Status SubcommandRegistry::Help(const SubcommandArgsRange &args,
+                                      std::istream &, std::ostream &,
+                                      std::ostream &errs) const {
   if (args.empty()) {
     errs << "available commands:\n" << ListCommands() << std::endl;
     return absl::OkStatus();
   }
 
-  const SubcommandEntry& entry = GetSubcommandEntry(args.front());
+  const SubcommandEntry &entry = GetSubcommandEntry(args.front());
   errs << entry.usage << std::endl;
   return absl::OkStatus();
 }

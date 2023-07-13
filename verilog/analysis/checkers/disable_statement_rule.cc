@@ -48,7 +48,7 @@ static constexpr absl::string_view kMessageSeqBlock =
     "Invalid usage of disable statement. Preferred construction is: disable "
     "label_of_seq_block;";
 
-const LintRuleDescriptor& DisableStatementNoLabelsRule::GetDescriptor() {
+const LintRuleDescriptor &DisableStatementNoLabelsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "disable-statement",
       .topic = "disable-invalid-in-non-sequential",
@@ -60,21 +60,21 @@ const LintRuleDescriptor& DisableStatementNoLabelsRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& DisableMatcher() {
+static const Matcher &DisableMatcher() {
   static const Matcher matcher(
       NodekDisableStatement(DisableStatementHasLabel()));
   return matcher;
 }
 
 void DisableStatementNoLabelsRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (!DisableMatcher().Matches(symbol, &manager)) {
     return;
   }
   absl::string_view message_final = kMessage;
   // if no kDisable label, return, nothing to be checked
-  const auto& disableLabels = FindAllSymbolIdentifierLeafs(symbol);
+  const auto &disableLabels = FindAllSymbolIdentifierLeafs(symbol);
   if (disableLabels.empty()) {
     return;
   }
@@ -85,30 +85,30 @@ void DisableStatementNoLabelsRule::HandleSymbol(
   // considered to be invalid. If the label for disable statements is not
   // found, it means that there is no appropriate label or the label
   // points to the illegal node such as forked label
-  const auto& rcontext = reversed_view(context);
+  const auto &rcontext = reversed_view(context);
   for (auto rc = rcontext.begin(); rc != rcontext.end(); rc++) {
-    const auto& node = *rc;
+    const auto &node = *rc;
     if (node->Tag().tag != static_cast<int>(NodeEnum::kSeqBlock)) {
       continue;
     }
-    for (const auto& ch : node->children()) {
+    for (const auto &ch : node->children()) {
       if (ch->Tag().tag != static_cast<int>(NodeEnum::kBegin)) {
         continue;
       }
-      const auto& beginLabels = FindAllSymbolIdentifierLeafs(*ch);
+      const auto &beginLabels = FindAllSymbolIdentifierLeafs(*ch);
       if (beginLabels.empty()) {
         continue;
       }
-      const auto& pnode = *std::next(rc);
-      const auto& ptag = pnode->Tag().tag;
+      const auto &pnode = *std::next(rc);
+      const auto &ptag = pnode->Tag().tag;
       if (ptag == static_cast<int>(NodeEnum::kInitialStatement) ||
           ptag == static_cast<int>(NodeEnum::kFinalStatement) ||
           ptag == static_cast<int>(NodeEnum::kAlwaysStatement)) {
         message_final = kMessageSeqBlock;
         break;
       }
-      const auto& beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
-      const auto& disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
+      const auto &beginLabel = SymbolCastToLeaf(*beginLabels[0].match);
+      const auto &disableLabel = SymbolCastToLeaf(*disableLabels[0].match);
       if (beginLabel.get().text() == disableLabel.get().text()) {
         return;
       }

@@ -34,7 +34,7 @@ struct ValueTypeFromKeyType;
 template <class KeyType, class MappedType>
 struct ValueTypeFromKeyType<KeyType, std::pair<const KeyType, MappedType>> {
   using ValueType = std::pair<const KeyType, MappedType>;
-  ValueType operator()(const KeyType& k) const {
+  ValueType operator()(const KeyType &k) const {
     return {k, MappedType{}};  // default-value mapped-type
   }
 };
@@ -42,15 +42,15 @@ struct ValueTypeFromKeyType<KeyType, std::pair<const KeyType, MappedType>> {
 // Partial specialization for when the KeyType == ValueType, for set-like types.
 template <class KeyType>
 struct ValueTypeFromKeyType<KeyType, KeyType> {
-  const KeyType& operator()(const KeyType& k) const {
+  const KeyType &operator()(const KeyType &k) const {
     return k;  // just forward the key
   }
 };
 }  // namespace internal
 
 template <typename M>
-bool InsertOrUpdate(M* map, const typename M::key_type& k,
-                    const typename M::mapped_type& v) {
+bool InsertOrUpdate(M *map, const typename M::key_type &k,
+                    const typename M::mapped_type &v) {
   auto ret = map->insert({k, v});
   if (ret.second) return true;
   ret.first->second = v;
@@ -58,7 +58,7 @@ bool InsertOrUpdate(M* map, const typename M::key_type& k,
 }
 
 template <typename M>
-typename M::mapped_type& InsertKeyOrDie(M* m, const typename M::key_type& k) {
+typename M::mapped_type &InsertKeyOrDie(M *m, const typename M::key_type &k) {
   using value_inserter = internal::ValueTypeFromKeyType<typename M::key_type,
                                                         typename M::value_type>;
   auto res = m->insert(value_inserter()(k));
@@ -67,22 +67,22 @@ typename M::mapped_type& InsertKeyOrDie(M* m, const typename M::key_type& k) {
 }
 
 template <class M>
-const typename M::mapped_type& FindWithDefault(
-    M& map, const typename M::key_type& key, const typename M::mapped_type& d) {
+const typename M::mapped_type &FindWithDefault(
+    M &map, const typename M::key_type &key, const typename M::mapped_type &d) {
   auto found = map.find(key);
   return (found == map.end()) ? d : found->second;
 }
 
 template <class M>
-const typename M::mapped_type* FindOrNull(M& map,
-                                          const typename M::key_type& k) {
+const typename M::mapped_type *FindOrNull(M &map,
+                                          const typename M::key_type &k) {
   auto found = map.find(k);
   return (found == map.end()) ? nullptr : &found->second;
 }
 
 template <class M>
-const typename M::mapped_type& FindOrDie(M& map,
-                                         const typename M::key_type& k) {
+const typename M::mapped_type &FindOrDie(M &map,
+                                         const typename M::key_type &k) {
   auto found = map.find(k);
   CHECK(found != map.end());
   return found->second;

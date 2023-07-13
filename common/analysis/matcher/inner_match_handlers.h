@@ -42,9 +42,9 @@ namespace matcher {
 // inner_matchers.
 // If not all inner matchers match, then nothing is bound to manager.
 //
-bool InnerMatchAll(const Symbol& symbol,
-                   const std::vector<Matcher>& inner_matchers,
-                   BoundSymbolManager* manager);
+bool InnerMatchAll(const Symbol &symbol,
+                   const std::vector<Matcher> &inner_matchers,
+                   BoundSymbolManager *manager);
 
 // Returns true if one of inner_matchers matches
 //
@@ -52,9 +52,9 @@ bool InnerMatchAll(const Symbol& symbol,
 // Subsequent matchers are not run.
 // If no inner matchers match, then nothing is bound to manager.
 //
-bool InnerMatchAny(const Symbol& symbol,
-                   const std::vector<Matcher>& inner_matchers,
-                   BoundSymbolManager* manager);
+bool InnerMatchAny(const Symbol &symbol,
+                   const std::vector<Matcher> &inner_matchers,
+                   BoundSymbolManager *manager);
 
 // Returns true if one of inner_matchers matches
 //
@@ -62,9 +62,9 @@ bool InnerMatchAny(const Symbol& symbol,
 // binds is the order in which matchers appear in inner_matchers.
 // If no inner matchers match, then nothing is bound to manager.
 //
-bool InnerMatchEachOf(const Symbol& symbol,
-                      const std::vector<Matcher>& inner_matchers,
-                      BoundSymbolManager* manager);
+bool InnerMatchEachOf(const Symbol &symbol,
+                      const std::vector<Matcher> &inner_matchers,
+                      BoundSymbolManager *manager);
 
 // Returns true if inner_matcher does not match.
 // Returns false if inner_matcher does match.
@@ -73,9 +73,9 @@ bool InnerMatchEachOf(const Symbol& symbol,
 //
 // No symbols are bound to manager regardless of outcome.
 //
-bool InnerMatchUnless(const Symbol& symbol,
-                      const std::vector<Matcher>& inner_matchers,
-                      BoundSymbolManager* manager);
+bool InnerMatchUnless(const Symbol &symbol,
+                      const std::vector<Matcher> &inner_matchers,
+                      BoundSymbolManager *manager);
 
 }  // namespace matcher
 }  // namespace verible

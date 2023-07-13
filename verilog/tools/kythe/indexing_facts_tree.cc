@@ -27,7 +27,7 @@
 namespace verilog {
 namespace kythe {
 
-Anchor::Anchor(const Anchor& other) = default;
+Anchor::Anchor(const Anchor &other) = default;
 
 std::string Anchor::DebugString() const {
   if (source_text_range_) {
@@ -38,11 +38,11 @@ std::string Anchor::DebugString() const {
   return absl::StrCat("{", Text(), "}");
 }
 
-std::ostream& operator<<(std::ostream& stream, const Anchor& anchor) {
+std::ostream &operator<<(std::ostream &stream, const Anchor &anchor) {
   return stream << anchor.DebugString();
 }
 
-bool Anchor::operator==(const Anchor& rhs) const {
+bool Anchor::operator==(const Anchor &rhs) const {
   if (source_text_range_) {
     if (!rhs.source_text_range_) {
       return false;
@@ -56,41 +56,41 @@ bool Anchor::operator==(const Anchor& rhs) const {
   return Text() == rhs.Text();
 }
 
-std::ostream& IndexingNodeData::DebugString(std::ostream* stream) const {
+std::ostream &IndexingNodeData::DebugString(std::ostream *stream) const {
   *stream << indexing_fact_type_ << ": ["
           << absl::StrJoin(anchors_.begin(), anchors_.end(), ", ",
-                           [](std::string* out, const Anchor& anchor) {
+                           [](std::string *out, const Anchor &anchor) {
                              absl::StrAppend(out, anchor.DebugString());
                            })
           << ']';
   return *stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const IndexingNodeData& data) {
-  const auto& anchors(data.Anchors());
+std::ostream &operator<<(std::ostream &stream, const IndexingNodeData &data) {
+  const auto &anchors(data.Anchors());
   return stream << data.GetIndexingFactType() << ": ["
                 << absl::StrJoin(anchors.begin(), anchors.end(), ", ",
                                  absl::StreamFormatter())
                 << ']';
 }
 
-bool IndexingNodeData::operator==(const IndexingNodeData& rhs) const {
+bool IndexingNodeData::operator==(const IndexingNodeData &rhs) const {
   return indexing_fact_type_ == rhs.GetIndexingFactType() &&
          anchors_.size() == rhs.Anchors().size() &&
          std::equal(anchors_.begin(), anchors_.end(), rhs.Anchors().begin());
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const PrintableIndexingNodeData& printable_node) {
+std::ostream &operator<<(std::ostream &stream,
+                         const PrintableIndexingNodeData &printable_node) {
   return printable_node.data.DebugString(&stream);
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const PrintableIndexingFactNode& printable_node) {
+std::ostream &operator<<(std::ostream &stream,
+                         const PrintableIndexingFactNode &printable_node) {
   return PrintTree(
       printable_node.data, &stream,
-      [&printable_node](std::ostream& s,
-                        const IndexingNodeData& d) -> std::ostream& {
+      [&printable_node](std::ostream &s,
+                        const IndexingNodeData &d) -> std::ostream & {
         return s << PrintableIndexingNodeData(d, printable_node.base);
       });
 }

@@ -32,7 +32,7 @@ static constexpr absl::string_view kMessage =
     "Parenthesize condition expressions that appear in the true-clause of "
     "another condition expression.";
 
-const LintRuleDescriptor& SuggestParenthesesRule::GetDescriptor() {
+const LintRuleDescriptor &SuggestParenthesesRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "suggest-parentheses",
       .topic = "parentheses",
@@ -44,15 +44,15 @@ const LintRuleDescriptor& SuggestParenthesesRule::GetDescriptor() {
 }
 
 void SuggestParenthesesRule::HandleNode(
-    const verible::SyntaxTreeNode& node,
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeNode &node,
+    const verible::SyntaxTreeContext &context) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   // TODO: evaluate other types of expressions
   switch (tag) {
     case NodeEnum::kConditionExpression: {
-      const verible::Symbol* trueCase = GetConditionExpressionTrueCase(node);
+      const verible::Symbol *trueCase = GetConditionExpressionTrueCase(node);
 
-      const verible::Symbol* trueCaseChild = UnwrapExpression(*trueCase);
+      const verible::Symbol *trueCaseChild = UnwrapExpression(*trueCase);
 
       const auto trueCaseChildtag =
           static_cast<verilog::NodeEnum>(trueCaseChild->Tag().tag);

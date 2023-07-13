@@ -31,20 +31,20 @@ namespace verible {
 // Iterator value printers used by Google Test
 
 template <typename TreeType>
-static void PrintTo(const VectorTreeLeavesIterator<TreeType>& it,
-                    std::ostream* os) {
+static void PrintTo(const VectorTreeLeavesIterator<TreeType> &it,
+                    std::ostream *os) {
   *os << "VectorTreeLeavesIterator(" << *it << ")";
 }
 
 template <typename TreeType>
-static void PrintTo(const VectorTreePreOrderIterator<TreeType>& it,
-                    std::ostream* os) {
+static void PrintTo(const VectorTreePreOrderIterator<TreeType> &it,
+                    std::ostream *os) {
   *os << "VectorTreePreOrderIterator(" << *it << ")";
 }
 
 template <typename TreeType>
-static void PrintTo(const VectorTreePostOrderIterator<TreeType>& it,
-                    std::ostream* os) {
+static void PrintTo(const VectorTreePostOrderIterator<TreeType> &it,
+                    std::ostream *os) {
   *os << "VectorTreePostOrderIterator(" << *it << ")";
 }
 
@@ -53,7 +53,7 @@ namespace {
 using Tree = verible::VectorTree<int>;
 
 template <typename Iterator, typename TreeType>
-void ExpectForwardIterator(TreeType* node, TreeType* next_node) {
+void ExpectForwardIterator(TreeType *node, TreeType *next_node) {
   EXPECT_TRUE(std::is_default_constructible_v<Iterator>);
   EXPECT_TRUE(std::is_copy_constructible_v<Iterator>);
   EXPECT_TRUE(std::is_copy_assignable_v<Iterator>);
@@ -263,11 +263,11 @@ static const TestCaseData kTestCasesData[] = {
 };
 
 template <typename NodesRange, typename ValuesRange>
-void ExpectNodesRangesValuesEq(const NodesRange& nodes,
-                               const ValuesRange& expected_values) {
+void ExpectNodesRangesValuesEq(const NodesRange &nodes,
+                               const ValuesRange &expected_values) {
   auto expected_it = expected_values.begin();
 
-  for (const auto& node : nodes) {
+  for (const auto &node : nodes) {
     EXPECT_NE(expected_it, expected_values.end());
     EXPECT_EQ(node.Value(), *expected_it);
     ++expected_it;
@@ -276,7 +276,7 @@ void ExpectNodesRangesValuesEq(const NodesRange& nodes,
 }
 
 TEST(VectorTreeIteratorTest, RootNodeTraversal) {
-  for (const auto& data : kTestCasesData) {
+  for (const auto &data : kTestCasesData) {
     std::ostringstream trace_msg;
     trace_msg << "Input tree:\n" << data.tree;
     SCOPED_TRACE(trace_msg.str());
@@ -303,11 +303,11 @@ TEST(VectorTreeIteratorTest, RootNodeTraversal) {
 }
 
 TEST(VectorTreeIteratorTest, SubtreeTraversal) {
-  for (const auto& data : kTestCasesData) {
+  for (const auto &data : kTestCasesData) {
     const auto subtree_path = data.subtree_traversal.subtree_path;
     if (subtree_path.empty()) continue;
 
-    const auto& subtree =
+    const auto &subtree =
         DescendPath(data.tree, subtree_path.begin(), subtree_path.end());
 
     std::ostringstream trace_msg;
@@ -338,11 +338,11 @@ TEST(VectorTreeIteratorTest, SubtreeTraversal) {
 }
 
 TEST(VectorTreeIteratorTest, IteratorSubtreeTraversal) {
-  for (const auto& data : kTestCasesData) {
+  for (const auto &data : kTestCasesData) {
     const auto subtree_path = data.subtree_traversal.subtree_path;
     if (subtree_path.empty()) continue;
 
-    const auto& subtree =
+    const auto &subtree =
         DescendPath(data.tree, subtree_path.begin(), subtree_path.end());
 
     std::ostringstream trace_msg;

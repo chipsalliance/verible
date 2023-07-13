@@ -49,13 +49,13 @@ enum class RuleSet { kNone, kDefault, kAll };
 //
 // AbslUnparseFlag takes the parsed representation of a ruleset
 // and converts it into string representation.
-std::string AbslUnparseFlag(const RuleSet& rules);
+std::string AbslUnparseFlag(const RuleSet &rules);
 
 // ParseFlags takes a source string text and a target Ruleset.
 // It attempts to parse text into a RuleSet and put that RuleSet into rules
 // If successful, returns true.
 // Otherwise, sets string error to the a error message and returns false.
-bool AbslParseFlag(absl::string_view text, RuleSet* rules, std::string* error);
+bool AbslParseFlag(absl::string_view text, RuleSet *rules, std::string *error);
 
 // Container class for parse/unparse flags
 // Keys must be the exact string_views in registered maps (not just string
@@ -65,7 +65,7 @@ struct RuleBundle {
   // Parse configuration from input. Separator between rules is 'separator',
   // typically that would be a comma or newline.
   bool ParseConfiguration(absl::string_view text, char separator,
-                          std::string* error);
+                          std::string *error);
   std::string UnparseConfiguration(char separator) const;
 };
 
@@ -74,7 +74,7 @@ struct RuleBundle {
 //
 // AbslUnparseFlag takes the parsed representation of a flag (RuleBundle)
 // and converts it into string representation.
-std::string AbslUnparseFlag(const RuleBundle& bundle);
+std::string AbslUnparseFlag(const RuleBundle &bundle);
 
 // ParseFlags takes a source string text and a target RuleBundle.
 // It clears bundle and parses text into it by checking to make sure
@@ -84,8 +84,8 @@ std::string AbslUnparseFlag(const RuleBundle& bundle);
 // If all rules are parsed successfully, returns true.
 // Otherwise, sets string error to the a error message containing the
 // invalid lint rule and returns false.
-bool AbslParseFlag(absl::string_view text, RuleBundle* bundle,
-                   std::string* error);
+bool AbslParseFlag(absl::string_view text, RuleBundle *bundle,
+                   std::string *error);
 
 // ProjectPolicy is needed in a transitional period when new rules are
 // becoming enabled while pre-existing code is still following their
@@ -98,30 +98,30 @@ struct ProjectPolicy {
 
   // Raw string to check for being part of the path.  Not a regex pattern.
   // Apply this exemption only if substring occurs in the file path.
-  std::vector<const char*> path_substrings;
+  std::vector<const char *> path_substrings;
 
   // Raw string to check for being part of the path.  Not a regex pattern.
   // Files that match the exclusion will not be analyzed.
   // This is suitable for paths that contain files that no human will ever
   // read.
-  std::vector<const char*> path_exclusions;
+  std::vector<const char *> path_exclusions;
 
   // Reviewers to involve for policy changes.  At least two.
-  std::vector<const char*> owners;
+  std::vector<const char *> owners;
 
   // Names of lint rules to disable.
-  std::vector<const char*> disabled_rules;
+  std::vector<const char *> disabled_rules;
 
   // Names of lint rules to enable (takes precedence over disabled_rules).
-  std::vector<const char*> enabled_rules;
+  std::vector<const char *> enabled_rules;
 
   // Returns a path if filename matches any of path_substrings,
   // otherwise nullptr.
-  const char* MatchesAnyPath(absl::string_view filename) const;
+  const char *MatchesAnyPath(absl::string_view filename) const;
 
   // Returns a path if filename matches any of path_exclusions,
   // otherwise nullptr.
-  const char* MatchesAnyExclusions(absl::string_view filename) const;
+  const char *MatchesAnyExclusions(absl::string_view filename) const;
 
   // Returns true if all disabled_rules and enabled_rules refer to registered
   // rules.  This helps catch typos.
@@ -139,7 +139,7 @@ struct LinterOptions {
   // The base set of rules used by linter
   const RuleSet ruleset;
   // Bundle of rules to enable/disable in addition to the base set
-  const RuleBundle& rules;
+  const RuleBundle &rules;
   // Path to a file with extra linter configuration, applied on top of the
   // base 'ruleset' and extra 'rules'
   std::string config_file;
@@ -169,17 +169,17 @@ class LinterConfiguration {
   LinterConfiguration() = default;
 
   // This is copy-able.
-  LinterConfiguration(const LinterConfiguration&) = default;
+  LinterConfiguration(const LinterConfiguration &) = default;
 
-  void TurnOn(const analysis::LintRuleId& rule) {
+  void TurnOn(const analysis::LintRuleId &rule) {
     configuration_[rule] = {true, ""};
   }
 
-  void TurnOff(const analysis::LintRuleId& rule) {
+  void TurnOff(const analysis::LintRuleId &rule) {
     configuration_[rule] = {false, ""};
   }
 
-  bool RuleIsOn(const analysis::LintRuleId& rule) const;
+  bool RuleIsOn(const analysis::LintRuleId &rule) const;
 
   // Clears configuration and updates to passed ruleset.
   // Behavior is as follows:
@@ -190,14 +190,14 @@ class LinterConfiguration {
   //
   // Note that additional rules can be layered on top of a ruleset via
   // TurnOn/TurnOff/UseRuleBundle.
-  void UseRuleSet(const RuleSet& rules);
+  void UseRuleSet(const RuleSet &rules);
 
   // Updates LinterConfiguration to enabled/disable all lint rules
   // in rule_bundle
-  void UseRuleBundle(const RuleBundle& rule_bundle);
+  void UseRuleBundle(const RuleBundle &rule_bundle);
 
   // Adjust set of active rules based on the filename.
-  void UseProjectPolicy(const ProjectPolicy& policy,
+  void UseProjectPolicy(const ProjectPolicy &policy,
                         absl::string_view filename);
 
   // Return the keys of enabled lint rules, sorted.
@@ -223,22 +223,22 @@ class LinterConfiguration {
   std::string external_waivers;
 
   // Returns true if configurations are equivalent.
-  bool operator==(const LinterConfiguration&) const;
+  bool operator==(const LinterConfiguration &) const;
 
-  bool operator!=(const LinterConfiguration& r) const { return !(*this == r); }
+  bool operator!=(const LinterConfiguration &r) const { return !(*this == r); }
 
   // Appends linter rules configuration from a file
   absl::Status AppendFromFile(absl::string_view filename);
 
   // Generates configuration forn LinterOptions
-  absl::Status ConfigureFromOptions(const LinterOptions& options);
+  absl::Status ConfigureFromOptions(const LinterOptions &options);
 
  private:
   // map of all enabled rules
   std::map<analysis::LintRuleId, RuleSetting> configuration_;
 };
 
-std::ostream& operator<<(std::ostream&, const LinterConfiguration&);
+std::ostream &operator<<(std::ostream &, const LinterConfiguration &);
 
 }  // namespace verilog
 

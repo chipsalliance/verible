@@ -39,7 +39,7 @@ class ByteOffsetSet : public verible::IntervalSet<int> {
  public:
   ByteOffsetSet() = default;
 
-  explicit ByteOffsetSet(const impl_type& iset) : impl_type(iset) {}
+  explicit ByteOffsetSet(const impl_type &iset) : impl_type(iset) {}
 
   // This constructor can initialize from a sequence of pairs, e.g.
   //   ByteOffsetSet s{{0,1}, {4,7}, {8,10}};
@@ -57,7 +57,7 @@ class LineNumberSet : public verible::IntervalSet<int> {
  public:
   LineNumberSet() = default;
 
-  explicit LineNumberSet(const impl_type& iset) : impl_type(iset) {}
+  explicit LineNumberSet(const impl_type &iset) : impl_type(iset) {}
 
   // This constructor can initialize from a sequence of pairs, e.g.
   //   LineNumberSet s{{0,1}, {4,7}, {8,10}};

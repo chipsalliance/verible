@@ -32,8 +32,8 @@ using verible::SyntaxTreeContext;
 using verible::SyntaxTreeNode;
 using verible::TNode;
 
-const SyntaxTreeNode& CastAsNode(const SymbolPtr& p) {
-  return down_cast<const SyntaxTreeNode&>(*p.get());
+const SyntaxTreeNode &CastAsNode(const SymbolPtr &p) {
+  return down_cast<const SyntaxTreeNode &>(*p.get());
 }
 
 // Test that empty context is handled correctly.

@@ -28,14 +28,14 @@ namespace internal {
 // Comparator to treat the first value of a pair as the effective key.
 template <class K>
 struct CompareFirst {
-  bool operator()(const K& left, const std::pair<K, K>& right) const {
+  bool operator()(const K &left, const std::pair<K, K> &right) const {
     return left < right.first;
   }
-  bool operator()(const std::pair<K, K>& left, const K& right) const {
+  bool operator()(const std::pair<K, K> &left, const K &right) const {
     return left.first < right;
   }
-  bool operator()(const std::pair<K, K>& left,
-                  const std::pair<K, K>& right) const {
+  bool operator()(const std::pair<K, K> &left,
+                  const std::pair<K, K> &right) const {
     return left.first < right.first;
   }
 
@@ -47,8 +47,8 @@ struct CompareFirst {
 // or else end().
 template <typename M>                            // M is a map-type
 static typename auto_iterator_selector<M>::type  // const_iterator or iterator
-FindSpanningInterval(M& intervals,
-                     const typename M::key_type::first_type& key) {
+FindSpanningInterval(M &intervals,
+                     const typename M::key_type::first_type &key) {
   const auto iter = intervals.upper_bound({key, key});
   // lower_bound misses equality condition
   if (iter != intervals.begin()) {
@@ -64,7 +64,7 @@ FindSpanningInterval(M& intervals,
 // range of 'value' if there is one, or else end().
 template <typename M>                            // M is a map-type
 static typename auto_iterator_selector<M>::type  // const_iterator or iterator
-FindSpanningInterval(M& intervals, const typename M::key_type interval) {
+FindSpanningInterval(M &intervals, const typename M::key_type interval) {
   // Nothing 'contains' an empty interval.
   if (interval.first != interval.second) {  // not an empty interval
     // Find an interval that contains the lower bound.
@@ -83,7 +83,7 @@ FindSpanningInterval(M& intervals, const typename M::key_type interval) {
 // Precondition: 'intervals' map contains non-overlapping key ranges.
 template <typename M>  // M is a map-type
 static std::pair<typename M::iterator, bool> FindNonoverlappingEmplacePosition(
-    M& intervals, const typename M::key_type& interval) {
+    M &intervals, const typename M::key_type &interval) {
   if (intervals.empty()) return {intervals.end(), true};
   const auto iter =
       intervals.upper_bound({interval.first, interval.second /* don't care */});
@@ -139,11 +139,11 @@ class DisjointIntervalMap {
  public:
   DisjointIntervalMap() = default;
 
-  DisjointIntervalMap(const DisjointIntervalMap&) = delete;
-  DisjointIntervalMap(DisjointIntervalMap&&) =
+  DisjointIntervalMap(const DisjointIntervalMap &) = delete;
+  DisjointIntervalMap(DisjointIntervalMap &&) =
       delete;  // could be default if needed
-  DisjointIntervalMap& operator=(const DisjointIntervalMap&) = delete;
-  DisjointIntervalMap& operator=(DisjointIntervalMap&&) =
+  DisjointIntervalMap &operator=(const DisjointIntervalMap &) = delete;
+  DisjointIntervalMap &operator=(DisjointIntervalMap &&) =
       delete;  // could be default if needed
 
   bool empty() const { return map_.empty(); }
@@ -152,29 +152,29 @@ class DisjointIntervalMap {
 
   // Returns an iterator to the entry whose key-range contains 'key', or else
   // end().
-  const_iterator find(const K& key) const {
+  const_iterator find(const K &key) const {
     return internal::FindSpanningInterval(map_, key);
   }
   // Returns an iterator to the entry whose key-range wholly contains the 'key'
   // range, or else end().
-  const_iterator find(const key_type& key) const {
+  const_iterator find(const key_type &key) const {
     return internal::FindSpanningInterval(map_, key);
   }
   // Returns an iterator to the entry whose key-range contains 'key', or else
   // end().
-  iterator find(const K& key) {
+  iterator find(const K &key) {
     return internal::FindSpanningInterval(map_, key);
   }
   // Returns an iterator to the entry whose key-range wholly contains the 'key'
   // range, or else end().
-  iterator find(const key_type& key) {
+  iterator find(const key_type &key) {
     return internal::FindSpanningInterval(map_, key);
   }
 
   // Inserts a value associated with the 'key' interval if it does not overlap
   // with any other key-interval already in the map.
   // The 'value' must be moved in (emplace).
-  std::pair<iterator, bool> emplace(key_type key, V&& value) {
+  std::pair<iterator, bool> emplace(key_type key, V &&value) {
     CHECK(key.first <= key.second);  // CHECK_LE requires printability
     const std::pair<iterator, bool> p(
         internal::FindNonoverlappingEmplacePosition(map_, key));
@@ -191,7 +191,7 @@ class DisjointIntervalMap {
   // consumed 'value').
   // Recommend using this for key-ranges that correspond to allocated memory,
   // because allocators must return non-overlapping memory ranges.
-  iterator must_emplace(const key_type& key, V&& value) {
+  iterator must_emplace(const key_type &key, V &&value) {
     const auto p(emplace(key, std::move(value)));
     CHECK(p.second) << "Failed to emplace!";
     return p.first;

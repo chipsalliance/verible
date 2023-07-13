@@ -28,11 +28,11 @@ namespace verible {
 
 // Print to the user as 1-based index because that is how lines
 // and columns are indexed in every file diagnostic tool.
-std::ostream& operator<<(std::ostream& out, const LineColumn& line_column) {
+std::ostream &operator<<(std::ostream &out, const LineColumn &line_column) {
   return out << line_column.line + 1 << ':' << line_column.column + 1;
 }
 
-std::ostream& operator<<(std::ostream& out, const LineColumnRange& r) {
+std::ostream &operator<<(std::ostream &out, const LineColumnRange &r) {
   // Unlike 'technical' representation where we point the end pos one past
   // the relevant range, for human consumption we want to point to the last
   // character.
@@ -70,9 +70,9 @@ LineColumnMap::LineColumnMap(absl::string_view text) {
 
 // Constructor that calculates line break offsets given an already-split
 // set of lines for a body of text.
-LineColumnMap::LineColumnMap(const std::vector<absl::string_view>& lines) {
+LineColumnMap::LineColumnMap(const std::vector<absl::string_view> &lines) {
   size_t offset = 0;
-  for (const auto& line : lines) {
+  for (const auto &line : lines) {
     beginning_of_line_offsets_.push_back(offset);
     offset += line.length() + 1;
   }

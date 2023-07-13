@@ -22,7 +22,7 @@
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, const NodePath& p) {
+std::ostream &operator<<(std::ostream &stream, const NodePath &p) {
   return stream << absl::StrCat(
              "{", absl::StrJoin(p.path.begin(), p.path.end(), ","), "}");
 }

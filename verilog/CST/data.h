@@ -27,8 +27,8 @@
 namespace verilog {
 
 // Returns tokens that correspond to declared names in data declarations
-std::vector<const verible::TokenInfo*> GetIdentifiersFromDataDeclaration(
-    const verible::Symbol& symbol);
+std::vector<const verible::TokenInfo *> GetIdentifiersFromDataDeclaration(
+    const verible::Symbol &symbol);
 
 }  // namespace verilog
 

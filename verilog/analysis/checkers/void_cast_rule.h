@@ -34,18 +34,18 @@ class VoidCastRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
   // Generate diagnostic message of why lint error occurred.
-  static std::string FormatReason(const verible::SyntaxTreeLeaf& leaf);
+  static std::string FormatReason(const verible::SyntaxTreeLeaf &leaf);
 
-  static const std::set<std::string>& ForbiddenFunctionsSet();
+  static const std::set<std::string> &ForbiddenFunctionsSet();
 
   std::set<verible::LintViolation> violations_;
 };

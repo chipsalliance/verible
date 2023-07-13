@@ -36,10 +36,10 @@ namespace internal {
 namespace {
 
 static std::vector<MarkedLine> MakeMarkedLines(
-    const std::vector<absl::string_view>& lines) {
+    const std::vector<absl::string_view> &lines) {
   std::vector<MarkedLine> result;
   result.reserve(lines.size());
-  for (const auto& line : lines) {
+  for (const auto &line : lines) {
     result.emplace_back(line);
   }
   return result;
@@ -62,7 +62,7 @@ TEST(MarkedLineParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       "", "x", "x213", "abc", "diff", "====",
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     MarkedLine m;
     EXPECT_FALSE(m.Parse(test).ok()) << " input: \"" << test << '"';
   }
@@ -81,7 +81,7 @@ TEST(MarkedLineParseTest, ValidInputs) {
       {"- abc", '-', " abc"}, {"+ abc", '+', " abc"}, {"---", '-', "--"},
       {"+++", '+', "++"},     {"-", '-', ""},         {"+", '+', ""},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     MarkedLine m;
     EXPECT_TRUE(m.Parse(test.input).ok()) << " input: \"" << test.input << '"';
     EXPECT_EQ(m.Marker(), test.expected_mark);
@@ -93,7 +93,7 @@ TEST(MarkedLinePrintTest, Print) {
   constexpr absl::string_view kTestCases[] = {
       " ", "+", "-", " 1 2 3", "-xyz", "+\tabc",
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     MarkedLine m;
     const auto status = m.Parse(test);
     ASSERT_TRUE(status.ok()) << status.message();
@@ -115,7 +115,7 @@ TEST(HunkIndicesParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       "", ",", "4,", ",5", "2,b", "x,2", "4,5,", "1,2,3",
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     HunkIndices h;
     EXPECT_FALSE(h.Parse(test).ok()) << " input: \"" << test << '"';
   }
@@ -132,7 +132,7 @@ TEST(HunkIndicesParseAndPrintTest, ValidInputs) {
       {"1,1", 1, 1},
       {"14,92", 14, 92},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     HunkIndices h;
     EXPECT_TRUE(h.Parse(test.input).ok()) << " input: \"" << test.input << '"';
     EXPECT_EQ(h.start, test.expected_start);
@@ -235,7 +235,7 @@ TEST(SourceInfoParseTest, InvalidInputs) {
   constexpr absl::string_view kTestCases[] = {
       "",  // path must be non-empty
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     SourceInfo info;
     EXPECT_FALSE(info.Parse(test).ok()) << " input: \"" << test << '"';
   }
@@ -247,7 +247,7 @@ TEST(SourceInfoParseAndPrintTest, ValidInputsPathOnly) {
       "p/q/a.txt",
       "/p/q/a.txt",
   };
-  for (const auto& path : kPaths) {
+  for (const auto &path : kPaths) {
     SourceInfo info;
     EXPECT_TRUE(info.Parse(path).ok());
     EXPECT_EQ(info.path, path);
@@ -272,8 +272,8 @@ TEST(SourceInfoParseAndPrintTest, ValidInputsWithTimestamps) {
       "2020-02-02 20:22:02.000000",
       "2020-02-02 20:22:02.000000 -0700",
   };
-  for (const auto& path : kPaths) {
-    for (const auto& time : kTimes) {
+  for (const auto &path : kPaths) {
+    for (const auto &time : kTimes) {
       SourceInfo info;
       const std::string text(absl::StrCat(path, "\t", time));
       EXPECT_TRUE(info.Parse(text).ok());
@@ -333,7 +333,7 @@ TEST(HunkParseTest, InvalidInputs) {
           // missing: " ..."
       },
   };
-  for (const auto& lines : kTestCases) {
+  for (const auto &lines : kTestCases) {
     Hunk hunk;
     const LineRange range(lines.begin(), lines.end());
     EXPECT_FALSE(hunk.Parse(range).ok());
@@ -364,7 +364,7 @@ TEST(HunkUpdateHeaderTest, Various) {
       {"@@ -222,4 +333,3 @@",
        {" common", "-removed", "-removed2", "+added", " common again"}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::vector<absl::string_view> lines;
     lines.push_back(kNonsenseHeader);
     lines.insert(lines.end(), test.payload.begin(), test.payload.end());
@@ -484,7 +484,7 @@ TEST(HunkAddedLinesTest, Various) {
           {{402, 404}, {406, 407}, {410, 412}},
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const LineRange range(test.hunk_text.begin(), test.hunk_text.end());
     Hunk hunk;
     const auto status = hunk.Parse(range);
@@ -537,7 +537,7 @@ TEST(HunkSplitTest, ExpectedSingletons) {
        " same more context",  //
        " same"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const std::vector<MarkedLine> lines(MakeMarkedLines(test));
     // can pick any starting line numbers, doesn't matter
     const Hunk hunk(10, 12, lines.begin(), lines.end());
@@ -554,11 +554,11 @@ struct ExpectedHunk {
 };
 
 static std::vector<Hunk> MakeExpectedHunks(
-    const Hunk& original, const std::vector<ExpectedHunk>& hunk_infos) {
-  const auto& marked_lines = original.MarkedLines();
+    const Hunk &original, const std::vector<ExpectedHunk> &hunk_infos) {
+  const auto &marked_lines = original.MarkedLines();
   std::vector<Hunk> results;
   results.reserve(hunk_infos.size());
-  for (const auto& hunk_info : hunk_infos) {
+  for (const auto &hunk_info : hunk_infos) {
     results.emplace_back(
         hunk_info.old_starting_line, hunk_info.new_starting_line,
         marked_lines.begin() + hunk_info.marked_line_offsets.first,
@@ -573,8 +573,8 @@ struct HunkSplitTestCase {
   std::vector<Hunk> expected_sub_hunks;
 
   HunkSplitTestCase(int old_starting_line, int new_starting_line,
-                    const std::vector<absl::string_view>& lines,
-                    const std::vector<ExpectedHunk>& sub_hunks)
+                    const std::vector<absl::string_view> &lines,
+                    const std::vector<ExpectedHunk> &sub_hunks)
       : marked_lines(MakeMarkedLines(lines)),
         original_hunk(old_starting_line, new_starting_line,
                       marked_lines.begin(), marked_lines.end()),
@@ -679,7 +679,7 @@ TEST(HunkSplitTest, MultipleSubHunks) {
                             {14, 15, {7, 10}},
                         }),
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_THAT(test.original_hunk.Split(),
                 ElementsAreArray(test.expected_sub_hunks));
   }
@@ -710,7 +710,7 @@ TEST(HunkParseAndPrintTest, ValidInputs) {
        "+  and then like whoa",      //
        " common line2"},
   };
-  for (const auto& lines : kTestCases) {
+  for (const auto &lines : kTestCases) {
     Hunk hunk;
     const LineRange range(lines.begin(), lines.end());
     const auto status = hunk.Parse(range);
@@ -833,7 +833,7 @@ TEST(FilePatchParseTest, InvalidInputs) {
           "malformed line does not begin with [ -+]",
       },
   };
-  for (const auto& lines : kTestCases) {
+  for (const auto &lines : kTestCases) {
     const LineRange range(lines.begin(), lines.end());
     FilePatch file_patch;
     EXPECT_FALSE(file_patch.Parse(range).ok()) << "lines:\n"
@@ -905,7 +905,7 @@ TEST(FilePatchParseAndPrintTest, ValidInputs) {
           " no change here",
       },
   };
-  for (const auto& lines : kTestCases) {
+  for (const auto &lines : kTestCases) {
     const LineRange range(lines.begin(), lines.end());
     FilePatch file_patch;
     const auto status = file_patch.Parse(range);
@@ -1017,7 +1017,7 @@ TEST(FilePatchAddedLinesTest, Various) {
           {{44, 46}, {81, 82}},
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const LineRange range(test.hunk_text.begin(), test.hunk_text.end());
     FilePatch file_patch;
     const auto status = file_patch.Parse(range);
@@ -1028,7 +1028,7 @@ TEST(FilePatchAddedLinesTest, Various) {
 
 class FilePatchPickApplyTest : public FilePatch, public ::testing::Test {
  protected:
-  absl::Status ParseLines(const std::vector<absl::string_view>& lines) {
+  absl::Status ParseLines(const std::vector<absl::string_view> &lines) {
     const LineRange range(lines.begin(), lines.end());
     return Parse(range);
   }
@@ -1053,7 +1053,7 @@ struct StringFile {
 
 class StringFileSequence {
  public:
-  explicit StringFileSequence(const std::vector<StringFile>& files)
+  explicit StringFileSequence(const std::vector<StringFile> &files)
       : files_(files) {}
   StringFileSequence(std::initializer_list<StringFile> files) : files_(files) {}
 
@@ -1067,7 +1067,7 @@ class StringFileSequence {
 // Can be passed anywhere that takes a FileReaderFunction.
 // TODO(fangism): move this to a "file_test_util" library.
 struct ReadStringFileSequence : public StringFileSequence {
-  explicit ReadStringFileSequence(const std::vector<StringFile>& files)
+  explicit ReadStringFileSequence(const std::vector<StringFile> &files)
       : StringFileSequence(files) {}
   ReadStringFileSequence(std::initializer_list<StringFile> files)
       : StringFileSequence(files) {}
@@ -1079,7 +1079,7 @@ struct ReadStringFileSequence : public StringFileSequence {
       return absl::OutOfRangeError(
           absl::StrCat("No more files to read beyond index=", index_));
     }
-    const auto& file = files_[index_];
+    const auto &file = files_[index_];
     EXPECT_EQ(filename, file.path) << " at index " << index_;
     ++index_;
     return std::string{file.contents};
@@ -1090,7 +1090,7 @@ struct ReadStringFileSequence : public StringFileSequence {
 // Can be passed anywhere that takes a FileWriterFunction.
 // TODO(fangism): move this to a "file_test_util" library.
 struct ExpectStringFileSequence : public StringFileSequence {
-  explicit ExpectStringFileSequence(const std::vector<StringFile>& files)
+  explicit ExpectStringFileSequence(const std::vector<StringFile> &files)
       : StringFileSequence(files) {}
   ExpectStringFileSequence(std::initializer_list<StringFile> files)
       : StringFileSequence(files) {}
@@ -1102,7 +1102,7 @@ struct ExpectStringFileSequence : public StringFileSequence {
       return absl::OutOfRangeError(
           absl::StrCat("No more files to compare beyond index=", index_));
     }
-    const auto& file = files_[index_];
+    const auto &file = files_[index_];
     EXPECT_EQ(filename, file.path) << " at index " << index_;
     EXPECT_EQ(file.contents, src) << " at index " << index_;
     ++index_;
@@ -2079,7 +2079,7 @@ TEST(PatchSetParseTest, InvalidInputs) {
       "@@ -2,1 +3,1 @@\n"
       "malformed line does not begin with [ -+]",
   };
-  for (const auto& patch_contents : kTestCases) {
+  for (const auto &patch_contents : kTestCases) {
     PatchSet patch_set;
     EXPECT_FALSE(patch_set.Parse(patch_contents).ok()) << "contents:\n"
                                                        << patch_contents;
@@ -2150,7 +2150,7 @@ TEST(PatchSetParseAndPrintTest, ValidInputs) {
       " no change here\n",
   };
 
-  for (const auto& patch_contents : kTestCases) {
+  for (const auto &patch_contents : kTestCases) {
     PatchSet patch_set;
     const auto status = patch_set.Parse(patch_contents);
     EXPECT_TRUE(status.ok()) << status.message();

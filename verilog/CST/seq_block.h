@@ -26,14 +26,14 @@
 namespace verilog {
 
 // Get TokenInfo of a label for a given kBegin symbol if exists, else nullptr
-const verible::TokenInfo* GetBeginLabelTokenInfo(const verible::Symbol& symbol);
+const verible::TokenInfo *GetBeginLabelTokenInfo(const verible::Symbol &symbol);
 
 // Get TokenInfo of a label for a given kEnd symbol if exists, else nullptr
-const verible::TokenInfo* GetEndLabelTokenInfo(const verible::Symbol& symbol);
+const verible::TokenInfo *GetEndLabelTokenInfo(const verible::Symbol &symbol);
 
 // Find and return a pointer to a kEnd symbol corresponding to a given kBegin
-const verible::Symbol* GetMatchingEnd(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context);
+const verible::Symbol *GetMatchingEnd(
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context);
 
 }  // namespace verilog
 

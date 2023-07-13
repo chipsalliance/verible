@@ -29,8 +29,8 @@
 
 namespace verilog {
 absl::Status AppendFileListFromContent(absl::string_view file_list_path,
-                                       const std::string& file_list_content,
-                                       FileList* append_to) {
+                                       const std::string &file_list_content,
+                                       FileList *append_to) {
   constexpr absl::string_view kIncludeDirPrefix = "+incdir+";
   constexpr absl::string_view kDefineMacroPrefix = "+define+";
   append_to->preprocessing.include_dirs.emplace_back(
@@ -79,14 +79,14 @@ absl::Status AppendFileListFromContent(absl::string_view file_list_path,
 }
 
 absl::Status AppendFileListFromFile(absl::string_view file_list_file,
-                                    FileList* append_to) {
+                                    FileList *append_to) {
   auto content_or = verible::file::GetContentAsString(file_list_file);
   if (!content_or.ok()) return content_or.status();
   return AppendFileListFromContent(file_list_file, *content_or, append_to);
 }
 
 absl::Status AppendFileListFromCommandline(
-    const std::vector<absl::string_view>& cmdline, FileList* append_to) {
+    const std::vector<absl::string_view> &cmdline, FileList *append_to) {
   for (absl::string_view argument : cmdline) {
     if (argument.empty()) continue;
     if (argument[0] != '+') {
@@ -141,7 +141,7 @@ absl::Status AppendFileListFromCommandline(
 
 std::string FileList::ToString() const {
   std::stringstream buffer;
-  for (const auto& definition : preprocessing.defines) {
+  for (const auto &definition : preprocessing.defines) {
     buffer << "+define+" << definition.name << "=" << definition.value << '\n';
   }
   for (absl::string_view include : preprocessing.include_dirs) {

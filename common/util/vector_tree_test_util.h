@@ -35,17 +35,17 @@ struct NamedInterval {
   NamedInterval(int l, int r, absl::string_view n)
       : left(l), right(r), name(n) {}
 
-  NamedInterval(const NamedInterval&) = default;
-  NamedInterval(NamedInterval&&) = default;
-  NamedInterval& operator=(const NamedInterval&) = default;
-  NamedInterval& operator=(NamedInterval&&) = default;
+  NamedInterval(const NamedInterval &) = default;
+  NamedInterval(NamedInterval &&) = default;
+  NamedInterval &operator=(const NamedInterval &) = default;
+  NamedInterval &operator=(NamedInterval &&) = default;
 
-  bool operator==(const NamedInterval& other) const {
+  bool operator==(const NamedInterval &other) const {
     return left == other.left && right == other.right && name == other.name;
   }
 };
 
-std::ostream& operator<<(std::ostream& stream, const NamedInterval& i);
+std::ostream &operator<<(std::ostream &stream, const NamedInterval &i);
 
 using VectorTreeTestType = VectorTree<NamedInterval>;
 
@@ -56,16 +56,16 @@ VectorTreeTestType MakeOneChildPolicyExampleTree();
 VectorTreeTestType MakeExampleFamilyTree();
 
 template <class T>
-std::vector<size_t> MakePath(const VectorTree<T>& node) {
+std::vector<size_t> MakePath(const VectorTree<T> &node) {
   std::vector<size_t> path;
   verible::Path(node, path);
   return path;
 }
 
-void IntervalPrinter(std::ostream* stream, const NamedInterval& interval);
+void IntervalPrinter(std::ostream *stream, const NamedInterval &interval);
 
 // Verify the invariant that parent spans same interval range as children.
-void VerifyInterval(const VectorTreeTestType& node);
+void VerifyInterval(const VectorTreeTestType &node);
 
 }  // namespace testing
 }  // namespace verible

@@ -41,7 +41,7 @@ using verible::matcher::Matcher;
 // Register ForbiddenSystemTaskFunctionRule
 VERILOG_REGISTER_LINT_RULE(ForbiddenSystemTaskFunctionRule);
 
-const LintRuleDescriptor& ForbiddenSystemTaskFunctionRule::GetDescriptor() {
+const LintRuleDescriptor &ForbiddenSystemTaskFunctionRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "invalid-system-task-function",
       .topic = "forbidden-system-functions",
@@ -53,15 +53,15 @@ const LintRuleDescriptor& ForbiddenSystemTaskFunctionRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& IdMatcher() {
+static const Matcher &IdMatcher() {
   static const Matcher matcher(SystemTFIdentifierLeaf().Bind("name"));
   return matcher;
 }
 
 // Set of invalid functions and suggested replacements
-const std::map<std::string, std::string>&
-ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
-  static const auto* invalid_symbols = new std::map<std::string, std::string>({
+const std::map<std::string, std::string>
+    &ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
+  static const auto *invalid_symbols = new std::map<std::string, std::string>({
       {"$psprintf", "$sformatf"},
       {"$random", "$urandom"},
       {"$srandom", "process::self().srandom()"},
@@ -78,11 +78,11 @@ ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
 }
 
 void ForbiddenSystemTaskFunctionRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (IdMatcher().Matches(symbol, &manager)) {
-    if (const auto* leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
-      const auto& ism = InvalidSymbolsMap();
+    if (const auto *leaf = manager.GetAs<verible::SyntaxTreeLeaf>("name")) {
+      const auto &ism = InvalidSymbolsMap();
       if (ism.find(std::string(leaf->get().text())) != ism.end()) {
         violations_.insert(
             verible::LintViolation(leaf->get(), FormatReason(*leaf), context));
@@ -96,7 +96,7 @@ verible::LintRuleStatus ForbiddenSystemTaskFunctionRule::Report() const {
 }
 
 /* static */ std::string ForbiddenSystemTaskFunctionRule::FormatReason(
-    const verible::SyntaxTreeLeaf& leaf) {
+    const verible::SyntaxTreeLeaf &leaf) {
   const auto function_name = std::string(leaf.get().text());
   const auto replacement =
       FindWithDefault(InvalidSymbolsMap(), function_name, "");

@@ -40,7 +40,7 @@ using verible::LintViolation;
 static constexpr absl::string_view kMessage =
     "Check banned declared name patterns";
 
-const LintRuleDescriptor& BannedDeclaredNamePatternsRule::GetDescriptor() {
+const LintRuleDescriptor &BannedDeclaredNamePatternsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "banned-declared-name-patterns",
       .topic = "identifiers",
@@ -52,12 +52,12 @@ const LintRuleDescriptor& BannedDeclaredNamePatternsRule::GetDescriptor() {
 }
 
 void BannedDeclaredNamePatternsRule::HandleNode(
-    const verible::SyntaxTreeNode& node,
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeNode &node,
+    const verible::SyntaxTreeContext &context) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   switch (tag) {
     case NodeEnum::kModuleDeclaration: {
-      const auto* module_match = GetModuleName(node);
+      const auto *module_match = GetModuleName(node);
       if (module_match) {
         const absl::string_view module_id = module_match->get().text();
 
@@ -68,7 +68,7 @@ void BannedDeclaredNamePatternsRule::HandleNode(
       break;
     }
     case NodeEnum::kPackageDeclaration: {
-      const verible::TokenInfo* pack_match = GetPackageNameToken(node);
+      const verible::TokenInfo *pack_match = GetPackageNameToken(node);
       if (pack_match) {
         absl::string_view pack_id = pack_match->text();
         if (absl::EqualsIgnoreCase(pack_id, "ILLEGALNAME")) {

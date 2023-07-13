@@ -32,7 +32,7 @@ class TestAnchor : public Anchor {
  public:
   // Forward all constructors
   template <typename... Args>
-  explicit TestAnchor(Args&&... args) : Anchor(std::forward<Args>(args)...) {}
+  explicit TestAnchor(Args &&...args) : Anchor(std::forward<Args>(args)...) {}
 };
 
 TEST(AnchorTest, DebugStringUsingOffsets) {

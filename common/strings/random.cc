@@ -40,7 +40,7 @@ std::string RandomEqualLengthIdentifier(absl::string_view input) {
   CHECK(!input.empty());
   std::string s(input.length(), '?');
   s.front() = RandomAlphaChar();
-  for (auto& ch : verible::make_range(s.begin() + 1, s.end())) {
+  for (auto &ch : verible::make_range(s.begin() + 1, s.end())) {
     ch = RandomAlphaNumChar();
   }
   return s;

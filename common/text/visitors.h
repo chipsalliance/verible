@@ -36,8 +36,8 @@ class SyntaxTreeNode;
 class TreeVisitorRecursive {
  public:
   virtual ~TreeVisitorRecursive() = default;
-  virtual void Visit(const SyntaxTreeLeaf& leaf) = 0;
-  virtual void Visit(const SyntaxTreeNode& node) = 0;
+  virtual void Visit(const SyntaxTreeLeaf &leaf) = 0;
+  virtual void Visit(const SyntaxTreeNode &node) = 0;
 };
 
 // SymbolVisitor is an abstract visitor class from which visitors can be derived
@@ -51,8 +51,8 @@ class TreeVisitorRecursive {
 class SymbolVisitor {
  public:
   virtual ~SymbolVisitor() = default;
-  virtual void Visit(const SyntaxTreeLeaf& leaf) = 0;
-  virtual void Visit(const SyntaxTreeNode& node) = 0;
+  virtual void Visit(const SyntaxTreeLeaf &leaf) = 0;
+  virtual void Visit(const SyntaxTreeNode &node) = 0;
 };
 
 // MutableTreeVisitorRecursive is the non-const version of TreeVisitorRecursive.
@@ -64,8 +64,8 @@ class SymbolVisitor {
 class MutableTreeVisitorRecursive {
  public:
   virtual ~MutableTreeVisitorRecursive() = default;
-  virtual void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr*) = 0;
-  virtual void Visit(const SyntaxTreeNode& node, SymbolPtr*) = 0;
+  virtual void Visit(const SyntaxTreeLeaf &leaf, SymbolPtr *) = 0;
+  virtual void Visit(const SyntaxTreeNode &node, SymbolPtr *) = 0;
 };
 
 }  // namespace verible

@@ -35,7 +35,7 @@ TEST(VerilogTreePrintTest, Prints) {
   EXPECT_TRUE(status.ok());
   std::ostringstream stream;
   EXPECT_TRUE(stream.str().empty());
-  const verible::SymbolPtr& tree_ptr = analyzer->SyntaxTree();
+  const verible::SymbolPtr &tree_ptr = analyzer->SyntaxTree();
   ASSERT_NE(tree_ptr, nullptr);
 
   PrettyPrintVerilogTree(*tree_ptr, analyzer->Data().Contents(), &stream);

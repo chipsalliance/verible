@@ -42,18 +42,18 @@ class ForbiddenSystemTaskFunctionRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
-  static std::string FormatReason(const verible::SyntaxTreeLeaf& leaf);
+  static std::string FormatReason(const verible::SyntaxTreeLeaf &leaf);
 
   // Set of invalid functions and suggested replacements
-  static const std::map<std::string, std::string>& InvalidSymbolsMap();
+  static const std::map<std::string, std::string> &InvalidSymbolsMap();
 
  private:
   std::set<verible::LintViolation> violations_;

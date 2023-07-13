@@ -83,34 +83,34 @@ struct StateNode {
   // for position tracking purposes.
   // If the UnwrappedLine has only one token or is empty, the initial state
   // will be Done().
-  StateNode(const UnwrappedLine& uwline, const BasicFormatStyle& style);
+  StateNode(const UnwrappedLine &uwline, const BasicFormatStyle &style);
 
   // Constructor for nodes that represent new wrap decision trees to explore.
   // 'spacing_choice' reflects the decision being explored, e.g. append, wrap,
   // preserve.
-  StateNode(const std::shared_ptr<const StateNode>& parent,
-            const BasicFormatStyle& style, SpacingDecision spacing_choice);
+  StateNode(const std::shared_ptr<const StateNode> &parent,
+            const BasicFormatStyle &style, SpacingDecision spacing_choice);
 
   // Returns true when the undecided_path is empty.
   // The search is over when there are no more decisions to explore.
   bool Done() const { return undecided_path.begin() == undecided_path.end(); }
 
   // Returns a reference to the token that is being acted upon in this state.
-  const PreFormatToken& GetCurrentToken() const {
+  const PreFormatToken &GetCurrentToken() const {
     // The undecided_path always starts at the position after the current token.
     return *(undecided_path.begin() - 1);
   }
 
   // Returns a reference to the token that considered for wrapping vs.
   // appending.
-  const PreFormatToken& GetNextToken() const {
+  const PreFormatToken &GetNextToken() const {
     // The undecided_path always starts at the position after the current token.
     return *undecided_path.begin();
   }
 
   // Returns pointer to previous state before this decision node.
   // This functions as a forward-iterator going up the state ancestry chain.
-  const StateNode* next() const { return prev_state.get(); }
+  const StateNode *next() const { return prev_state.get(); }
 
   // Returns true if this state was initialized with an unwrapped line and
   // has no parent state.
@@ -120,7 +120,7 @@ struct StateNode {
   // This occurs in O(N) time, and is only suitable for testing/debug.
   size_t Depth() const {
     size_t depth = 1;
-    const auto* iter = this;
+    const auto *iter = this;
     while (!iter->IsRootState()) {
       ++depth;
       iter = iter->prev_state.get();
@@ -131,19 +131,19 @@ struct StateNode {
   // Produce next state by appending a token if the result stays under the
   // column limit, or breaking onto a new line if required.
   static std::shared_ptr<const StateNode> AppendIfItFits(
-      const std::shared_ptr<const StateNode>& current_state,
-      const BasicFormatStyle& style);
+      const std::shared_ptr<const StateNode> &current_state,
+      const BasicFormatStyle &style);
 
   // Repeatedly apply AppendIfItFits() until Done() with formatting.
   // TODO(b/134711965): We may want a variant that preserves spaces too.
   static std::shared_ptr<const StateNode> QuickFinish(
-      const std::shared_ptr<const StateNode>& current_state,
-      const BasicFormatStyle& style);
+      const std::shared_ptr<const StateNode> &current_state,
+      const BasicFormatStyle &style);
 
   // Comparator provides an ordering of which paths should be explored
   // when maintained in a priority queue.  For Dijsktra-style algorithms,
   // we want to explore the min-cost paths first.
-  bool operator<(const StateNode& r) const {
+  bool operator<(const StateNode &r) const {
     return cumulative_cost < r.cumulative_cost ||
            // TODO(b/145558510): Favor solutions that use fewer lines.
            // To do that would require counting number of wrap decisions,
@@ -159,19 +159,19 @@ struct StateNode {
   // wrap decisions (through ancestry chain: prev_state) all the way back to
   // the first token in the original UnwrappedLine (that was used to
   // initialize the root state).
-  void ReconstructFormatDecisions(FormattedExcerpt*) const;
+  void ReconstructFormatDecisions(FormattedExcerpt *) const;
 
  private:
-  const PreFormatToken& GetPreviousToken() const;
+  const PreFormatToken &GetPreviousToken() const;
 
   int UpdateColumnPosition();
-  void UpdateCumulativeCost(const BasicFormatStyle&, int column_for_penalty);
-  void OpenGroupBalance(const BasicFormatStyle&);
+  void UpdateCumulativeCost(const BasicFormatStyle &, int column_for_penalty);
+  void OpenGroupBalance(const BasicFormatStyle &);
   void CloseGroupBalance();
 };
 
 // Human-readable representation for debugging only.
-std::ostream& operator<<(std::ostream&, const StateNode&);
+std::ostream &operator<<(std::ostream &, const StateNode &);
 
 }  // namespace verible
 

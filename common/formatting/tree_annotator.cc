@@ -31,10 +31,10 @@ namespace {  // implementation detail
 // refactoring as a common pattern.
 class TreeAnnotator : public TreeContextVisitor {
  public:
-  TreeAnnotator(const Symbol* syntax_tree_root, const TokenInfo& eof_token,
+  TreeAnnotator(const Symbol *syntax_tree_root, const TokenInfo &eof_token,
                 std::vector<PreFormatToken>::iterator tokens_begin,
                 std::vector<PreFormatToken>::iterator tokens_end,
-                const ContextTokenAnnotatorFunction& annotator)
+                const ContextTokenAnnotatorFunction &annotator)
       : eof_token_(eof_token),
         syntax_tree_root_(syntax_tree_root),
         token_annotator_(annotator),
@@ -45,16 +45,16 @@ class TreeAnnotator : public TreeContextVisitor {
 
  private:                           // methods
   using TreeContextVisitor::Visit;  // for SyntaxTreeNode
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     CatchUpToCurrentLeaf(leaf.get());
   }
 
-  void CatchUpToCurrentLeaf(const TokenInfo& leaf_token);
+  void CatchUpToCurrentLeaf(const TokenInfo &leaf_token);
 
   // TODO(fangism): This exists solely to facilitate CatchUpToCurrentLeaf().
   // Consider using position in text_buffer as a terminator, and eliminating
   // this.
-  const TokenInfo& EOFToken() const { return eof_token_; }
+  const TokenInfo &EOFToken() const { return eof_token_; }
 
  private:  // fields
   // Saved copy of the EOF token from the original token stream.
@@ -63,7 +63,7 @@ class TreeAnnotator : public TreeContextVisitor {
 
   // Syntax tree that will be traversed, and will provide context
   // during leaf visits.
-  const Symbol* syntax_tree_root_ = nullptr;
+  const Symbol *syntax_tree_root_ = nullptr;
 
   // Function used to annotate the PreFormatTokens.
   ContextTokenAnnotatorFunction token_annotator_;
@@ -97,7 +97,7 @@ void TreeAnnotator::Annotate() {
   CatchUpToCurrentLeaf(EOFToken());
 }
 
-void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
+void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo &leaf_token) {
   // "Catch up" next_filtered_token_ to the current leaf.
   // Recall that SyntaxTreeLeaf has its own copy of TokenInfo,
   // so we need to compare a unique property instead of address.
@@ -110,9 +110,9 @@ void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
          // compare const char* addresses:
          next_filtered_token_->token->text().begin() !=
              leaf_token.text().begin()) {
-    const auto& left_token = *next_filtered_token_;
+    const auto &left_token = *next_filtered_token_;
     ++next_filtered_token_;
-    auto& right_token = *next_filtered_token_;
+    auto &right_token = *next_filtered_token_;
     token_annotator_(left_token, &right_token, saved_left_context_, Context());
   }
   // next_filtered_token_ now points to leaf_token, now caught up.
@@ -124,10 +124,10 @@ void TreeAnnotator::CatchUpToCurrentLeaf(const TokenInfo& leaf_token) {
 }  // namespace
 
 void AnnotateFormatTokensUsingSyntaxContext(
-    const Symbol* syntax_tree_root, const TokenInfo& eof_token,
+    const Symbol *syntax_tree_root, const TokenInfo &eof_token,
     std::vector<PreFormatToken>::iterator tokens_begin,
     std::vector<PreFormatToken>::iterator tokens_end,
-    const ContextTokenAnnotatorFunction& annotator) {
+    const ContextTokenAnnotatorFunction &annotator) {
   TreeAnnotator t(syntax_tree_root, eof_token, tokens_begin, tokens_end,
                   annotator);
   t.Annotate();

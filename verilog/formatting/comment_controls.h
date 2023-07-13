@@ -27,15 +27,15 @@ namespace formatter {
 // Returns a representation of byte offsets where true (membership) means
 // formatting is disabled.
 verible::ByteOffsetSet DisableFormattingRanges(
-    absl::string_view text, const verible::TokenSequence& tokens);
+    absl::string_view text, const verible::TokenSequence &tokens);
 
 // TODO(fangism): Move these next functions into common/formatting.
 // Same with the above types.
 
 // Translates line numbers into a set of byte ranges to disable formatting.
 verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
-    const verible::LineNumberSet& line_numbers,
-    const verible::LineColumnMap& line_column_map);
+    const verible::LineNumberSet &line_numbers,
+    const verible::LineColumnMap &line_column_map);
 
 // Formats space between tokens while honoring formatting-disabled ranges.
 // 'text_base' is the entire original text that was formatted.
@@ -46,8 +46,8 @@ verible::ByteOffsetSet EnabledLinesToDisabledByteRanges(
 // Output is written to 'stream'.
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
-    const verible::ByteOffsetSet& disabled_ranges, bool include_disabled_ranges,
-    std::ostream& stream);
+    const verible::ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
+    std::ostream &stream);
 
 }  // namespace formatter
 }  // namespace verilog

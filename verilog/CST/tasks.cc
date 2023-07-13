@@ -28,57 +28,57 @@
 namespace verilog {
 
 std::vector<verible::TreeSearchMatch> FindAllTaskDeclarations(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return verible::SearchSyntaxTree(root, NodekTaskDeclaration());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllTaskPrototypes(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return verible::SearchSyntaxTree(root, NodekTaskPrototype());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllTaskHeaders(
-    const verible::Symbol& root) {
+    const verible::Symbol &root) {
   return verible::SearchSyntaxTree(root, NodekTaskHeader());
 }
 
-const verible::SyntaxTreeNode* GetTaskHeader(const verible::Symbol& task_decl) {
+const verible::SyntaxTreeNode *GetTaskHeader(const verible::Symbol &task_decl) {
   return verible::GetSubtreeAsNode(task_decl, NodeEnum::kTaskDeclaration, 0,
                                    NodeEnum::kTaskHeader);
 }
 
-const verible::SyntaxTreeNode* GetTaskPrototypeHeader(
-    const verible::Symbol& task_proto) {
+const verible::SyntaxTreeNode *GetTaskPrototypeHeader(
+    const verible::Symbol &task_proto) {
   return verible::GetSubtreeAsNode(task_proto, NodeEnum::kTaskPrototype, 0,
                                    NodeEnum::kTaskHeader);
 }
 
-const verible::Symbol* GetTaskHeaderLifetime(
-    const verible::Symbol& task_header) {
+const verible::Symbol *GetTaskHeaderLifetime(
+    const verible::Symbol &task_header) {
   return verible::GetSubtreeAsSymbol(task_header, NodeEnum::kTaskHeader, 2);
 }
 
-const verible::Symbol* GetTaskHeaderId(const verible::Symbol& task_header) {
+const verible::Symbol *GetTaskHeaderId(const verible::Symbol &task_header) {
   return verible::GetSubtreeAsSymbol(task_header, NodeEnum::kTaskHeader, 3);
 }
 
-const verible::Symbol* GetTaskLifetime(const verible::Symbol& task_decl) {
-  const auto* header = GetTaskHeader(task_decl);
+const verible::Symbol *GetTaskLifetime(const verible::Symbol &task_decl) {
+  const auto *header = GetTaskHeader(task_decl);
   return header ? GetTaskHeaderLifetime(*header) : nullptr;
 }
 
-const verible::Symbol* GetTaskId(const verible::Symbol& task_decl) {
-  const auto* header = GetTaskHeader(task_decl);
+const verible::Symbol *GetTaskId(const verible::Symbol &task_decl) {
+  const auto *header = GetTaskHeader(task_decl);
   return header ? GetTaskHeaderId(*header) : nullptr;
 }
 
-const verible::SyntaxTreeLeaf* GetTaskName(const verible::Symbol& task_decl) {
-  const auto* function_id = GetTaskId(task_decl);
+const verible::SyntaxTreeLeaf *GetTaskName(const verible::Symbol &task_decl) {
+  const auto *function_id = GetTaskId(task_decl);
   return function_id ? GetIdentifier(*function_id) : nullptr;
 }
 
-const verible::SyntaxTreeNode* GetTaskStatementList(
-    const verible::Symbol& task_decl) {
+const verible::SyntaxTreeNode *GetTaskStatementList(
+    const verible::Symbol &task_decl) {
   return verible::GetSubtreeAsNode(task_decl, NodeEnum::kTaskDeclaration, 1,
                                    NodeEnum::kStatementList);
 }

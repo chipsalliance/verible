@@ -28,18 +28,18 @@ namespace verilog {
 
 class VerilogPrettyPrinter : public verible::PrettyPrinter {
  public:
-  explicit VerilogPrettyPrinter(std::ostream* output_stream,
+  explicit VerilogPrettyPrinter(std::ostream *output_stream,
                                 absl::string_view base);
 
-  void Visit(const verible::SyntaxTreeLeaf&) final;
-  void Visit(const verible::SyntaxTreeNode&) final;
+  void Visit(const verible::SyntaxTreeLeaf &) final;
+  void Visit(const verible::SyntaxTreeNode &) final;
 
   // void Visit(verible::SyntaxTreeNode*) final;
 };
 
 // Prints tree contained at root to stream
-void PrettyPrintVerilogTree(const verible::Symbol& root, absl::string_view base,
-                            std::ostream* stream);
+void PrettyPrintVerilogTree(const verible::Symbol &root, absl::string_view base,
+                            std::ostream *stream);
 
 }  // namespace verilog
 

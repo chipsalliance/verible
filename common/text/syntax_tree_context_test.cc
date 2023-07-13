@@ -27,7 +27,7 @@ using ::testing::ElementsAre;
 // Test that AutoPop properly pushes and pops nodes on and off the stack
 TEST(SyntaxTreeContextTest, PushPopTest) {
   SyntaxTreeContext context;
-  const auto& const_context = context;
+  const auto &const_context = context;
   EXPECT_TRUE(context.empty());
   {
     SyntaxTreeNode node1(1);
@@ -252,9 +252,9 @@ TEST(SyntaxTreeContextTest, DirectParentsAreTest) {
 
 TEST(SyntaxTreeContextTest, NearestParentMatchingTest) {
   // define a few predicate functions
-  const auto True = [](const SyntaxTreeNode& n) { return true; };
+  const auto True = [](const SyntaxTreeNode &n) { return true; };
   const auto TagEq = [](int i) {
-    return [i](const SyntaxTreeNode& n) { return n.Tag().tag == i; };
+    return [i](const SyntaxTreeNode &n) { return n.Tag().tag == i; };
   };
 
   SyntaxTreeContext context;

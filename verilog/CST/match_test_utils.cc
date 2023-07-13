@@ -34,13 +34,13 @@ using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 void TestVerilogSyntaxRangeMatches(
-    absl::string_view test_name, const SyntaxTreeSearchTestCase& test_case,
-    const std::function<std::vector<TreeSearchMatch>(const TextStructureView&)>&
-        match_collector) {
+    absl::string_view test_name, const SyntaxTreeSearchTestCase &test_case,
+    const std::function<std::vector<TreeSearchMatch>(const TextStructureView &)>
+        &match_collector) {
   const absl::string_view code(test_case.code);
   // Parse Verilog source code into syntax tree.
   VerilogAnalyzer analyzer(code, "test-file");
-  const TextStructureView& text_structure(analyzer.Data());
+  const TextStructureView &text_structure(analyzer.Data());
   const absl::string_view code_copy = text_structure.Contents();
   ASSERT_OK(analyzer.Analyze()) << test_name << " failed on:\n" << code;
 

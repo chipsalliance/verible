@@ -35,7 +35,7 @@ std::string NodeEnumToString(NodeEnum node_enum) {
   }
 }
 
-std::ostream& operator<<(std::ostream& stream, const NodeEnum& e) {
+std::ostream &operator<<(std::ostream &stream, const NodeEnum &e) {
   return stream << NodeEnumToString(e);
 }
 

@@ -44,7 +44,7 @@ using Matcher = verible::matcher::Matcher;
 // Register ParameterNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ParameterNameStyleRule);
 
-const LintRuleDescriptor& ParameterNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &ParameterNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "parameter-name-style",
       .topic = "constants",
@@ -60,7 +60,7 @@ const LintRuleDescriptor& ParameterNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ParamDeclMatcher() {
+static const Matcher &ParamDeclMatcher() {
   static const Matcher matcher(NodekParamDeclaration());
   return matcher;
 }
@@ -69,10 +69,10 @@ std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
                                                  uint32_t allowed_bitmap) {
   // TODO(hzeller): there are multiple places in this file referring to the
   // same string representations of these options.
-  static constexpr std::pair<uint32_t, const char*> kBitNames[] = {
+  static constexpr std::pair<uint32_t, const char *> kBitNames[] = {
       {kUpperCamelCase, "CamelCase"}, {kAllCaps, "ALL_CAPS"}};
   std::string bit_list;
-  for (const auto& b : kBitNames) {
+  for (const auto &b : kBitNames) {
     if (allowed_bitmap & b.first) {
       if (!bit_list.empty()) bit_list.append(" or ");
       bit_list.append(b.second);
@@ -82,8 +82,8 @@ std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
                       bit_list);
 }
 
-void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                          const SyntaxTreeContext& context) {
+void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                          const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ParamDeclMatcher().Matches(symbol, &manager)) {
     if (IsParamTypeDeclaration(symbol)) return;
@@ -92,7 +92,7 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
 
     auto identifiers = GetAllParameterNameTokens(symbol);
 
-    for (const auto* id : identifiers) {
+    for (const auto *id : identifiers) {
       const auto param_name = id->text();
       uint32_t observed_style = 0;
       if (verible::IsUpperCamelCaseWithDigits(param_name)) {

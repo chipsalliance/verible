@@ -36,7 +36,7 @@ class LintRunner<TokenStreamLintRule> {
     linter_.AddRule(std::move(rule));
   }
 
-  LintRuleStatus Run(const TextStructureView& text_structure,
+  LintRuleStatus Run(const TextStructureView &text_structure,
                      absl::string_view) {
     linter_.Lint(text_structure.TokenStream());
     // Looking for one type of rule violation at a time.

@@ -45,7 +45,7 @@ using verible::down_cast;
 using verible::SyntaxTreeLeaf;
 
 struct MatchTestCase {
-  const char* code;
+  const char *code;
   int expect_packed_matches;
   int expect_unpacked_matches;
 };
@@ -166,27 +166,27 @@ static const MatchTestCase kMatchTestCases[] = {
     // {"parameter int p[0:1] = {0,2}, q[0:1] = {1,3};", 0, 2},
 };
 
-static size_t ExtractNumDimensions(const verible::Symbol* root) {
+static size_t ExtractNumDimensions(const verible::Symbol *root) {
   if (root == nullptr) return 0;
   const auto matches = FindAllDeclarationDimensions(*root);
   if (matches.empty()) return 0;
   // Only extract from the first match.
   if (matches[0].match == nullptr) return 0;
-  const auto& s = *matches[0].match;
-  return (down_cast<const verible::SyntaxTreeNode&>(s).children()).size();
+  const auto &s = *matches[0].match;
+  return (down_cast<const verible::SyntaxTreeNode &>(s).children()).size();
 }
 
 // Test that number of sets of packed dimensions found is correct.
 TEST(FindAllPackedDimensionsTest, MatchCounts) {
-  for (const auto& test : kMatchTestCases) {
+  for (const auto &test : kMatchTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     ASSERT_OK(analyzer.Analyze()) << "Failed test code: " << test.code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto packed_dimensions =
         FindAllPackedDimensions(*ABSL_DIE_IF_NULL(root));
     const int nonempty_packed_dimensions =
         std::count_if(packed_dimensions.begin(), packed_dimensions.end(),
-                      [](const verible::TreeSearchMatch& m) {
+                      [](const verible::TreeSearchMatch &m) {
                         return ExtractNumDimensions(m.match) > 0;
                       });
     EXPECT_EQ(nonempty_packed_dimensions, test.expect_packed_matches)
@@ -196,15 +196,15 @@ TEST(FindAllPackedDimensionsTest, MatchCounts) {
 
 // Test that number of sets of unpacked dimensions found is correct.
 TEST(FindAllUnpackedDimensionsTest, MatchCounts) {
-  for (const auto& test : kMatchTestCases) {
+  for (const auto &test : kMatchTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     ASSERT_OK(analyzer.Analyze()) << "Failed test code: " << test.code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto unpacked_dimensions =
         FindAllUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
     const int nonempty_unpacked_dimensions =
         std::count_if(unpacked_dimensions.begin(), unpacked_dimensions.end(),
-                      [](const verible::TreeSearchMatch& m) {
+                      [](const verible::TreeSearchMatch &m) {
                         return ExtractNumDimensions(m.match) > 0;
                       });
     EXPECT_EQ(nonempty_unpacked_dimensions, test.expect_unpacked_matches)
@@ -213,7 +213,7 @@ TEST(FindAllUnpackedDimensionsTest, MatchCounts) {
 }
 
 struct DimensionTestCase {
-  const char* code;
+  const char *code;
   int expect_dimensions;
 };
 
@@ -227,19 +227,19 @@ TEST(ExtractNumDimensionsTest, DimensionCounts) {
       {"wire w [2];", 1},   {"wire w [3][5];", 2},
       {"wire w [];", 1},
   };
-  for (const auto& test : kDimensionTestCases) {
+  for (const auto &test : kDimensionTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     ASSERT_OK(analyzer.Analyze()) << "Failed test code: " << test.code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     EXPECT_EQ(ExtractNumDimensions(root.get()), test.expect_dimensions)
         << "Failed test code: " << test.code;
   }
 }
 
 struct RangeTestCase {
-  const char* code;
-  const char* expect_left;
-  const char* expect_right;
+  const char *code;
+  const char *expect_left;
+  const char *expect_right;
 };
 
 // Each of these test cases should have exactly one ranged-dimension.
@@ -252,31 +252,31 @@ static const RangeTestCase kRangeTestCases[] = {
 
 // Test that left-expression of dimension range is extracted correctly.
 TEST(GetDimensionRangeLeftBoundTest, CheckBounds) {
-  for (const auto& test : kRangeTestCases) {
+  for (const auto &test : kRangeTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     ASSERT_OK(analyzer.Analyze()) << "Failed test code: " << test.code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto range_matches =
         SearchSyntaxTree(*ABSL_DIE_IF_NULL(root), NodekDimensionRange());
     ASSERT_EQ(range_matches.size(), 1);
-    const auto* left = GetDimensionRangeLeftBound(*range_matches.front().match);
-    const SyntaxTreeLeaf* left_leaf = verible::GetLeftmostLeaf(*left);
+    const auto *left = GetDimensionRangeLeftBound(*range_matches.front().match);
+    const SyntaxTreeLeaf *left_leaf = verible::GetLeftmostLeaf(*left);
     EXPECT_EQ(ABSL_DIE_IF_NULL(left_leaf)->get().text(), test.expect_left);
   }
 }
 
 // Test that right-expression of dimension range is extracted correctly.
 TEST(GetDimensionRangeRightBoundTest, CheckBounds) {
-  for (const auto& test : kRangeTestCases) {
+  for (const auto &test : kRangeTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     ASSERT_OK(analyzer.Analyze()) << "Failed test code: " << test.code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto range_matches =
         SearchSyntaxTree(*ABSL_DIE_IF_NULL(root), NodekDimensionRange());
     ASSERT_EQ(range_matches.size(), 1);
-    const auto* right =
+    const auto *right =
         GetDimensionRangeRightBound(*range_matches.front().match);
-    const SyntaxTreeLeaf* right_leaf = verible::GetLeftmostLeaf(*right);
+    const SyntaxTreeLeaf *right_leaf = verible::GetLeftmostLeaf(*right);
     EXPECT_EQ(ABSL_DIE_IF_NULL(right_leaf)->get().text(), test.expect_right);
   }
 }

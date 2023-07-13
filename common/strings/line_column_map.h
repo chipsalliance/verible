@@ -38,33 +38,33 @@ struct LineColumn {
   int line;    // 0-based index
   int column;  // 0-based index
 
-  constexpr bool operator==(const LineColumn& r) const {
+  constexpr bool operator==(const LineColumn &r) const {
     return line == r.line && column == r.column;
   }
-  constexpr bool operator<(const LineColumn& r) const {
+  constexpr bool operator<(const LineColumn &r) const {
     if (line < r.line) return true;
     if (line > r.line) return false;
     return column < r.column;
   }
-  constexpr bool operator>=(const LineColumn& r) const { return !(*this < r); }
+  constexpr bool operator>=(const LineColumn &r) const { return !(*this < r); }
 };
 
-std::ostream& operator<<(std::ostream&, const LineColumn&);
+std::ostream &operator<<(std::ostream &, const LineColumn &);
 
 // A complete range.
 struct LineColumnRange {
   LineColumn start;  // Inclusive
   LineColumn end;    // Exclusive
 
-  constexpr bool operator==(const LineColumnRange& r) const {
+  constexpr bool operator==(const LineColumnRange &r) const {
     return start == r.start && end == r.end;
   }
-  constexpr bool PositionInRange(const LineColumn& pos) const {
+  constexpr bool PositionInRange(const LineColumn &pos) const {
     return pos >= start && pos < end;
   }
 };
 
-std::ostream& operator<<(std::ostream&, const LineColumnRange&);
+std::ostream &operator<<(std::ostream &, const LineColumnRange &);
 
 // Fast mapping of substring position to human-useful line/column
 class LineColumnMap {
@@ -72,7 +72,7 @@ class LineColumnMap {
   // Build line column map from pre-split contiguous blob of content.
   // The distance between consecutive string_views is expected to have
   // a gap of one character (the splitting '\n' character).
-  explicit LineColumnMap(const std::vector<absl::string_view>& lines);
+  explicit LineColumnMap(const std::vector<absl::string_view> &lines);
 
   // This constructor is only used in LintStatusFormatter and
   // LintWaiverBuilder.
@@ -102,7 +102,7 @@ class LineColumnMap {
   // been considered.
   LineColumn GetLineColAtOffset(absl::string_view base, int bytes_offset) const;
 
-  const std::vector<int>& GetBeginningOfLineOffsets() const {
+  const std::vector<int> &GetBeginningOfLineOffsets() const {
     return beginning_of_line_offsets_;
   }
 

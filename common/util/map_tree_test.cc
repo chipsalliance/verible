@@ -129,10 +129,10 @@ struct NonCopyable {
   explicit NonCopyable(absl::string_view text) : text(text) {}
 
   // move-only, no copy
-  NonCopyable(const NonCopyable&) = delete;
-  NonCopyable(NonCopyable&&) = default;
-  NonCopyable& operator=(const NonCopyable&) = delete;
-  NonCopyable& operator=(NonCopyable&&) = default;
+  NonCopyable(const NonCopyable &) = delete;
+  NonCopyable(NonCopyable &&) = default;
+  NonCopyable &operator=(const NonCopyable &) = delete;
+  NonCopyable &operator=(NonCopyable &&) = default;
 };
 
 TEST(MapTreeTest, EmplaceOneNonCopyable) {
@@ -238,7 +238,7 @@ TEST(MapTreeTest, InitializeMultipleChildrenWithDistinctKeys) {
   }
   EXPECT_EQ(m.Find(2), m.end());
 
-  for (const auto& p : m) {
+  for (const auto &p : m) {
     EXPECT_EQ(p.second.KeyValuePair(), &p);
     EXPECT_EQ(p.second.Key(), &p.first);
     EXPECT_EQ(p.second.Parent(), &m);
@@ -262,7 +262,7 @@ TEST(MapTreeTest, InitializeTwoGenerationsDeepCopy) {
                              MapTreeTestType("bbb",
                                              KV{1,  // grandchild
                                                 MapTreeTestType("dd")})});
-  const auto check = [](const MapTreeTestType& root) {
+  const auto check = [](const MapTreeTestType &root) {
     const auto child = root.Find(4);
     const auto grandchild = child->second.Find(1);
     EXPECT_EQ(child->first, 4);
@@ -334,7 +334,7 @@ TEST(MapTreeTest, Swap) {
                      KV{2,   // child
                         MapTreeTestType("aaaa")});
 
-  const auto check1 = [](const MapTreeTestType& root) {
+  const auto check1 = [](const MapTreeTestType &root) {
     const auto child = root.Find(4);
     const auto grandchild = child->second.Find(1);
     EXPECT_EQ(child->first, 4);
@@ -351,7 +351,7 @@ TEST(MapTreeTest, Swap) {
     EXPECT_EQ(grandchild->second.Root(), &root);
   };
 
-  const auto check2 = [](const MapTreeTestType& root) {
+  const auto check2 = [](const MapTreeTestType &root) {
     const auto child = root.Find(2);
     EXPECT_EQ(child->first, 2);
     EXPECT_EQ(child->second.Value(), "aaaa");
@@ -380,15 +380,15 @@ TEST(MapTreeTest, TraversePrint) {
   // pre-order traversals
   {  // print node values (string_views)
     std::ostringstream stream;
-    m.ApplyPreOrder([&stream](const MapTreeTestType::node_value_type& v) {
+    m.ApplyPreOrder([&stream](const MapTreeTestType::node_value_type &v) {
       stream << v << " ";
     });
     EXPECT_EQ(stream.str(), "groot qq ww vv pp tt ss ");
   }
   {  // print keys (ints)
     std::ostringstream stream;
-    m.ApplyPreOrder([&stream](const MapTreeTestType& node) {
-      const auto* key = node.Key();
+    m.ApplyPreOrder([&stream](const MapTreeTestType &node) {
+      const auto *key = node.Key();
       stream << (key == nullptr ? 0 : *key) << " ";
     });
     EXPECT_EQ(stream.str(), "0 3 2 6 5 1 4 ");
@@ -397,15 +397,15 @@ TEST(MapTreeTest, TraversePrint) {
   // post-order traversals
   {  // print node values (string_views)
     std::ostringstream stream;
-    m.ApplyPostOrder([&stream](const MapTreeTestType::node_value_type& v) {
+    m.ApplyPostOrder([&stream](const MapTreeTestType::node_value_type &v) {
       stream << v << " ";
     });
     EXPECT_EQ(stream.str(), "ww vv qq tt ss pp groot ");
   }
   {  // print keys (ints)
     std::ostringstream stream;
-    m.ApplyPostOrder([&stream](const MapTreeTestType& node) {
-      const auto* key = node.Key();
+    m.ApplyPostOrder([&stream](const MapTreeTestType &node) {
+      const auto *key = node.Key();
       stream << (key == nullptr ? 0 : *key) << " ";
     });
     EXPECT_EQ(stream.str(), "2 6 3 1 4 5 0 ");
@@ -423,7 +423,7 @@ TEST(MapTreeTest, TraverseMutate) {
   {                             // mutate node values (string_views)
     MapTreeTestType m_copy(m);  // deep copy, mutate this copy
     std::ostringstream stream;
-    m_copy.ApplyPreOrder([&stream](MapTreeTestType::node_value_type& v) {
+    m_copy.ApplyPreOrder([&stream](MapTreeTestType::node_value_type &v) {
       v = v.substr(1);     // mutate: truncate
       stream << v << " ";  // print to verify order
     });
@@ -432,7 +432,7 @@ TEST(MapTreeTest, TraverseMutate) {
   {                             // mutate nodes
     MapTreeTestType m_copy(m);  // deep copy, mutate this copy
     std::ostringstream stream;
-    m_copy.ApplyPreOrder([&stream](MapTreeTestType& v) {
+    m_copy.ApplyPreOrder([&stream](MapTreeTestType &v) {
       v.Value() = v.Value().substr(1);  // mutate: truncate
       stream << v.Value() << " ";       // print to verify order
     });
@@ -443,7 +443,7 @@ TEST(MapTreeTest, TraverseMutate) {
   {                             // mutate node values (string_views)
     MapTreeTestType m_copy(m);  // deep copy, mutate this copy
     std::ostringstream stream;
-    m_copy.ApplyPostOrder([&stream](MapTreeTestType::node_value_type& v) {
+    m_copy.ApplyPostOrder([&stream](MapTreeTestType::node_value_type &v) {
       v = v.substr(1);     // mutate: truncate
       stream << v << " ";  // print to verify order
     });
@@ -452,7 +452,7 @@ TEST(MapTreeTest, TraverseMutate) {
   {                             // mutate nodes
     MapTreeTestType m_copy(m);  // deep copy, mutate this copy
     std::ostringstream stream;
-    m_copy.ApplyPostOrder([&stream](MapTreeTestType& v) {
+    m_copy.ApplyPostOrder([&stream](MapTreeTestType &v) {
       v.Value() = v.Value().substr(1);  // mutate: truncate
       stream << v.Value() << " ";       // print to verify order
     });
@@ -508,8 +508,8 @@ TEST(MapTreeTest, PrintTreeTwoGenerationsUsingIndent) {
                             KV{6, MapTreeTestType("vv")})});
   std::ostringstream stream;
   m.PrintTree(stream,
-              [](std::ostream& s, const std::string& text,
-                 size_t indent) -> std::ostream& {
+              [](std::ostream &s, const std::string &text,
+                 size_t indent) -> std::ostream & {
                 const Spacer wrap(indent + 4);
                 for (const auto c : text) {
                   s << '\n' << wrap << c;

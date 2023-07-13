@@ -50,16 +50,16 @@ LineDiffs::LineDiffs(absl::string_view before, absl::string_view after)
                                 after_lines.begin(), after_lines.end())) {}
 
 template <typename Iter>
-static std::ostream& PrintLineRange(std::ostream& stream, char op, Iter start,
+static std::ostream &PrintLineRange(std::ostream &stream, char op, Iter start,
                                     Iter end) {
-  for (const auto& line : make_range(start, end)) {
+  for (const auto &line : make_range(start, end)) {
     stream << op << line;
   }
   return stream;
 }
 
-std::ostream& LineDiffs::PrintEdit(std::ostream& stream,
-                                   const Edit& edit) const {
+std::ostream &LineDiffs::PrintEdit(std::ostream &stream,
+                                   const Edit &edit) const {
   const char op = EditOperationToLineMarker(edit.operation);
   if (edit.operation == Operation::INSERT) {
     PrintLineRange(stream, op, after_lines.begin() + edit.start,
@@ -74,16 +74,16 @@ std::ostream& LineDiffs::PrintEdit(std::ostream& stream,
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const LineDiffs& diffs) {
-  for (const auto& edit : diffs.edits) {
+std::ostream &operator<<(std::ostream &stream, const LineDiffs &diffs) {
+  for (const auto &edit : diffs.edits) {
     diffs.PrintEdit(stream, edit);
   }
   return stream;
 }
 
-LineNumberSet DiffEditsToAddedLineNumbers(const Edits& edits) {
+LineNumberSet DiffEditsToAddedLineNumbers(const Edits &edits) {
   LineNumberSet added_lines;
-  for (const auto& edit : edits) {
+  for (const auto &edit : edits) {
     if (edit.operation == Operation::INSERT) {
       // Add 1 to convert from 0-indexed to 1-indexed.
       added_lines.Add(
@@ -93,12 +93,12 @@ LineNumberSet DiffEditsToAddedLineNumbers(const Edits& edits) {
   return added_lines;
 }
 
-std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
+std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
                                                int common_context) {
   const int split_threshold = common_context * 2;
   std::vector<diff::Edits> hunks(1);  // start with 1 empty destination vector
-  for (const diff::Edit& edit : edits) {
-    auto& current_hunk = hunks.back();
+  for (const diff::Edit &edit : edits) {
+    auto &current_hunk = hunks.back();
     if (edit.operation == Operation::EQUALS) {
       const int edit_size = edit.end - edit.start;
       if (current_hunk.empty()) {
@@ -135,7 +135,7 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
 
   // The last hunk may have been started before knowing it was the last one.
   // Remove if it is a no-op.
-  const auto& last_hunk = hunks.back();  // hunks is always non-empty
+  const auto &last_hunk = hunks.back();  // hunks is always non-empty
   if (last_hunk.size() == 1 &&
       last_hunk.front().operation == Operation::EQUALS) {
     // This last hunk's only element is an Operation::EQUALS (no-change),
@@ -144,8 +144,8 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
   }
 
   // Trim excess EQUALS tail edits in each hunk.
-  for (auto& hunk : hunks) {
-    auto& tail = hunk.back();
+  for (auto &hunk : hunks) {
+    auto &tail = hunk.back();
     if (tail.operation == Operation::EQUALS) {
       if (tail.end - tail.start > common_context) {
         tail.end = tail.start + common_context;
@@ -155,7 +155,7 @@ std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
   return hunks;
 }
 
-void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
+void LineDiffsToUnifiedDiff(std::ostream &stream, const LineDiffs &linediffs,
                             unsigned common_context, absl::string_view file_a,
                             absl::string_view file_b) {
   const std::vector<diff::Edits> chunks =
@@ -174,11 +174,11 @@ void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
   }
 
   int added_lines_count = 0;
-  for (const auto& chunk : chunks) {
+  for (const auto &chunk : chunks) {
     int chunk_before_lines_count = 0;
     int chunk_added_lines_count = 0;
 
-    for (const auto& edit : chunk) {
+    for (const auto &edit : chunk) {
       if (edit.operation == Operation::INSERT) {
         chunk_added_lines_count += edit.end - edit.start;
       } else if (edit.operation == Operation::DELETE) {
@@ -200,7 +200,7 @@ void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
 
     added_lines_count += chunk_added_lines_count;
 
-    for (const auto& edit : chunk) {
+    for (const auto &edit : chunk) {
       linediffs.PrintEdit(stream, edit);
 
       // Last line from either original or new text, and final '\n' is missing?

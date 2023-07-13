@@ -37,8 +37,8 @@ namespace verilog {
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4,
           typename T5>
-verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
-                                 T3&& id, T4&& equals, T5&& proto) {
+verible::SymbolPtr MakeDPIImport(T0 &&keyword, T1 &&spec, T2 &&property,
+                                 T3 &&id, T4 &&equals, T5 &&proto) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
   if (id != nullptr) {
@@ -58,9 +58,9 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
 // in positions 3 and 4 (optional symbols).  Compiler is not guaranteed
 // to deduce to that some paths are not reachble/applicable.
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
-verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
+verible::SymbolPtr MakeDPIImport(T0 &&keyword, T1 &&spec, T2 &&property,
                                  std::nullptr_t id, std::nullptr_t equals,
-                                 T3&& proto, T4&& semi) {
+                                 T3 &&proto, T4 &&semi) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
   CHECK(verible::SymbolCastToNode(*proto).MatchesTagAnyOf(
@@ -72,10 +72,11 @@ verible::SymbolPtr MakeDPIImport(T0&& keyword, T1&& spec, T2&& property,
 }
 
 // Find all DPI imports.
-std::vector<verible::TreeSearchMatch> FindAllDPIImports(const verible::Symbol&);
+std::vector<verible::TreeSearchMatch> FindAllDPIImports(
+    const verible::Symbol &);
 
 // Returns the function/task prototype.
-const verible::SyntaxTreeNode* GetDPIImportPrototype(const verible::Symbol&);
+const verible::SyntaxTreeNode *GetDPIImportPrototype(const verible::Symbol &);
 
 }  // namespace verilog
 

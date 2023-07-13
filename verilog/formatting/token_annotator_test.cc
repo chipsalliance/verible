@@ -45,11 +45,11 @@ using ::verible::PreFormatToken;
 using ::verible::SpacingOptions;
 
 // Private function with external linkage from token_annotator.cc.
-extern void AnnotateFormatToken(const FormatStyle& style,
-                                const PreFormatToken& prev_token,
-                                PreFormatToken* curr_token,
-                                const verible::SyntaxTreeContext& prev_context,
-                                const verible::SyntaxTreeContext& curr_context);
+extern void AnnotateFormatToken(const FormatStyle &style,
+                                const PreFormatToken &prev_token,
+                                PreFormatToken *curr_token,
+                                const verible::SyntaxTreeContext &prev_context,
+                                const verible::SyntaxTreeContext &curr_context);
 
 namespace {
 
@@ -59,24 +59,24 @@ namespace {
 // We do not want to compare break penalties, because that would be too
 // change-detector-y.
 struct ExpectedInterTokenInfo {
-  constexpr ExpectedInterTokenInfo(int spaces, const SpacingOptions& bd)
+  constexpr ExpectedInterTokenInfo(int spaces, const SpacingOptions &bd)
       : spaces_required(spaces), break_decision(bd) {}
 
   int spaces_required = 0;
   SpacingOptions break_decision = SpacingOptions::kUndecided;
 
-  bool operator==(const InterTokenInfo& before) const {
+  bool operator==(const InterTokenInfo &before) const {
     return spaces_required == before.spaces_required &&
            break_decision == before.break_decision;
   }
 
-  bool operator!=(const InterTokenInfo& before) const {
+  bool operator!=(const InterTokenInfo &before) const {
     return !(*this == before);
   }
 };
 
-std::ostream& operator<<(std::ostream& stream,
-                         const ExpectedInterTokenInfo& t) {
+std::ostream &operator<<(std::ostream &stream,
+                         const ExpectedInterTokenInfo &t) {
   stream << "{\n  spaces_required: " << t.spaces_required
          << "\n  break_decision: " << t.break_decision << "\n}";
   return stream;
@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream& stream,
 // type T is any container or range over PreFormatTokens.
 template <class T>
 bool CorrectExpectedFormatTokens(
-    const std::vector<ExpectedInterTokenInfo>& expected, const T& tokens) {
+    const std::vector<ExpectedInterTokenInfo> &expected, const T &tokens) {
   EXPECT_EQ(expected.size(), tokens.size())
       << "Size of expected calculations and format tokens does not match.";
   if (expected.size() != tokens.size()) {
@@ -96,8 +96,8 @@ bool CorrectExpectedFormatTokens(
 
   const auto first_mismatch =
       std::mismatch(expected.cbegin(), expected.cend(), tokens.begin(),
-                    [](const ExpectedInterTokenInfo& expected,
-                       const PreFormatToken& token) -> bool {
+                    [](const ExpectedInterTokenInfo &expected,
+                       const PreFormatToken &token) -> bool {
                       return expected == token.before;
                     });
   const bool all_match = first_mismatch.first == expected.cend();
@@ -126,11 +126,11 @@ struct AnnotateFormattingInformationTestCase {
 };
 
 // Print input tokens' text for debugging.
-std::ostream& operator<<(
-    std::ostream& stream,
-    const AnnotateFormattingInformationTestCase& test_case) {
+std::ostream &operator<<(
+    std::ostream &stream,
+    const AnnotateFormattingInformationTestCase &test_case) {
   stream << '[';
-  for (const auto& token : test_case.input_tokens) {
+  for (const auto &token : test_case.input_tokens) {
     stream << ' ' << token.text();
   }
   return stream << " ]";
@@ -143,7 +143,7 @@ class InitializedSyntaxTreeContext : public verible::SyntaxTreeContext {
  public:
   InitializedSyntaxTreeContext(std::initializer_list<NodeEnum> ancestors) {
     // Build up a "skinny" tree from the bottom-up, much like the parser does.
-    std::vector<verible::SyntaxTreeNode*> parents;
+    std::vector<verible::SyntaxTreeNode *> parents;
     parents.reserve(ancestors.size());
     for (const auto ancestor : verible::reversed_view(ancestors)) {
       if (root_ == nullptr) {
@@ -152,9 +152,9 @@ class InitializedSyntaxTreeContext : public verible::SyntaxTreeContext {
         root_ = verible::MakeTaggedNode(ancestor, root_);
       }
       parents.push_back(ABSL_DIE_IF_NULL(
-          verible::down_cast<verible::SyntaxTreeNode*>(root_.get())));
+          verible::down_cast<verible::SyntaxTreeNode *>(root_.get())));
     }
-    for (const auto* parent : verible::reversed_view(parents)) {
+    for (const auto *parent : verible::reversed_view(parents)) {
       Push(parent);
     }
   }
@@ -164,10 +164,10 @@ class InitializedSyntaxTreeContext : public verible::SyntaxTreeContext {
   verible::SymbolPtr root_;
 };
 
-std::ostream& operator<<(std::ostream& stream,
-                         const InitializedSyntaxTreeContext& context) {
+std::ostream &operator<<(std::ostream &stream,
+                         const InitializedSyntaxTreeContext &context) {
   stream << "[ ";
-  for (const auto* node : verible::make_range(context.begin(), context.end())) {
+  for (const auto *node : verible::make_range(context.begin(), context.end())) {
     stream << NodeEnumToString(NodeEnum(ABSL_DIE_IF_NULL(node)->Tag().tag))
            << " ";
   }
@@ -1807,19 +1807,19 @@ TEST(TokenAnnotatorTest, AnnotateFormattingInfoTest) {
   };
 
   int test_index = 0;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     verible::UnwrappedLineMemoryHandler handler;
     handler.CreateTokenInfos(test_case.input_tokens);
     verible::UnwrappedLine unwrapped_line(test_case.uwline_indentation,
                                           handler.GetPreFormatTokensBegin());
     handler.AddFormatTokens(&unwrapped_line);
     // The format_token_enums are not yet set by AddFormatTokens.
-    for (auto& ftoken : handler.pre_format_tokens_) {
+    for (auto &ftoken : handler.pre_format_tokens_) {
       ftoken.format_token_enum =
           GetFormatTokenType(verilog_tokentype(ftoken.TokenEnum()));
     }
 
-    auto& ftokens_range = handler.pre_format_tokens_;
+    auto &ftokens_range = handler.pre_format_tokens_;
     // nullptr buffer_start is needed because token text do not belong to the
     // same contiguous string buffer.
     // Pass an empty/fake tree, which will not be used for testing
@@ -4688,7 +4688,7 @@ TEST(TokenAnnotatorTest, AnnotateFormattingWithContextTest) {
       },
   };
   int test_index = 0;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "test_index[" << test_index << "]:";
     PreFormatToken left(&test_case.left_token);
     PreFormatToken right(&test_case.right_token);
@@ -5419,7 +5419,7 @@ TEST(TokenAnnotatorTest, OriginalSpacingSensitiveTests) {
       },
   };
   int test_index = 0;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "test_index[" << test_index << "]:";
 
     const verible::TokenInfoTestData test_data = {

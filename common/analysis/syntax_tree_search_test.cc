@@ -119,7 +119,7 @@ TEST(SearchSyntaxTreeTest, RootOnlyNodeMatchFalsePredicate) {
   auto matcher_builder = NodeMatcher<0>();
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(
-      *tree, matcher, [](const SyntaxTreeContext&) { return false; });
+      *tree, matcher, [](const SyntaxTreeContext &) { return false; });
   EXPECT_TRUE(matches.empty());
 }
 
@@ -129,7 +129,7 @@ TEST(SearchSyntaxTreeTest, RootOnlyNodeMatchTruePredicate) {
   auto matcher_builder = NodeMatcher<0>();
   auto matcher = matcher_builder();
   auto matches = SearchSyntaxTree(
-      *tree, matcher, [](const SyntaxTreeContext&) { return true; });
+      *tree, matcher, [](const SyntaxTreeContext &) { return true; });
   EXPECT_EQ(matches.size(), 1);
   EXPECT_EQ(&SymbolCastToNode(*matches.front().match), tree.get());
 }

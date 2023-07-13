@@ -38,7 +38,7 @@ VERILOG_REGISTER_LINT_RULE(MacroStringConcatenationRule);
 static constexpr absl::string_view kMessage =
     "Token concatenation (``) used inside plain string literal.";
 
-const LintRuleDescriptor& MacroStringConcatenationRule::GetDescriptor() {
+const LintRuleDescriptor &MacroStringConcatenationRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "macro-string-concatenation",
       .topic = "defines",
@@ -48,7 +48,7 @@ const LintRuleDescriptor& MacroStringConcatenationRule::GetDescriptor() {
   return d;
 }
 
-void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
+void MacroStringConcatenationRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
   const absl::string_view text(token.text());
 
@@ -57,7 +57,7 @@ void MacroStringConcatenationRule::HandleToken(const TokenInfo& token) {
     if (IsUnlexed(token_enum)) {
       verible::ValueSaver<State> state_saver(&state_, State::kInsideDefineBody);
       RecursiveLexText(
-          text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
+          text, [this](const TokenInfo &subtoken) { HandleToken(subtoken); });
     }
   } else if (state_ == State::kInsideDefineBody &&
              token_enum == TK_StringLiteral) {

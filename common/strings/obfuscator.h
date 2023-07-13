@@ -44,7 +44,7 @@ class Obfuscator {
   using translator_type = BijectiveMap<std::string, std::string,
                                        StringViewCompare, StringViewCompare>;
 
-  explicit Obfuscator(const generator_type& g) : generator_(g) {}
+  explicit Obfuscator(const generator_type &g) : generator_(g) {}
 
   // Declares a mapping from key-string to value-string that will be
   // used in obfuscation.  This is useful for applying previously used
@@ -61,7 +61,7 @@ class Obfuscator {
   absl::string_view operator()(absl::string_view input);
 
   // Read-only view of string translation map.
-  const translator_type& GetTranslator() const { return translator_; }
+  const translator_type &GetTranslator() const { return translator_; }
 
   // Parses a mapping dictionary, and pre-loads the translator map with it.
   // Format: one entry per line, each line is space-separated pair of
@@ -90,7 +90,7 @@ class IdentifierObfuscator : public Obfuscator {
  public:
   // Tip for users of this: use something like RandomEqualLengthIdentifier,
   // but also make sure to not accidentally generate any of your keywords.
-  explicit IdentifierObfuscator(const generator_type& g) : Obfuscator(g) {}
+  explicit IdentifierObfuscator(const generator_type &g) : Obfuscator(g) {}
 
   // Same as inherited method, but verifies that key and value are equal length.
   bool encode(absl::string_view key, absl::string_view value);

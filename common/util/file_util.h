@@ -69,10 +69,10 @@ absl::string_view Stem(absl::string_view filename);
 // and going upwards the directory tree. Returns true if anything is found and
 // puts the found file in 'result'.
 absl::Status UpwardFileSearch(absl::string_view start,
-                              absl::string_view filename, std::string* result);
+                              absl::string_view filename, std::string *result);
 
 // Determines whether the given filename exists and is a regular file or pipe.
-absl::Status FileExists(const std::string& filename);
+absl::Status FileExists(const std::string &filename);
 
 // Read file "filename" and return its content as string.
 absl::StatusOr<std::string> GetContentAsString(absl::string_view filename);
@@ -121,15 +121,15 @@ class ScopedTestFile {
   ~ScopedTestFile();
 
   // not copy-able
-  ScopedTestFile(const ScopedTestFile&) = delete;
-  ScopedTestFile& operator=(const ScopedTestFile&) = delete;
+  ScopedTestFile(const ScopedTestFile &) = delete;
+  ScopedTestFile &operator=(const ScopedTestFile &) = delete;
 
   // move-able (to support vector::emplace_back())
-  ScopedTestFile(ScopedTestFile&&) = default;
-  ScopedTestFile& operator=(ScopedTestFile&&) = default;
+  ScopedTestFile(ScopedTestFile &&) = default;
+  ScopedTestFile &operator=(ScopedTestFile &&) = default;
 
   // Filename created by this instance.
-  const std::string& filename() const { return filename_; }
+  const std::string &filename() const { return filename_; }
 
  private:
   std::string filename_;

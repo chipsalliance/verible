@@ -33,7 +33,7 @@ namespace verible {
 class TextStructureLinter {
  public:
   // Analyzes a sequence of tokens.
-  void Lint(const TextStructureView&, absl::string_view);
+  void Lint(const TextStructureView &, absl::string_view);
 
   // Transfers ownership of rule into this Linter
   void AddRule(std::unique_ptr<TextStructureLintRule> rule) {

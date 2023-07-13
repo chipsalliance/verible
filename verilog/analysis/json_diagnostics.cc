@@ -32,7 +32,7 @@ namespace verilog {
 // Returns AnalysisPhase as JSON value.
 // Try not to change. External tools may use these values as a constant phase
 // IDs.
-static json analysis_phase_to_json(const verible::AnalysisPhase& phase) {
+static json analysis_phase_to_json(const verible::AnalysisPhase &phase) {
   switch (phase) {
     case verible::AnalysisPhase::kLexPhase:
       return "lex";
@@ -45,21 +45,21 @@ static json analysis_phase_to_json(const verible::AnalysisPhase& phase) {
   }
 }
 
-json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer* analyzer,
+json GetLinterTokenErrorsAsJson(const verilog::VerilogAnalyzer *analyzer,
                                 size_t limit) {
   json syntax_errors = json::array();
 
-  const std::vector<verible::RejectedToken>& rejected_tokens =
+  const std::vector<verible::RejectedToken> &rejected_tokens =
       analyzer->GetRejectedTokens();
-  for (const auto& rejected_token : rejected_tokens) {
-    json& error = syntax_errors.emplace_back(json::object());
+  for (const auto &rejected_token : rejected_tokens) {
+    json &error = syntax_errors.emplace_back(json::object());
 
     analyzer->ExtractLinterTokenErrorDetail(
         rejected_token,
-        [&error](const std::string& filename, LineColumnRange range,
+        [&error](const std::string &filename, LineColumnRange range,
                  ErrorSeverity severity, AnalysisPhase phase,
                  absl::string_view token_text, absl::string_view context_line,
-                 const std::string& message) {
+                 const std::string &message) {
           // TODO: should this do something different for severity = kWarning ?
           error["line"] = range.start.line;  // NB: zero based index
           error["column"] = range.start.column;

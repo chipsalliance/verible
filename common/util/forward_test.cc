@@ -28,50 +28,50 @@ class TestClassA {};
 class TestClassB {
  public:
   TestClassB() = default;
-  explicit TestClassB(const TestClassA&) {}
+  explicit TestClassB(const TestClassA &) {}
 };
 
 TEST(ForwardReferenceElseConstructTest, ForwardReference) {
   TestClassA a;
-  const auto& ref = ForwardReferenceElseConstruct<TestClassA>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<TestClassA>()(a);
   EXPECT_EQ(&ref, &a);  // same object forwarded
 }
 
 TEST(ForwardReferenceElseConstructTest, ForwardReferenceConst) {
   const TestClassA a;
-  const auto& ref = ForwardReferenceElseConstruct<TestClassA>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<TestClassA>()(a);
   EXPECT_EQ(&ref, &a);  // same object forwarded
 }
 
 TEST(ForwardReferenceElseConstructTest, Construct) {
   const TestClassA a;
-  const auto& ref = ForwardReferenceElseConstruct<TestClassB>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<TestClassB>()(a);
   static_assert(!std::is_same<decltype(ref), TestClassA>::value,
                 "!std::is_same<decltype(ref), TestClassA>::value");
 }
 
 TEST(ForwardReferenceElseConstructTest, ForwardStringView) {
   const absl::string_view a("hello");
-  const auto& ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
   EXPECT_EQ(&ref, &a);  // same object forwarded
 }
 
 TEST(ForwardReferenceElseConstructTest, ConstructString) {
   const absl::string_view a("hello");
-  const auto& ref = ForwardReferenceElseConstruct<std::string>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<std::string>()(a);
   static_assert(!std::is_same<decltype(ref), absl::string_view>::value,
                 "!std::is_same<decltype(ref), absl::string_view>::value");
 }
 
 TEST(ForwardReferenceElseConstructTest, ForwardString) {
   const std::string a("hello");
-  const auto& ref = ForwardReferenceElseConstruct<std::string>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<std::string>()(a);
   EXPECT_EQ(&ref, &a);  // same object forwarded
 }
 
 TEST(ForwardReferenceElseConstructTest, ConstructStringView) {
   const std::string a("hello");
-  const auto& ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
+  const auto &ref = ForwardReferenceElseConstruct<absl::string_view>()(a);
   static_assert(!std::is_same<decltype(ref), std::string>::value,
                 "!std::is_same<decltype(ref), std::string>::value");
 }

@@ -58,7 +58,7 @@ class PatchSet {
   absl::Status Parse(absl::string_view patch_contents);
 
   // Prints a unified-diff formatted output.
-  std::ostream& Render(std::ostream& stream) const;
+  std::ostream &Render(std::ostream &stream) const;
 
   // Returns a map<filename, line_numbers> that indicates which lines in each
   // file are new (in patch files, these are hunk lines starting with '+').
@@ -71,13 +71,13 @@ class PatchSet {
   // Interactively prompt user to select hunks to apply in-place.
   // 'ins' is the stream from which user-input is read,
   // and 'outs' is the stream that displays text and prompts to the user.
-  absl::Status PickApplyInPlace(std::istream& ins, std::ostream& outs) const;
+  absl::Status PickApplyInPlace(std::istream &ins, std::ostream &outs) const;
 
  protected:
   // For testing, allow mocking out of file I/O.
-  absl::Status PickApply(std::istream& ins, std::ostream& outs,
-                         const internal::FileReaderFunction& file_reader,
-                         const internal::FileWriterFunction& file_writer) const;
+  absl::Status PickApply(std::istream &ins, std::ostream &outs,
+                         const internal::FileReaderFunction &file_reader,
+                         const internal::FileWriterFunction &file_writer) const;
 
  private:
   // Non-patch plain text that could describe the origins of the diff/patch,
@@ -90,7 +90,7 @@ class PatchSet {
   std::vector<internal::FilePatch> file_patches_;
 };
 
-std::ostream& operator<<(std::ostream&, const PatchSet&);
+std::ostream &operator<<(std::ostream &, const PatchSet &);
 
 // Private implementation details follow.
 namespace internal {
@@ -129,30 +129,30 @@ struct MarkedLine {
   absl::string_view Text() const { return {&line[1], line.length() - 1}; }
 
   // default equality operator
-  bool operator==(const MarkedLine& other) const { return line == other.line; }
-  bool operator!=(const MarkedLine& other) const { return !(*this == other); }
+  bool operator==(const MarkedLine &other) const { return line == other.line; }
+  bool operator!=(const MarkedLine &other) const { return !(*this == other); }
 
   absl::Status Parse(absl::string_view);
 };
 
-std::ostream& operator<<(std::ostream&, const MarkedLine&);
+std::ostream &operator<<(std::ostream &, const MarkedLine &);
 
 struct HunkIndices {
   int start;  // starting line number for a hunk, 1-based
   int count;  // number of lines to expect in this hunk
 
   // default equality operator
-  bool operator==(const HunkIndices& other) const {
+  bool operator==(const HunkIndices &other) const {
     return start == other.start && count == other.count;
   }
-  bool operator!=(const HunkIndices& other) const { return !(*this == other); }
+  bool operator!=(const HunkIndices &other) const { return !(*this == other); }
 
   std::string FormatToString() const;
 
   absl::Status Parse(absl::string_view);
 };
 
-std::ostream& operator<<(std::ostream&, const HunkIndices&);
+std::ostream &operator<<(std::ostream &, const HunkIndices &);
 
 struct HunkHeader {
   HunkIndices old_range;
@@ -162,22 +162,22 @@ struct HunkHeader {
   std::string context;
 
   // default equality operator
-  bool operator==(const HunkHeader& other) const {
+  bool operator==(const HunkHeader &other) const {
     return old_range == other.old_range && new_range == other.new_range &&
            context == other.context;
   }
-  bool operator!=(const HunkHeader& other) const { return !(*this == other); }
+  bool operator!=(const HunkHeader &other) const { return !(*this == other); }
 
   absl::Status Parse(absl::string_view);
 };
 
-std::ostream& operator<<(std::ostream&, const HunkHeader&);
+std::ostream &operator<<(std::ostream &, const HunkHeader &);
 
 // One unit of a file change.
 class Hunk {
  public:
   Hunk() = default;
-  Hunk(const Hunk&) = default;
+  Hunk(const Hunk &) = default;
 
   template <typename Iter>
   Hunk(int old_starting_line, int new_starting_line, Iter begin, Iter end)
@@ -191,9 +191,9 @@ class Hunk {
   // MarkedLines.
   absl::Status IsValid() const;
 
-  const HunkHeader& Header() const { return header_; }
+  const HunkHeader &Header() const { return header_; }
 
-  const std::vector<MarkedLine>& MarkedLines() const { return lines_; }
+  const std::vector<MarkedLine> &MarkedLines() const { return lines_; }
 
   // If a hunk is modified for any reason, the number of added/removed lines may
   // have changed, so this will update the .count values.
@@ -202,20 +202,20 @@ class Hunk {
   // Returns a set of line numbers for lines that are changed or new.
   LineNumberSet AddedLines() const;
 
-  absl::Status Parse(const LineRange&);
+  absl::Status Parse(const LineRange &);
 
-  std::ostream& Print(std::ostream&) const;
+  std::ostream &Print(std::ostream &) const;
 
   // Verify consistency of lines in the patch (old-file) against the file that
   // is read in whole.
   absl::Status VerifyAgainstOriginalLines(
-      const std::vector<absl::string_view>& original_lines) const;
+      const std::vector<absl::string_view> &original_lines) const;
 
   // default structural comparison
-  bool operator==(const Hunk& other) const {
+  bool operator==(const Hunk &other) const {
     return header_ == other.header_ && lines_ == other.lines_;
   }
-  bool operator!=(const Hunk& other) const { return !(*this == other); }
+  bool operator!=(const Hunk &other) const { return !(*this == other); }
 
   // Splits this Hunk into smaller ones at the points of common context.
   // Returns array of hunks.  If this hunk can no longer be split, then it is
@@ -230,7 +230,7 @@ class Hunk {
   std::vector<MarkedLine> lines_;
 };
 
-std::ostream& operator<<(std::ostream&, const Hunk&);
+std::ostream &operator<<(std::ostream &, const Hunk &);
 
 struct SourceInfo {
   std::string path;       // location to patched file, absolute or relative
@@ -239,13 +239,13 @@ struct SourceInfo {
   absl::Status Parse(absl::string_view);
 };
 
-std::ostream& operator<<(std::ostream&, const SourceInfo&);
+std::ostream &operator<<(std::ostream &, const SourceInfo &);
 
 // Set of changes for a single file.
 class FilePatch {
  public:
   // Initialize data struct from a range of patch lines.
-  absl::Status Parse(const LineRange&);
+  absl::Status Parse(const LineRange &);
 
   // Returns true if this file is new.
   bool IsNewFile() const;
@@ -253,25 +253,25 @@ class FilePatch {
   // Returns true if this file is deleted.
   bool IsDeletedFile() const;
 
-  const SourceInfo& NewFileInfo() const { return new_file_; }
+  const SourceInfo &NewFileInfo() const { return new_file_; }
 
   // Returns a set of line numbers for lines that are changed or new.
   LineNumberSet AddedLines() const;
 
-  std::ostream& Print(std::ostream&) const;
+  std::ostream &Print(std::ostream &) const;
 
   // Verify consistency of lines in the patch (old-file) against the file that
   // is read in whole.
   absl::Status VerifyAgainstOriginalLines(
-      const std::vector<absl::string_view>& original_lines) const;
+      const std::vector<absl::string_view> &original_lines) const;
 
-  absl::Status PickApplyInPlace(std::istream& ins, std::ostream& outs) const;
+  absl::Status PickApplyInPlace(std::istream &ins, std::ostream &outs) const;
 
   // For testing with mocked-out file I/O.
   // Public to allow use by PatchSet::PickApply().
-  absl::Status PickApply(std::istream& ins, std::ostream& outs,
-                         const FileReaderFunction& file_reader,
-                         const FileWriterFunction& file_writer) const;
+  absl::Status PickApply(std::istream &ins, std::ostream &outs,
+                         const FileReaderFunction &file_reader,
+                         const FileWriterFunction &file_writer) const;
 
  private:
   // These are lines of informational text only, such as how the diff was
@@ -282,7 +282,7 @@ class FilePatch {
   std::vector<Hunk> hunks_;
 };
 
-std::ostream& operator<<(std::ostream&, const FilePatch&);
+std::ostream &operator<<(std::ostream &, const FilePatch &);
 
 }  // namespace internal
 

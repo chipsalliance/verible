@@ -50,9 +50,9 @@ struct LintTestCase : public TokenInfoTestData {
   // Returns true if every element is an exact match to the expected set.
   // TODO(b/141875806): Take a symbol translator function to produce a
   // human-readable, language-specific enum name.
-  bool ExactMatchFindings(const std::set<LintViolation>& found_violations,
+  bool ExactMatchFindings(const std::set<LintViolation> &found_violations,
                           absl::string_view base,
-                          std::ostream* diffstream) const;
+                          std::ostream *diffstream) const;
 };
 
 template <typename RuleType>
@@ -66,8 +66,8 @@ class LintRunner;
 // Tests that LintTestCase test has expected violations under make_rule
 // Expects test.code to be accepted by AnalyzerType.
 template <class AnalyzerType, class RuleType>
-void RunLintTestCase(const LintTestCase& test,
-                     const LintRuleGenerator<RuleType>& make_rule,
+void RunLintTestCase(const LintTestCase &test,
+                     const LintRuleGenerator<RuleType> &make_rule,
                      absl::string_view filename) {
   // All linters start by parsing to yield a TextStructure.
   // TODO(hzeller): make preprocessor configurable. Right now, preprocessor
@@ -78,7 +78,7 @@ void RunLintTestCase(const LintTestCase& test,
   // Instantiate a linter that runs a single rule to analyze text.
   LintRunner<RuleType> lint_runner(make_rule());
   const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), filename);
-  const auto& violations(rule_status.violations);
+  const auto &violations(rule_status.violations);
 
   // Report detailed differences, if any.
   const absl::string_view base_text = analyzer.Data().Contents();
@@ -100,7 +100,7 @@ void RunConfiguredLintTestCases(
     CHECK(config_status.ok()) << config_status.message();
     return instance;
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     RunLintTestCase<AnalyzerType, rule_type>(test, rule_generator, filename);
   }
 }
@@ -120,8 +120,8 @@ struct AutoFixInOut {
 // Tests that LintTestCase test has expected violations under make_rule
 // Expects test.code to be accepted by AnalyzerType.
 template <class AnalyzerType, class RuleType>
-void RunLintAutoFixCase(const AutoFixInOut& test,
-                        const LintRuleGenerator<RuleType>& make_rule) {
+void RunLintAutoFixCase(const AutoFixInOut &test,
+                        const LintRuleGenerator<RuleType> &make_rule) {
   // All linters start by parsing to yield a TextStructure.
   AnalyzerType analyzer(test.code, "");
   absl::Status unused_parser_status = analyzer.Analyze();
@@ -129,11 +129,11 @@ void RunLintAutoFixCase(const AutoFixInOut& test,
   // Instantiate a linter that runs a single rule to analyze text.
   LintRunner<RuleType> lint_runner(make_rule());
   const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), "");
-  const auto& violations(rule_status.violations);
+  const auto &violations(rule_status.violations);
 
   CHECK_EQ(violations.size(), 1) << "TODO: apply multi-violation fixes";
   CHECK_GT(violations.begin()->autofixes.size(), test.fix_alternative);
-  const verible::AutoFix& fix =
+  const verible::AutoFix &fix =
       rule_status.violations.begin()->autofixes[test.fix_alternative];
   std::string fix_out = fix.Apply(analyzer.Data().Contents());
 
@@ -150,7 +150,7 @@ void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
     CHECK(config_status.ok()) << config_status.message();
     return instance;
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     RunLintAutoFixCase<AnalyzerType, rule_type>(test, rule_generator);
   }
 }

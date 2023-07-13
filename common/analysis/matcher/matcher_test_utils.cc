@@ -30,7 +30,7 @@
 namespace verible {
 namespace matcher {
 
-void RunMatcherTestCase(const MatcherTestCase& test) {
+void RunMatcherTestCase(const MatcherTestCase &test) {
   BoundSymbolManager bound_symbol_manager;
 
   ASSERT_NE(test.root, nullptr);
@@ -42,7 +42,7 @@ void RunMatcherTestCase(const MatcherTestCase& test) {
     // If test passed, then all bound symbols should precisely matched expected.
     EXPECT_EQ(test.expected_bound_nodes.size(), bound_symbol_manager.Size());
 
-    for (const auto& expected : test.expected_bound_nodes) {
+    for (const auto &expected : test.expected_bound_nodes) {
       EXPECT_TRUE(bound_symbol_manager.ContainsSymbol(expected.first));
 
       auto matched_symbol = bound_symbol_manager.FindSymbol(expected.first);
@@ -57,22 +57,22 @@ void RunMatcherTestCase(const MatcherTestCase& test) {
 
 class MatchCounter : public TreeVisitorRecursive {
  public:
-  explicit MatchCounter(const Matcher& matcher) : matcher_(matcher) {}
+  explicit MatchCounter(const Matcher &matcher) : matcher_(matcher) {}
 
-  int Count(const Symbol& symbol) {
+  int Count(const Symbol &symbol) {
     num_matches_ = 0;
     symbol.Accept(this);
     return num_matches_;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final { TestSymbol(leaf); }
-  void Visit(const SyntaxTreeNode& node) final { TestSymbol(node); }
+  void Visit(const SyntaxTreeLeaf &leaf) final { TestSymbol(leaf); }
+  void Visit(const SyntaxTreeNode &node) final { TestSymbol(node); }
 
  private:
   const Matcher matcher_;
   int num_matches_ = 0;
 
-  void TestSymbol(const Symbol& symbol) {
+  void TestSymbol(const Symbol &symbol) {
     BoundSymbolManager manager;
     bool found_match = matcher_.Matches(symbol, &manager);
 
@@ -82,7 +82,7 @@ class MatchCounter : public TreeVisitorRecursive {
   }
 };
 
-void ExpectMatchesInAST(const Symbol& tree, const Matcher& matcher,
+void ExpectMatchesInAST(const Symbol &tree, const Matcher &matcher,
                         int num_matches, absl::string_view code) {
   MatchCounter counter(matcher);
   EXPECT_EQ(num_matches, counter.Count(tree)) << "code:\n"

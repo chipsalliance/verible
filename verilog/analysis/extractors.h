@@ -33,8 +33,8 @@ namespace analysis {
 // This could be useful when interface names are required to be
 // preserved.
 absl::Status CollectInterfaceNames(
-    absl::string_view content, std::set<std::string>* if_names,
-    const verilog::VerilogPreprocess::Config& preprocess_config);
+    absl::string_view content, std::set<std::string> *if_names,
+    const verilog::VerilogPreprocess::Config &preprocess_config);
 
 }  // namespace analysis
 }  // namespace verilog

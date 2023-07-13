@@ -27,7 +27,7 @@
 namespace verilog {
 namespace analysis {
 
-std::ostream& operator<<(std::ostream& stream, const BasedNumber& number) {
+std::ostream &operator<<(std::ostream &stream, const BasedNumber &number) {
   if (number.ok) {
     stream << "base:" << number.base << " signed:" << number.signedness
            << " literal:" << number.literal;

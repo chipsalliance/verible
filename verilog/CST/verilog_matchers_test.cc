@@ -35,7 +35,7 @@ TEST(VerilogMatchers, SystemTFIdentifierLeafTests) {
       {SystemTFIdentifierLeaf(), EmbedInClass(""), 0},
       {SystemTFIdentifierLeaf(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -53,7 +53,7 @@ TEST(VerilogMatchers, MacroCallIdLeafTests) {
       {MacroCallIdLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 0},
       {MacroCallIdLeaf(), EmbedInClassMethod("$uvm_foo(\"foo\");"), 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -68,7 +68,7 @@ TEST(VerilogMatchers, SymbolIdentifierLeaf) {
       {SymbolIdentifierLeaf(), EmbedInClassMethod("uvm_foo(\"foo\");"), 3},
       {SymbolIdentifierLeaf(), "parameter foo = 32'hDEADBEEF;", 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -81,7 +81,7 @@ TEST(VerilogMatchers, VoidCastNodeTests) {
       {NodekVoidcast(), EmbedInClass(""), 0},
       {NodekVoidcast(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -94,7 +94,7 @@ TEST(VerilogMatchers, ExpressionNodeTests) {
       {NodekExpression(), EmbedInClass(""), 0},
       {NodekExpression(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -120,7 +120,7 @@ TEST(VerilogMatchers, ExpressionHasFunctionCallTests) {
                                      FunctionCallHasParenGroup()),
        EmbedInClassMethod("x = bar.foo();"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -135,7 +135,7 @@ TEST(VerilogMatchers, NonCallExpressionHasRandomizeCallExtensionTests) {
       {NonCallHasRandomizeCallExtension(), EmbedInClass(""), 0},
       {NonCallHasRandomizeCallExtension(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -148,7 +148,7 @@ TEST(VerilogMatchers, CallExpressionHasRandomizeCallExtensionTests) {
       {CallHasRandomizeCallExtension(), EmbedInClass(""), 0},
       {CallHasRandomizeCallExtension(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -162,7 +162,7 @@ TEST(VerilogMatchers, ExpressionHasRandomizeFunctionTests) {
       {ExpressionHasRandomizeFunction(), EmbedInClass(""), 0},
       {ExpressionHasRandomizeFunction(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -172,7 +172,7 @@ TEST(VerilogMatchers, FunctionCallHasIdTests) {
   const RawMatcherTestCase tests[] = {
       {FunctionCallHasId(), EmbedInClassMethod("foo();"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -186,7 +186,7 @@ TEST(VerilogMatchers, NumberHasConstantWidthTests) {
       {NumberHasConstantWidth(), "localparam x = 8'b0000_1111;", 1},
       {NumberHasConstantWidth(), "localparam x = `WIDTH'bx;", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -210,7 +210,7 @@ TEST(VerilogMatchers, NumberHasBasedLiteralTests) {
       {NumberHasBasedLiteral(), "localparam x = 32'h 0000_4321;", 1},
       {NumberHasBasedLiteral(), "localparam x = 64'H aaaa_bbbb_cccc_dddd;", 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -235,7 +235,7 @@ TEST(VerilogMatchers, NumberIsBinaryTests) {
       {NumberIsBinary(), "localparam x = 32'h 0000_4321;", 0},
       {NumberIsBinary(), "localparam x = 64'H aaaa_bbbb_cccc_dddd;", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -260,7 +260,7 @@ TEST(VerilogMatchers, NumberHasBinaryDigitsTests) {
       {NumberHasBinaryDigits(), "localparam x = 32'h 0000_4321;", 0},
       {NumberHasBinaryDigits(), "localparam x = 64'H aaaa_bbbb_cccc_dddd;", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -275,7 +275,7 @@ TEST(VerilogMatchers, ActualParameterListNodeTests) {
       {NodekActualParameterList(), EmbedInModule(""), 0},
       {NodekActualParameterList(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -290,7 +290,7 @@ TEST(VerilogMatchers, ActualParameterListHasPositionalParameterListTests) {
       {ActualParameterListHasPositionalParameterList(), EmbedInModule(""), 0},
       {ActualParameterListHasPositionalParameterList(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -304,7 +304,7 @@ TEST(VerilogMatchers, GateInstanceNodeTests) {
       {NodekGateInstance(), EmbedInModule(""), 0},
       {NodekGateInstance(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -317,7 +317,7 @@ TEST(VerilogMatchers, GateInstanceHasPortListTests) {
       {GateInstanceHasPortList(), EmbedInModule(""), 0},
       {GateInstanceHasPortList(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -339,7 +339,7 @@ TEST(VerilogMatchers, GenerateBlockNodeTests) {
       {NodekGenerateBlock(), EmbedInModule(""), 0},
       {NodekGenerateBlock(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -362,7 +362,7 @@ TEST(VerilogMatchers, GenerateRegionNodeTests) {
       {NodekGenerateRegion(), EmbedInModule(""), 0},
       {NodekGenerateRegion(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -387,7 +387,7 @@ TEST(VerilogMatchers, HasBeginLabelTests) {
       {HasBeginLabel(), EmbedInModule(""), 0},
       {HasBeginLabel(), "", 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -426,7 +426,7 @@ TEST(VerilogMatchers, HasGenerateBlockTests) {
                      "endgenerate"),
        0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -449,7 +449,7 @@ TEST(VerilogMatchers, GenerateBlockHasBeginLabelTests) {
                      "endgenerate"),
        0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -472,7 +472,7 @@ TEST(VerilogMatchers, AlwaysStatementNodeTests) {
                      "always_comb begin a = b; end"),
        2},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -493,7 +493,7 @@ TEST(VerilogMatchers, AlwaysKeywordTests) {
                      "always_comb begin a = b; end"),
        0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -514,7 +514,7 @@ TEST(VerilogMatchers, AlwaysCombKeywordTests) {
                      "always_comb begin a = b; end"),
        1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -535,7 +535,7 @@ TEST(VerilogMatchers, AlwaysFFKeywordTests) {
                      "always_comb begin a = b; end"),
        1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -559,7 +559,7 @@ TEST(VerilogMatchers, AlwaysStatementHasEventControlStarTests) {
                      "always_comb begin a = b; end"),
        0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -577,7 +577,7 @@ TEST(VerilogMatchers, AlwaysStatementHasEventControlStarAndParentheses) {
       {AlwaysStatementHasEventControlStarAndParentheses(),
        EmbedInModule("always @( * ) begin a = b; end"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -598,7 +598,7 @@ TEST(VerilogMatchers, AlwaysStatementHasParentheses) {
       {AlwaysStatementHasParentheses(),
        EmbedInModule("always @(posedge foo) begin a <= b; end"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -621,7 +621,7 @@ TEST(VerilogMatchers, PathkLPValueTests) {
       {PathkLPValue(), EmbedInClassMethod("forever x = y;"), 1},
       {PathkLPValue(), EmbedInClassMethod("x = 1;\ny = two();"), 2},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -643,7 +643,7 @@ TEST(VerilogMatchers, RValueIsFunctionCallTest) {
       {RValueIsFunctionCall(), EmbedInClassMethod("x = bar::foo() -12;"), 0},
       {RValueIsFunctionCall(), EmbedInClassMethod("x = a + bar::foo();"), 0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -666,7 +666,7 @@ TEST(VerilogMatchers, FunctionCallIsQualifiedTest) {
       {FunctionCallIsQualified(), EmbedInClassMethod("x = bar::foo() -12;"), 1},
       {FunctionCallIsQualified(), EmbedInClassMethod("x = a + bar::foo();"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -714,7 +714,7 @@ TEST(VerilogMatchers, RValueFunctionCallIsQualifiedTest) {
       {RValueIsFunctionCall(FunctionCallIsQualified()),
        EmbedInClassMethod("x = a + bar::foo();"), 0},  // outermost rvalue is +
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -736,7 +736,7 @@ TEST(VerilogMatchers, FunctionCallArgumentsTest) {
       {FunctionCallArguments(), EmbedInClassMethod("x = foobar();"), 0},
       {FunctionCallArguments(), EmbedInClassMethod("f.g.h = foobar(g);"), 1},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -756,7 +756,7 @@ TEST(VerilogMatchers, DeclarationDimensionsHasRanges) {
       {DeclarationDimensionsHasRanges(), EmbedInModule("wire [1:2] w [1:0];"),
        2},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }
@@ -784,7 +784,7 @@ TEST(VerilogMatchers, HasDefaultCaseTests) {
        )",
        0},
   };
-  for (const auto& test : tests) {
+  for (const auto &test : tests) {
     verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
   }
 }

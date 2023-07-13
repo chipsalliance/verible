@@ -56,7 +56,7 @@ using verible::TreeSearchMatch;
 TEST(FindAllModuleDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_declarations =
       FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(module_declarations.empty());
@@ -65,7 +65,7 @@ TEST(FindAllModuleDeclarationsTest, EmptySource) {
 TEST(FindAllModuleDeclarationsTest, NonModule) {
   VerilogAnalyzer analyzer("class foo; endclass", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_declarations =
       FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(module_declarations.empty());
@@ -74,7 +74,7 @@ TEST(FindAllModuleDeclarationsTest, NonModule) {
 TEST(FindAllModuleDeclarationsTest, OneModule) {
   VerilogAnalyzer analyzer("module mod; endmodule", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_declarations =
       FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_EQ(module_declarations.size(), 1);
@@ -93,7 +93,7 @@ endclass
 )",
                            "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_declarations =
       FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_EQ(module_declarations.size(), 2);
@@ -102,7 +102,7 @@ endclass
 TEST(GetModuleNameTokenTest, RootIsNotAModule) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   // Root node is a description list, not a module.
   // If this happens, it is a programmer error, not user error.
   EXPECT_EQ(GetModuleName(*ABSL_DIE_IF_NULL(root)), nullptr);
@@ -115,16 +115,16 @@ TEST(GetModuleNameTokenTest, ValidModule) {
       {"interface m;\nendinterface\n"},
       {"module ", {kTag, "foo"}, "; endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& programs =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &programs =
               FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& instance : programs) {
-            const auto* name = GetModuleName(*instance.match);
+          for (const auto &instance : programs) {
+            const auto *name = GetModuleName(*instance.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -139,16 +139,16 @@ TEST(GetModuleNameTokenTest, ValidInterface) {
       {"module m;\nendmodule\n"},
       {"interface ", {kTag, "foo"}, "; endinterface"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& programs =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &programs =
               FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& instance : programs) {
-            const auto* name = GetModuleName(*instance.match);
+          for (const auto &instance : programs) {
+            const auto *name = GetModuleName(*instance.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -163,16 +163,16 @@ TEST(GetModuleNameTokenTest, ValidProgram) {
       {"module m;\nendmodule\n"},
       {"program ", {kTag, "foo"}, "; endprogram"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& programs =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &programs =
               FindAllProgramDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& instance : programs) {
-            const auto* name = GetModuleName(*instance.match);
+          for (const auto &instance : programs) {
+            const auto *name = GetModuleName(*instance.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -194,16 +194,16 @@ TEST(GetModulePortDeclarationListTest, ModulePorts) {
       {"module m", {kTag, "(\ninput   clk\n)"}, ";\nendmodule\n"},
       {"module m", {kTag, "(\ninput   clk,\noutput foo\n)"}, ";\nendmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& modules =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &modules =
               FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> groups;
-          for (const auto& instance : modules) {
-            const auto* group = GetModulePortParenGroup(*instance.match);
+          for (const auto &instance : modules) {
+            const auto *group = GetModulePortParenGroup(*instance.match);
             if (group == nullptr) {
               continue;
             }
@@ -228,16 +228,16 @@ TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
        {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
        "();\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> params;
-          for (const auto& instance : instances) {
-            const auto* decl =
+          for (const auto &instance : instances) {
+            const auto *decl =
                 GetParamDeclarationListFromModuleDeclaration(*instance.match);
             if (decl == nullptr) {
               continue;
@@ -262,16 +262,16 @@ TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
        {kTag, "#(parameter int x = 3,\n parameter logic y = 4)"},
        "();\nendinterface"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> params;
-          for (const auto& instance : instances) {
-            const auto* decl = GetParamDeclarationListFromInterfaceDeclaration(
+          for (const auto &instance : instances) {
+            const auto *decl = GetParamDeclarationListFromInterfaceDeclaration(
                 *instance.match);
             if (decl == nullptr) {
               continue;
@@ -291,16 +291,16 @@ TEST(GetModulePortDeclarationListTest, ModulePortList) {
       {"module m(", {kTag, "input clk, y"}, ");\nendmodule\n"},
       {"module m;\nendmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> lists;
-          for (const auto& instance : instances) {
-            const auto* list = GetModulePortDeclarationList(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *list = GetModulePortDeclarationList(*instance.match);
             if (list == nullptr) {
               continue;
             }
@@ -319,16 +319,16 @@ TEST(GetInterfacePortDeclarationListTest, InterfacePortList) {
       {"interface m(", {kTag, "input clk, y"}, ");\nendinterface\n"},
       {"interface m;\nendinterface\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> lists;
-          for (const auto& instance : instances) {
-            const auto* list = GetModulePortDeclarationList(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *list = GetModulePortDeclarationList(*instance.match);
             if (list == nullptr) {
               continue;
             }
@@ -347,16 +347,16 @@ TEST(GetProgramPortDeclarationListTest, ProgramPortList) {
       {"program m(", {kTag, "input clk, y"}, ");\nendprogram\n"},
       {"program m;\nendprogram\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllProgramDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> lists;
-          for (const auto& instance : instances) {
-            const auto* list = GetModulePortDeclarationList(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *list = GetModulePortDeclarationList(*instance.match);
             if (list == nullptr) {
               continue;
             }
@@ -378,16 +378,16 @@ TEST(FindModuleEndTest, ModuleEndName) {
       {"interface m;\nendinterface: m"},
       {"program m;\nendprogram: m"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllModuleDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> labels;
-          for (const auto& instance : instances) {
-            const auto* label = GetModuleEndLabel(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *label = GetModuleEndLabel(*instance.match);
             if (label == nullptr) {
               continue;
             }
@@ -410,16 +410,16 @@ TEST(FindInterfaceEndTest, InterfaceEndName) {
       {"interface m;\nendinterface: ", {kTag, "m"}},
       {"program m;\nendprogram: m"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllInterfaceDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> labels;
-          for (const auto& instance : instances) {
-            const auto* label = GetModuleEndLabel(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *label = GetModuleEndLabel(*instance.match);
             if (label == nullptr) {
               continue;
             }
@@ -442,16 +442,16 @@ TEST(FindProgramEndTest, ProgramEndName) {
       {"interface m;\nendinterface: m"},
       {"program m;\nendprogram: ", {kTag, "m"}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllProgramDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> labels;
-          for (const auto& instance : instances) {
-            const auto* label = GetModuleEndLabel(*instance.match);
+          for (const auto &instance : instances) {
+            const auto *label = GetModuleEndLabel(*instance.match);
             if (label == nullptr) {
               continue;
             }
@@ -467,7 +467,7 @@ TEST(FindProgramEndTest, ProgramEndName) {
 TEST(FindAllModuleHeadersTest, MatchesProgram) {
   VerilogAnalyzer analyzer("program p;\nendprogram\n", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
   EXPECT_EQ(module_headers.size(), 1);
 }
@@ -476,7 +476,7 @@ TEST(FindAllModuleHeadersTest, MatchesProgram) {
 TEST(FindAllModuleHeadersTest, MatchesInterface) {
   VerilogAnalyzer analyzer("interface m;\nendinterface\n", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
   EXPECT_EQ(module_headers.size(), 1);
 }
@@ -485,7 +485,7 @@ TEST(FindAllModuleHeadersTest, MatchesInterface) {
 TEST(FindAllModuleHeadersTest, ClassNoMatch) {
   VerilogAnalyzer analyzer("class foo; endclass", "");
   EXPECT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto module_headers = FindAllModuleHeaders(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(module_headers.empty());
 }

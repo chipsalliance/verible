@@ -23,7 +23,7 @@
 
 namespace diff {
 // Print functions copied from external_libs/editscript_test.cc
-std::ostream& operator<<(std::ostream& out, Operation operation) {
+std::ostream &operator<<(std::ostream &out, Operation operation) {
   switch (operation) {
     case Operation::EQUALS:
       return (out << "EQUALS");
@@ -35,15 +35,15 @@ std::ostream& operator<<(std::ostream& out, Operation operation) {
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const diff::Edit& edit) {
+std::ostream &operator<<(std::ostream &out, const diff::Edit &edit) {
   out << "{" << edit.operation << ",[" << edit.start << "," << edit.end << ")}";
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const Edits& edits) {
+std::ostream &operator<<(std::ostream &out, const Edits &edits) {
   out << "Edits{";
   std::string outer_delim;
-  for (auto& edit : edits) {
+  for (auto &edit : edits) {
     out << outer_delim << edit;
     outer_delim = ",";
   }
@@ -113,7 +113,7 @@ TEST(LineDiffsTest, Various) {
        "+gandalf\n"
        " pippin\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const LineDiffs line_diffs(test.before, test.after);
 
     std::ostringstream stream;
@@ -151,7 +151,7 @@ TEST(DiffEditsToAddedLineNumbersTest, Various) {
         {Operation::INSERT, 6, 11}},  //
        {{3, 5}, {7, 12}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_EQ(DiffEditsToAddedLineNumbers(test.edits),
               test.expected_line_numbers);
   }
@@ -186,10 +186,10 @@ struct RelativeEdit {
 //
 // (This is currently well-suited for a test-only library, but
 // could eventually become a crucial piece of future diff-to-patch-library.)
-diff::Edits MakeDiffEdits(const std::vector<RelativeEdit>& relative_edits,
+diff::Edits MakeDiffEdits(const std::vector<RelativeEdit> &relative_edits,
                           int64_t old_index = 0, int64_t new_index = 0) {
   diff::Edits edits;
-  for (const RelativeEdit& edit : relative_edits) {
+  for (const RelativeEdit &edit : relative_edits) {
     if (!edits.empty() && edits.back().operation == edit.operation) {
       // same type as previous operation, just combine them.
       edits.back().end += edit.size;
@@ -338,7 +338,7 @@ TEST(MakeDiffEditsTest, Various) {
            {Operation::EQUALS, 17, 25},
        }},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_THAT(MakeDiffEdits(test.rel_edits),
                 ElementsAreArray(test.expected_edits));
   }
@@ -511,7 +511,7 @@ TEST(DiffEditsToPatchHunksTest, Various) {
                    5, 4),
            }},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_THAT(DiffEditsToPatchHunks(test.whole_edits, test.common_context),
                 ElementsAreArray(test.expected_hunks));
   }
@@ -801,7 +801,7 @@ TEST(LineDiffsToUnifiedDiffTest, Various) {
       },
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     LineDiffs linediffs(test.before_text, test.after_text);
     std::ostringstream stream;
     LineDiffsToUnifiedDiff(stream, linediffs, test.common_context, test.file_a,

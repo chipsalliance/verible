@@ -78,8 +78,8 @@ TEST(DescendPathTest, NodeNodeNode) {
 // Tests that descending reaches two terminal leaves.
 TEST(DescendPathTest, NodeTwoLeaves) {
   SymbolPtr node = Node(Leaf(0, "more"), Leaf(0, "text"));
-  const auto* leaf0 = &SymbolCastToLeaf(*DescendPath(*node, {0}));
-  const auto* leaf1 = &SymbolCastToLeaf(*DescendPath(*node, {1}));
+  const auto *leaf0 = &SymbolCastToLeaf(*DescendPath(*node, {0}));
+  const auto *leaf1 = &SymbolCastToLeaf(*DescendPath(*node, {1}));
   EXPECT_NE(leaf0, nullptr);
   EXPECT_NE(leaf1, nullptr);
   EXPECT_NE(leaf0, leaf1);
@@ -89,8 +89,8 @@ TEST(DescendPathTest, NodeTwoLeaves) {
 // Tests that descending stops as a node with multiple children nodes.
 TEST(DescendPathTest, NodeTwoSubNodes) {
   SymbolPtr node = Node(Node(), Node());
-  const auto* subnode0 = &SymbolCastToNode(*DescendPath(*node, {0}));
-  const auto* subnode1 = &SymbolCastToNode(*DescendPath(*node, {1}));
+  const auto *subnode0 = &SymbolCastToNode(*DescendPath(*node, {0}));
+  const auto *subnode1 = &SymbolCastToNode(*DescendPath(*node, {1}));
   EXPECT_NE(subnode0, nullptr);
   EXPECT_NE(subnode1, nullptr);
   EXPECT_NE(subnode0, subnode1);
@@ -100,8 +100,8 @@ TEST(DescendPathTest, NodeTwoSubNodes) {
 // Tests that descending stops as a node with multiple children, some null.
 TEST(DescendPathTest, NodeFirstChildLeafSecondChildNull) {
   SymbolPtr node = Node(Leaf(0, "text"), nullptr);
-  const auto* leaf0 = &SymbolCastToLeaf(*DescendPath(*node, {0}));
-  const auto* leaf1 = DescendPath(*node, {1});
+  const auto *leaf0 = &SymbolCastToLeaf(*DescendPath(*node, {0}));
+  const auto *leaf1 = DescendPath(*node, {1});
   EXPECT_NE(leaf0, nullptr);
   EXPECT_EQ(leaf1, nullptr);
   EXPECT_DEATH(DescendPath(*node, {2}), "");     // out-of-bounds
@@ -111,8 +111,8 @@ TEST(DescendPathTest, NodeFirstChildLeafSecondChildNull) {
 // Tests that descending stops as a node with multiple children, some null.
 TEST(DescendPathTest, NodeFirstChildNullSecondChildLeaf) {
   SymbolPtr node = Node(nullptr, Leaf(0, "text"));
-  const auto* leaf0 = DescendPath(*node, {0});
-  const auto* leaf1 = &SymbolCastToLeaf(*DescendPath(*node, {1}));
+  const auto *leaf0 = DescendPath(*node, {0});
+  const auto *leaf1 = &SymbolCastToLeaf(*DescendPath(*node, {1}));
   EXPECT_EQ(leaf0, nullptr);
   EXPECT_NE(leaf1, nullptr);
   EXPECT_DEATH(DescendPath(*node, {2}), "");     // out-of-bounds
@@ -122,8 +122,8 @@ TEST(DescendPathTest, NodeFirstChildNullSecondChildLeaf) {
 // Tests that descending stops as a node with multiple children, some null.
 TEST(DescendPathTest, NodeFirstChildNullSecondChildNode) {
   SymbolPtr node = Node(nullptr, Node());
-  const auto* subnode0 = DescendPath(*node, {0});
-  const auto* subnode1 = &SymbolCastToNode(*DescendPath(*node, {1}));
+  const auto *subnode0 = DescendPath(*node, {0});
+  const auto *subnode1 = &SymbolCastToNode(*DescendPath(*node, {1}));
   EXPECT_EQ(subnode0, nullptr);
   EXPECT_NE(subnode1, nullptr);
   EXPECT_DEATH(DescendPath(*node, {2}), "");     // out-of-bounds
@@ -133,8 +133,8 @@ TEST(DescendPathTest, NodeFirstChildNullSecondChildNode) {
 // Tests that descending stops as a node with multiple children, some null.
 TEST(DescendPathTest, NodeFirstChildNodeSecondChildNull) {
   SymbolPtr node = Node(Node(), nullptr);
-  const auto* subnode0 = &SymbolCastToNode(*DescendPath(*node, {0}));
-  const auto* subnode1 = DescendPath(*node, {1});
+  const auto *subnode0 = &SymbolCastToNode(*DescendPath(*node, {0}));
+  const auto *subnode1 = DescendPath(*node, {1});
   EXPECT_NE(subnode0, nullptr);
   EXPECT_EQ(subnode1, nullptr);
   EXPECT_DEATH(DescendPath(*node, {2}), "");     // out-of-bounds

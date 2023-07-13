@@ -20,8 +20,8 @@
 
 namespace verible {
 
-nlohmann::json ToJson(const TokenInfo& token_info,
-                      const TokenInfo::Context& context, bool include_text) {
+nlohmann::json ToJson(const TokenInfo &token_info,
+                      const TokenInfo::Context &context, bool include_text) {
   nlohmann::json json(nlohmann::json::object());
   std::ostringstream stream;
   context.token_enum_translator(stream, token_info.token_enum());

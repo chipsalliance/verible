@@ -25,12 +25,12 @@
 
 namespace verible {
 
-void ParserVerifier::Visit(const SyntaxTreeLeaf& leaf) {
+void ParserVerifier::Visit(const SyntaxTreeLeaf &leaf) {
   for (;;) {
     // Check to stop if reached end of stream or end of file
     if (view_iterator_ == view_.end() || (**view_iterator_).isEOF()) return;
 
-    const TokenInfo& view_token = **view_iterator_;
+    const TokenInfo &view_token = **view_iterator_;
     if (token_comparator_(view_token, leaf.get())) {
       // Found a matching token, continue to next leaf
       view_iterator_++;

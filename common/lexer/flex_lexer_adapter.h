@@ -74,10 +74,10 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Returns the token associated with the last UpdateLocation() call.
-  const TokenInfo& GetLastToken() const final { return last_token_; }
+  const TokenInfo &GetLastToken() const final { return last_token_; }
 
   // Returns next token and updates its location.
-  const TokenInfo& DoNextToken() override {
+  const TokenInfo &DoNextToken() override {
     if (at_eof_) {
       // Do not call yylex(), because that will result in the fatal error:
       // "fatal flex scanner internal error--end of buffer missed"
@@ -129,7 +129,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to handle unrecognized chars.
-  void LexerOutput(const char* buf, int size) final {
+  void LexerOutput(const char *buf, int size) final {
     VLOG(1) << "LexerOutput: rejected text: \"" << std::string(buf, size)
             << '\"';
 
@@ -143,7 +143,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Overrides yyFlexLexer's implementation to do proper error handling.
-  void LexerError(const char* msg) final {
+  void LexerError(const char *msg) final {
     std::cerr << "Fatal LexerError: " << msg;
     abort();
   }

@@ -38,11 +38,11 @@
 namespace verible {
 
 // ParseFunc is a yacc/bison generated yyparse() function.
-template <int (*ParseFunc)(ParserParam*)>
+template <int (*ParseFunc)(ParserParam *)>
 class BisonParserAdapter : public Parser {
  public:
   // Filename purely FYI.
-  BisonParserAdapter(TokenGenerator* token_generator,
+  BisonParserAdapter(TokenGenerator *token_generator,
                      absl::string_view filename)
       : Parser(), param_(token_generator, filename) {}
 
@@ -60,7 +60,7 @@ class BisonParserAdapter : public Parser {
     // More detailed error information is stored inside param_.
   }
 
-  const std::vector<TokenInfo>& RejectedTokens() const final {
+  const std::vector<TokenInfo> &RejectedTokens() const final {
     return param_.RecoveredSyntaxErrors();
   }
 

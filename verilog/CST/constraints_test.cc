@@ -66,10 +66,10 @@ TEST(FindAllConstraintDeclarationsTest, BasicTests) {
        {kTag, "constraint y { x == 10; }"},
        "; endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllConstraintDeclarations(*root);
         });
   }
@@ -80,10 +80,10 @@ TEST(IsOutOfLineConstraintDefinitionTest, BasicTests) {
       {"class foo; rand logic a; constraint Bar { a < 16; } endclass", false},
       {"constraint classname::constraint_c { a <= b; }", true},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
 
     std::vector<verible::TreeSearchMatch> constraint_declarations =
         FindAllConstraintDeclarations(*root);
@@ -103,10 +103,10 @@ TEST(GetSymbolIdentifierFromConstraintDeclarationTest, BasicTests) {
       {"class foo; rand logic a; constraint b { a >= 16; } endclass", "b"},
       {"class foo; rand logic a; constraint stH { a == 16; } endclass", "stH"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     std::vector<verible::TreeSearchMatch> constraint_declarations =
         FindAllConstraintDeclarations(*root);
 

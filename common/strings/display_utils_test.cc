@@ -44,7 +44,7 @@ TEST(AutoTruncateTest, Various) {
       {"123!(@*#&)!#$!@#(*xyz", 11, "123!...*xyz"},
       {"123!(@*#&)!#$!@#(*xyz", 12, "123!(...*xyz"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     stream << AutoTruncate{test.input, test.max_chars};
     EXPECT_EQ(stream.str(), test.expected);
@@ -58,7 +58,7 @@ TEST(VisualizeWhitespaceTest, Various) {
       {"   ", "..."},    {"\n\n\n", "\\\n\\\n\\\n"},
       {"\t\t\t", "###"}, {"abc \n\t123", "abc.\\\n#123"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     stream << VisualizeWhitespace{test.first};
     EXPECT_EQ(stream.str(), test.second);
@@ -72,7 +72,7 @@ TEST(VisualizeWhitespaceTest, OtherSubstitutions) {
       {"   ", "---"},    {"\n\n\n", "NNN"},
       {"\t\t\t", "TTT"}, {"abc \n\t123", "abc-NT123"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     stream << VisualizeWhitespace{test.first, '-', "N", "T"};
     EXPECT_EQ(stream.str(), test.second);
@@ -97,7 +97,7 @@ TEST(EscapeStringTest, Various) {
       {" ~", " ~"},
       {"\x7f\x80\xfe\xff", R"(\x7f\x80\xfe\xff)"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     stream << EscapeString{test.first};
     EXPECT_EQ(stream.str(), test.second);
@@ -110,7 +110,7 @@ using IntVector = std::vector<int>;
 // to be shared.
 // TODO(fangism): Use auto return type with C++17 as minimum standard.
 static SequenceStreamFormatter<IntVector> AngleBracketFormatter(
-    const IntVector& t) {
+    const IntVector &t) {
   return SequenceFormatter(t, " | ", "< ", " >");
 }
 

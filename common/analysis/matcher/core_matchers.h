@@ -48,12 +48,12 @@ namespace matcher {
 //  TNode(5, Node(5));
 //  TNode(5, Leaf(2));
 template <typename... Args>
-Matcher AllOf(Args&&... args) {
+Matcher AllOf(Args &&...args) {
   static_assert(sizeof...(args) > 0,
                 "AllOf requires at least one inner matcher");
 
   // AllOf matcher's behavior is completely determined by its inner_matchers
-  auto predicate = [](const Symbol& symbol) { return true; };
+  auto predicate = [](const Symbol &symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchAll);
 
@@ -88,12 +88,12 @@ Matcher AllOf(Args&&... args) {
 // And fails to match:
 //  TNode(5, Leaf(2));
 template <typename... Args>
-Matcher AnyOf(Args&&... args) {
+Matcher AnyOf(Args &&...args) {
   static_assert(sizeof...(args) > 0,
                 "AnyOf requires at least one inner matcher");
 
   // AnyOf matcher's behavior is completely determined by its inner_matchers.
-  auto predicate = [](const Symbol& symbol) { return true; };
+  auto predicate = [](const Symbol &symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchAny);
 
@@ -127,12 +127,12 @@ Matcher AnyOf(Args&&... args) {
 // And fails to match
 //  TNode(5, Leaf(2));
 template <typename... Args>
-Matcher EachOf(Args&&... args) {
+Matcher EachOf(Args &&...args) {
   static_assert(sizeof...(args) > 0,
                 "EachOf requires at least one inner matcher");
 
   // EachOf matcher's behavior is completely determined by its inner_matchers.
-  auto predicate = [](const Symbol& symbol) { return true; };
+  auto predicate = [](const Symbol &symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchEachOf);
 
@@ -158,9 +158,9 @@ Matcher EachOf(Args&&... args) {
 // And fails to match
 //  TNode(5, TNode(5));
 template <typename... Args>
-Matcher Unless(const Matcher& inner_matcher) {
+Matcher Unless(const Matcher &inner_matcher) {
   // Unless matcher's behavior is completely determined by its inner_matcher.
-  auto predicate = [](const Symbol& symbol) { return true; };
+  auto predicate = [](const Symbol &symbol) { return true; };
 
   Matcher matcher(predicate, InnerMatchUnless);
 

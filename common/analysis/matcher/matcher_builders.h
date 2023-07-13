@@ -41,7 +41,7 @@ namespace matcher {
 // See verible/doc/style_lint.md for example usage
 
 template <SymbolKind Kind, typename EnumType, EnumType Tag>
-bool EqualTagPredicate(const Symbol& symbol) {
+bool EqualTagPredicate(const Symbol &symbol) {
   SymbolTag symbol_tag = {Kind, static_cast<int>(Tag)};
   return symbol.Tag() == symbol_tag;
 }
@@ -73,7 +73,7 @@ class PathMatchBuilder {
   static_assert(N > 0, "Path must have at least one element");
 
  public:
-  explicit constexpr PathMatchBuilder(const std::array<SymbolTag, N>& path)
+  explicit constexpr PathMatchBuilder(const std::array<SymbolTag, N> &path)
       : path_(path) {}
 
   template <typename... Args>
@@ -86,13 +86,13 @@ class PathMatchBuilder {
 
     // As long as one of the inner_matchers matches against discovered
     // descendants, PathMatchBuilder also matches.
-    auto predicate = [](const Symbol& symbol) { return true; };
+    auto predicate = [](const Symbol &symbol) { return true; };
 
     // The transformation that is performed on the symbol before it passed
     // off to the InnerMatchHandler.
     // Each descendant in returned vector is matched seperately.
     // TODO(jeremycs): describe match branching behavior here
-    auto transformer = [local_path](const Symbol& symbol) {
+    auto transformer = [local_path](const Symbol &symbol) {
       return GetAllDescendantsFromPath(symbol, local_path);
     };
 
@@ -183,7 +183,7 @@ class DynamicTagMatchBuilder {
 
   template <typename... Args>
   BindableMatcher operator()(Args... args) const {
-    BindableMatcher matcher([this](const Symbol& s) { return s.Tag() == tag_; },
+    BindableMatcher matcher([this](const Symbol &s) { return s.Tag() == tag_; },
                             InnerMatchAll);
     matcher.AddMatchers(std::forward<Args>(args)...);
     return matcher;

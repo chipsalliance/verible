@@ -30,9 +30,9 @@
 using verible::SubcommandArgsRange;
 using verible::SubcommandEntry;
 
-static absl::Status ChangedLines(const SubcommandArgsRange& args,
-                                 std::istream& ins, std::ostream& outs,
-                                 std::ostream& errs) {
+static absl::Status ChangedLines(const SubcommandArgsRange &args,
+                                 std::istream &ins, std::ostream &outs,
+                                 std::ostream &errs) {
   if (args.empty()) {
     return absl::InvalidArgumentError(
         "Missing patchfile argument.  Use '-' for stdin.");
@@ -46,7 +46,7 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
 
   const verible::FileLineNumbersMap changed_lines(
       patch_set.AddedLinesMap(false));
-  for (const auto& file_lines : changed_lines) {
+  for (const auto &file_lines : changed_lines) {
     outs << file_lines.first;
     if (!file_lines.second.empty()) {
       file_lines.second.FormatInclusive(outs << ' ', true);
@@ -56,9 +56,9 @@ static absl::Status ChangedLines(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static absl::Status ApplyPick(const SubcommandArgsRange& args,
-                              std::istream& ins, std::ostream& outs,
-                              std::ostream& errs) {
+static absl::Status ApplyPick(const SubcommandArgsRange &args,
+                              std::istream &ins, std::ostream &outs,
+                              std::ostream &errs) {
   if (args.empty()) {
     return absl::InvalidArgumentError("Missing patchfile argument.");
   }
@@ -73,9 +73,9 @@ static absl::Status ApplyPick(const SubcommandArgsRange& args,
   return patch_set.PickApplyInPlace(ins, outs);
 }
 
-static absl::Status StdinTest(const SubcommandArgsRange& args,
-                              std::istream& ins, std::ostream& outs,
-                              std::ostream& errs) {
+static absl::Status StdinTest(const SubcommandArgsRange &args,
+                              std::istream &ins, std::ostream &outs,
+                              std::ostream &errs) {
   constexpr size_t kOpenLimit = 10;
   outs << "This is a demo of re-opening std::cin, up to " << kOpenLimit
        << " times.\n"
@@ -100,10 +100,10 @@ static absl::Status StdinTest(const SubcommandArgsRange& args,
   return absl::OkStatus();
 }
 
-static absl::Status CatTest(const SubcommandArgsRange& args, std::istream& ins,
-                            std::ostream& outs, std::ostream& errs) {
+static absl::Status CatTest(const SubcommandArgsRange &args, std::istream &ins,
+                            std::ostream &outs, std::ostream &errs) {
   size_t file_count = 0;
-  for (const auto& arg : args) {
+  for (const auto &arg : args) {
     const absl::StatusOr<std::string> contents_or =
         verible::file::GetContentAsString(arg);
     if (!contents_or.ok()) return contents_or.status();
@@ -173,10 +173,10 @@ Each 'file' echoed back to stdout will be enclosed in banner lines with
       false}},
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   // Create a registry of subcommands (locally, rather than as a static global).
   verible::SubcommandRegistry commands;
-  for (const auto& entry : kCommands) {
+  for (const auto &entry : kCommands) {
     const auto status = commands.RegisterCommand(entry.first, entry.second);
     if (!status.ok()) {
       std::cerr << status.message() << std::endl;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
   // subcommand args start at [2]
   const SubcommandArgsRange command_args(args.cbegin() + 2, args.cend());
 
-  const auto& sub = commands.GetSubcommandEntry(args[1]);
+  const auto &sub = commands.GetSubcommandEntry(args[1]);
   // Run the subcommand.
   const auto status = sub.main(command_args, std::cin, std::cout, std::cerr);
   if (!status.ok()) {

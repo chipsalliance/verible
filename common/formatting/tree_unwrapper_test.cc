@@ -35,14 +35,14 @@
 
 namespace verible {
 
-static bool KeepNonWhitespace(const TokenInfo& token) {
+static bool KeepNonWhitespace(const TokenInfo &token) {
   const absl::string_view text(absl::StripAsciiWhitespace(token.text()));
   return !text.empty();
 }
 
 class TreeUnwrapperData {
  public:
-  explicit TreeUnwrapperData(const verible::TokenSequence& tokens) {
+  explicit TreeUnwrapperData(const verible::TokenSequence &tokens) {
     verible::InitTokenStreamView(tokens, &tokens_view_);
     verible::FilterTokenStreamViewInPlace(KeepNonWhitespace, &tokens_view_);
 
@@ -61,7 +61,7 @@ class TreeUnwrapperData {
 
 class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
  public:
-  explicit FakeTreeUnwrapper(const TextStructureView& view)
+  explicit FakeTreeUnwrapper(const TextStructureView &view)
       : TreeUnwrapperData(view.TokenStream()),
         TreeUnwrapper(view, TreeUnwrapperData::preformatted_tokens_) {}
 
@@ -71,18 +71,18 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
 
   // Leaf visit that adds a PreFormatToken from the leaf's TokenInfo
   // to the current_unwrapped_line_
-  void Visit(const verible::SyntaxTreeLeaf& leaf) final {
+  void Visit(const verible::SyntaxTreeLeaf &leaf) final {
     CatchUpFilteredTokens();
     AddTokenToCurrentUnwrappedLine();
   }
 
   // Node visit that always starts a new unwrapped line
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand, &node);
     TraverseChildren(node);
   }
 
-  void InterChildNodeHook(const SyntaxTreeNode& node) final {}
+  void InterChildNodeHook(const SyntaxTreeNode &node) final {}
 
   using TreeUnwrapper::StartNewUnwrappedLine;
 
@@ -90,7 +90,7 @@ class FakeTreeUnwrapper : public TreeUnwrapperData, public TreeUnwrapper {
   void CatchUpFilteredTokens() {
     const auto iter = CurrentFormatTokenIterator();
     SkipUnfilteredTokens(
-        [=](const verible::TokenInfo& token) { return &token != iter->token; });
+        [=](const verible::TokenInfo &token) { return &token != iter->token; });
   }
 };
 
@@ -101,14 +101,14 @@ TEST(TreeUnwrapperTest, EmptyStartNewUnwrappedLine) {
   FakeTreeUnwrapper tree_unwrapper(*view);
 
   // const reference forces use of const method
-  const auto& const_tree_unwrapper(tree_unwrapper);
+  const auto &const_tree_unwrapper(tree_unwrapper);
 
   // Do not call .Unwrap() for this test.
 
-  const auto& current = const_tree_unwrapper.CurrentUnwrappedLine();
+  const auto &current = const_tree_unwrapper.CurrentUnwrappedLine();
   tree_unwrapper.StartNewUnwrappedLine(PartitionPolicyEnum::kAlwaysExpand,
                                        &*view->SyntaxTree());
-  const auto& next = const_tree_unwrapper.CurrentUnwrappedLine();
+  const auto &next = const_tree_unwrapper.CurrentUnwrappedLine();
   EXPECT_EQ(&current, &next);
 }
 
@@ -124,8 +124,8 @@ TEST(TreeUnwrapperTest, NonEmptyUnwrap) {
   tree_unwrapper.Unwrap();
   const auto unwrapped_lines = tree_unwrapper.FullyPartitionedUnwrappedLines();
   ASSERT_EQ(unwrapped_lines.size(), 2);
-  const UnwrappedLine& first_unwrapped_line = unwrapped_lines[0];
-  const UnwrappedLine& second_unwrapped_line = unwrapped_lines[1];
+  const UnwrappedLine &first_unwrapped_line = unwrapped_lines[0];
+  const UnwrappedLine &second_unwrapped_line = unwrapped_lines[1];
 
   EXPECT_EQ(first_unwrapped_line.Size(), 2);
   EXPECT_EQ(second_unwrapped_line.Size(), 1);

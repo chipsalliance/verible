@@ -86,13 +86,13 @@ TEST(VerilogSourceFileTest, ParseValidFile) {
   // Parse automatically opens.
   EXPECT_TRUE(file.Parse().ok());
   EXPECT_TRUE(file.Status().ok());
-  const TextStructureView* text_structure =
+  const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
-  const auto* tokens = &text_structure->TokenStream();
+  const auto *tokens = &text_structure->TokenStream();
   EXPECT_NE(tokens, nullptr);
-  const auto* tree = &text_structure->SyntaxTree();
+  const auto *tree = &text_structure->SyntaxTree();
   EXPECT_NE(tree, nullptr);
 
   // Re-parsing doesn't change anything
@@ -111,13 +111,13 @@ TEST(VerilogSourceFileTest, ParseInvalidFile) {
   // Parse automatically opens.
   EXPECT_FALSE(file.Parse().ok());
   EXPECT_FALSE(file.Status().ok());
-  const TextStructureView* text_structure =
+  const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
-  const auto* tokens = &text_structure->TokenStream();
+  const auto *tokens = &text_structure->TokenStream();
   EXPECT_NE(tokens, nullptr);
-  const auto* tree = &text_structure->SyntaxTree();
+  const auto *tree = &text_structure->SyntaxTree();
   EXPECT_NE(tree, nullptr);
   // but syntax tree may be empty, depends on error-recovery
 
@@ -162,13 +162,13 @@ TEST(InMemoryVerilogSourceFileTest, ParseValidFile) {
   // Parse automatically opens.
   EXPECT_TRUE(file.Parse().ok());
   EXPECT_TRUE(file.Status().ok());
-  const TextStructureView* text_structure =
+  const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
-  const auto* tokens = &text_structure->TokenStream();
+  const auto *tokens = &text_structure->TokenStream();
   EXPECT_NE(tokens, nullptr);
-  const auto* tree = &text_structure->SyntaxTree();
+  const auto *tree = &text_structure->SyntaxTree();
   EXPECT_NE(tree, nullptr);
 
   // Re-parsing doesn't change anything
@@ -185,13 +185,13 @@ TEST(InMemoryVerilogSourceFileTest, ParseInvalidFile) {
   // Parse automatically opens.
   EXPECT_FALSE(file.Parse().ok());
   EXPECT_FALSE(file.Status().ok());
-  const TextStructureView* text_structure =
+  const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
-  const auto* tokens = &text_structure->TokenStream();
+  const auto *tokens = &text_structure->TokenStream();
   EXPECT_NE(tokens, nullptr);
-  const auto* tree = &text_structure->SyntaxTree();
+  const auto *tree = &text_structure->SyntaxTree();
   EXPECT_NE(tree, nullptr);
   // but syntax tree may be empty, depends on error-recovery
 
@@ -209,20 +209,20 @@ TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
       std::make_unique<VerilogAnalyzer>(text, "internal");
   absl::Status status = analyzed_structure->Analyze();
   EXPECT_TRUE(status.ok());
-  const TextStructureView& input_text_structure = analyzed_structure->Data();
+  const TextStructureView &input_text_structure = analyzed_structure->Data();
 
   ParsedVerilogSourceFile file("internal", &input_text_structure);
   // Parse automatically opens.
   EXPECT_TRUE(file.Parse().ok());
   EXPECT_TRUE(file.Status().ok());
-  const TextStructureView* text_structure =
+  const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
   EXPECT_EQ(&input_text_structure, text_structure);
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
-  const auto* tokens = &text_structure->TokenStream();
+  const auto *tokens = &text_structure->TokenStream();
   EXPECT_NE(tokens, nullptr);
-  const auto* tree = &text_structure->SyntaxTree();
+  const auto *tree = &text_structure->SyntaxTree();
   EXPECT_NE(tree, nullptr);
 
   // Re-parsing doesn't change anything
@@ -251,13 +251,13 @@ TEST(VerilogProjectTest, NonexistentFileLookup) {
   const auto tempdir = ::testing::TempDir();
   VerilogProject project(tempdir, {tempdir});
   {  // non-const-lookup overload
-    VerilogSourceFile* file = project.LookupRegisteredFile("never-there.v");
+    VerilogSourceFile *file = project.LookupRegisteredFile("never-there.v");
     EXPECT_EQ(file, nullptr);
   }
   {
     // const-lookup overload
-    const VerilogProject& cproject(project);
-    const VerilogSourceFile* file =
+    const VerilogProject &cproject(project);
+    const VerilogSourceFile *file =
         cproject.LookupRegisteredFile("never-there.v");
     EXPECT_EQ(file, nullptr);
   }
@@ -279,7 +279,7 @@ TEST(VerilogProjectTest, LookupFileOriginTest) {
   const ScopedTestFile tf(sources_dir, "module m;\nendmodule\n");
   const auto status_or_file =
       project.OpenTranslationUnit(Basename(tf.filename()));
-  VerilogSourceFile* verilog_source_file = *status_or_file;
+  VerilogSourceFile *verilog_source_file = *status_or_file;
   const absl::string_view content1(verilog_source_file->GetContent());
 
   {
@@ -295,7 +295,7 @@ TEST(VerilogProjectTest, LookupFileOriginTest) {
   const ScopedTestFile tf2(sources_dir, "class c;\nendclass\n");
   const auto status_or_file2 =
       project.OpenTranslationUnit(Basename(tf2.filename()));
-  VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+  VerilogSourceFile *verilog_source_file2 = *status_or_file2;
   const absl::string_view content2(verilog_source_file2->GetContent());
 
   // Pick substrings known to come from those files.
@@ -318,18 +318,18 @@ TEST(VerilogProjectTest, LookupFileOriginTestMoreFiles) {
   // WArning: Test size is quadratic in N, but linear in memory in N.
   constexpr int N = 50;
   std::vector<std::unique_ptr<ScopedTestFile>> test_files;
-  std::vector<const VerilogSourceFile*> sources;
+  std::vector<const VerilogSourceFile *> sources;
   for (int i = 0; i < N; ++i) {
     // Write files, need not be parse-able.
     test_files.emplace_back(std::make_unique<ScopedTestFile>(
         sources_dir, "sa89*(98<Na! 89 89891231!@#ajk jasoij(*&^ asaissd0afd "));
     const auto status_or_file =
         project.OpenTranslationUnit(Basename(test_files.back()->filename()));
-    const VerilogSourceFile* source_file = *status_or_file;
+    const VerilogSourceFile *source_file = *status_or_file;
     ASSERT_NE(source_file, nullptr);
     sources.push_back(source_file);
 
-    for (const auto& source : sources) {
+    for (const auto &source : sources) {
       // Pick substrings known to come from those files.
       EXPECT_EQ(project.LookupFileOrigin(source->GetContent().substr(15, 12)),
                 source);
@@ -350,7 +350,7 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   const ScopedTestFile tf(sources_dir, text);
   const auto status_or_file =
       project.OpenTranslationUnit(Basename(tf.filename()));
-  VerilogSourceFile* verilog_source_file = *status_or_file;
+  VerilogSourceFile *verilog_source_file = *status_or_file;
   EXPECT_TRUE(verilog_source_file->Status().ok());
   EXPECT_EQ(verilog_source_file->ReferencedPath(), Basename(tf.filename()));
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
@@ -358,7 +358,7 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
             verilog_source_file);
   const absl::string_view content(verilog_source_file->GetContent());
   {  // const-lookup overload
-    const VerilogProject& cproject(project);
+    const VerilogProject &cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
               verilog_source_file);
     EXPECT_EQ(cproject.LookupFileOrigin(content.substr(2, 4)),
@@ -366,31 +366,31 @@ TEST(VerilogProjectTest, ValidTranslationUnit) {
   }
 
   EXPECT_TRUE(verilog_source_file->Parse().ok());
-  const TextStructureView& text_structure(
+  const TextStructureView &text_structure(
       *verilog_source_file->GetTextStructure());
-  const auto* tree = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
+  const auto *tree = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
   EXPECT_EQ(FindAllModuleDeclarations(*tree).size(), 1);
 
   {
     // Re-parsing the file changes nothing.
     EXPECT_TRUE(verilog_source_file->Parse().ok());
-    const auto* tree2 = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
+    const auto *tree2 = ABSL_DIE_IF_NULL(text_structure.SyntaxTree().get());
     EXPECT_EQ(tree2, tree);
     EXPECT_EQ(FindAllModuleDeclarations(*tree).size(), 1);
   }
   {  // Re-opening the file changes nothing.
     const auto status_or_file2 =
         project.OpenTranslationUnit(Basename(tf.filename()));
-    VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+    VerilogSourceFile *verilog_source_file2 = *status_or_file2;
     EXPECT_EQ(verilog_source_file2, verilog_source_file);
     EXPECT_TRUE(verilog_source_file2->Status().ok());
   }
 
   // Testing begin/end iteration.
-  for (auto& file : project) {
+  for (auto &file : project) {
     EXPECT_TRUE(file.second->Parse().ok());
   }
-  for (const auto& file : project) {
+  for (const auto &file : project) {
     EXPECT_TRUE(file.second->Status().ok());
   }
 }
@@ -407,14 +407,14 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
   const ScopedTestFile tf(includes_dir, text);
   const absl::string_view basename(Basename(tf.filename()));
   const auto status_or_file = project.OpenIncludedFile(basename);
-  VerilogSourceFile* verilog_source_file = *status_or_file;
+  VerilogSourceFile *verilog_source_file = *status_or_file;
   EXPECT_TRUE(verilog_source_file->Status().ok());
   EXPECT_EQ(verilog_source_file->ReferencedPath(), basename);
   EXPECT_EQ(verilog_source_file->ResolvedPath(), tf.filename());
   EXPECT_EQ(project.LookupRegisteredFile(Basename(tf.filename())),
             verilog_source_file);
   {  // const-lookup overload
-    const VerilogProject& cproject(project);
+    const VerilogProject &cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(Basename(tf.filename())),
               verilog_source_file);
   }
@@ -422,7 +422,7 @@ TEST(VerilogProjectTest, ValidIncludeFile) {
   // Re-opening same file, changes nothing
   {
     const auto status_or_file2 = project.OpenIncludedFile(basename);
-    VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+    VerilogSourceFile *verilog_source_file2 = *status_or_file2;
     EXPECT_EQ(verilog_source_file2, verilog_source_file);
     EXPECT_TRUE(verilog_source_file2->Status().ok());
   }
@@ -452,20 +452,20 @@ TEST(VerilogProjectTest, OpenVirtualIncludeFile) {
   project.AddVirtualFile(full_path, text);
 
   const auto status_or_file = project.OpenIncludedFile(basename);
-  VerilogSourceFile* verilog_source_file = *status_or_file;
+  VerilogSourceFile *verilog_source_file = *status_or_file;
   EXPECT_TRUE(verilog_source_file->Status().ok());
   EXPECT_EQ(verilog_source_file->ReferencedPath(), full_path);
   EXPECT_EQ(verilog_source_file->ResolvedPath(), full_path);
   EXPECT_EQ(project.LookupRegisteredFile(basename), verilog_source_file);
   {  // const-lookup overload
-    const VerilogProject& cproject(project);
+    const VerilogProject &cproject(project);
     EXPECT_EQ(cproject.LookupRegisteredFile(basename), verilog_source_file);
   }
 
   // Re-opening same file, changes nothing
   {
     const auto status_or_file2 = project.OpenIncludedFile(basename);
-    VerilogSourceFile* verilog_source_file2 = *status_or_file2;
+    VerilogSourceFile *verilog_source_file2 = *status_or_file2;
     EXPECT_EQ(verilog_source_file2, verilog_source_file);
     EXPECT_TRUE(verilog_source_file2->Status().ok());
   }
@@ -537,7 +537,7 @@ TEST(VerilogProjectTest, AddVirtualFile) {
   const std::string file_content = "virtual file content";
   project.AddVirtualFile(file_path, file_content);
 
-  auto* stored_file = project.LookupRegisteredFile(file_path);
+  auto *stored_file = project.LookupRegisteredFile(file_path);
   ASSERT_NE(stored_file, nullptr);
   EXPECT_TRUE(stored_file->Open().ok());
   EXPECT_TRUE(stored_file->Status().ok());
