@@ -85,7 +85,7 @@ TEST(RebaseStringViewTest, NewSubstringNotAtFront) {
 TEST(RebaseStringViewTest, UsingCharPointer) {
   const absl::string_view text = "hello";
   const absl::string_view new_base = "xxxhelloyyy";
-  const char* new_view = new_base.begin() + 3;
+  const char *new_view = new_base.begin() + 3;
   absl::string_view text_view(text);
   RebaseStringView(&text_view, new_view);  // assume original length
   EXPECT_TRUE(BoundsEqual(text_view, new_base.substr(3, 5)));

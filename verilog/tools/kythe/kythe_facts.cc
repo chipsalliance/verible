@@ -48,7 +48,7 @@ size_t CombineHash(size_t existing, size_t addition) {
 // res[2] = hash(0, name[0], name[1])
 // ...
 // res[N] = hash(0, name[0], name[1], ..., name[N])
-std::vector<size_t> RollingHash(const std::vector<absl::string_view>& names) {
+std::vector<size_t> RollingHash(const std::vector<absl::string_view> &names) {
   if (names.size() <= 1) {
     return {0};  // Global scope
   }
@@ -84,12 +84,12 @@ SignatureDigest Signature::Digest() const {
   return SignatureDigest{.rolling_hash = RollingHash(Names())};
 }
 
-bool VName::operator==(const VName& other) const {
+bool VName::operator==(const VName &other) const {
   return path == other.path && root == other.root && corpus == other.corpus &&
          signature == other.signature && language == other.language;
 }
 
-std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
+std::ostream &VName::FormatJSON(std::ostream &stream, bool debug,
                                 int indentation) const {
   // Output new line only in debug mode.
   const std::string separator = debug ? "\n" : "";
@@ -105,16 +105,16 @@ std::ostream& VName::FormatJSON(std::ostream& stream, bool debug,
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const VName& vname) {
+std::ostream &operator<<(std::ostream &stream, const VName &vname) {
   return vname.FormatJSON(stream, /*debug=*/true);
 }
 
-bool Fact::operator==(const Fact& other) const {
+bool Fact::operator==(const Fact &other) const {
   return fact_value == other.fact_value && fact_name == other.fact_name &&
          node_vname == other.node_vname;
 }
 
-std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
+std::ostream &Fact::FormatJSON(std::ostream &stream, bool debug,
                                int indentation) const {
   // Output new line only in debug mode.
   const std::string separator = debug ? "\n" : "";
@@ -134,16 +134,16 @@ std::ostream& Fact::FormatJSON(std::ostream& stream, bool debug,
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const Fact& fact) {
+std::ostream &operator<<(std::ostream &stream, const Fact &fact) {
   return fact.FormatJSON(stream, /*debug=*/true);
 }
 
-bool Edge::operator==(const Edge& other) const {
+bool Edge::operator==(const Edge &other) const {
   return edge_name == other.edge_name && source_node == other.source_node &&
          target_node == other.target_node;
 }
 
-std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
+std::ostream &Edge::FormatJSON(std::ostream &stream, bool debug,
                                int indentation) const {
   // Output new line only in debug mode.
   const std::string separator = debug ? "\n" : "";
@@ -164,7 +164,7 @@ std::ostream& Edge::FormatJSON(std::ostream& stream, bool debug,
   return stream << verible::Spacer(indentation) << "}";
 }
 
-std::ostream& operator<<(std::ostream& stream, const Edge& edge) {
+std::ostream &operator<<(std::ostream &stream, const Edge &edge) {
   return edge.FormatJSON(stream, /*debug=*/true);
 }
 

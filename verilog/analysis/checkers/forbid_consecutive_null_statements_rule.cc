@@ -40,7 +40,7 @@ VERILOG_REGISTER_LINT_RULE(ForbidConsecutiveNullStatementsRule);
 static constexpr absl::string_view kMessage =
     "Do not use consecutive null statements like \';;\'.";
 
-const LintRuleDescriptor& ForbidConsecutiveNullStatementsRule::GetDescriptor() {
+const LintRuleDescriptor &ForbidConsecutiveNullStatementsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-consecutive-null-statements",
       .topic = "redundant-semicolons",
@@ -52,7 +52,7 @@ const LintRuleDescriptor& ForbidConsecutiveNullStatementsRule::GetDescriptor() {
 }
 
 void ForbidConsecutiveNullStatementsRule::HandleLeaf(
-    const verible::SyntaxTreeLeaf& leaf, const SyntaxTreeContext& context) {
+    const verible::SyntaxTreeLeaf &leaf, const SyntaxTreeContext &context) {
   if (context.IsInside(NodeEnum::kForSpec)) {
     // for loops are allowed to be: for (;;)
     state_ = State::kNormal;

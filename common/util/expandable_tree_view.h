@@ -35,7 +35,7 @@ class TreeViewNodeInfo {
   using value_const_reference = typename TreeTraits::Value::const_reference;
 
  public:
-  explicit TreeViewNodeInfo(const WrappedNodeType& node) : node_(&node) {}
+  explicit TreeViewNodeInfo(const WrappedNodeType &node) : node_(&node) {}
 
   void Unexpand() { expand_ = false; }
   void Expand() { expand_ = true; }
@@ -46,7 +46,7 @@ class TreeViewNodeInfo {
  private:
   // Immutable pointer to corresponding VectorTree node.
   // This promises to never modify the node's data.
-  const WrappedNodeType* const node_;
+  const WrappedNodeType *const node_;
 
   // Current view of this particular subtree node.
   // If true, then traverse children_, otherwise visit this node as one element.
@@ -104,9 +104,9 @@ class ExpandableTreeView {
   using const_iterator = iterator;
 
   // Constructs (recursively) a fully-expanded view from the input tree.
-  explicit ExpandableTreeView(const tree_type& tree)
+  explicit ExpandableTreeView(const tree_type &tree)
       : view_(
-            Transform<impl_type>(tree, [](const tree_type& other) -> node_type {
+            Transform<impl_type>(tree, [](const tree_type &other) -> node_type {
               // Initialize a view node using the address of corresponding node
               // in the other tree.
               return node_type(other);
@@ -116,19 +116,19 @@ class ExpandableTreeView {
   }
 
   // TODO(fangism): implement later as needed
-  ExpandableTreeView(const this_type&) = delete;
-  ExpandableTreeView(this_type&&) = delete;
+  ExpandableTreeView(const this_type &) = delete;
+  ExpandableTreeView(this_type &&) = delete;
 
   ~ExpandableTreeView() = default;
 
   // Accessors
 
-  const node_type& Value() const { return view_.Value(); }
-  node_type& Value() { return view_.Value(); }
+  const node_type &Value() const { return view_.Value(); }
+  node_type &Value() { return view_.Value(); }
 
   // Directly access children nodes by index.
-  const impl_type& operator[](size_t i) const { return view_.Children()[i]; }
-  impl_type& operator[](size_t i) { return view_.Children()[i]; }
+  const impl_type &operator[](size_t i) const { return view_.Children()[i]; }
+  impl_type &operator[](size_t i) { return view_.Children()[i]; }
 
   // Iteration
 
@@ -138,12 +138,12 @@ class ExpandableTreeView {
   // Transformation
 
   // Apply a mutating transformation to this tree view, pre-order traversal.
-  void ApplyPreOrder(const std::function<void(impl_type&)>& f) {
+  void ApplyPreOrder(const std::function<void(impl_type &)> &f) {
     verible::ApplyPreOrder(view_, f);
   }
 
   // Apply a mutating transformation to this tree view, post-order traversal.
-  void ApplyPostOrder(const std::function<void(impl_type&)>& f) {
+  void ApplyPostOrder(const std::function<void(impl_type &)> &f) {
     verible::ApplyPostOrder(view_, f);
   }
 
@@ -154,8 +154,8 @@ class ExpandableTreeView {
   // Recall that expanded nodes should *only* visit children, not self.
   // This behaves a lot like VectorTree::LeftmostDescendant(), only the
   // termination condition is different.
-  static const impl_type* first_unexpanded_child(const impl_type& current) {
-    const auto& info = current.Value();
+  static const impl_type *first_unexpanded_child(const impl_type &current) {
+    const auto &info = current.Value();
     if (info.IsExpanded() && !is_leaf(current)) {
       // Let compiler to tail-call optimize self-recursion.
       return first_unexpanded_child(current.Children().front());
@@ -170,7 +170,7 @@ class ExpandableTreeView {
   // This behaves a lot like VectorTree::NextLeaf().
   // \precondition this->parent_->expand_ is true (for all ancestors),
   //   otherwise we would have never reached this node.
-  static const impl_type* next_sibling(const impl_type& current) {
+  static const impl_type *next_sibling(const impl_type &current) {
     if (current.Parent() == nullptr) return nullptr;
 
     // Find the next sibling, if there is one.
@@ -179,7 +179,7 @@ class ExpandableTreeView {
     if (next_rank == current.Parent()->Children().size()) {
       // This is the last child of the group.
       // Find the nearest parent that has a next child (ascending).
-      auto* next_ancestor = next_sibling(*current.Parent());
+      auto *next_ancestor = next_sibling(*current.Parent());
       return next_ancestor ? first_unexpanded_child(*next_ancestor) : nullptr;
     }
     // More children follow this one.
@@ -208,17 +208,17 @@ class ExpandableTreeView<WrappedNodeType>::iterator {
   using iterator_category = std::forward_iterator_tag;
   using value_type = typename TreeTraits::Value::type;
   using difference_type = int;
-  using pointer = typename TreeTraits::Value::type*;
-  using reference = typename TreeTraits::Value::type&;
+  using pointer = typename TreeTraits::Value::type *;
+  using reference = typename TreeTraits::Value::type &;
 
  private:
-  explicit iterator(const impl_type* node) : node_(node) {}
+  explicit iterator(const impl_type *node) : node_(node) {}
 
  public:
-  iterator(const iterator&) = default;
+  iterator(const iterator &) = default;
 
   // pre-increment
-  iterator& operator++() {
+  iterator &operator++() {
     node_ = next_sibling(*node_);
     return *this;
   }
@@ -232,18 +232,18 @@ class ExpandableTreeView<WrappedNodeType>::iterator {
 
   // TODO(fangism): implement decrement operators, to support bidirectionality
 
-  bool operator==(const iterator& rhs) const { return node_ == rhs.node_; }
+  bool operator==(const iterator &rhs) const { return node_ == rhs.node_; }
 
-  bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+  bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
 
-  const value_type& operator*() const { return node_->Value().Value(); }
-  const value_type* operator->() const { return &node_->Value().Value(); }
+  const value_type &operator*() const { return node_->Value().Value(); }
+  const value_type *operator->() const { return &node_->Value().Value(); }
 
  private:
   // From the node_ pointer alone, we have sufficient information to iterate.
   // For now, this supports forward-only iteration because, once this becomes
   // nullptr, there is no way to go backward.
-  const impl_type* node_;
+  const impl_type *node_;
 };
 
 }  // namespace verible

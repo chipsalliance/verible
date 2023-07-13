@@ -46,22 +46,22 @@ using TokenStreamReferenceView = std::vector<TokenSequence::iterator>;
 using TokenViewRange = iterator_range<TokenStreamView::const_iterator>;
 
 // Tokens that evaluate to false with these predicates are removed.
-using TokenFilterPredicate = std::function<bool(const TokenInfo&)>;
+using TokenFilterPredicate = std::function<bool(const TokenInfo &)>;
 
 // Populates a TokenStreamView with every iterator of a TokenSequence.
-void InitTokenStreamView(const TokenSequence&, TokenStreamView*);
+void InitTokenStreamView(const TokenSequence &, TokenStreamView *);
 
 // Create a new TokenStreamView with tokens conditionally omitted.
-void FilterTokenStreamView(const TokenFilterPredicate& keep,
-                           const TokenStreamView& src, TokenStreamView* dest);
+void FilterTokenStreamView(const TokenFilterPredicate &keep,
+                           const TokenStreamView &src, TokenStreamView *dest);
 
 // Remove tokens from a TokenStreamView according to a predicate.
-void FilterTokenStreamViewInPlace(const TokenFilterPredicate& keep,
-                                  TokenStreamView*);
+void FilterTokenStreamViewInPlace(const TokenFilterPredicate &keep,
+                                  TokenStreamView *);
 
 // Returns iterator range of TokenSequence iterators that span the given file
 // offsets. The second iterator points 1-past-the-end of the range.
-TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView& view,
+TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView &view,
                                              absl::string_view range);
 
 }  // namespace verible

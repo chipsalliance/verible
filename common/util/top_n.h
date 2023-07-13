@@ -47,7 +47,7 @@ class TopN {
   // Inserts an element in the prescribed sorted order, and caps the size (K).
   // Has same run-time as heap-insertion, no worse than O(lg K) ~ O(1).
   // Removing the worst element is a heap-remove-min-key, which is O(1).
-  void push(const value_type& v) {
+  void push(const value_type &v) {
     elements_.push(v);
     if (size() > max_size()) {
       elements_.pop();  // remove worst element

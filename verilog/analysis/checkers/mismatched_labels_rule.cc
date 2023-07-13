@@ -45,7 +45,7 @@ static constexpr absl::string_view kMessageMismatch =
 static constexpr absl::string_view kMessageMissing =
     "Matching begin label is missing.";
 
-const LintRuleDescriptor& MismatchedLabelsRule::GetDescriptor() {
+const LintRuleDescriptor &MismatchedLabelsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "mismatched-labels",
       .topic = "mismatched-labels",
@@ -55,20 +55,20 @@ const LintRuleDescriptor& MismatchedLabelsRule::GetDescriptor() {
 }
 
 // Matches the begin node.
-static const Matcher& BeginMatcher() {
+static const Matcher &BeginMatcher() {
   static const Matcher matcher(NodekBegin());
   return matcher;
 }
 
 void MismatchedLabelsRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
 
   if (BeginMatcher().Matches(symbol, &manager)) {
-    const auto& matchingEnd = GetMatchingEnd(symbol, context);
+    const auto &matchingEnd = GetMatchingEnd(symbol, context);
 
-    const auto* begin_label = GetBeginLabelTokenInfo(symbol);
-    const auto* end_label = GetEndLabelTokenInfo(*matchingEnd);
+    const auto *begin_label = GetBeginLabelTokenInfo(symbol);
+    const auto *end_label = GetEndLabelTokenInfo(*matchingEnd);
 
     // Don't check anything if there is no end label
     if (end_label == nullptr) {

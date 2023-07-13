@@ -21,8 +21,8 @@
 namespace verible {
 
 // Returns JSON representation of TokenInfo
-nlohmann::json ToJson(const TokenInfo& token_info,
-                      const TokenInfo::Context& context,
+nlohmann::json ToJson(const TokenInfo &token_info,
+                      const TokenInfo::Context &context,
                       bool include_text = false);
 
 }  // namespace verible

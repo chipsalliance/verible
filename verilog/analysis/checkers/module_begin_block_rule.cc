@@ -38,7 +38,7 @@ VERILOG_REGISTER_LINT_RULE(ModuleBeginBlockRule);
 static constexpr absl::string_view kMessage =
     "Module-level begin-end blocks are not LRM-valid syntax.";
 
-const LintRuleDescriptor& ModuleBeginBlockRule::GetDescriptor() {
+const LintRuleDescriptor &ModuleBeginBlockRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "module-begin-block",
       .topic = "floating-begin-end-blocks",
@@ -50,13 +50,13 @@ const LintRuleDescriptor& ModuleBeginBlockRule::GetDescriptor() {
 }
 
 // Matches begin-end blocks at the module-item level.
-static const Matcher& BlockMatcher() {
+static const Matcher &BlockMatcher() {
   static const Matcher matcher(NodekModuleBlock());
   return matcher;
 }
 
 void ModuleBeginBlockRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (BlockMatcher().Matches(symbol, &manager)) {
     violations_.insert(verible::LintViolation(symbol, kMessage, context));

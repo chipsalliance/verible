@@ -34,8 +34,8 @@ std::string RandomEqualLengthSymbolIdentifier(absl::string_view in);
 // arguments and macro definition bodies.
 // Returned status signals success or possible an internal error.
 absl::Status ObfuscateVerilogCode(absl::string_view content,
-                                  std::ostream* output,
-                                  verible::IdentifierObfuscator* subst);
+                                  std::ostream *output,
+                                  verible::IdentifierObfuscator *subst);
 
 }  // namespace verilog
 

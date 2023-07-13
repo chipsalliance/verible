@@ -29,7 +29,7 @@ using ::google::protobuf::io::FileOutputStream;
 using ::kythe::proto::Entry;
 
 // Returns the VName representation in Kythe's storage proto format.
-::kythe::proto::VName ConvertVnameToProto(const VName& vname) {
+::kythe::proto::VName ConvertVnameToProto(const VName &vname) {
   ::kythe::proto::VName proto_vname;
   *proto_vname.mutable_signature() = vname.signature.ToString();
   *proto_vname.mutable_corpus() = std::string{vname.corpus};
@@ -40,7 +40,7 @@ using ::kythe::proto::Entry;
 }
 
 // Returns the Fact representation in Kythe's storage proto format.
-Entry ConvertEdgeToEntry(const Edge& edge) {
+Entry ConvertEdgeToEntry(const Edge &edge) {
   Entry entry;
   entry.set_fact_name("/");
   *entry.mutable_edge_kind() = std::string{edge.edge_name};
@@ -50,7 +50,7 @@ Entry ConvertEdgeToEntry(const Edge& edge) {
 }
 
 // Returns the Fact representation in Kythe's storage proto format.
-Entry ConvertFactToEntry(const Fact& fact) {
+Entry ConvertFactToEntry(const Fact &fact) {
   Entry entry;
   *entry.mutable_fact_name() = std::string{fact.fact_name};
   *entry.mutable_fact_value() = fact.fact_value;
@@ -59,7 +59,7 @@ Entry ConvertFactToEntry(const Fact& fact) {
 }
 
 // Output entry to the stream.
-void OutputProto(const Entry& entry, FileOutputStream* stream) {
+void OutputProto(const Entry &entry, FileOutputStream *stream) {
   CodedOutputStream coded_stream(stream);
   coded_stream.WriteVarint32(entry.ByteSizeLong());
   entry.SerializeToCodedStream(&coded_stream);
@@ -70,10 +70,10 @@ void OutputProto(const Entry& entry, FileOutputStream* stream) {
 KytheProtoOutput::KytheProtoOutput(int fd) : out_(fd) {}
 KytheProtoOutput::~KytheProtoOutput() { out_.Close(); }
 
-void KytheProtoOutput::Emit(const Fact& fact) {
+void KytheProtoOutput::Emit(const Fact &fact) {
   OutputProto(ConvertFactToEntry(fact), &out_);
 }
-void KytheProtoOutput::Emit(const Edge& edge) {
+void KytheProtoOutput::Emit(const Edge &edge) {
   OutputProto(ConvertEdgeToEntry(edge), &out_);
 }
 

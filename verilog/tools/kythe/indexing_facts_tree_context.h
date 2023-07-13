@@ -24,16 +24,16 @@ namespace kythe {
 // Container with a stack of IndexingFactNode to hold context of
 // IndexingFactNodes during traversal of an IndexingFactsTree.
 class IndexingFactsTreeContext
-    : public verible::AutoPopStack<IndexingFactNode*> {
+    : public verible::AutoPopStack<IndexingFactNode *> {
  public:
-  using base_type = verible::AutoPopStack<IndexingFactNode*>;
+  using base_type = verible::AutoPopStack<IndexingFactNode *>;
 
   // member class to handle push and pop of stack safely
   using AutoPop = base_type::AutoPop;
 
  public:
   // returns the top IndexingFactsNode of the stack.
-  IndexingFactNode& top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
+  IndexingFactNode &top() { return *ABSL_DIE_IF_NULL(base_type::top()); }
 };
 
 }  // namespace kythe

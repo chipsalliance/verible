@@ -64,10 +64,10 @@ TEST(FindAllMacroCallsTest, Various) {
       {"function f;\nf = `BAR(`FOO());\nendfunction\n", 2},
       {"function f;\nf = `BAR() * `FOO();\nendfunction\n", 2},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     EXPECT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(macro_calls.size(), test.expected_matches) << "code:\n"
                                                          << test.code;
@@ -94,14 +94,14 @@ TEST(GetMacroCallIdsTest, Various) {
       {"function f;\nf = `BAR10() * `FOO10();\nendfunction\n",
        {"`BAR10", "`FOO10"}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     EXPECT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     std::vector<absl::string_view> found_names;
     found_names.reserve(macro_calls.size());
-    for (const auto& match : macro_calls) {
+    for (const auto &match : macro_calls) {
       found_names.push_back(GetMacroCallId(*match.match)->text());
     }
     EXPECT_THAT(found_names, ElementsAreArray(test.expected_names))
@@ -129,13 +129,13 @@ TEST(MacroCallArgsTest, Emptiness) {
       {"function f;\nf = `BAR(`FOO());\nendfunction\n", false},
       {"function f;\nf = `BAR() * `FOO();\nendfunction\n", true},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "");
     EXPECT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto macro_calls = FindAllMacroCalls(*ABSL_DIE_IF_NULL(root));
     ASSERT_FALSE(macro_calls.empty());
-    const auto* args = GetMacroCallArgs(*macro_calls.front().match);
+    const auto *args = GetMacroCallArgs(*macro_calls.front().match);
     EXPECT_EQ(MacroCallArgsIsEmpty(*args), test.expect_empty) << "code:\n"
                                                               << test.code;
     // TODO(b/151371397): check exact substrings
@@ -152,17 +152,17 @@ TEST(GetFunctionFormalPortsGroupTest, WithFormalPorts) {
       {"task t;\n", {kTag, "`FOO"}, "\nendtask\n"},
       {"module m;\n", {kTag, "`FOO"}, "\nendmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const absl::string_view code(test.code);
     VerilogAnalyzer analyzer(code, "test-file");
     const absl::string_view code_copy(analyzer.Data().Contents());
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
 
     const auto macro_items = FindAllMacroGenericItems(*root);
     ASSERT_EQ(macro_items.size(), 1);
-    const auto& macro_item = *macro_items.front().match;
-    const auto& id = GetMacroGenericItemId(macro_item);
+    const auto &macro_item = *macro_items.front().match;
+    const auto &id = GetMacroGenericItemId(macro_item);
     const absl::string_view id_text = id->text();
 
     // TODO(b/151371397): Refactor this test code along with
@@ -212,15 +212,15 @@ TEST(FindAllMacroDefinitions, MacroName) {
        {kTag, "my_macro"},
        " 10\n endclass\n module m(); int x = `TEN;\n endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : decls) {
-            const auto* type = GetMacroName(*decl.match);
+          for (const auto &decl : decls) {
+            const auto *type = GetMacroName(*decl.match);
             names.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return names;
@@ -262,17 +262,17 @@ TEST(FindAllMacroDefinitions, MacroArgsName) {
        {kTag, "i"},
        ") i\n endclass\n module m(); int x = `TEN(1);\n endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllMacroDefinitions(*ABSL_DIE_IF_NULL(root));
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : decls) {
-            const auto& args = FindAllMacroDefinitionsArgs(*decl.match);
-            for (const auto& arg : args) {
-              const auto* name = GetMacroArgName(*arg.match);
+          for (const auto &decl : decls) {
+            const auto &args = FindAllMacroDefinitionsArgs(*decl.match);
+            for (const auto &arg : args) {
+              const auto *name = GetMacroArgName(*arg.match);
               names.push_back(TreeSearchMatch{name, {/* ignored context */}});
             }
           }
@@ -291,16 +291,16 @@ TEST(FindAllPreprocessorInclude, IncludedFileName) {
       {"`include `d"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& includes =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &includes =
               FindAllPreprocessorInclude(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& include : includes) {
-            const auto* filename =
+          for (const auto &include : includes) {
+            const auto *filename =
                 GetFileFromPreprocessorInclude(*include.match);
             if (filename == nullptr) {
               continue;

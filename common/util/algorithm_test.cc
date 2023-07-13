@@ -323,7 +323,7 @@ class EveryN {
   explicit EveryN(int n, int init = 0) : i_(init), n_(n) {}
 
   template <class T>
-  bool operator()(const T&) {
+  bool operator()(const T &) {
     const bool ret = (i_ == n_);
     if (ret) i_ = 0;
     ++i_;
@@ -364,7 +364,7 @@ TEST(LexicographicalLessTest, Containers) {
 
 // like substr()
 template <class T>
-iterator_range<typename T::const_iterator> make_subrange(const T& t, size_t b,
+iterator_range<typename T::const_iterator> make_subrange(const T &t, size_t b,
                                                          size_t e) {
   return make_range(t.begin() + b, t.begin() + e);
 }

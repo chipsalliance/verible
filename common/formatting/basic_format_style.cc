@@ -24,7 +24,7 @@
 namespace verible {
 
 // This mapping defines how this enum is displayed and parsed.
-static const verible::EnumNameMap<IndentationStyle>& IndentationStyleStrings() {
+static const verible::EnumNameMap<IndentationStyle> &IndentationStyleStrings() {
   static const verible::EnumNameMap<IndentationStyle>
       kIndentationStyleStringMap({
           {"indent", IndentationStyle::kIndent},
@@ -33,16 +33,16 @@ static const verible::EnumNameMap<IndentationStyle>& IndentationStyleStrings() {
   return kIndentationStyleStringMap;
 }
 
-std::ostream& operator<<(std::ostream& stream, IndentationStyle p) {
+std::ostream &operator<<(std::ostream &stream, IndentationStyle p) {
   return IndentationStyleStrings().Unparse(p, stream);
 }
 
-bool AbslParseFlag(absl::string_view text, IndentationStyle* mode,
-                   std::string* error) {
+bool AbslParseFlag(absl::string_view text, IndentationStyle *mode,
+                   std::string *error) {
   return IndentationStyleStrings().Parse(text, mode, error, "IndentationStyle");
 }
 
-std::string AbslUnparseFlag(const IndentationStyle& mode) {
+std::string AbslUnparseFlag(const IndentationStyle &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();

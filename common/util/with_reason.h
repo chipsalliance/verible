@@ -41,7 +41,7 @@ namespace verible {
 template <typename T>
 struct WithReason {
   T value;
-  const char* reason;  // A simple string literal shall suffice.
+  const char *reason;  // A simple string literal shall suffice.
 };
 
 }  // namespace verible

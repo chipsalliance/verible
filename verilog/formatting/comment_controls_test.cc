@@ -64,7 +64,7 @@ struct DisableRangeTestData : public TokenInfoTestData {
     // convert expected_tokens into expected ranges
     const auto tokens = FindImportantTokens();
     const absl::string_view base(code);
-    for (const auto& t : tokens) {
+    for (const auto &t : tokens) {
       expected.Add({t.left(base), t.right(base)});
     }
   }
@@ -73,14 +73,14 @@ struct DisableRangeTestData : public TokenInfoTestData {
 TEST(DisableFormattingRangesTest, FormatOnNoEffect) {
   // By default, nothing is disabled, formatter is on for entire file, so these
   // should have no effect.
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "xxx yyy;\n  // verilog_format: on\n",
       "xxx yyy;\n  /* verilog_format: on */\n",
       "xxx yyy;\n// verilog_format:  on\n//verilog_format:on\n",
       "xxx yyy;\n  // verilog_format: other\n",
       "xxx yyy;\n  // verilog_format:\n",  // no command
   };
-  for (const auto* code : kTestCases) {
+  for (const auto *code : kTestCases) {
     VerilogAnalyzer analyzer(code, "<file>");
     EXPECT_TRUE(analyzer.Tokenize().ok());
     const auto disable_ranges = DisableFormattingRanges(
@@ -103,7 +103,7 @@ TEST(DisableFormattingRangesTest, FormatOffDisableToEndEOLComment) {
       {"xxx yyy;\n  // verilog_format: off\n",
        {kOff, "\t// verilog_format: off again\n"}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "<file>");
     EXPECT_TRUE(analyzer.Tokenize().ok());
     const auto disable_ranges = DisableFormattingRanges(
@@ -137,7 +137,7 @@ TEST(DisableFormattingRangesTest, FormatOffDisableToEndBlockComment) {
        {kOff, "\n\n/* verilog_format:on */"},
        "\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "<file>");
     EXPECT_TRUE(analyzer.Tokenize().ok());
     const auto disable_ranges = DisableFormattingRanges(
@@ -201,7 +201,7 @@ TEST(DisableFormattingRangesTest, FormatOffVarious) {
        "\n"
        "cc dd;\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.code, "<file>");
     EXPECT_TRUE(analyzer.Tokenize().ok());
     const auto disable_ranges = DisableFormattingRanges(
@@ -302,7 +302,7 @@ TEST(EnabledLinesToDisabledByteRangesTest, AllCases) {
           {{0, 17}}  // disable all lines
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     LineColumnMap line_map(test.text);
     const ByteOffsetSet result(
         EnabledLinesToDisabledByteRanges(test.enabled_lines, line_map));
@@ -378,7 +378,7 @@ TEST(FormatWhitespaceWithDisabledByteRangesTest, EmptyStrings) {
       {"ab\ncd\nef\n", {3, 6}, {{5, 9}}, "\n"},
       {"ab\ncd\nef\n", {3, 6}, {{6, 9}}, "\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     const auto substr = test.full_text.substr(
         test.substring_range.first,

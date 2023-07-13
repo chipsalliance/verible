@@ -41,18 +41,18 @@ struct RawMatcherTestCase {
   const int num_matches;
 };
 
-void ExpectMatchesInAST(const Symbol& tree, const Matcher& matcher,
+void ExpectMatchesInAST(const Symbol &tree, const Matcher &matcher,
                         int num_matches, absl::string_view code);
 
 // Runs a raw test case. Expects test.code to be correctly parsed by
 // analyzer A.
 template <class A>
-void RunRawMatcherTestCase(const RawMatcherTestCase& test) {
+void RunRawMatcherTestCase(const RawMatcherTestCase &test) {
   A analyzer(test.code, "<<inline-test>>");
   absl::Status status = analyzer.Analyze();
   EXPECT_TRUE(status.ok()) << "code with error:\n" << test.code;
 
-  auto* tree = analyzer.SyntaxTree().get();
+  auto *tree = analyzer.SyntaxTree().get();
   EXPECT_TRUE(tree != nullptr);
 
   ExpectMatchesInAST(*tree, test.matcher, test.num_matches, test.code);
@@ -73,7 +73,7 @@ struct MatcherTestCase {
   const std::map<std::string, SymbolTag> expected_bound_nodes;
 };
 
-void RunMatcherTestCase(const MatcherTestCase& test);
+void RunMatcherTestCase(const MatcherTestCase &test);
 
 }  // namespace matcher
 }  // namespace verible

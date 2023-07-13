@@ -30,14 +30,14 @@ using LinesOfTokens = std::vector<std::vector<TokenInfo>>;
 // Joins the text fields of TokenInfos into a newly allocated string.
 // All other fields of TokenInfos are ignored.
 // Each lines of tokens must end with a newline "\n" token.
-std::string JoinLinesOfTokensIntoString(const LinesOfTokens&);
+std::string JoinLinesOfTokensIntoString(const LinesOfTokens &);
 
 // Helper class for constructing a pre-tokenized text structure.
 // This avoids depending on any lexer for testing.
 class TextStructureTokenized : public TextStructure {
  public:
   // Each line of tokens
-  explicit TextStructureTokenized(const LinesOfTokens& lines_of_tokens);
+  explicit TextStructureTokenized(const LinesOfTokens &lines_of_tokens);
 };
 
 // Return a text structure view of a "hello, world" string

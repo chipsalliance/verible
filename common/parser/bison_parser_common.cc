@@ -28,16 +28,16 @@ namespace verible {
 // token. This no longer calls yylex(), but insteads pulls a token from a token
 // stream. 'value' points to yylval in yyparse(), which can be accessed as $1,
 // $2, ... in the yacc grammar semantic actions.
-int LexAdapter(SymbolPtr* value, ParserParam* param) {
-  const auto& last_token = param->FetchToken();
+int LexAdapter(SymbolPtr *value, ParserParam *param) {
+  const auto &last_token = param->FetchToken();
   value->reset(new SyntaxTreeLeaf(last_token));
   return last_token.token_enum();
 }
 
 // Error-reporting function.
 // Called by Bison-generated parser when a recognition error occurs.
-void ParseError(const ParserParam* param, const char* function_name,
-                const char* message) {
+void ParseError(const ParserParam *param, const char *function_name,
+                const char *message) {
   VLOG(1) << param->filename() << ": " << function_name
           << " error: " << message;
   // Bison's default and 'verbose' error messages are uninformative.

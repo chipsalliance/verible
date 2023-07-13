@@ -40,7 +40,7 @@ VERILOG_REGISTER_LINT_RULE(PosixEOFRule);
 
 static constexpr absl::string_view kMessage = "File must end with a newline.";
 
-const LintRuleDescriptor& PosixEOFRule::GetDescriptor() {
+const LintRuleDescriptor &PosixEOFRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "posix-eof",
       .topic = "posix-file-endings",
@@ -49,10 +49,10 @@ const LintRuleDescriptor& PosixEOFRule::GetDescriptor() {
   return d;
 }
 
-void PosixEOFRule::Lint(const TextStructureView& text_structure,
+void PosixEOFRule::Lint(const TextStructureView &text_structure,
                         absl::string_view) {
   if (!text_structure.Contents().empty()) {
-    const auto& last_line = text_structure.Lines().back();
+    const auto &last_line = text_structure.Lines().back();
     if (!last_line.empty()) {
       // Point to the end of the line (also EOF).
       const TokenInfo token(TK_OTHER, last_line.substr(last_line.length(), 0));

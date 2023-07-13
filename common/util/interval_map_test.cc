@@ -182,7 +182,7 @@ TEST(DisjointIntervalMapTest, MustEmplaceSuccess) {
   constexpr std::tuple<int, int, int> kTestValues[] = {
       {3, 4, 5}, {1, 3, 9}, {4, 7, 2}, {-10, -5, 0}, {10, 15, 33},
   };
-  for (const auto& t : kTestValues) {
+  for (const auto &t : kTestValues) {
     const auto iter = imap.must_emplace({std::get<0>(t), std::get<1>(t)},
                                         std::make_unique<int>(std::get<2>(t)));
     // Ensure that inserted value is the expected key and value.
@@ -268,7 +268,7 @@ TEST(DisjointIntervalMapTest, BeginEndRangeConstIterators) {
   imap.must_emplace({50, 60}, std::make_unique<int>(10));
   imap.must_emplace({30, 35}, std::make_unique<int>(5));
   imap.must_emplace({39, 46}, std::make_unique<int>(7));
-  for (const auto& pair : imap) {
+  for (const auto &pair : imap) {
     EXPECT_EQ(pair.first.second - pair.first.first, *pair.second);
   }
 }
@@ -278,11 +278,11 @@ TEST(DisjointIntervalMapTest, BeginEndRangeConstIterators) {
 using VectorIntervalMap =
     DisjointIntervalMap<std::vector<int>::const_iterator, std::vector<int>>;
 
-static VectorIntervalMap::iterator AllocateVectorBlock(VectorIntervalMap* vmap,
+static VectorIntervalMap::iterator AllocateVectorBlock(VectorIntervalMap *vmap,
                                                        int min, int max) {
   std::vector<int> v(max - min);
   int i = min;
-  for (auto& e : v) {
+  for (auto &e : v) {
     e = i;
     ++i;
   }
@@ -294,7 +294,7 @@ static VectorIntervalMap::iterator AllocateVectorBlock(VectorIntervalMap* vmap,
   return new_iter;
 }
 
-static void VerifyVectorBlock(const VectorIntervalMap& vmap,
+static void VerifyVectorBlock(const VectorIntervalMap &vmap,
                               VectorIntervalMap::const_iterator block) {
   for (auto left = block->first.first; left != std::prev(block->first.second);
        ++left) {

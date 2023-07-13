@@ -37,9 +37,9 @@ class RequireHelloRule : public TextStructureLintRule {
  public:
   RequireHelloRule() = default;
 
-  void Lint(const TextStructureView& text_structure,
+  void Lint(const TextStructureView &text_structure,
             absl::string_view filename) final {
-    const auto& lines = text_structure.Lines();
+    const auto &lines = text_structure.Lines();
     const absl::string_view contents = text_structure.Contents();
     if (!lines.empty() && !absl::StartsWith(contents, "Hello")) {
       const TokenInfo token(1, lines[0]);

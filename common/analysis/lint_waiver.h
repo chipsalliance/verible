@@ -33,7 +33,7 @@ namespace verible {
 // LintWaiver maintains a set of line ranges per lint rule that should be
 // exempt from each rule.
 class LintWaiver {
-  using RegexVector = std::vector<const std::regex*>;
+  using RegexVector = std::vector<const std::regex *>;
 
  public:
   LintWaiver() = default;
@@ -56,11 +56,11 @@ class LintWaiver {
                       int line_end);
 
   // Adds a regular expression which will be used to apply a waiver.
-  void WaiveWithRegex(absl::string_view rule_name, const std::string& regex);
+  void WaiveWithRegex(absl::string_view rule_name, const std::string &regex);
 
   // Converts the prepared regular expressions to line numbers and applies the
   // waivers.
-  void RegexToLines(absl::string_view content, const LineColumnMap& line_map);
+  void RegexToLines(absl::string_view content, const LineColumnMap &line_map);
 
   // Returns true if `line_number` should be waived for a particular rule.
   bool RuleIsWaivedOnLine(absl::string_view rule_name, int line_number) const;
@@ -70,12 +70,12 @@ class LintWaiver {
 
   // TODO(hzeller): The following methods break abstraction and are only
   // for performance. Reconsider if this is worth it.
-  const LineNumberSet* LookupLineNumberSet(absl::string_view rule_name) const {
+  const LineNumberSet *LookupLineNumberSet(absl::string_view rule_name) const {
     return verible::container::FindOrNull(waiver_map_, rule_name);
   }
 
   // Test if a particular line is included in the set.
-  static bool LineNumberSetContains(const LineNumberSet& line_set, int line) {
+  static bool LineNumberSetContains(const LineNumberSet &line_set, int line) {
     return line_set.Contains(line);
   }
 
@@ -115,8 +115,8 @@ class LintWaiverBuilder {
   //   The first argument after the trigger is the name of the rule to waive.
   // 'waive_command' is the second argument after the trigger, and is the
   //   command for 'waive-one-line'.
-  LintWaiverBuilder(TokenFilterPredicate&& is_comment,
-                    TokenFilterPredicate&& is_space, absl::string_view trigger,
+  LintWaiverBuilder(TokenFilterPredicate &&is_comment,
+                    TokenFilterPredicate &&is_space, absl::string_view trigger,
                     absl::string_view waive_line_command,
                     absl::string_view waive_start_command,
                     absl::string_view waive_stop_command)
@@ -129,21 +129,21 @@ class LintWaiverBuilder {
 
   // Takes a single line's worth of tokens and determines updates to the set of
   // waived lines.  Pass a slice of tokens using make_range.
-  void ProcessLine(const TokenRange& tokens, int line_number);
+  void ProcessLine(const TokenRange &tokens, int line_number);
 
   // Takes a lexically analyzed text structure and determines the entire set of
   // waived lines.  This can be more easily unit-tested using
   // TextStructureTokenized from text_structure_test_utils.h.
-  void ProcessTokenRangesByLine(const TextStructureView&);
+  void ProcessTokenRangesByLine(const TextStructureView &);
 
   // Takes a set of active linter rules and the affected filename to be linted,
   // and applies waivers from waiver_filename and its content.
   absl::Status ApplyExternalWaivers(
-      const std::set<absl::string_view>& active_rules,
+      const std::set<absl::string_view> &active_rules,
       absl::string_view lintee_filename, absl::string_view waiver_filename,
       absl::string_view waivers_config_content);
 
-  const LintWaiver& GetLintWaiver() const { return lint_waiver_; }
+  const LintWaiver &GetLintWaiver() const { return lint_waiver_; }
 
  protected:
   // Parses a comment and extracts a waived rule name.
@@ -151,7 +151,7 @@ class LintWaiverBuilder {
   // `comment_tokens` is just re-used memory to avoid re-allocation.
   absl::string_view ExtractWaivedRuleFromComment(
       absl::string_view comment_text,
-      std::vector<absl::string_view>* comment_tokens) const;
+      std::vector<absl::string_view> *comment_tokens) const;
 
   // Special string that leads a comment that is a waiver directive
   // Typically, name of linter tool is used here.

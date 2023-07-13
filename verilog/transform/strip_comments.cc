@@ -36,29 +36,29 @@ using verible::TokenInfo;
 
 // Replace non-newline characters with a single char, like <space>.
 // Tabs are considered non-newline characters.
-static void ReplaceNonNewlines(absl::string_view text, std::ostream* output,
+static void ReplaceNonNewlines(absl::string_view text, std::ostream *output,
                                char replacement) {
   if (text.empty()) return;
   const std::vector<absl::string_view> lines(
       absl::StrSplit(text, absl::ByChar('\n')));
   // no newline before first element
   *output << Spacer(lines.front().size(), replacement);
-  for (const auto& line : verible::make_range(lines.begin() + 1, lines.end())) {
+  for (const auto &line : verible::make_range(lines.begin() + 1, lines.end())) {
     *output << '\n' << Spacer(line.size(), replacement);
   }
 }
 
-void StripVerilogComments(absl::string_view content, std::ostream* output,
+void StripVerilogComments(absl::string_view content, std::ostream *output,
                           char replacement) {
   VLOG(1) << __FUNCTION__;
   verilog::VerilogLexer lexer(content);
 
-  const TokenInfo::Context context(content, [](std::ostream& stream, int e) {
+  const TokenInfo::Context context(content, [](std::ostream &stream, int e) {
     stream << verilog_symbol_name(e);
   });
 
   for (;;) {
-    const verible::TokenInfo& token(lexer.DoNextToken());
+    const verible::TokenInfo &token(lexer.DoNextToken());
     if (token.isEOF()) break;
 
     VLOG(2) << "token: " << verible::TokenWithContext{token, context};

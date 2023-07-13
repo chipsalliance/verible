@@ -39,7 +39,7 @@ class KzipCreator final {
 
   // Adds compilation unit to the Kzip.
   absl::Status AddCompilationUnit(
-      const ::kythe::proto::IndexedCompilation& unit);
+      const ::kythe::proto::IndexedCompilation &unit);
 
  private:
   std::unique_ptr<FILE, decltype(&fclose)> zip_file_;

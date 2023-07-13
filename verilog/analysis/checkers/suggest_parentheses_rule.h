@@ -30,10 +30,10 @@ class SuggestParenthesesRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleNode(const verible::SyntaxTreeNode& node,
-                  const verible::SyntaxTreeContext& context) final;
+  void HandleNode(const verible::SyntaxTreeNode &node,
+                  const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 

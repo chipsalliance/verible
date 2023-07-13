@@ -32,11 +32,11 @@ class MacroNameStyleRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   MacroNameStyleRule() = default;
 
-  void HandleToken(const verible::TokenInfo& token) final;
+  void HandleToken(const verible::TokenInfo &token) final;
 
   verible::LintRuleStatus Report() const final;
 

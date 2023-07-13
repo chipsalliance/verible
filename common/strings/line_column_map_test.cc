@@ -28,12 +28,12 @@ namespace {
 
 struct LineColumnTestData {
   LineColumn line_col;
-  const char* text;
+  const char *text;
 };
 
 struct LineColumnRangeTestData {
   LineColumnRange range;
-  const char* text;
+  const char *text;
 };
 
 struct LineColumnQuery {
@@ -42,7 +42,7 @@ struct LineColumnQuery {
 };
 
 struct LineColumnMapTestData {
-  const char* text;
+  const char *text;
   std::vector<int> expected_offsets;
   std::vector<LineColumnQuery> queries;
 };
@@ -77,7 +77,7 @@ TEST(LineColumnTextTest, PrintLineColumn) {
       {{1, 0}, "2:1"},
       {{10, 8}, "11:9"},
   };
-  for (const auto& test_case : text_test_data) {
+  for (const auto &test_case : text_test_data) {
     std::ostringstream oss;
     oss << test_case.line_col;
     EXPECT_EQ(oss.str(), test_case.text);
@@ -93,7 +93,7 @@ TEST(LineColumnTextTest, PrintLineColumnRange) {
       {{{10, 8}, {10, 9}}, "11:9:"},  // Single character range
       {{{10, 8}, {10, 8}}, "11:9:"},  // Empty range.
   };
-  for (const auto& test_case : text_test_data) {
+  for (const auto &test_case : text_test_data) {
     std::ostringstream oss;
     oss << test_case.range;
     EXPECT_EQ(oss.str(), test_case.text);
@@ -112,7 +112,7 @@ TEST(LineColumnMapTest, OffsetAtLine) {
 // This test verifies the offsets where columns are reset to 0,
 // which happens after every newline.
 TEST(LineColumnMapTest, Offsets) {
-  for (const auto& test_case : map_test_data) {
+  for (const auto &test_case : map_test_data) {
     const LineColumnMap line_map(test_case.text);
     EXPECT_EQ(line_map.GetBeginningOfLineOffsets(), test_case.expected_offsets)
         << "Text: \"" << test_case.text << "\"";
@@ -122,7 +122,7 @@ TEST(LineColumnMapTest, Offsets) {
 // This tests that computing offsets from pre-split lines is consistent
 // with the constructor that takes the whole text string.
 TEST(LineColumnMapTest, OffsetsFromLines) {
-  for (const auto& test_case : map_test_data) {
+  for (const auto &test_case : map_test_data) {
     const LineColumnMap line_map(test_case.text);
     std::vector<absl::string_view> lines = absl::StrSplit(test_case.text, '\n');
     const LineColumnMap alt_line_map(lines);
@@ -153,7 +153,7 @@ TEST(LineColumnMapTest, EndOffsetVarious) {
       {"aaaa\nbbb\n", 9},  //
       {"\n\n", 2},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     const LineColumnMap map(test.text);
     EXPECT_EQ(map.LastLineOffset(), test.expected_offset) << "text:\n"
                                                           << test.text;
@@ -162,9 +162,9 @@ TEST(LineColumnMapTest, EndOffsetVarious) {
 
 // This test verifies the translation from byte-offset to line-column.
 TEST(LineColumnMapTest, Lookup) {
-  for (const auto& test_case : map_test_data) {
+  for (const auto &test_case : map_test_data) {
     const LineColumnMap line_map(test_case.text);
-    for (const auto& q : test_case.queries) {
+    for (const auto &q : test_case.queries) {
       EXPECT_EQ(q.line_col,
                 line_map.GetLineColAtOffset(test_case.text, q.offset))
           << "Text: \"" << test_case.text << "\"\n"

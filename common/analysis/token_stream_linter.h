@@ -32,7 +32,7 @@ namespace verible {
 class TokenStreamLinter {
  public:
   // Analyzes a sequence of tokens.
-  void Lint(const TokenSequence& tokens);
+  void Lint(const TokenSequence &tokens);
 
   // Transfers ownership of rule into this Linter
   void AddRule(std::unique_ptr<TokenStreamLintRule> rule) {

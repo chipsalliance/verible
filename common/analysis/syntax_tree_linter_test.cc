@@ -39,16 +39,16 @@ class AllLeavesMustBeN : public SyntaxTreeLintRule {
 
   // When handling leaf, check that it has target tag and report a violation
   // is not
-  void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) final {
+  void HandleLeaf(const SyntaxTreeLeaf &leaf,
+                  const SyntaxTreeContext &context) final {
     if (leaf.get().token_enum() != target_) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
 
   // Do not operate on nodes
-  void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) final {}
+  void HandleNode(const SyntaxTreeNode &node,
+                  const SyntaxTreeContext &context) final {}
   LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 
  private:
@@ -113,18 +113,18 @@ TEST(SyntaxTreeLinterTest, MultipleRules) {
 class ChildrenLeavesAscending : public SyntaxTreeLintRule {
  public:
   // Do not process leaves
-  void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) final {}
+  void HandleLeaf(const SyntaxTreeLeaf &leaf,
+                  const SyntaxTreeContext &context) final {}
 
   // When handling nodes, iterate through all children and check that tags
   // are ascending. Report leafs nodes that have leaves that are out of order.
-  void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) final {
+  void HandleNode(const SyntaxTreeNode &node,
+                  const SyntaxTreeContext &context) final {
     int last_tag = 0;
-    for (const auto& child : node.children()) {
+    for (const auto &child : node.children()) {
       if (child->Kind() == SymbolKind::kLeaf) {
-        const SyntaxTreeLeaf* leaf_child =
-            down_cast<SyntaxTreeLeaf*>(child.get());
+        const SyntaxTreeLeaf *leaf_child =
+            down_cast<SyntaxTreeLeaf *>(child.get());
         const int current_tag = leaf_child->get().token_enum();
         if (current_tag >= last_tag) {
           last_tag = current_tag;
@@ -221,15 +221,15 @@ TEST(SyntaxTreeLinterTest, HeterogenousTests) {
 class TagMatchesContextDepth : public SyntaxTreeLintRule {
  public:
   // When handling a leaf, check leaf's tag vs the size of its context
-  void HandleLeaf(const SyntaxTreeLeaf& leaf,
-                  const SyntaxTreeContext& context) final {
+  void HandleLeaf(const SyntaxTreeLeaf &leaf,
+                  const SyntaxTreeContext &context) final {
     if (static_cast<size_t>(leaf.get().token_enum()) != context.size()) {
       violations_.insert(LintViolation(leaf.get(), "", context));
     }
   }
   // Do not process nodes
-  void HandleNode(const SyntaxTreeNode& node,
-                  const SyntaxTreeContext& context) final {}
+  void HandleNode(const SyntaxTreeNode &node,
+                  const SyntaxTreeContext &context) final {}
 
   LintRuleStatus Report() const final { return LintRuleStatus(violations_); }
 

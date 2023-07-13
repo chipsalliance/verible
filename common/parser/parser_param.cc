@@ -29,7 +29,7 @@
 
 namespace verible {
 
-ParserParam::ParserParam(TokenGenerator* token_stream,
+ParserParam::ParserParam(TokenGenerator *token_stream,
                          absl::string_view filename)
     : token_stream_(token_stream),
       filename_(filename),
@@ -38,28 +38,28 @@ ParserParam::ParserParam(TokenGenerator* token_stream,
 
 ParserParam::~ParserParam() = default;
 
-const TokenInfo& ParserParam::FetchToken() {
+const TokenInfo &ParserParam::FetchToken() {
   last_token_ = (*token_stream_)();
   return last_token_;
 }
 
-void ParserParam::RecordSyntaxError(const SymbolPtr& symbol_ptr) {
-  const auto* leaf = down_cast<const SyntaxTreeLeaf*>(symbol_ptr.get());
+void ParserParam::RecordSyntaxError(const SymbolPtr &symbol_ptr) {
+  const auto *leaf = down_cast<const SyntaxTreeLeaf *>(symbol_ptr.get());
   const auto token = leaf->get();
   VLOG(1) << filename_ << ": recovered syntax error: " << token;
   recovered_syntax_errors_.push_back(token);
 }
 
 template <typename T>
-static void move_stack(T** raw_stack, const int64_t* size,
-                       std::vector<T>* stack) {
+static void move_stack(T **raw_stack, const int64_t *size,
+                       std::vector<T> *stack) {
   stack->resize(*size);
   std::move(*raw_stack, *raw_stack + *size, stack->begin());
 }
 
 // See bison_parser_common.h for use of this (yyoverflow).
-void ParserParam::ResizeStacksInternal(bison_state_int_type** state_stack,
-                                       SymbolPtr** value_stack, int64_t* size) {
+void ParserParam::ResizeStacksInternal(bison_state_int_type **state_stack,
+                                       SymbolPtr **value_stack, int64_t *size) {
   if (state_stack_.empty()) {
     // This is the first reallocation case.
     move_stack(state_stack, size, &state_stack_);

@@ -62,7 +62,7 @@ using StringRangeSet = std::set<absl::string_view, LessStringRanges>;
 
 // This function helps find symmetric differences between two sets
 // of findings (actual vs. expected) based on locations.
-static int CompareFindingLocation(absl::string_view lhs, const TokenInfo& rhs) {
+static int CompareFindingLocation(absl::string_view lhs, const TokenInfo &rhs) {
   const int delta = CompareStringRanges(lhs, rhs.text());
   // Then compare enums, where we only care about equality.
   return delta;
@@ -70,13 +70,13 @@ static int CompareFindingLocation(absl::string_view lhs, const TokenInfo& rhs) {
 
 // TODO(b/151371397): refactor this for re-use for multi-findings style tests.
 bool SyntaxTreeSearchTestCase::ExactMatchFindings(
-    const std::vector<TreeSearchMatch>& actual_findings, absl::string_view base,
-    std::ostream* diffstream) const {
+    const std::vector<TreeSearchMatch> &actual_findings, absl::string_view base,
+    std::ostream *diffstream) const {
   // Convert actual_findings into string ranges.  Ignore matches' context.
   StringRangeSet actual_findings_ranges;
-  for (const auto& finding : actual_findings) {
+  for (const auto &finding : actual_findings) {
     if (finding.match == nullptr) continue;
-    const auto& match_symbol(*finding.match);
+    const auto &match_symbol(*finding.match);
     const absl::string_view spanned_text = StringSpanOfSymbol(match_symbol);
     // Spanned text can be empty when a subtree is devoid of leaves.
     if (spanned_text.empty()) continue;
@@ -106,7 +106,7 @@ bool SyntaxTreeSearchTestCase::ExactMatchFindings(
     all_match = false;
     *diffstream
         << "The following actual findings did not match the expected ones:\n";
-    for (const auto& finding : unmatched_actual_findings) {
+    for (const auto &finding : unmatched_actual_findings) {
       constexpr int kIgnored = -1;
       TokenInfo(kIgnored, finding).ToStream(*diffstream, context) << std::endl;
     }
@@ -115,7 +115,7 @@ bool SyntaxTreeSearchTestCase::ExactMatchFindings(
     all_match = false;
     *diffstream
         << "The following expected findings did not match the ones found:\n";
-    for (const auto& finding : unmatched_expected_findings) {
+    for (const auto &finding : unmatched_expected_findings) {
       finding.ToStream(*diffstream, context) << std::endl;
     }
   }

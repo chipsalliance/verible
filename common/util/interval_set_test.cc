@@ -33,7 +33,7 @@ class UnsafeIntervalSet : public interval_set_type {
  public:
   // intervals must be non-overlapping, but can be any order.
   UnsafeIntervalSet(std::initializer_list<interval_type> intervals) {
-    for (const auto& interval : intervals) {
+    for (const auto &interval : intervals) {
       AddUnsafe(interval);
     }
     // Ensure class invariants.
@@ -402,7 +402,7 @@ TEST(IntervalSetTest, AddSingleValue) {
       {40, {{10, 20}, {30, 41}}},
       {41, {{10, 20}, {30, 40}, {41, 42}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     UnsafeIntervalSet copy(init);
     copy.Add(test.value);
     EXPECT_EQ(copy, test.expected);
@@ -466,7 +466,7 @@ TEST(IntervalSetTest, AddIntervalNonEmpty) {
       {{40, 41}, {{10, 20}, {30, 41}}},
       {{41, 42}, {{10, 20}, {30, 40}, {41, 42}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     UnsafeIntervalSet copy(init);
     copy.Add(test.value);
     EXPECT_EQ(copy, test.expected);
@@ -522,7 +522,7 @@ TEST(IntervalSetTest, DifferenceSingleValue) {
       {40, {{10, 20}, {30, 40}}},
       {41, {{10, 20}, {30, 40}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "remove: " << test.value << " expect: " << test.expected;
     UnsafeIntervalSet copy(init);
     copy.Difference(test.value);
@@ -611,7 +611,7 @@ TEST(IntervalSetTest, DifferenceIntervalNonEmpty) {
       {{40, 41}, {{10, 20}, {30, 40}}},
       {{41, 41}, {{10, 20}, {30, 40}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "remove: " << test.value << " expect: " << test.expected;
     UnsafeIntervalSet copy(init);
     copy.Difference(test.value);
@@ -642,7 +642,7 @@ TEST(IntervalSetTest, SetDifferences) {
       {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{0, 4}}, {{5, 6}, {7, 8}}},
       {{{1, 2}, {3, 4}, {5, 6}, {7, 8}}, {{1, 9}}, {}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << test.a << " - " << test.b << " == " << test.c;
     UnsafeIntervalSet set(test.a);
     set.Difference(test.b);
@@ -662,14 +662,14 @@ TEST(IntervalSetTest, SetUnions) {
       {{{1, 2}, {3, 4}, {5, 6}}, {{2, 7}}, {{1, 7}}},
       {{{1, 2}, {5, 6}}, {{3, 4}, {7, 8}}, {{1, 2}, {3, 4}, {5, 6}, {7, 8}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << test.a << " U " << test.b << " == " << test.c;
     UnsafeIntervalSet set(test.a);
     set.Union(test.b);
     EXPECT_EQ(set, test.c);
   }
   // commutative test
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << test.b << " U " << test.a << " == " << test.c;
     UnsafeIntervalSet set(test.b);
     set.Union(test.a);
@@ -686,7 +686,7 @@ TEST(IntervalSetTest, ComplementEmptyInitial) {
       {1, 10},    //
       {10, 100},  //
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     interval_set_type set;
     set.Complement(test);
     EXPECT_EQ(set, interval_set_type{test});
@@ -746,7 +746,7 @@ TEST(IntervalSetTest, ComplementGeneral) {
       {{40, 41}, {{40, 41}}},
       {{40, 45}, {{40, 45}}},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "comp " << test.value << " == " << test.expected;
     UnsafeIntervalSet set(initial);
     set.Complement(test.value);
@@ -957,7 +957,7 @@ using VectorIntervalSet = DisjointIntervalSet<std::vector<int>::const_iterator>;
 
 // Make sure values interior to a range point back to the entire range.
 template <typename M>
-static void DisjointIntervalConsistencyCheck(const M& iset) {
+static void DisjointIntervalConsistencyCheck(const M &iset) {
   // works on integers and iterators
   for (auto iter = iset.begin(); iter != iset.end(); ++iter) {
     for (auto i = iter->first; i != iter->second; ++i) {
@@ -987,7 +987,7 @@ TEST(DisjointIntervalSetTest, EmplaceOne) {
 }
 
 template <typename M>
-static typename M::const_iterator VerifyEmplace(M* iset,
+static typename M::const_iterator VerifyEmplace(M *iset,
                                                 typename M::mapped_type min,
                                                 typename M::mapped_type max) {
   const auto p = iset->emplace(min, max);
@@ -1065,7 +1065,7 @@ TEST(DisjointIntervalSetTest, MustEmplaceSuccess) {
   constexpr std::pair<int, int> kTestValues[] = {
       {3, 4}, {1, 3}, {4, 7}, {-10, -5}, {10, 15},
   };
-  for (const auto& t : kTestValues) {
+  for (const auto &t : kTestValues) {
     const auto iter = iset.must_emplace(t.first, t.second);
     // Ensure that inserted value is the expected key min and max.
     EXPECT_EQ(iter->first, t.first);

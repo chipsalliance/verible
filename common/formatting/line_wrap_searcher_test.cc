@@ -43,8 +43,8 @@ class SearchLineWrapsTestFixture : public UnwrappedLineMemoryHandler,
     return levels * style_.indentation_spaces;
   }
 
-  FormattedExcerpt SearchLineWraps(const UnwrappedLine& uwline,
-                                   const BasicFormatStyle& style) {
+  FormattedExcerpt SearchLineWraps(const UnwrappedLine &uwline,
+                                   const BasicFormatStyle &style) {
     // Bound the size of search for unit testing.
     const auto results = verible::SearchLineWraps(uwline, style, 1000);
     EXPECT_FALSE(results.empty());
@@ -76,12 +76,12 @@ TEST_F(SearchLineWrapsTestFixture, OneToken) {
   UnwrappedLine uwline_in(LevelsToSpaces(0), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 0;
   ftokens_in[0].before.spaces_required = 99;  // should be ignored
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), 1);
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   // First token should never break.
   EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::kAppend);
   EXPECT_EQ(formatted_line.Render(), "aaa");
@@ -95,12 +95,12 @@ TEST_F(SearchLineWrapsTestFixture, OneTokenIndented) {
   UnwrappedLine uwline_in(LevelsToSpaces(2), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 0;
   ftokens_in[0].before.spaces_required = 77;  // should be ignored
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), 1);
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   // First token should never break.
   EXPECT_EQ(ftokens_out.front().before.action, SpacingDecision::kAppend);
   // 2 indentation levels, 3 spaces each = 6 spaces
@@ -119,7 +119,7 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnOneLine) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 77;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -130,7 +130,7 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnOneLine) {
   ftokens_in[3].before.spaces_required = 1;
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   // Since all tokens fit on one line, expect no breaks.
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
@@ -152,7 +152,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLine) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 77;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -163,7 +163,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLine) {
   ftokens_in[3].before.spaces_required = 1;
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   // First token should never break.
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
@@ -193,7 +193,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultiple) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 33;  // should be ignored
   for (size_t i = 1; i < tokens.size(); ++i) {
@@ -204,7 +204,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultiple) {
   ftokens_in[5].before.break_penalty = 2;
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
@@ -231,7 +231,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultipleDifferentSpaces) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 33;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -244,7 +244,7 @@ TEST_F(SearchLineWrapsTestFixture, WrapsToNextLineMultipleDifferentSpaces) {
   }
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
@@ -269,7 +269,7 @@ TEST_F(SearchLineWrapsTestFixture, ForcedJoins) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 11;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -280,7 +280,7 @@ TEST_F(SearchLineWrapsTestFixture, ForcedJoins) {
       SpacingOptions::kMustAppend;  // This causes search to break earlier.
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kWrap);
   EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
@@ -300,7 +300,7 @@ TEST_F(SearchLineWrapsTestFixture, ForcedWraps) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 11;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -310,7 +310,7 @@ TEST_F(SearchLineWrapsTestFixture, ForcedWraps) {
   ftokens_in[2].before.spaces_required = 1;
   const FormattedExcerpt formatted_line = SearchLineWraps(uwline_in, style_);
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
-  const auto& ftokens_out = formatted_line.Tokens();
+  const auto &ftokens_out = formatted_line.Tokens();
   EXPECT_EQ(ftokens_out[0].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(ftokens_out[1].before.action, SpacingDecision::kWrap);
   EXPECT_EQ(ftokens_out[2].before.action, SpacingDecision::kAppend);
@@ -330,7 +330,7 @@ TEST_F(SearchLineWrapsTestFixture, DisplayEquallyOptimalWrappings) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 11;  // should be ignored
   ftokens_in[1].before.break_penalty = 3;
@@ -344,7 +344,7 @@ TEST_F(SearchLineWrapsTestFixture, DisplayEquallyOptimalWrappings) {
   //   break before token[2].
   // However, using a tie-breaker like terminal-column position, will favor
   // equally good solutions that break earlier.
-  const auto& first = formatted_lines.front();
+  const auto &first = formatted_lines.front();
   EXPECT_EQ(first.Tokens()[1].before.action, SpacingDecision::kAppend);
   EXPECT_EQ(first.Tokens()[2].before.action, SpacingDecision::kWrap);
   std::ostringstream stream;
@@ -364,7 +364,7 @@ TEST_F(SearchLineWrapsTestFixture, FitsOnLine) {
   UnwrappedLine uwline_in(LevelsToSpaces(0), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.spaces_required = 99;  // irrelevant
   ftokens_in[1].before.spaces_required = 1;
   ftokens_in[2].before.spaces_required = 1;
@@ -409,7 +409,7 @@ TEST_F(SearchLineWrapsTestFixture, AbortedSearch) {
   UnwrappedLine uwline_in(LevelsToSpaces(1), pre_format_tokens_.begin());
   AddFormatTokens(&uwline_in);
   EXPECT_EQ(uwline_in.Size(), tokens.size());
-  auto& ftokens_in = pre_format_tokens_;
+  auto &ftokens_in = pre_format_tokens_;
   ftokens_in[0].before.break_penalty = 1;
   ftokens_in[0].before.spaces_required = 77;  // should be ignored
   ftokens_in[1].before.break_penalty = 1;
@@ -418,7 +418,7 @@ TEST_F(SearchLineWrapsTestFixture, AbortedSearch) {
   ftokens_in[2].before.spaces_required = 1;
   // Intentionally limit search space to a small count to force early abort.
   const auto formatted_lines = verible::SearchLineWraps(uwline_in, style_, 2);
-  const FormattedExcerpt& formatted_line = formatted_lines.front();
+  const FormattedExcerpt &formatted_line = formatted_lines.front();
   EXPECT_EQ(formatted_line.Tokens().size(), tokens.size());
   EXPECT_FALSE(formatted_line.CompletedFormatting());
   // The resulting state is unpredictable, because the search terminated early.

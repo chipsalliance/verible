@@ -67,7 +67,7 @@ TEST(TokenInfoToJsonTest, ToJsonWithTokenEnumTranslator) {
   const TokenInfo token_info(143, text);
 
   const verible::TokenInfo::Context context(
-      text, [](std::ostream& stream, int e) { stream << "token enum " << e; });
+      text, [](std::ostream &stream, int e) { stream << "token enum " << e; });
 
   EXPECT_EQ(ToJson(token_info, context), nlohmann::json::parse(R"({
     "start": 0,

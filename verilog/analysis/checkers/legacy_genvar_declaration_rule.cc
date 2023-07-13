@@ -40,7 +40,7 @@ using verible::LintViolation;
 static constexpr absl::string_view kMessage =
     "Do not use separate genvar declaration.";
 
-const LintRuleDescriptor& LegacyGenvarDeclarationRule::GetDescriptor() {
+const LintRuleDescriptor &LegacyGenvarDeclarationRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "legacy-genvar-declaration",
       .topic = "generate-constructs",
@@ -50,13 +50,13 @@ const LintRuleDescriptor& LegacyGenvarDeclarationRule::GetDescriptor() {
 }
 
 void LegacyGenvarDeclarationRule::HandleNode(
-    const verible::SyntaxTreeNode& node,
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeNode &node,
+    const verible::SyntaxTreeContext &context) {
   const auto tag = static_cast<verilog::NodeEnum>(node.Tag().tag);
   if (tag == NodeEnum::kGenvarDeclaration) {
     const auto identifier_matches = FindAllSymbolIdentifierLeafs(node);
-    for (const auto& match : identifier_matches) {
-      const auto& leaf = verible::SymbolCastToLeaf(*match.match);
+    for (const auto &match : identifier_matches) {
+      const auto &leaf = verible::SymbolCastToLeaf(*match.match);
       violations_.insert(LintViolation(leaf.get(), kMessage));
     }
   }

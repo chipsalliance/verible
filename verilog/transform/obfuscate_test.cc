@@ -38,7 +38,7 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
       {"bbb", "BBB"},
       {"ccc", "CCC"},
   };
-  for (const auto& sub : subs) {
+  for (const auto &sub : subs) {
     ASSERT_TRUE(ob.encode(sub.first, sub.second));
   }
   const std::pair<absl::string_view, absl::string_view> kTestCases[] = {
@@ -95,7 +95,7 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
           "  // comment2\n",
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream output;
     const auto status = ObfuscateVerilogCode(test.first, &output, &ob);
     EXPECT_TRUE(status.ok()) << "Unexpected error: " << status.message();
@@ -110,7 +110,7 @@ TEST(ObfuscateVerilogCodeTest, InputLexicalError) {
       "`define FOO 911badid\n",
       "`FOO(`)\n",
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     IdentifierObfuscator ob(RandomEqualLengthSymbolIdentifier);
     std::ostringstream output;
     const auto status = ObfuscateVerilogCode(test, &output, &ob);

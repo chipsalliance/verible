@@ -37,7 +37,7 @@ TEST(SubcommandRegistryTest, NoNewCommands) {
 TEST(SubcommandRegistryTest, HelpNoArgsTest) {
   SubcommandRegistry registry;
   // Test built-in help command.
-  const SubcommandEntry& help(registry.GetSubcommandEntry("help"));
+  const SubcommandEntry &help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
   std::vector<absl::string_view> args;
@@ -51,7 +51,7 @@ TEST(SubcommandRegistryTest, HelpNoArgsTest) {
 TEST(SubcommandRegistryTest, HelpHelpCommand) {
   SubcommandRegistry registry;
   // Test built-in help command.
-  const SubcommandEntry& help(registry.GetSubcommandEntry("help"));
+  const SubcommandEntry &help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
   std::vector<absl::string_view> args{"help"};
@@ -64,8 +64,8 @@ TEST(SubcommandRegistryTest, HelpHelpCommand) {
 }
 
 static const SubcommandEntry fizz_func{
-    [](const SubcommandArgsRange, std::istream&, std::ostream& outs,
-       std::ostream&) {
+    [](const SubcommandArgsRange, std::istream &, std::ostream &outs,
+       std::ostream &) {
       outs << 42;
       return absl::OkStatus();
     },
@@ -83,7 +83,7 @@ TEST(SubcommandRegistryTest, RegisterCommandPublicOk) {
 
   std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
-  const SubcommandEntry& fizz_entry(registry.GetSubcommandEntry("fizz"));
+  const SubcommandEntry &fizz_entry(registry.GetSubcommandEntry("fizz"));
 
   std::istringstream ins;
   std::ostringstream outs, errs;
@@ -99,7 +99,7 @@ TEST(SubcommandRegistryTest, ShowRegisteredCommandsOnWrongCommandRequest) {
     EXPECT_TRUE(absl::StrContains(registry.ListCommands(), "fizz"));
   }
 
-  const SubcommandEntry& cmd(registry.GetSubcommandEntry("wrong_command"));
+  const SubcommandEntry &cmd(registry.GetSubcommandEntry("wrong_command"));
 
   std::vector<absl::string_view> args{"foo", "bar"};
   const SubcommandArgsRange range(args.begin(), args.end());
@@ -112,8 +112,8 @@ TEST(SubcommandRegistryTest, ShowRegisteredCommandsOnWrongCommandRequest) {
 }
 
 static const SubcommandEntry buzz_func{
-    [](const SubcommandArgsRange, std::istream&, std::ostream& outs,
-       std::ostream&) {
+    [](const SubcommandArgsRange, std::istream &, std::ostream &outs,
+       std::ostream &) {
       outs << 99;
       return absl::OkStatus();
     },
@@ -131,7 +131,7 @@ TEST(SubcommandRegistryTest, RegisterCommandHiddenOk) {
 
   std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
-  const SubcommandEntry& buzz_entry(registry.GetSubcommandEntry("buzz"));
+  const SubcommandEntry &buzz_entry(registry.GetSubcommandEntry("buzz"));
 
   std::istringstream ins;
   std::ostringstream outs, errs;
@@ -169,7 +169,7 @@ TEST(SubcommandRegistryTest, RegisterCommandMultipleCommands) {
   std::vector<absl::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   {
-    const SubcommandEntry& fizz_entry(registry.GetSubcommandEntry("fizz"));
+    const SubcommandEntry &fizz_entry(registry.GetSubcommandEntry("fizz"));
     std::istringstream ins;
     std::ostringstream outs, errs;
     const auto status = fizz_entry.main(range, ins, outs, errs);
@@ -177,7 +177,7 @@ TEST(SubcommandRegistryTest, RegisterCommandMultipleCommands) {
     EXPECT_EQ(outs.str(), "42");
   }
   {
-    const SubcommandEntry& buzz_entry(registry.GetSubcommandEntry("buzz"));
+    const SubcommandEntry &buzz_entry(registry.GetSubcommandEntry("buzz"));
     std::istringstream ins;
     std::ostringstream outs, errs;
     const auto status = buzz_entry.main(range, ins, outs, errs);

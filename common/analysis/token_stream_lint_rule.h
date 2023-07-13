@@ -29,7 +29,7 @@ class TokenStreamLintRule : public LintRule {
   ~TokenStreamLintRule() override = default;
 
   // Scans a single token during analysis.
-  virtual void HandleToken(const TokenInfo& token) = 0;
+  virtual void HandleToken(const TokenInfo &token) = 0;
 };
 
 }  // namespace verible

@@ -64,12 +64,12 @@ struct TestFileEntry {
 
   // Points to a successfully opened source file that corresponds to test_file_
   // opened as a translation unit.
-  const VerilogSourceFile* const source_file = nullptr;
+  const VerilogSourceFile *const source_file = nullptr;
 
   TestFileEntry(
       absl::string_view code_text, absl::string_view temp_dir,
-      const std::function<const VerilogSourceFile*(absl::string_view)>&
-          file_opener,
+      const std::function<const VerilogSourceFile *(absl::string_view)>
+          &file_opener,
       absl::string_view override_basename = "")
       : origin_text(code_text),
         temp_file(temp_dir, origin_text, override_basename),
@@ -98,20 +98,20 @@ class SimpleTestProject : public TempDir, public VerilogProject {
  public:
   // 'code_text' is the contents of the single translation unit in this project
   explicit SimpleTestProject(absl::string_view code_text,
-                             const std::vector<std::string>& include_paths = {})
+                             const std::vector<std::string> &include_paths = {})
       : VerilogProject(temp_dir_, include_paths, /*corpus=*/"unittest",
                        /*populate_string_maps=*/false),
         code_text_(code_text),
         translation_unit_(code_text, temp_dir_,
                           [this](absl::string_view full_file_name)
-                              -> const VerilogSourceFile* {
+                              -> const VerilogSourceFile * {
                             /* VerilogProject base class is already fully
                              * initialized */
                             return *OpenTranslationUnit(
                                 verible::file::Basename(full_file_name));
                           }) {}
 
-  const TestFileEntry& XUnit() const { return translation_unit_; }
+  const TestFileEntry &XUnit() const { return translation_unit_; }
 
   absl::string_view OnlyFileName() const {
     return translation_unit_.temp_file.filename();
@@ -136,10 +136,10 @@ class SimpleTestProject : public TempDir, public VerilogProject {
     };
   }
 
-  std::vector<absl::Status>& Errors() { return errors_; }
+  std::vector<absl::Status> &Errors() { return errors_; }
 
   // This printer only works well for tests cases with one translation unit.
-  PrintableIndexingFactNode TreePrinter(const IndexingFactNode& n) const {
+  PrintableIndexingFactNode TreePrinter(const IndexingFactNode &n) const {
     return PrintableIndexingFactNode(n, code_text_);
   }
 
@@ -161,12 +161,12 @@ class IncludeTestProject : protected SimpleTestProject {
   IncludeTestProject(absl::string_view code_text,
                      absl::string_view include_file_basename,
                      absl::string_view include_text,
-                     const std::vector<std::string>& include_paths = {})
+                     const std::vector<std::string> &include_paths = {})
       : SimpleTestProject(code_text, include_paths),
         include_file_(
             include_text, temp_dir_,
             [this](
-                absl::string_view full_file_name) -> const VerilogSourceFile* {
+                absl::string_view full_file_name) -> const VerilogSourceFile * {
               /* VerilogProject base class is already fully initialized */
               return *OpenIncludedFile(verible::file::Basename(full_file_name));
             },
@@ -177,7 +177,7 @@ class IncludeTestProject : protected SimpleTestProject {
   using SimpleTestProject::Extract;
   using SimpleTestProject::XUnit;
 
-  const TestFileEntry& IncludeFile() const { return include_file_; }
+  const TestFileEntry &IncludeFile() const { return include_file_; }
 
  private:
   // The one and only one included file in the test.
@@ -225,7 +225,7 @@ TEST(FactsTreeExtractor, EqualOperatorTest) {
           Anchor(absl::string_view("foo")),
       }));
 
-  const auto P = [&code_text](const IndexingFactNode& n) {
+  const auto P = [&code_text](const IndexingFactNode &n) {
     return PrintableIndexingFactNode(n, code_text);
   };
   {
@@ -262,7 +262,7 @@ TEST(FactsTreeExtractor, EmptyCSTTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -275,7 +275,7 @@ TEST(FactsTreeExtractor, ParseErrorTest) {
       "module unfinished",  // syntax error
   };
 
-  for (const auto& code_text : code_texts) {
+  for (const auto &code_text : code_texts) {
     SimpleTestProject project(code_text);
     const auto facts_tree = project.Extract();
     const std::vector<absl::Status> errors(project.Errors());
@@ -303,7 +303,7 @@ TEST(FactsTreeExtractor, EmptyModuleTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -353,7 +353,7 @@ TEST(FactsTreeExtractor, PropagatedUserDefinedTypeInModulePort) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -400,7 +400,7 @@ TEST(FactsTreeExtractor, OneLocalNetTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -453,7 +453,7 @@ TEST(FactsTreeExtractor, OneModuleInstanceTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -521,7 +521,7 @@ TEST(FactsTreeExtractor, TwoModuleInstanceTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }  // namespace
@@ -581,7 +581,7 @@ TEST(FactsTreeExtractor, MultipleModuleInstancesInTheSameDeclarationTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }  // namespace
@@ -623,7 +623,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -694,7 +694,7 @@ TEST(FactsTreeExtractor, ModuleDimensionTypePortsTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -754,7 +754,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsNonANSIStyleTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -796,7 +796,7 @@ TEST(FactsTreeExtractor, ClassParams) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -859,7 +859,7 @@ TEST(FactsTreeExtractor, QualifiedVariableType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -901,7 +901,7 @@ TEST(FactsTreeExtractor, ClassTypeParams) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1070,7 +1070,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWithActualNamedPorts) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1138,7 +1138,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWitStarExpandedPorts) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1198,7 +1198,7 @@ TEST(FactsTreeExtractor, ModuleWithPortsDataTypeForwarding) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1440,7 +1440,7 @@ TEST(FactsTreeExtractor, PrimitiveTypeExtraction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1498,7 +1498,7 @@ TEST(FactsTreeExtractor, MultiSignalDeclaration) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1595,7 +1595,7 @@ TEST(FactsTreeExtractor, ModuleInstanceWithPortsTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }  // namespace
@@ -1630,7 +1630,7 @@ TEST(FactsTreeExtractor, WireTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1655,7 +1655,7 @@ TEST(FactsTreeExtractor, ClassTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1693,7 +1693,7 @@ TEST(FactsTreeExtractor, CLassWithinModuleTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1733,7 +1733,7 @@ TEST(FactsTreeExtractor, NestedClassTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1808,7 +1808,7 @@ TEST(FactsTreeExtractor, OneClassInstanceTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1901,7 +1901,7 @@ TEST(FactsTreeExtractor, ClassMemberAccess) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -1938,7 +1938,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationNoArgs) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2007,7 +2007,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskDeclarationWithArgs) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2064,7 +2064,7 @@ TEST(FactsTreeExtractor, ClassMember) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2129,7 +2129,7 @@ TEST(FactsTreeExtractor, FunctionAndTaskCallNoArgs) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2348,7 +2348,7 @@ TEST(FactsTreeExtractor, FunctionClassCall) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2379,7 +2379,7 @@ TEST(FactsTreeExtractor, ThisAsFunctionCall) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2458,7 +2458,7 @@ TEST(FactsTreeExtractor, MacroDefinitionTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2613,7 +2613,7 @@ TEST(FactsTreeExtractor, MacroCallTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2697,7 +2697,7 @@ TEST(PackageImportTest, PackageAndImportedItemName) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2765,7 +2765,7 @@ TEST(PackageImportTest, PackageDirectMemberReference) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2881,7 +2881,7 @@ TEST(PackageImportTest, ClassInstanceWithMultiParams) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2916,7 +2916,7 @@ TEST(PackageImportTest, UserDefinedType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -2967,7 +2967,7 @@ TEST(PackageImportTest, SelectVariableDimension) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3002,7 +3002,7 @@ TEST(PackageImportTest, ClassParameterType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3054,7 +3054,7 @@ TEST(PackageImportTest, ClassInstanceWithParams) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3085,7 +3085,7 @@ TEST(PackageImportTest, PackageTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3189,7 +3189,7 @@ TEST(FactsTreeExtractor, ForLoopInitializations) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3242,7 +3242,7 @@ TEST(FactsTreeExtractor, ClassExtends) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3344,7 +3344,7 @@ TEST(FactsTreeExtractor, ParameterExtraction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3446,7 +3446,7 @@ TEST(FactsTreeExtractor, InterfaceParameterExtraction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3489,7 +3489,7 @@ TEST(FactsTreeExtractor, ClassAsPort) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3591,7 +3591,7 @@ TEST(FactsTreeExtractor, ProgramParameterExtraction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -3699,7 +3699,7 @@ TEST(FactsTreeExtractor, PackedAndUnpackedDimension) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4112,7 +4112,7 @@ TEST(FactsTreeExtractor, EnumTest) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4156,7 +4156,7 @@ TEST(FactsTreeExtractor, NonLiteralIncludeSafeFail) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4199,7 +4199,7 @@ TEST(FactsTreeExtractor, StructInModule) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4249,7 +4249,7 @@ TEST(FactsTreeExtractor, ClassConstructor) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4292,7 +4292,7 @@ TEST(FactsTreeExtractor, StructInPackage) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4335,7 +4335,7 @@ TEST(FactsTreeExtractor, UnionInModule) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4378,7 +4378,7 @@ TEST(FactsTreeExtractor, UnionInPackage) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4421,7 +4421,7 @@ TEST(FactsTreeExtractor, UnionTypeInPackage) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4464,7 +4464,7 @@ TEST(FactsTreeExtractor, UnionTypenModule) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4507,7 +4507,7 @@ TEST(FactsTreeExtractor, StructTypeInPackage) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4550,7 +4550,7 @@ TEST(FactsTreeExtractor, StructTypedefModule) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4593,7 +4593,7 @@ TEST(FactsTreeExtractor, DataTypeReferenceInUnionType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4636,7 +4636,7 @@ TEST(FactsTreeExtractor, StructInUnionType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4679,7 +4679,7 @@ TEST(FactsTreeExtractor, StructInUnion) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4722,7 +4722,7 @@ TEST(FactsTreeExtractor, UnionInStructType) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4765,7 +4765,7 @@ TEST(FactsTreeExtractor, UnionInStruct) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4833,7 +4833,7 @@ TEST(FactsTreeExtractor, TypedVariable) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4875,7 +4875,7 @@ TEST(FactsTreeExtractor, FunctionNameAsQualifiedId) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4918,7 +4918,7 @@ TEST(FactsTreeExtractor, PureVirtualFunction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -4961,7 +4961,7 @@ TEST(FactsTreeExtractor, ExternFunction) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5004,7 +5004,7 @@ TEST(FactsTreeExtractor, ExternTask) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5047,7 +5047,7 @@ TEST(FactsTreeExtractor, PureVirtualTask) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5097,7 +5097,7 @@ TEST(FactsTreeExtractor, VirtualDataDeclaration) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5165,7 +5165,7 @@ TEST(FactsTreeExtractor, FunctionNamedArgument) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5231,7 +5231,7 @@ TEST(FactsTreeExtractor, FunctionPortPackedAndUnpackedDimsensions) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5276,7 +5276,7 @@ TEST(FactsTreeExtractor, UserDefinedTypeFunctionPort) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5321,7 +5321,7 @@ TEST(FactsTreeExtractor, StructFunctionPort) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }
@@ -5374,7 +5374,7 @@ TEST(FactsTreeExtractor, NestedStructFunctionPort) {
   const auto facts_tree = project.Extract();
 
   const auto result_pair = DeepEqual(facts_tree, expected);
-  const auto P = [&project](const T& t) { return project.TreePrinter(t); };
+  const auto P = [&project](const T &t) { return project.TreePrinter(t); };
   EXPECT_EQ(result_pair.left, nullptr) << P(*result_pair.left);
   EXPECT_EQ(result_pair.right, nullptr) << P(*result_pair.right);
 }

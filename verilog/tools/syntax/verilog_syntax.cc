@@ -64,7 +64,7 @@ enum class LanguageMode {
   kVerilogLibraryMap,
 };
 
-static const verible::EnumNameMap<LanguageMode>& LanguageModeStringMap() {
+static const verible::EnumNameMap<LanguageMode> &LanguageModeStringMap() {
   static const verible::EnumNameMap<LanguageMode> kLanguageModeStringMap({
       {"auto", LanguageMode::kAutoDetect},
       {"sv", LanguageMode::kSystemVerilog},
@@ -73,16 +73,16 @@ static const verible::EnumNameMap<LanguageMode>& LanguageModeStringMap() {
   return kLanguageModeStringMap;
 }
 
-static std::ostream& operator<<(std::ostream& stream, LanguageMode mode) {
+static std::ostream &operator<<(std::ostream &stream, LanguageMode mode) {
   return LanguageModeStringMap().Unparse(mode, stream);
 }
 
-static bool AbslParseFlag(absl::string_view text, LanguageMode* mode,
-                          std::string* error) {
+static bool AbslParseFlag(absl::string_view text, LanguageMode *mode,
+                          std::string *error) {
   return LanguageModeStringMap().Parse(text, mode, error, "--flag value");
 }
 
-static std::string AbslUnparseFlag(const LanguageMode& mode) {
+static std::string AbslUnparseFlag(const LanguageMode &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();
@@ -121,9 +121,9 @@ using verible::TextStructureView;
 using verilog::VerilogAnalyzer;
 
 static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
-    const std::shared_ptr<verible::MemBlock>& content,
+    const std::shared_ptr<verible::MemBlock> &content,
     absl::string_view filename,
-    const verilog::VerilogPreprocess::Config& preprocess_config) {
+    const verilog::VerilogPreprocess::Config &preprocess_config) {
   switch (absl::GetFlag(FLAGS_lang)) {
     case LanguageMode::kAutoDetect:
       return VerilogAnalyzer::AnalyzeAutomaticMode(content, filename,
@@ -143,8 +143,8 @@ static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
 }
 
 // Prints all tokens in view that are not matched in root.
-static void VerifyParseTree(const TextStructureView& text_structure) {
-  const ConcreteSyntaxTree& root = text_structure.SyntaxTree();
+static void VerifyParseTree(const TextStructureView &text_structure) {
+  const ConcreteSyntaxTree &root = text_structure.SyntaxTree();
   if (root == nullptr) return;
   // TODO(fangism): this seems like a good method for TextStructureView.
   ParserVerifier verifier(*root, text_structure.GetTokenStreamView());
@@ -154,13 +154,13 @@ static void VerifyParseTree(const TextStructureView& text_structure) {
     std::cout << std::endl << "All tokens matched." << std::endl;
   } else {
     std::cout << std::endl << "Unmatched Tokens:" << std::endl;
-    for (const auto& token : unmatched) {
+    for (const auto &token : unmatched) {
       std::cout << token << std::endl;
     }
   }
 }
 
-static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
+static bool ShouldIncludeTokenText(const verible::TokenInfo &token) {
   const verilog_tokentype tokentype =
       static_cast<verilog_tokentype>(token.token_enum());
   absl::string_view type_str = verilog::TokenTypeToString(tokentype);
@@ -173,10 +173,10 @@ static bool ShouldIncludeTokenText(const verible::TokenInfo& token) {
 }
 
 static int AnalyzeOneFile(
-    const std::shared_ptr<verible::MemBlock>& content,
+    const std::shared_ptr<verible::MemBlock> &content,
     absl::string_view filename,
-    const verilog::VerilogPreprocess::Config& preprocess_config,
-    json* json_out) {
+    const verilog::VerilogPreprocess::Config &preprocess_config,
+    json *json_out) {
   int exit_status = 0;
   const auto analyzer =
       ParseWithLanguageMode(content, filename, preprocess_config);
@@ -193,7 +193,7 @@ static int AnalyzeOneFile(
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages(
               absl::GetFlag(FLAGS_show_diagnostic_context)));
-      for (const auto& message : syntax_error_messages) {
+      for (const auto &message : syntax_error_messages) {
         std::cout << message << std::endl;
         ++error_count;
         if (error_limit != 0 && error_count >= error_limit) break;
@@ -206,13 +206,13 @@ static int AnalyzeOneFile(
   }
   const bool parse_ok = parse_status.ok();
 
-  std::function<void(std::ostream&, int)> token_translator;
+  std::function<void(std::ostream &, int)> token_translator;
   if (!absl::GetFlag(FLAGS_export_json)) {
-    token_translator = [](std::ostream& stream, int e) {
+    token_translator = [](std::ostream &stream, int e) {
       stream << verilog::verilog_symbol_name(e);
     };
   } else {
-    token_translator = [](std::ostream& stream, int e) {
+    token_translator = [](std::ostream &stream, int e) {
       stream << verilog::TokenTypeToString(static_cast<verilog_tokentype>(e));
     };
   }
@@ -222,13 +222,13 @@ static int AnalyzeOneFile(
   if (absl::GetFlag(FLAGS_printtokens)) {
     if (!absl::GetFlag(FLAGS_export_json)) {
       std::cout << std::endl << "Lexed and filtered tokens:" << std::endl;
-      for (const auto& t : analyzer->Data().GetTokenStreamView()) {
+      for (const auto &t : analyzer->Data().GetTokenStreamView()) {
         t->ToStream(std::cout, context) << std::endl;
       }
     } else {
-      json& tokens = (*json_out)["tokens"] = json::array();
-      const auto& token_stream = analyzer->Data().GetTokenStreamView();
-      for (const auto& t : token_stream) {
+      json &tokens = (*json_out)["tokens"] = json::array();
+      const auto &token_stream = analyzer->Data().GetTokenStreamView();
+      for (const auto &t : token_stream) {
         tokens.push_back(
             verible::ToJson(*t, context, ShouldIncludeTokenText(*t)));
       }
@@ -239,21 +239,21 @@ static int AnalyzeOneFile(
   if (absl::GetFlag(FLAGS_printrawtokens)) {
     if (!absl::GetFlag(FLAGS_export_json)) {
       std::cout << std::endl << "All lexed tokens:" << std::endl;
-      for (const auto& t : analyzer->Data().TokenStream()) {
+      for (const auto &t : analyzer->Data().TokenStream()) {
         t.ToStream(std::cout, context) << std::endl;
       }
     } else {
-      json& tokens = (*json_out)["rawtokens"] = json::array();
-      const auto& token_stream = analyzer->Data().TokenStream();
-      for (const auto& t : token_stream) {
+      json &tokens = (*json_out)["rawtokens"] = json::array();
+      const auto &token_stream = analyzer->Data().TokenStream();
+      for (const auto &t : token_stream) {
         tokens.push_back(
             verible::ToJson(t, context, ShouldIncludeTokenText(t)));
       }
     }
   }
 
-  const auto& text_structure = analyzer->Data();
-  const auto& syntax_tree = text_structure.SyntaxTree();
+  const auto &text_structure = analyzer->Data();
+  const auto &syntax_tree = text_structure.SyntaxTree();
 
   // check for printtree flag, and print tree if on
   if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
@@ -284,7 +284,7 @@ static int AnalyzeOneFile(
   return exit_status;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);

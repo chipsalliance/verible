@@ -33,10 +33,10 @@ namespace analysis {
 class ModuleParameterRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
   verible::LintRuleStatus Report() const final;
 
  private:
@@ -48,17 +48,17 @@ class ModuleParameterRule : public verible::SyntaxTreeLintRule {
 class ModulePortRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
   verible::LintRuleStatus Report() const final;
 
  private:
   // Returns false if a port list node is in violation of this rule and
   // true if it is not.
   static bool IsPortListCompliant(
-      const verible::SyntaxTreeNode& port_list_node);
+      const verible::SyntaxTreeNode &port_list_node);
 
   std::set<verible::LintViolation> violations_;
 };

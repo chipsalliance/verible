@@ -32,20 +32,20 @@
 
 namespace verilog {
 
-VerilogPrettyPrinter::VerilogPrettyPrinter(std::ostream* output_stream,
+VerilogPrettyPrinter::VerilogPrettyPrinter(std::ostream *output_stream,
                                            absl::string_view base)
     : verible::PrettyPrinter(
           output_stream,
-          verible::TokenInfo::Context(base, [](std::ostream& stream, int e) {
+          verible::TokenInfo::Context(base, [](std::ostream &stream, int e) {
             stream << verilog_symbol_name(e);
           })) {}
 
-void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeLeaf& leaf) {
+void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeLeaf &leaf) {
   auto_indent() << "Leaf @" << child_rank_ << ' '
                 << verible::TokenWithContext{leaf.get(), context_} << std::endl;
 }
 
-void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode& node) {
+void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode &node) {
   std::string tag_info = absl::StrCat(
       "(tag: ", NodeEnumToString(static_cast<NodeEnum>(node.Tag().tag)), ") ");
 
@@ -55,7 +55,7 @@ void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode& node) {
   {
     const verible::ValueSaver<int> value_saver(&indent_, indent_ + 2);
     const verible::ValueSaver<int> rank_saver(&child_rank_, 0);
-    for (const auto& child : node.children()) {
+    for (const auto &child : node.children()) {
       // TODO(fangism): display nullptrs or child indices to show position.
       if (child) child->Accept(this);
       ++child_rank_;
@@ -64,8 +64,8 @@ void VerilogPrettyPrinter::Visit(const verible::SyntaxTreeNode& node) {
   auto_indent() << "}" << std::endl;
 }
 
-void PrettyPrintVerilogTree(const verible::Symbol& root, absl::string_view base,
-                            std::ostream* stream) {
+void PrettyPrintVerilogTree(const verible::Symbol &root, absl::string_view base,
+                            std::ostream *stream) {
   VerilogPrettyPrinter printer(stream, base);
   root.Accept(&printer);
 }

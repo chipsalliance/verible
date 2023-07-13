@@ -29,25 +29,25 @@ namespace verilog {
 using verible::Symbol;
 
 std::vector<verible::TreeSearchMatch> FindAllPackedDimensions(
-    const Symbol& root) {
+    const Symbol &root) {
   return SearchSyntaxTree(root, NodekPackedDimensions());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllUnpackedDimensions(
-    const Symbol& root) {
+    const Symbol &root) {
   return SearchSyntaxTree(root, NodekUnpackedDimensions());
 }
 
 std::vector<verible::TreeSearchMatch> FindAllDeclarationDimensions(
-    const Symbol& root) {
+    const Symbol &root) {
   return SearchSyntaxTree(root, NodekDeclarationDimensions());
 }
 
-const Symbol* GetDimensionRangeLeftBound(const Symbol& s) {
+const Symbol *GetDimensionRangeLeftBound(const Symbol &s) {
   return verible::GetSubtreeAsSymbol(s, NodeEnum::kDimensionRange, 1);
 }
 
-const Symbol* GetDimensionRangeRightBound(const verible::Symbol& s) {
+const Symbol *GetDimensionRangeRightBound(const verible::Symbol &s) {
   return verible::GetSubtreeAsSymbol(s, NodeEnum::kDimensionRange, 3);
 }
 

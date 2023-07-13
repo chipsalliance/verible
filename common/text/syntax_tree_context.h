@@ -36,9 +36,9 @@ namespace verible {
 // interface that can express AND/OR/NOT.
 // Despite of implementation based on pointers. This class requires
 // that managed elements are non-nullptrs.
-class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
+class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode *> {
  public:
-  using base_type = AutoPopStack<const SyntaxTreeNode*>;
+  using base_type = AutoPopStack<const SyntaxTreeNode *>;
 
   // member class to handle push and pop of stack safely
   using AutoPop = base_type::AutoPop;
@@ -49,7 +49,7 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
 
  public:
   // returns the top SyntaxTreeNode of the stack
-  const SyntaxTreeNode& top() const {
+  const SyntaxTreeNode &top() const {
     return *ABSL_DIE_IF_NULL(base_type::top());
   }
 
@@ -62,7 +62,7 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
     if (size() <= reverse_offset) return false;
     return std::any_of(
         rbegin() + reverse_offset, rend(),
-        [=](const SyntaxTreeNode* node) { return node->MatchesTag(tag_enum); });
+        [=](const SyntaxTreeNode *node) { return node->MatchesTag(tag_enum); });
   }
 
   // IsInside returns true if there is a node of the specified
@@ -80,7 +80,7 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
   template <typename E>
   bool IsInsideFirst(std::initializer_list<E> includes,
                      std::initializer_list<E> excludes) const {
-    for (const auto& type : reversed_view(*this)) {
+    for (const auto &type : reversed_view(*this)) {
       if (type->MatchesTagAnyOf(includes)) return true;
       if (type->MatchesTagAnyOf(excludes)) return false;
     }
@@ -115,18 +115,18 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
     if (tag_enums.size() > size()) return false;
     // top of stack is back of vector (direct parent)
     return std::equal(tag_enums.begin(), tag_enums.end(), rbegin(),
-                      [](E tag, const SyntaxTreeNode* node) {
+                      [](E tag, const SyntaxTreeNode *node) {
                         return E(node->Tag().tag) == tag;
                       });
   }
 
   // Returns the closest ancestor (starting from top of context stack) that
   // matches the given 'predicate' function, or nullptr if no match is found.
-  const SyntaxTreeNode* NearestParentMatching(
-      const std::function<bool(const SyntaxTreeNode&)>& predicate) const {
+  const SyntaxTreeNode *NearestParentMatching(
+      const std::function<bool(const SyntaxTreeNode &)> &predicate) const {
     const auto ancestors(reversed_view(*this));
     const auto found = std::find_if(ancestors.begin(), ancestors.end(),
-                                    [&predicate](const SyntaxTreeNode* parent) {
+                                    [&predicate](const SyntaxTreeNode *parent) {
                                       return predicate(*parent);
                                     });
     return found != ancestors.end() ? *found : nullptr;
@@ -135,9 +135,9 @@ class SyntaxTreeContext : public AutoPopStack<const SyntaxTreeNode*> {
   // Returns the closest ancestor (starting from top of context stack) with the
   // specified node tag (enum).
   template <typename E>
-  const SyntaxTreeNode* NearestParentWithTag(E tag) const {
+  const SyntaxTreeNode *NearestParentWithTag(E tag) const {
     return NearestParentMatching(
-        [tag](const SyntaxTreeNode& node) { return E(node.Tag().tag) == tag; });
+        [tag](const SyntaxTreeNode &node) { return E(node.Tag().tag) == tag; });
   }
 };
 

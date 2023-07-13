@@ -25,9 +25,9 @@ namespace {
 using ::testing::ElementsAre;
 
 static void AcceptFunctionChar(
-    const std::function<absl::string_view(char)>& func) {}
+    const std::function<absl::string_view(char)> &func) {}
 static void AcceptFunctionStringView(
-    const std::function<absl::string_view(absl::string_view)>& func) {}
+    const std::function<absl::string_view(absl::string_view)> &func) {}
 
 // This tests that StringSpliterator can be passed to a std::function.
 TEST(StringSpliteratorTest, CompileTimeAsFunction) {
@@ -125,7 +125,7 @@ using IntPair = std::pair<int, int>;
 // which is a stronger check than string contents comparison.
 static std::vector<IntPair> SplitLinesToOffsets(absl::string_view text) {
   std::vector<IntPair> offsets;
-  for (const auto& line : SplitLines(text)) {
+  for (const auto &line : SplitLines(text)) {
     offsets.push_back(SubstringOffsets(line, text));
   }
   return offsets;
@@ -173,7 +173,7 @@ TEST(SplitLinesTest, NonBlankLinesUnterminated) {
 static std::vector<IntPair> SplitLinesKeepLineTerminatorToOffsets(
     absl::string_view text) {
   std::vector<IntPair> offsets;
-  for (const auto& line : SplitLinesKeepLineTerminator(text)) {
+  for (const auto &line : SplitLinesKeepLineTerminator(text)) {
     offsets.push_back(SubstringOffsets(line, text));
   }
   return offsets;

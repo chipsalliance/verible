@@ -144,10 +144,10 @@ class LintWaiverBuilderTest : public testing::Test, public LintWaiverBuilder {
  public:
   LintWaiverBuilderTest()
       : LintWaiverBuilder(
-            [](const TokenInfo& token) {
+            [](const TokenInfo &token) {
               return token.token_enum() == kComment;
             },
-            [](const TokenInfo& token) {
+            [](const TokenInfo &token) {
               return token.token_enum() == kSpace ||
                      token.token_enum() == kNewline;
             },
@@ -155,7 +155,7 @@ class LintWaiverBuilderTest : public testing::Test, public LintWaiverBuilder {
             kWaiveStopCommand) {}
 
   // Convenient sequence adapter to iterator range.
-  void ProcessLine(const TokenSequence& tokens, size_t line_number) {
+  void ProcessLine(const TokenSequence &tokens, size_t line_number) {
     LintWaiverBuilder::ProcessLine(make_range(tokens.begin(), tokens.end()),
                                    line_number);
   }
@@ -163,7 +163,7 @@ class LintWaiverBuilderTest : public testing::Test, public LintWaiverBuilder {
 
 // Tests that initial state contains no line waivers.
 TEST_F(LintWaiverBuilderTest, PostConstruction) {
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("some-rule", 0));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("some-rule", 1));
@@ -174,7 +174,7 @@ TEST_F(LintWaiverBuilderTest, PostConstruction) {
 TEST_F(LintWaiverBuilderTest, EmptyLine) {
   const TokenSequence tokens{};
   ProcessLine(tokens, 0);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("some-rule", 0));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("some-rule", 1));
@@ -189,7 +189,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnly) {
       {TokenInfo(kOther, "hello")}};
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 2));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("x-rule", 3));
@@ -202,7 +202,7 @@ TEST_F(LintWaiverBuilderTest, LastLineWaiveNextLine) {
       {TokenInfo(kComment, "// mylinter waive z-rule")}};
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("z-rule", 2));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("z-rule", 3));
   // Does nothing with next line until next line is actually encountered.
@@ -221,7 +221,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyMissingWaiveCommand) {
       {TokenInfo(kOther, "hello")}};
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 2));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 3));
@@ -235,7 +235,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyWrongWaiveCommand) {
       {TokenInfo(kOther, "hello")}};
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 2));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 3));
@@ -248,7 +248,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyExtraTextIgnored) {
       {TokenInfo(kOther, "hello")}};
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("x-rule", 0));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("x-rule", 1));
@@ -261,7 +261,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyOddSpacing) {
       {TokenInfo(kOther, "hello")}};
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("y-rule", 0));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("y-rule", 1));
@@ -277,7 +277,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyLeadingSpace) {
       {TokenInfo(kOther, "hello"), TokenInfo(kOther, "world")}};
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 0));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("xx-rule", 1));
@@ -294,7 +294,7 @@ TEST_F(LintWaiverBuilderTest, OneCommentOnlyBlockStyle) {
       {TokenInfo(kOther, "hello"), TokenInfo(kOther, "world")}};
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 0));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("xx-rule", 1));
@@ -309,7 +309,7 @@ TEST_F(LintWaiverBuilderTest, CommentWaiverCanceledByBlankLine) {
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
   ProcessLine(lines[2], 2);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 0));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 1));
@@ -325,7 +325,7 @@ TEST_F(LintWaiverBuilderTest, CommentWaiverCarriedToNextLine) {
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
   ProcessLine(lines[2], 2);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 0));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 1));
@@ -345,7 +345,7 @@ TEST_F(LintWaiverBuilderTest, CommentWaiverCarriedToNextLineLeadingSpaces) {
   ProcessLine(lines[0], 3);
   ProcessLine(lines[1], 4);
   ProcessLine(lines[2], 5);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 3));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("xx-rule", 4));
@@ -362,7 +362,7 @@ TEST_F(LintWaiverBuilderTest, MultipleNextLineWaiversAccumulate) {
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
   ProcessLine(lines[2], 2);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("aa-rule", 0));
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("aa-rule", 1));
@@ -382,7 +382,7 @@ TEST_F(LintWaiverBuilderTest, ThisLineWaiver) {
        TokenInfo(kComment, "// mylinter waive bb-rule")}};
   ProcessLine(lines[0], 8);
   ProcessLine(lines[1], 9);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("bb-rule", 8));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("bb-rule", 9));
@@ -397,7 +397,7 @@ TEST_F(LintWaiverBuilderTest, NextLineAndThisLineWaiversCombine) {
        TokenInfo(kComment, "// mylinter waive bb-rule")}};
   ProcessLine(lines[0], 0);
   ProcessLine(lines[1], 1);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("aa-rule", 0));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("aa-rule", 1));
@@ -416,7 +416,7 @@ TEST_F(LintWaiverBuilderTest, MultipleThisLineWaiver) {
        TokenInfo(kComment, "/* mylinter waive cc-rule */")}};
   ProcessLine(lines[0], 8);
   ProcessLine(lines[1], 9);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("bb-rule", 8));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("bb-rule", 9));
@@ -438,7 +438,7 @@ TEST_F(LintWaiverBuilderTest, SingleRangeWaiver) {
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
   ProcessLine(lines[2], 4);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("cc-rule", 2));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("cc-rule", 3));
@@ -454,7 +454,7 @@ TEST_F(LintWaiverBuilderTest, EndRangeWaiverNoEffect) {
   };
   ProcessLine(lines[0], 12);
   ProcessLine(lines[1], 15);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_TRUE(waiver.Empty());
 }
 
@@ -468,7 +468,7 @@ TEST_F(LintWaiverBuilderTest, SingleRangeWaiverDirectivesOnOwnLine) {
   ProcessLine(lines[0], 4);
   ProcessLine(lines[1], 5);
   ProcessLine(lines[2], 6);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("cc-rule", 4));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("cc-rule", 5));
@@ -487,7 +487,7 @@ TEST_F(LintWaiverBuilderTest, SingleRangeWaiverLonger) {
   ProcessLine(lines[0], 2);
   ProcessLine(lines[1], 3);
   ProcessLine(lines[2], 8);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("cc-rule", 2));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("cc-rule", 3));
@@ -509,7 +509,7 @@ TEST_F(LintWaiverBuilderTest, SingleRangeWaiverDoubleOpenDoubleClose) {
   ProcessLine(lines[1], 4);  // duplicate waive-begin (ignored)
   ProcessLine(lines[2], 5);
   ProcessLine(lines[2], 6);  // duplicate waive-end (harmless)
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("cc-rule", 2));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("cc-rule", 3));
@@ -532,7 +532,7 @@ TEST_F(LintWaiverBuilderTest, MultiRangeWaiver) {
   ProcessLine(lines[2], 5);
   ProcessLine(lines[3], 7);
   ProcessLine(lines[4], 9);
-  const LintWaiver& waiver = GetLintWaiver();
+  const LintWaiver &waiver = GetLintWaiver();
   EXPECT_FALSE(waiver.Empty());
   EXPECT_FALSE(waiver.RuleIsWaivedOnLine("cc-rule", 2));
   EXPECT_TRUE(waiver.RuleIsWaivedOnLine("cc-rule", 3));
@@ -550,7 +550,7 @@ static const TokenInfo EOL(kNewline, "\n");
 TEST_F(LintWaiverBuilderTest, FromTextStructureEmptyFile) {
   const TextStructureTokenized text_structure({});  // empty
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_TRUE(lint_waiver.Empty());
   EXPECT_FALSE(lint_waiver.RuleIsWaivedOnLine("abc-rule", 0));
 }
@@ -564,7 +564,7 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureNoWaivers) {
        {TokenInfo(kOther, "hello"), TokenInfo(kOther, ","),
         TokenInfo(kSpace, " "), TokenInfo(kOther, "world"), EOL}});
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_TRUE(lint_waiver.Empty());
   EXPECT_FALSE(lint_waiver.RuleIsWaivedOnLine("abc-rule", 0));
 }
@@ -575,7 +575,7 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureOneWaiverNextLine) {
       {{TokenInfo(kComment, "// mylinter waive abc-rule"), EOL},
        {TokenInfo(kOther, "hello"), EOL}});
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_FALSE(lint_waiver.Empty());
   EXPECT_TRUE(lint_waiver.RuleIsWaivedOnLine("abc-rule", 1));
 }
@@ -589,7 +589,7 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureOneWaiverThisLine) {
         TokenInfo(kComment, "// mylinter waive qq-rule"), EOL},
        {TokenInfo(kOther, "bye"), EOL}});
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_FALSE(lint_waiver.Empty());
   EXPECT_TRUE(lint_waiver.RuleIsWaivedOnLine("qq-rule", 2));
 }
@@ -604,7 +604,7 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureOneWaiverRange) {
       {TokenInfo(kOther, "bye"), EOL}                                 // line[4]
   });
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_FALSE(lint_waiver.Empty());
   EXPECT_FALSE(lint_waiver.RuleIsWaivedOnLine("qq-rule", 0));
   EXPECT_TRUE(lint_waiver.RuleIsWaivedOnLine("qq-rule", 1));
@@ -621,7 +621,7 @@ TEST_F(LintWaiverBuilderTest, FromTextStructureOneWaiverRangeOpened) {
       {TokenInfo(kOther, "bye"), EOL}                                 // line[3]
   });
   ProcessTokenRangesByLine(text_structure.Data());
-  const auto& lint_waiver = GetLintWaiver();
+  const auto &lint_waiver = GetLintWaiver();
   EXPECT_FALSE(lint_waiver.Empty());
   EXPECT_FALSE(lint_waiver.RuleIsWaivedOnLine("qq-rule", 0));
   EXPECT_TRUE(lint_waiver.RuleIsWaivedOnLine("qq-rule", 1));

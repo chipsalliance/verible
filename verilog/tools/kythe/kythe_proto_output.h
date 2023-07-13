@@ -28,8 +28,8 @@ class KytheProtoOutput final : public KytheOutput {
   ~KytheProtoOutput() final;
 
   // Output Kythe facts from the indexing data in proto format.
-  void Emit(const Fact& fact) final;
-  void Emit(const Edge& edge) final;
+  void Emit(const Fact &fact) final;
+  void Emit(const Edge &edge) final;
 
  private:
   ::google::protobuf::io::FileOutputStream out_;

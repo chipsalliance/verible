@@ -53,7 +53,7 @@ using verible::matcher::Matcher;
 // Register CreateObjectNameMatchRule
 VERILOG_REGISTER_LINT_RULE(CreateObjectNameMatchRule);
 
-const LintRuleDescriptor& CreateObjectNameMatchRule::GetDescriptor() {
+const LintRuleDescriptor &CreateObjectNameMatchRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "create-object-name-match",
       .topic = "uvm-naming",
@@ -72,7 +72,7 @@ const LintRuleDescriptor& CreateObjectNameMatchRule::GetDescriptor() {
 // Here, the LHS var_h will be bound to "lval" (only for simple references),
 // the qualified function call (mytype::type_id::create) will be bound to
 // "func", and the list of function call arguments will be bound to "args".
-static const Matcher& CreateAssignmentMatcher() {
+static const Matcher &CreateAssignmentMatcher() {
   // function-local static to avoid initialization-ordering problems
   static const Matcher matcher(NodekNetVariableAssignment(
       PathkLPValue(PathkReference().Bind("lval_ref")),
@@ -85,15 +85,15 @@ static const Matcher& CreateAssignmentMatcher() {
 // and returns false if the necessary conditions are not met.
 // TODO(fangism): This function will be useful to many other analyses.
 // Make public and refactor.
-static bool UnqualifiedIdEquals(const SyntaxTreeNode& node,
+static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
                                 absl::string_view name) {
   if (node.MatchesTag(NodeEnum::kUnqualifiedId)) {
     if (!node.children().empty()) {
       // The one-and-only child is the SymbolIdentifier token
-      const auto& leaf_ptr =
-          down_cast<const SyntaxTreeLeaf*>(node.children().front().get());
+      const auto &leaf_ptr =
+          down_cast<const SyntaxTreeLeaf *>(node.children().front().get());
       if (leaf_ptr != nullptr) {
-        const TokenInfo& token = leaf_ptr->get();
+        const TokenInfo &token = leaf_ptr->get();
         return token.token_enum() == SymbolIdentifier && token.text() == name;
       }
     }
@@ -104,17 +104,17 @@ static bool UnqualifiedIdEquals(const SyntaxTreeNode& node,
 // Returns true if the qualified call is in the form "<any>::type_id::create".
 // TODO(fangism): Refactor into QualifiedCallEndsWith().
 static bool QualifiedCallIsTypeIdCreate(
-    const SyntaxTreeNode& qualified_id_node) {
-  const auto& children = qualified_id_node.children();
+    const SyntaxTreeNode &qualified_id_node) {
+  const auto &children = qualified_id_node.children();
   const size_t num_children = children.size();
   // Allow for more than 3 segments, in case of package qualification, e.g.
   // my_pkg::class_type::type_id::create.
   // 5: 3 segments + 2 separators (in alternation), e.g. A::B::C
   if (qualified_id_node.children().size() >= 5) {
-    const auto* create_leaf_ptr =
-        down_cast<const SyntaxTreeNode*>(children.back().get());
-    const auto* type_id_leaf_ptr =
-        down_cast<const SyntaxTreeNode*>(children[num_children - 3].get());
+    const auto *create_leaf_ptr =
+        down_cast<const SyntaxTreeNode *>(children.back().get());
+    const auto *type_id_leaf_ptr =
+        down_cast<const SyntaxTreeNode *>(children[num_children - 3].get());
     if (create_leaf_ptr != nullptr && type_id_leaf_ptr != nullptr) {
       return UnqualifiedIdEquals(*create_leaf_ptr, "create") &&
              UnqualifiedIdEquals(*type_id_leaf_ptr, "type_id");
@@ -135,8 +135,8 @@ static absl::string_view StripOuterQuotes(absl::string_view text) {
 // Returns token information for a single string literal expression, or nullptr
 // if the expression is not a string literal.
 // `expr_node` should be a SyntaxTreeNode tagged as an expression.
-static const TokenInfo* ExtractStringLiteralToken(
-    const SyntaxTreeNode& expr_node) {
+static const TokenInfo *ExtractStringLiteralToken(
+    const SyntaxTreeNode &expr_node) {
   if (!expr_node.MatchesTag(NodeEnum::kExpression)) return nullptr;
 
   // this check is limited to only checking string literal leaf tokens
@@ -145,10 +145,10 @@ static const TokenInfo* ExtractStringLiteralToken(
     return nullptr;
   }
 
-  const auto* leaf_ptr =
-      down_cast<const SyntaxTreeLeaf*>(expr_node.children().front().get());
+  const auto *leaf_ptr =
+      down_cast<const SyntaxTreeLeaf *>(expr_node.children().front().get());
   if (leaf_ptr != nullptr) {
-    const TokenInfo& token = leaf_ptr->get();
+    const TokenInfo &token = leaf_ptr->get();
     if (token.token_enum() == TK_StringLiteral) {
       return &token;
     }
@@ -157,12 +157,12 @@ static const TokenInfo* ExtractStringLiteralToken(
 }
 
 // Returns the first expression from an argument list, if it exists.
-static const SyntaxTreeNode* GetFirstExpressionFromArgs(
-    const SyntaxTreeNode& args_node) {
+static const SyntaxTreeNode *GetFirstExpressionFromArgs(
+    const SyntaxTreeNode &args_node) {
   if (!args_node.children().empty()) {
-    const auto& first_arg = args_node.children().front();
-    if (const auto* first_expr =
-            down_cast<const SyntaxTreeNode*>(first_arg.get())) {
+    const auto &first_arg = args_node.children().front();
+    if (const auto *first_expr =
+            down_cast<const SyntaxTreeNode *>(first_arg.get())) {
       return first_expr;
     }
   }
@@ -178,30 +178,30 @@ static std::string FormatReason(absl::string_view decl_name,
       decl_name, ", got: ", name_text, ". ");
 }
 
-void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol& symbol,
-                                             const SyntaxTreeContext& context) {
+void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol &symbol,
+                                             const SyntaxTreeContext &context) {
   // Check for assignments that match the pattern.
   verible::matcher::BoundSymbolManager manager;
   if (!CreateAssignmentMatcher().Matches(symbol, &manager)) return;
 
   // Extract named bindings for matched nodes within this match.
 
-  const auto* lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
+  const auto *lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
   if (lval_ref == nullptr) return;
 
-  const TokenInfo* lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
+  const TokenInfo *lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
   if (lval_id == nullptr) return;
   if (lval_id->token_enum() != SymbolIdentifier) return;
 
-  const auto* call = manager.GetAs<SyntaxTreeNode>("func");
-  const auto* args = manager.GetAs<SyntaxTreeNode>("args");
+  const auto *call = manager.GetAs<SyntaxTreeNode>("func");
+  const auto *args = manager.GetAs<SyntaxTreeNode>("args");
   if (call == nullptr) return;
   if (args == nullptr) return;
   if (!QualifiedCallIsTypeIdCreate(*call)) return;
 
   // The first argument is a string that must match the variable name, lval.
-  if (const auto* expr = GetFirstExpressionFromArgs(*args)) {
-    if (const TokenInfo* name_token = ExtractStringLiteralToken(*expr)) {
+  if (const auto *expr = GetFirstExpressionFromArgs(*args)) {
+    if (const TokenInfo *name_token = ExtractStringLiteralToken(*expr)) {
       if (StripOuterQuotes(name_token->text()) != lval_id->text()) {
         violations_.insert(LintViolation(
             *name_token, FormatReason(lval_id->text(), name_token->text())));

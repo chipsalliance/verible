@@ -50,19 +50,19 @@ TEST(IdIsQualifiedTest, VariousIds) {
       {"task goo(); endtask", 0 /* goo */},
       {"task fff::goo(); endtask", 1 /* fff::goo */},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto q_ids = FindAllQualifiedIds(*root);
     ASSERT_EQ(q_ids.size(), test.second);
     if (!q_ids.empty()) {
-      for (const auto& id : q_ids) {
+      for (const auto &id : q_ids) {
         EXPECT_TRUE(IdIsQualified(*id.match));
       }
     } else {
       const auto u_ids = FindAllUnqualifiedIds(*root);
-      for (const auto& id : u_ids) {
+      for (const auto &id : u_ids) {
         EXPECT_FALSE(IdIsQualified(*id.match));
       }
     }
@@ -96,30 +96,30 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
       {{kTag, "p_pkg"}, "::", {kTag, "tree"}, "#(11) ", {kTag, "bark"}, ";"},
   };
   // Test GetIdentifier
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "[GetIdentifier] code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto ids = FindAllUnqualifiedIds(*root);
           std::vector<verible::TreeSearchMatch> got_ids;
-          for (const auto& id : ids) {
-            const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+          for (const auto &id : ids) {
+            const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
             got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
           }
           return got_ids;
         });
   }
   // Test AutoUnwrapIdentifier
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "[AutoUnwrapIdentifier] code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto ids = FindAllUnqualifiedIds(*root);
           std::vector<verible::TreeSearchMatch> got_ids;
-          for (const auto& id : ids) {
-            const verible::SyntaxTreeLeaf* base =
+          for (const auto &id : ids) {
+            const verible::SyntaxTreeLeaf *base =
                 AutoUnwrapIdentifier(*id.match);
             if (base == nullptr) continue;
             got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
@@ -137,15 +137,15 @@ TEST(GetIdentifierTest, PortIdentifiers) {
       {"module t; output reg ", {kTag, "o"}, "; endmodule"},
   };
   // Test GetIdentifier
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "[GetIdentifier] code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto ids = FindAllPortIdentifiers(*root);
           std::vector<verible::TreeSearchMatch> got_ids;
-          for (const auto& id : ids) {
-            const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+          for (const auto &id : ids) {
+            const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
             got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
           }
           return got_ids;
@@ -181,16 +181,16 @@ TEST(GetIdentifierTest, IdentifierUnpackedDimensions) {
        {kTag, "c"},
        ";\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto decls =
               FindAllIdentifierUnpackedDimensions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> identifiers;
-          for (const auto& decl : decls) {
-            const auto* identifier =
+          for (const auto &decl : decls) {
+            const auto *identifier =
                 GetSymbolIdentifierFromIdentifierUnpackedDimensions(
                     *decl.match);
             identifiers.push_back(
@@ -222,14 +222,14 @@ TEST(FindAllSymbolIdentifierTest, VariousIds) {
        ");\n",
        "endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto symb_ids = FindAllSymbolIdentifierLeafs(*root);
           std::vector<TreeSearchMatch> identifiers;
           identifiers.reserve(symb_ids.size());
-          for (const auto& symb_id : symb_ids) {
+          for (const auto &symb_id : symb_ids) {
             identifiers.push_back(
                 TreeSearchMatch{symb_id.match, {/* ignored context */}});
           }

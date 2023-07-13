@@ -50,13 +50,13 @@ struct BasedNumber {
   BasedNumber(char base_, bool sign_, absl::string_view text)
       : base(base_), signedness(sign_), literal(text), ok(true) {}
 
-  bool operator==(const BasedNumber& rhs) const {
+  bool operator==(const BasedNumber &rhs) const {
     return base == rhs.base && signedness == rhs.signedness &&
            literal == rhs.literal && ok && rhs.ok;
   }
 };
 
-std::ostream& operator<<(std::ostream& stream, const BasedNumber& number);
+std::ostream &operator<<(std::ostream &stream, const BasedNumber &number);
 
 }  // namespace analysis
 }  // namespace verilog

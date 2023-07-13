@@ -30,7 +30,7 @@ struct TextMacroDefinition {
   std::string name;
   std::string value;
 
-  bool operator==(const TextMacroDefinition& other) const {
+  bool operator==(const TextMacroDefinition &other) const {
     return name == other.name && value == other.value;
   }
 };
@@ -75,19 +75,19 @@ struct FileList {
 // always possible to pinpoint back to the owning string view in case we want
 // to provide detailed error messages.
 absl::Status AppendFileListFromFile(absl::string_view file_list_file,
-                                    FileList* append_to);
+                                    FileList *append_to);
 
 // Reads in a list of files line-by-line from the given string. The include
 // directories are prefixed by "+incdir+" (TODO: +define+)
 absl::Status AppendFileListFromContent(absl::string_view file_list_path,
-                                       const std::string& file_list_content,
-                                       FileList* append_to);
+                                       const std::string &file_list_content,
+                                       FileList *append_to);
 
 // Parse positional parameters from command line and extract files,
 // +incdir+ and +define+ and appends to FileList.
 // TODO: Also support --file_list_path (and -f), --file_list_root
 absl::Status AppendFileListFromCommandline(
-    const std::vector<absl::string_view>& cmdline, FileList* append_to);
+    const std::vector<absl::string_view> &cmdline, FileList *append_to);
 
 }  // namespace verilog
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_FILELIST_H_

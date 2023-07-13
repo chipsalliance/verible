@@ -22,7 +22,7 @@ namespace {
 // Tests that all strings containing more than just upper case letters,
 // underscores, and digits are rejected.
 TEST(IsNameAllCapsUnderscoresDigitsTest, RejectTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "foo",  "HAS A SPACE", "NOT_ALL_UPPERCASe", "MiXeD",
       "FO?O", "lower",       "lower_underscore",
   };
@@ -34,7 +34,7 @@ TEST(IsNameAllCapsUnderscoresDigitsTest, RejectTests) {
 // Tests that all strings containing only upper case letters, underscores, and
 // digits are accepted.
 TEST(IsNameAllCapsUnderscoresDigitsTest, AcceptTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "",    "FOO",       "HAS_UNDERSCORE", "_UNDERSCORE_AT_BEGINNING",
       "___", "__UPPER__", "_123",           "FOO_1",
   };
@@ -46,7 +46,7 @@ TEST(IsNameAllCapsUnderscoresDigitsTest, AcceptTests) {
 // Tests that all strings containing underscores not next to digits are
 // rejected.
 TEST(AllUnderscoresFollowedByDigitsTest, RejectTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "Hello_World", "_H1", "Hello_",   "1_",           "Foo1_Bar",
       "Fo_1_o",      "_",   "Hello__1", "Hello__World", "__1",
   };
@@ -57,7 +57,7 @@ TEST(AllUnderscoresFollowedByDigitsTest, RejectTests) {
 
 // Tests that all strings containing underscores next to a digit are accepted.
 TEST(AllUnderscoresFollowedByDigitsTest, AcceptTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "",
       "Foo_1",
       "Foo_1_1",
@@ -71,7 +71,7 @@ TEST(AllUnderscoresFollowedByDigitsTest, AcceptTests) {
 // Tests that all strings not following UpperCamelCase naming convention are
 // rejected.
 TEST(IsUpperCamelCaseWithDigitsTest, RejectTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "Hello_World", "hello_world", "helloworld", "helloWorld", "Hello_1_World",
       "Hello__1",    "Foo_",        "_Foo",       "_1",         "__Foo",
   };
@@ -83,7 +83,7 @@ TEST(IsUpperCamelCaseWithDigitsTest, RejectTests) {
 // Tests that all strings following UpperCamelCase naming convention are
 // accepted.
 TEST(IsUpperCamelCaseWithDigitsTest, AcceptTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "",
       "HelloWorld",
       "Foo_1",
@@ -100,7 +100,7 @@ TEST(IsUpperCamelCaseWithDigitsTest, AcceptTests) {
 // Tests that all strings following lower_snake_case naming convention are
 // accepted.
 TEST(IsLowerSnakeCaseWithDigitsTest, AcceptTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "",       "hello_world", "hello_1_world", "hello_1", "hello_world_1_1",
       "hello1", "hello_",
   };
@@ -112,7 +112,7 @@ TEST(IsLowerSnakeCaseWithDigitsTest, AcceptTests) {
 // Tests that all strings not following lower_snake_case naming convention are
 // rejected.
 TEST(IsLowerSnakeCaseWithDigitsTest, RejectTests) {
-  static const char* test_cases[] = {
+  static const char *test_cases[] = {
       "_1",       "__hello",    "Hello_world", "hello_1_World",
       "hello_1W", "HelloWorld", "helLo1_",
   };

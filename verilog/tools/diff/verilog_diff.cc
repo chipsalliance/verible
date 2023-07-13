@@ -43,7 +43,7 @@ enum class DiffMode {
   kObfuscate,
 };
 
-static const verible::EnumNameMap<DiffMode>& DiffModeStringMap() {
+static const verible::EnumNameMap<DiffMode> &DiffModeStringMap() {
   static const verible::EnumNameMap<DiffMode> kDiffModeStringMap({
       {"format", DiffMode::kFormat},
       {"obfuscate", DiffMode::kObfuscate},
@@ -51,15 +51,15 @@ static const verible::EnumNameMap<DiffMode>& DiffModeStringMap() {
   return kDiffModeStringMap;
 }
 
-std::ostream& operator<<(std::ostream& stream, DiffMode p) {
+std::ostream &operator<<(std::ostream &stream, DiffMode p) {
   return DiffModeStringMap().Unparse(p, stream);
 }
 
-bool AbslParseFlag(absl::string_view text, DiffMode* mode, std::string* error) {
+bool AbslParseFlag(absl::string_view text, DiffMode *mode, std::string *error) {
   return DiffModeStringMap().Parse(text, mode, error, "--mode value");
 }
 
-std::string AbslUnparseFlag(const DiffMode& mode) {
+std::string AbslUnparseFlag(const DiffMode &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();
@@ -74,14 +74,14 @@ ABSL_FLAG(DiffMode, mode, DiffMode::kFormat,
 )");
 
 using EquivalenceFunctionType = std::function<verilog::DiffStatus(
-    absl::string_view, absl::string_view, std::ostream*)>;
+    absl::string_view, absl::string_view, std::ostream *)>;
 
 static const std::map<DiffMode, EquivalenceFunctionType> diff_func_map({
     {DiffMode::kFormat, verilog::FormatEquivalent},
     {DiffMode::kObfuscate, verilog::ObfuscationEquivalent},
 });
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] file1 file2\n"
                                   "Use - as a file name to read from stdin.");

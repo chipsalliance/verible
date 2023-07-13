@@ -24,11 +24,11 @@
 
 namespace verible {
 
-void TextStructureLinter::Lint(const TextStructureView& text_structure,
+void TextStructureLinter::Lint(const TextStructureView &text_structure,
                                absl::string_view filename) {
   VLOG(1) << "TextStructureLinter analyzing text with " << rules_.size()
           << " rules.";
-  for (const auto& rule : rules_) {
+  for (const auto &rule : rules_) {
     ABSL_DIE_IF_NULL(rule)->Lint(text_structure, filename);
   }
 }
@@ -36,7 +36,7 @@ void TextStructureLinter::Lint(const TextStructureView& text_structure,
 std::vector<LintRuleStatus> TextStructureLinter::ReportStatus() const {
   std::vector<LintRuleStatus> status;
   status.reserve(rules_.size());
-  for (const auto& rule : rules_) {
+  for (const auto &rule : rules_) {
     status.push_back(ABSL_DIE_IF_NULL(rule)->Report());
   }
   return status;

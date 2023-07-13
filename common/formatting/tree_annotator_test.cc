@@ -28,16 +28,16 @@ namespace {
 using ::testing::ElementsAre;
 
 std::vector<int> ExtractSyntaxTreeContextEnums(
-    const SyntaxTreeContext& context) {
+    const SyntaxTreeContext &context) {
   std::vector<int> result;
-  for (const auto* node : context) {
+  for (const auto *node : context) {
     result.push_back(ABSL_DIE_IF_NULL(node)->Tag().tag);
   }
   return result;
 }
 
-static void DoNothing(const PreFormatToken&, PreFormatToken*,
-                      const SyntaxTreeContext&, const SyntaxTreeContext&) {}
+static void DoNothing(const PreFormatToken &, PreFormatToken *,
+                      const SyntaxTreeContext &, const SyntaxTreeContext &) {}
 
 TEST(AnnotateFormatTokensUsingSyntaxContextTest, EmptyFormatTokens) {
   std::vector<PreFormatToken> ftokens;
@@ -49,15 +49,15 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, EmptyFormatTokens) {
 
 constexpr int kForcedSpaces = 5;
 
-void ForceSpaces(const PreFormatToken&, PreFormatToken* right,
-                 const SyntaxTreeContext& /* left_context */,
-                 const SyntaxTreeContext& /* right_context */) {
+void ForceSpaces(const PreFormatToken &, PreFormatToken *right,
+                 const SyntaxTreeContext & /* left_context */,
+                 const SyntaxTreeContext & /* right_context */) {
   right->before.spaces_required = kForcedSpaces;
 }
 
 // The first format token never gets annotated.
 template <class T>
-iterator_range<typename T::const_iterator> ExcludeFirst(const T& t) {
+iterator_range<typename T::const_iterator> ExcludeFirst(const T &t) {
   return make_range(t.begin() + 1, t.end());
 }
 
@@ -70,19 +70,19 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContext) {
       {verible::TK_EOF, text.substr(3, 0)},  // EOF
   };
   std::vector<PreFormatToken> ftokens;
-  for (const auto& t : tokens) {
+  for (const auto &t : tokens) {
     ftokens.emplace_back(&t);
   }
   AnnotateFormatTokensUsingSyntaxContext(nullptr, tokens[3], ftokens.begin(),
                                          ftokens.end(), ForceSpaces);
-  for (const auto& ftoken : ExcludeFirst(ftokens)) {
+  for (const auto &ftoken : ExcludeFirst(ftokens)) {
     EXPECT_EQ(ftoken.before.spaces_required, kForcedSpaces);
   }
 }
 
-void LeftIsB(const PreFormatToken& left, PreFormatToken* right,
-             const SyntaxTreeContext& /* left_context */,
-             const SyntaxTreeContext& /* right_context */) {
+void LeftIsB(const PreFormatToken &left, PreFormatToken *right,
+             const SyntaxTreeContext & /* left_context */,
+             const SyntaxTreeContext & /* right_context */) {
   if (left.token->text() == "b") {
     right->before.spaces_required = kForcedSpaces;
   } else {
@@ -99,7 +99,7 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContextBasedOnLeft) {
       {verible::TK_EOF, text.substr(3, 0)},  // EOF
   };
   std::vector<PreFormatToken> ftokens;
-  for (const auto& t : tokens) {
+  for (const auto &t : tokens) {
     ftokens.emplace_back(&t);
   }
   AnnotateFormatTokensUsingSyntaxContext(nullptr, tokens[3], ftokens.begin(),
@@ -108,10 +108,10 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UnusedContextBasedOnLeft) {
   EXPECT_EQ(ftokens[2].before.spaces_required, kForcedSpaces);
 }
 
-void RightContextDirectParentIsNine(const PreFormatToken&,
-                                    PreFormatToken* right,
-                                    const SyntaxTreeContext& left_context,
-                                    const SyntaxTreeContext& right_context) {
+void RightContextDirectParentIsNine(const PreFormatToken &,
+                                    PreFormatToken *right,
+                                    const SyntaxTreeContext &left_context,
+                                    const SyntaxTreeContext &right_context) {
   if (right_context.DirectParentIs(9)) {
     right->before.spaces_required = kForcedSpaces;
   } else {
@@ -128,7 +128,7 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingRightContext) {
       {verible::TK_EOF, text.substr(3, 0)},  // EOF
   };
   std::vector<PreFormatToken> ftokens;
-  for (const auto& t : tokens) {
+  for (const auto &t : tokens) {
     ftokens.emplace_back(&t);
   }
   const auto tree = TNode(6,                          // synthesized syntax tree
@@ -143,10 +143,10 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingRightContext) {
   EXPECT_EQ(ftokens[2].before.spaces_required, kForcedSpaces);
 }
 
-void LeftContextDirectParentIsSeven(const PreFormatToken&,
-                                    PreFormatToken* right,
-                                    const SyntaxTreeContext& left_context,
-                                    const SyntaxTreeContext& right_context) {
+void LeftContextDirectParentIsSeven(const PreFormatToken &,
+                                    PreFormatToken *right,
+                                    const SyntaxTreeContext &left_context,
+                                    const SyntaxTreeContext &right_context) {
   if (left_context.DirectParentIs(7)) {
     right->before.spaces_required = kForcedSpaces + 4;
   } else {
@@ -163,7 +163,7 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, UsingLeftContext) {
       {verible::TK_EOF, text.substr(3, 0)},  // EOF
   };
   std::vector<PreFormatToken> ftokens;
-  for (const auto& t : tokens) {
+  for (const auto &t : tokens) {
     ftokens.emplace_back(&t);
   }
   const auto tree = TNode(6,                          // synthesized syntax tree
@@ -202,14 +202,14 @@ TEST(AnnotateFormatTokensUsingSyntaxContextTest, VerifySlidingContexts) {
                           TNode(9, Leaf(tokens[6]))     //
   );
   std::vector<PreFormatToken> ftokens;
-  for (const auto& t : tokens) {
+  for (const auto &t : tokens) {
     ftokens.emplace_back(&t);
   }
   std::vector<std::vector<int>> saved_contexts;
   saved_contexts.push_back({6, 7});  // first leaf's context
-  auto context_listener = [&](const PreFormatToken&, PreFormatToken*,
-                              const SyntaxTreeContext& left_context,
-                              const SyntaxTreeContext& right_context) {
+  auto context_listener = [&](const PreFormatToken &, PreFormatToken *,
+                              const SyntaxTreeContext &left_context,
+                              const SyntaxTreeContext &right_context) {
     // continuity and consistency check
     const auto left_enums = ExtractSyntaxTreeContextEnums(left_context);
     EXPECT_EQ(left_enums, saved_contexts.back());

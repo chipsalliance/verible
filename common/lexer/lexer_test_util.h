@@ -41,10 +41,10 @@ class FakeLexer {
  protected:
   explicit FakeLexer() = default;
 
-  void SetTokensData(const std::vector<TokenInfo>& tokens);
+  void SetTokensData(const std::vector<TokenInfo> &tokens);
 
  public:
-  const TokenInfo& DoNextToken();
+  const TokenInfo &DoNextToken();
 
  protected:
   std::vector<TokenInfo> tokens_;
@@ -58,11 +58,11 @@ struct ShowCode {
   absl::string_view text;
 };
 
-std::ostream& operator<<(std::ostream&, const ShowCode&);
+std::ostream &operator<<(std::ostream &, const ShowCode &);
 
 // SimpleTestData is used to verify single token values.
 struct SimpleTestData {
-  const char* code;
+  const char *code;
 
   // Check for ignored token, that is, EOF.
   template <class Lexer>
@@ -84,9 +84,9 @@ struct SimpleTestData {
   template <class Lexer>
   void testSingleToken(const int expected_token) const {
     Lexer lexer(code);
-    const TokenInfo& next_token(lexer.DoNextToken());
+    const TokenInfo &next_token(lexer.DoNextToken());
     EXPECT_EQ(expected_token, next_token.token_enum()) << ShowCode{code};
-    const TokenInfo& last_token(lexer.DoNextToken());
+    const TokenInfo &last_token(lexer.DoNextToken());
     EXPECT_EQ(TK_EOF, last_token.token_enum()) << ShowCode{code};
   }
 };
@@ -95,21 +95,21 @@ struct SimpleTestData {
 // This is useful for testing tokens sensitive to lexer start-conditions.
 // TODO(b/139743437): phase this out in favor of SynthesizedLexerTestData.
 struct GenericTestDataSequence {
-  const char* code;
+  const char *code;
   const std::initializer_list<int> expected_tokens;
 
   template <class Lexer>
   void test() const {
     Lexer lexer(code);
     int i = 0;
-    for (const auto& expected_token_enum : expected_tokens) {
-      const TokenInfo& next_token(lexer.DoNextToken());
+    for (const auto &expected_token_enum : expected_tokens) {
+      const TokenInfo &next_token(lexer.DoNextToken());
       EXPECT_EQ(expected_token_enum, next_token.token_enum())
           << "    Code[" << i << "]:" << ShowCode{code}
           << "\n    Last token text: \"" << next_token.text() << "\"";
       ++i;
     }
-    const TokenInfo& last_token(lexer.DoNextToken());
+    const TokenInfo &last_token(lexer.DoNextToken());
     EXPECT_EQ(TK_EOF, last_token.token_enum())
         << "    expecting " << (expected_tokens.size() - i)
         << " more tokens: " << ShowCode{code};
@@ -127,11 +127,11 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
   void test() const {
     Lexer lexer(code);
     int i = 0;
-    for (const auto& expected_token : expected_tokens) {
+    for (const auto &expected_token : expected_tokens) {
       VerifyExpectedToken(&lexer, expected_token);
       ++i;
     }
-    const TokenInfo& final_token(lexer.DoNextToken());
+    const TokenInfo &final_token(lexer.DoNextToken());
     EXPECT_EQ(TK_EOF, final_token.token_enum())
         << " expecting " << (expected_tokens.size() - i) << " more tokens"
         << ShowCode{code};
@@ -141,12 +141,12 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
   // A single expected_text can span multiple tokens, when we're only checking
   // string contents, and not checking *how* this excerpt is tokenized.
   template <class Lexer>
-  void DontCareMultiTokens(Lexer* lexer,
+  void DontCareMultiTokens(Lexer *lexer,
                            absl::string_view expected_text) const {
     // Consume tokens and compare string fragments against the
     // expected_text until the text is fully matched.
     while (!expected_text.empty()) {
-      const TokenInfo& next_token = lexer->DoNextToken();
+      const TokenInfo &next_token = lexer->DoNextToken();
       const size_t token_length = next_token.text().length();
       ASSERT_LE(token_length, expected_text.length())
           << "\nlast token: " << next_token << ShowCode{code};
@@ -161,8 +161,8 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
 
   // Check lexer output against a single expected_token.
   template <class Lexer>
-  void VerifyExpectedToken(Lexer* lexer,
-                           const TokenInfo& expected_token) const {
+  void VerifyExpectedToken(Lexer *lexer,
+                           const TokenInfo &expected_token) const {
     switch (expected_token.token_enum()) {
       case ExpectedTokenInfo::kDontCare:
         DontCareMultiTokens(lexer, expected_token.text());
@@ -171,7 +171,7 @@ struct SynthesizedLexerTestData : public TokenInfoTestData {
         return;
       default:
         // Compare full TokenInfo, enum, text (exact range).
-        const TokenInfo& next_token = lexer->DoNextToken();
+        const TokenInfo &next_token = lexer->DoNextToken();
         EXPECT_EQ(expected_token, next_token) << ShowCode{code};
     }
   }
@@ -186,8 +186,8 @@ inline constexpr SingleCharTok SingleChar{};
 // Test for ignored tokens.
 template <class Lexer>
 void TestLexer(std::initializer_list<SimpleTestData> test_data,
-               const IgnoredText& not_used) {
-  for (const auto& test_case : test_data) {
+               const IgnoredText &not_used) {
+  for (const auto &test_case : test_data) {
     test_case.testIgnored<Lexer>();
   }
 }
@@ -195,8 +195,8 @@ void TestLexer(std::initializer_list<SimpleTestData> test_data,
 // Test for single-character tokens (returned value == that character).
 template <class Lexer>
 void TestLexer(std::initializer_list<SimpleTestData> test_data,
-               const SingleCharTok& not_used) {
-  for (const auto& test_case : test_data) {
+               const SingleCharTok &not_used) {
+  for (const auto &test_case : test_data) {
     test_case.testSingleChar<Lexer>();
   }
 }
@@ -205,7 +205,7 @@ void TestLexer(std::initializer_list<SimpleTestData> test_data,
 template <class Lexer>
 void TestLexer(std::initializer_list<SimpleTestData> test_data,
                const int expected_token) {
-  for (const auto& test_case : test_data) {
+  for (const auto &test_case : test_data) {
     test_case.testSingleToken<Lexer>(expected_token);
   }
 }
@@ -213,7 +213,7 @@ void TestLexer(std::initializer_list<SimpleTestData> test_data,
 // Test for sequences of expected tokens.
 template <class Lexer>
 void TestLexer(std::initializer_list<GenericTestDataSequence> test_data) {
-  for (const auto& test_case : test_data) {
+  for (const auto &test_case : test_data) {
     test_case.test<Lexer>();
   }
 }
@@ -221,7 +221,7 @@ void TestLexer(std::initializer_list<GenericTestDataSequence> test_data) {
 // Test for sequences of expected tokens.
 template <class Lexer>
 void TestLexer(std::initializer_list<SynthesizedLexerTestData> test_data) {
-  for (const auto& test_case : test_data) {
+  for (const auto &test_case : test_data) {
     test_case.test<Lexer>();
   }
 }

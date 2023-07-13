@@ -36,11 +36,11 @@ class BijectiveMap {
   // Map of keys to values (by pointer).
   // Would really rather have value_type be a reverse_map_type::const_iterator
   // but cannot due to mutually recursive template type.
-  using forward_map_type = std::map<K, const V*, KComp>;
+  using forward_map_type = std::map<K, const V *, KComp>;
   // Map of values to keys (by pointer).
   // Would really rather have value_type be a forward_map_type::const_iterator
   // but cannot due to mutually recursive template type.
-  using reverse_map_type = std::map<V, const K*, VComp>;
+  using reverse_map_type = std::map<V, const K *, VComp>;
 
  public:
   BijectiveMap() = default;
@@ -66,29 +66,29 @@ class BijectiveMap {
   bool empty() const { return forward_map_.empty(); }
 
   // read-only direct access to internal maps
-  const forward_map_type& forward_view() const { return forward_map_; }
-  const reverse_map_type& reverse_view() const { return reverse_map_; }
+  const forward_map_type &forward_view() const { return forward_map_; }
+  const reverse_map_type &reverse_view() const { return reverse_map_; }
 
   // Lookup value given key.  Returns nullptr if not found.
   template <typename ConvertibleToKey>
-  const V* find_forward(const ConvertibleToKey& k) const {
+  const V *find_forward(const ConvertibleToKey &k) const {
     const auto found = forward_map_.find(k);
     return found == forward_map_.end() ? nullptr : found->second;
   }
 
   // Lookup key given value.  Returns nullptr if not found.
   template <typename ConvertibleToValue>
-  const K* find_reverse(const ConvertibleToValue& v) const {
+  const K *find_reverse(const ConvertibleToValue &v) const {
     const auto found = reverse_map_.find(v);
     return found == reverse_map_.end() ? nullptr : found->second;
   }
 
   // Returns true if successfully inserted new pair.
-  bool insert(const std::pair<K, V>& p) { return insert(p.first, p.second); }
+  bool insert(const std::pair<K, V> &p) { return insert(p.first, p.second); }
 
   // Establishes 1-1 association between key and value.
   // Returns true if successfully inserted new pair.
-  bool insert(const K& k, const V& v) {
+  bool insert(const K &k, const V &v) {
     const auto fwd_p = forward_map_.insert(std::make_pair(k, nullptr));
     const auto rev_p = reverse_map_.insert(std::make_pair(v, nullptr));
     if (fwd_p.second && rev_p.second) {
@@ -115,7 +115,7 @@ class BijectiveMap {
   // success.  If the range of values generated is small, this could result
   // in more frequent retries.  Use cases for this include randomizing generated
   // values, or using secondary hashes to avoid collisions.
-  const V* insert_using_value_generator(const K& k, std::function<V()> f) {
+  const V *insert_using_value_generator(const K &k, std::function<V()> f) {
     const auto fwd_p = forward_map_.insert(std::make_pair(k, nullptr));
     if (!fwd_p.second) return fwd_p.first->second;  // key entry aleady exists
     do {

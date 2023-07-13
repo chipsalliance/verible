@@ -44,7 +44,7 @@ static constexpr absl::string_view kMessageStruct =
 static constexpr absl::string_view kMessageUnion =
     "union definitions always should be named using typedef.";
 
-const LintRuleDescriptor& ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
+const LintRuleDescriptor &ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "typedef-structs-unions",
       .topic = "typedef-structs-unions",
@@ -65,34 +65,34 @@ absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
       {{"allow_anonymous_nested", SetBool(&allow_anonymous_nested_type_)}});
 }
 
-static const Matcher& StructMatcher() {
+static const Matcher &StructMatcher() {
   static const Matcher matcher(NodekStructType());
   return matcher;
 }
 
-static const Matcher& UnionMatcher() {
+static const Matcher &UnionMatcher() {
   static const Matcher matcher(NodekUnionType());
   return matcher;
 }
 
-static bool IsPreceededByTypedef(const verible::SyntaxTreeContext& context) {
+static bool IsPreceededByTypedef(const verible::SyntaxTreeContext &context) {
   return context.DirectParentsAre({NodeEnum::kDataTypePrimitive,
                                    NodeEnum::kDataType,
                                    NodeEnum::kTypeDeclaration});
 }
 
-static bool NestedInStructOrUnion(const verible::SyntaxTreeContext& context) {
+static bool NestedInStructOrUnion(const verible::SyntaxTreeContext &context) {
   return context.IsInsideStartingFrom(NodeEnum::kDataTypePrimitive, 1);
 }
 
 bool ForbiddenAnonymousStructsUnionsRule::IsRuleMet(
-    const verible::SyntaxTreeContext& context) const {
+    const verible::SyntaxTreeContext &context) const {
   return IsPreceededByTypedef(context) ||
          (allow_anonymous_nested_type_ && NestedInStructOrUnion(context));
 }
 
 void ForbiddenAnonymousStructsUnionsRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (StructMatcher().Matches(symbol, &manager) && !IsRuleMet(context)) {
     violations_.insert(LintViolation(symbol, kMessageStruct, context));

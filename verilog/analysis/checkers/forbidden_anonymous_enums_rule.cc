@@ -40,7 +40,7 @@ VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousEnumsRule);
 static constexpr absl::string_view kMessage =
     "enum types always should be named using typedef.";
 
-const LintRuleDescriptor& ForbiddenAnonymousEnumsRule::GetDescriptor() {
+const LintRuleDescriptor &ForbiddenAnonymousEnumsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "typedef-enums",
       .topic = "typedef-enums",
@@ -51,13 +51,13 @@ const LintRuleDescriptor& ForbiddenAnonymousEnumsRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& EnumMatcher() {
+static const Matcher &EnumMatcher() {
   static const Matcher matcher(NodekEnumType());
   return matcher;
 }
 
 void ForbiddenAnonymousEnumsRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (EnumMatcher().Matches(symbol, &manager)) {
     // Check if it is preceded by a typedef

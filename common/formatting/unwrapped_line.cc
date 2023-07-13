@@ -32,7 +32,7 @@
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
+std::ostream &operator<<(std::ostream &stream, PartitionPolicyEnum p) {
   switch (p) {
     case PartitionPolicyEnum::kUninitialized:
       return stream << "uninitialized";
@@ -60,7 +60,7 @@ std::ostream& operator<<(std::ostream& stream, PartitionPolicyEnum p) {
   LOG(FATAL) << "Unknown partition policy " << int(p);
 }
 
-static void TokenFormatter(std::string* out, const PreFormatToken& token,
+static void TokenFormatter(std::string *out, const PreFormatToken &token,
                            bool verbose) {
   if (verbose) {
     std::ostringstream oss;
@@ -75,19 +75,19 @@ void UnwrappedLine::SetIndentationSpaces(int spaces) {
   indentation_spaces_ = spaces;
 }
 
-void UnwrappedLine::DefaultOriginPrinter(std::ostream& stream,
-                                         const verible::Symbol* symbol) {
+void UnwrappedLine::DefaultOriginPrinter(std::ostream &stream,
+                                         const verible::Symbol *symbol) {
   static constexpr int kContextLimit = 25;
   stream << '"' << AutoTruncate{StringSpanOfSymbol(*symbol), kContextLimit}
          << '"';
 }
 
-std::ostream* UnwrappedLine::AsCode(
-    std::ostream* stream, bool verbose,
-    const OriginPrinterFunction& origin_printer) const {
+std::ostream *UnwrappedLine::AsCode(
+    std::ostream *stream, bool verbose,
+    const OriginPrinterFunction &origin_printer) const {
   *stream << Spacer(indentation_spaces_, kIndentationMarker) << '['
           << absl::StrJoin(tokens_, " ",
-                           [=](std::string* out, const PreFormatToken& token) {
+                           [=](std::string *out, const PreFormatToken &token) {
                              TokenFormatter(out, token, verbose);
                            })
           << "], policy: " << partition_policy_;
@@ -99,23 +99,23 @@ std::ostream* UnwrappedLine::AsCode(
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const UnwrappedLine& line) {
+std::ostream &operator<<(std::ostream &stream, const UnwrappedLine &line) {
   return *line.AsCode(&stream);
 }
 
-FormattedExcerpt::FormattedExcerpt(const UnwrappedLine& uwline)
+FormattedExcerpt::FormattedExcerpt(const UnwrappedLine &uwline)
     : indentation_spaces_(uwline.IndentationSpaces()) {
   tokens_.reserve(uwline.Size());
   // Convert working PreFormatTokens (computed from wrap optimization) into
   // decision-bound representation.
   const auto range = uwline.TokensRange();
   std::transform(range.begin(), range.end(), std::back_inserter(tokens_),
-                 [](const PreFormatToken& t) { return FormattedToken(t); });
+                 [](const PreFormatToken &t) { return FormattedToken(t); });
 }
 
-std::ostream& FormattedExcerpt::FormattedText(
-    std::ostream& stream, bool indent,
-    const std::function<bool(const TokenInfo&)>& include_token_p) const {
+std::ostream &FormattedExcerpt::FormattedText(
+    std::ostream &stream, bool indent,
+    const std::function<bool(const TokenInfo &)> &include_token_p) const {
   if (tokens_.empty()) return stream;
   // Let caller print the preceding/trailing newline.
   if (indent) {
@@ -125,7 +125,7 @@ std::ostream& FormattedExcerpt::FormattedText(
   }
   // We do not want the indentation before the first token, if it was
   // already handled separately.
-  const auto& front = tokens_.front();
+  const auto &front = tokens_.front();
   if (include_token_p(*front.token)) {
     VLOG(2) << "action: " << front.before.action;
     switch (front.before.action) {
@@ -137,15 +137,15 @@ std::ostream& FormattedExcerpt::FormattedText(
         stream << front.token->text();
     }
   }
-  for (const auto& ftoken :
+  for (const auto &ftoken :
        verible::make_range(tokens_.begin() + 1, tokens_.end())) {
     if (include_token_p(*ftoken.token)) stream << ftoken;
   }
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const FormattedExcerpt& excerpt) {
+std::ostream &operator<<(std::ostream &stream,
+                         const FormattedExcerpt &excerpt) {
   return excerpt.FormattedText(stream, true);
 }
 

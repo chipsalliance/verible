@@ -18,7 +18,7 @@
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, SymbolKind kind) {
+std::ostream &operator<<(std::ostream &stream, SymbolKind kind) {
   switch (kind) {
     case SymbolKind::kLeaf:
       return stream << "SymbolKind::kLeaf";

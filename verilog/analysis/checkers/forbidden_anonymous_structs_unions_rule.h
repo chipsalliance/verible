@@ -55,18 +55,18 @@ class ForbiddenAnonymousStructsUnionsRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
   absl::Status Configure(absl::string_view configuration) final;
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) final;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
   // Tests if the rule is met, taking waiving condition into account.
-  bool IsRuleMet(const verible::SyntaxTreeContext& context) const;
+  bool IsRuleMet(const verible::SyntaxTreeContext &context) const;
 
   bool allow_anonymous_nested_type_ = false;
 

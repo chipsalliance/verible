@@ -106,10 +106,10 @@ TEST(FindAllFunctionDeclarationsTest, Various) {
        "endgroup\n"
        "endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -153,22 +153,22 @@ TEST(FindAllFunctionPrototypesTest, Various) {
        "endfunction\n"
        "endclass\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root));
         });
   }
   // Protype headers map to the same range as the enclosing prototype.
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
           std::vector<TreeSearchMatch> headers;
           headers.reserve(protos.size());
-          for (const auto& proto : protos) {
+          for (const auto &proto : protos) {
             headers.push_back(TreeSearchMatch{
                 GetFunctionPrototypeHeader(*proto.match), /* no context */});
           }
@@ -203,14 +203,14 @@ TEST(FunctionPrototypesReturnTypesTest, Various) {
        "endclass\n"},
   };
   // Protype headers map to the same range as the enclosing prototype.
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
           std::vector<TreeSearchMatch> returns;
-          for (const auto& proto : protos) {
-            const auto* return_type = GetFunctionHeaderReturnType(
+          for (const auto &proto : protos) {
+            const auto *return_type = GetFunctionHeaderReturnType(
                 *GetFunctionPrototypeHeader(*proto.match));
             if (return_type == nullptr) continue;
             if (verible::StringSpanOfSymbol(*return_type).empty()) continue;
@@ -251,14 +251,14 @@ TEST(FunctionPrototypesIdsTest, Various) {
        "endclass\n"},
   };
   // Protype headers map to the same range as the enclosing prototype.
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto protos(FindAllFunctionPrototypes(*ABSL_DIE_IF_NULL(root)));
           std::vector<TreeSearchMatch> ids;
-          for (const auto& proto : protos) {
-            const auto* id =
+          for (const auto &proto : protos) {
+            const auto *id =
                 GetFunctionHeaderId(*GetFunctionPrototypeHeader(*proto.match));
             if (id == nullptr) continue;
             if (verible::StringSpanOfSymbol(*id).empty()) continue;
@@ -328,10 +328,10 @@ TEST(FindAllFunctionHeadersTest, Various) {
        "endgroup\n"
        "endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllFunctionHeaders(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -345,15 +345,15 @@ TEST(GetFunctionHeaderTest, DeclarationHeader) {
       {"module m; ", {kTag, "function foo();"}, " endfunction endmodule"},
       {"package p; ", {kTag, "function foo();"}, " endfunction endpackage"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           // Root node is a description list, not a function.
           const auto function_declarations = FindAllFunctionDeclarations(*root);
           std::vector<TreeSearchMatch> headers;
-          for (const auto& decl : function_declarations) {
-            const auto& function_node = SymbolCastToNode(*decl.match);
+          for (const auto &decl : function_declarations) {
+            const auto &function_node = SymbolCastToNode(*decl.match);
             headers.push_back(TreeSearchMatch{GetFunctionHeader(function_node),
                                               /* no context */});
           }
@@ -366,12 +366,12 @@ TEST(GetFunctionLifetimeTest, NoLifetimeDeclared) {
   VerilogAnalyzer analyzer("function foo(); endfunction", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a function.
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node =
+  const auto &function_node =
       SymbolCastToNode(*function_declarations.front().match);
-  const auto* lifetime = GetFunctionLifetime(function_node);
+  const auto *lifetime = GetFunctionLifetime(function_node);
   EXPECT_EQ(lifetime, nullptr);
 }
 
@@ -379,12 +379,12 @@ TEST(GetFunctionLifetimeTest, StaticLifetimeDeclared) {
   VerilogAnalyzer analyzer("function static foo(); endfunction", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a function.
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node =
+  const auto &function_node =
       SymbolCastToNode(*function_declarations.front().match);
-  const auto* lifetime = GetFunctionLifetime(function_node);
+  const auto *lifetime = GetFunctionLifetime(function_node);
   CheckSymbolAsLeaf(*ABSL_DIE_IF_NULL(lifetime), TK_static);
   // TODO(b/151371397): verify substring range
 }
@@ -393,12 +393,12 @@ TEST(GetFunctionLifetimeTest, AutomaticLifetimeDeclared) {
   VerilogAnalyzer analyzer("function automatic foo(); endfunction", "");
   ASSERT_OK(analyzer.Analyze());
   // Root node is a description list, not a function.e
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto function_declarations = FindAllFunctionDeclarations(*root);
   ASSERT_EQ(function_declarations.size(), 1);
-  const auto& function_node =
+  const auto &function_node =
       SymbolCastToNode(*function_declarations.front().match);
-  const auto* lifetime = GetFunctionLifetime(function_node);
+  const auto *lifetime = GetFunctionLifetime(function_node);
   CheckSymbolAsLeaf(*ABSL_DIE_IF_NULL(lifetime), TK_automatic);
   // TODO(b/151371397): verify substring range
 }
@@ -413,17 +413,17 @@ TEST(GetFunctionIdTest, UnqualifiedIds) {
       {"class c; function ", {kTag, "zoo"}, "(); endfunction endclass"},
       {"function ", {kTag, "myclass"}, "::", {kTag, "foo"}, "(); endfunction"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto function_declarations = FindAllFunctionDeclarations(*root);
           std::vector<TreeSearchMatch> got_ids;
-          for (const auto& decl : function_declarations) {
-            const auto& function_node = SymbolCastToNode(*decl.match);
-            const auto* function_id = GetFunctionId(function_node);
-            for (const auto& id : FindAllUnqualifiedIds(*function_id)) {
-              const verible::SyntaxTreeLeaf* base = GetIdentifier(*id.match);
+          for (const auto &decl : function_declarations) {
+            const auto &function_node = SymbolCastToNode(*decl.match);
+            const auto *function_id = GetFunctionId(function_node);
+            for (const auto &id : FindAllUnqualifiedIds(*function_id)) {
+              const verible::SyntaxTreeLeaf *base = GetIdentifier(*id.match);
               got_ids.push_back(TreeSearchMatch{base, /* empty context */});
             }
           }
@@ -438,16 +438,16 @@ TEST(GetFunctionIdTest, QualifiedIds) {
       {"function foo(); endfunction"},
       {"function ", {kTag, "myclass::foo"}, "(); endfunction"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto function_declarations = FindAllFunctionDeclarations(*root);
           std::vector<TreeSearchMatch> got_ids;
-          for (const auto& decl : function_declarations) {
-            const auto& function_node = SymbolCastToNode(*decl.match);
-            const auto* function_id = GetFunctionId(function_node);
-            for (const auto& id : FindAllQualifiedIds(*function_id)) {
+          for (const auto &decl : function_declarations) {
+            const auto &function_node = SymbolCastToNode(*decl.match);
+            const auto *function_id = GetFunctionId(function_node);
+            for (const auto &id : FindAllQualifiedIds(*function_id)) {
               got_ids.push_back(id);
             }
           }
@@ -481,16 +481,16 @@ TEST(GetFunctionReturnTypeTest, VariousReturnTypes) {
        {kTag, "foo#(bar)"},
        " f;\nendfunction\nendmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllFunctionDeclarations(*root);
           std::vector<TreeSearchMatch> returns;
-          for (const auto& decl : decls) {
-            const auto& statement = *decl.match;
-            const auto* return_type = GetFunctionReturnType(statement);
+          for (const auto &decl : decls) {
+            const auto &statement = *decl.match;
+            const auto *return_type = GetFunctionReturnType(statement);
             // Expect a type node, even when type is implicit or empty.
             if (return_type == nullptr) continue;
             const auto return_type_span =
@@ -524,16 +524,16 @@ TEST(GetFunctionFormalPortsGroupTest, MixedFormalPorts) {
        {kTag, "(input logic foo, bar)"},
        ";\nendfunction\nendmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllFunctionDeclarations(*root);
           std::vector<TreeSearchMatch> ports;
-          for (const auto& decl : decls) {
-            const auto& statement = *decl.match;
-            const auto* port_formals = GetFunctionFormalPortsGroup(statement);
+          for (const auto &decl : decls) {
+            const auto &statement = *decl.match;
+            const auto *port_formals = GetFunctionFormalPortsGroup(statement);
             if (port_formals == nullptr) continue;
             const auto port_formals_span =
                 verible::StringSpanOfSymbol(*port_formals);
@@ -584,16 +584,16 @@ TEST(GetFunctionHeaderTest, GetFunctionName) {
        {kTag, "my_fun"},
        "();\n return 10;\n endfunction\n  endclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto decls =
               FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> types;
-          for (const auto& decl : decls) {
-            const auto* type = GetFunctionName(*decl.match);
+          for (const auto &decl : decls) {
+            const auto *type = GetFunctionName(*decl.match);
             types.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
           return types;
@@ -614,16 +614,16 @@ TEST(GetFunctionHeaderTest, GetFunctionClassCallName) {
        {kTag, "function_name"},
        "());\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto calls =
               FindAllFunctionOrTaskCallsExtension(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& Call : calls) {
-            const auto* name =
+          for (const auto &Call : calls) {
+            const auto *name =
                 GetFunctionCallNameFromCallExtension(*Call.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
@@ -662,16 +662,16 @@ TEST(GetFunctionBlockStatement, GetFunctionBody) {
        {kTag, "return 1;"},
        "\nendfunction\nendclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto decls =
               FindAllFunctionDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> functions_body;
-          for (const auto& decl : decls) {
-            const auto& body = GetFunctionBlockStatementList(*decl.match);
+          for (const auto &decl : decls) {
+            const auto &body = GetFunctionBlockStatementList(*decl.match);
             functions_body.push_back(
                 TreeSearchMatch{body, {/* ignored context */}});
           }
@@ -693,16 +693,16 @@ TEST(FunctionCallTest, GetFunctionCallName) {
       {"r=this();"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& calls =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &calls =
               FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> identifiers;
-          for (const auto& call : calls) {
-            const auto* identifier =
+          for (const auto &call : calls) {
+            const auto *identifier =
                 GetIdentifiersFromFunctionCall(*call.match);
             if (identifier == nullptr) {
               continue;
@@ -748,16 +748,16 @@ TEST(FunctionCallTest, GetFunctionCallArguments) {
 
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllFunctionOrTaskCalls(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> paren_groups;
-          for (const auto& decl : instances) {
-            const auto* paren_group = GetParenGroupFromCall(*decl.match);
+          for (const auto &decl : instances) {
+            const auto *paren_group = GetParenGroupFromCall(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});
           }
@@ -780,16 +780,16 @@ TEST(FunctionCallTest, GetFunctionCallExtensionArguments) {
        ");\nendmodule"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllFunctionOrTaskCallsExtension(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> paren_groups;
-          for (const auto& decl : instances) {
-            const auto* paren_group =
+          for (const auto &decl : instances) {
+            const auto *paren_group =
                 GetParenGroupFromCallExtension(*decl.match);
             paren_groups.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});
@@ -828,16 +828,16 @@ TEST(FunctionCallTest, GetConstructorNewKeyword) {
        "endclass\n"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& ctors =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &ctors =
               FindAllConstructorPrototypes(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> new_tokens;
-          for (const auto& decl : ctors) {
-            const auto* paren_group =
+          for (const auto &decl : ctors) {
+            const auto *paren_group =
                 GetConstructorPrototypeNewKeyword(*decl.match);
             new_tokens.emplace_back(
                 TreeSearchMatch{paren_group, {/* ignored context */}});

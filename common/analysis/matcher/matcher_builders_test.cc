@@ -102,7 +102,7 @@ TEST(MatcherBuildersTest, MatcherTestCases) {
       {Node5(PathLeaf1(PathLeaf1())), TNode(5, XLeaf(1), XLeaf(1)), false, {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -168,7 +168,7 @@ TEST(MatcherBuildersTest, DynamicMatcherTestCases) {
       {DNode5(PathLeaf1(PathLeaf1())), TNode(5, XLeaf(1), XLeaf(1)), false, {}},
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     RunMatcherTestCase(test_case);
   }
 }
@@ -195,9 +195,9 @@ TEST(MatcherBuildersTest, MatchPathSimple) {
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("outer"));
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("inner"));
 
-  const auto* outer_match = down_cast<const SyntaxTreeNode*>(
+  const auto *outer_match = down_cast<const SyntaxTreeNode *>(
       bound_symbol_manager.FindSymbol("outer"));
-  const auto* inner_match = down_cast<const SyntaxTreeLeaf*>(
+  const auto *inner_match = down_cast<const SyntaxTreeLeaf *>(
       bound_symbol_manager.FindSymbol("inner"));
   ASSERT_NE(outer_match, nullptr);
   ASSERT_NE(inner_match, nullptr);

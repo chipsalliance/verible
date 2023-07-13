@@ -28,10 +28,10 @@ class TreeContextVisitor : public SymbolVisitor {
   TreeContextVisitor() = default;
 
  protected:
-  void Visit(const SyntaxTreeLeaf& leaf) override {}
-  void Visit(const SyntaxTreeNode& node) override;
+  void Visit(const SyntaxTreeLeaf &leaf) override {}
+  void Visit(const SyntaxTreeNode &node) override;
 
-  const SyntaxTreeContext& Context() const { return current_context_; }
+  const SyntaxTreeContext &Context() const { return current_context_; }
 
   // Keeps track of ancestors as the visitor traverses tree.
   SyntaxTreeContext current_context_;
@@ -43,7 +43,7 @@ class SyntaxTreePath;
 // elements are assumed to have values that are less than 0 but greater than any
 // negative number. First non-matching elements pair determines the result:
 // -1 if a < b, 1 if a > b. If all pairs are equal the result is 0.
-int CompareSyntaxTreePath(const SyntaxTreePath& a, const SyntaxTreePath& b);
+int CompareSyntaxTreePath(const SyntaxTreePath &a, const SyntaxTreePath &b);
 
 // Type that is used to keep track of positions descended from a root
 // node to reach a particular node.
@@ -63,18 +63,18 @@ class SyntaxTreePath : public std::vector<int> {
  public:
   using std::vector<int>::vector;  // Import base class constructors
 
-  bool operator==(const SyntaxTreePath& rhs) const {
+  bool operator==(const SyntaxTreePath &rhs) const {
     return CompareSyntaxTreePath(*this, rhs) == 0;
   }
-  bool operator<(const SyntaxTreePath& rhs) const {
+  bool operator<(const SyntaxTreePath &rhs) const {
     return CompareSyntaxTreePath(*this, rhs) < 0;
   }
-  bool operator>(const SyntaxTreePath& rhs) const {
+  bool operator>(const SyntaxTreePath &rhs) const {
     return CompareSyntaxTreePath(*this, rhs) > 0;
   }
-  bool operator!=(const SyntaxTreePath& rhs) const { return !(*this == rhs); }
-  bool operator<=(const SyntaxTreePath& rhs) const { return !(*this > rhs); }
-  bool operator>=(const SyntaxTreePath& rhs) const { return !(*this < rhs); }
+  bool operator!=(const SyntaxTreePath &rhs) const { return !(*this == rhs); }
+  bool operator<=(const SyntaxTreePath &rhs) const { return !(*this > rhs); }
+  bool operator>=(const SyntaxTreePath &rhs) const { return !(*this < rhs); }
 };
 
 // This visitor traverses a tree and maintains a stack of offsets
@@ -87,9 +87,9 @@ class TreeContextPathVisitor : public TreeContextVisitor {
   TreeContextPathVisitor() = default;
 
  protected:
-  void Visit(const SyntaxTreeNode& node) override;
+  void Visit(const SyntaxTreeNode &node) override;
 
-  const SyntaxTreePath& Path() const { return current_path_; }
+  const SyntaxTreePath &Path() const { return current_path_; }
 
   // Keeps track of path of descent from root node.
   SyntaxTreePath current_path_;
@@ -98,14 +98,14 @@ class TreeContextPathVisitor : public TreeContextVisitor {
 // Computes the path of the next sibling by incrementing the last element
 // of the path.  Resulting path may not necessarily correspond to a valid
 // element.  'path' must not be empty.
-SyntaxTreePath NextSiblingPath(const SyntaxTreePath& path);
+SyntaxTreePath NextSiblingPath(const SyntaxTreePath &path);
 
 // Format SyntaxTreePaths using: stream << TreePathFormatter(path);
 // It is necessary to define this way because SyntaxTreePath is a typedef to a
 // generic container type.
 // TODO(fangism): Use auto return type once C++17 become the minimum standard.
 SequenceStreamFormatter<SyntaxTreePath> TreePathFormatter(
-    const SyntaxTreePath& path);
+    const SyntaxTreePath &path);
 
 }  // namespace verible
 

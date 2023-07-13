@@ -28,7 +28,7 @@ using IntStack = AutoPopStack<int>;
 // Test that AutoPop properly pushes and pops nodes on and off the stack
 TEST(AutoPopStackTest, PushPopTest) {
   IntStack context;
-  const auto& const_context = context;
+  const auto &const_context = context;
   EXPECT_TRUE(context.empty());
   {
     IntStack::AutoPop p1(&context, 1);

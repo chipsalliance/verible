@@ -45,7 +45,7 @@ VERILOG_REGISTER_LINT_RULE(ExplicitFunctionTaskParameterTypeRule);
 static constexpr absl::string_view kMessage =
     "Explicitly define a storage type for every function parameter.";
 
-const LintRuleDescriptor&
+const LintRuleDescriptor &
 ExplicitFunctionTaskParameterTypeRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "explicit-function-task-parameter-type",
@@ -57,18 +57,18 @@ ExplicitFunctionTaskParameterTypeRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& PortMatcher() {
+static const Matcher &PortMatcher() {
   static const Matcher matcher(NodekPortItem());
   return matcher;
 }
 
 void ExplicitFunctionTaskParameterTypeRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
-    const auto* type_node = GetTypeOfTaskFunctionPortItem(symbol);
+    const auto *type_node = GetTypeOfTaskFunctionPortItem(symbol);
     if (!IsStorageTypeOfDataTypeSpecified(*ABSL_DIE_IF_NULL(type_node))) {
-      const auto* port_id = GetIdentifierFromTaskFunctionPortItem(symbol);
+      const auto *port_id = GetIdentifierFromTaskFunctionPortItem(symbol);
       violations_.insert(LintViolation(*port_id, kMessage, context));
     }
   }

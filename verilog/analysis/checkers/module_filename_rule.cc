@@ -49,7 +49,7 @@ static constexpr absl::string_view kMessage =
     "Declared module does not match the first dot-delimited component "
     "of file name: ";
 
-const LintRuleDescriptor& ModuleFilenameRule::GetDescriptor() {
+const LintRuleDescriptor &ModuleFilenameRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "module-filename",
       .topic = "file-names",
@@ -65,19 +65,19 @@ const LintRuleDescriptor& ModuleFilenameRule::GetDescriptor() {
   return d;
 }
 
-static bool ModuleNameMatches(const verible::Symbol& s,
+static bool ModuleNameMatches(const verible::Symbol &s,
                               absl::string_view name) {
-  const auto* module_leaf = GetModuleName(s);
+  const auto *module_leaf = GetModuleName(s);
   return module_leaf && module_leaf->get().text() == name;
 }
 
-void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
+void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
                               absl::string_view filename) {
   if (verible::file::IsStdin(filename)) {
     return;
   }
 
-  const auto& tree = text_structure.SyntaxTree();
+  const auto &tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 
   // Find all module declarations.
@@ -92,7 +92,7 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
   std::back_insert_iterator<std::vector<verible::TreeSearchMatch>> back_it(
       module_cleaned);
   std::remove_copy_if(module_matches.begin(), module_matches.end(), back_it,
-                      [](verible::TreeSearchMatch& m) {
+                      [](verible::TreeSearchMatch &m) {
                         return m.context.IsInside(NodeEnum::kModuleDeclaration);
                       });
 
@@ -112,14 +112,14 @@ void ModuleFilenameRule::Lint(const TextStructureView& text_structure,
 
   // If there is at least one module with a matching name, suppress finding.
   if (std::any_of(module_cleaned.begin(), module_cleaned.end(),
-                  [=](const verible::TreeSearchMatch& m) {
+                  [=](const verible::TreeSearchMatch &m) {
                     return ModuleNameMatches(*m.match, unitname);
                   })) {
     return;
   }
 
   // Only report a violation on the last module declaration.
-  const auto* last_module_id = GetModuleName(*module_cleaned.back().match);
+  const auto *last_module_id = GetModuleName(*module_cleaned.back().match);
   if (!last_module_id) LOG(ERROR) << "Couldn't extract module name";
   if (last_module_id) {
     violations_.insert(verible::LintViolation(

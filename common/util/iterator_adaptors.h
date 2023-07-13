@@ -40,7 +40,7 @@ constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i) {
 template <class T>
 verible::iterator_range<
     std::reverse_iterator<typename auto_iterator_selector<T>::type>>
-reversed_view(T& t) {
+reversed_view(T &t) {
   // equivalent to:
   // return make_range(t.rbegin(), t.rend());
   // but does not require the rbegin/rend methods.

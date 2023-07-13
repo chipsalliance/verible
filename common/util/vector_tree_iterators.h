@@ -39,8 +39,8 @@ class VectorTreeIteratorBase {
   using iterator_category = std::forward_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = VectorTreeType;
-  using pointer = VectorTreeType*;
-  using reference = VectorTreeType&;
+  using pointer = VectorTreeType *;
+  using reference = VectorTreeType &;
 
   VectorTreeIteratorBase() : node_(nullptr) {}
   explicit VectorTreeIteratorBase(pointer node) : node_(node) {}
@@ -53,12 +53,12 @@ class VectorTreeIteratorBase {
     CHECK_NOTNULL(node_);
     return node_;
   }
-  ImplType& operator++() {
+  ImplType &operator++() {
     node_ = ImplType::GetNextNode(node_);
-    return static_cast<ImplType&>(*this);
+    return static_cast<ImplType &>(*this);
   }
   ImplType operator++(int) {
-    ImplType tmp = static_cast<ImplType&>(*this);
+    ImplType tmp = static_cast<ImplType &>(*this);
     node_ = ImplType::GetNextNode(node_);
     return tmp;
   }
@@ -66,10 +66,10 @@ class VectorTreeIteratorBase {
     while (rhs--) ++lhs;
     return lhs;
   }
-  friend bool operator==(const ImplType& a, const ImplType& b) {
+  friend bool operator==(const ImplType &a, const ImplType &b) {
     return a.node_ == b.node_;
   };
-  friend bool operator!=(const ImplType& a, const ImplType& b) {
+  friend bool operator!=(const ImplType &a, const ImplType &b) {
     return a.node_ != b.node_;
   };
 
@@ -88,17 +88,17 @@ class VectorTreeLeavesIterator
 
  public:
   VectorTreeLeavesIterator() : base_type() {}
-  explicit VectorTreeLeavesIterator(VectorTreeType* node)
+  explicit VectorTreeLeavesIterator(VectorTreeType *node)
       : base_type(node ? &LeftmostDescendant(*node) : nullptr) {}
 
-  static VectorTreeType* GetNextNode(VectorTreeType* node) {
+  static VectorTreeType *GetNextNode(VectorTreeType *node) {
     if (!node) return nullptr;
     return NextLeaf(*node);
   }
 };
 
 template <typename VectorTreeType>
-VectorTreeLeavesIterator(VectorTreeType*)
+VectorTreeLeavesIterator(VectorTreeType *)
     -> VectorTreeLeavesIterator<VectorTreeType>;
 
 // Returns VectorTreeLeavesIterator range that spans all leaves of a tree.
@@ -106,7 +106,7 @@ VectorTreeLeavesIterator(VectorTreeType*)
 // this node.
 template <typename VectorTreeType>
 iterator_range<VectorTreeLeavesIterator<VectorTreeType>>
-VectorTreeLeavesTraversal(VectorTreeType& tree) {
+VectorTreeLeavesTraversal(VectorTreeType &tree) {
   VectorTreeLeavesIterator<VectorTreeType> begin(&LeftmostDescendant(tree));
   VectorTreeLeavesIterator<VectorTreeType> end(&RightmostDescendant(tree));
   ++end;
@@ -122,9 +122,9 @@ class VectorTreePreOrderIterator
 
  public:
   VectorTreePreOrderIterator() : base_type() {}
-  explicit VectorTreePreOrderIterator(VectorTreeType* node) : base_type(node) {}
+  explicit VectorTreePreOrderIterator(VectorTreeType *node) : base_type(node) {}
 
-  static VectorTreeType* GetNextNode(VectorTreeType* node) {
+  static VectorTreeType *GetNextNode(VectorTreeType *node) {
     if (!node) return nullptr;
     if (!node->Children().empty()) return &node->Children().front();
     while (node && verible::IsLastChild(*node)) {
@@ -142,14 +142,14 @@ class VectorTreePreOrderIterator
 };
 
 template <typename VectorTreeType>
-VectorTreePreOrderIterator(VectorTreeType*)
+VectorTreePreOrderIterator(VectorTreeType *)
     -> VectorTreePreOrderIterator<VectorTreeType>;
 
 // Returns VectorTreePreOrderIterator range that spans all nodes of a tree
 // (including the tree's root).
 template <typename VectorTreeType>
 iterator_range<VectorTreePreOrderIterator<VectorTreeType>>
-VectorTreePreOrderTraversal(VectorTreeType& tree) {
+VectorTreePreOrderTraversal(VectorTreeType &tree) {
   VectorTreePreOrderIterator<VectorTreeType> it(&tree);
   return {it.begin(), it.end()};
 }
@@ -163,10 +163,10 @@ class VectorTreePostOrderIterator
 
  public:
   VectorTreePostOrderIterator() : base_type() {}
-  explicit VectorTreePostOrderIterator(VectorTreeType* node)
+  explicit VectorTreePostOrderIterator(VectorTreeType *node)
       : base_type(node) {}
 
-  static VectorTreeType* GetNextNode(VectorTreeType* node) {
+  static VectorTreeType *GetNextNode(VectorTreeType *node) {
     if (!node) return nullptr;
     if (verible::IsLastChild(*node)) return node->Parent();
     node = NextSibling(*node);
@@ -182,14 +182,14 @@ class VectorTreePostOrderIterator
 };
 
 template <typename VectorTreeType>
-VectorTreePostOrderIterator(VectorTreeType*)
+VectorTreePostOrderIterator(VectorTreeType *)
     -> VectorTreePostOrderIterator<VectorTreeType>;
 
 // Returns VectorTreePostOrderIterator range that spans all nodes of a tree
 // (including the tree's root).
 template <typename VectorTreeType>
 iterator_range<VectorTreePostOrderIterator<VectorTreeType>>
-VectorTreePostOrderTraversal(VectorTreeType& tree) {
+VectorTreePostOrderTraversal(VectorTreeType &tree) {
   VectorTreePostOrderIterator<VectorTreeType> it(&tree);
   return {it.begin(), it.end()};
 }

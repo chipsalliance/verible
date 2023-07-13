@@ -185,7 +185,7 @@ TEST(TokenInfoTest, ToStringWithBase) {
   EXPECT_EQ(token_info.ToString(context), "(#7 @9-12: \"cat\")");
 }
 
-void TokenTranslator(std::ostream& stream, int e) {
+void TokenTranslator(std::ostream &stream, int e) {
   switch (e) {
     case 7:
       stream << "lucky-seven";

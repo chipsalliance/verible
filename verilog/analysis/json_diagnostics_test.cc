@@ -25,8 +25,8 @@
 namespace verilog {
 namespace {
 
-static void CheckJsonErrorItem(const nlohmann::json& json, const char* phase,
-                               const char* text) {
+static void CheckJsonErrorItem(const nlohmann::json &json, const char *phase,
+                               const char *text) {
   EXPECT_TRUE(json["column"].is_number());
   EXPECT_TRUE(json["line"].is_number());
   ASSERT_TRUE(json["phase"].is_string());

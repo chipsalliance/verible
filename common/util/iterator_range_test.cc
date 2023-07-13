@@ -187,7 +187,7 @@ TEST(IteratorRangeTest, WholeVectorMakePair) {
 TEST(IteratorRangeTest, PartArray) {
   int v[] = {2, 3, 5, 7, 11, 13};
   {
-    iterator_range<int*> range(&v[1], &v[4]);  // 3, 5, 7
+    iterator_range<int *> range(&v[1], &v[4]);  // 3, 5, 7
     EXPECT_THAT(range, ElementsAre(3, 5, 7));
   }
   {

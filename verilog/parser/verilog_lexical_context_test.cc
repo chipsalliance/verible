@@ -65,7 +65,7 @@ using verible::TokenStreamReferenceView;
 // expected, absl::string_view pattern);
 #define EXPECT_EQ_REASON(expr, expected, pattern)                        \
   {                                                                      \
-    const auto& r = expr; /* evaluate expr once, auto-extend lifetime */ \
+    const auto &r = expr; /* evaluate expr once, auto-extend lifetime */ \
     EXPECT_EQ(r.value, expected) << r.reason;                            \
     /* value could be correct, but reason could be wrong. */             \
     EXPECT_TRUE(absl::StrContains(absl::string_view(r.reason), pattern)) \
@@ -74,16 +74,16 @@ using verible::TokenStreamReferenceView;
 
 template <class SM>
 void ExpectStateMachineTokenSequence(
-    SM& sm, verible::TokenStreamView::const_iterator* token_iter,
+    SM &sm, verible::TokenStreamView::const_iterator *token_iter,
     std::initializer_list<int> expect_token_enums) {
   int i = 0;
   for (int expect_token_enum : expect_token_enums) {
-    const TokenInfo& token(***token_iter);
+    const TokenInfo &token(***token_iter);
     const int token_enum = token.token_enum();
     const int interpreted_enum = sm.InterpretToken(token_enum);
-    const char* raw_symbol = verilog_symbol_name(token_enum);
-    const char* interpreted_symbol = verilog_symbol_name(interpreted_enum);
-    const char* expected_symbol = verilog_symbol_name(expect_token_enum);
+    const char *raw_symbol = verilog_symbol_name(token_enum);
+    const char *interpreted_symbol = verilog_symbol_name(interpreted_enum);
+    const char *expected_symbol = verilog_symbol_name(expect_token_enum);
     VLOG(1) << "token[" << i << "] enum: " << raw_symbol << " -> "
             << interpreted_symbol;
     EXPECT_EQ(interpreted_enum, expect_token_enum)
@@ -99,7 +99,7 @@ TEST(KeywordLabelStateMachineTest, NoKeywords) {
   VerilogAnalyzer analyzer("1, 2; 3;", "");
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
-  const auto& tokens_view = analyzer.Data().GetTokenStreamView();
+  const auto &tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), 7);  // including EOF
 
   internal::KeywordLabelStateMachine b;
@@ -121,7 +121,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithoutLabels) {
        true, false}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
-  const auto& tokens_view = analyzer.Data().GetTokenStreamView();
+  const auto &tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());
 
   internal::KeywordLabelStateMachine b;
@@ -145,7 +145,7 @@ TEST(KeywordLabelStateMachineTest, KeywordsWithLabels) {
        false, true, false, false}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
-  const auto& tokens_view = analyzer.Data().GetTokenStreamView();
+  const auto &tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
   internal::KeywordLabelStateMachine b;
@@ -169,7 +169,7 @@ TEST(KeywordLabelStateMachineTest, ItemsInsideBlocks) {
                                                     true, true, true, true}};
   EXPECT_OK(analyzer.Tokenize());
   analyzer.FilterTokensForSyntaxTree();
-  const auto& tokens_view = analyzer.Data().GetTokenStreamView();
+  const auto &tokens_view = analyzer.Data().GetTokenStreamView();
   EXPECT_EQ(tokens_view.size(), expect_item_may_start.size());  // including EOF
 
   internal::KeywordLabelStateMachine b;
@@ -314,7 +314,7 @@ TEST_F(LastSemicolonStateMachineTest, LifeCycleFinalSemicolon) {
 // TODO(fangism): move this into a test_util library
 struct StateMachineTestBase : public ::testing::Test {
   // Lexes code and initializes token_iter to point to the first token.
-  void Tokenize(const std::string& code) {
+  void Tokenize(const std::string &code) {
     analyzer = std::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer->Tokenize());
     analyzer->FilterTokensForSyntaxTree();
@@ -322,7 +322,7 @@ struct StateMachineTestBase : public ::testing::Test {
   }
 
   template <class SM>
-  void ExpectTokenSequence(SM& sm, std::initializer_list<int> expect_enums) {
+  void ExpectTokenSequence(SM &sm, std::initializer_list<int> expect_enums) {
     ExpectStateMachineTokenSequence(sm, &token_iter, expect_enums);
   }
 
@@ -1177,7 +1177,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
 
   void AdvanceToken() {
     TokenSequence::iterator iter(*token_iter_);
-    TokenInfo& token(*iter);
+    TokenInfo &token(*iter);
     LexicalContext::AdvanceToken(&token);
     ++token_iter_;
   }
@@ -1218,7 +1218,7 @@ class LexicalContextTest : public ::testing::Test, public LexicalContext {
   }
 
   // Lexes code and initializes token_iter to point to the first token.
-  void Tokenize(const std::string& code) {
+  void Tokenize(const std::string &code) {
     analyzer_ = std::make_unique<VerilogAnalyzer>(code, "");
     EXPECT_OK(analyzer_->Tokenize());
     analyzer_->FilterTokensForSyntaxTree();

@@ -36,7 +36,7 @@ class TokenStreamViewTest : public testing::Test {
     tokens_.push_back(TokenInfo::EOFToken());
   }
 
-  static bool KeepEvenTokens(const TokenInfo& t) {
+  static bool KeepEvenTokens(const TokenInfo &t) {
     return !(t.token_enum() & 0x1);
   }
 
@@ -101,7 +101,7 @@ TEST_F(TokenViewRangeTest, TokenViewRangeSpanningOffsetsNonEmpty) {
       {9, 12, 4, 4},  // empty, does not span a whole token
       {9, 9, 4, 4},   {9, 19, 4, 7},
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     const int length = test_case.right_offset - test_case.left_offset;
     const absl::string_view text_range(
         data_.Contents().substr(test_case.left_offset, length));

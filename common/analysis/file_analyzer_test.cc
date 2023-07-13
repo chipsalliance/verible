@@ -43,7 +43,7 @@ TEST(RejectedTokenStreamTest, StringRepresentation) {
 // Subclass for the purpose of testing FileAnalyzer.
 class FakeFileAnalyzer : public FileAnalyzer {
  public:
-  FakeFileAnalyzer(const std::string& text, const std::string& filename)
+  FakeFileAnalyzer(const std::string &text, const std::string &filename)
       : FileAnalyzer(text, filename) {}
 
   absl::Status Tokenize() final {
@@ -73,10 +73,10 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
   {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
-        [](const std::string& filename, LineColumnRange range,
+        [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
-           const std::string& message) {
+           const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 1);
           EXPECT_EQ(range.start.column, 4);
@@ -111,10 +111,10 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
   {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
-        [](const std::string& filename, LineColumnRange range,
+        [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
-           const std::string& message) {
+           const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 1);
           EXPECT_EQ(range.start.column, 4);
@@ -147,10 +147,10 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
   {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
-        [](const std::string& filename, LineColumnRange range,
+        [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
-           const std::string& message) {
+           const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 0);
           EXPECT_EQ(range.start.column, 5);
@@ -204,10 +204,10 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
   {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
-        [](const std::string& filename, LineColumnRange range,
+        [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
-           const std::string& message) {
+           const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 0);
           EXPECT_EQ(range.start.column, 7);
@@ -282,10 +282,10 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
   {
     analyzer.ExtractLinterTokenErrorDetail(
         {error_token, AnalysisPhase::kParsePhase},
-        [](const std::string& filename, LineColumnRange range,
+        [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
            absl::string_view token_text, absl::string_view context_line,
-           const std::string& message) {
+           const std::string &message) {
           EXPECT_EQ(filename, "unbalanced.txt");
           EXPECT_EQ(range.start.line, 2);
           EXPECT_EQ(range.start.column, 7);

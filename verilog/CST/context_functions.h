@@ -23,48 +23,48 @@ namespace analysis {
 
 // The following functions are specialized for common Verilog context queries.
 
-inline bool ContextIsInsideClass(const verible::SyntaxTreeContext& context) {
+inline bool ContextIsInsideClass(const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kClassDeclaration);
 }
 
-inline bool ContextIsInsideModule(const verible::SyntaxTreeContext& context) {
+inline bool ContextIsInsideModule(const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kModuleDeclaration);
 }
 
 // Does not treat global scope as being inside a package.
-inline bool ContextIsInsidePackage(const verible::SyntaxTreeContext& context) {
+inline bool ContextIsInsidePackage(const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kPackageDeclaration);
 }
 
 inline bool ContextIsInsidePackedDimensions(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kPackedDimensions);
 }
 
 inline bool ContextIsInsideUnpackedDimensions(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   // Exclude being inside an associative array dimensions ([type]).
   return context.IsInsideFirst({NodeEnum::kUnpackedDimensions},
                                {NodeEnum::kDimensionAssociativeType});
 }
 
 inline bool ContextIsInsideFormalParameterList(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kFormalParameterList);
 }
 
 inline bool ContextIsInsideTaskFunctionPortList(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kPortList);
 }
 
 inline bool ContextIsInsideStatement(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   return context.IsInside(NodeEnum::kStatement);
 }
 
 inline bool ContextIsInsideDeclarationDimensions(
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeContext &context) {
   return context.DirectParentIsOneOf(
       {NodeEnum::kDimensionRange, NodeEnum::kDimensionScalar,
        NodeEnum::kDimensionSlice, NodeEnum::kDimensionAssociativeType});

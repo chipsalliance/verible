@@ -78,7 +78,7 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping) {
   style.column_limit = 40;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : kTestCases) {
+  for (const auto &test_case : kTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream, debug_stream;
     ExecutionControl control;
@@ -152,7 +152,7 @@ TEST(FormatterEndToEndTest, PenaltySensitiveLineWrapping100Col) {
   style.column_limit = 100;
   style.indentation_spaces = 2;
   style.wrap_spaces = 4;
-  for (const auto& test_case : k100ColTestCases) {
+  for (const auto &test_case : k100ColTestCases) {
     VLOG(1) << "code-to-format:\n" << test_case.input << "<EOF>";
     std::ostringstream stream, debug_stream;
     ExecutionControl control;

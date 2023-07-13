@@ -47,7 +47,7 @@ VERILOG_REGISTER_LINT_RULE(OneModulePerFileRule);
 static constexpr absl::string_view kMessage =
     "Each file should have only one module declaration. Found: ";
 
-const LintRuleDescriptor& OneModulePerFileRule::GetDescriptor() {
+const LintRuleDescriptor &OneModulePerFileRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "one-module-per-file",
       .topic = "file-extensions",
@@ -56,9 +56,9 @@ const LintRuleDescriptor& OneModulePerFileRule::GetDescriptor() {
   return d;
 }
 
-void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
+void OneModulePerFileRule::Lint(const TextStructureView &text_structure,
                                 absl::string_view) {
-  const auto& tree = text_structure.SyntaxTree();
+  const auto &tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 
   auto module_matches = FindAllModuleDeclarations(*tree);
@@ -72,13 +72,13 @@ void OneModulePerFileRule::Lint(const TextStructureView& text_structure,
   std::back_insert_iterator<std::vector<verible::TreeSearchMatch>> back_it(
       module_cleaned);
   std::remove_copy_if(module_matches.begin(), module_matches.end(), back_it,
-                      [](verible::TreeSearchMatch& m) {
+                      [](verible::TreeSearchMatch &m) {
                         return m.context.IsInside(NodeEnum::kModuleDeclaration);
                       });
 
   if (module_cleaned.size() > 1) {
     // Report second module declaration
-    const auto* second_module_id = GetModuleName(*module_cleaned[1].match);
+    const auto *second_module_id = GetModuleName(*module_cleaned[1].match);
     if (!second_module_id) LOG(ERROR) << "Couldn't extract module name";
     if (second_module_id) {
       violations_.insert(verible::LintViolation(

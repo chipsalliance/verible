@@ -48,7 +48,7 @@ using verible::matcher::Matcher;
 static constexpr absl::string_view kMessage =
     "Signal names must use lower_snake_case naming convention.";
 
-const LintRuleDescriptor& SignalNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &SignalNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "signal-name-style",
       .topic = "signal-conventions",
@@ -60,26 +60,26 @@ const LintRuleDescriptor& SignalNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& PortMatcher() {
+static const Matcher &PortMatcher() {
   static const Matcher matcher(NodekPortDeclaration());
   return matcher;
 }
 
-static const Matcher& NetMatcher() {
+static const Matcher &NetMatcher() {
   static const Matcher matcher(NodekNetDeclaration());
   return matcher;
 }
 
-static const Matcher& DataMatcher() {
+static const Matcher &DataMatcher() {
   static const Matcher matcher(NodekDataDeclaration());
   return matcher;
 }
 
-void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                       const SyntaxTreeContext& context) {
+void SignalNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                       const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
-    const auto* identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
+    const auto *identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
     const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
     if (!verible::IsLowerSnakeCaseWithDigits(name)) {
       violations_.insert(
@@ -87,7 +87,7 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     }
   } else if (NetMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromNetDeclaration(symbol);
-    for (const auto* leaf : identifier_leaves) {
+    for (const auto *leaf : identifier_leaves) {
       const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name)) {
         violations_.insert(LintViolation(*leaf, kMessage, context));
@@ -95,7 +95,7 @@ void SignalNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
     }
   } else if (DataMatcher().Matches(symbol, &manager)) {
     const auto identifier_leaves = GetIdentifiersFromDataDeclaration(symbol);
-    for (const auto* leaf : identifier_leaves) {
+    for (const auto *leaf : identifier_leaves) {
       const auto name = leaf->text();
       if (!verible::IsLowerSnakeCaseWithDigits(name)) {
         violations_.insert(LintViolation(*leaf, kMessage, context));

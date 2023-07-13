@@ -33,15 +33,15 @@ namespace verible {
 // returning a greedily formatted result (which can still be rendered)
 // that will be marked as !CompletedFormatting().
 // This is guaranteed to return at least one result.
-std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine& uwline,
-                                              const BasicFormatStyle& style,
+std::vector<FormattedExcerpt> SearchLineWraps(const UnwrappedLine &uwline,
+                                              const BasicFormatStyle &style,
                                               int max_search_states);
 
 // Diagnostic helper for displaying when multiple optimal wrappings are found
 // by SearchLineWraps.  This aids in development around wrap penalty tuning.
 void DisplayEquallyOptimalWrappings(
-    std::ostream& stream, const UnwrappedLine& uwline,
-    const std::vector<FormattedExcerpt>& solutions);
+    std::ostream &stream, const UnwrappedLine &uwline,
+    const std::vector<FormattedExcerpt> &solutions);
 
 // Returns false as soon as calculated line length exceeds maximum, or a token
 // that requires a newline is encountered.  If everything fits, then return
@@ -51,8 +51,8 @@ struct FitResult {
   int final_column;
 };
 
-FitResult FitsOnLine(const UnwrappedLine& uwline,
-                     const BasicFormatStyle& style);
+FitResult FitsOnLine(const UnwrappedLine &uwline,
+                     const BasicFormatStyle &style);
 
 }  // namespace verible
 

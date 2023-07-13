@@ -22,7 +22,7 @@
 namespace verilog {
 
 // Returns a JSON representation of tree contained at root.
-nlohmann::json ConvertVerilogTreeToJson(const verible::Symbol& root,
+nlohmann::json ConvertVerilogTreeToJson(const verible::Symbol &root,
                                         absl::string_view base);
 
 }  // namespace verilog

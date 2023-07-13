@@ -69,7 +69,7 @@ struct ColumnPositionEntry {
 
 using ColumnPositionTree = VectorTree<ColumnPositionEntry>;
 
-std::ostream& operator<<(std::ostream&, const ColumnPositionTree&);
+std::ostream &operator<<(std::ostream &, const ColumnPositionTree &);
 
 // ColumnSchemaScanner traverses syntax subtrees of similar types and
 // collects the positions that wish to register columns for alignment
@@ -84,12 +84,12 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
       : sparse_columns_(ColumnPositionTree({{}, TokenInfo::EOFToken(), {}})) {}
 
   // Returns the collection of column position entries.
-  const ColumnPositionTree& SparseColumns() const { return sparse_columns_; }
+  const ColumnPositionTree &SparseColumns() const { return sparse_columns_; }
 
  protected:
   // Returns subpath relative to base_path
   static SyntaxTreePath GetSubpath(
-      const SyntaxTreePath& base_path,
+      const SyntaxTreePath &base_path,
       std::initializer_list<SyntaxTreePath::value_type> subpositions) {
     auto subpath = base_path;
     subpath.insert(subpath.end(), subpositions);
@@ -103,25 +103,25 @@ class ColumnSchemaScanner : public TreeContextPathVisitor {
   // 'path' represents relative position within the enclosing syntax subtree,
   // and is used as a key for ordering and matching columns.
   // Returns pointer to a created column or nullptr if column was not created.
-  static ColumnPositionTree* ReserveNewColumn(
-      ColumnPositionTree* parent_column, const Symbol& symbol,
-      const AlignmentColumnProperties& properties, const SyntaxTreePath& path);
-  ColumnPositionTree* ReserveNewColumn(
-      const Symbol& symbol, const AlignmentColumnProperties& properties,
-      const SyntaxTreePath& path) {
+  static ColumnPositionTree *ReserveNewColumn(
+      ColumnPositionTree *parent_column, const Symbol &symbol,
+      const AlignmentColumnProperties &properties, const SyntaxTreePath &path);
+  ColumnPositionTree *ReserveNewColumn(
+      const Symbol &symbol, const AlignmentColumnProperties &properties,
+      const SyntaxTreePath &path) {
     return ReserveNewColumn(&sparse_columns_, symbol, properties, path);
   }
 
   // Reserve a column using the current path as the key.
-  ColumnPositionTree* ReserveNewColumn(
-      const Symbol& symbol, const AlignmentColumnProperties& properties) {
+  ColumnPositionTree *ReserveNewColumn(
+      const Symbol &symbol, const AlignmentColumnProperties &properties) {
     return ReserveNewColumn(&sparse_columns_, symbol, properties, Path());
   }
   // Reserve a subcolumn using subcolumn number appended to the parent's path
   // as the key.
-  static ColumnPositionTree* ReserveNewColumn(
-      ColumnPositionTree* parent_column, const Symbol& symbol,
-      const AlignmentColumnProperties& properties) {
+  static ColumnPositionTree *ReserveNewColumn(
+      ColumnPositionTree *parent_column, const Symbol &symbol,
+      const AlignmentColumnProperties &properties) {
     CHECK_NOTNULL(parent_column);
     const SyntaxTreePath::value_type subindex =
         parent_column->Children().size();
@@ -178,7 +178,7 @@ struct TaggedTokenPartitionRange {
 // of group to align (same syntax).
 std::vector<TaggedTokenPartitionRange>
 GetSubpartitionsBetweenBlankLinesSingleTag(
-    const TokenPartitionRange& full_range, int subtype);
+    const TokenPartitionRange &full_range, int subtype);
 
 // From a range of token 'partitions', this selects sub-ranges to align.
 // 'partition_selector' decides which partitions qualify for alignment.
@@ -216,15 +216,15 @@ GetSubpartitionsBetweenBlankLinesSingleTag(
 //   match (B)  // continue group
 //
 std::vector<TaggedTokenPartitionRange> GetPartitionAlignmentSubranges(
-    const TokenPartitionRange& partitions,
+    const TokenPartitionRange &partitions,
     const std::function<AlignedPartitionClassification(
-        const TokenPartitionTree&)>& partition_selector,
+        const TokenPartitionTree &)> &partition_selector,
     int min_match_count = 2);
 
 // This is the interface used to extract alignment cells from ranges of tokens.
 // Note that it is not required to use a ColumnSchemaScanner.
 using AlignmentCellScannerFunction =
-    std::function<ColumnPositionTree(const TokenPartitionTree&)>;
+    std::function<ColumnPositionTree(const TokenPartitionTree &)>;
 
 // For sections of code that are deemed alignable, this enum controls
 // the formatter behavior.
@@ -243,19 +243,19 @@ enum class AlignmentPolicy {
   kInferUserIntent,
 };
 
-std::ostream& operator<<(std::ostream&, AlignmentPolicy);
+std::ostream &operator<<(std::ostream &, AlignmentPolicy);
 
-bool AbslParseFlag(absl::string_view text, AlignmentPolicy* policy,
-                   std::string* error);
+bool AbslParseFlag(absl::string_view text, AlignmentPolicy *policy,
+                   std::string *error);
 
-std::string AbslUnparseFlag(const AlignmentPolicy& policy);
+std::string AbslUnparseFlag(const AlignmentPolicy &policy);
 
 // This represents one unit of alignable work, which is usually a filtered
 // subset of partitions within a contiguous range of partitions.
 class AlignablePartitionGroup {
  public:
-  AlignablePartitionGroup(const std::vector<TokenPartitionIterator>& rows,
-                          const AlignmentCellScannerFunction& scanner,
+  AlignablePartitionGroup(const std::vector<TokenPartitionIterator> &rows,
+                          const AlignmentCellScannerFunction &scanner,
                           AlignmentPolicy policy)
       : alignable_rows_(rows),
         alignment_cell_scanner_(scanner),
@@ -274,10 +274,10 @@ class AlignablePartitionGroup {
  private:
   struct GroupAlignmentData;
   static GroupAlignmentData CalculateAlignmentSpacings(
-      const std::vector<TokenPartitionIterator>& rows,
-      const AlignmentCellScannerFunction& cell_scanner_gen, int column_limit);
+      const std::vector<TokenPartitionIterator> &rows,
+      const AlignmentCellScannerFunction &cell_scanner_gen, int column_limit);
 
-  void ApplyAlignment(const GroupAlignmentData& align_data) const;
+  void ApplyAlignment(const GroupAlignmentData &align_data) const;
 
  private:
   // The set of partitions to treat as rows for tabular alignment.
@@ -295,18 +295,18 @@ class AlignablePartitionGroup {
 // a sequence of sub-ranges for the purposes of formatting aligned groups.
 using ExtractAlignmentGroupsFunction =
     std::function<std::vector<AlignablePartitionGroup>(
-        const TokenPartitionRange&)>;
+        const TokenPartitionRange &)>;
 
 // This predicate function is used to select partitions to be ignored within
 // an alignment group.  For example, one may wish to ignore comment-only lines.
 using IgnoreAlignmentRowPredicate =
-    std::function<bool(const TokenPartitionTree&)>;
+    std::function<bool(const TokenPartitionTree &)>;
 
 // Select subset of iterators inside a partition range that are not ignored
 // by the predicate.
 std::vector<TokenPartitionIterator> FilterAlignablePartitions(
-    const TokenPartitionRange& range,
-    const IgnoreAlignmentRowPredicate& ignore_partition_predicate);
+    const TokenPartitionRange &range,
+    const IgnoreAlignmentRowPredicate &ignore_partition_predicate);
 
 // This adapter composes several functions for alignment (legacy interface) into
 // one used in the current interface.  This exists to help migrate existing code
@@ -318,9 +318,9 @@ std::vector<TokenPartitionIterator> FilterAlignablePartitions(
 // TabularAlignTokens().
 ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
     const std::function<std::vector<TaggedTokenPartitionRange>(
-        const TokenPartitionRange&)>& legacy_extractor,
-    const IgnoreAlignmentRowPredicate& legacy_ignore_predicate,
-    const AlignmentCellScannerFunction& alignment_cell_scanner,
+        const TokenPartitionRange &)> &legacy_extractor,
+    const IgnoreAlignmentRowPredicate &legacy_ignore_predicate,
+    const AlignmentCellScannerFunction &alignment_cell_scanner,
     AlignmentPolicy alignment_policy);
 
 // Instantiates a ScannerType (implements ColumnSchemaScanner) and extracts
@@ -331,26 +331,26 @@ ExtractAlignmentGroupsFunction ExtractAlignmentGroupsAdapter(
 // for alignment purposes.
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells(
-    const TokenPartitionTree& row,
-    const std::function<ScannerType(void)>& scanner_factory) {
-  const UnwrappedLine& unwrapped_line = row.Value();
+    const TokenPartitionTree &row,
+    const std::function<ScannerType(void)> &scanner_factory) {
+  const UnwrappedLine &unwrapped_line = row.Value();
   // Walk the original syntax tree that spans a subset of the tokens spanned by
   // this 'row', and detect the sparse set of columns found by the scanner.
   ScannerType scanner = scanner_factory();
-  const Symbol* origin = unwrapped_line.Origin();
+  const Symbol *origin = unwrapped_line.Origin();
   if (origin != nullptr) origin->Accept(&scanner);
   return scanner.SparseColumns();
 }
 
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells(
-    const TokenPartitionTree& row) {
+    const TokenPartitionTree &row) {
   return ScanPartitionForAlignmentCells<ScannerType>(
       row, [] { return ScannerType(); });
 }
 
 using NonTreeTokensScannerFunction = std::function<void(
-    FormatTokenRange, FormatTokenRange, ColumnPositionTree*)>;
+    FormatTokenRange, FormatTokenRange, ColumnPositionTree *)>;
 
 // Similarly to the function above this function creates an instance of
 // ScannerType and extracts column alignment information. Firstly it reuses
@@ -367,27 +367,27 @@ using NonTreeTokensScannerFunction = std::function<void(
 // purposes.
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
-    const TokenPartitionTree& row,
-    const std::function<ScannerType(void)>& scanner_factory,
-    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
+    const TokenPartitionTree &row,
+    const std::function<ScannerType(void)> &scanner_factory,
+    const NonTreeTokensScannerFunction &non_tree_column_scanner) {
   // re-use existing scanner
   ColumnPositionTree column_entries =
       ScanPartitionForAlignmentCells<ScannerType>(row, scanner_factory);
 
-  const UnwrappedLine& unwrapped_line = row.Value();
+  const UnwrappedLine &unwrapped_line = row.Value();
   const auto ftokens = unwrapped_line.TokensRange();
-  const Symbol* origin = unwrapped_line.Origin();
+  const Symbol *origin = unwrapped_line.Origin();
 
   FormatTokenRange leading_tokens(ftokens.begin(), ftokens.begin());
   FormatTokenRange trailing_tokens(ftokens.end(), ftokens.end());
   if (origin != nullptr) {
     // Identify the last token covered by the origin tree.
-    const SyntaxTreeLeaf* first_leaf = GetLeftmostLeaf(*origin);
-    const SyntaxTreeLeaf* last_leaf = GetRightmostLeaf(*origin);
+    const SyntaxTreeLeaf *first_leaf = GetLeftmostLeaf(*origin);
+    const SyntaxTreeLeaf *last_leaf = GetRightmostLeaf(*origin);
     CHECK_NOTNULL(first_leaf);
     CHECK_NOTNULL(last_leaf);
-    const TokenInfo& first_tree_token = first_leaf->get();
-    const TokenInfo& last_tree_token = last_leaf->get();
+    const TokenInfo &first_tree_token = first_leaf->get();
+    const TokenInfo &last_tree_token = last_leaf->get();
 
     // Collect tokens excluded from SyntaxTree (delimiters and comments)
     CHECK(!ftokens.empty());
@@ -430,8 +430,8 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
 
 template <class ScannerType>
 ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
-    const TokenPartitionTree& row,
-    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
+    const TokenPartitionTree &row,
+    const NonTreeTokensScannerFunction &non_tree_column_scanner) {
   return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
       row, [] { return ScannerType(); }, non_tree_column_scanner);
 }
@@ -450,15 +450,15 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
 //   };
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator() {
-  return [](const TokenPartitionTree& row) {
+  return [](const TokenPartitionTree &row) {
     return ScanPartitionForAlignmentCells<ScannerType>(row);
   };
 }
 
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-    const std::function<ScannerType(void)>& scanner_factory) {
-  return [scanner_factory](const TokenPartitionTree& row) {
+    const std::function<ScannerType(void)> &scanner_factory) {
+  return [scanner_factory](const TokenPartitionTree &row) {
     return ScanPartitionForAlignmentCells<ScannerType>(row, scanner_factory);
   };
 }
@@ -468,8 +468,8 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
 // comments.
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
-    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
-  return [non_tree_column_scanner](const TokenPartitionTree& row) {
+    const NonTreeTokensScannerFunction &non_tree_column_scanner) {
+  return [non_tree_column_scanner](const TokenPartitionTree &row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
         row, non_tree_column_scanner);
   };
@@ -478,9 +478,9 @@ AlignmentCellScannerFunction AlignmentCellScannerGenerator(
 template <class ScannerType>
 AlignmentCellScannerFunction AlignmentCellScannerGenerator(
     const std::function<ScannerType(void)> scanner_factory,
-    const NonTreeTokensScannerFunction& non_tree_column_scanner) {
+    const NonTreeTokensScannerFunction &non_tree_column_scanner) {
   return [scanner_factory,
-          non_tree_column_scanner](const TokenPartitionTree& row) {
+          non_tree_column_scanner](const TokenPartitionTree &row) {
     return ScanPartitionForAlignmentCells_WithNonTreeTokens<ScannerType>(
         row, scanner_factory, non_tree_column_scanner);
   };
@@ -534,9 +534,9 @@ void FormatUsingOriginalSpacing(TokenPartitionRange partition_range);
 //
 void TabularAlignTokens(
     int column_limit, absl::string_view full_text,
-    const ByteOffsetSet& disabled_byte_ranges,
-    const ExtractAlignmentGroupsFunction& extract_alignment_groups,
-    TokenPartitionTree* partition_ptr);
+    const ByteOffsetSet &disabled_byte_ranges,
+    const ExtractAlignmentGroupsFunction &extract_alignment_groups,
+    TokenPartitionTree *partition_ptr);
 
 }  // namespace verible
 

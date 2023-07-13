@@ -30,7 +30,7 @@ namespace verible {
 // By comparing only the left-bound of the corresponding text ranges,
 // this assumes that no two violations start at the same location.
 // This assumption could be removed later, if needed.
-static int CompareViolation(const LintViolation& lhs, const TokenInfo& rhs) {
+static int CompareViolation(const LintViolation &lhs, const TokenInfo &rhs) {
   {
     const int delta =
         std::distance(rhs.text().begin(), lhs.token.text().begin());
@@ -50,8 +50,8 @@ static int CompareViolation(const LintViolation& lhs, const TokenInfo& rhs) {
 
 // TODO(b/151371397): refactor this for re-use for multi-findings style tests.
 bool LintTestCase::ExactMatchFindings(
-    const std::set<LintViolation>& found_violations, absl::string_view base,
-    std::ostream* diffstream) const {
+    const std::set<LintViolation> &found_violations, absl::string_view base,
+    std::ostream *diffstream) const {
   // Due to the order in which violations are visited, we can assert that
   // the reported violations are thus ordered.
   // TODO(fangism): It wouldn't be too expensive to verify this assertion.
@@ -76,7 +76,7 @@ bool LintTestCase::ExactMatchFindings(
     all_match = false;
     *diffstream
         << "FOUND these violations, but did not match the expected ones:\n";
-    for (const auto& violation : unmatched_found_violations) {
+    for (const auto &violation : unmatched_found_violations) {
       violation.token.ToStream(*diffstream, context) << std::endl;
     }
   }
@@ -84,7 +84,7 @@ bool LintTestCase::ExactMatchFindings(
     all_match = false;
     *diffstream
         << "EXPECTED these violations, but did not match the ones found:\n";
-    for (const auto& violation : unmatched_expected_violations) {
+    for (const auto &violation : unmatched_expected_violations) {
       violation.ToStream(*diffstream, context) << std::endl;
     }
   }

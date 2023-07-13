@@ -27,7 +27,7 @@
 
 namespace verible {
 
-void SyntaxTreeLinter::Lint(const Symbol& root) {
+void SyntaxTreeLinter::Lint(const Symbol &root) {
   VLOG(1) << "SyntaxTreeLinter analyzing syntax tree with " << rules_.size()
           << " rules.";
   root.Accept(this);
@@ -36,15 +36,15 @@ void SyntaxTreeLinter::Lint(const Symbol& root) {
 std::vector<LintRuleStatus> SyntaxTreeLinter::ReportStatus() const {
   std::vector<LintRuleStatus> status;
   status.reserve(rules_.size());
-  for (const auto& rule : rules_) {
+  for (const auto &rule : rules_) {
     status.push_back(ABSL_DIE_IF_NULL(rule)->Report());
   }
   return status;
 }
 
 // Visits a leaf. Every held rule handles that leaf.
-void SyntaxTreeLinter::Visit(const SyntaxTreeLeaf& leaf) {
-  for (const auto& rule : rules_) {
+void SyntaxTreeLinter::Visit(const SyntaxTreeLeaf &leaf) {
+  for (const auto &rule : rules_) {
     // Have rule handle the leaf as both a leaf and a symbol.
     ABSL_DIE_IF_NULL(rule)->HandleLeaf(leaf, Context());
     rule->HandleSymbol(leaf, Context());
@@ -54,8 +54,8 @@ void SyntaxTreeLinter::Visit(const SyntaxTreeLeaf& leaf) {
 // Visits a node. First, linter has every rule handle that node
 // Second, linter recurses on every non-null child of that node in order
 // to visit the entire tree
-void SyntaxTreeLinter::Visit(const SyntaxTreeNode& node) {
-  for (const auto& rule : rules_) {
+void SyntaxTreeLinter::Visit(const SyntaxTreeNode &node) {
+  for (const auto &rule : rules_) {
     // Have rule handle the node as both a node and a symbol.
     ABSL_DIE_IF_NULL(rule)->HandleNode(node, Context());
     rule->HandleSymbol(node, Context());

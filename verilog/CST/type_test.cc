@@ -61,10 +61,10 @@ TEST(FindAllDataTypeDeclarationsTest, BasicTests) {
       {"task foo(int foo, inout bar); endtask", 2},
       {"task foo(bit foo, ref bar); endtask", 2},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto data_type_declarations =
         FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(data_type_declarations.size(), test.second);
@@ -88,10 +88,10 @@ TEST(FindAllTypeDeclarationsTest, BasicTests) {
           {kTag, "typedef enum { Idle, Busy } another_name;"},
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -126,10 +126,10 @@ TEST(FindAllEnumTypesTest, BasicTests) {
        {kTag, "enum { Idle, Busy }"},
        " another_name;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllEnumTypes(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -160,10 +160,10 @@ TEST(FindAllStructTypesTest, BasicTests) {
        " other_name; "
        "typedef enum { Idle, Busy } another_name;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllStructTypes(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -194,10 +194,10 @@ TEST(FindAllUnionTypesTest, BasicTests) {
        " other_name; "
        "typedef enum { Idle, Busy } another_name;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllUnionTypes(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -213,12 +213,12 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, AcceptTests) {
       {"task foo(int bar); endtask", 1},
       {"task foo(int foo, bit bar); endtask", 2},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test.first, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto data_type_declarations = FindAllDataTypeDeclarations(*root);
-    for (const auto& data_type : data_type_declarations) {
+    for (const auto &data_type : data_type_declarations) {
       // Only check the node kDataTypes within a node kPortList.
       if (analysis::ContextIsInsideTaskFunctionPortList(data_type.context)) {
         EXPECT_TRUE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)))
@@ -240,12 +240,12 @@ TEST(IsStorageTypeOfDataTypeSpecifiedTest, RejectTests) {
       {"task foo(foo, input bar); endtask"},
       {"task foo(input foo, inout bar); endtask"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VerilogAnalyzer analyzer(test, "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto data_type_declarations = FindAllDataTypeDeclarations(*root);
-    for (const auto& data_type : data_type_declarations) {
+    for (const auto &data_type : data_type_declarations) {
       // Only check the node kDataTypes within a node kPortList.
       if (analysis::ContextIsInsideTaskFunctionPortList(data_type.context)) {
         EXPECT_FALSE(IsStorageTypeOfDataTypeSpecified(*(data_type.match)));
@@ -270,14 +270,14 @@ TEST(GetIdentifierFromTypeDeclarationTest, TypedefNames) {
       {"typedef union { int a; bit [8:0] b; } ", {kTag, "bar2"}, ";"},
       {"typedef union { int a; } ", {kTag, "name"}, ";"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto type_declarations = FindAllTypeDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
           ids.reserve(type_declarations.size());
-          for (const auto& decl : type_declarations) {
+          for (const auto &decl : type_declarations) {
             ids.push_back(TreeSearchMatch{
                 GetIdentifierFromTypeDeclaration(*decl.match),
                 /* no context */});
@@ -326,17 +326,17 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
        " v2 [x:y], v3 [x:y];\nendfunction"},
       {"class c;\n class_type x;\nendclass"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &decls = FindAllDataDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> packed_dimensions;
-          for (const auto& decl : decls) {
+          for (const auto &decl : decls) {
             VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
-            const auto* packed_dimension =
+            const auto *packed_dimension =
                 GetPackedDimensionFromDataDeclaration(*decl.match);
             if (packed_dimension == nullptr) continue;
             if (packed_dimension->children().empty()) continue;
@@ -371,16 +371,16 @@ TEST(GetType, GetStructOrUnionOrEnumType) {
        {kTag, "enum { Idle, Busy }"},
        " another_name;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& types = FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &types = FindAllTypeDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : types) {
-            const auto* name = GetReferencedTypeOfTypeDeclaration(*decl.match);
+          for (const auto &decl : types) {
+            const auto *name = GetReferencedTypeOfTypeDeclaration(*decl.match);
             if (name == nullptr) continue;
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
@@ -396,16 +396,16 @@ TEST(GetTypeIdentifier, GetNameOfDataType) {
       {"module m(logic x);\nendmodule"},
       {"module m(", {kTag, "bus"}, " x);\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& types =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &types =
               FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : types) {
-            const auto* name = GetTypeIdentifierFromDataType(*decl.match);
+          for (const auto &decl : types) {
+            const auto *name = GetTypeIdentifierFromDataType(*decl.match);
             if (name == nullptr) {
               continue;
             }
@@ -426,17 +426,17 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
       {"union {union {int x;} var2;} var1;"},
       {"union {", {kTag, "my_type"}, " var2;} var1;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     VLOG(1) << "code:\n" << test.code;
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& types =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &types =
               FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> inner_types;
-          for (const auto& decl : types) {
-            const auto* inner_type =
+          for (const auto &decl : types) {
+            const auto *inner_type =
                 GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
             if (inner_type == nullptr) {
               continue;
@@ -482,15 +482,15 @@ TEST(GetDataImplicitIdDimensions, GetNameOfDataImplicitIdDimensions) {
        {kTag, "yy"},
        ";}\nfar;"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& types =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &types =
               FindAllDataTypeImplicitIdDimensions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : types) {
+          for (const auto &decl : types) {
             const auto name =
                 GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
                     *decl.match);
@@ -528,15 +528,15 @@ TEST(GetEnumName, GetEnumNameIdentifier) {
        {kTag, "BB"},
        "} enum_var;\nendpackage"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances = FindAllEnumNames(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances = FindAllEnumNames(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : instances) {
-            const auto* name = GetSymbolIdentifierFromEnumName(*decl.match);
+          for (const auto &decl : instances) {
+            const auto *name = GetSymbolIdentifierFromEnumName(*decl.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -552,16 +552,16 @@ TEST(GetIdentifiersFromDataType, GetIdentifier) {
       {"function ", {kTag, "void"}, " foo();\nendfunction"},
       {"function foo();\n  ", {kTag, "test"}, " data = foo();\nendfunction"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllDataTypeDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : instances) {
-            const auto* name = GetIdentifiersFromDataType(*decl.match);
+          for (const auto &decl : instances) {
+            const auto *name = GetIdentifiersFromDataType(*decl.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -577,17 +577,17 @@ TEST(GetLocalRootFromReference, GetLocalRoot) {
        " = foo.foo();\n"
        "endfunction"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& instances =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &instances =
               FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& decl : instances) {
+          for (const auto &decl : instances) {
             if (ReferenceIsSimpleIdentifier(*decl.match)) {
-              const auto* name = GetLocalRootFromReference(*decl.match);
+              const auto *name = GetLocalRootFromReference(*decl.match);
               names.emplace_back(
                   TreeSearchMatch{name, {/* ignored context */}});
             }

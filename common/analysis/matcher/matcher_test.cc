@@ -103,8 +103,8 @@ TEST(MatcherTest, BindMatcherFlat) {
   const auto should_match = TNode(5);
   EXPECT_TRUE(matcher.Matches(*should_match, &bound_symbol_manager));
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("f"));
-  const auto* node_ptr =
-      down_cast<const SyntaxTreeNode*>(bound_symbol_manager.FindSymbol("f"));
+  const auto *node_ptr =
+      down_cast<const SyntaxTreeNode *>(bound_symbol_manager.FindSymbol("f"));
   ASSERT_NE(node_ptr, nullptr);
   EXPECT_TRUE(node_ptr->MatchesTag(5));
   EXPECT_EQ(bound_symbol_manager.Size(), 1);
@@ -133,10 +133,10 @@ TEST(MatcherTest, BindMatcherNested) {
   EXPECT_TRUE(outer_matcher.Matches(*should_match, &bound_symbol_manager));
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("f"));
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("g"));
-  const auto* outer_match =
-      down_cast<const SyntaxTreeNode*>(bound_symbol_manager.FindSymbol("f"));
+  const auto *outer_match =
+      down_cast<const SyntaxTreeNode *>(bound_symbol_manager.FindSymbol("f"));
   auto inner_match =
-      down_cast<const SyntaxTreeNode*>(bound_symbol_manager.FindSymbol("g"));
+      down_cast<const SyntaxTreeNode *>(bound_symbol_manager.FindSymbol("g"));
   ASSERT_NE(outer_match, nullptr);
   ASSERT_NE(inner_match, nullptr);
   EXPECT_TRUE(inner_match->MatchesTag(5));
@@ -153,9 +153,9 @@ TEST(MatcherTest, BindMatcherNested) {
 
 // Returns first child of symbol as a one element array.
 // If symbol is a leaf or doesn't have children, returns empty array.
-static std::vector<const Symbol*> GetFirstChild(const Symbol& symbol) {
+static std::vector<const Symbol *> GetFirstChild(const Symbol &symbol) {
   if (symbol.Kind() == SymbolKind::kNode) {
-    const auto& node = down_cast<const SyntaxTreeNode&>(symbol);
+    const auto &node = down_cast<const SyntaxTreeNode &>(symbol);
     if (node.children().empty()) return {};
     return {node.children()[0].get()};
   }
@@ -163,7 +163,7 @@ static std::vector<const Symbol*> GetFirstChild(const Symbol& symbol) {
   return {};
 }
 
-static bool HasExactlyOneChild(const Symbol& symbol) {
+static bool HasExactlyOneChild(const Symbol &symbol) {
   return GetFirstChild(symbol).size() == 1;
 }
 
@@ -185,10 +185,10 @@ TEST(MatcherTest, SimpleTransformerTest) {
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("f"));
   EXPECT_TRUE(bound_symbol_manager.ContainsSymbol("g"));
 
-  const auto* outer_match =
-      down_cast<const SyntaxTreeNode*>(bound_symbol_manager.FindSymbol("f"));
-  const auto* inner_match =
-      down_cast<const SyntaxTreeLeaf*>(bound_symbol_manager.FindSymbol("g"));
+  const auto *outer_match =
+      down_cast<const SyntaxTreeNode *>(bound_symbol_manager.FindSymbol("f"));
+  const auto *inner_match =
+      down_cast<const SyntaxTreeLeaf *>(bound_symbol_manager.FindSymbol("g"));
   ASSERT_NE(outer_match, nullptr);
   ASSERT_NE(inner_match, nullptr);
   EXPECT_EQ(outer_match->Tag(), NodeTag(5));

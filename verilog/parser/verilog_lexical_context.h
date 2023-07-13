@@ -64,7 +64,7 @@ class ConstraintBlockStateMachine {
   int InterpretToken(int token_enum) const;
 
   // Show representation (for debugging).
-  std::ostream& Dump(std::ostream&) const;
+  std::ostream &Dump(std::ostream &) const;
 
  private:
   void DeferInvalidToken(int token_enum);
@@ -106,8 +106,8 @@ class ConstraintBlockStateMachine {
   std::stack<State> states_;
 };
 
-inline std::ostream& operator<<(std::ostream& os,
-                                const ConstraintBlockStateMachine& s) {
+inline std::ostream &operator<<(std::ostream &os,
+                                const ConstraintBlockStateMachine &s) {
   return s.Dump(os);
 }
 
@@ -180,7 +180,7 @@ class LastSemicolonStateMachine {
         finish_token_enum_(stop),
         semicolon_replacement_(replacement) {}
 
-  void UpdateState(verible::TokenInfo*);
+  void UpdateState(verible::TokenInfo *);
 
  protected:
   enum State {
@@ -200,10 +200,10 @@ class LastSemicolonStateMachine {
   // Keeps track of the last semicolons.  Upon de-activation, the last
   // semicolon will be replaced.  Technically, we only need a two-slot queue,
   // but a CircularBuffer is overkill.
-  std::stack<verible::TokenInfo*> semicolons_;
+  std::stack<verible::TokenInfo *> semicolons_;
 
   // One token look-back.
-  verible::TokenInfo* previous_token_ = nullptr;
+  verible::TokenInfo *previous_token_ = nullptr;
 };
 }  // namespace internal
    //
@@ -230,8 +230,8 @@ class LexicalContext {
   ~LexicalContext() = default;
 
   // Not copy-able.
-  LexicalContext(const LexicalContext&) = delete;
-  LexicalContext& operator=(const LexicalContext&) = delete;
+  LexicalContext(const LexicalContext &) = delete;
+  LexicalContext &operator=(const LexicalContext &) = delete;
 
   // Re-writes some token enums in-place using context-sensitivity.
   // This function must re-tag tokens enumerated (_TK_*), see verilog.y and
@@ -241,7 +241,7 @@ class LexicalContext {
   // Postcondition: tokens_view's tokens must not be tagged with (_TK_*)
   // enumerations.
   void TransformVerilogSymbols(
-      const verible::TokenStreamReferenceView& tokens_view) {
+      const verible::TokenStreamReferenceView &tokens_view) {
     // TODO(fangism): Using a stream interface would further decouple the input
     // iteration from output iteration.
     for (auto iter : tokens_view) {
@@ -251,18 +251,18 @@ class LexicalContext {
 
  protected:  // Allow direct testing of some methods.
   // Reads a single token, and may alter it depending on internal state.
-  void AdvanceToken(verible::TokenInfo*);
+  void AdvanceToken(verible::TokenInfo *);
 
   // Changes the enum of a token where disambiguation is needed.
   int InterpretToken(int token_enum) const;
 
   // Changes the enum of a token (in-place) without changing internal state.
-  void MutateToken(verible::TokenInfo* token) const {
+  void MutateToken(verible::TokenInfo *token) const {
     token->set_token_enum(InterpretToken(token->token_enum()));
   }
 
   // Updates the internally tracked state without touching the token.
-  void UpdateState(const verible::TokenInfo& token);
+  void UpdateState(const verible::TokenInfo &token);
 
   // State functions:
 
@@ -287,7 +287,7 @@ class LexicalContext {
            in_initial_always_final_construct_;
   }
 
-  const verible::TokenInfo* previous_token_ = nullptr;
+  const verible::TokenInfo *previous_token_ = nullptr;
 
   // Non-nestable states can be represented without a stack.
   // Do not bother trying to accommodate malformed input token sequences.
@@ -315,14 +315,14 @@ class LexicalContext {
 
   // Tracks if, for, case blocks.
   struct FlowControlState {
-    const verible::TokenInfo* start;
+    const verible::TokenInfo *start;
     // When this is false, the state is still in the header, which is:
     //   if (...)
     //   for (...)
     //   case (...)  (including other case-variants)
     bool in_body = false;  // starts in header state
 
-    explicit FlowControlState(const verible::TokenInfo* token) : start(token) {}
+    explicit FlowControlState(const verible::TokenInfo *token) : start(token) {}
   };
   std::vector<FlowControlState> flow_control_stack_;
 
@@ -360,10 +360,10 @@ class LexicalContext {
   //     ...
   //   end  // pops off of this stack
   //
-  std::vector<const verible::TokenInfo*> block_stack_;
+  std::vector<const verible::TokenInfo *> block_stack_;
 
   // Tracks open-close paired tokens like parentheses and brackets and braces.
-  std::vector<const verible::TokenInfo*> balance_stack_;
+  std::vector<const verible::TokenInfo *> balance_stack_;
 };
 
 }  // namespace verilog

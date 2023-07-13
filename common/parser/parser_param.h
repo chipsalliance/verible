@@ -43,22 +43,22 @@ class ParserParam {
  public:
   // The "filename" is merely to have better error messages, it is purely
   // FYI, does not change processing.
-  ParserParam(TokenGenerator* token_stream, absl::string_view filename);
+  ParserParam(TokenGenerator *token_stream, absl::string_view filename);
 
   ~ParserParam();
 
-  const TokenInfo& FetchToken();
+  const TokenInfo &FetchToken();
 
-  const TokenInfo& GetLastToken() const { return last_token_; }
+  const TokenInfo &GetLastToken() const { return last_token_; }
 
   // Save a copy of the offending token before bison error-recovery
   // discards it.
-  void RecordSyntaxError(const SymbolPtr& symbol_ptr);
+  void RecordSyntaxError(const SymbolPtr &symbol_ptr);
 
   // Filename being processed, if known.
   absl::string_view filename() const { return filename_; }
 
-  const std::vector<TokenInfo>& RecoveredSyntaxErrors() const {
+  const std::vector<TokenInfo> &RecoveredSyntaxErrors() const {
     return recovered_syntax_errors_;
   }
 
@@ -70,8 +70,8 @@ class ParserParam {
   // New bison (at least 3.5) define the size type to be ptrdiff_t, while old
   // bisons use size_t. Be compatible with any reasonable long-ish type.
   template <typename SizeType>
-  void ResizeStacks(bison_state_int_type** state_stack, SymbolPtr** value_stack,
-                    SizeType* size) {
+  void ResizeStacks(bison_state_int_type **state_stack, SymbolPtr **value_stack,
+                    SizeType *size) {
     int64_t s = *size;
     ResizeStacksInternal(state_stack, value_stack, &s);
     *size = s;
@@ -89,15 +89,15 @@ class ParserParam {
   void SetRoot(ConcreteSyntaxTree r) { root_ = std::move(r); }
 
  private:
-  void ResizeStacksInternal(bison_state_int_type** state_stack,
-                            SymbolPtr** value_stack, int64_t* size);
+  void ResizeStacksInternal(bison_state_int_type **state_stack,
+                            SymbolPtr **value_stack, int64_t *size);
 
   // Container of syntax-rejected tokens.
   // TODO(fangism): Pair this with recovery token, the point at which
   // error-recovery is complete and parsing resumes (for diagnostic purposes).
   std::vector<TokenInfo> recovered_syntax_errors_;
 
-  TokenGenerator* const token_stream_;
+  TokenGenerator *const token_stream_;
   const std::string filename_;
 
   TokenInfo last_token_;
@@ -109,8 +109,8 @@ class ParserParam {
   size_t max_used_stack_size_;
 
  public:  // deleted member functions: public.
-  ParserParam(const ParserParam&) = delete;
-  ParserParam& operator=(const ParserParam&) = delete;
+  ParserParam(const ParserParam &) = delete;
+  ParserParam &operator=(const ParserParam &) = delete;
 };
 
 }  // namespace verible

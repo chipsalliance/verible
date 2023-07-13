@@ -33,10 +33,10 @@ bool Obfuscator::encode(absl::string_view key, absl::string_view value) {
 
 absl::string_view Obfuscator::operator()(absl::string_view input) {
   if (decode_mode_) {
-    const auto* p = translator_.find_reverse(input);
+    const auto *p = translator_.find_reverse(input);
     return (p != nullptr) ? *p : input;
   }
-  const std::string* str = translator_.insert_using_value_generator(
+  const std::string *str = translator_.insert_using_value_generator(
       std::string(input), [this, input]() { return generator_(input); });
   return *str;
 }
@@ -45,7 +45,7 @@ constexpr char kPairSeparator = ' ';
 
 std::string Obfuscator::save() const {
   std::ostringstream stream;
-  for (const auto& pair : translator_.forward_view()) {
+  for (const auto &pair : translator_.forward_view()) {
     stream << pair.first << kPairSeparator << *pair.second << "\n";
   }
   return stream.str();
@@ -54,7 +54,7 @@ std::string Obfuscator::save() const {
 absl::Status Obfuscator::load(absl::string_view mapping) {
   const std::vector<absl::string_view> lines =
       absl::StrSplit(mapping, '\n', absl::SkipEmpty());
-  for (const auto& line : lines) {
+  for (const auto &line : lines) {
     const std::vector<absl::string_view> elements =
         absl::StrSplit(absl::StripAsciiWhitespace(line), kPairSeparator);
     if (elements.size() < 2) {

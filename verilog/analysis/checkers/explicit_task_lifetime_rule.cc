@@ -45,7 +45,7 @@ VERILOG_REGISTER_LINT_RULE(ExplicitTaskLifetimeRule);
 static constexpr absl::string_view kMessage =
     "Explicitly define static or automatic lifetime for non-class tasks";
 
-const LintRuleDescriptor& ExplicitTaskLifetimeRule::GetDescriptor() {
+const LintRuleDescriptor &ExplicitTaskLifetimeRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "explicit-task-lifetime",
       .topic = "function-task-explicit-lifetime",
@@ -56,13 +56,13 @@ const LintRuleDescriptor& ExplicitTaskLifetimeRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& TaskMatcher() {
+static const Matcher &TaskMatcher() {
   static const Matcher matcher(NodekTaskDeclaration());
   return matcher;
 }
 
-void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol& symbol,
-                                            const SyntaxTreeContext& context) {
+void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol &symbol,
+                                            const SyntaxTreeContext &context) {
   // Don't need to check for lifetime declaration if context is inside a class
   if (ContextIsInsideClass(context)) return;
 
@@ -70,7 +70,7 @@ void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol& symbol,
   if (TaskMatcher().Matches(symbol, &manager)) {
     // If task id is qualified, it is an out-of-line
     // class task definition, which is also exempt.
-    const auto* task_id = GetTaskId(symbol);
+    const auto *task_id = GetTaskId(symbol);
     if (IdIsQualified(*task_id)) return;
 
     // Make sure the lifetime was set

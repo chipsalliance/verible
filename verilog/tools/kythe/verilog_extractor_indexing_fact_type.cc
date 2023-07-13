@@ -37,7 +37,7 @@ std::string IndexingFactTypeEnumToString(IndexingFactType indexing_fact_type) {
   }
 }
 
-std::ostream& operator<<(std::ostream& stream, const IndexingFactType& e) {
+std::ostream &operator<<(std::ostream &stream, const IndexingFactType &e) {
   return stream << IndexingFactTypeEnumToString(e);
 }
 

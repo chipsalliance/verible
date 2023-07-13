@@ -58,7 +58,7 @@ using verible::TreeSearchMatch;
 TEST(FindAllPortDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -68,7 +68,7 @@ TEST(FindAllPortDeclarationsTest, EmptySource) {
 TEST(FindAllPortDeclarationsTest, NonPort) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -78,7 +78,7 @@ TEST(FindAllPortDeclarationsTest, NonPort) {
 TEST(FindAllPortDeclarationsTest, OneWire) {
   VerilogAnalyzer analyzer("wire w;", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -88,7 +88,7 @@ TEST(FindAllPortDeclarationsTest, OneWire) {
 TEST(FindAllPortDeclarationsTest, OneWireInModule) {
   VerilogAnalyzer analyzer("module m; wire w; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -96,7 +96,7 @@ TEST(FindAllPortDeclarationsTest, OneWireInModule) {
 
 // Tests that a port wire inside a module is found.
 TEST(FindAllPortDeclarationsTest, OnePortInModule) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "logic l",
       "wire w",
       "input w",
@@ -116,11 +116,11 @@ TEST(FindAllPortDeclarationsTest, OnePortInModule) {
     VerilogAnalyzer analyzer(absl::StrCat("module m(", test, "); endmodule"),
                              "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto port_declarations =
         FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(port_declarations.size(), 1);
-    const auto& decl = port_declarations.front();
+    const auto &decl = port_declarations.front();
     EXPECT_TRUE(decl.context.IsInside(NodeEnum::kModuleDeclaration));
   }
 }
@@ -167,14 +167,14 @@ TEST(GetIdentifierFromPortDeclarationTest, VariousPorts) {
        {kTag, "bar2"},
        "); endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto port_declarations = FindAllPortDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
-          for (const auto& port : port_declarations) {
-            const auto* identifier_leaf =
+          for (const auto &port : port_declarations) {
+            const auto *identifier_leaf =
                 GetIdentifierFromPortDeclaration(*port.match);
             ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
           }
@@ -187,7 +187,7 @@ TEST(GetIdentifierFromPortDeclarationTest, VariousPorts) {
 TEST(FindAllModulePortDeclarationsTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -197,7 +197,7 @@ TEST(FindAllModulePortDeclarationsTest, EmptySource) {
 TEST(FindAllModulePortDeclarationsTest, NonPort) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -207,7 +207,7 @@ TEST(FindAllModulePortDeclarationsTest, NonPort) {
 TEST(FindAllModulePortDeclarationsTest, OneWire) {
   VerilogAnalyzer analyzer("wire w;", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -217,7 +217,7 @@ TEST(FindAllModulePortDeclarationsTest, OneWire) {
 TEST(FindAllModulePortDeclarationsTest, OneWireInModule) {
   VerilogAnalyzer analyzer("module m; wire w; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto port_declarations =
       FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(port_declarations.empty());
@@ -225,7 +225,7 @@ TEST(FindAllModulePortDeclarationsTest, OneWireInModule) {
 
 // Tests that a port wire inside a module is found.
 TEST(FindAllModulePortDeclarationsTest, OnePortInModule) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "input p",     "input [1:0] p",     "input p [0:1]",
       "input p [6]", "input [7:0] p [6]", "input wire p",
       "output p",    "output reg p",      "output reg [1:0] p",
@@ -234,11 +234,11 @@ TEST(FindAllModulePortDeclarationsTest, OnePortInModule) {
     VerilogAnalyzer analyzer(absl::StrCat("module m(p); ", test, "; endmodule"),
                              "");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto port_declarations =
         FindAllModulePortDeclarations(*ABSL_DIE_IF_NULL(root));
     EXPECT_EQ(port_declarations.size(), 1);
-    const auto& decl = port_declarations.front();
+    const auto &decl = port_declarations.front();
     EXPECT_TRUE(decl.context.IsInside(NodeEnum::kModuleDeclaration));
   }
 }
@@ -283,14 +283,14 @@ TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
        {kTag, "bar2"},
        "; endmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto port_declarations = FindAllModulePortDeclarations(*root);
           std::vector<TreeSearchMatch> ids;
-          for (const auto& port : port_declarations) {
-            const auto* identifier_leaf =
+          for (const auto &port : port_declarations) {
+            const auto *identifier_leaf =
                 GetIdentifierFromModulePortDeclaration(*port.match);
             ids.push_back(TreeSearchMatch{identifier_leaf, /* no context */});
           }
@@ -301,7 +301,7 @@ TEST(GetIdentifierFromModulePortDeclarationTest, VariousPorts) {
 
 // Negative tests that no ports are found where they are not expected.
 TEST(FindAllTaskFunctionPortDeclarationsTest, ExpectNoTaskFunctionPorts) {
-  constexpr const char* kTestCases[] = {
+  constexpr const char *kTestCases[] = {
       "",
       "module foo(input wire bar); endmodule",
       "function void foo(); endfunction",
@@ -309,10 +309,10 @@ TEST(FindAllTaskFunctionPortDeclarationsTest, ExpectNoTaskFunctionPorts) {
       "class foo; endclass",
       "class foo; function void bar(); endfunction endclass",
   };
-  for (const auto* code : kTestCases) {
+  for (const auto *code : kTestCases) {
     VerilogAnalyzer analyzer(code, "<<inline-file>>");
     ASSERT_OK(analyzer.Analyze());
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto port_declarations =
         FindAllTaskFunctionPortDeclarations(*ABSL_DIE_IF_NULL(root));
     EXPECT_TRUE(port_declarations.empty());
@@ -357,26 +357,26 @@ TEST(GetIdentifierFromTaskFunctionPortItemTest, ExpectSomeTaskFunctionPorts) {
       {"task automatic foo(input pkg::t_t bar, output pkg::t_t baz); endtask",
        {{"bar", true}, {"baz", true}}},
   };
-  for (const auto& test : kTestCases) {
-    const std::string& code = test.code;
-    const auto& expected_ports = test.expected_ports;
+  for (const auto &test : kTestCases) {
+    const std::string &code = test.code;
+    const auto &expected_ports = test.expected_ports;
     VerilogAnalyzer analyzer(code, "<<inline-file>>");
     ASSERT_OK(analyzer.Analyze()) << "Failed code:\n" << code;
-    const auto& root = analyzer.Data().SyntaxTree();
+    const auto &root = analyzer.Data().SyntaxTree();
     const auto port_declarations =
         FindAllTaskFunctionPortDeclarations(*ABSL_DIE_IF_NULL(root));
     ASSERT_EQ(port_declarations.size(), expected_ports.size());
 
     // Compare expected port ids one-by-one, and check for type presence.
     int i = 0;
-    for (const auto& expected_port : expected_ports) {
-      const auto& port_decl = port_declarations[i];
-      const auto* identifier_leaf =
+    for (const auto &expected_port : expected_ports) {
+      const auto &port_decl = port_declarations[i];
+      const auto *identifier_leaf =
           GetIdentifierFromTaskFunctionPortItem(*port_decl.match);
       EXPECT_EQ(identifier_leaf->get().text(), expected_port.id)
           << "Failed code:\n"
           << code;
-      const auto* port_type = GetTypeOfTaskFunctionPortItem(*port_decl.match);
+      const auto *port_type = GetTypeOfTaskFunctionPortItem(*port_decl.match);
       EXPECT_EQ(IsStorageTypeOfDataTypeSpecified(*ABSL_DIE_IF_NULL(port_type)),
                 expected_port.have_type)
           << "Failed code:\n"
@@ -401,16 +401,16 @@ TEST(GetAllPortReferences, GetPortReferenceIdentifier) {
       {"module m(input wire a,", {kTag, "b"}, "[0:1]); endmodule: m"},
       {"module m(wire a,", {kTag, "b"}, "[0:1]); endmodule: m"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto decls = FindAllPortReferences(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> types;
-          for (const auto& decl : decls) {
-            const auto* type = GetIdentifierFromPortReference(
+          for (const auto &decl : decls) {
+            const auto *type = GetIdentifierFromPortReference(
                 *GetPortReferenceFromPort(*decl.match));
             types.push_back(TreeSearchMatch{type, {/* ignored context */}});
           }
@@ -433,15 +433,15 @@ TEST(GetActualNamedPort, GetActualPortName) {
        {kTag, "in3"},
        ");\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> names;
-          for (const auto& port : ports) {
-            const auto* name = GetActualNamedPortName(*port.match);
+          for (const auto &port : ports) {
+            const auto *name = GetActualNamedPortName(*port.match);
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -461,15 +461,15 @@ TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
        ", ",
        ".in3);\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &ports = FindAllActualNamedPort(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> paren_groups;
-          for (const auto& port : ports) {
-            const auto* paren_group = GetActualNamedPortParenGroup(*port.match);
+          for (const auto &port : ports) {
+            const auto *paren_group = GetActualNamedPortParenGroup(*port.match);
             if (paren_group == nullptr) {
               continue;
             }
@@ -495,16 +495,16 @@ TEST(FunctionPort, GetUnpackedDimensions) {
        ");\nendtask"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& ports =
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &ports =
               FindAllTaskFunctionPortDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> dimensions;
-          for (const auto& port : ports) {
-            const auto* dimension =
+          for (const auto &port : ports) {
+            const auto *dimension =
                 GetUnpackedDimensionsFromTaskFunctionPortItem(*port.match);
             dimensions.emplace_back(
                 TreeSearchMatch{dimension, {/* ignored context */}});
@@ -534,18 +534,18 @@ TEST(FunctionPort, GetDirection) {
        " b); endmodule;"},
   };
 
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
-          const auto& ports = FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &ports = FindAllPortDeclarations(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> directions;
-          for (const auto& port : ports) {
-            const auto* direction =
+          for (const auto &port : ports) {
+            const auto *direction =
                 GetDirectionFromPortDeclaration(*port.match);
             directions.emplace_back(
-                TreeSearchMatch{(const verible::Symbol*)direction, {}});
+                TreeSearchMatch{(const verible::Symbol *)direction, {}});
           }
           return directions;
         });

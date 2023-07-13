@@ -42,7 +42,7 @@ namespace {
 TEST(GetIdentifiersFromDataDeclarationTest, EmptySource) {
   VerilogAnalyzer analyzer("", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(data_declarations.empty());
@@ -51,7 +51,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, EmptySource) {
 TEST(GetIdentifiersFromDataDeclarationTest, NoData) {
   VerilogAnalyzer analyzer("module foo; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   EXPECT_TRUE(data_declarations.empty());
@@ -60,7 +60,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, NoData) {
 TEST(GetIdentifiersFromDataDeclarationTest, OneVariable) {
   VerilogAnalyzer analyzer("module foo; logic v; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 1);
@@ -70,7 +70,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, OneVariable) {
 TEST(GetIdentifiersFromDataDeclarationTest, MultipleVariables) {
   VerilogAnalyzer analyzer("module foo; logic x; logic y; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 2);
@@ -81,7 +81,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, MultipleVariables) {
 TEST(GetIdentifiersFromDataDeclarationTest, MultipleInlineVariables) {
   VerilogAnalyzer analyzer("module foo; logic x, y, z; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 3);
@@ -93,7 +93,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, MultipleInlineVariables) {
 TEST(GetIdentifiersFromDataDeclarationTest, MultipleMixedVariables) {
   VerilogAnalyzer analyzer("module foo; logic x, y, z; logic a; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 4);
@@ -106,7 +106,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, MultipleMixedVariables) {
 TEST(GetIdentifiersFromDataDeclarationTest, OneObjectVariable) {
   VerilogAnalyzer analyzer("module top; foo baz(0); endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 1);
@@ -116,7 +116,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, OneObjectVariable) {
 TEST(GetIdentifiersFromDataDeclarationTest, MultipleObjectVariables) {
   VerilogAnalyzer analyzer("module top; foo baz(0); foo bay(1); endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 2);
@@ -127,7 +127,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, MultipleObjectVariables) {
 TEST(GetIdentifiersFromDataDeclarationTest, MultipleInlineObjectVariables) {
   VerilogAnalyzer analyzer("module top; foo baz(0), bay(1); endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 2);
@@ -145,7 +145,7 @@ logic b, c;
 endmodule)",
                            "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 6);
@@ -160,7 +160,7 @@ endmodule)",
 TEST(GetIdentifiersFromDataDeclarationTest, DoNotMatchArrayDeclarations) {
   VerilogAnalyzer analyzer("module top; logic v[M:N]; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 1);
@@ -170,7 +170,7 @@ TEST(GetIdentifiersFromDataDeclarationTest, DoNotMatchArrayDeclarations) {
 TEST(GetIdentifiersFromDataDeclarationTest, DoNotMatchAssignedVariables) {
   VerilogAnalyzer analyzer("module top; logic v = z; endmodule", "");
   ASSERT_OK(analyzer.Analyze());
-  const auto& root = analyzer.Data().SyntaxTree();
+  const auto &root = analyzer.Data().SyntaxTree();
   const auto data_declarations =
       GetIdentifiersFromDataDeclaration(*ABSL_DIE_IF_NULL(root));
   ASSERT_EQ(data_declarations.size(), 1);

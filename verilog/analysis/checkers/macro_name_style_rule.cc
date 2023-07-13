@@ -44,7 +44,7 @@ static constexpr absl::string_view kMessage =
     "Macro names must contain only CAPITALS, underscores, and digits.  "
     "Exception: UVM-like macros.";
 
-const LintRuleDescriptor& MacroNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &MacroNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "macro-name-style",
       .topic = "defines",
@@ -55,13 +55,13 @@ const LintRuleDescriptor& MacroNameStyleRule::GetDescriptor() {
   return d;
 }
 
-void MacroNameStyleRule::HandleToken(const TokenInfo& token) {
+void MacroNameStyleRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
   const absl::string_view text(token.text());
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
     RecursiveLexText(
-        text, [this](const TokenInfo& subtoken) { HandleToken(subtoken); });
+        text, [this](const TokenInfo &subtoken) { HandleToken(subtoken); });
     return;
   }
 

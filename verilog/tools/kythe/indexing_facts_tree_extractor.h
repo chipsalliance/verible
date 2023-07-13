@@ -31,9 +31,9 @@ namespace kythe {
 // The returned tree will have the files as children and they will retain their
 // original ordering from the file list.
 IndexingFactNode ExtractFiles(absl::string_view file_list_path,
-                              VerilogProject* project,
-                              const std::vector<std::string>& file_names,
-                              std::vector<absl::Status>* errors = nullptr);
+                              VerilogProject *project,
+                              const std::vector<std::string> &file_names,
+                              std::vector<absl::Status> *errors = nullptr);
 
 }  // namespace kythe
 }  // namespace verilog

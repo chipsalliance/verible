@@ -26,7 +26,7 @@
 namespace verilog {
 namespace kythe {
 
-void ScopeResolver::SetCurrentScope(const Signature& scope) {
+void ScopeResolver::SetCurrentScope(const Signature &scope) {
   if (current_scope_ == scope && !current_scope_digest_.rolling_hash.empty()) {
     return;
   }
@@ -38,7 +38,7 @@ void ScopeResolver::SetCurrentScope(const Signature& scope) {
   VLOG(2) << "Set scope to: " << ScopeDebug(scope.Digest());
 }
 
-void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
+void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName &vname) {
   absl::string_view name = vname.signature.Names().back();
   auto scopes = variable_to_scoped_vname_.find(name);
   if (scopes == variable_to_scoped_vname_.end()) {
@@ -59,7 +59,7 @@ void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
   if (current_scope_names == scope_to_vnames_.end()) {
     return;
   }
-  auto& vnames = current_scope_names->second;
+  auto &vnames = current_scope_names->second;
   for (auto iter = vnames.begin(); iter != vnames.end(); ++iter) {
     if (*iter == vname) {
       vnames.erase(iter);
@@ -69,13 +69,13 @@ void ScopeResolver::RemoveDefinitionFromCurrentScope(const VName& vname) {
 }
 
 void ScopeResolver::AppendScopeToCurrentScope(
-    const SignatureDigest& source_scope) {
+    const SignatureDigest &source_scope) {
   AppendScopeToScope(source_scope, CurrentScopeDigest());
 }
 
 void ScopeResolver::AppendScopeToScope(
-    const SignatureDigest& source_scope,
-    const SignatureDigest& destination_scope) {
+    const SignatureDigest &source_scope,
+    const SignatureDigest &destination_scope) {
   auto scope_vnames = scope_to_vnames_.find(source_scope);
   if (scope_vnames == scope_to_vnames_.end()) {
     VLOG(2) << "Can't find scope " << ScopeDebug(source_scope)
@@ -87,7 +87,7 @@ void ScopeResolver::AppendScopeToScope(
     return;
   }
 
-  for (const auto& vn : scope_vnames->second) {
+  for (const auto &vn : scope_vnames->second) {
     const std::optional<ScopedVname> vn_type =
         FindScopeAndDefinition(vn.signature.Names().back(), source_scope);
     if (!vn_type) {
@@ -101,12 +101,12 @@ void ScopeResolver::AppendScopeToScope(
   }
 }
 
-void ScopeResolver::AddDefinitionToCurrentScope(const VName& new_member) {
+void ScopeResolver::AddDefinitionToCurrentScope(const VName &new_member) {
   AddDefinitionToCurrentScope(new_member, new_member.signature.Digest());
 }
 
 void ScopeResolver::AddDefinitionToCurrentScope(
-    const VName& new_member, const SignatureDigest& type_scope) {
+    const VName &new_member, const SignatureDigest &type_scope) {
   // Remove the existing definition -- overwrite it with the new which has
   // updated information about types.
   RemoveDefinitionFromCurrentScope(new_member);
@@ -120,7 +120,7 @@ void ScopeResolver::AddDefinitionToCurrentScope(
 }
 
 std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
-    absl::string_view name, const SignatureDigest& scope_focus) {
+    absl::string_view name, const SignatureDigest &scope_focus) {
   VLOG(2) << "Find definition for '" << name << "' within scope "
           << ScopeDebug(scope_focus);
   auto scope = variable_to_scoped_vname_.find(name);
@@ -129,8 +129,8 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
             << ScopeDebug(scope_focus) << " (unregistered name)";
     return {};
   }
-  const ScopedVname* match = nullptr;
-  for (auto& scope_member : scope->second) {
+  const ScopedVname *match = nullptr;
+  for (auto &scope_member : scope->second) {
     SignatureDigest digest = scope_member.instantiation_scope;
     if (scope_focus.rolling_hash.size() < digest.rolling_hash.size() ||
         (match != nullptr &&
@@ -161,8 +161,8 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
   return FindScopeAndDefinition(name, CurrentScopeDigest());
 }
 
-const absl::flat_hash_set<VName>& ScopeResolver::ListScopeMembers(
-    const SignatureDigest& scope_digest) const {
+const absl::flat_hash_set<VName> &ScopeResolver::ListScopeMembers(
+    const SignatureDigest &scope_digest) const {
   const static absl::flat_hash_set<VName> kEmptyMemberList;
   auto scope = scope_to_vnames_.find(scope_digest);
   if (scope == scope_to_vnames_.end()) {
@@ -171,7 +171,7 @@ const absl::flat_hash_set<VName>& ScopeResolver::ListScopeMembers(
   return scope->second;
 }
 
-std::string ScopeResolver::ScopeDebug(const SignatureDigest& scope) const {
+std::string ScopeResolver::ScopeDebug(const SignatureDigest &scope) const {
   if (!enable_debug_) {
     return "UNKNOWN (debug off)";
   }

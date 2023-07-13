@@ -47,7 +47,7 @@ static constexpr absl::string_view kMessage =
     "Declare packed dimension range in little-endian (decreasing) order, "
     "e.g. [N-1:0].";
 
-const LintRuleDescriptor& PackedDimensionsRule::GetDescriptor() {
+const LintRuleDescriptor &PackedDimensionsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "packed-dimensions-range-ordering",
       .topic = "packed-ordering",
@@ -58,13 +58,13 @@ const LintRuleDescriptor& PackedDimensionsRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& DimensionRangeMatcher() {
+static const Matcher &DimensionRangeMatcher() {
   static const Matcher matcher(NodekDimensionRange());
   return matcher;
 }
 
 void PackedDimensionsRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   if (!ContextIsInsidePackedDimensions(context)) return;
 
   verible::matcher::BoundSymbolManager manager;
@@ -72,8 +72,8 @@ void PackedDimensionsRule::HandleSymbol(
     // Check whether or not bounds are numeric constants, including 0.
     // If one can conclude that left < right, then record as violation.
 
-    const auto& left = *ABSL_DIE_IF_NULL(GetDimensionRangeLeftBound(symbol));
-    const auto& right = *ABSL_DIE_IF_NULL(GetDimensionRangeRightBound(symbol));
+    const auto &left = *ABSL_DIE_IF_NULL(GetDimensionRangeLeftBound(symbol));
+    const auto &right = *ABSL_DIE_IF_NULL(GetDimensionRangeRightBound(symbol));
     int left_value, right_value;
     const bool left_is_constant = ConstantIntegerValue(left, &left_value);
     const bool right_is_constant = ConstantIntegerValue(right, &right_value);

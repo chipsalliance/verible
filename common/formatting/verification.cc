@@ -22,7 +22,7 @@
 namespace verible {
 
 absl::Status ReformatMustMatch(absl::string_view original_text,
-                               const LineNumberSet& lines,
+                               const LineNumberSet &lines,
                                absl::string_view formatted_text,
                                absl::string_view reformatted_text) {
   if (reformatted_text != formatted_text) {

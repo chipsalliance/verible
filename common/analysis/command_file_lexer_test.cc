@@ -31,7 +31,7 @@ class FilteredCommandFileLexer : public CommandFileLexer {
   explicit FilteredCommandFileLexer(absl::string_view code)
       : CommandFileLexer(code) {}
 
-  bool KeepSyntaxTreeTokens(const verible::TokenInfo& t) {
+  bool KeepSyntaxTreeTokens(const verible::TokenInfo &t) {
     switch (t.token_enum()) {
       case ConfigToken::kNewline:
         return false;
@@ -40,7 +40,7 @@ class FilteredCommandFileLexer : public CommandFileLexer {
     }
   }
 
-  const verible::TokenInfo& DoNextToken() final {
+  const verible::TokenInfo &DoNextToken() final {
     do {
       CommandFileLexer::DoNextToken();
     } while (!KeepSyntaxTreeTokens(GetLastToken()));
@@ -52,13 +52,13 @@ using LexerTestData = verible::SynthesizedLexerTestData;
 
 // Forwarding function to the template test driver function.
 template <typename... Args>
-static void TestLexer(Args&&... args) {
+static void TestLexer(Args &&...args) {
   verible::TestLexer<CommandFileLexer>(std::forward<Args>(args)...);
 }
 
 // Forwarding function to the template test driver function.
 template <typename... Args>
-static void TestFilteredLexer(Args&&... args) {
+static void TestFilteredLexer(Args &&...args) {
   verible::TestLexer<FilteredCommandFileLexer>(std::forward<Args>(args)...);
 }
 

@@ -136,8 +136,8 @@ TEST_F(UnwrappedLineTest, SpanNextToken) {
   UnwrappedLine uwline(0, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
 
-  const auto& front_token = tokens.front();
-  const auto& back_token = tokens.back();
+  const auto &front_token = tokens.front();
+  const auto &back_token = tokens.back();
   const auto range = uwline.TokensRange();
   EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum());
   EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum());
@@ -183,8 +183,8 @@ TEST_F(UnwrappedLineTest, SpanPrevToken) {
   UnwrappedLine uwline(0, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
 
-  const auto& front_token = tokens.front();
-  const auto& back_token = tokens.back();
+  const auto &front_token = tokens.front();
+  const auto &back_token = tokens.back();
   const auto range = uwline.TokensRange();
   EXPECT_EQ(range.front().TokenEnum(), front_token.token_enum());
   EXPECT_EQ(range.back().TokenEnum(), back_token.token_enum());
@@ -258,7 +258,7 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmpty) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
   ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
@@ -281,7 +281,7 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptySuppressIndent) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
   ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
@@ -302,7 +302,7 @@ TEST_F(UnwrappedLineTest, FormattedTextNonEmptyWithIndent) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Pretend we've committed formatting decisions from an optimizer.
   ftokens[0].before.break_decision = SpacingOptions::kMustWrap;
   ftokens[0].before.spaces_required = 4;
@@ -324,13 +324,13 @@ TEST_F(UnwrappedLineTest, FormattedTextSelectiveIncludeToken) {
   CreateTokenInfos(tokens);
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  for (auto& t : pre_format_tokens_) {
+  for (auto &t : pre_format_tokens_) {
     t.before.spaces_required = 2;
   }
   FormattedExcerpt output(uwline);
   std::ostringstream stream;
   // Choose to not include test_token2 in output.
-  output.FormattedText(stream, false, [](const TokenInfo& t) {
+  output.FormattedText(stream, false, [](const TokenInfo &t) {
     return t.text() != "test_token2";
   });
   const char expected[] = R"(test_token1  test_token3)";
@@ -386,7 +386,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveSpacesWithTokens) {
   CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
   ftokens[0].before.break_decision = SpacingOptions::kPreserve;
@@ -412,7 +412,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlines) {
   CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
   ftokens[0].before.break_decision = SpacingOptions::kPreserve;
@@ -435,7 +435,7 @@ TEST_F(UnwrappedLineTest, FormattedTextPreserveNewlinesDropSpaces) {
   CreateTokenInfosExternalStringBuffer(tokens);  // use 'text' buffer
   UnwrappedLine uwline(4, pre_format_tokens_.begin());
   AddFormatTokens(&uwline);
-  auto& ftokens = pre_format_tokens_;
+  auto &ftokens = pre_format_tokens_;
   // Don't care about other before.* fields when preserving
   ftokens[0].before.preserved_space_start = text.begin() + 0;
   ftokens[0].before.break_decision = SpacingOptions::kPreserve;
@@ -526,7 +526,7 @@ TEST_F(UnwrappedLineTest, AsCodeCustomOriginPrinter) {
   uwline.SetOrigin(&*tree);
   {
     std::ostringstream stream;
-    uwline.AsCode(&stream, false, [](std::ostream& out, const Symbol* symbol) {
+    uwline.AsCode(&stream, false, [](std::ostream &out, const Symbol *symbol) {
       EXPECT_NE(symbol, nullptr);
       out << "Test/" << symbol->Tag().tag << "/";
       UnwrappedLine::DefaultOriginPrinter(out, symbol);

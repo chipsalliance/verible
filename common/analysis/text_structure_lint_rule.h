@@ -41,7 +41,7 @@ class TextStructureLintRule : public LintRule {
   ~TextStructureLintRule() override = default;
 
   // Analyze text structure for violations.
-  virtual void Lint(const TextStructureView& text_structure,
+  virtual void Lint(const TextStructureView &text_structure,
                     absl::string_view filename) = 0;
 };
 

@@ -33,9 +33,9 @@ namespace verilog {
 
 // Construct a function header CST node, without the trailing ';'.
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
-verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
-                                      T2&& lifetime, T3&& return_type_id,
-                                      T4&& ports) {
+verible::SymbolPtr MakeFunctionHeader(T0 &&qualifiers, T1 &&function_start,
+                                      T2 &&lifetime, T3 &&return_type_id,
+                                      T4 &&ports) {
   verible::CheckOptionalSymbolAsNode(qualifiers, NodeEnum::kQualifierList);
   ExpectString(function_start, "function");
   verible::CheckOptionalSymbolAsNode(ports, NodeEnum::kParenGroup);
@@ -50,9 +50,9 @@ verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
 // Construct a function header CST node, with the trailing ';'.
 template <typename T0, typename T1, typename T2, typename T3, typename T4,
           typename T5>
-verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
-                                      T2&& lifetime, T3&& return_type_id,
-                                      T4&& ports, T5&& semicolon) {
+verible::SymbolPtr MakeFunctionHeader(T0 &&qualifiers, T1 &&function_start,
+                                      T2 &&lifetime, T3 &&return_type_id,
+                                      T4 &&ports, T5 &&semicolon) {
   ExpectString(semicolon, ";");
   return ExtendNode(
       MakeFunctionHeader(
@@ -66,11 +66,11 @@ verible::SymbolPtr MakeFunctionHeader(T0&& qualifiers, T1&& function_start,
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4,
           typename T5, typename T6, typename T7, typename T8, typename T9>
-verible::SymbolPtr MakeFunctionDeclaration(T0&& qualifiers, T1&& function_start,
-                                           T2&& lifetime, T3&& return_type_id,
-                                           T4&& ports, T5&& semicolon,
-                                           T6&& function_items, T7&& body,
-                                           T8&& function_end, T9&& label) {
+verible::SymbolPtr MakeFunctionDeclaration(T0 &&qualifiers, T1 &&function_start,
+                                           T2 &&lifetime, T3 &&return_type_id,
+                                           T4 &&ports, T5 &&semicolon,
+                                           T6 &&function_items, T7 &&body,
+                                           T8 &&function_end, T9 &&label) {
   ExpectString(function_end, "endfunction");
   return verible::MakeTaggedNode(
       NodeEnum::kFunctionDeclaration,
@@ -86,109 +86,109 @@ verible::SymbolPtr MakeFunctionDeclaration(T0&& qualifiers, T1&& function_start,
 
 // Find all function declarations, including class method declarations.
 std::vector<verible::TreeSearchMatch> FindAllFunctionDeclarations(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all function headers (in declarations and prototypes).
 std::vector<verible::TreeSearchMatch> FindAllFunctionHeaders(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all function prototypes (extern, pure virtual).
 std::vector<verible::TreeSearchMatch> FindAllFunctionPrototypes(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all function (or Task) calls.
 std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCalls(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all function (or Task) calls extension e.g class_name.function_call().
 std::vector<verible::TreeSearchMatch> FindAllFunctionOrTaskCallsExtension(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all constructor prototypes.
 std::vector<verible::TreeSearchMatch> FindAllConstructorPrototypes(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Returns the function declaration header (return type, id, ports)
-const verible::SyntaxTreeNode* GetFunctionHeader(
-    const verible::Symbol& function_decl);
+const verible::SyntaxTreeNode *GetFunctionHeader(
+    const verible::Symbol &function_decl);
 
 // Returns the function prototype header (return type, id, ports)
-const verible::SyntaxTreeNode* GetFunctionPrototypeHeader(
-    const verible::Symbol& function_decl);
+const verible::SyntaxTreeNode *GetFunctionPrototypeHeader(
+    const verible::Symbol &function_decl);
 
 // FunctionHeader accessors
 
 // Returns the function lifetime of the function header.
-const verible::Symbol* GetFunctionHeaderLifetime(
-    const verible::Symbol& function_header);
+const verible::Symbol *GetFunctionHeaderLifetime(
+    const verible::Symbol &function_header);
 
 // Returns the parenthesis group containing the formal ports list, or nullptr.
-const verible::Symbol* GetFunctionHeaderFormalPortsGroup(
-    const verible::Symbol& function_header);
+const verible::Symbol *GetFunctionHeaderFormalPortsGroup(
+    const verible::Symbol &function_header);
 
 // Returns the return type of the function header.
-const verible::Symbol* GetFunctionHeaderReturnType(
-    const verible::Symbol& function_header);
+const verible::Symbol *GetFunctionHeaderReturnType(
+    const verible::Symbol &function_header);
 
 // Returns the id of the function header.
-const verible::Symbol* GetFunctionHeaderId(
-    const verible::Symbol& function_header);
+const verible::Symbol *GetFunctionHeaderId(
+    const verible::Symbol &function_header);
 
 // FunctionDeclaration acccessors
 
 // Returns the function lifetime of the node.
-const verible::Symbol* GetFunctionLifetime(
-    const verible::Symbol& function_decl);
+const verible::Symbol *GetFunctionLifetime(
+    const verible::Symbol &function_decl);
 
 // Returns the parenthesis group containing the formal ports list, or nullptr.
-const verible::Symbol* GetFunctionFormalPortsGroup(
-    const verible::Symbol& function_decl);
+const verible::Symbol *GetFunctionFormalPortsGroup(
+    const verible::Symbol &function_decl);
 
 // Returns the return type of the function declaration.
-const verible::Symbol* GetFunctionReturnType(
-    const verible::Symbol& function_decl);
+const verible::Symbol *GetFunctionReturnType(
+    const verible::Symbol &function_decl);
 
 // Returns the id of the function declaration.
-const verible::Symbol* GetFunctionId(const verible::Symbol& function_decl);
+const verible::Symbol *GetFunctionId(const verible::Symbol &function_decl);
 
 // Returns leaf node for function name.
 // e.g. function my_fun(); return leaf node for "my_fun".
-const verible::SyntaxTreeLeaf* GetFunctionName(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetFunctionName(const verible::Symbol &);
 
 // Returns local root node from node tagged with kFunctionCall.
-const verible::SyntaxTreeNode* GetLocalRootFromFunctionCall(
-    const verible::Symbol&);
+const verible::SyntaxTreeNode *GetLocalRootFromFunctionCall(
+    const verible::Symbol &);
 
 // Return the node spanning identifier for the function call node.
 // e.g from "pkg::get()" returns the node spanning "pkg::get".
-const verible::SyntaxTreeNode* GetIdentifiersFromFunctionCall(
-    const verible::Symbol& function_call);
+const verible::SyntaxTreeNode *GetIdentifiersFromFunctionCall(
+    const verible::Symbol &function_call);
 
 // Returns leaf node for function name in function call.
 // e.g my_function(); return leaf node for "my_function".
-const verible::SyntaxTreeLeaf* GetFunctionCallName(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetFunctionCallName(const verible::Symbol &);
 
 // Returns leaf node for function name in function call extension.
 // e.g class_name.my_function(); return leaf node for "my_function".
-const verible::SyntaxTreeLeaf* GetFunctionCallNameFromCallExtension(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetFunctionCallNameFromCallExtension(
+    const verible::Symbol &);
 
 // Returns the function declaration body.
-const verible::SyntaxTreeNode* GetFunctionBlockStatementList(
-    const verible::Symbol&);
+const verible::SyntaxTreeNode *GetFunctionBlockStatementList(
+    const verible::Symbol &);
 
 // Return the node spanning the paren group of function call.
 // e.g my_function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode* GetParenGroupFromCall(const verible::Symbol&);
+const verible::SyntaxTreeNode *GetParenGroupFromCall(const verible::Symbol &);
 
 // Return the node spanning the paren group of function call extension.
 // e.g my_class.my_function(a, b, c) return the node spanning (a, b, c).
-const verible::SyntaxTreeNode* GetParenGroupFromCallExtension(
-    const verible::Symbol&);
+const verible::SyntaxTreeNode *GetParenGroupFromCallExtension(
+    const verible::Symbol &);
 
 // Returns leaf node for the "new" keyword of a constructor prototype.
-const verible::SyntaxTreeLeaf* GetConstructorPrototypeNewKeyword(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetConstructorPrototypeNewKeyword(
+    const verible::Symbol &);
 
 }  // namespace verilog
 

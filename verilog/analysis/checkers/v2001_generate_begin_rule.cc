@@ -42,7 +42,7 @@ VERILOG_REGISTER_LINT_RULE(V2001GenerateBeginRule);
 static constexpr absl::string_view kMessage =
     "Do not begin a generate block inside a generate region.";
 
-const LintRuleDescriptor& V2001GenerateBeginRule::GetDescriptor() {
+const LintRuleDescriptor &V2001GenerateBeginRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "v2001-generate-begin",
       .topic = "generate-constructs",
@@ -53,17 +53,17 @@ const LintRuleDescriptor& V2001GenerateBeginRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& GenerateRegionMatcher() {
+static const Matcher &GenerateRegionMatcher() {
   static const Matcher matcher(
       NodekGenerateRegion(HasGenerateBlock().Bind("block")));
   return matcher;
 }
 
 void V2001GenerateBeginRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (GenerateRegionMatcher().Matches(symbol, &manager)) {
-    if (const auto* block = manager.GetAs<verible::SyntaxTreeNode>("block")) {
+    if (const auto *block = manager.GetAs<verible::SyntaxTreeNode>("block")) {
       violations_.insert(LintViolation(verible::GetLeftmostLeaf(*block)->get(),
                                        kMessage, context));
     }

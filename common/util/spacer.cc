@@ -19,7 +19,7 @@
 
 namespace verible {
 
-std::ostream& operator<<(std::ostream& stream, const Spacer& spacer) {
+std::ostream &operator<<(std::ostream &stream, const Spacer &spacer) {
   for (size_t i = 0; i < spacer.repeat; ++i) {
     stream << spacer.repeated_char;
   }

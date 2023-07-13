@@ -35,7 +35,7 @@ struct AutoTruncate {
   const int max_chars;
 };
 
-std::ostream& operator<<(std::ostream&, const AutoTruncate& trunc);
+std::ostream &operator<<(std::ostream &, const AutoTruncate &trunc);
 
 // To help visualize strings with non-alphanumeric characters, this stream
 // adapter prints special characters escaped using C escape sequences, without
@@ -48,7 +48,7 @@ struct EscapeString {
   explicit EscapeString(absl::string_view text) : text(text) {}
 };
 
-std::ostream& operator<<(std::ostream&, const EscapeString& vis);
+std::ostream &operator<<(std::ostream &, const EscapeString &vis);
 
 // To help visualize strings that consist of whitespace, this stream adapter
 // prints spaces, tabs, and newlines with alternate text, without modifying or
@@ -72,7 +72,7 @@ struct VisualizeWhitespace {
         tab_alt(tab_alt) {}
 };
 
-std::ostream& operator<<(std::ostream&, const VisualizeWhitespace& vis);
+std::ostream &operator<<(std::ostream &, const VisualizeWhitespace &vis);
 
 // TODO(fangism): once C++17 becomes the minimum standard for building
 // push the following block into an internal namespace, and use auto
@@ -87,7 +87,7 @@ std::ostream& operator<<(std::ostream&, const VisualizeWhitespace& vis);
 // accidentally create conflicting definitions, and violate ODR.
 template <class T>
 struct SequenceStreamFormatter {
-  const T& sequence;  // binds to object that is to be printed
+  const T &sequence;  // binds to object that is to be printed
   absl::string_view separator;
   absl::string_view prefix;
   absl::string_view suffix;
@@ -97,8 +97,8 @@ struct SequenceStreamFormatter {
 
 // Redirects stream printing to abs::StrJoin wrapped in a single object.
 template <class T>
-std::ostream& operator<<(std::ostream& stream,
-                         const SequenceStreamFormatter<T>& t) {
+std::ostream &operator<<(std::ostream &stream,
+                         const SequenceStreamFormatter<T> &t) {
   return stream << t.prefix
                 << absl::StrJoin(t.sequence.begin(), t.sequence.end(),
                                  t.separator, absl::StreamFormatter())
@@ -135,7 +135,7 @@ std::ostream& operator<<(std::ostream& stream,
 //   "< 1 | 2 | 3 | ... >"
 //
 template <class T>
-SequenceStreamFormatter<T> SequenceFormatter(const T& t,
+SequenceStreamFormatter<T> SequenceFormatter(const T &t,
                                              absl::string_view sep = ", ",
                                              absl::string_view prefix = "",
                                              absl::string_view suffix = "") {

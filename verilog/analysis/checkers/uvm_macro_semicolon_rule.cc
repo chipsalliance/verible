@@ -37,7 +37,7 @@ using verible::LintViolation;
 // Register UvmMacroSemicolonRule
 VERILOG_REGISTER_LINT_RULE(UvmMacroSemicolonRule);
 
-const LintRuleDescriptor& UvmMacroSemicolonRule::GetDescriptor() {
+const LintRuleDescriptor &UvmMacroSemicolonRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "uvm-macro-semicolon",
       .topic = "uvm-macro-semicolon-convention",  // TODO(b/155128436): verify
@@ -48,13 +48,13 @@ const LintRuleDescriptor& UvmMacroSemicolonRule::GetDescriptor() {
 }
 
 // Returns a diagnostic message for this lint violation.
-static std::string FormatReason(const verible::TokenInfo& macro_id) {
+static std::string FormatReason(const verible::TokenInfo &macro_id) {
   return absl::StrCat("UVM macro call, ", macro_id.text(),
                       " should not be followed by a semicolon \';\'.");
 }
 
 // Returns true if leaf is a macro and matches `uvm_
-static bool IsUvmMacroId(const verible::SyntaxTreeLeaf& leaf) {
+static bool IsUvmMacroId(const verible::SyntaxTreeLeaf &leaf) {
   if (leaf.Tag().tag == verilog_tokentype::MacroCallId ||
       leaf.Tag().tag == verilog_tokentype::MacroIdItem ||
       leaf.Tag().tag == verilog_tokentype::MacroIdentifier) {
@@ -64,8 +64,8 @@ static bool IsUvmMacroId(const verible::SyntaxTreeLeaf& leaf) {
 }
 
 void UvmMacroSemicolonRule::HandleLeaf(
-    const verible::SyntaxTreeLeaf& leaf,
-    const verible::SyntaxTreeContext& context) {
+    const verible::SyntaxTreeLeaf &leaf,
+    const verible::SyntaxTreeContext &context) {
   if (ContextIsInsideStatement(context) ||
       context.IsInside(NodeEnum::kMacroCall) ||
       context.IsInside(NodeEnum::kDataDeclaration)) {

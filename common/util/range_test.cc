@@ -221,7 +221,7 @@ TEST(SubRangeIndicesTest, EqComparable) {
   const std::vector<int> v;
   const auto supersequence = make_range(v.begin(), v.end());
   const auto subsequence = supersequence;
-  auto indices = [&v](const decltype(supersequence)& range) {
+  auto indices = [&v](const decltype(supersequence) &range) {
     return SubRangeIndices(range, v);  // v is the common base for both ranges
   };
   EXPECT_EQ(indices(subsequence), indices(supersequence));

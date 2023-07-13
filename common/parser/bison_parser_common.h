@@ -54,11 +54,11 @@
 namespace verible {
 
 // Calls to yylex() in generated code will be redirected here.
-int LexAdapter(SymbolPtr* value, ParserParam* param);
+int LexAdapter(SymbolPtr *value, ParserParam *param);
 
 // Calls to yyerror() in generated code will be redirected hee.
-void ParseError(const ParserParam* param, const char* function_name,
-                const char* message);
+void ParseError(const ParserParam *param, const char *function_name,
+                const char *message);
 
 }  // namespace verible
 
@@ -71,13 +71,13 @@ void ParseError(const ParserParam* param, const char* function_name,
 // Called by Bison-generated parser to get a next token.
 // TODO(fangism): control yylex prototype using YY_DECL, or embed param inside
 //   FlexLexerAdapter class template.
-inline int yylex(verible::SymbolPtr* value, verible::ParserParam* param) {
+inline int yylex(verible::SymbolPtr *value, verible::ParserParam *param) {
   return verible::LexAdapter(value, param);
 }
 
 // Error-reporting function.
 // Called by Bison-generated parser when a recognition error occurs.
-inline void yyerror(verible::ParserParam* param, const char* message) {
+inline void yyerror(verible::ParserParam *param, const char *message) {
   // TODO(fangism): record and accumulate multiple errors with error recovery.
   // TODO(fangism): pass in ParserParam reference to save errors, and analyze
   //   stack state.  This may need to be refactored per-language.

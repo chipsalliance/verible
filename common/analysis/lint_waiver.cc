@@ -46,13 +46,13 @@ void LintWaiver::WaiveOneLine(absl::string_view rule_name, int line_number) {
 
 void LintWaiver::WaiveLineRange(absl::string_view rule_name, int line_begin,
                                 int line_end) {
-  LineNumberSet& line_set = waiver_map_[rule_name];
+  LineNumberSet &line_set = waiver_map_[rule_name];
   line_set.Add({line_begin, line_end});
 }
 
 void LintWaiver::WaiveWithRegex(absl::string_view rule_name,
-                                const std::string& regex_str) {
-  RegexVector& regex_vector = waiver_re_map_[rule_name];
+                                const std::string &regex_str) {
+  RegexVector &regex_vector = waiver_re_map_[rule_name];
   auto regex_iter = regex_cache_.find(regex_str);
 
   if (regex_iter == regex_cache_.end()) {
@@ -63,12 +63,12 @@ void LintWaiver::WaiveWithRegex(absl::string_view rule_name,
 }
 
 void LintWaiver::RegexToLines(absl::string_view contents,
-                              const LineColumnMap& line_map) {
-  for (const auto& rule : waiver_re_map_) {
-    for (const auto* re : rule.second) {
+                              const LineColumnMap &line_map) {
+  for (const auto &rule : waiver_re_map_) {
+    for (const auto *re : rule.second) {
       for (std::cregex_iterator i(contents.begin(), contents.end(), *re);
            i != std::cregex_iterator(); i++) {
-        const std::cmatch& match = *i;
+        const std::cmatch &match = *i;
         WaiveOneLine(rule.first, line_map.LineAtOffset(match.position()));
       }
     }
@@ -77,12 +77,12 @@ void LintWaiver::RegexToLines(absl::string_view contents,
 
 bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
                                     int line_number) const {
-  const auto* line_set = verible::container::FindOrNull(waiver_map_, rule_name);
+  const auto *line_set = verible::container::FindOrNull(waiver_map_, rule_name);
   return line_set != nullptr && LineNumberSetContains(*line_set, line_number);
 }
 
 bool LintWaiver::Empty() const {
-  for (const auto& rule_waiver : waiver_map_) {
+  for (const auto &rule_waiver : waiver_map_) {
     if (!rule_waiver.second.empty()) {
       return false;
     }
@@ -92,11 +92,11 @@ bool LintWaiver::Empty() const {
 
 absl::string_view LintWaiverBuilder::ExtractWaivedRuleFromComment(
     absl::string_view comment_text,
-    std::vector<absl::string_view>* comment_tokens) const {
+    std::vector<absl::string_view> *comment_tokens) const {
   // Look for directives of the form: <tool_name> <directive> <rule_name>
   // Addition text beyond the last argument is ignored, so it could
   // contain more comment text.
-  auto& tokens = *comment_tokens;
+  auto &tokens = *comment_tokens;
   // TODO(fangism): Stop splitting after 3 tokens, everything after that is
   // ignored.  Use something like absl::MaxSplits, but works with multi-spaces.
   tokens = absl::StrSplit(comment_text, ' ', absl::SkipEmpty());
@@ -113,7 +113,7 @@ absl::string_view LintWaiverBuilder::ExtractWaivedRuleFromComment(
   return "";
 }
 
-void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
+void LintWaiverBuilder::ProcessLine(const TokenRange &tokens, int line_number) {
   // TODO(fangism): [optimization] Use a SmallVector, or function-local
   // static to avoid re-allocation in every call.  This method does not
   // need to be re-entrant.
@@ -129,13 +129,13 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Determine whether line contains any non-space, non-comment tokens.
   const bool line_has_tokens =
-      std::any_of(tokens.begin(), tokens.end(), [this](const TokenInfo& t) {
+      std::any_of(tokens.begin(), tokens.end(), [this](const TokenInfo &t) {
         return !(is_token_whitespace_(t) || is_token_comment_(t));
       });
 
   if (line_has_tokens) {
     // Apply un-applied one-line waivers, and then reset them.
-    for (const auto& rule : unapplied_oneline_waivers_) {
+    for (const auto &rule : unapplied_oneline_waivers_) {
       lint_waiver_.WaiveOneLine(rule, line_number);
     }
     unapplied_oneline_waivers_.clear();
@@ -143,7 +143,7 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 
   // Find all directives on this line.
   std::vector<absl::string_view> comment_tokens;  // Re-use in loop.
-  for (const auto& token : tokens) {
+  for (const auto &token : tokens) {
     if (is_token_comment_(token)) {
       // Lex the comment text.
       const absl::string_view comment_text =
@@ -185,9 +185,9 @@ void LintWaiverBuilder::ProcessLine(const TokenRange& tokens, int line_number) {
 }
 
 void LintWaiverBuilder::ProcessTokenRangesByLine(
-    const TextStructureView& text_structure) {
+    const TextStructureView &text_structure) {
   const int total_lines = text_structure.Lines().size();
-  const auto& tokens = text_structure.TokenStream();
+  const auto &tokens = text_structure.TokenStream();
   for (int i = 0; i < total_lines; ++i) {
     const auto token_range = text_structure.TokenRangeOnLine(i);
     const int begin_dist = std::distance(tokens.begin(), token_range.begin());
@@ -205,7 +205,7 @@ void LintWaiverBuilder::ProcessTokenRangesByLine(
   // Flush out any remaining open-ranges, so that those waivers take effect
   // until the end-of-file.
   // TODO(b/78064145): Detect these as suspiciously unbalanced waiver uses.
-  for (const auto& open_range : waiver_open_ranges_) {
+  for (const auto &open_range : waiver_open_ranges_) {
     lint_waiver_.WaiveLineRange(open_range.first, open_range.second,
                                 total_lines);
   }
@@ -216,7 +216,7 @@ template <typename... T>
 static std::string WaiveCommandErrorFmt(LineColumn pos,
                                         absl::string_view filename,
                                         absl::string_view msg,
-                                        const T&... args) {
+                                        const T &...args) {
   return absl::StrCat(filename, ":", pos.line + 1, ":", pos.column + 1,
                       ": command error: ", msg, args...);
 }
@@ -224,16 +224,16 @@ static std::string WaiveCommandErrorFmt(LineColumn pos,
 template <typename... T>
 static absl::Status WaiveCommandError(LineColumn pos,
                                       absl::string_view filename,
-                                      absl::string_view msg, const T&... args) {
+                                      absl::string_view msg, const T &...args) {
   return absl::InvalidArgumentError(
       WaiveCommandErrorFmt(pos, filename, msg, args...));
 }
 
 static absl::Status WaiveCommandHandler(
-    const TokenRange& tokens, absl::string_view waive_file,
+    const TokenRange &tokens, absl::string_view waive_file,
     absl::string_view waive_content, absl::string_view lintee_filename,
-    const LineColumnMap& line_map, LintWaiver* waiver,
-    const std::set<absl::string_view>& active_rules) {
+    const LineColumnMap &line_map, LintWaiver *waiver,
+    const std::set<absl::string_view> &active_rules) {
   absl::string_view rule;
 
   absl::string_view option;
@@ -250,7 +250,7 @@ static absl::Status WaiveCommandHandler(
   LineColumn token_pos;
   LineColumn regex_token_pos = {};
 
-  for (const auto& token : tokens) {
+  for (const auto &token : tokens) {
     token_pos =
         line_map.GetLineColAtOffset(waive_content, token.left(waive_content));
 
@@ -337,7 +337,7 @@ static absl::Status WaiveCommandHandler(
             const std::regex file_matcher(file_match_regex);
             location_match =
                 std::regex_search(std::string(lintee_filename), file_matcher);
-          } catch (const std::regex_error& e) {
+          } catch (const std::regex_error &e) {
             return WaiveCommandError(token_pos, waive_file,
                                      "--location regex is invalid");
           }
@@ -365,8 +365,8 @@ static absl::Status WaiveCommandHandler(
         if (can_use_regex) {
           try {
             waiver->WaiveWithRegex(rule, regex);
-          } catch (const std::regex_error& e) {
-            const char* reason = e.what();
+          } catch (const std::regex_error &e) {
+            const char *reason = e.what();
 
             return WaiveCommandError(regex_token_pos, waive_file,
                                      "Invalid regex: ", reason);
@@ -403,12 +403,12 @@ static absl::Status WaiveCommandHandler(
 }
 
 using HandlerFun = std::function<absl::Status(
-    const TokenRange&, absl::string_view waive_file,
+    const TokenRange &, absl::string_view waive_file,
     absl::string_view waive_content, absl::string_view lintee_filename,
-    const LineColumnMap&, LintWaiver*, const std::set<absl::string_view>&)>;
-static const std::map<absl::string_view, HandlerFun>& GetCommandHandlers() {
+    const LineColumnMap &, LintWaiver *, const std::set<absl::string_view> &)>;
+static const std::map<absl::string_view, HandlerFun> &GetCommandHandlers() {
   // allocated once, never freed
-  static const auto* handlers = new std::map<absl::string_view, HandlerFun>{
+  static const auto *handlers = new std::map<absl::string_view, HandlerFun>{
       // Right now, we only have one handler
       {"waive", WaiveCommandHandler},
   };
@@ -416,7 +416,7 @@ static const std::map<absl::string_view, HandlerFun>& GetCommandHandlers() {
 }
 
 absl::Status LintWaiverBuilder::ApplyExternalWaivers(
-    const std::set<absl::string_view>& active_rules,
+    const std::set<absl::string_view> &active_rules,
     absl::string_view lintee_filename, absl::string_view waiver_filename,
     absl::string_view waivers_config_content) {
   if (waivers_config_content.empty()) {
@@ -427,12 +427,12 @@ absl::Status LintWaiverBuilder::ApplyExternalWaivers(
   const LineColumnMap line_map(waivers_config_content);
   LineColumn command_pos;
 
-  const auto& handlers = GetCommandHandlers();
+  const auto &handlers = GetCommandHandlers();
 
   std::vector<TokenRange> commands = lexer.GetCommandsTokenRanges();
 
   bool all_commands_ok = true;
-  for (const auto& c_range : commands) {
+  for (const auto &c_range : commands) {
     const auto command = make_container_range(c_range.begin(), c_range.end());
 
     command_pos = line_map.GetLineColAtOffset(

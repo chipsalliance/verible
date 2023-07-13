@@ -50,7 +50,7 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(TruncatedNumericLiteralRule);
 
-const LintRuleDescriptor& TruncatedNumericLiteralRule::GetDescriptor() {
+const LintRuleDescriptor &TruncatedNumericLiteralRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "truncated-numeric-literal",
       .topic = "number-literals",
@@ -61,7 +61,7 @@ const LintRuleDescriptor& TruncatedNumericLiteralRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& NumberMatcher() {
+static const Matcher &NumberMatcher() {
   static const Matcher matcher(
       NodekNumber(NumberHasConstantWidth().Bind("width"),
                   NumberHasBasedLiteral().Bind("literal")));
@@ -69,7 +69,7 @@ static const Matcher& NumberMatcher() {
 }
 
 // Given a binary/oct/hex digit, return how many bits it occupies
-static int digitBits(char digit, bool* is_lower_bound) {
+static int digitBits(char digit, bool *is_lower_bound) {
   if (digit == 'z' || digit == 'x' || digit == '?') {
     *is_lower_bound = true;
     return 1;  // Minimum number of bits assumed
@@ -89,7 +89,7 @@ static absl::string_view StripLeadingZeroes(absl::string_view str) {
 
 // Return count of bits the given number occupies. Sometims we can only make
 // a lower bound estimate, return that in "is_lower_bound".
-static size_t GetBitWidthOfNumber(const BasedNumber& n, bool* is_lower_bound) {
+static size_t GetBitWidthOfNumber(const BasedNumber &n, bool *is_lower_bound) {
   const absl::string_view literal = StripLeadingZeroes(n.literal);
 
   *is_lower_bound = true;           // Can only estimate for the following two
@@ -146,22 +146,22 @@ static size_t GetBitWidthOfNumber(const BasedNumber& n, bool* is_lower_bound) {
 }
 
 void TruncatedNumericLiteralRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (!NumberMatcher().Matches(symbol, &manager)) return;
-  const auto* width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
-  const auto* literal_node = manager.GetAs<SyntaxTreeNode>("literal");
+  const auto *width_leaf = manager.GetAs<SyntaxTreeLeaf>("width");
+  const auto *literal_node = manager.GetAs<SyntaxTreeNode>("literal");
   if (!width_leaf || !literal_node) return;
 
   const auto width_text = width_leaf->get().text();
   size_t width;
   if (!absl::SimpleAtoi(width_text, &width)) return;
 
-  const auto& base_digit_part = literal_node->children();
-  const auto* base_leaf =
-      down_cast<const SyntaxTreeLeaf*>(base_digit_part[0].get());
-  const auto* digits_leaf =
-      down_cast<const SyntaxTreeLeaf*>(base_digit_part[1].get());
+  const auto &base_digit_part = literal_node->children();
+  const auto *base_leaf =
+      down_cast<const SyntaxTreeLeaf *>(base_digit_part[0].get());
+  const auto *digits_leaf =
+      down_cast<const SyntaxTreeLeaf *>(base_digit_part[1].get());
 
   const auto base_text = base_leaf->get().text();
   const auto digits_text = digits_leaf->get().text();

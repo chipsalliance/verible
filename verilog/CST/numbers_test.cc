@@ -51,7 +51,7 @@ TEST(BasedNumberTest, ParseLiteral) {
       {"\'H", "FEED_face", {'h', false, "FEEDface"}},
       {"\'sh", "ADee", {'h', true, "ADee"}},
   };
-  for (const auto& test : test_cases) {
+  for (const auto &test : test_cases) {
     const BasedNumber actual(test.base, test.digits);
     EXPECT_TRUE(actual.ok);
     EXPECT_EQ(test.expected, actual);
@@ -66,7 +66,7 @@ TEST(BasedNumberTest, ParseInvalidLiterals) {
       {"", "96"},
       {"1'b", "1"},  // valid literals start with '
   };
-  for (const auto& test : test_cases) {
+  for (const auto &test : test_cases) {
     const BasedNumber actual(test.first, test.second);
     EXPECT_FALSE(actual.ok);
   }

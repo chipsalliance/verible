@@ -36,13 +36,13 @@
 
 namespace verible {
 
-const Symbol* DescendThroughSingletons(const Symbol& symbol) {
+const Symbol *DescendThroughSingletons(const Symbol &symbol) {
   if (symbol.Kind() == SymbolKind::kLeaf) {
     return &symbol;
   }
   // else is a kNode
-  const auto& node = SymbolCastToNode(symbol);
-  const auto& children = node.children();
+  const auto &node = SymbolCastToNode(symbol);
+  const auto &children = node.children();
   if (children.size() == 1 && children.front() != nullptr) {
     // If only child is non-null, descend.
     return DescendThroughSingletons(*children.front());
@@ -51,16 +51,16 @@ const Symbol* DescendThroughSingletons(const Symbol& symbol) {
   return &symbol;
 }
 
-const SyntaxTreeLeaf* GetRightmostLeaf(const Symbol& symbol) {
+const SyntaxTreeLeaf *GetRightmostLeaf(const Symbol &symbol) {
   if (symbol.Kind() == SymbolKind::kLeaf) {
     return &SymbolCastToLeaf(symbol);
   }
 
-  const auto& node = SymbolCastToNode(symbol);
+  const auto &node = SymbolCastToNode(symbol);
 
-  for (const auto& child : reversed_view(node.children())) {
+  for (const auto &child : reversed_view(node.children())) {
     if (child != nullptr) {
-      const auto* leaf = GetRightmostLeaf(*child);
+      const auto *leaf = GetRightmostLeaf(*child);
       if (leaf != nullptr) {
         return leaf;
       }
@@ -70,16 +70,16 @@ const SyntaxTreeLeaf* GetRightmostLeaf(const Symbol& symbol) {
   return nullptr;
 }
 
-const SyntaxTreeLeaf* GetLeftmostLeaf(const Symbol& symbol) {
+const SyntaxTreeLeaf *GetLeftmostLeaf(const Symbol &symbol) {
   if (symbol.Kind() == SymbolKind::kLeaf) {
     return &SymbolCastToLeaf(symbol);
   }
 
-  const auto& node = SymbolCastToNode(symbol);
+  const auto &node = SymbolCastToNode(symbol);
 
-  for (const auto& child : node.children()) {
+  for (const auto &child : node.children()) {
     if (child != nullptr) {
-      const auto* leaf = GetLeftmostLeaf(*child);
+      const auto *leaf = GetLeftmostLeaf(*child);
       if (leaf != nullptr) {
         return leaf;
       }
@@ -89,13 +89,13 @@ const SyntaxTreeLeaf* GetLeftmostLeaf(const Symbol& symbol) {
   return nullptr;
 }
 
-absl::string_view StringSpanOfSymbol(const Symbol& symbol) {
+absl::string_view StringSpanOfSymbol(const Symbol &symbol) {
   return StringSpanOfSymbol(symbol, symbol);
 }
 
-absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym) {
-  const auto* left = GetLeftmostLeaf(lsym);
-  const auto* right = GetRightmostLeaf(rsym);
+absl::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym) {
+  const auto *left = GetLeftmostLeaf(lsym);
+  const auto *right = GetRightmostLeaf(rsym);
   if (left != nullptr && right != nullptr) {
     const auto range_begin = left->get().text().begin();
     const auto range_end = right->get().text().end();
@@ -105,25 +105,25 @@ absl::string_view StringSpanOfSymbol(const Symbol& lsym, const Symbol& rsym) {
   return "";
 }
 
-const SyntaxTreeNode& SymbolCastToNode(const Symbol& symbol) {
+const SyntaxTreeNode &SymbolCastToNode(const Symbol &symbol) {
   // Assert the symbol is a node.
   CHECK_EQ(symbol.Kind(), SymbolKind::kNode)
       << "got: " << RawTreePrinter(symbol);
-  return down_cast<const SyntaxTreeNode&>(symbol);
+  return down_cast<const SyntaxTreeNode &>(symbol);
 }
 
-SyntaxTreeNode& SymbolCastToNode(Symbol& symbol) {
+SyntaxTreeNode &SymbolCastToNode(Symbol &symbol) {
   // Assert the symbol is a node.
   CHECK_EQ(symbol.Kind(), SymbolKind::kNode)
       << "got: " << RawTreePrinter(symbol);
-  return down_cast<SyntaxTreeNode&>(symbol);
+  return down_cast<SyntaxTreeNode &>(symbol);
 }
 
-const SyntaxTreeLeaf& SymbolCastToLeaf(const Symbol& symbol) {
+const SyntaxTreeLeaf &SymbolCastToLeaf(const Symbol &symbol) {
   // Assert the symbol is a leaf.
   CHECK_EQ(symbol.Kind(), SymbolKind::kLeaf)
       << "got: " << RawTreePrinter(symbol);
-  return down_cast<const SyntaxTreeLeaf&>(symbol);
+  return down_cast<const SyntaxTreeLeaf &>(symbol);
 }
 
 namespace {
@@ -133,10 +133,10 @@ namespace {
 // modifying syntax trees.
 class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
  public:
-  explicit FirstSubtreeFinderMutable(const TreePredicate& predicate)
+  explicit FirstSubtreeFinderMutable(const TreePredicate &predicate)
       : predicate_(predicate) {}
 
-  void Visit(const SyntaxTreeNode& node, SymbolPtr* symbol_ptr) final {
+  void Visit(const SyntaxTreeNode &node, SymbolPtr *symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &node);  // symbol_ptr owns node.
     if (result_ == nullptr) {
       // If this node matches, return it, and skip evaluating children.
@@ -144,9 +144,9 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
         result_ = symbol_ptr;
       } else {
         // Cast the mutable copy of the node pointer (same object as &node).
-        auto* const mutable_node =
-            down_cast<SyntaxTreeNode*>(symbol_ptr->get());
-        for (SymbolPtr& child : mutable_node->mutable_children()) {
+        auto *const mutable_node =
+            down_cast<SyntaxTreeNode *>(symbol_ptr->get());
+        for (SymbolPtr &child : mutable_node->mutable_children()) {
           if (child != nullptr) {
             child->Accept(this, &child);
           }
@@ -157,7 +157,7 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
     }
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* symbol_ptr) final {
+  void Visit(const SyntaxTreeLeaf &leaf, SymbolPtr *symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &leaf);  // symbol_ptr owns leaf.
     // If already have a result, stop checking and return right away.
     if (result_ == nullptr) {
@@ -167,14 +167,14 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
     }
   }
 
-  ConcreteSyntaxTree* result() const { return result_; }
+  ConcreteSyntaxTree *result() const { return result_; }
 
  private:
   // Matching criterion.
   TreePredicate predicate_;
 
   // Contains first matching result found or nullptr if no match is found.
-  ConcreteSyntaxTree* result_ = nullptr;
+  ConcreteSyntaxTree *result_ = nullptr;
 };
 
 // FirstSubtreeFinder is a visitor class that supports the implementation of
@@ -182,16 +182,16 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
 // exit early if a match is found.
 class FirstSubtreeFinder : public SymbolVisitor {
  public:
-  explicit FirstSubtreeFinder(const TreePredicate& predicate)
+  explicit FirstSubtreeFinder(const TreePredicate &predicate)
       : predicate_(predicate) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     if (result_ == nullptr) {
       // If this node matches, return it, and skip evaluating children.
       if (predicate_(node)) {
         result_ = &node;
       } else {
-        for (const SymbolPtr& child : node.children()) {
+        for (const SymbolPtr &child : node.children()) {
           if (child != nullptr) {
             child->Accept(this);
           }
@@ -202,7 +202,7 @@ class FirstSubtreeFinder : public SymbolVisitor {
     }
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     // If already have a result, stop checking and return right away.
     if (result_ == nullptr) {
       if (predicate_(leaf)) {
@@ -211,68 +211,68 @@ class FirstSubtreeFinder : public SymbolVisitor {
     }
   }
 
-  const Symbol* result() const { return result_; }
+  const Symbol *result() const { return result_; }
 
  private:
   // Matching criterion.
   TreePredicate predicate_;
 
   // Contains first matching result found or nullptr if no match is found.
-  const Symbol* result_ = nullptr;
+  const Symbol *result_ = nullptr;
 };
 
 // A visitor that finds the last matching node. Inherits from
 // TreeVisitorRecursive, as it needs to visit all nodes in the tree.
 class LastSubtreeFinder : public TreeVisitorRecursive {
  public:
-  explicit LastSubtreeFinder(const TreePredicate& predicate)
+  explicit LastSubtreeFinder(const TreePredicate &predicate)
       : predicate_(predicate) {}
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     if (predicate_(node)) result_ = &node;
   }
 
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     if (predicate_(leaf)) result_ = &leaf;
   }
 
-  const Symbol* result() const { return result_; }
+  const Symbol *result() const { return result_; }
 
  private:
   // Matching criterion.
   TreePredicate predicate_;
 
   // Contains last matching result found or nullptr if no match is found.
-  const Symbol* result_ = nullptr;
+  const Symbol *result_ = nullptr;
 };
 }  // namespace
 
-ConcreteSyntaxTree* FindFirstSubtreeMutable(ConcreteSyntaxTree* tree,
-                                            const TreePredicate& pred) {
+ConcreteSyntaxTree *FindFirstSubtreeMutable(ConcreteSyntaxTree *tree,
+                                            const TreePredicate &pred) {
   if (*ABSL_DIE_IF_NULL(tree) == nullptr) return nullptr;
   FirstSubtreeFinderMutable finder(pred);
   (*tree)->Accept(&finder, tree);
   return finder.result();
 }
 
-const Symbol* FindFirstSubtree(const Symbol* tree, const TreePredicate& pred) {
+const Symbol *FindFirstSubtree(const Symbol *tree, const TreePredicate &pred) {
   if (tree == nullptr) return nullptr;
   FirstSubtreeFinder finder(pred);
   tree->Accept(&finder);
   return finder.result();
 }
 
-const Symbol* FindLastSubtree(const Symbol* tree, const TreePredicate& pred) {
+const Symbol *FindLastSubtree(const Symbol *tree, const TreePredicate &pred) {
   if (tree == nullptr) return nullptr;
   LastSubtreeFinder finder(pred);
   tree->Accept(&finder);
   return finder.result();
 }
 
-ConcreteSyntaxTree* FindSubtreeStartingAtOffset(
-    ConcreteSyntaxTree* tree, const char* first_token_offset) {
-  auto predicate = [=](const Symbol& s) {
-    const SyntaxTreeLeaf* leftmost = GetLeftmostLeaf(s);
+ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
+    ConcreteSyntaxTree *tree, const char *first_token_offset) {
+  auto predicate = [=](const Symbol &s) {
+    const SyntaxTreeLeaf *leftmost = GetLeftmostLeaf(s);
     if (leftmost != nullptr) {
       if (std::distance(first_token_offset, leftmost->get().text().begin()) >=
           0) {
@@ -281,7 +281,7 @@ ConcreteSyntaxTree* FindSubtreeStartingAtOffset(
     }
     return false;
   };
-  ConcreteSyntaxTree* result =
+  ConcreteSyntaxTree *result =
       FindFirstSubtreeMutable(ABSL_DIE_IF_NULL(tree), predicate);
   // This cannot return a null tree node because it would have been skipped
   // by FirstSubtreeFinderMutable.
@@ -292,17 +292,17 @@ ConcreteSyntaxTree* FindSubtreeStartingAtOffset(
 // Helper function for PruneSyntaxTreeAfterOffset
 namespace {
 // Returns true if this node should be deleted by parent (pop_back).
-bool PruneTreeFromRight(ConcreteSyntaxTree* tree, const char* offset) {
+bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
   const auto kind = (*ABSL_DIE_IF_NULL(tree))->Kind();
   switch (kind) {
     case SymbolKind::kLeaf: {
-      auto* leaf = down_cast<SyntaxTreeLeaf*>(tree->get());
+      auto *leaf = down_cast<SyntaxTreeLeaf *>(tree->get());
       return std::distance(offset, leaf->get().text().end()) > 0;
     }
     case SymbolKind::kNode: {
-      auto& node = down_cast<SyntaxTreeNode&>(*tree->get());
-      auto& children = node.mutable_children();
-      for (auto& child : reversed_view(children)) {
+      auto &node = down_cast<SyntaxTreeNode &>(*tree->get());
+      auto &children = node.mutable_children();
+      for (auto &child : reversed_view(children)) {
         if (child == nullptr) {
           children.pop_back();  // pop_back() guaranteed to not realloc
         } else {
@@ -325,39 +325,39 @@ bool PruneTreeFromRight(ConcreteSyntaxTree* tree, const char* offset) {
 }
 }  // namespace
 
-void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree* tree, const char* offset) {
+void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree, const char *offset) {
   PruneTreeFromRight(tree, offset);
 }
 
 // Helper functions for ZoomSyntaxTree
 namespace {
 // Return the upper bound offset of the rightmost token in the tree.
-const char* RightmostOffset(const Symbol& symbol) {
-  const SyntaxTreeLeaf* leaf_ptr = verible::GetRightmostLeaf(symbol);
+const char *RightmostOffset(const Symbol &symbol) {
+  const SyntaxTreeLeaf *leaf_ptr = verible::GetRightmostLeaf(symbol);
   return ABSL_DIE_IF_NULL(leaf_ptr)->get().text().end();
 }
 
 // Return the first non-null child node/leaf of the immediate subtree.
-ConcreteSyntaxTree* LeftSubtree(ConcreteSyntaxTree* tree) {
+ConcreteSyntaxTree *LeftSubtree(ConcreteSyntaxTree *tree) {
   if ((ABSL_DIE_IF_NULL(*tree))->Kind() == verible::SymbolKind::kLeaf) {
     // Leaves don't have subtrees.
     return nullptr;
   }
-  auto& children = down_cast<SyntaxTreeNode&>(*tree->get()).mutable_children();
-  for (auto& child : children) {
+  auto &children = down_cast<SyntaxTreeNode &>(*tree->get()).mutable_children();
+  for (auto &child : children) {
     if (child != nullptr) return &child;
   }
   return nullptr;
 }
 }  // namespace
 
-ConcreteSyntaxTree* ZoomSyntaxTree(ConcreteSyntaxTree* tree,
+ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
                                    absl::string_view trim_range) {
   if (*tree == nullptr) return nullptr;
 
   const auto left_offset = trim_range.begin();
   // Find shallowest syntax tree node that starts at the given byte offset.
-  ConcreteSyntaxTree* match =
+  ConcreteSyntaxTree *match =
       FindSubtreeStartingAtOffset(ABSL_DIE_IF_NULL(tree), left_offset);
 
   // Take leftmost subtree until its right bound falls within offset.
@@ -369,8 +369,8 @@ ConcreteSyntaxTree* ZoomSyntaxTree(ConcreteSyntaxTree* tree,
   return match;
 }
 
-void TrimSyntaxTree(ConcreteSyntaxTree* tree, absl::string_view trim_range) {
-  auto* replacement = ZoomSyntaxTree(tree, trim_range);
+void TrimSyntaxTree(ConcreteSyntaxTree *tree, absl::string_view trim_range) {
+  auto *replacement = ZoomSyntaxTree(tree, trim_range);
   if (replacement == nullptr || *replacement == nullptr) {
     *tree = nullptr;
   } else {
@@ -384,25 +384,25 @@ class LeafMutatorVisitor : public MutableTreeVisitorRecursive {
  public:
   // Maintains a reference but not ownership of the mutator, so the
   // mutator must outlive this object.
-  explicit LeafMutatorVisitor(const LeafMutator* mutator)
+  explicit LeafMutatorVisitor(const LeafMutator *mutator)
       : leaf_mutator_(*mutator) {}
 
-  void Visit(const SyntaxTreeNode&, SymbolPtr*) final {}
+  void Visit(const SyntaxTreeNode &, SymbolPtr *) final {}
 
   // Transforms a single leaf.
-  void Visit(const SyntaxTreeLeaf& leaf, SymbolPtr* leaf_owner) final {
+  void Visit(const SyntaxTreeLeaf &leaf, SymbolPtr *leaf_owner) final {
     CHECK_EQ(leaf_owner->get(), &leaf);
-    auto* const mutable_leaf = down_cast<SyntaxTreeLeaf*>(leaf_owner->get());
+    auto *const mutable_leaf = down_cast<SyntaxTreeLeaf *>(leaf_owner->get());
     leaf_mutator_(ABSL_DIE_IF_NULL(mutable_leaf)->get_mutable());
   }
 
  private:
   // Mutation to apply to every leaf token.
-  const LeafMutator& leaf_mutator_;
+  const LeafMutator &leaf_mutator_;
 };
 }  // namespace
 
-void MutateLeaves(ConcreteSyntaxTree* tree, const LeafMutator& mutator) {
+void MutateLeaves(ConcreteSyntaxTree *tree, const LeafMutator &mutator) {
   if (*ABSL_DIE_IF_NULL(tree) != nullptr) {
     LeafMutatorVisitor visitor(&mutator);
     (*tree)->Accept(&visitor, tree);
@@ -413,21 +413,21 @@ void MutateLeaves(ConcreteSyntaxTree* tree, const LeafMutator& mutator) {
 // Implementation of printing functions
 //
 
-std::ostream& RawSymbolPrinter::auto_indent() {
+std::ostream &RawSymbolPrinter::auto_indent() {
   return *stream_ << Spacer(indent_, ' ');
 }
 
-void RawSymbolPrinter::Visit(const SyntaxTreeLeaf& leaf) {
+void RawSymbolPrinter::Visit(const SyntaxTreeLeaf &leaf) {
   leaf.get().ToStream(auto_indent() << "Leaf @" << child_rank_ << ' ')
       << std::endl;
 }
 
-void PrettyPrinter::Visit(const SyntaxTreeLeaf& leaf) {
+void PrettyPrinter::Visit(const SyntaxTreeLeaf &leaf) {
   leaf.get().ToStream(auto_indent() << "Leaf @" << child_rank_ << ' ', context_)
       << std::endl;
 }
 
-void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
+void RawSymbolPrinter::Visit(const SyntaxTreeNode &node) {
   std::string tag_info;
   const int tag = node.Tag().tag;
   if (tag != 0) tag_info = absl::StrCat("(tag: ", tag, ") ");
@@ -438,7 +438,7 @@ void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
   {
     const ValueSaver<int> value_saver(&indent_, indent_ + 2);
     const ValueSaver<int> rank_saver(&child_rank_, 0);
-    for (const auto& child : node.children()) {
+    for (const auto &child : node.children()) {
       if (child) {
         child->Accept(this);
       } else if (print_null_nodes_) {
@@ -452,29 +452,29 @@ void RawSymbolPrinter::Visit(const SyntaxTreeNode& node) {
   auto_indent() << "}" << std::endl;
 }
 
-std::ostream& RawTreePrinter::Print(std::ostream& stream) const {
+std::ostream &RawTreePrinter::Print(std::ostream &stream) const {
   RawSymbolPrinter printer(&stream, print_null_nodes_);
   root_.Accept(&printer);
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const RawTreePrinter& printer) {
+std::ostream &operator<<(std::ostream &stream, const RawTreePrinter &printer) {
   return printer.Print(stream);
 }
 
-void PrettyPrintTree(const Symbol& root, const TokenInfo::Context& context,
-                     std::ostream* stream) {
+void PrettyPrintTree(const Symbol &root, const TokenInfo::Context &context,
+                     std::ostream *stream) {
   PrettyPrinter printer(stream, context);
   root.Accept(&printer);
 }
 
-std::ostream& TreePrettyPrinter::Print(std::ostream& stream) const {
+std::ostream &TreePrettyPrinter::Print(std::ostream &stream) const {
   PrettyPrintTree(root_, context_, &stream);
   return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const TreePrettyPrinter& printer) {
+std::ostream &operator<<(std::ostream &stream,
+                         const TreePrettyPrinter &printer) {
   return printer.Print(stream);
 }
 

@@ -40,9 +40,9 @@ static void SinkValue(SymbolPtr) {
   // Do nothing, just consume and expire the pointer.
 }
 
-static SyntaxTreeNode* CheckTree(const SymbolPtr& ptr) {
+static SyntaxTreeNode *CheckTree(const SymbolPtr &ptr) {
   CHECK(ptr->Kind() == SymbolKind::kNode);
-  return down_cast<SyntaxTreeNode*>(ptr.get());
+  return down_cast<SyntaxTreeNode *>(ptr.get());
 }
 
 // Test that MatchesTag matches correctly.
@@ -260,7 +260,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildren) {
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
   EXPECT_THAT(parentnode->children(), SizeIs(3));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
 }
@@ -272,7 +272,7 @@ TEST(SyntaxTreeNodeAppend, AdoptNullChildren) {
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
   EXPECT_THAT(parentnode->children(), SizeIs(2));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, IsNull());
   }
 }
@@ -304,7 +304,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenMixed) {
   auto parentnode = CheckTree(parent);
   ASSERT_THAT(parentnode, NotNull());
   EXPECT_THAT(parentnode->children(), SizeIs(5));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
 }
@@ -319,7 +319,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenMultiple) {
   auto parentnode = CheckTree(parent);
   ASSERT_THAT(parentnode, NotNull());
   EXPECT_THAT(parentnode->children(), SizeIs(7));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
 }
@@ -331,7 +331,7 @@ TEST(ExtendNodeTest, AdoptChildren) {
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
   EXPECT_THAT(parentnode->children(), SizeIs(2));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
 }
@@ -343,7 +343,7 @@ TEST(ExtendNodeTest, AdoptChildrenMixed) {
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
   EXPECT_THAT(parentnode->children(), SizeIs(4));
-  for (const auto& child : parentnode->children()) {
+  for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
 }
@@ -377,7 +377,7 @@ TEST(ExtendNodeTest, SetChild1Size2) {
 // Tests that subscript operator works (mutable).
 TEST(NodeSubscriptTest, MutableReference) {
   auto example = Node(Leaf(6, "6"), Leaf(7, "7"));
-  auto& example_node = down_cast<SyntaxTreeNode&>(*example);
+  auto &example_node = down_cast<SyntaxTreeNode &>(*example);
   EXPECT_EQ(example_node[0]->Tag().tag, 6);
   EXPECT_EQ(example_node[1]->Tag().tag, 7);
 }
@@ -385,7 +385,7 @@ TEST(NodeSubscriptTest, MutableReference) {
 // Tests that subscript operator works (const).
 TEST(NodeSubscriptTest, ConstReference) {
   auto example = Node(Leaf(8, "8"), Leaf(9, "9"));
-  const auto& example_node = down_cast<const SyntaxTreeNode&>(*example);
+  const auto &example_node = down_cast<const SyntaxTreeNode &>(*example);
   EXPECT_EQ(example_node[0]->Tag().tag, 8);
   EXPECT_EQ(example_node[1]->Tag().tag, 9);
 }

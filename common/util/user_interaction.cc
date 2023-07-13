@@ -30,7 +30,7 @@
 
 namespace verible {
 
-bool IsInteractiveTerminalSession(const std::ostream& s) {
+bool IsInteractiveTerminalSession(const std::ostream &s) {
   // Unix: STDIN_FILENO; windows: _fileno( stdin ). So just name the
   // file descriptors by number.
   static bool kStdinIsTerminal = isatty(0);
@@ -40,7 +40,7 @@ bool IsInteractiveTerminalSession(const std::ostream& s) {
           kStdoutIsTerminal);
 }
 
-char ReadCharFromUser(std::istream& input, std::ostream& output,
+char ReadCharFromUser(std::istream &input, std::ostream &output,
                       bool input_is_terminal, absl::string_view prompt) {
   if (input_is_terminal) {
     // Terminal input: print prompt, read whole line and return first character.
@@ -79,7 +79,7 @@ static constexpr absl::string_view kColorsStart[static_cast<uint32_t>(Color::kNu
 };
 // clang-format on
 
-std::ostream& bold(std::ostream& out, absl::string_view s) {
+std::ostream &bold(std::ostream &out, absl::string_view s) {
   if (IsInteractiveTerminalSession(out)) {
     out << kBoldEscape << s << kNormalEscape;
   } else {
@@ -87,7 +87,7 @@ std::ostream& bold(std::ostream& out, absl::string_view s) {
   }
   return out;
 }
-std::ostream& inverse(std::ostream& out, absl::string_view s) {
+std::ostream &inverse(std::ostream &out, absl::string_view s) {
   if (IsInteractiveTerminalSession(out)) {
     out << kInverseEscape << s << kNormalEscape;
   } else {
@@ -95,7 +95,7 @@ std::ostream& inverse(std::ostream& out, absl::string_view s) {
   }
   return out;
 }
-std::ostream& Colored(std::ostream& out, absl::string_view s, Color c) {
+std::ostream &Colored(std::ostream &out, absl::string_view s, Color c) {
   if (IsInteractiveTerminalSession(out) && c != Color::kNone) {
     out << kColorsStart[static_cast<uint32_t>(c)] << s << kNormalEscape;
   } else {

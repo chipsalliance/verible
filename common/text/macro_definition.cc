@@ -29,7 +29,7 @@ namespace verible {
 
 using container::FindOrNull;
 
-bool MacroDefinition::AppendParameter(const MacroParameterInfo& param_info) {
+bool MacroDefinition::AppendParameter(const MacroParameterInfo &param_info) {
   is_callable_ = true;
   // Record position of this parameter.
   const bool inserted = parameter_positions_
@@ -41,8 +41,8 @@ bool MacroDefinition::AppendParameter(const MacroParameterInfo& param_info) {
 }
 
 absl::Status MacroDefinition::PopulateSubstitutionMap(
-    const std::vector<TokenInfo>& macro_call_args,
-    substitution_map_type* arg_map) const {
+    const std::vector<TokenInfo> &macro_call_args,
+    substitution_map_type *arg_map) const {
   if (macro_call_args.size() != parameter_info_array_.size()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Error calling macro ", name_.text(), " with ",
@@ -54,7 +54,7 @@ absl::Status MacroDefinition::PopulateSubstitutionMap(
   const auto actuals_end = macro_call_args.end();
   auto formals_iter = parameter_info_array_.begin();
   for (; actuals_iter != actuals_end; ++actuals_iter, ++formals_iter) {
-    auto& replacement_text = (*arg_map)[formals_iter->name.text()];
+    auto &replacement_text = (*arg_map)[formals_iter->name.text()];
     if (!actuals_iter->text().empty()) {
       // Actual text is provided.
       replacement_text = *actuals_iter;
@@ -68,8 +68,8 @@ absl::Status MacroDefinition::PopulateSubstitutionMap(
 }
 
 absl::Status MacroDefinition::PopulateSubstitutionMap(
-    const std::vector<DefaultTokenInfo>& macro_call_args,
-    substitution_map_type* arg_map) const {
+    const std::vector<DefaultTokenInfo> &macro_call_args,
+    substitution_map_type *arg_map) const {
   if (macro_call_args.size() != parameter_info_array_.size()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Error calling macro ", name_.text(), " with ",
@@ -81,7 +81,7 @@ absl::Status MacroDefinition::PopulateSubstitutionMap(
   const auto actuals_end = macro_call_args.end();
   auto formals_iter = parameter_info_array_.begin();
   for (; actuals_iter != actuals_end; ++actuals_iter, ++formals_iter) {
-    auto& replacement_text = (*arg_map)[formals_iter->name.text()];
+    auto &replacement_text = (*arg_map)[formals_iter->name.text()];
     if (!actuals_iter->text().empty()) {
       // Actual text is provided.
       replacement_text = *actuals_iter;
@@ -94,12 +94,12 @@ absl::Status MacroDefinition::PopulateSubstitutionMap(
   return absl::OkStatus();
 }
 
-const TokenInfo& MacroDefinition::SubstituteText(
-    const substitution_map_type& substitution_map, const TokenInfo& token_info,
+const TokenInfo &MacroDefinition::SubstituteText(
+    const substitution_map_type &substitution_map, const TokenInfo &token_info,
     int actual_token_enum) {
   if (actual_token_enum == 0 ||
       (actual_token_enum == token_info.token_enum())) {
-    const auto* replacement = FindOrNull(substitution_map, token_info.text());
+    const auto *replacement = FindOrNull(substitution_map, token_info.text());
     if (replacement) {
       // Substitute formal parameter for actual text.
       return *replacement;

@@ -28,13 +28,13 @@ class FakeTokenSequenceLexer : public Lexer, public FakeLexer {
  public:
   using FakeLexer::SetTokensData;
 
-  const TokenInfo& GetLastToken() const final { return *tokens_iter_; }
+  const TokenInfo &GetLastToken() const final { return *tokens_iter_; }
 
-  const TokenInfo& DoNextToken() final { return FakeLexer::DoNextToken(); }
+  const TokenInfo &DoNextToken() final { return FakeLexer::DoNextToken(); }
 
   void Restart(absl::string_view) final {}
 
-  bool TokenIsError(const TokenInfo&) const override { return false; }
+  bool TokenIsError(const TokenInfo &) const override { return false; }
 };
 
 TEST(MakeTokenGeneratorTest, Generate) {
@@ -65,13 +65,13 @@ TEST(MakeTokenSequenceTest, Sequencer) {
   lexer.SetTokensData(tokens);
   TokenSequence receiver;
   const auto lex_status =
-      MakeTokenSequence(&lexer, text, &receiver, [](const TokenInfo&) {});
+      MakeTokenSequence(&lexer, text, &receiver, [](const TokenInfo &) {});
   EXPECT_TRUE(lex_status.ok());
   EXPECT_EQ(receiver, TokenSequence(tokens));
 }
 
 class TheNumberTwoIsErrorLexer : public FakeTokenSequenceLexer {
-  bool TokenIsError(const TokenInfo& token) const final {
+  bool TokenIsError(const TokenInfo &token) const final {
     return token.token_enum() == 2;
   }
 };
@@ -89,7 +89,7 @@ TEST(MakeTokenSequenceTest, SequencerWithError) {
   TokenSequence errors;
   const auto lex_status = MakeTokenSequence(
       &lexer, text, &receiver,
-      [&](const TokenInfo& error_token) { errors.push_back(error_token); });
+      [&](const TokenInfo &error_token) { errors.push_back(error_token); });
   EXPECT_FALSE(lex_status.ok());
   ASSERT_EQ(receiver.size(), 2);  // includes error token
   ASSERT_EQ(errors.size(), 1);

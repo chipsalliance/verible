@@ -42,7 +42,7 @@ VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 static constexpr absl::string_view kMessage =
     "Explicitly define a default case for every case statement.";
 
-const LintRuleDescriptor& CaseMissingDefaultRule::GetDescriptor() {
+const LintRuleDescriptor &CaseMissingDefaultRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "case-missing-default",
       .topic = "case-statements",
@@ -51,14 +51,14 @@ const LintRuleDescriptor& CaseMissingDefaultRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& CaseMatcher() {
+static const Matcher &CaseMatcher() {
   static const Matcher matcher(
       NodekCaseItemList(verible::matcher::Unless(HasDefaultCase())));
   return matcher;
 }
 
 void CaseMissingDefaultRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (context.DirectParentIs(NodeEnum::kCaseStatement) &&
       CaseMatcher().Matches(symbol, &manager)) {

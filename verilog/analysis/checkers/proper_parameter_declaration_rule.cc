@@ -48,7 +48,7 @@ static constexpr absl::string_view kLocalParamMessage =
     "\'localparam\' declarations should only be within modules\' or classes\' "
     "definition bodies.";
 
-const LintRuleDescriptor& ProperParameterDeclarationRule::GetDescriptor() {
+const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "proper-parameter-declaration",
       .topic = "constants",
@@ -60,14 +60,14 @@ const LintRuleDescriptor& ProperParameterDeclarationRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ParamDeclMatcher() {
+static const Matcher &ParamDeclMatcher() {
   static const Matcher matcher(NodekParamDeclaration());
   return matcher;
 }
 
 // TODO(kathuriac): Also check the 'interface' and 'program' constructs.
 void ProperParameterDeclarationRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ParamDeclMatcher().Matches(symbol, &manager)) {
     const auto param_decl_token = GetParamKeyword(symbol);

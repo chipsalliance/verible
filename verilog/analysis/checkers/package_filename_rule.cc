@@ -48,7 +48,7 @@ static constexpr absl::string_view kMessage =
     "Package declaration name must match the file name "
     "(ignoring optional \"_pkg\" file name suffix).  ";
 
-const LintRuleDescriptor& PackageFilenameRule::GetDescriptor() {
+const LintRuleDescriptor &PackageFilenameRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "package-filename",
       .topic = "file-names",
@@ -63,13 +63,13 @@ const LintRuleDescriptor& PackageFilenameRule::GetDescriptor() {
   return d;
 }
 
-void PackageFilenameRule::Lint(const TextStructureView& text_structure,
+void PackageFilenameRule::Lint(const TextStructureView &text_structure,
                                absl::string_view filename) {
   if (verible::file::IsStdin(filename)) {
     return;
   }
 
-  const auto& tree = text_structure.SyntaxTree();
+  const auto &tree = text_structure.SyntaxTree();
   if (tree == nullptr) return;
 
   // Find all package declarations.
@@ -100,8 +100,8 @@ void PackageFilenameRule::Lint(const TextStructureView& text_structure,
   }
 
   // Report a violation on every package declaration, potentially.
-  for (const auto& package_match : package_matches) {
-    const verible::TokenInfo* package_name_token =
+  for (const auto &package_match : package_matches) {
+    const verible::TokenInfo *package_name_token =
         GetPackageNameToken(*package_match.match);
     if (!package_name_token) continue;
     absl::string_view package_id = package_name_token->text();

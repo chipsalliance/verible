@@ -36,11 +36,11 @@ namespace verible {
 // Iter can point to any Interval<> or any type constructible to Interval<>
 // (like std::pair).
 template <class Iter>
-std::ostream& FormatIntervals(std::ostream& stream, Iter begin, Iter end) {
+std::ostream &FormatIntervals(std::ostream &stream, Iter begin, Iter end) {
   using value_type = typename std::iterator_traits<Iter>::value_type;
   return stream << absl::StrJoin(
              begin, end, ", ",
-             [](std::string* out, const value_type& interval) {
+             [](std::string *out, const value_type &interval) {
                std::ostringstream temp_stream;
                temp_stream << AsInterval(interval);
                out->append(temp_stream.str());
@@ -56,7 +56,7 @@ class IntervalSetImpl {
   // iterator variants.
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
-  FindLowerBound(M& intervals, const typename M::mapped_type& value) {
+  FindLowerBound(M &intervals, const typename M::mapped_type &value) {
     const auto lower_bound = intervals.lower_bound(value);
     if (lower_bound == intervals.begin()) {
       return lower_bound;
@@ -74,8 +74,8 @@ class IntervalSetImpl {
   // 'interval', if one exists, else end().
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
-  FindSpanningInterval(M& intervals,
-                       const Interval<typename M::mapped_type>& interval) {
+  FindSpanningInterval(M &intervals,
+                       const Interval<typename M::mapped_type> &interval) {
     CHECK(interval.valid());
     // Nothing 'contains' an empty interval.
     if (!interval.empty()) {
@@ -93,7 +93,7 @@ class IntervalSetImpl {
   // This is more efficient than checking for [value, value +1).
   template <typename M>                            // M is a map-type
   static typename auto_iterator_selector<M>::type  // const_iterator or iterator
-  FindSpanningInterval(M& intervals, const typename M::mapped_type& value) {
+  FindSpanningInterval(M &intervals, const typename M::mapped_type &value) {
     const auto upper_bound = intervals.upper_bound(value);
     // lower_bound misses equality condition
     if (upper_bound != intervals.begin()) {
@@ -113,9 +113,9 @@ class IntervalSetImpl {
   // Precondition: 'intervals' map contains non-overlapping key ranges.
   template <typename M>  // M is a map-type
   static std::pair<typename M::iterator, bool>
-  FindNonoverlappingEmplacePosition(M& intervals,
-                                    const typename M::mapped_type& min,
-                                    const typename M::mapped_type& max) {
+  FindNonoverlappingEmplacePosition(M &intervals,
+                                    const typename M::mapped_type &min,
+                                    const typename M::mapped_type &max) {
     if (intervals.empty()) return {intervals.end(), true};
     const auto iter = intervals.upper_bound(min);
     if (iter == intervals.begin()) {
@@ -157,17 +157,17 @@ class IntervalSet : private internal::IntervalSetImpl {
   IntervalSet(std::initializer_list<Interval<T>> ranges) {
     // Add-ing will properly fuse overlapping intervals and maintain intervals_'
     // invariants.
-    for (const auto& range : ranges) {
+    for (const auto &range : ranges) {
       Add(range);
     }
   }
 
-  IntervalSet(const IntervalSet<T>&) = default;
-  IntervalSet(IntervalSet<T>&&) noexcept = default;
+  IntervalSet(const IntervalSet<T> &) = default;
+  IntervalSet(IntervalSet<T> &&) noexcept = default;
   ~IntervalSet() { CheckIntegrity(); }
 
-  IntervalSet<T>& operator=(const IntervalSet<T>&) = default;
-  IntervalSet<T>& operator=(IntervalSet<T>&&) noexcept = default;
+  IntervalSet<T> &operator=(const IntervalSet<T> &) = default;
+  IntervalSet<T> &operator=(IntervalSet<T> &&) noexcept = default;
 
  public:
   const_iterator begin() const { return intervals_.begin(); }
@@ -186,59 +186,59 @@ class IntervalSet : private internal::IntervalSetImpl {
   // Remove all intervals from the set.
   void clear() { intervals_.clear(); }
 
-  void swap(IntervalSet<T>& other) { intervals_.swap(other.intervals_); }
+  void swap(IntervalSet<T> &other) { intervals_.swap(other.intervals_); }
 
-  bool operator==(const IntervalSet<T>& other) const {
+  bool operator==(const IntervalSet<T> &other) const {
     return intervals_ == other.intervals_;
   }
 
-  bool operator!=(const IntervalSet<T>& other) const {
+  bool operator!=(const IntervalSet<T> &other) const {
     return !(*this == other);
   }
 
   // Returns true if value is a member of an interval in the set.
-  bool Contains(const T& value) const {
+  bool Contains(const T &value) const {
     return Find(value) != intervals_.end();
   }
 
   // Returns true if interval is entirely contained by an interval in the set.
   // If interval is empty, return false.
-  bool Contains(const Interval<T>& interval) const {
+  bool Contains(const Interval<T> &interval) const {
     return Find(interval) != intervals_.end();
   }
 
   // TODO(fangism): bool Contains(const IntervalSet<T>& interval) const;
 
   // Returns the first (interval) iterator that spans or follows 'value'.
-  const_iterator LowerBound(const T& value) const {
+  const_iterator LowerBound(const T &value) const {
     return internal::IntervalSetImpl::FindLowerBound(intervals_, value);
   }
 
   // Returns the first (interval) iterator that follows 'value'.
-  const_iterator UpperBound(const T& value) const {
+  const_iterator UpperBound(const T &value) const {
     return intervals_.upper_bound(value);
   }
 
   // Returns an iterator to the interval that entirely contains [min,max),
   // or the end iterator if no such interval exists, or the input is empty.
-  const_iterator Find(const Interval<T>& interval) const {
+  const_iterator Find(const Interval<T> &interval) const {
     return internal::IntervalSetImpl::FindSpanningInterval(intervals_,
                                                            interval);
   }
 
   // Returns an iterator to the interval that contains 'value',
   // or the end iterator if no such interval exists.
-  const_iterator Find(const T& value) const {
+  const_iterator Find(const T &value) const {
     return internal::IntervalSetImpl::FindSpanningInterval(intervals_, value);
   }
 
   // Adds an interval to the interval set.
   // Also fuses any intervals that may result from the addition.
-  void Add(const Interval<T>& interval) {
+  void Add(const Interval<T> &interval) {
     CHECK(interval.valid());
     if (interval.empty()) return;  // adding empty interval changes nothing
-    const auto& min = interval.min;
-    const auto& max = interval.max;
+    const auto &min = interval.min;
+    const auto &max = interval.max;
 
     T new_max = max;
     iterator erase_end;
@@ -287,15 +287,15 @@ class IntervalSet : private internal::IntervalSetImpl {
   }
 
   // Adds a single value to the interval set.
-  void Add(const T& value) { Add({value, value + 1}); }
+  void Add(const T &value) { Add({value, value + 1}); }
 
   // Removes an interval from the set.
   // Run-time: O(lg N), where N is the number of existing intervals.
-  void Difference(const Interval<T>& interval) {
+  void Difference(const Interval<T> &interval) {
     CHECK(interval.valid());
     if (interval.empty()) return;  // removing an empty interval changes nothing
-    const auto& min = interval.min;
-    const auto& max = interval.max;
+    const auto &min = interval.min;
+    const auto &max = interval.max;
 
     iterator erase_end;
     bool replace_upper = false;
@@ -358,27 +358,27 @@ class IntervalSet : private internal::IntervalSetImpl {
   }
 
   // Removes a single value from the interval set.
-  void Difference(const T& value) { Difference({value, value + 1}); }
+  void Difference(const T &value) { Difference({value, value + 1}); }
 
   // Subtracts all intervals in the other set from this one.
-  void Difference(const IntervalSet<T>& iset) {
+  void Difference(const IntervalSet<T> &iset) {
     // TODO(fangism): optimize by implementing with two advancing iterators,
     // like linear-time sorted-sequence set operations.
-    for (const auto& interval : iset) {
+    for (const auto &interval : iset) {
       Difference(AsInterval(interval));
     }
   }
 
   // Adds all intervals in the other set from this one.
-  void Union(const IntervalSet<T>& iset) {
+  void Union(const IntervalSet<T> &iset) {
     // Could be optimized with a hand-written linear-merge.
-    for (const auto& interval : iset) {
+    for (const auto &interval : iset) {
       Add(AsInterval(interval));
     }
   }
 
   // Inverts the set of integers with respect to the given interval bound.
-  void Complement(const Interval<T>& interval) {
+  void Complement(const Interval<T> &interval) {
     // This could be more efficient with a direct insertion of elements.
     IntervalSet<T> temp{{interval}};
     temp.Difference(*this);
@@ -391,7 +391,7 @@ class IntervalSet : private internal::IntervalSetImpl {
   template <typename S>
   IntervalSet<S> MonotonicTransform(std::function<S(T)> func) const {
     IntervalSet<S> result;
-    for (const auto& interval : intervals_) {
+    for (const auto &interval : intervals_) {
       S left = func(interval.first);
       S right = func(interval.second);
       // ignore empty intervals that may result from range compression
@@ -415,7 +415,7 @@ class IntervalSet : private internal::IntervalSetImpl {
       Interval<T> interval;
     };
     // comparator for binary search
-    auto less = [](size_t l, const cumulative_weighted_interval& r) {
+    auto less = [](size_t l, const cumulative_weighted_interval &r) {
       return l < r.cumulative_weight;
     };
 
@@ -423,7 +423,7 @@ class IntervalSet : private internal::IntervalSetImpl {
     std::vector<cumulative_weighted_interval> interval_map;
     CHECK(!empty()) << "Non-empty interval set required for random generator";
     size_t cumulative_size = 0;
-    for (const auto& range : intervals_) {
+    for (const auto &range : intervals_) {
       const auto interval = AsInterval(range);
       interval_map.push_back({cumulative_size, interval});
       cumulative_size += interval.length();
@@ -445,11 +445,11 @@ class IntervalSet : private internal::IntervalSetImpl {
     };
   }
 
-  std::ostream& FormatInclusive(std::ostream& stream, bool compact,
+  std::ostream &FormatInclusive(std::ostream &stream, bool compact,
                                 char delim = '-') const {
     return stream << absl::StrJoin(
                intervals_, ",",
-               [=](std::string* out, const value_type& interval) {
+               [=](std::string *out, const value_type &interval) {
                  std::ostringstream temp_stream;
                  AsInterval(interval).FormatInclusive(temp_stream, compact,
                                                       delim);
@@ -460,7 +460,7 @@ class IntervalSet : private internal::IntervalSetImpl {
  protected:
   // This operation is only intended for constructing test expect values.
   // It does not guarantee any invariants among intervals_.
-  void AddUnsafe(const Interval<T>& interval) {
+  void AddUnsafe(const Interval<T> &interval) {
     CHECK(interval.valid());
     CHECK(!interval.empty());
     intervals_[interval.min] = interval.max;
@@ -494,17 +494,17 @@ class IntervalSet : private internal::IntervalSetImpl {
 
   // Mutable variants of Find(), LowerBound() are protected to preserve
   // invariants.
-  iterator Find(const Interval<T>& interval) {
+  iterator Find(const Interval<T> &interval) {
     return internal::IntervalSetImpl::FindSpanningInterval(intervals_,
                                                            interval);
   }
-  iterator Find(const T& value) {
+  iterator Find(const T &value) {
     return internal::IntervalSetImpl::FindSpanningInterval(intervals_, value);
   }
-  iterator LowerBound(const T& value) {
+  iterator LowerBound(const T &value) {
     return internal::IntervalSetImpl::FindLowerBound(intervals_, value);
   }
-  iterator UpperBound(const T& value) { return intervals_.upper_bound(value); }
+  iterator UpperBound(const T &value) { return intervals_.upper_bound(value); }
 
  private:
   // Internal storage of intervals.
@@ -516,12 +516,12 @@ class IntervalSet : private internal::IntervalSetImpl {
 };  // class IntervalSet
 
 template <typename T>
-void swap(IntervalSet<T>& t1, IntervalSet<T>& t2) {
+void swap(IntervalSet<T> &t1, IntervalSet<T> &t2) {
   t1.swap(t2);
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& stream, const IntervalSet<T>& iset) {
+std::ostream &operator<<(std::ostream &stream, const IntervalSet<T> &iset) {
   // Format each IntervalSet internal interval as an Interval<T>.
   return FormatIntervals(stream, iset.begin(), iset.end());
 }
@@ -532,13 +532,13 @@ std::ostream& operator<<(std::ostream& stream, const IntervalSet<T>& iset) {
 // Iter is any iterator that points to a string (or string-like).
 // Returns false on any parse eror, true on complete success.
 template <typename T, typename Iter>
-bool ParseInclusiveRanges(IntervalSet<T>* iset, Iter begin, Iter end,
-                          std::ostream* errstream, const char sep = '-') {
+bool ParseInclusiveRanges(IntervalSet<T> *iset, Iter begin, Iter end,
+                          std::ostream *errstream, const char sep = '-') {
   std::vector<absl::string_view> bounds;  // re-use allocated memory
-  for (const auto& range : verible::make_range(begin, end)) {
+  for (const auto &range : verible::make_range(begin, end)) {
     bounds = absl::StrSplit(range, sep);
     if (bounds.size() == 1) {
-      const auto& arg = bounds.front();
+      const auto &arg = bounds.front();
       // ignore blanks, which comes from splitting ""
       if (arg.empty()) continue;
       int line_number;
@@ -589,10 +589,10 @@ class DisjointIntervalSet : private internal::IntervalSetImpl {
  public:
   DisjointIntervalSet() = default;
 
-  DisjointIntervalSet(const DisjointIntervalSet&) = default;
-  DisjointIntervalSet(DisjointIntervalSet&&) noexcept = default;
-  DisjointIntervalSet& operator=(const DisjointIntervalSet&) = default;
-  DisjointIntervalSet& operator=(DisjointIntervalSet&&) noexcept = default;
+  DisjointIntervalSet(const DisjointIntervalSet &) = default;
+  DisjointIntervalSet(DisjointIntervalSet &&) noexcept = default;
+  DisjointIntervalSet &operator=(const DisjointIntervalSet &) = default;
+  DisjointIntervalSet &operator=(DisjointIntervalSet &&) noexcept = default;
 
   bool empty() const { return intervals_.empty(); }
   const_iterator begin() const { return intervals_.begin(); }
@@ -600,19 +600,19 @@ class DisjointIntervalSet : private internal::IntervalSetImpl {
 
   // Returns an iterator to the entry whose key-range contains 'key', or else
   // end().
-  const_iterator find(const T& key) const {
+  const_iterator find(const T &key) const {
     return FindSpanningInterval(intervals_, key);
   }
   // Returns an iterator to the entry whose key-range wholly contains the 'key'
   // range, or else end().
-  const_iterator find(const std::pair<T, T>& key) const {
+  const_iterator find(const std::pair<T, T> &key) const {
     return FindSpanningInterval(intervals_, key);
   }
 
   // Inserts a value associated with the 'key' interval if it does not overlap
   // with any other key-interval already in the map.
   // The 'value' must be moved in (emplace).
-  std::pair<const_iterator, bool> emplace(const T& min_key, const T& max_key) {
+  std::pair<const_iterator, bool> emplace(const T &min_key, const T &max_key) {
     CHECK(min_key <= max_key);  // CHECK_LE requires printability
     const std::pair<const_iterator, bool> p(
         FindNonoverlappingEmplacePosition(intervals_, min_key, max_key));
@@ -628,7 +628,7 @@ class DisjointIntervalSet : private internal::IntervalSetImpl {
   // consumed 'value').
   // Recommend using this for key-ranges that correspond to allocated memory,
   // because allocators must return non-overlapping memory ranges.
-  const_iterator must_emplace(const T& min_key, const T& max_key) {
+  const_iterator must_emplace(const T &min_key, const T &max_key) {
     const auto p(emplace(min_key, max_key));
     CHECK(p.second) << "Failed to emplace!";
     return p.first;

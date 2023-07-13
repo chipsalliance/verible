@@ -31,54 +31,55 @@ namespace verilog {
 
 // Find all individual port declarations.
 std::vector<verible::TreeSearchMatch> FindAllPortDeclarations(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all nodes tagged with kPort.
 std::vector<verible::TreeSearchMatch> FindAllPortReferences(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Find all nodes tagged with kActualNamedPort.
 std::vector<verible::TreeSearchMatch> FindAllActualNamedPort(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Extract the name of the port identifier from a port declaration.
-const verible::SyntaxTreeLeaf* GetIdentifierFromPortDeclaration(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetIdentifierFromPortDeclaration(
+    const verible::Symbol &);
 
 // Extract the direction from a port declaration.
 // Can return nullptr if the direction is not explicitly specified.
-const verible::SyntaxTreeLeaf* GetDirectionFromPortDeclaration(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetDirectionFromPortDeclaration(
+    const verible::Symbol &);
 
 // Find all individual module port declarations.
 std::vector<verible::TreeSearchMatch> FindAllModulePortDeclarations(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Extract the name of the module port identifier from a port declaration.
-const verible::SyntaxTreeLeaf* GetIdentifierFromModulePortDeclaration(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetIdentifierFromModulePortDeclaration(
+    const verible::Symbol &);
 
 // Extract the direction from a module port declaration.
-const verible::SyntaxTreeLeaf* GetDirectionFromModulePortDeclaration(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetDirectionFromModulePortDeclaration(
+    const verible::Symbol &);
 
 // Extract the name of the module port identifier from a port reference.
 // For Non-ANSI style ports e.g module m(a, b);
-const verible::SyntaxTreeLeaf* GetIdentifierFromPortReference(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetIdentifierFromPortReference(
+    const verible::Symbol &);
 
 // Extracts the node tagged with kPortReference from a node tagged with kPort.
-const verible::SyntaxTreeNode* GetPortReferenceFromPort(const verible::Symbol&);
+const verible::SyntaxTreeNode *GetPortReferenceFromPort(
+    const verible::Symbol &);
 
 // Find all task/function port declarations.
 std::vector<verible::TreeSearchMatch> FindAllTaskFunctionPortDeclarations(
-    const verible::Symbol&);
+    const verible::Symbol &);
 
 // Syntax tree node builder for tp_port_item nonterminal.
 template <typename T0, typename T1, typename T2>
-verible::SymbolPtr MakeTaskFunctionPortItem(T0&& direction,
-                                            T1&& type_id_dimensions,
-                                            T2&& default_value) {
+verible::SymbolPtr MakeTaskFunctionPortItem(T0 &&direction,
+                                            T1 &&type_id_dimensions,
+                                            T2 &&default_value) {
   // TODO(fangism): check assumptions about arguments' node/symbol types
   return verible::MakeTaggedNode(
       NodeEnum::kPortItem, std::forward<T0>(direction),
@@ -87,26 +88,26 @@ verible::SymbolPtr MakeTaskFunctionPortItem(T0&& direction,
 
 // Extract the kDataType from a single task/function port item.
 // The data type could contain only nullptrs (implicit).
-const verible::Symbol* GetTypeOfTaskFunctionPortItem(const verible::Symbol&);
+const verible::Symbol *GetTypeOfTaskFunctionPortItem(const verible::Symbol &);
 
 // Extract the declared identifier from a task/function port item.
-const verible::SyntaxTreeLeaf* GetIdentifierFromTaskFunctionPortItem(
-    const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetIdentifierFromTaskFunctionPortItem(
+    const verible::Symbol &);
 
 // Extract the unpacked dimensions from a task/function port item.
-const verible::SyntaxTreeNode* GetUnpackedDimensionsFromTaskFunctionPortItem(
-    const verible::Symbol&);
+const verible::SyntaxTreeNode *GetUnpackedDimensionsFromTaskFunctionPortItem(
+    const verible::Symbol &);
 
 // Returns the leaf node containing the name of the actual named port.
 // example: from ".x(y)" this returns the leaf spanning "x".
 // Returns nullptr if it doesn't exist.
-const verible::SyntaxTreeLeaf* GetActualNamedPortName(const verible::Symbol&);
+const verible::SyntaxTreeLeaf *GetActualNamedPortName(const verible::Symbol &);
 
 // Returns the node containing the paren group of the actual named port (if
 // exists).
 // e.g. from ".x(y)" returns the node spanning (y), from ".z" return
 // nullptr.
-const verible::Symbol* GetActualNamedPortParenGroup(const verible::Symbol&);
+const verible::Symbol *GetActualNamedPortParenGroup(const verible::Symbol &);
 
 }  // namespace verilog
 

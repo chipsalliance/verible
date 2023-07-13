@@ -64,8 +64,8 @@ static std::string GetBuildVersion() {
 // We might want to have argc edited in the future, hence non-const param.
 std::vector<absl::string_view> InitCommandLine(
     absl::string_view usage,
-    int* argc,  // NOLINT(readability-non-const-parameter)
-    char*** argv) {
+    int *argc,  // NOLINT(readability-non-const-parameter)
+    char ***argv) {
   absl::InitializeSymbolizer(*argv[0]);
   absl::FlagsUsageConfig usage_config;
   usage_config.version_string = GetBuildVersion;
@@ -74,7 +74,7 @@ std::vector<absl::string_view> InitCommandLine(
 
   // To avoid confusing and rarely used flags, we just enable logging via
   // environment variables.
-  const char* const stderr_log_level = getenv("VERIBLE_LOGTHRESHOLD");
+  const char *const stderr_log_level = getenv("VERIBLE_LOGTHRESHOLD");
   int log_level = 0;
   if (stderr_log_level && absl::SimpleAtoi(stderr_log_level, &log_level)) {
     absl::SetStderrThreshold(
@@ -83,7 +83,7 @@ std::vector<absl::string_view> InitCommandLine(
 
   // Until vlog is provided in absl, we use our own global variable, defined
   // in logging.cc
-  const char* const vlog_level_env = getenv("VERIBLE_VLOG_DETAIL");
+  const char *const vlog_level_env = getenv("VERIBLE_VLOG_DETAIL");
   if (!vlog_level_env ||
       !absl::SimpleAtoi(vlog_level_env, &verible::global_vlog_level_)) {
     global_vlog_level_ = 0;

@@ -55,7 +55,7 @@ static constexpr absl::string_view kMessageOut =
 static constexpr absl::string_view kMessageInOut =
     "inout port names must end with _io, _nio or _pio";
 
-const LintRuleDescriptor& PortNameSuffixRule::GetDescriptor() {
+const LintRuleDescriptor &PortNameSuffixRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "port-name-suffix",
       .topic = "suffixes-for-signals-and-types",
@@ -68,14 +68,14 @@ const LintRuleDescriptor& PortNameSuffixRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& PortMatcher() {
+static const Matcher &PortMatcher() {
   static const Matcher matcher(NodekPortDeclaration());
   return matcher;
 }
 
 void PortNameSuffixRule::Violation(absl::string_view direction,
-                                   const TokenInfo& token,
-                                   const SyntaxTreeContext& context) {
+                                   const TokenInfo &token,
+                                   const SyntaxTreeContext &context) {
   if (direction == "input") {
     violations_.insert(LintViolation(token, kMessageIn, context));
   } else if (direction == "output") {
@@ -98,13 +98,13 @@ bool PortNameSuffixRule::IsSuffixCorrect(absl::string_view suffix,
   return suffixes.at(direction).count(suffix) == 1;
 }
 
-void PortNameSuffixRule::HandleSymbol(const Symbol& symbol,
-                                      const SyntaxTreeContext& context) {
+void PortNameSuffixRule::HandleSymbol(const Symbol &symbol,
+                                      const SyntaxTreeContext &context) {
   constexpr absl::string_view implicit_direction = "input";
   verible::matcher::BoundSymbolManager manager;
   if (PortMatcher().Matches(symbol, &manager)) {
-    const auto* identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
-    const auto* direction_leaf = GetDirectionFromPortDeclaration(symbol);
+    const auto *identifier_leaf = GetIdentifierFromPortDeclaration(symbol);
+    const auto *direction_leaf = GetDirectionFromPortDeclaration(symbol);
     const auto token = identifier_leaf->get();
     const auto direction =
         direction_leaf ? direction_leaf->get().text() : implicit_direction;

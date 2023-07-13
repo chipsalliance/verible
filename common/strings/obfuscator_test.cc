@@ -32,7 +32,7 @@ static char Rot13(char c) {
 // Non-random generator, just for the sake of testing.
 static std::string RotateGenerator(absl::string_view input) {
   std::string s(input);
-  for (auto& ch : s) ch = Rot13(ch);
+  for (auto &ch : s) ch = Rot13(ch);
   return s;
 }
 
@@ -43,7 +43,7 @@ TEST(ObfuscatorTest, Construction) {
 
 TEST(ObfuscatorTest, Transform) {
   Obfuscator ob(RotateGenerator);
-  const auto& tran = ob.GetTranslator();
+  const auto &tran = ob.GetTranslator();
   // repeat same string
   for (int i = 0; i < 2; ++i) {
     const auto str = ob("cat");
@@ -66,7 +66,7 @@ TEST(ObfuscatorTest, Transform) {
 TEST(ObfuscatorTest, Encode) {
   Obfuscator ob(RotateGenerator);
   ob.encode("cat", "sheep");
-  const auto& tran = ob.GetTranslator();
+  const auto &tran = ob.GetTranslator();
   EXPECT_EQ(tran.size(), 1);
   EXPECT_EQ(*ABSL_DIE_IF_NULL(tran.find_forward("cat")), "sheep");
   EXPECT_EQ(*ABSL_DIE_IF_NULL(tran.find_reverse("sheep")), "cat");
@@ -158,7 +158,7 @@ TEST(ObfuscatorTest, LoadMap) {
 
 TEST(IdentifierObfuscatorTest, Transform) {
   IdentifierObfuscator ob(RandomEqualLengthIdentifier);
-  const auto& tran = ob.GetTranslator();
+  const auto &tran = ob.GetTranslator();
   // repeat same string
   for (int i = 0; i < 2; ++i) {
     const auto str = ob("cat");  // str is random
@@ -188,7 +188,7 @@ TEST(IdentifierObfuscatorTest, EncodeInvalid) {
 TEST(IdentifierObfuscatorTest, EncodeValidTransform) {
   IdentifierObfuscator ob(RandomEqualLengthIdentifier);
   ob.encode("cat", "cow");
-  const auto& tran = ob.GetTranslator();
+  const auto &tran = ob.GetTranslator();
   // repeat same string
   for (int i = 0; i < 2; ++i) {
     const auto str = ob("cat");

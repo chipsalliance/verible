@@ -37,18 +37,18 @@ using verible::ByteOffsetSet;
 using verible::EscapeString;
 
 ByteOffsetSet DisableFormattingRanges(absl::string_view text,
-                                      const verible::TokenSequence& tokens) {
+                                      const verible::TokenSequence &tokens) {
   static constexpr absl::string_view kTrigger = "verilog_format:";
   static const auto kDelimiters = absl::ByAnyChar(" \t");
   static constexpr int kNullOffset = -1;
   const verible::TokenInfo::Context context(
       text,
-      [](std::ostream& stream, int e) { stream << verilog_symbol_name(e); });
+      [](std::ostream &stream, int e) { stream << verilog_symbol_name(e); });
 
   // By default, no text ranges are formatter-disabled.
   int begin_disable_offset = kNullOffset;
   ByteOffsetSet disable_set;
-  for (const auto& token : tokens) {
+  for (const auto &token : tokens) {
     VLOG(2) << verible::TokenWithContext{token, context};
     const auto vtoken_enum = verilog_tokentype(token.token_enum());
     if (IsComment(vtoken_enum)) {
@@ -90,8 +90,8 @@ ByteOffsetSet DisableFormattingRanges(absl::string_view text,
 }
 
 ByteOffsetSet EnabledLinesToDisabledByteRanges(
-    const verible::LineNumberSet& line_numbers,
-    const verible::LineColumnMap& line_column_map) {
+    const verible::LineNumberSet &line_numbers,
+    const verible::LineColumnMap &line_column_map) {
   // Interpret empty line numbers as enabling all lines for formatting.
   if (line_numbers.empty()) return ByteOffsetSet();
   // Translate lines to byte offsets (strictly monotonic).
@@ -114,8 +114,8 @@ static size_t NewlineCount(absl::string_view s) {
 
 void FormatWhitespaceWithDisabledByteRanges(
     absl::string_view text_base, absl::string_view space_text,
-    const ByteOffsetSet& disabled_ranges, bool include_disabled_ranges,
-    std::ostream& stream) {
+    const ByteOffsetSet &disabled_ranges, bool include_disabled_ranges,
+    std::ostream &stream) {
   VLOG(3) << __FUNCTION__;
   CHECK(verible::IsSubRange(space_text, text_base));
   const int start = std::distance(text_base.begin(), space_text.begin());
@@ -139,7 +139,7 @@ void FormatWhitespaceWithDisabledByteRanges(
   bool partially_enabled = false;
   size_t total_enabled_newlines = 0;
   int next_start = start;  // keep track of last consumed position
-  for (const auto& range : enabled_ranges) {
+  for (const auto &range : enabled_ranges) {
     if (include_disabled_ranges) {  // for disabled intervals, print the
                                     // original spacing
       const absl::string_view disabled(

@@ -133,10 +133,10 @@ class ContainerProxyBase {
   ContainerProxyBase() = default;
 
   // Copy/move of the base class doesn't make sense.
-  ContainerProxyBase(const ContainerProxyBase&) = delete;
-  ContainerProxyBase(ContainerProxyBase&&) = delete;
-  ContainerProxyBase& operator=(const ContainerProxyBase&) = delete;
-  ContainerProxyBase& operator=(ContainerProxyBase&&) = delete;
+  ContainerProxyBase(const ContainerProxyBase &) = delete;
+  ContainerProxyBase(ContainerProxyBase &&) = delete;
+  ContainerProxyBase &operator=(const ContainerProxyBase &) = delete;
+  ContainerProxyBase &operator=(ContainerProxyBase &&) = delete;
 
   using container_type = ContainerType;
 
@@ -192,38 +192,38 @@ class ContainerProxyBase {
   // cost, but that is not guaranteed.
 
   template <typename... Args>
-  iterator emplace(const_iterator pos, Args&&... args) {
+  iterator emplace(const_iterator pos, Args &&...args) {
     const auto iter = container().emplace(pos, std::forward<Args>(args)...);
     CallElementsInserted(iter);
     return iter;
   }
 
   template <typename... Args>
-  void emplace_front(Args&&... args) {
+  void emplace_front(Args &&...args) {
     container().emplace_front(std::forward<Args>(args)...);
     CallElementsInserted(container().begin());
   }
 
   template <typename... Args>
-  void emplace_back(Args&&... args) {
+  void emplace_back(Args &&...args) {
     container().emplace_back(std::forward<Args>(args)...);
     CallElementsInserted(std::prev(container().end()));
   }
 
-  iterator insert(const_iterator pos, const value_type& value) {
+  iterator insert(const_iterator pos, const value_type &value) {
     const auto iter = container().insert(pos, value);
     CallElementsInserted(iter);
     return iter;
   }
 
   iterator insert(const_iterator pos, size_type count,
-                  const value_type& value) {
+                  const value_type &value) {
     const auto iter = container().insert(pos, count, value);
     CallElementsInserted(iter, std::next(iter, count));
     return iter;
   }
 
-  iterator insert(const_iterator pos, value_type&& value) {
+  iterator insert(const_iterator pos, value_type &&value) {
     const auto iter = container().insert(pos, std::move(value));
     CallElementsInserted(iter);
     return iter;
@@ -245,20 +245,20 @@ class ContainerProxyBase {
     return iter;
   }
 
-  void push_front(const value_type& value) {
+  void push_front(const value_type &value) {
     container().push_front(value);
     CallElementsInserted(container().begin());
   }
-  void push_front(value_type&& value) {
+  void push_front(value_type &&value) {
     container().push_front(std::move(value));
     CallElementsInserted(container().begin());
   }
 
-  void push_back(const value_type& value) {
+  void push_back(const value_type &value) {
     container().push_back(value);
     CallElementsInserted(std::prev(container().end()));
   }
-  void push_back(value_type&& value) {
+  void push_back(value_type &&value) {
     container().push_back(std::move(value));
     CallElementsInserted(std::prev(container().end()));
   }
@@ -316,7 +316,7 @@ class ContainerProxyBase {
     CallElementsWereReplaced();
   }
 
-  void assign(size_type count, const value_type& value) {
+  void assign(size_type count, const value_type &value) {
     CallElementsBeingReplaced();
     container().assign(count, value);
     CallElementsWereReplaced();
@@ -324,7 +324,7 @@ class ContainerProxyBase {
 
   // Intended to be exposed via `using` in `DerivedType`.
   // NOLINTNEXTLINE(misc-unconventional-assign-operator)
-  DerivedType& operator=(const ContainerType& other_container) {
+  DerivedType &operator=(const ContainerType &other_container) {
     CallElementsBeingReplaced();
     container() = other_container;
     CallElementsWereReplaced();
@@ -333,7 +333,7 @@ class ContainerProxyBase {
 
   // Intended to be exposed via `using` in `DerivedType`.
   // NOLINTNEXTLINE(misc-unconventional-assign-operator)
-  DerivedType& operator=(ContainerType&& other_container) noexcept {
+  DerivedType &operator=(ContainerType &&other_container) noexcept {
     CallElementsBeingReplaced();
     container() = std::move(other_container);
     CallElementsWereReplaced();
@@ -342,20 +342,20 @@ class ContainerProxyBase {
 
   // Intended to be exposed via `using` in `DerivedType`.
   // NOLINTNEXTLINE(misc-unconventional-assign-operator)
-  DerivedType& operator=(std::initializer_list<value_type> values) {
+  DerivedType &operator=(std::initializer_list<value_type> values) {
     CallElementsBeingReplaced();
     container() = values;
     CallElementsWereReplaced();
     return *derived();
   }
 
-  void swap(ContainerType& other) {
+  void swap(ContainerType &other) {
     CallElementsBeingReplaced();
     container().swap(other);
     CallElementsWereReplaced();
   }
 
-  void swap(DerivedType& other) {
+  void swap(DerivedType &other) {
     CallElementsBeingReplaced();
     other.CallElementsBeingReplaced();
     container().swap(other.container());
@@ -367,8 +367,8 @@ class ContainerProxyBase {
   // `swap(DerivedType&)` method (either through importing this class' method
   // via `using` or implementing their own version).
   template <class DT_ = DerivedType,
-            class = decltype(std::declval<DT_>().swap(std::declval<DT_&>()))>
-  friend void swap(DerivedType& a, DerivedType& b) {
+            class = decltype(std::declval<DT_>().swap(std::declval<DT_ &>()))>
+  friend void swap(DerivedType &a, DerivedType &b) {
     a.swap(b);
   }
 
@@ -396,7 +396,7 @@ class ContainerProxyBase {
     }
   }
 
-  void resize(size_type count, const value_type& value) {
+  void resize(size_type count, const value_type &value) {
     const auto initial_size = container().size();
     if (count < initial_size) {
       const iterator first_removed = std::next(container().begin(), count);
@@ -429,11 +429,11 @@ class ContainerProxyBase {
                      std::distance(container().cbegin(), iter));
   }
 
-  auto* derived() { return static_cast<DerivedType*>(this); }
-  const auto* derived() const { return static_cast<const DerivedType*>(this); }
+  auto *derived() { return static_cast<DerivedType *>(this); }
+  const auto *derived() const { return static_cast<const DerivedType *>(this); }
 
-  ContainerType& container() { return derived()->underlying_container(); }
-  const ContainerType& container() const {
+  ContainerType &container() { return derived()->underlying_container(); }
+  const ContainerType &container() const {
     return derived()->underlying_container();
   }
 

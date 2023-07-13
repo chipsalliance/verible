@@ -40,7 +40,7 @@ void TestParserAcceptValid(absl::string_view code, int i) {
   absl::Status status = analyzer.Analyze();
   if (!status.ok()) {
     // Print more detailed error message.
-    const auto& rejected_tokens = analyzer.GetRejectedTokens();
+    const auto &rejected_tokens = analyzer.GetRejectedTokens();
     if (!rejected_tokens.empty()) {
       EXPECT_TRUE(status.ok())
           << "Rejected valid code:\n"
@@ -56,7 +56,7 @@ void TestParserAcceptValid(absl::string_view code, int i) {
 // class AnalyzerType is any class with a absl::Status AnalyzerType::Analyze()
 // method.
 template <class AnalyzerType>
-void TestParserRejectInvalid(const TokenInfoTestData& test, int i) {
+void TestParserRejectInvalid(const TokenInfoTestData &test, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << test.code << "'\n";
   ASSERT_FALSE(test.expected_tokens.empty());
   // Find the first not-don't-care token.
@@ -67,14 +67,14 @@ void TestParserRejectInvalid(const TokenInfoTestData& test, int i) {
     EXPECT_FALSE(status.ok())
         << "Accepted invalid code (iteration: " << iteration << "):\n"
         << test.code;
-    const auto& rejected_tokens = analyzer.GetRejectedTokens();
+    const auto &rejected_tokens = analyzer.GetRejectedTokens();
     ASSERT_FALSE(rejected_tokens.empty());
 
     const absl::string_view base_text = analyzer.Data().Contents();
     const auto expected_error_tokens = test.FindImportantTokens(base_text);
     ASSERT_FALSE(expected_error_tokens.empty());
     // Only check the first rejected token, ignore the rest.
-    const auto& expected_error_token = expected_error_tokens.front();
+    const auto &expected_error_token = expected_error_tokens.front();
     EXPECT_EQ(expected_error_token, rejected_tokens[0].token_info);
     ++iteration;
     // Run the analyzer a second time to make sure the parser cleared
@@ -91,7 +91,7 @@ struct ErrorRecoveryTestCase {
 };
 
 template <class AnalyzerType>
-void TestParserErrorRecovered(const ErrorRecoveryTestCase& test, int i) {
+void TestParserErrorRecovered(const ErrorRecoveryTestCase &test, int i) {
   VLOG(1) << "test_data[" << i << "] = '" << test.code << "'\n";
   int iteration = 0;
   do {
@@ -103,7 +103,7 @@ void TestParserErrorRecovered(const ErrorRecoveryTestCase& test, int i) {
     const auto rejected_tokens = analyzer.GetRejectedTokens();
     EXPECT_FALSE(rejected_tokens.empty());
     // Only check the first rejected token, ignore the rest.
-    const auto& tree = analyzer.SyntaxTree();
+    const auto &tree = analyzer.SyntaxTree();
     const auto matching_paths = matcher::GetAllDescendantsFromPath(
         *ABSL_DIE_IF_NULL(tree), test.tree_path);
     EXPECT_FALSE(matching_paths.empty())
@@ -124,10 +124,10 @@ void TestParserAllMatched(absl::string_view code, int i) {
   EXPECT_TRUE(status.ok()) << status.message() << "\nRejected: "
                            << analyzer.GetRejectedTokens().front().token_info;
 
-  const Symbol* tree_ptr = analyzer.SyntaxTree().get();
+  const Symbol *tree_ptr = analyzer.SyntaxTree().get();
   EXPECT_NE(tree_ptr, nullptr) << "Missing syntax tree with input:\n" << code;
   if (tree_ptr == nullptr) return;  // Already failed, abort this test case.
-  const Symbol& root = *tree_ptr;
+  const Symbol &root = *tree_ptr;
 
   ParserVerifier verifier(root, analyzer.Data().GetTokenStreamView());
   const auto unmatched = verifier.Verify();

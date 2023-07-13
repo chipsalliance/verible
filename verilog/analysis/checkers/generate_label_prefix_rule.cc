@@ -45,7 +45,7 @@ static constexpr absl::string_view kMessage =
 // TODO(fangism): generalize to a configurable pattern and
 // rename this class/rule to GenerateLabelNamingStyle?
 
-const LintRuleDescriptor& GenerateLabelPrefixRule::GetDescriptor() {
+const LintRuleDescriptor &GenerateLabelPrefixRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "generate-label-prefix",
       .topic = "generate-constructs",
@@ -55,13 +55,13 @@ const LintRuleDescriptor& GenerateLabelPrefixRule::GetDescriptor() {
 }
 
 // Matches begin statements
-static const Matcher& BlockMatcher() {
+static const Matcher &BlockMatcher() {
   static const Matcher matcher(NodekGenerateBlock());
   return matcher;
 }
 
 void GenerateLabelPrefixRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (BlockMatcher().Matches(symbol, &manager)) {
     // Exclude case generate statements, as kGenerateBlock is generated for
@@ -70,8 +70,8 @@ void GenerateLabelPrefixRule::HandleSymbol(
       return;
     }
 
-    for (const auto& child : SymbolCastToNode(symbol).children()) {
-      const verible::TokenInfo* label = nullptr;
+    for (const auto &child : SymbolCastToNode(symbol).children()) {
+      const verible::TokenInfo *label = nullptr;
       switch (NodeEnum(SymbolCastToNode(*child).Tag().tag)) {
         case NodeEnum::kBegin:
           label = GetBeginLabelTokenInfo(*child);

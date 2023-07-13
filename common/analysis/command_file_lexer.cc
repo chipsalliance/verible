@@ -25,12 +25,12 @@ namespace verible {
 CommandFileLexer::CommandFileLexer(absl::string_view config)
     : parent_lexer_type(config) {
   const auto lex_status = MakeTokenSequence(
-      this, config, &tokens_, [&](const TokenInfo& error_token) {
+      this, config, &tokens_, [&](const TokenInfo &error_token) {
         LOG(ERROR) << "erroneous token: " << error_token;
       });
 
   // Pre-process all tokens where its needed
-  for (auto& t : tokens_) {
+  for (auto &t : tokens_) {
     switch (t.token_enum()) {
       case ConfigToken::kFlag:
         // Skip -- prefix
@@ -45,7 +45,7 @@ CommandFileLexer::CommandFileLexer(absl::string_view config)
   Restart(config);
 }
 
-bool CommandFileLexer::TokenIsError(const verible::TokenInfo& token) const {
+bool CommandFileLexer::TokenIsError(const verible::TokenInfo &token) const {
   return false;
 }
 

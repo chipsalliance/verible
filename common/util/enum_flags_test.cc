@@ -55,26 +55,26 @@ class EnumNameMapTest : public ::testing::Test, public TestMapType {
 static const TestMapType test_map;
 
 // Conventional stream printer (declared in header providing enum).
-std::ostream& operator<<(std::ostream& stream, MyFakeEnum p) {
+std::ostream &operator<<(std::ostream &stream, MyFakeEnum p) {
   return test_map.Unparse(p, stream);
 }
 
 // Testing using the absl::flags API, but we're only testing this particular
 // overload, and thus, don't actually need to depend on their library.
 
-bool AbslParseFlag(absl::string_view text, MyFakeEnum* mode,
-                   std::string* error) {
+bool AbslParseFlag(absl::string_view text, MyFakeEnum *mode,
+                   std::string *error) {
   return test_map.Parse(text, mode, error, "MyFakeEnum");
 }
 
-std::string AbslUnparseFlag(const MyFakeEnum& mode) {
+std::string AbslUnparseFlag(const MyFakeEnum &mode) {
   std::ostringstream stream;
   stream << mode;
   return stream.str();
 }
 
 TEST_F(EnumNameMapTest, ParseFlagValueValues) {
-  for (const auto& p : enum_name_map_.forward_view()) {
+  for (const auto &p : enum_name_map_.forward_view()) {
     MyFakeEnum e = MyFakeEnum::kValue1;
     std::string error;
     EXPECT_TRUE(AbslParseFlag(p.first, &e, &error)) << " parsing " << p.first;
@@ -91,13 +91,13 @@ TEST_F(EnumNameMapTest, ParseFlagTestInvalidValue) {
   // Make sure error message names the offending value, and lists all valid
   // values (map keys).
   EXPECT_TRUE(absl::StrContains(error, bad_value));
-  for (const auto& p : enum_name_map_.forward_view()) {
+  for (const auto &p : enum_name_map_.forward_view()) {
     EXPECT_TRUE(absl::StrContains(error, p.first));
   }
 }
 
 TEST_F(EnumNameMapTest, UnparseFlags) {
-  for (const auto& p : enum_name_map_.forward_view()) {
+  for (const auto &p : enum_name_map_.forward_view()) {
     EXPECT_EQ(AbslUnparseFlag(*p.second), p.first);
   }
 }
@@ -113,7 +113,7 @@ enum class AnotherFakeEnum {
   kValueC,
 };
 
-std::ostream& operator<<(std::ostream& stream, AnotherFakeEnum p) {
+std::ostream &operator<<(std::ostream &stream, AnotherFakeEnum p) {
   return stream << "!!!";  // don't care
 }
 

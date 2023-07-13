@@ -39,7 +39,7 @@ enum class SpacingOptions {
   kPreserve,       // do not optimize, use original spacing
 };
 
-std::ostream& operator<<(std::ostream&, SpacingOptions);
+std::ostream &operator<<(std::ostream &, SpacingOptions);
 
 // Tri-state value that encodes how this token affects group balancing
 // for line-wrapping purposes.
@@ -50,7 +50,7 @@ enum class GroupBalancing {
           // TODO(fangism): Reset?  (separator)
 };
 
-std::ostream& operator<<(std::ostream&, GroupBalancing);
+std::ostream &operator<<(std::ostream &, GroupBalancing);
 
 // InterTokenInfo defines parameters that are important to formatting
 // decisions related to adjacent tokens.
@@ -76,27 +76,27 @@ struct InterTokenInfo {
   // tokens, for the sake of preserving space.
   // Together with the current token, they can form a string_view representing
   // pre-existing space from the original buffer.
-  const char* preserved_space_start = nullptr;
+  const char *preserved_space_start = nullptr;
 
   InterTokenInfo() = default;
-  InterTokenInfo(const InterTokenInfo&) = default;
+  InterTokenInfo(const InterTokenInfo &) = default;
 
   // Comparison is only really used for testing.
-  bool operator==(const InterTokenInfo& r) const {
+  bool operator==(const InterTokenInfo &r) const {
     return spaces_required == r.spaces_required &&
            break_penalty == r.break_penalty &&
            break_decision == r.break_decision &&
            preserved_space_start == r.preserved_space_start;
   }
 
-  bool operator!=(const InterTokenInfo& r) const { return !((*this) == r); }
+  bool operator!=(const InterTokenInfo &r) const { return !((*this) == r); }
 
   // For debug printing.
-  std::ostream& CompactNotation(std::ostream&) const;
+  std::ostream &CompactNotation(std::ostream &) const;
 };
 
 // Human-readable form, for debugging.
-std::ostream& operator<<(std::ostream&, const InterTokenInfo&);
+std::ostream &operator<<(std::ostream &, const InterTokenInfo &);
 
 // PreFormatToken is a wrapper for TokenInfo objects. It contains an original
 // pointer to a TokenInfo object, as well as additional information for
@@ -104,7 +104,7 @@ std::ostream& operator<<(std::ostream&, const InterTokenInfo&);
 // inter-token annotations.
 struct PreFormatToken {
   // The token this PreFormatToken holds. TokenInfo must outlive this object.
-  const TokenInfo* token = nullptr;
+  const TokenInfo *token = nullptr;
 
   // The enum for this PreFormatToken, an abstraction from the TokenInfo enum
   // for decision making. The values are intended to come from language-specific
@@ -120,9 +120,9 @@ struct PreFormatToken {
 
   PreFormatToken() = default;
 
-  explicit PreFormatToken(const TokenInfo* t) : token(t) {}
+  explicit PreFormatToken(const TokenInfo *t) : token(t) {}
 
-  explicit PreFormatToken(const verible::SyntaxTreeLeaf& leaf)
+  explicit PreFormatToken(const verible::SyntaxTreeLeaf &leaf)
       : PreFormatToken(&leaf.get()) {}
 
   // The length of characters in the PreFormatToken
@@ -151,15 +151,15 @@ struct PreFormatToken {
   std::string ToString() const;
 };
 
-std::ostream& operator<<(std::ostream& stream, const PreFormatToken& token);
+std::ostream &operator<<(std::ostream &stream, const PreFormatToken &token);
 
 // Sets pointers that establish substring ranges of (whitespace) text *between*
 // non-whitespace tokens.  This allows for reconstruction and analysis of
 // inter-token (space) text.
 // Note that this does not cover the space between the last token and EOF.
 void ConnectPreFormatTokensPreservedSpaceStarts(
-    const char* buffer_start,
-    std::vector<verible::PreFormatToken>* format_tokens);
+    const char *buffer_start,
+    std::vector<verible::PreFormatToken> *format_tokens);
 
 // Marks formatting-disabled ranges of tokens so that their original spacing is
 // preserved.  'ftokens' is the array of PreFormatTokens to potentially mark.
@@ -167,8 +167,8 @@ void ConnectPreFormatTokensPreservedSpaceStarts(
 // 'base_text' is the string_view of the whole text being formatted, and serves
 // as the base reference for 'disabled_byte_ranges' offsets.
 void PreserveSpacesOnDisabledTokenRanges(
-    std::vector<PreFormatToken>* ftokens,
-    const ByteOffsetSet& disabled_byte_ranges, absl::string_view base_text);
+    std::vector<PreFormatToken> *ftokens,
+    const ByteOffsetSet &disabled_byte_ranges, absl::string_view base_text);
 
 using FormatTokenRange =
     container_iterator_range<std::vector<PreFormatToken>::const_iterator>;
@@ -187,7 +187,7 @@ enum class SpacingDecision {
               // front of line.
 };
 
-std::ostream& operator<<(std::ostream& stream, SpacingDecision);
+std::ostream &operator<<(std::ostream &stream, SpacingDecision);
 
 // Set of bound parameters for formatting around this token.
 // The fields here are related to InterTokenInfo.
@@ -199,11 +199,11 @@ struct InterTokenDecision {
   SpacingDecision action = SpacingDecision::kPreserve;
 
   // When preserving spaces before this token, start from this offset.
-  const char* preserved_space_start = nullptr;
+  const char *preserved_space_start = nullptr;
 
   InterTokenDecision() = default;
 
-  explicit InterTokenDecision(const InterTokenInfo&);
+  explicit InterTokenDecision(const InterTokenInfo &);
 };
 
 // FormattedToken represents re-formatted text, whose spacing/line-break
@@ -214,23 +214,23 @@ struct FormattedToken {
 
   // Don't care what spacing decision is at this time, it will be populated
   // when reconstructing formatting decisions from StateNode.
-  explicit FormattedToken(const PreFormatToken& ftoken)
+  explicit FormattedToken(const PreFormatToken &ftoken)
       : token(ftoken.token), before(ftoken.before) {}
 
   // Reconstructs the original spacing that preceded this token.
   absl::string_view OriginalLeadingSpaces() const;
 
   // Print out formatted result after formatting decision optimization.
-  std::ostream& FormattedText(std::ostream&) const;
+  std::ostream &FormattedText(std::ostream &) const;
 
   // The token this PreFormatToken holds. TokenInfo must outlive this object.
-  const TokenInfo* token = nullptr;
+  const TokenInfo *token = nullptr;
 
   // Decision about what spaces to apply before printing this token.
   InterTokenDecision before;
 };
 
-std::ostream& operator<<(std::ostream& stream, const FormattedToken& token);
+std::ostream &operator<<(std::ostream &stream, const FormattedToken &token);
 
 }  // namespace verible
 

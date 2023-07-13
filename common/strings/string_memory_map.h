@@ -50,10 +50,10 @@ class StringViewSuperRangeMap {
 
   StringViewSuperRangeMap() = default;
 
-  StringViewSuperRangeMap(const StringViewSuperRangeMap&) = default;
-  StringViewSuperRangeMap(StringViewSuperRangeMap&&) = default;
-  StringViewSuperRangeMap& operator=(const StringViewSuperRangeMap&) = default;
-  StringViewSuperRangeMap& operator=(StringViewSuperRangeMap&&) = default;
+  StringViewSuperRangeMap(const StringViewSuperRangeMap &) = default;
+  StringViewSuperRangeMap(StringViewSuperRangeMap &&) = default;
+  StringViewSuperRangeMap &operator=(const StringViewSuperRangeMap &) = default;
+  StringViewSuperRangeMap &operator=(StringViewSuperRangeMap &&) = default;
 
   bool empty() const { return string_map_.empty(); }
   const_iterator begin() const { return string_map_.begin(); }
@@ -102,7 +102,7 @@ class StringViewSuperRangeMap {
 // always return the same range for the same object.  One way to ensure this is
 // to make the underlying storage a 'const std::string'.
 //
-template <class T, absl::string_view RangeOf(const T&)>
+template <class T, absl::string_view RangeOf(const T &)>
 class StringMemoryMap {
   using key_type = absl::string_view::const_iterator;
   using map_type = DisjointIntervalMap<key_type, T>;
@@ -112,15 +112,15 @@ class StringMemoryMap {
 
   StringMemoryMap() = default;
 
-  StringMemoryMap(const StringMemoryMap&) = delete;
-  StringMemoryMap(StringMemoryMap&&) = delete;
-  StringMemoryMap& operator=(const StringMemoryMap&) = delete;
-  StringMemoryMap& operator=(StringMemoryMap&&) = delete;
+  StringMemoryMap(const StringMemoryMap &) = delete;
+  StringMemoryMap(StringMemoryMap &&) = delete;
+  StringMemoryMap &operator=(const StringMemoryMap &) = delete;
+  StringMemoryMap &operator=(StringMemoryMap &&) = delete;
 
   // Returns reference to the object in the set that owns the memory range of
   // string 's', or else nullptr if 's' does not fall entirely within one of the
   // intervals in the map.
-  const T* find(absl::string_view sv) const {
+  const T *find(absl::string_view sv) const {
     const auto iter = memory_map_.find(internal::string_view_to_pair(sv));
     if (iter == memory_map_.end()) return nullptr;
     return &iter->second;
@@ -128,7 +128,7 @@ class StringMemoryMap {
 
   // Move-inserts an element into the set, keyed on the memory range owned
   // by the object.
-  iterator insert(T&& t) {
+  iterator insert(T &&t) {
     const absl::string_view key = RangeOf(t);
     return memory_map_.must_emplace(internal::string_view_to_pair(key),
                                     std::move(t));

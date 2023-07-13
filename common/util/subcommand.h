@@ -38,8 +38,8 @@ using SubcommandArgsRange =
 // Currently this function type is hard-coded, but this could eventually
 // become a template parameter.
 using SubcommandFunction =
-    std::function<absl::Status(const SubcommandArgsRange&, std::istream& ins,
-                               std::ostream& outs, std::ostream& errs)>;
+    std::function<absl::Status(const SubcommandArgsRange &, std::istream &ins,
+                               std::ostream &outs, std::ostream &errs)>;
 
 // Represents a function selected by the user.
 struct SubcommandEntry {
@@ -65,26 +65,26 @@ class SubcommandRegistry {
   SubcommandRegistry();
 
   // Not intended for copy/move-ing.
-  SubcommandRegistry(const SubcommandRegistry&) = delete;
-  SubcommandRegistry(SubcommandRegistry&&) = delete;
-  SubcommandRegistry& operator=(const SubcommandRegistry&) = delete;
-  SubcommandRegistry& operator=(SubcommandRegistry&&) = delete;
+  SubcommandRegistry(const SubcommandRegistry &) = delete;
+  SubcommandRegistry(SubcommandRegistry &&) = delete;
+  SubcommandRegistry &operator=(const SubcommandRegistry &) = delete;
+  SubcommandRegistry &operator=(SubcommandRegistry &&) = delete;
 
   // Add a function to this map.
   // Returned status is an error if a function already exists with the given
   // name.
-  absl::Status RegisterCommand(absl::string_view name, const SubcommandEntry&);
+  absl::Status RegisterCommand(absl::string_view name, const SubcommandEntry &);
 
   // Lookup a function in this map by name.
-  const SubcommandEntry& GetSubcommandEntry(absl::string_view command) const;
+  const SubcommandEntry &GetSubcommandEntry(absl::string_view command) const;
 
   // Print a help summary of all registered commands.
   std::string ListCommands() const;
 
  protected:
   // Every command map comes with a built-in 'help' command.
-  absl::Status Help(const SubcommandArgsRange& args, std::istream&,
-                    std::ostream&, std::ostream& errs) const;
+  absl::Status Help(const SubcommandArgsRange &args, std::istream &,
+                    std::ostream &, std::ostream &errs) const;
 
  private:
   using SubcommandMap =

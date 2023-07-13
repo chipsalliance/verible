@@ -44,7 +44,7 @@ VERILOG_REGISTER_LINT_RULE(ForbidNegativeArrayDim);
 static constexpr absl::string_view kMessage =
     "Avoid using negative constant literals for array dimensions.";
 
-const LintRuleDescriptor& ForbidNegativeArrayDim::GetDescriptor() {
+const LintRuleDescriptor &ForbidNegativeArrayDim::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-negative-array-dim",
       .topic = "forbid-negative-array-dim",
@@ -54,13 +54,13 @@ const LintRuleDescriptor& ForbidNegativeArrayDim::GetDescriptor() {
 }
 
 // Matches the begin node.
-static const Matcher& UnaryPrefixExprMatcher() {
+static const Matcher &UnaryPrefixExprMatcher() {
   static const Matcher matcher(NodekUnaryPrefixExpression());
   return matcher;
 }
 
 void ForbidNegativeArrayDim::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   // This only works for simple unary expressions. They can't be nested inside
   // other expressions. This avoids false positives of the form:
   // logic l [10+(-5):0], logic l[-(-5):0]
@@ -75,9 +75,9 @@ void ForbidNegativeArrayDim::HandleSymbol(
 
   // As we've previously ensured that this symbol is a kUnaryPrefixExpression
   // both its operator and operand are defined
-  const verible::TokenInfo* u_operator =
+  const verible::TokenInfo *u_operator =
       verilog::GetUnaryPrefixOperator(symbol);
-  const verible::Symbol* operand = verilog::GetUnaryPrefixOperand(symbol);
+  const verible::Symbol *operand = verilog::GetUnaryPrefixOperand(symbol);
 
   int value = 0;
   const bool is_constant = verilog::ConstantIntegerValue(*operand, &value);

@@ -22,12 +22,12 @@
 namespace verible {
 namespace matcher {
 
-bool InnerMatchAll(const Symbol& symbol,
-                   const std::vector<Matcher>& inner_matchers,
-                   BoundSymbolManager* manager) {
+bool InnerMatchAll(const Symbol &symbol,
+                   const std::vector<Matcher> &inner_matchers,
+                   BoundSymbolManager *manager) {
   BoundSymbolManager backtrack_checkpoint(*manager);
 
-  for (const auto& matcher : inner_matchers) {
+  for (const auto &matcher : inner_matchers) {
     if (!matcher.Matches(symbol, manager)) {
       *manager = backtrack_checkpoint;
       return false;
@@ -36,10 +36,10 @@ bool InnerMatchAll(const Symbol& symbol,
   return true;
 }
 
-bool InnerMatchAny(const Symbol& symbol,
-                   const std::vector<Matcher>& inner_matchers,
-                   BoundSymbolManager* manager) {
-  for (const auto& matcher : inner_matchers) {
+bool InnerMatchAny(const Symbol &symbol,
+                   const std::vector<Matcher> &inner_matchers,
+                   BoundSymbolManager *manager) {
+  for (const auto &matcher : inner_matchers) {
     BoundSymbolManager lookahead(*manager);
     if (matcher.Matches(symbol, &lookahead)) {
       *manager = lookahead;
@@ -49,12 +49,12 @@ bool InnerMatchAny(const Symbol& symbol,
   return false;
 }
 
-bool InnerMatchEachOf(const Symbol& symbol,
-                      const std::vector<Matcher>& inner_matchers,
-                      BoundSymbolManager* manager) {
+bool InnerMatchEachOf(const Symbol &symbol,
+                      const std::vector<Matcher> &inner_matchers,
+                      BoundSymbolManager *manager) {
   bool some_inner_matched_passed = false;
 
-  for (const auto& matcher : inner_matchers) {
+  for (const auto &matcher : inner_matchers) {
     BoundSymbolManager backup(*manager);
     if (matcher.Matches(symbol, manager)) {
       // If matcher passes, remember that we found a passing inner matcher
@@ -68,12 +68,12 @@ bool InnerMatchEachOf(const Symbol& symbol,
   return some_inner_matched_passed;
 }
 
-bool InnerMatchUnless(const Symbol& symbol,
-                      const std::vector<Matcher>& inner_matchers,
-                      BoundSymbolManager* manager) {
+bool InnerMatchUnless(const Symbol &symbol,
+                      const std::vector<Matcher> &inner_matchers,
+                      BoundSymbolManager *manager) {
   CHECK_EQ(inner_matchers.size(), 1);
 
-  const auto& matcher = inner_matchers[0];
+  const auto &matcher = inner_matchers[0];
 
   // We don't need to keep track of what inner matcher matches because any
   // binds will be discarded if it matches.

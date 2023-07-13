@@ -42,15 +42,15 @@ struct LineDiffs {
   // Computes the line-difference between before_text and after_text.
   LineDiffs(absl::string_view before_text, absl::string_view after_text);
 
-  std::ostream& PrintEdit(std::ostream&, const diff::Edit&) const;
+  std::ostream &PrintEdit(std::ostream &, const diff::Edit &) const;
 };
 
 // Prints a monolithic single-hunk unified-diff.
-std::ostream& operator<<(std::ostream&, const LineDiffs& diffs);
+std::ostream &operator<<(std::ostream &, const LineDiffs &diffs);
 
 // Translates diff::Edits to an interval-set representation.
 // diff::Edits are 0-indexed, but the returned line numbers will be 1-indexed.
-LineNumberSet DiffEditsToAddedLineNumbers(const diff::Edits&);
+LineNumberSet DiffEditsToAddedLineNumbers(const diff::Edits &);
 
 // Divides a single edit-sequence (that covers two whole sequences) into
 // subsequences of of edits ("patch hunks") that skip over unchanged sections.
@@ -75,10 +75,10 @@ LineNumberSet DiffEditsToAddedLineNumbers(const diff::Edits&);
 //
 // This function could be upstreamed to the editscript library because it is
 // agnostic to the type being diff-ed.
-std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits& edits,
+std::vector<diff::Edits> DiffEditsToPatchHunks(const diff::Edits &edits,
                                                int common_context);
 
-void LineDiffsToUnifiedDiff(std::ostream& stream, const LineDiffs& linediffs,
+void LineDiffsToUnifiedDiff(std::ostream &stream, const LineDiffs &linediffs,
                             unsigned common_context,
                             absl::string_view file_a = {},
                             absl::string_view file_b = {});

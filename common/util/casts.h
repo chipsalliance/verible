@@ -20,7 +20,7 @@
 
 namespace verible {
 template <typename To, typename From>
-inline To down_cast(From* f) {
+inline To down_cast(From *f) {
   static_assert(
       (std::is_base_of<From, typename std::remove_pointer<To>::type>::value),
       "target type not derived from source type");
@@ -34,7 +34,7 @@ inline To down_cast(From* f) {
 }
 
 template <typename To, typename From>
-inline To down_cast(From& f) {
+inline To down_cast(From &f) {
   static_assert(std::is_lvalue_reference<To>::value,
                 "target type not a reference");
   static_assert(
@@ -43,7 +43,7 @@ inline To down_cast(From& f) {
 
   // We skip the assert and hence the dynamic_cast if RTTI is disabled.
 #if !defined(__GNUC__) || defined(__GXX_RTTI)
-  assert(dynamic_cast<typename std::remove_reference<To>::type*>(&f) !=
+  assert(dynamic_cast<typename std::remove_reference<To>::type *>(&f) !=
          nullptr);
 #endif  // !defined(__GNUC__) || defined(__GXX_RTTI)
 

@@ -35,7 +35,7 @@ using config::NVConfigSpec;
 // TODO(hzeller): consider using flex for a more readable tokenization that
 // can also much easier deal with whitespaces, strings etc.
 absl::Status ParseNameValues(string_view config_string,
-                             const std::initializer_list<NVConfigSpec>& spec) {
+                             const std::initializer_list<NVConfigSpec> &spec) {
   if (config_string.empty()) return absl::OkStatus();
 
   for (const string_view single_config : absl::StrSplit(config_string, ';')) {
@@ -43,10 +43,10 @@ absl::Status ParseNameValues(string_view config_string,
         absl::StrSplit(single_config, ':');
     const auto value_config = std::find_if(  // linear search
         spec.begin(), spec.end(),
-        [&nv_pair](const NVConfigSpec& s) { return nv_pair.first == s.name; });
+        [&nv_pair](const NVConfigSpec &s) { return nv_pair.first == s.name; });
     if (value_config == spec.end()) {
       std::string available;
-      for (const auto& s : spec) {
+      for (const auto &s : spec) {
         if (!available.empty()) available.append(", ");
         available.append("'").append(s.name).append("'");
       }
@@ -70,7 +70,7 @@ absl::Status ParseNameValues(string_view config_string,
 }
 
 namespace config {
-ConfigValueSetter SetInt(int* value, int minimum, int maximum) {
+ConfigValueSetter SetInt(int *value, int minimum, int maximum) {
   CHECK(value) << "Must provide pointer to integer to store.";
   return [value, minimum, maximum](string_view v) {
     int parsed_value;
@@ -87,12 +87,12 @@ ConfigValueSetter SetInt(int* value, int minimum, int maximum) {
   };
 }
 
-ConfigValueSetter SetInt(int* value) {
+ConfigValueSetter SetInt(int *value) {
   return SetInt(value, std::numeric_limits<int>::min(),
                 std::numeric_limits<int>::max());
 }
 
-ConfigValueSetter SetBool(bool* value) {
+ConfigValueSetter SetBool(bool *value) {
   CHECK(value) << "Must provide pointer to boolean to store.";
   return [value](string_view v) {
     // clang-format off

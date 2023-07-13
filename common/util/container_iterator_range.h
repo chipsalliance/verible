@@ -144,12 +144,12 @@ class container_iterator_range : public iterator_range<IT> {
   // Returns true if begin/end bounds of iterator range are identical.
   // Templated to allow comparison between const-mismatched iterators.
   template <typename T2>
-  bool operator==(const container_iterator_range<T2>& other) const {
+  bool operator==(const container_iterator_range<T2> &other) const {
     return BoundsEqual(*this, other);
   }
 
   template <typename T2>
-  bool operator!=(const container_iterator_range<T2>& other) const {
+  bool operator!=(const container_iterator_range<T2> &other) const {
     return !(*this == other);
   }
 

@@ -39,7 +39,7 @@ VERILOG_REGISTER_LINT_RULE(GenerateLabelRule);
 static constexpr absl::string_view kMessage =
     "All generate block statements must have a label";
 
-const LintRuleDescriptor& GenerateLabelRule::GetDescriptor() {
+const LintRuleDescriptor &GenerateLabelRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "generate-label",
       .topic = "generate-statements",
@@ -55,14 +55,14 @@ const LintRuleDescriptor& GenerateLabelRule::GetDescriptor() {
 //      always @(posedge clk) foo <= bar;
 //    end
 //
-static const Matcher& BlockMatcher() {
+static const Matcher &BlockMatcher() {
   static const Matcher matcher(
       NodekGenerateBlock(verible::matcher::Unless(HasBeginLabel())));
   return matcher;
 }
 
 void GenerateLabelRule::HandleSymbol(
-    const verible::Symbol& symbol, const verible::SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const verible::SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (BlockMatcher().Matches(symbol, &manager)) {
     violations_.insert(verible::LintViolation(symbol, kMessage, context));

@@ -45,7 +45,7 @@ static constexpr absl::string_view kMessage =
     "`endif should be followed on the same line by a comment that matches the "
     "opening `ifdef/`ifndef.";
 
-const LintRuleDescriptor& EndifCommentRule::GetDescriptor() {
+const LintRuleDescriptor &EndifCommentRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "endif-comment",
       .topic = "endif-comment",
@@ -57,7 +57,7 @@ const LintRuleDescriptor& EndifCommentRule::GetDescriptor() {
   return d;
 }
 
-void EndifCommentRule::HandleToken(const TokenInfo& token) {
+void EndifCommentRule::HandleToken(const TokenInfo &token) {
   // Responds to a token by updating the state of the analysis.
   switch (state_) {
     case State::kNormal: {

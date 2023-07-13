@@ -47,7 +47,7 @@ VERILOG_REGISTER_LINT_RULE(PositiveMeaningParameterNameRule);
 static constexpr absl::string_view kMessage =
     "Use positive naming for parameters, start the name with 'enable' instead.";
 
-const LintRuleDescriptor& PositiveMeaningParameterNameRule::GetDescriptor() {
+const LintRuleDescriptor &PositiveMeaningParameterNameRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "positive-meaning-parameter-name",
       .topic = "binary-parameters",
@@ -58,19 +58,19 @@ const LintRuleDescriptor& PositiveMeaningParameterNameRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& ParamDeclMatcher() {
+static const Matcher &ParamDeclMatcher() {
   static const Matcher matcher(NodekParamDeclaration());
   return matcher;
 }
 
 void PositiveMeaningParameterNameRule::HandleSymbol(
-    const verible::Symbol& symbol, const SyntaxTreeContext& context) {
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (ParamDeclMatcher().Matches(symbol, &manager)) {
     if (IsParamTypeDeclaration(symbol)) return;
 
     auto identifiers = GetAllParameterNameTokens(symbol);
-    for (const auto& id : identifiers) {
+    for (const auto &id : identifiers) {
       const auto param_name = id->text();
 
       if (absl::StartsWithIgnoreCase(param_name, "disable")) {

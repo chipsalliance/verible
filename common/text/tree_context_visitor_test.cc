@@ -25,9 +25,9 @@ namespace {
 
 using ::testing::ElementsAreArray;
 
-static std::vector<int> ContextToTags(const SyntaxTreeContext& context) {
+static std::vector<int> ContextToTags(const SyntaxTreeContext &context) {
   std::vector<int> values;
-  for (const auto& ancestor : context) {
+  for (const auto &ancestor : context) {
     values.push_back(ancestor->Tag().tag);
   }
   return values;
@@ -37,11 +37,11 @@ static std::vector<int> ContextToTags(const SyntaxTreeContext& context) {
 template <class BaseVisitor>
 class ContextRecorder : public BaseVisitor {
  public:
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     context_history_.push_back(BaseVisitor::Context());
   }
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     context_history_.push_back(BaseVisitor::Context());
     BaseVisitor::Visit(node);
   }
@@ -49,7 +49,7 @@ class ContextRecorder : public BaseVisitor {
   std::vector<std::vector<int>> ContextTagHistory() const {
     std::vector<std::vector<int>> result;
     result.reserve(context_history_.size());
-    for (const auto& context : context_history_) {
+    for (const auto &context : context_history_) {
       result.emplace_back(ContextToTags(context));
     }
     return result;
@@ -60,8 +60,8 @@ class ContextRecorder : public BaseVisitor {
 };
 
 template <class T>
-static void TestContextRecorder(const SymbolPtr& tree,
-                                const std::vector<std::vector<int>>& expect) {
+static void TestContextRecorder(const SymbolPtr &tree,
+                                const std::vector<std::vector<int>> &expect) {
   ContextRecorder<T> r;
   tree->Accept(&r);
   EXPECT_THAT(r.ContextTagHistory(), ElementsAreArray(expect));
@@ -72,8 +72,8 @@ static void TestContextRecorder(const SymbolPtr& tree,
 // directly use the visitor in the base class, and might have to duplicate
 // some functionality.  This ensures proper coverage, regardless of the
 // implementation.
-static void TestContextRecorders(const SymbolPtr& tree,
-                                 const std::vector<std::vector<int>>& expect) {
+static void TestContextRecorders(const SymbolPtr &tree,
+                                 const std::vector<std::vector<int>> &expect) {
   TestContextRecorder<TreeContextVisitor>(tree, expect);
   TestContextRecorder<TreeContextPathVisitor>(tree, expect);
 }
@@ -141,16 +141,16 @@ TEST(TreeContextVisitorTest, FullTree) {
 // Test class demonstrating visitation and path tracking
 class PathRecorder : public TreeContextPathVisitor {
  public:
-  void Visit(const SyntaxTreeLeaf& leaf) final {
+  void Visit(const SyntaxTreeLeaf &leaf) final {
     path_history_.push_back(Path());
   }
 
-  void Visit(const SyntaxTreeNode& node) final {
+  void Visit(const SyntaxTreeNode &node) final {
     path_history_.push_back(Path());
     TreeContextPathVisitor::Visit(node);
   }
 
-  const std::vector<SyntaxTreePath>& PathTagHistory() const {
+  const std::vector<SyntaxTreePath> &PathTagHistory() const {
     return path_history_;
   }
 
@@ -318,7 +318,7 @@ TEST(NextSiblingPathTest, Various) {
       {{0, 0}, {0, 1}},                    //
       {{1, 1, 1, 1, 1}, {1, 1, 1, 1, 2}},  //
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_EQ(NextSiblingPath(test.first), test.second);
   }
 }
@@ -331,7 +331,7 @@ TEST(TreePathFormatterTest, Various) {
       {{0, 1}, "[0,1]"},                 //
       {{1, 1, 2, 3, 5}, "[1,1,2,3,5]"},  //
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     std::ostringstream stream;
     stream << TreePathFormatter(test.first);
     EXPECT_EQ(stream.str(), test.second);
@@ -369,7 +369,7 @@ TEST(SyntaxTreePathTest, Equal) {
           SyntaxTreePath{11, 0, -2},
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_TRUE(test.first == test.second);
     EXPECT_TRUE(test.first >= test.second);
     EXPECT_TRUE(test.first <= test.second);
@@ -407,7 +407,7 @@ TEST(SyntaxTreePathTest, LessThanAndGreaterThan) {
           SyntaxTreePath{1, 0, 2},
       },
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     EXPECT_TRUE(test.first < test.second);
     EXPECT_TRUE(test.first <= test.second);
     EXPECT_TRUE(test.second > test.first);

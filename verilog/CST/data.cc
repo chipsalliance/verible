@@ -32,7 +32,7 @@ using verible::Symbol;
 using verible::TokenInfo;
 
 // Helper predicate to match all types of applicable variables
-static bool ExpectedTagPredicate(const Symbol& symbol) {
+static bool ExpectedTagPredicate(const Symbol &symbol) {
   verible::SymbolTag reg_symbol = {
       verible::SymbolKind::kNode,
       static_cast<int>(NodeEnum::kRegisterVariable)};
@@ -49,11 +49,11 @@ static bool ExpectedTagPredicate(const Symbol& symbol) {
   return symbol.Tag() == reg_symbol || symbol.Tag() == gate_symbol;
 }
 
-std::vector<const TokenInfo*> GetIdentifiersFromDataDeclaration(
-    const Symbol& symbol) {
+std::vector<const TokenInfo *> GetIdentifiersFromDataDeclaration(
+    const Symbol &symbol) {
   // TODO(fangism): leverage GetInstanceListFromDataDeclaration().
   // Instead of searching, use direct access.  See CST/declaration.h.
-  std::vector<const TokenInfo*> identifiers;
+  std::vector<const TokenInfo *> identifiers;
 
   auto matcher = verible::matcher::Matcher(ExpectedTagPredicate,
                                            verible::matcher::InnerMatchAll);
@@ -61,11 +61,11 @@ std::vector<const TokenInfo*> GetIdentifiersFromDataDeclaration(
   std::vector<verible::TreeSearchMatch> identifier_nodes =
       SearchSyntaxTree(symbol, matcher);
 
-  for (auto& id : identifier_nodes) {
-    const auto* identifier = SymbolCastToNode(*id.match)[0].get();
+  for (auto &id : identifier_nodes) {
+    const auto *identifier = SymbolCastToNode(*id.match)[0].get();
     if (!identifier) continue;
 
-    const auto* identifier_leaf = AutoUnwrapIdentifier(*identifier);
+    const auto *identifier_leaf = AutoUnwrapIdentifier(*identifier);
 
     identifiers.push_back(&identifier_leaf->get());
   }

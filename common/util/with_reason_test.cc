@@ -22,7 +22,7 @@ namespace verible {
 namespace {
 
 // Example of a priority-ordered function.
-static WithReason<const char*> FizzBuzzer(int i) {
+static WithReason<const char *> FizzBuzzer(int i) {
   if (i % 3 == 0) {
     if (i % 5 == 0) {
       return {"fizzbuzz", "value is divisible by 3 and 5."};

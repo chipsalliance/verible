@@ -47,7 +47,7 @@ enum class LayoutType {
   kStack,
 };
 
-std::ostream& operator<<(std::ostream& stream, LayoutType type);
+std::ostream &operator<<(std::ostream &stream, LayoutType type);
 
 // LayoutTree node data
 class LayoutItem {
@@ -65,7 +65,7 @@ class LayoutItem {
   }
 
   // Creates Line item from UnwrappedLine.
-  explicit LayoutItem(const UnwrappedLine& uwline, int indentation = 0)
+  explicit LayoutItem(const UnwrappedLine &uwline, int indentation = 0)
       : type_(LayoutType::kLine),
         indentation_(indentation),
         tokens_(uwline.TokensRange()),
@@ -76,7 +76,7 @@ class LayoutItem {
   }
 
   // Creates Line item from UnwrappedLine.
-  explicit LayoutItem(const UnwrappedLine& uwline, bool must_wrap,
+  explicit LayoutItem(const UnwrappedLine &uwline, bool must_wrap,
                       int indentation)
       : type_(LayoutType::kLine),
         indentation_(indentation),
@@ -89,11 +89,11 @@ class LayoutItem {
 
   // Multiple LayoutFunctionSegments can store copies of the same layout.
   // The objects are copied mostly in LayoutFunctionFactory::* functions.
-  LayoutItem(const LayoutItem&) = default;
-  LayoutItem& operator=(const LayoutItem&) = default;
+  LayoutItem(const LayoutItem &) = default;
+  LayoutItem &operator=(const LayoutItem &) = default;
 
-  LayoutItem(LayoutItem&&) = default;
-  LayoutItem& operator=(LayoutItem&&) = default;
+  LayoutItem(LayoutItem &&) = default;
+  LayoutItem &operator=(LayoutItem &&) = default;
 
   LayoutType Type() const { return type_; }
 
@@ -120,7 +120,7 @@ class LayoutItem {
   // string for other item types.
   std::string Text() const {
     return absl::StrJoin(tokens_, " ",
-                         [](std::string* out, const PreFormatToken& token) {
+                         [](std::string *out, const PreFormatToken &token) {
                            absl::StrAppend(out, token.Text());
                          });
   }
@@ -132,7 +132,7 @@ class LayoutItem {
 
     if (tokens_.empty()) return 0;
     int len = 0;
-    for (const auto& token : tokens_) {
+    for (const auto &token : tokens_) {
       // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
       if (const auto line_break_pos = token.Text().find('\n');
@@ -157,7 +157,7 @@ class LayoutItem {
     return tokens_;
   }
 
-  friend bool operator==(const LayoutItem& lhs, const LayoutItem& rhs) {
+  friend bool operator==(const LayoutItem &lhs, const LayoutItem &rhs) {
     return (lhs.type_ == rhs.type_ && lhs.indentation_ == rhs.indentation_ &&
             lhs.tokens_ == rhs.tokens_ &&
             lhs.spaces_before_ == rhs.spaces_before_ &&
@@ -165,7 +165,7 @@ class LayoutItem {
   }
 
  private:
-  static bool UnwrappedLineMustWrap(const UnwrappedLine& uwline) {
+  static bool UnwrappedLineMustWrap(const UnwrappedLine &uwline) {
     if (uwline.TokensRange().empty()) return false;
 
     const auto policy = uwline.PartitionPolicy();
@@ -176,7 +176,7 @@ class LayoutItem {
     return (break_decision == SpacingOptions::kMustWrap);
   }
 
-  static int SpacesRequiredBeforeUnwrappedLine(const UnwrappedLine& uwline) {
+  static int SpacesRequiredBeforeUnwrappedLine(const UnwrappedLine &uwline) {
     const auto tokens = uwline.TokensRange();
     const auto policy = uwline.PartitionPolicy();
     const auto indentation = uwline.IndentationSpaces();
@@ -193,7 +193,7 @@ class LayoutItem {
   bool must_wrap_;
 };
 
-std::ostream& operator<<(std::ostream& stream, const LayoutItem& layout);
+std::ostream &operator<<(std::ostream &stream, const LayoutItem &layout);
 
 // Intermediate partition tree layout
 using LayoutTree = VectorTree<LayoutItem>;
@@ -250,13 +250,13 @@ class LayoutFunction {
     if (!segments_.empty()) CHECK_EQ(segments_.front().column, 0);
   }
 
-  LayoutFunction(LayoutFunction&&) = default;
-  LayoutFunction& operator=(LayoutFunction&&) = default;
+  LayoutFunction(LayoutFunction &&) = default;
+  LayoutFunction &operator=(LayoutFunction &&) = default;
 
-  LayoutFunction(const LayoutFunction&) = default;
-  LayoutFunction& operator=(const LayoutFunction&) = default;
+  LayoutFunction(const LayoutFunction &) = default;
+  LayoutFunction &operator=(const LayoutFunction &) = default;
 
-  void push_back(const LayoutFunctionSegment& segment) {
+  void push_back(const LayoutFunctionSegment &segment) {
     if (!segments_.empty()) {
       CHECK_LT(segments_.back().column, segment.column);
     } else {
@@ -264,7 +264,7 @@ class LayoutFunction {
     }
     segments_.push_back(segment);
   }
-  void push_back(LayoutFunctionSegment&& segment) {
+  void push_back(LayoutFunctionSegment &&segment) {
     if (!segments_.empty()) {
       CHECK_LT(segments_.back().column, segment.column);
     } else {
@@ -288,18 +288,18 @@ class LayoutFunction {
   // AKA: x-
   const_iterator AtOrToTheLeftOf(int column) const;
 
-  LayoutFunctionSegment& front() { return segments_.front(); }
-  const LayoutFunctionSegment& front() const { return segments_.front(); }
+  LayoutFunctionSegment &front() { return segments_.front(); }
+  const LayoutFunctionSegment &front() const { return segments_.front(); }
 
-  LayoutFunctionSegment& back() { return segments_.back(); }
-  const LayoutFunctionSegment& back() const { return segments_.back(); }
+  LayoutFunctionSegment &back() { return segments_.back(); }
+  const LayoutFunctionSegment &back() const { return segments_.back(); }
 
-  const LayoutFunctionSegment& operator[](size_t index) const {
+  const LayoutFunctionSegment &operator[](size_t index) const {
     CHECK_GE(index, 0);
     CHECK_LT(index, segments_.size());
     return segments_[index];
   }
-  LayoutFunctionSegment& operator[](size_t index) {
+  LayoutFunctionSegment &operator[](size_t index) {
     CHECK_GE(index, 0);
     CHECK_LT(index, segments_.size());
     return segments_[index];
@@ -313,7 +313,7 @@ class LayoutFunction {
     // should be taken into account in the code that uses this method. This
     // shouldn't be the case, as every layout should wrap the same token range.
     CHECK(std::all_of(segments_.begin(), segments_.end(),
-                      [must_wrap](const auto& segment) {
+                      [must_wrap](const auto &segment) {
                         return segment.layout.Value().MustWrap() == must_wrap;
                       }));
     return must_wrap;
@@ -321,7 +321,7 @@ class LayoutFunction {
 
   // Sets whether to force line break just before this layout.
   void SetMustWrap(bool must_wrap) {
-    for (auto& segment : segments_) {
+    for (auto &segment : segments_) {
       segment.layout.Value().SetMustWrap(must_wrap);
     }
   }
@@ -330,7 +330,7 @@ class LayoutFunction {
   bool AreSegmentsSorted() const {
     return std::is_sorted(
         segments_.begin(), segments_.end(),
-        [](const LayoutFunctionSegment& a, const LayoutFunctionSegment& b) {
+        [](const LayoutFunctionSegment &a, const LayoutFunctionSegment &b) {
           return a.column < b.column;
         });
   }
@@ -356,18 +356,18 @@ class LayoutFunctionIterator {
  public:
   LayoutFunctionIterator() = default;
 
-  explicit LayoutFunctionIterator(container& layout_function, int index = 0)
+  explicit LayoutFunctionIterator(container &layout_function, int index = 0)
       : lf_(&layout_function), index_(index) {
     CHECK_LE(index_, lf_->size());
   }
 
-  LayoutFunctionIterator(const iterator&) = default;
-  LayoutFunctionIterator& operator=(const iterator&) = default;
+  LayoutFunctionIterator(const iterator &) = default;
+  LayoutFunctionIterator &operator=(const iterator &) = default;
 
   // Helper methods
 
   // Returns reference to iterated container
-  container& Container() const { return *lf_; }
+  container &Container() const { return *lf_; }
 
   // Returns index of current element
   int Index() const { return index_; }
@@ -381,7 +381,7 @@ class LayoutFunctionIterator {
     if (Container().empty()) return;
     CHECK_EQ(Container().front().column, 0);
 
-    auto& this_ref = *this;
+    auto &this_ref = *this;
     if (this_ref->column > column) {
       while (this_ref->column > column) --this_ref;
     } else {
@@ -397,8 +397,8 @@ class LayoutFunctionIterator {
   using iterator_category = std::random_access_iterator_tag;
   using difference_type = std::ptrdiff_t;
   using value_type = LayoutFunctionSegment;
-  using pointer = ConditionalConst<IsConstIterator, LayoutFunctionSegment>*;
-  using reference = ConditionalConst<IsConstIterator, LayoutFunctionSegment>&;
+  using pointer = ConditionalConst<IsConstIterator, LayoutFunctionSegment> *;
+  using reference = ConditionalConst<IsConstIterator, LayoutFunctionSegment> &;
 
   reference operator*() const { return (*lf_)[index_]; }
 
@@ -409,20 +409,20 @@ class LayoutFunctionIterator {
     return (*lf_)[index_ + index];
   }
 
-  iterator& operator+=(difference_type rhs) {
+  iterator &operator+=(difference_type rhs) {
     CHECK_LE(rhs, lf_->size() - index_);
     index_ += rhs;
     return *this;
   }
-  iterator& operator-=(difference_type rhs) {
+  iterator &operator-=(difference_type rhs) {
     CHECK_LE(rhs, index_);
     index_ -= rhs;
     return *this;
   }
 
-  iterator& operator++() { return *this += 1; }
+  iterator &operator++() { return *this += 1; }
 
-  iterator& operator--() { return *this -= 1; }
+  iterator &operator--() { return *this -= 1; }
 
   iterator operator++(int) {
     auto tmp = *this;
@@ -443,62 +443,62 @@ class LayoutFunctionIterator {
     return iterator(*lf_, index_ - rhs);
   }
 
-  friend iterator operator+(difference_type lhs, const iterator& rhs) {
+  friend iterator operator+(difference_type lhs, const iterator &rhs) {
     return iterator(*rhs.lf_, lhs + rhs.index_);
   }
-  friend iterator operator-(difference_type lhs, const iterator& rhs) {
+  friend iterator operator-(difference_type lhs, const iterator &rhs) {
     return iterator(*rhs.lf_, lhs - rhs.index_);
   }
 
   template <bool RhsIsConst>
   difference_type operator+(
-      const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+      const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return this->index_ + rhs.index_;
   }
   template <bool RhsIsConst>
   difference_type operator-(
-      const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+      const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return this->index_ - rhs.index_;
   }
 
   template <bool RhsIsConst>
-  bool operator==(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator==(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return (lf_ == rhs.lf_) && (index_ == rhs.index_);
   }
   template <bool RhsIsConst>
-  bool operator<(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator<(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return (lf_ == rhs.lf_) && (index_ < rhs.index_);
   }
   template <bool RhsIsConst>
-  bool operator>(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator>(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return (lf_ == rhs.lf_) && (index_ > rhs.index_);
   }
   template <bool RhsIsConst>
-  bool operator!=(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator!=(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return !(*this == rhs);
   }
   template <bool RhsIsConst>
-  bool operator<=(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator<=(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return !(*this > rhs);
   }
   template <bool RhsIsConst>
-  bool operator>=(const LayoutFunctionIterator<RhsIsConst>& rhs) const {
+  bool operator>=(const LayoutFunctionIterator<RhsIsConst> &rhs) const {
     return !(*this < rhs);
   }
 
  private:
-  container* lf_;
+  container *lf_;
   int index_;
 };
 
-std::ostream& operator<<(std::ostream& stream,
-                         const LayoutFunctionSegment& segment);
+std::ostream &operator<<(std::ostream &stream,
+                         const LayoutFunctionSegment &segment);
 
-std::ostream& operator<<(std::ostream& stream, const LayoutFunction& lf);
+std::ostream &operator<<(std::ostream &stream, const LayoutFunction &lf);
 
 template <bool IsConstIterator>
-std::ostream& operator<<(std::ostream& stream,
-                         const LayoutFunctionIterator<IsConstIterator>& it) {
+std::ostream &operator<<(std::ostream &stream,
+                         const LayoutFunctionIterator<IsConstIterator> &it) {
   return stream << &it.Container() << "[" << it.Index() << "/"
                 << it.Container().size() << "]";
 }
@@ -511,14 +511,14 @@ inline constexpr bool IsIteratorDereferencingTo = std::is_same_v<
 // Methods for creating and combining LayoutFunctions
 class LayoutFunctionFactory {
  public:
-  explicit LayoutFunctionFactory(const BasicFormatStyle& style)
+  explicit LayoutFunctionFactory(const BasicFormatStyle &style)
       : style_(style) {}
 
   // Creates LayoutFunction for a single line from UnwrappedLine 'uwline'.
-  LayoutFunction Line(const UnwrappedLine& uwline) const;
+  LayoutFunction Line(const UnwrappedLine &uwline) const;
 
   // Creates LayoutFunction from a single line with tokens wrapped using Wrap().
-  LayoutFunction WrappedLine(const UnwrappedLine& uwline) const;
+  LayoutFunction WrappedLine(const UnwrappedLine &uwline) const;
 
   // Combines two or more layouts vertically.
   // All combined layouts start at the same column. The first line of layout
@@ -543,7 +543,7 @@ class LayoutFunctionFactory {
     auto segments =
         absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
     std::transform(lfs.begin(), lfs.end(), segments.begin(),
-                   [](const LayoutFunction& lf) {
+                   [](const LayoutFunction &lf) {
                      CHECK(!lf.empty());
                      return lf.begin();
                    });
@@ -588,7 +588,7 @@ class LayoutFunctionFactory {
 
     LayoutFunction incremental = lfs_container.front();
     lfs_container.pop_front();
-    for (auto& lf : lfs_container) {
+    for (auto &lf : lfs_container) {
       incremental = Juxtaposition(incremental, lf);
     }
 
@@ -622,7 +622,7 @@ class LayoutFunctionFactory {
     auto segments =
         absl::FixedArray<LayoutFunction::const_iterator>(lfs.size());
     std::transform(lfs.begin(), lfs.end(), segments.begin(),
-                   [](const LayoutFunction& lf) {
+                   [](const LayoutFunction &lf) {
                      CHECK(!lf.empty());
                      return lf.begin();
                    });
@@ -631,7 +631,7 @@ class LayoutFunctionFactory {
   }
 
   // Returns LayoutFunction 'lf' with layout indented using 'indent' spaces.
-  LayoutFunction Indent(const LayoutFunction& lf, int indent) const;
+  LayoutFunction Indent(const LayoutFunction &lf, int indent) const;
 
   // Joins layouts horizontally and wraps them into multiple lines to stay under
   // column limit. Kind of like a words in a paragraph.
@@ -670,18 +670,18 @@ class LayoutFunctionFactory {
                      : results[j + 1],
         });
 
-        const auto& next_element = lfs[j + 1];
+        const auto &next_element = lfs[j + 1];
         if (use_tokens_break_penalty) {
           // Deprioritize token-level wrapping
           // TODO(mglb): Find a better way to do this. This ratio has been
           // chosen using only a few test cases.
           const int wrapping_penalty = style_.over_column_limit_penalty;
-          const auto& second_layout = results[j + 1].front().layout;
-          const auto& first_line = LeftmostDescendant(second_layout).Value();
-          const auto& first_token = first_line.TokensRange().front();
+          const auto &second_layout = results[j + 1].front().layout;
+          const auto &first_line = LeftmostDescendant(second_layout).Value();
+          const auto &first_token = first_line.TokensRange().front();
           const int token_break_penalty = first_token.before.break_penalty;
 
-          for (auto& segment : results_i[j - i]) {
+          for (auto &segment : results_i[j - i]) {
             segment.intercept += wrapping_penalty + token_break_penalty;
           }
         }
@@ -707,34 +707,34 @@ class LayoutFunctionFactory {
   }
 
  private:
-  LayoutFunction Juxtaposition(const LayoutFunction& left,
-                               const LayoutFunction& right) const;
+  LayoutFunction Juxtaposition(const LayoutFunction &left,
+                               const LayoutFunction &right) const;
 
   LayoutFunction Stack(
-      absl::FixedArray<LayoutFunction::const_iterator>* segments) const;
+      absl::FixedArray<LayoutFunction::const_iterator> *segments) const;
 
   static LayoutFunction Choice(
-      absl::FixedArray<LayoutFunction::const_iterator>* segments);
+      absl::FixedArray<LayoutFunction::const_iterator> *segments);
 
-  const BasicFormatStyle& style_;
+  const BasicFormatStyle &style_;
 };
 
 class TokenPartitionsLayoutOptimizer {
  public:
-  explicit TokenPartitionsLayoutOptimizer(const BasicFormatStyle& style)
+  explicit TokenPartitionsLayoutOptimizer(const BasicFormatStyle &style)
       : factory_(style) {}
 
-  TokenPartitionsLayoutOptimizer(const TokenPartitionsLayoutOptimizer&) =
+  TokenPartitionsLayoutOptimizer(const TokenPartitionsLayoutOptimizer &) =
       delete;
-  TokenPartitionsLayoutOptimizer(TokenPartitionsLayoutOptimizer&&) = delete;
-  TokenPartitionsLayoutOptimizer& operator=(
-      const TokenPartitionsLayoutOptimizer&) = delete;
-  TokenPartitionsLayoutOptimizer& operator=(TokenPartitionsLayoutOptimizer&&) =
+  TokenPartitionsLayoutOptimizer(TokenPartitionsLayoutOptimizer &&) = delete;
+  TokenPartitionsLayoutOptimizer &operator=(
+      const TokenPartitionsLayoutOptimizer &) = delete;
+  TokenPartitionsLayoutOptimizer &operator=(TokenPartitionsLayoutOptimizer &&) =
       delete;
 
-  void Optimize(int indentation, TokenPartitionTree* node) const;
+  void Optimize(int indentation, TokenPartitionTree *node) const;
 
-  LayoutFunction CalculateOptimalLayout(const TokenPartitionTree& node) const;
+  LayoutFunction CalculateOptimalLayout(const TokenPartitionTree &node) const;
 
  private:
   const LayoutFunctionFactory factory_;
@@ -746,18 +746,18 @@ class TreeReconstructor {
       : current_indentation_spaces_(indentation_spaces) {}
   ~TreeReconstructor() = default;
 
-  TreeReconstructor(const TreeReconstructor&) = delete;
-  TreeReconstructor(TreeReconstructor&&) = delete;
-  TreeReconstructor& operator=(const TreeReconstructor&) = delete;
-  TreeReconstructor& operator=(TreeReconstructor&&) = delete;
+  TreeReconstructor(const TreeReconstructor &) = delete;
+  TreeReconstructor(TreeReconstructor &&) = delete;
+  TreeReconstructor &operator=(const TreeReconstructor &) = delete;
+  TreeReconstructor &operator=(TreeReconstructor &&) = delete;
 
-  void TraverseTree(const LayoutTree& layout_tree);
+  void TraverseTree(const LayoutTree &layout_tree);
 
-  void ReplaceTokenPartitionTreeNode(TokenPartitionTree* node);
+  void ReplaceTokenPartitionTreeNode(TokenPartitionTree *node);
 
  private:
   TokenPartitionTree tree_;
-  TokenPartitionTree* current_node_ = nullptr;
+  TokenPartitionTree *current_node_ = nullptr;
 
   int current_indentation_spaces_;
 };

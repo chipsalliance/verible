@@ -25,8 +25,8 @@ namespace analysis {
 
 // Find all modules and collect interface names
 absl::Status CollectInterfaceNames(
-    absl::string_view content, std::set<std::string>* if_names,
-    const VerilogPreprocess::Config& preprocess_config) {
+    absl::string_view content, std::set<std::string> *if_names,
+    const VerilogPreprocess::Config &preprocess_config) {
   VLOG(1) << __FUNCTION__;
 
   const auto analyzer = verilog::VerilogAnalyzer::AnalyzeAutomaticMode(
@@ -40,16 +40,16 @@ absl::Status CollectInterfaceNames(
   // TODO: Having a syntax error may still result in a partial syntax tree
   // to work with.  Currently, this utility has zero tolerance on syntax error.
 
-  const auto& syntax_tree = analyzer->SyntaxTree();
+  const auto &syntax_tree = analyzer->SyntaxTree();
   const auto mod_headers =
       FindAllModuleHeaders(*ABSL_DIE_IF_NULL(syntax_tree).get());
 
   // For each module, collect all identifiers under the module
   // header tree into if_names.
-  for (const auto& mod_header : mod_headers) {
+  for (const auto &mod_header : mod_headers) {
     const auto if_leafs = FindAllSymbolIdentifierLeafs(*mod_header.match);
-    for (const auto& if_leaf_match : if_leafs) {
-      const auto& if_leaf = SymbolCastToLeaf(*if_leaf_match.match);
+    for (const auto &if_leaf_match : if_leafs) {
+      const auto &if_leaf = SymbolCastToLeaf(*if_leaf_match.match);
       absl::string_view if_name = if_leaf.get().text();
       if_names->insert(std::string(if_name));  // TODO: use absl::string_view
     }

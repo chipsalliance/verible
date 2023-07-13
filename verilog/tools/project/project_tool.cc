@@ -63,7 +63,7 @@ struct VerilogProjectConfig {
   // See --file_list_root above.
   std::string file_list_root;
 
-  absl::Status LoadFromCommandline(const SubcommandArgsRange& args) {
+  absl::Status LoadFromCommandline(const SubcommandArgsRange &args) {
     const std::vector<absl::string_view> cmdline{args.begin(), args.end()};
     auto status = AppendFileListFromCommandline(cmdline, &file_list);
     if (!status.ok()) return status;
@@ -92,7 +92,7 @@ struct VerilogProjectConfig {
 // TODO: refactor this for re-use with tools/kythe/verilog_kythe_extractor.cc.
 struct ProjectSymbols {
   // From global absl flags.
-  const VerilogProjectConfig& config;
+  const VerilogProjectConfig &config;
 
   // This object must outlive 'symbol_table' (maintained by struct-ordering).
   std::unique_ptr<verilog::VerilogProject> project;
@@ -100,14 +100,14 @@ struct ProjectSymbols {
   // Unified symbol table.
   std::unique_ptr<verilog::SymbolTable> symbol_table;
 
-  explicit ProjectSymbols(const VerilogProjectConfig& config)
+  explicit ProjectSymbols(const VerilogProjectConfig &config)
       : config(config) {}
 
   // no copy, no move, no assign
-  ProjectSymbols(const ProjectSymbols&) = delete;
-  ProjectSymbols(ProjectSymbols&&) = delete;
-  ProjectSymbols& operator=(const ProjectSymbols&) = delete;
-  ProjectSymbols& operator=(ProjectSymbols&&) = delete;
+  ProjectSymbols(const ProjectSymbols &) = delete;
+  ProjectSymbols(ProjectSymbols &&) = delete;
+  ProjectSymbols &operator=(const ProjectSymbols &) = delete;
+  ProjectSymbols &operator=(ProjectSymbols &&) = delete;
 
   // Initializes a project, and opens listed files.
   absl::Status Load() {
@@ -116,7 +116,7 @@ struct ProjectSymbols {
     // Error-out early if any files failed to open.
     project = std::make_unique<verilog::VerilogProject>(
         config.file_list_root, config.file_list.preprocessing.include_dirs);
-    for (const auto& file : config.file_list.file_paths) {
+    for (const auto &file : config.file_list.file_paths) {
       const auto open_status = project->OpenTranslationUnit(file);
       if (!open_status.ok()) return open_status.status();
     }
@@ -127,35 +127,35 @@ struct ProjectSymbols {
   }
 
   // Builds symbol table.
-  void Build(std::vector<absl::Status>* build_statuses) {
+  void Build(std::vector<absl::Status> *build_statuses) {
     VLOG(1) << __FUNCTION__;
     // For now, ingest files in the order they were listed.
     // Without conflicting definitions in files, this order should not matter.
-    for (const auto& file : config.file_list.file_paths) {
+    for (const auto &file : config.file_list.file_paths) {
       symbol_table->BuildSingleTranslationUnit(file, build_statuses);
     }
   }
 
   // Resolves symbols.
-  void Resolve(std::vector<absl::Status>* resolve_statuses) const {
+  void Resolve(std::vector<absl::Status> *resolve_statuses) const {
     symbol_table->Resolve(resolve_statuses);
   }
 };
 
 static std::string JoinStatusMessages(
-    const std::vector<absl::Status>& statuses) {
+    const std::vector<absl::Status> &statuses) {
   return absl::StrCat(
       "[combined statuses]:\n",
       absl::StrJoin(
-          statuses, "\n", [](std::string* out, const absl::Status& status) {
+          statuses, "\n", [](std::string *out, const absl::Status &status) {
             out->append(status.message().begin(), status.message().end());
           }));
 }
 
-static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
-                                            std::istream& ins,
-                                            std::ostream& outs,
-                                            std::ostream& errs) {
+static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange &args,
+                                            std::istream &ins,
+                                            std::ostream &outs,
+                                            std::ostream &errs) {
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
@@ -182,8 +182,8 @@ static absl::Status BuildAndShowSymbolTable(const SubcommandArgsRange& args,
 }
 
 static absl::Status ResolveAndShowSymbolReferences(
-    const SubcommandArgsRange& args, std::istream& ins, std::ostream& outs,
-    std::ostream& errs) {
+    const SubcommandArgsRange &args, std::istream &ins, std::ostream &outs,
+    std::ostream &errs) {
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
@@ -212,9 +212,9 @@ static absl::Status ResolveAndShowSymbolReferences(
   return absl::OkStatus();
 }
 
-static absl::Status ShowFileDependencies(const SubcommandArgsRange& args,
-                                         std::istream& ins, std::ostream& outs,
-                                         std::ostream& errs) {
+static absl::Status ShowFileDependencies(const SubcommandArgsRange &args,
+                                         std::istream &ins, std::ostream &outs,
+                                         std::ostream &errs) {
   VLOG(1) << __FUNCTION__;
   // Load configuration.
   VerilogProjectConfig config;
@@ -283,10 +283,10 @@ Project options, including source file list.
     // TODO: symbol table name-completion demo
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   // Create a registry of subcommands (locally, rather than as a static global).
   verible::SubcommandRegistry commands;
-  for (const auto& entry : kCommands) {
+  for (const auto &entry : kCommands) {
     const auto status = commands.RegisterCommand(entry.first, entry.second);
     if (!status.ok()) {
       std::cerr << status.message() << std::endl;
@@ -310,7 +310,7 @@ int main(int argc, char* argv[]) {
   // subcommand args start at [2]
   const SubcommandArgsRange command_args(args.cbegin() + 2, args.cend());
 
-  const auto& sub = commands.GetSubcommandEntry(args[1]);
+  const auto &sub = commands.GetSubcommandEntry(args[1]);
   // Run the subcommand.
   const auto status = sub.main(command_args, std::cin, std::cout, std::cerr);
   if (!status.ok()) {

@@ -91,7 +91,7 @@ class MapTree {
   MapTree() = default;
 
   // deep-copy, requires node_value_type to be copy-able.
-  MapTree(const MapTree& other)
+  MapTree(const MapTree &other)
       : node_value_(other.node_value_),
         subtrees_(other.subtrees_),
         // new copy is disconnected from original parent and is a new root
@@ -100,7 +100,7 @@ class MapTree {
   }
 
   // move (with relink)
-  MapTree(MapTree&& other) noexcept
+  MapTree(MapTree &&other) noexcept
       : node_value_(std::move(other.node_value_)),
         subtrees_(std::move(other.subtrees_)),
         // Retain existing parent.
@@ -109,8 +109,8 @@ class MapTree {
   }
 
   // TODO(fangism): implement assignments as needed
-  MapTree& operator=(const MapTree&) = delete;
-  MapTree& operator=(MapTree&&) = delete;
+  MapTree &operator=(const MapTree &) = delete;
+  MapTree &operator=(MapTree &&) = delete;
 
   // Recursively initialize trees (copy node value).
   // Example:
@@ -126,7 +126,7 @@ class MapTree {
   //               P{key6, M(value6)})}
   //   );
   template <typename... Args>
-  explicit MapTree(const node_value_type& v, Args&&... args)
+  explicit MapTree(const node_value_type &v, Args &&...args)
       : node_value_(v), subtrees_() {
     EmplacePairs(std::forward<Args>(args)...);
   }
@@ -134,14 +134,14 @@ class MapTree {
   // Recursively initialize trees (move node value).
   // See example above, using node_value_type copy.
   template <typename... Args>
-  explicit MapTree(node_value_type&& v, Args&&... args)
+  explicit MapTree(node_value_type &&v, Args &&...args)
       : node_value_(std::move(v)), subtrees_() {
     EmplacePairs(std::forward<Args>(args)...);
   }
 
   ~MapTree() { CHECK(CheckIntegrity()); }
 
-  void swap(this_type& other) {
+  void swap(this_type &other) {
     std::swap(node_value_, other.node_value_);
     subtrees_.swap(other.subtrees_);
     Relink();
@@ -153,7 +153,7 @@ class MapTree {
   // Ensure parent-child mutual linkage invariant.
   // This property should hold after any mutating operation.
   bool CheckIntegrity() const {
-    for (const auto& node : *this) {
+    for (const auto &node : *this) {
       CHECK_EQ(node.second.Parent(), this)
           << "Inconsistency: child's parent does not point back to this node!";
       if (!node.second.CheckIntegrity()) return false;
@@ -169,7 +169,7 @@ class MapTree {
   // whether or not it was newly inserted or already there, and true to indicate
   // that it was newly created, false if an entry already existed at that key.
   template <typename... Args>
-  std::pair<iterator, bool> TryEmplace(const key_type& key, Args&&... args) {
+  std::pair<iterator, bool> TryEmplace(const key_type &key, Args &&...args) {
     const auto p = subtrees_.emplace(
         key_value_type{key, node_value_type(std::forward<Args>(args)...)});
     if (p.second) {
@@ -188,7 +188,7 @@ class MapTree {
   // If there are duplicate keys, only the first of each key will be taken,
   // while the other duplicates will be dropped.
   template <typename F, typename... Args>
-  void EmplacePairs(F&& first, Args&&... args) {
+  void EmplacePairs(F &&first, Args &&...args) {
     const auto p = subtrees_.emplace(std::forward<F>(first));
     if (p.second) {
       // Link child to parent.
@@ -205,8 +205,8 @@ class MapTree {
 
   // Iteration/Navigation
 
-  this_type* Parent() { return parent_; }
-  const this_type* Parent() const { return parent_; }
+  this_type *Parent() { return parent_; }
+  const this_type *Parent() const { return parent_; }
 
   iterator begin() { return subtrees_.begin(); }
   const_iterator begin() const { return subtrees_.begin(); }
@@ -217,7 +217,7 @@ class MapTree {
 
   size_t NumAncestors() const {
     size_t depth = 0;
-    for (const this_type* iter = Parent(); iter != nullptr;
+    for (const this_type *iter = Parent(); iter != nullptr;
          iter = iter->Parent()) {
       ++depth;
     }
@@ -229,9 +229,9 @@ class MapTree {
   // This method could have been named IsDescendedFrom().
   // nullptr is never considered an ancestor of any node.
   // 'this' node is not considered an ancestor of itself.
-  bool HasAncestor(const this_type* other) const {
+  bool HasAncestor(const this_type *other) const {
     if (other == nullptr) return false;
-    for (const this_type* iter = Parent(); iter != nullptr;
+    for (const this_type *iter = Parent(); iter != nullptr;
          iter = iter->Parent()) {
       if (iter == other) return true;
     }
@@ -239,15 +239,15 @@ class MapTree {
   }
 
   // Returns pointer to the tree root, the greatest ancestor of this node.
-  const this_type* Root() const {
-    const this_type* node = this;
+  const this_type *Root() const {
+    const this_type *node = this;
     while (node->Parent() != nullptr) node = node->Parent();
     return node;
   }
 
   // Returns pointer to the key-value pair of which this node is the value.
   // Root nodes return nullptr because they have no associated key.
-  const key_value_type* KeyValuePair() const {
+  const key_value_type *KeyValuePair() const {
     // Note: The use of offsetof below is technically undefined until C++17
     // because std::pair is not a standard layout type. However, all compilers
     // currently provide well-defined behavior as an extension (which is
@@ -266,8 +266,8 @@ class MapTree {
     // pair-co-located with a key.
     // Use pointer arithmetic to recover location of the key-value pair to which
     // this node value belongs.
-    return reinterpret_cast<const key_value_type*>(
-        reinterpret_cast<const char*>(this) - value_offset);
+    return reinterpret_cast<const key_value_type *>(
+        reinterpret_cast<const char *>(this) - value_offset);
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -276,24 +276,24 @@ class MapTree {
 
   // Returns the key associated with this node (if this is not a root),
   // otherwise return nullptr.
-  const key_type* Key() const {
+  const key_type *Key() const {
     if (Parent() == nullptr) return nullptr;  // Root node has no key
     return &KeyValuePair()->first;
   }
 
   // Access
 
-  const subtrees_type& Children() const { return subtrees_; }
+  const subtrees_type &Children() const { return subtrees_; }
 
-  node_value_type& Value() { return node_value_; }
-  const node_value_type& Value() const { return node_value_; }
+  node_value_type &Value() { return node_value_; }
+  const node_value_type &Value() const { return node_value_; }
 
   // Search
 
   // Returns an iterator located at 'key' or end() if not found.
   // O(lg N), same as underlying map type.
   template <typename AnyKey>
-  iterator Find(AnyKey&& key) {
+  iterator Find(AnyKey &&key) {
     // Forward to underlying map::find, enabling heterogenous lookup.
     return subtrees_.find(std::forward<AnyKey>(key));
   }
@@ -301,7 +301,7 @@ class MapTree {
   // Returns a const_iterator located at 'key' or end() if not found.
   // O(lg N), same as underlying map type.
   template <typename AnyKey>
-  const_iterator Find(AnyKey&& key) const {
+  const_iterator Find(AnyKey &&key) const {
     // Forward to underlying map::find, enabling heterogenous lookup.
     return subtrees_.find(std::forward<AnyKey>(key));
   }
@@ -318,15 +318,15 @@ class MapTree {
 
   // Applies function 'f' to all nodes in this tree in a pre-order traversal.
   // Children are visited in key-order.
-  void ApplyPreOrder(const std::function<void(const this_type&)>& f) const {
+  void ApplyPreOrder(const std::function<void(const this_type &)> &f) const {
     f(*this);
-    for (const auto& child : *this) {
+    for (const auto &child : *this) {
       child.second.ApplyPreOrder(f);
     }
   }
-  void ApplyPreOrder(const std::function<void(this_type&)>& f) {
+  void ApplyPreOrder(const std::function<void(this_type &)> &f) {
     f(*this);
-    for (auto& child : *this) {
+    for (auto &child : *this) {
       child.second.ApplyPreOrder(f);
     }
   }
@@ -334,23 +334,23 @@ class MapTree {
   // This variant of ApplyPreOrder expects a function on the underlying
   // node_value_type (const&).
   void ApplyPreOrder(
-      const std::function<void(const node_value_type&)>& f) const {
-    ApplyPreOrder([&f](const this_type& t) { f(t.Value()); });
+      const std::function<void(const node_value_type &)> &f) const {
+    ApplyPreOrder([&f](const this_type &t) { f(t.Value()); });
   }
-  void ApplyPreOrder(const std::function<void(node_value_type&)>& f) {
-    ApplyPreOrder([&f](this_type& t) { f(t.Value()); });
+  void ApplyPreOrder(const std::function<void(node_value_type &)> &f) {
+    ApplyPreOrder([&f](this_type &t) { f(t.Value()); });
   }
 
   // Applies function 'f' to all nodes in this tree in a post-order traversal.
   // Children are visited in key-order.
-  void ApplyPostOrder(const std::function<void(const this_type&)>& f) const {
-    for (const auto& child : *this) {
+  void ApplyPostOrder(const std::function<void(const this_type &)> &f) const {
+    for (const auto &child : *this) {
       child.second.ApplyPostOrder(f);
     }
     f(*this);
   }
-  void ApplyPostOrder(const std::function<void(this_type&)>& f) {
-    for (auto& child : *this) {
+  void ApplyPostOrder(const std::function<void(this_type &)> &f) {
+    for (auto &child : *this) {
       child.second.ApplyPostOrder(f);
     }
     f(*this);
@@ -359,11 +359,11 @@ class MapTree {
   // This variant of ApplyPostOrder expects a function on the underlying
   // node_value_type (const&).
   void ApplyPostOrder(
-      const std::function<void(const node_value_type&)>& f) const {
-    ApplyPostOrder([&f](const this_type& t) { f(t.Value()); });
+      const std::function<void(const node_value_type &)> &f) const {
+    ApplyPostOrder([&f](const this_type &t) { f(t.Value()); });
   }
-  void ApplyPostOrder(const std::function<void(node_value_type&)>& f) {
-    ApplyPostOrder([&f](this_type& t) { f(t.Value()); });
+  void ApplyPostOrder(const std::function<void(node_value_type &)> &f) {
+    ApplyPostOrder([&f](this_type &t) { f(t.Value()); });
   }
 
   // Transforms
@@ -372,18 +372,18 @@ class MapTree {
 
   // Pretty-print tree, using a custom node_value printer function.
   // Keys are printed using operator<<.
-  std::ostream& PrintTree(
-      std::ostream& stream,
-      const std::function<std::ostream&(std::ostream&, const node_value_type&,
-                                        size_t value_indent)>& printer,
-      size_t indent = 0) const {
+  std::ostream &PrintTree(std::ostream &stream,
+                          const std::function<std::ostream &(
+                              std::ostream &, const node_value_type &,
+                              size_t value_indent)> &printer,
+                          size_t indent = 0) const {
     // Indentation will be printed before the key, not here.
     printer(stream << "{ (", Value(), indent) << ')';
     if (Children().empty()) {
       stream << " }";
     } else {
       stream << '\n';
-      for (const auto& child : Children()) {
+      for (const auto &child : Children()) {
         stream << Spacer(indent + 2) << child.first << ": ";
         child.second.PrintTree(stream, printer, indent + 2) << '\n';
       }
@@ -394,18 +394,18 @@ class MapTree {
 
   // Pretty-print tree, using the default stream printer, which requires that
   // operator<<(std::ostream&, const node_value_type&) is defined.
-  std::ostream& PrintTree(std::ostream& stream, size_t indent = 0) const {
+  std::ostream &PrintTree(std::ostream &stream, size_t indent = 0) const {
     return PrintTree(
         stream,
-        [](std::ostream& s, const node_value_type& v,
-           size_t unused_indent) -> std::ostream& { return s << v; },
+        [](std::ostream &s, const node_value_type &v,
+           size_t unused_indent) -> std::ostream & { return s << v; },
         indent);
   }
 
  private:  // methods
   // Establish parent-child links.
   void Relink() {
-    for (auto& subtree : subtrees_) {
+    for (auto &subtree : subtrees_) {
       subtree.second.parent_ = this;
     }
   }
@@ -418,7 +418,7 @@ class MapTree {
   subtrees_type subtrees_;
 
   // Pointer to parent node, or nullptr if this is a root node.
-  this_type* parent_ = nullptr;
+  this_type *parent_ = nullptr;
 };
 
 }  // namespace verible

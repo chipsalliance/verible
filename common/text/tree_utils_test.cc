@@ -33,8 +33,8 @@ namespace verible {
 namespace {
 
 // Helper function for reaching only-child node.
-const Symbol* ExpectOnlyChild(const Symbol& node) {
-  return down_cast<const SyntaxTreeNode&>(node).children()[0].get();
+const Symbol *ExpectOnlyChild(const Symbol &node) {
+  return down_cast<const SyntaxTreeNode &>(node).children()[0].get();
 }
 
 // Tests that leaf is considered an only-child when descending.
@@ -414,41 +414,41 @@ TEST(TreePrintTest, PrettyPrintSkipNullptrs) {
 // Test that 1-node tree and always-true predicate yields the root node.
 TEST(FindFirstSubtreeMutableTest, OneNodePredicateTrue) {
   SymbolPtr tree = Node();
-  SymbolPtr* result =
-      FindFirstSubtreeMutable(&tree, [](const Symbol&) { return true; });
+  SymbolPtr *result =
+      FindFirstSubtreeMutable(&tree, [](const Symbol &) { return true; });
   EXPECT_EQ(result, &tree);
 }
 
 // Test that 1-node tree and always-false predicate yields no match.
 TEST(FindFirstSubtreeMutableTest, OneNodePredicateFalse) {
   SymbolPtr tree = Node();
-  SymbolPtr* result =
-      FindFirstSubtreeMutable(&tree, [](const Symbol&) { return false; });
+  SymbolPtr *result =
+      FindFirstSubtreeMutable(&tree, [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that 2-node tree and always-true predicate yields the root node.
 TEST(FindFirstSubtreeMutableTest, TwoLevelPredicateTrue) {
   SymbolPtr tree = TNode(1, TNode(2));
-  SymbolPtr* result =
-      FindFirstSubtreeMutable(&tree, [](const Symbol&) { return true; });
+  SymbolPtr *result =
+      FindFirstSubtreeMutable(&tree, [](const Symbol &) { return true; });
   EXPECT_EQ(result, &tree);
 }
 
 // Test that 2-node tree and always-false predicate yields nullptr.
 TEST(FindFirstSubtreeMutableTest, TwoLevelPredicateFalse) {
   SymbolPtr tree = TNode(1, TNode(2));
-  SymbolPtr* result =
-      FindFirstSubtreeMutable(&tree, [](const Symbol&) { return false; });
+  SymbolPtr *result =
+      FindFirstSubtreeMutable(&tree, [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
-bool IsNodeTagged(const Symbol& s, int tag) {
+bool IsNodeTagged(const Symbol &s, int tag) {
   const SymbolTag t = s.Tag();
   return t.kind == SymbolKind::kNode && t.tag == tag;
 }
 
-bool IsLeafTagged(const Symbol& s, int tag) {
+bool IsLeafTagged(const Symbol &s, int tag) {
   const SymbolTag t = s.Tag();
   return t.kind == SymbolKind::kLeaf && t.tag == tag;
 }
@@ -456,8 +456,8 @@ bool IsLeafTagged(const Symbol& s, int tag) {
 // Test that tree and predicate can match the root node.
 TEST(FindFirstSubtreeMutableTest, TwoLevelNodeTagIs1) {
   SymbolPtr tree = TNode(1, TNode(2));
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsNodeTagged(s, 1); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsNodeTagged(s, 1); });
   EXPECT_EQ(result, &tree);
 }
 
@@ -465,32 +465,32 @@ TEST(FindFirstSubtreeMutableTest, TwoLevelNodeTagIs1) {
 TEST(FindFirstSubtreeMutableTest, SkipNulls) {
   SymbolPtr tree = TNode(1, nullptr, nullptr, TNode(2), nullptr);
   SymbolPtr expect = TNode(2);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
 // Test that tree and predicate can match no node.
 TEST(FindFirstSubtreeMutableTest, TwoLevelNoNodeMatch) {
   SymbolPtr tree = TNode(1, TNode(2));
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 3); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 3); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no node with null leaves.
 TEST(FindFirstSubtreeMutableTest, TwoLevelNoNodeMatchNullLeaves) {
   SymbolPtr tree = TNode(1, nullptr, nullptr);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 4); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 4); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindFirstSubtreeMutableTest, TwoLevelNoLeafTag) {
   SymbolPtr tree = TNode(1, TNode(2));
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -498,8 +498,8 @@ TEST(FindFirstSubtreeMutableTest, TwoLevelNoLeafTag) {
 TEST(FindFirstSubtreeMutableTest, TwoLevelNodeTagIs2) {
   SymbolPtr tree = TNode(1, TNode(2));
   SymbolPtr expect = TNode(2);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
@@ -507,16 +507,16 @@ TEST(FindFirstSubtreeMutableTest, TwoLevelNodeTagIs2) {
 TEST(FindFirstSubtreeMutableTest, TwoLevelLeafTagIs2) {
   SymbolPtr tree = TNode(1, XLeaf(2));
   SymbolPtr expect = XLeaf(2);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 2); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindFirstSubtreeMutableTest, TwoLevelLeafTagNoMatch) {
   SymbolPtr tree = TNode(1, XLeaf(2), XLeaf(3));
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -524,8 +524,8 @@ TEST(FindFirstSubtreeMutableTest, TwoLevelLeafTagNoMatch) {
 TEST(FindFirstSubtreeMutableTest, MatchFirstOfSiblings) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(3)), TNode(2, TNode(4)));
   SymbolPtr expect = TNode(2, TNode(3));
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
@@ -533,8 +533,8 @@ TEST(FindFirstSubtreeMutableTest, MatchFirstOfSiblings) {
 TEST(FindFirstSubtreeMutableTest, MatchFirstInOrder) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(3)), TNode(3, TNode(4)));
   SymbolPtr expect = TNode(3);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsNodeTagged(s, 3); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsNodeTagged(s, 3); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
@@ -542,8 +542,8 @@ TEST(FindFirstSubtreeMutableTest, MatchFirstInOrder) {
 TEST(FindFirstSubtreeMutableTest, MatchLeaf) {
   SymbolPtr tree = TNode(1, TNode(2, XLeaf(3)), TNode(3, TNode(4)));
   SymbolPtr expect = XLeaf(3);
-  SymbolPtr* result = FindFirstSubtreeMutable(
-      &tree, [](const Symbol& s) { return IsLeafTagged(s, 3); });
+  SymbolPtr *result = FindFirstSubtreeMutable(
+      &tree, [](const Symbol &s) { return IsLeafTagged(s, 3); });
   EXPECT_TRUE(EqualTreesByEnum(result->get(), expect.get()));
 }
 
@@ -552,40 +552,40 @@ TEST(FindFirstSubtreeMutableTest, MatchLeaf) {
 // Test that 1-node tree and always-true predicate yields the root node.
 TEST(FindFirstSubtreeTest, OneNodePredicateTrue) {
   SymbolPtr tree = Node();
-  const Symbol* result =
-      FindFirstSubtree(tree.get(), [](const Symbol&) { return true; });
+  const Symbol *result =
+      FindFirstSubtree(tree.get(), [](const Symbol &) { return true; });
   EXPECT_EQ(result, tree.get());
 }
 
 // Test that 1-node tree and always-false predicate yields no match.
 TEST(FindFirstSubtreeTest, OneNodePredicateFalse) {
   SymbolPtr tree = Node();
-  const Symbol* result =
-      FindFirstSubtree(tree.get(), [](const Symbol&) { return false; });
+  const Symbol *result =
+      FindFirstSubtree(tree.get(), [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that 2-node tree and always-true predicate yields the root node.
 TEST(FindFirstSubtreeTest, TwoLevelPredicateTrue) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result =
-      FindFirstSubtree(tree.get(), [](const Symbol&) { return true; });
+  const Symbol *result =
+      FindFirstSubtree(tree.get(), [](const Symbol &) { return true; });
   EXPECT_EQ(result, tree.get());
 }
 
 // Test that 2-node tree and always-false predicate yields nullptr.
 TEST(FindFirstSubtreeTest, TwoLevelPredicateFalse) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result =
-      FindFirstSubtree(tree.get(), [](const Symbol&) { return false; });
+  const Symbol *result =
+      FindFirstSubtree(tree.get(), [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match the root node.
 TEST(FindFirstSubtreeTest, TwoLevelNodeTagIs1) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 1); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 1); });
   EXPECT_EQ(result, tree.get());
 }
 
@@ -593,32 +593,32 @@ TEST(FindFirstSubtreeTest, TwoLevelNodeTagIs1) {
 TEST(FindFirstSubtreeTest, SkipNulls) {
   SymbolPtr tree = TNode(1, nullptr, nullptr, TNode(2), nullptr);
   SymbolPtr expect = TNode(2);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
 // Test that tree and predicate can match no node.
 TEST(FindFirstSubtreeTest, TwoLevelNoNodeMatch) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 3); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 3); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no node with null leaves.
 TEST(FindFirstSubtreeTest, TwoLevelNoNodeMatchNullLeaves) {
   SymbolPtr tree = TNode(1, nullptr, nullptr);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 4); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 4); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindFirstSubtreeTest, TwoLevelNoLeafTag) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -626,8 +626,8 @@ TEST(FindFirstSubtreeTest, TwoLevelNoLeafTag) {
 TEST(FindFirstSubtreeTest, TwoLevelNodeTagIs2) {
   SymbolPtr tree = TNode(1, TNode(2));
   SymbolPtr expect = TNode(2);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -635,16 +635,16 @@ TEST(FindFirstSubtreeTest, TwoLevelNodeTagIs2) {
 TEST(FindFirstSubtreeTest, TwoLevelLeafTagIs2) {
   SymbolPtr tree = TNode(1, XLeaf(2));
   SymbolPtr expect = XLeaf(2);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 2); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindFirstSubtreeTest, TwoLevelLeafTagNoMatch) {
   SymbolPtr tree = TNode(1, XLeaf(2), XLeaf(3));
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -652,8 +652,8 @@ TEST(FindFirstSubtreeTest, TwoLevelLeafTagNoMatch) {
 TEST(FindFirstSubtreeTest, MatchFirstOfSiblings) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(3)), TNode(2, TNode(4)));
   SymbolPtr expect = TNode(2, TNode(3));
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -661,8 +661,8 @@ TEST(FindFirstSubtreeTest, MatchFirstOfSiblings) {
 TEST(FindFirstSubtreeTest, MatchFirstInOrder) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(3)), TNode(3, TNode(4)));
   SymbolPtr expect = TNode(3);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 3); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 3); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -670,8 +670,8 @@ TEST(FindFirstSubtreeTest, MatchFirstInOrder) {
 TEST(FindFirstSubtreeTest, MatchLeaf) {
   SymbolPtr tree = TNode(1, TNode(2, XLeaf(3)), TNode(3, TNode(4)));
   SymbolPtr expect = XLeaf(3);
-  const Symbol* result = FindFirstSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 3); });
+  const Symbol *result = FindFirstSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 3); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -680,16 +680,16 @@ TEST(FindFirstSubtreeTest, MatchLeaf) {
 // Test that 1-node tree and always-true predicate yields the root node.
 TEST(FindLastSubtreeTest, OneNodePredicateTrue) {
   SymbolPtr tree = Node();
-  const Symbol* result =
-      FindLastSubtree(tree.get(), [](const Symbol&) { return true; });
+  const Symbol *result =
+      FindLastSubtree(tree.get(), [](const Symbol &) { return true; });
   EXPECT_EQ(result, tree.get());
 }
 
 // Test that 1-node tree and always-false predicate yields no match.
 TEST(FindLastSubtreeTest, OneNodePredicateFalse) {
   SymbolPtr tree = Node();
-  const Symbol* result =
-      FindLastSubtree(tree.get(), [](const Symbol&) { return false; });
+  const Symbol *result =
+      FindLastSubtree(tree.get(), [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -697,24 +697,24 @@ TEST(FindLastSubtreeTest, OneNodePredicateFalse) {
 TEST(FindLastSubtreeTest, TwoLevelPredicateTrue) {
   SymbolPtr tree = TNode(1, TNode(2));
   SymbolPtr expect = TNode(2);
-  const Symbol* result =
-      FindLastSubtree(tree.get(), [](const Symbol&) { return true; });
+  const Symbol *result =
+      FindLastSubtree(tree.get(), [](const Symbol &) { return true; });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
 // Test that 2-node tree and always-false predicate yields nullptr.
 TEST(FindLastSubtreeTest, TwoLevelPredicateFalse) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result =
-      FindLastSubtree(tree.get(), [](const Symbol&) { return false; });
+  const Symbol *result =
+      FindLastSubtree(tree.get(), [](const Symbol &) { return false; });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match the root node.
 TEST(FindLastSubtreeTest, TwoLevelNodeTagIs1) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 1); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 1); });
   EXPECT_EQ(result, tree.get());
 }
 
@@ -722,32 +722,32 @@ TEST(FindLastSubtreeTest, TwoLevelNodeTagIs1) {
 TEST(FindLastSubtreeTest, SkipNulls) {
   SymbolPtr tree = TNode(1, nullptr, nullptr, TNode(2), nullptr);
   SymbolPtr expect = TNode(2);
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
 // Test that tree and predicate can match no node.
 TEST(FindLastSubtreeTest, TwoLevelNoNodeMatch) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 3); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 3); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no node with null leaves.
 TEST(FindLastSubtreeTest, TwoLevelNoNodeMatchNullLeaves) {
   SymbolPtr tree = TNode(1, nullptr, nullptr);
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 4); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 4); });
   EXPECT_EQ(result, nullptr);
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindLastSubtreeTest, TwoLevelNoLeafTag) {
   SymbolPtr tree = TNode(1, TNode(2));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -755,8 +755,8 @@ TEST(FindLastSubtreeTest, TwoLevelNoLeafTag) {
 TEST(FindLastSubtreeTest, TwoLevelNodeTagIs2) {
   SymbolPtr tree = TNode(1, TNode(2));
   SymbolPtr expect = TNode(2);
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -764,16 +764,16 @@ TEST(FindLastSubtreeTest, TwoLevelNodeTagIs2) {
 TEST(FindLastSubtreeTest, TwoLevelLeafTagIs2) {
   SymbolPtr tree = TNode(1, XLeaf(2));
   SymbolPtr expect = XLeaf(2);
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 2); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
 // Test that tree and predicate can match no leaf.
 TEST(FindLastSubtreeTest, TwoLevelLeafTagNoMatch) {
   SymbolPtr tree = TNode(1, XLeaf(2), XLeaf(3));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsLeafTagged(s, 1); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsLeafTagged(s, 1); });
   EXPECT_EQ(result, nullptr);
 }
 
@@ -781,8 +781,8 @@ TEST(FindLastSubtreeTest, TwoLevelLeafTagNoMatch) {
 TEST(FindLastSubtreeTest, MatchLastOfSiblings) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(2, TNode(2))), TNode(2, TNode(3)));
   SymbolPtr expect = TNode(2, TNode(3));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 2); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 2); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -790,8 +790,8 @@ TEST(FindLastSubtreeTest, MatchLastOfSiblings) {
 TEST(FindLastSubtreeTest, MatchLastInOrder) {
   SymbolPtr tree = TNode(1, TNode(2, TNode(3)), TNode(3, TNode(4)));
   SymbolPtr expect = TNode(3, TNode(4));
-  const Symbol* result = FindLastSubtree(
-      tree.get(), [](const Symbol& s) { return IsNodeTagged(s, 3); });
+  const Symbol *result = FindLastSubtree(
+      tree.get(), [](const Symbol &s) { return IsNodeTagged(s, 3); });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
 }
 
@@ -799,7 +799,7 @@ TEST(FindLastSubtreeTest, MatchLastInOrder) {
 TEST(FindLastSubtreeTest, MatchLeaf) {
   SymbolPtr tree = TNode(1, TNode(2, XLeaf(3)), TNode(3, TNode(4, XLeaf(4))));
   SymbolPtr expect = XLeaf(4);
-  const Symbol* result = FindLastSubtree(tree.get(), [](const Symbol& s) {
+  const Symbol *result = FindLastSubtree(tree.get(), [](const Symbol &s) {
     return IsLeafTagged(s, 3) || IsLeafTagged(s, 4);
   });
   EXPECT_TRUE(EqualTreesByEnum(result, expect.get()));
@@ -819,21 +819,21 @@ struct FindSubtreeStartingAtOffsetTest : public testing::Test {
 
 // Test that a single leaf yields itself when it starts < offset.
 TEST_F(FindSubtreeStartingAtOffsetTest, LeafOnlyOffsetLessThan) {
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kFindSubtreeTestText.begin());
   EXPECT_EQ(*subtree, tree);
 }
 
 // Test that a single leaf yields itself when it starts == offset.
 TEST_F(FindSubtreeStartingAtOffsetTest, LeafOnlyOffsetLeftEqual) {
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kFindSubtreeTestText.begin() + 1);
   EXPECT_EQ(*subtree, tree);
 }
 
 // Test that a single leaf yields null when it starts > offset.
 TEST_F(FindSubtreeStartingAtOffsetTest, LeafOnlyOffsetGreaterThan) {
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kFindSubtreeTestText.begin() + 2);
   EXPECT_EQ(subtree, nullptr);
 }
@@ -868,27 +868,27 @@ struct FindSubtreeStartingAtOffsetFakeTreeTest : public testing::Test {
 // Test that a whole tree is returned when offset is less than leftmost token.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetLessThanFirstToken) {
   // Note: begin() - 1 points to a valid location due to kBaseTextPadded
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kBaseText.begin() - 1);
   EXPECT_EQ(*subtree, tree);
 }
 
 // Test that a whole tree is returned when offset starts at leftmost token.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtFirstToken) {
-  SymbolPtr* subtree = FindSubtreeStartingAtOffset(&tree, kBaseText.begin());
+  SymbolPtr *subtree = FindSubtreeStartingAtOffset(&tree, kBaseText.begin());
   EXPECT_EQ(*subtree, tree);
 }
 
 // Test that an offset past last token yields nullptr.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetPastLastToken) {
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + 18);
   EXPECT_EQ(subtree, nullptr);
 }
 
 // Test that an offset in middle of last token yields nullptr.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetInsideLastToken) {
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + 13);
   EXPECT_EQ(subtree, nullptr);
 }
@@ -897,7 +897,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetInsideLastToken) {
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetInsideFirstToken) {
   SymbolPtr expect = Leaf(0, kBaseText.substr(0, 5));
   for (int offset = 1; offset <= 4; ++offset) {
-    SymbolPtr* subtree =
+    SymbolPtr *subtree =
         FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + offset);
     EXPECT_TRUE(EqualTreesByEnum(subtree->get(), expect.get()));
   }
@@ -906,7 +906,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetInsideFirstToken) {
 // Test that a subtree is returned when offset starts inside leftmost token.
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetInsideMiddleSubtree) {
   SymbolPtr expect = Leaf(0, kBaseText.substr(5, 3));
-  SymbolPtr* subtree =
+  SymbolPtr *subtree =
       FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + 5);
   EXPECT_TRUE(EqualTreesByEnum(subtree->get(), expect.get()));
 }
@@ -918,7 +918,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtLastSubtree) {
                            Leaf(0, kBaseText.substr(12, 5))  // noformat
   );
   for (int offset = 6; offset <= 8; ++offset) {
-    SymbolPtr* subtree =
+    SymbolPtr *subtree =
         FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + offset);
     EXPECT_TRUE(EqualTreesByEnum(subtree->get(), expect.get()));
   }
@@ -928,7 +928,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtLastSubtree) {
 TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtLastLeaf) {
   SymbolPtr expect = Leaf(0, kBaseText.substr(8, 2));
   for (int offset = 9; offset <= 12; ++offset) {
-    SymbolPtr* subtree =
+    SymbolPtr *subtree =
         FindSubtreeStartingAtOffset(&tree, kBaseText.begin() + offset);
     EXPECT_TRUE(EqualTreesByEnum(subtree->get(), expect.get()));
   }
@@ -937,7 +937,7 @@ TEST_F(FindSubtreeStartingAtOffsetFakeTreeTest, TreeOffsetAtLastLeaf) {
 // MutateLeaves tests
 
 // Example LeafMutator
-void SetLeafEnum(TokenInfo* token) { token->set_token_enum(9); }
+void SetLeafEnum(TokenInfo *token) { token->set_token_enum(9); }
 
 // Test that null unique_ptr is ignored.
 TEST(MutateLeavesTest, UniqueNullPtr) {
@@ -1309,13 +1309,13 @@ TEST(TrimSyntaxTreeTest, ComplexMidSpanSubtree2) {
 
 TEST(SymbolCastToNodeTest, BasicTest) {
   const SyntaxTreeNode node_symbol;
-  const auto& node = SymbolCastToNode(node_symbol);
+  const auto &node = SymbolCastToNode(node_symbol);
   CHECK_EQ(node.Kind(), SymbolKind::kNode);
 }
 
 TEST(SymbolCastToNodeTest, BasicTestMutable) {
   SyntaxTreeNode node_symbol;
-  SyntaxTreeNode& node = SymbolCastToNode(node_symbol);
+  SyntaxTreeNode &node = SymbolCastToNode(node_symbol);
   CHECK_EQ(node.Kind(), SymbolKind::kNode);
 }
 
@@ -1331,7 +1331,7 @@ TEST(SymbolCastToNodeTest, InvalidInputLeafMutable) {
 
 TEST(SymbolCastToLeafTest, BasicTest) {
   SyntaxTreeLeaf leaf_symbol(3, "foo");
-  const auto& leaf = SymbolCastToLeaf(leaf_symbol);
+  const auto &leaf = SymbolCastToLeaf(leaf_symbol);
   CHECK_EQ(leaf.Kind(), SymbolKind::kLeaf);
 }
 
@@ -1356,7 +1356,7 @@ enum class FakeEnum {
   kTwo,
 };
 
-std::ostream& operator<<(std::ostream& stream, FakeEnum e) {
+std::ostream &operator<<(std::ostream &stream, FakeEnum e) {
   switch (e) {
     case FakeEnum::kZero:
       stream << "zero";
@@ -1455,7 +1455,7 @@ TEST(CheckOptionalSymbolAsLeafTest, Nullptr) {
 }
 
 TEST(CheckOptionalSymbolAsLeafTest, NullBarePtr) {
-  const Symbol* root = nullptr;
+  const Symbol *root = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsLeaf(root, FakeEnum::kOne), nullptr);
 }
 
@@ -1490,12 +1490,12 @@ TEST(CheckOptionalSymbolAsNodeTest, Nullptr) {
 }
 
 TEST(CheckOptionalSymbolAsNodeTest, NullBarePtr) {
-  const Symbol* root = nullptr;
+  const Symbol *root = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsNode(root, FakeEnum::kOne), nullptr);
 }
 
 TEST(CheckOptionalSymbolAsNodeTest, NullBarePtrNoEnum) {
-  const Symbol* root = nullptr;
+  const Symbol *root = nullptr;
   EXPECT_EQ(CheckOptionalSymbolAsNode(root), nullptr);
 }
 
@@ -1546,29 +1546,29 @@ TEST(GetSubtreeAsSymbolTest, WrongParentEnumTag) {
 
 TEST(GetSubtreeAsSymbolTest, ValidAccessNode) {
   auto root = TNode(FakeEnum::kTwo, TNode(FakeEnum::kOne));
-  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
-  const auto* child_node = down_cast<const SyntaxTreeNode*>(child);
+  const auto *child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
+  const auto *child_node = down_cast<const SyntaxTreeNode *>(child);
   EXPECT_EQ(FakeEnum(child_node->Tag().tag), FakeEnum::kOne);
 }
 
 TEST(GetSubtreeAsSymbolTest, ValidAccessLeaf) {
   auto root = TNode(FakeEnum::kTwo, Leaf(6, "six"));
-  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
-  const auto* child_leaf = down_cast<const SyntaxTreeLeaf*>(child);
+  const auto *child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 0);
+  const auto *child_leaf = down_cast<const SyntaxTreeLeaf *>(child);
   EXPECT_EQ(child_leaf->get().token_enum(), 6);
 }
 
 TEST(GetSubtreeAsSymbolTest, ValidAccessAtIndexOne) {
   auto root =
       TNode(FakeEnum::kTwo, TNode(FakeEnum::kZero), TNode(FakeEnum::kOne));
-  const auto* child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 1);
-  const auto* child_node = down_cast<const SyntaxTreeNode*>(child);
+  const auto *child = GetSubtreeAsSymbol(*root, FakeEnum::kTwo, 1);
+  const auto *child_node = down_cast<const SyntaxTreeNode *>(child);
   EXPECT_EQ(FakeEnum(child_node->Tag().tag), FakeEnum::kOne);
 }
 
 TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnum) {
   auto root = TNode(FakeEnum::kZero, TNode(FakeEnum::kOne));
-  const auto& child = GetSubtreeAsNode(*root, FakeEnum::kZero, 0);
+  const auto &child = GetSubtreeAsNode(*root, FakeEnum::kZero, 0);
   EXPECT_EQ(FakeEnum(child->Tag().tag), FakeEnum::kOne);
 }
 
@@ -1591,7 +1591,7 @@ TEST(GetSubtreeAsNodeTest, ValidatedFoundNodeEnumChildMismatches) {
 
 TEST(GetSubtreeAsLeafTest, ValidatedFoundLeaf) {
   auto root = TNode(FakeEnum::kZero, Leaf(7, "foo"));
-  const SyntaxTreeLeaf* leaf = GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0);
+  const SyntaxTreeLeaf *leaf = GetSubtreeAsLeaf(*root, FakeEnum::kZero, 0);
   EXPECT_EQ(leaf->get().token_enum(), 7);
 }
 

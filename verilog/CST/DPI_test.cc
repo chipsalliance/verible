@@ -71,10 +71,10 @@ TEST(FindAllDPIImportsTest, CountMatches) {
        "\n"
        "endmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllDPIImports(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -111,15 +111,15 @@ TEST(GetDPIImportPrototypeTest, Various) {
        "\n"
        "endmodule\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
 
           const auto dpi_imports = FindAllDPIImports(*ABSL_DIE_IF_NULL(root));
           std::vector<TreeSearchMatch> prototypes;
           prototypes.reserve(dpi_imports.size());
-          for (const auto& dpi_import : dpi_imports) {
+          for (const auto &dpi_import : dpi_imports) {
             prototypes.push_back(TreeSearchMatch{
                 GetDPIImportPrototype(*dpi_import.match), /* no context */});
           }
