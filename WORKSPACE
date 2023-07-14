@@ -140,10 +140,10 @@ bison_register_toolchains()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "e340f39fad1e35d9237540bcd6a2592ccac353e5d21d0f0521f6ab77370e0142",
-    strip_prefix = "protobuf-22.0",
+    sha256 = "a700a49470d301f1190a487a923b5095bf60f08f4ae4cac9f5f7c36883d17971",
+    strip_prefix = "protobuf-23.4",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/releases/download/v22.0/protobuf-22.0.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protobuf-23.4.tar.gz",
     ],
 )
 
