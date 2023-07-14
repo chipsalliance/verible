@@ -45,9 +45,9 @@ http_archive(
         "//bazel:absl.patch",
         "//bazel:fix-uninitialized-var.patch",
     ],
-    sha256 = "e46fe4fd52b94dc344429b74b9520bead577f1db622def7a69bdefae6908836c",
-    strip_prefix = "abseil-cpp-35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],
+    sha256 = "51d676b6846440210da48899e4df618a357e6e44ecde7106f1e44ea16ae8adc7",
+    strip_prefix = "abseil-cpp-20230125.3",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.zip"],
 )
 
 http_archive(
@@ -138,12 +138,13 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
 bison_register_toolchains()
 
+# Slightly after 23.4, with fixed #13062 signedness warning.
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "e340f39fad1e35d9237540bcd6a2592ccac353e5d21d0f0521f6ab77370e0142",
-    strip_prefix = "protobuf-22.0",
+    sha256 = "3023165dbf01e6e3a215124de6f932ae9ccc8c2e0b9d7e30e3023bba8ca08205",
+    strip_prefix = "protobuf-5789e0ffb5af9cda52a72cf9d8d1b3acc596588d",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/releases/download/v22.0/protobuf-22.0.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/5789e0ffb5af9cda52a72cf9d8d1b3acc596588d.zip",
     ],
 )
 
