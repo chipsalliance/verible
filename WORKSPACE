@@ -231,11 +231,11 @@ maybe(
     ],
 )
 
-# For sha256; Version taken from branch with bazel rules
+# Only needed for sha256; Version taken from branch with bazel rules
 # https://github.com/google/boringssl/tree/master-with-bazel
 http_archive(
     name = "com_google_boringssl",
-    sha256 = "482796f369c8655dbda3be801ae98c47916ecd3bff223d007a723fd5f5ecba22",
-    strip_prefix = "boringssl-d345d68d5c4b5471290ebe13f090f1fd5b7e8f58",
-    urls = ["https://github.com/google/boringssl/archive/d345d68d5c4b5471290ebe13f090f1fd5b7e8f58.zip"],
+    sha256 = "8b28b030652d1b5e0f8de306e8bdc1b67f7164c2ec889056a0c13e78ba615a34",
+    strip_prefix = "boringssl-342e805bc1f5dfdd650e3f031686d6c939b095d9",
+    urls = ["https://github.com/google/boringssl/archive/342e805bc1f5dfdd650e3f031686d6c939b095d9.zip"],
 )
