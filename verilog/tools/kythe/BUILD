@@ -213,7 +213,7 @@ cc_library(
         ":kythe-facts",
         ":kythe-facts-extractor",
         "//third_party/proto/kythe:storage_cc_proto",
-        "@com_google_protobuf//:protobuf",
+        "@com_google_protobuf//src/google/protobuf/io",
     ],
 )
 
