@@ -14,8 +14,6 @@
 
 #include "verilog/tools/kythe/kzip_creator.h"
 
-#include <openssl/sha.h>
-
 #include <array>
 #include <cstdio>
 #include <string>
@@ -26,6 +24,7 @@
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/simple_zip.h"
+#include "openssl/sha.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 
 namespace verilog {
