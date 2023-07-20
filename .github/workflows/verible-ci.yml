@@ -448,7 +448,21 @@ jobs:
         restore-keys: bazelcache_macos_
 
     - name: Tests
-      run: bazel test --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
+      run: bazel test -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis //...
+
+    - name: Build
+      run: bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
+
+    - name: Pack up
+      run: |
+        VERSION=$(git describe --match=v*)
+        .github/bin/simple-install.sh verible-${VERSION}-macOS
+        tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: verible-*.tar.gz
 
   PrepareVSPlugin:
     container: ubuntu:jammy
