@@ -456,7 +456,7 @@ jobs:
     - name: Pack up
       run: |
         VERSION=$(git describe --match=v*)
-        .github/bin/simple-install.sh verible-${VERSION}-macOS
+        .github/bin/simple-install.sh verible-${VERSION}-macOS/bin
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
@@ -534,7 +534,7 @@ jobs:
 
 
   Release:
-    needs: [ Check, Build, WindowsBuild, PrepareVSPlugin ]
+    needs: [ Check, Build, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
