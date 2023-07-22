@@ -175,8 +175,8 @@ guide and the [development resources](./doc/development.md).
 
 Verible's code base is written in C++.
 
-To build, you need the [bazel] (>= 4.0) build system and a C++17 compatible compiler
-(e.g. >= g++-9), as well as python3.
+To build, you need the [bazel] (>= 4.0) build system and a C++17 compatible
+compiler (e.g. >= g++-10), as well as python3.
 
 Use your package manager to install the dependencies; on a system with
 the nix package manager simply run `nix-shell` to get a build environment.
@@ -197,7 +197,8 @@ shared libraries, you can use custom config
 instead of default `gold` linker).
 
 ```bash
-# Generates statically linked executables
+# Generate statically linked executables.
+# Uses bfd linker and needs static system libs available.
 bazel build -c opt --config=create_static_linked_executables //...
 ```
 
