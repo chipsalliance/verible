@@ -34,7 +34,7 @@ class KzipCreator final {
   // Initializes the archive. Crashes if initialization fails.
   explicit KzipCreator(absl::string_view output_path);
 
-  // Adds source code file to the Kzip. Returns its SHA digest.
+  // Adds source code file to the Kzip. Returns its digest.
   std::string AddSourceFile(absl::string_view path, absl::string_view content);
 
   // Adds compilation unit to the Kzip.
