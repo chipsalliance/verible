@@ -277,9 +277,9 @@ cc_library(
         "//common/util:file-util",
         "//common/util:simple-zip",
         "//third_party/proto/kythe:analysis_cc_proto",
+        "@com_google_absl//absl/hash",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_boringssl//:crypto",
     ],
 )
 

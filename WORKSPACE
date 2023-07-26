@@ -230,12 +230,3 @@ maybe(
         "https://zlib.net/fossils/zlib-1.2.13.tar.gz",
     ],
 )
-
-# Only needed for sha256; Version taken from branch with bazel rules
-# https://github.com/google/boringssl/tree/master-with-bazel
-http_archive(
-    name = "com_google_boringssl",
-    sha256 = "8b28b030652d1b5e0f8de306e8bdc1b67f7164c2ec889056a0c13e78ba615a34",
-    strip_prefix = "boringssl-342e805bc1f5dfdd650e3f031686d6c939b095d9",
-    urls = ["https://github.com/google/boringssl/archive/342e805bc1f5dfdd650e3f031686d6c939b095d9.zip"],
-)
