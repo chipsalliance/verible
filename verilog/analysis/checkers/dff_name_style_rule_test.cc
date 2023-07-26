@@ -19,7 +19,6 @@
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"
-#include "dff_name_style_rule.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
@@ -152,9 +151,9 @@ TEST(DffNameStyleRuleTest, Reject) {
       {"module m; always_ff @(posedge c) begin a_ff <= ",
        {SymbolIdentifier, "b"},
        "; end endmodule"},
-      {"module m; always_ff @(posedge c) begin a1_ff <= ",
-       {SymbolIdentifier, "a0_n"},
-       "; end endmodule"},
+      {"module m; always_ff @(posedge c) begin ",
+       {SymbolIdentifier, "a1_ff"},
+       " <= a0_n; end endmodule"},
       {"module m; always_ff @(posedge c) begin a_ff <= ",
        {SymbolIdentifier, "mystruct"},
        ".b_n; end endmodule"},
