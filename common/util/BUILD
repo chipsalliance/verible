@@ -542,17 +542,30 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "tree-operations_test",
-    srcs = ["tree_operations_test.cc"],
-    deps = [
-        ":spacer",
-        ":tree-operations",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
+[
+    (
+        cc_test(
+            name = "tree-operations_" + shard + "_test",
+            srcs = ["tree_operations_test.cc"],
+            defines = ["COMPILATION_SHARD=" + shard],
+            deps = [
+                ":spacer",
+                ":tree-operations",
+                "@com_google_absl//absl/strings",
+                "@com_google_absl//absl/strings:str_format",
+                "@com_google_googletest//:gtest_main",
+            ],
+        ),
+    )
+    for shard in [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+    ]
+]
 
 cc_test(
     name = "expandable-tree-view_test",

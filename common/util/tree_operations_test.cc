@@ -28,6 +28,29 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+/*
+  The compiler takes a long time to compile this file, so we divide it
+  into shards, in each shard only compiling a subsection, determined by the
+  value in the COMPILATION_SHARD define.
+
+                        How to assign shards
+  Run a separate compile for each shard, and look at reported time by bazel:
+
+  for f in 1 2 3 4 5 6 ; do
+      bazel build -c opt //common/util:tree-operations_${f}_test
+  done
+
+  ... then choose shard in #if CURRENT_SHARD() sections until
+  compilation times are roughly balanced.
+*/
+
+// If COMPILATION_SHARD is set, this is used to only compile part of the code.
+#ifdef COMPILATION_SHARD
+#define CURRENT_SHARD_IS(s) s == COMPILATION_SHARD
+#else
+#define CURRENT_SHARD_IS(s) 1
+#endif
+
 namespace verible {
 namespace {
 
@@ -222,6 +245,7 @@ class IntNode {
 
   const int& id() const { return value_; }
 
+#if CURRENT_SHARD_IS(6)
   friend std::ostream& operator<<(std::ostream& stream, const IntNode& self) {
     self.PrintRecursively(stream, 0);
     return stream;
@@ -235,6 +259,7 @@ class IntNode {
     return stream << absl::StreamFormat("%p (%d)\n", self_ptr,
                                         self_ptr->value_);
   }
+#endif
 
  private:
   void PrintRecursively(std::ostream& stream, size_t depth = 0) const {
@@ -382,6 +407,7 @@ TEST(Misc, TreeNodeTraits) {
   }
 }
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(SimpleNodeTest, TreeNodeTraits) {
   // This test passes if it compiles without errors.
   using Traits = TreeNodeTraits<TypeParam>;
@@ -392,7 +418,9 @@ TYPED_TEST(SimpleNodeTest, TreeNodeTraits) {
   static_assert(std::is_same_v<typename Traits::Children::container_type,
                                typename TypeParam::ChildrenType>);
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(NodeWithValueTest, TreeNodeTraits) {
   // This test passes if it compiles without errors.
   using Traits = TreeNodeTraits<TypeParam>;
@@ -406,14 +434,18 @@ TYPED_TEST(NodeWithValueTest, TreeNodeTraits) {
   static_assert(std::is_same_v<typename Traits::Value::const_reference,
                                const std::string&>);
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(NodeWithParentTest, TreeNodeTraits) {
   // This test passes if it compiles without errors.
   using Traits = TreeNodeTraits<TypeParam>;
 
   static_assert(Traits::Parent::available == true);
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(SimpleNodeTest, is_leaf) {
   EXPECT_FALSE(is_leaf(this->root));
   EXPECT_TRUE(is_leaf(this->NodeAt({0})));
@@ -431,7 +463,9 @@ TYPED_TEST(SimpleNodeTest, is_leaf) {
   EXPECT_FALSE(is_leaf(this->NodeAt({3, 0, 1})));
   EXPECT_TRUE(is_leaf(this->NodeAt({3, 0, 1, 0})));
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(SimpleNodeTest, DescendPath) {
   {
     const std::vector<size_t> path = {0};
@@ -449,7 +483,9 @@ TYPED_TEST(SimpleNodeTest, DescendPath) {
               this->NodeAt({2, 1}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(SimpleNodeTest, LeftmostDescendant) {
   EXPECT_EQ(LeftmostDescendant(this->root), this->root.Children().front());
   EXPECT_EQ(LeftmostDescendant(this->root.Children().back()),
@@ -457,7 +493,9 @@ TYPED_TEST(SimpleNodeTest, LeftmostDescendant) {
   EXPECT_EQ(LeftmostDescendant(this->NodeAt({2, 1, 0})),
             this->NodeAt({2, 1, 0}));
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(SimpleNodeTest, RightmostDescendant) {
   EXPECT_EQ(RightmostDescendant(this->root), this->NodeAt({3, 2, 1, 0}));
   EXPECT_EQ(RightmostDescendant(this->root.Children().back()),
@@ -465,7 +503,9 @@ TYPED_TEST(SimpleNodeTest, RightmostDescendant) {
   EXPECT_EQ(RightmostDescendant(this->NodeAt({2, 1, 0})),
             this->NodeAt({2, 1, 0}));
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(SimpleNodeTest, ApplyPreOrderWithNode) {
   using NodeRef = std::add_lvalue_reference_t<TypeParam>;
   {
@@ -500,7 +540,9 @@ TYPED_TEST(SimpleNodeTest, ApplyPreOrderWithNode) {
     EXPECT_EQ(visited_values, expected_visited_values);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(SimpleNodeTest, ApplyPostOrderWithNode) {
   using NodeRef = std::add_lvalue_reference_t<TypeParam>;
   {
@@ -534,7 +576,9 @@ TYPED_TEST(SimpleNodeTest, ApplyPostOrderWithNode) {
     EXPECT_EQ(visited_values, expected_visited_values);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(NodeWithValueTest, ApplyPreOrderWithValue) {
   {
     static const std::vector<std::string> expected_visited_values = {
@@ -569,7 +613,9 @@ TYPED_TEST(NodeWithValueTest, ApplyPreOrderWithValue) {
     EXPECT_EQ(visited_values, expected_visited_values);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(NodeWithValueTest, ApplyPostOrderWithValue) {
   {
     static const std::vector<std::string> expected_visited_values = {
@@ -605,7 +651,9 @@ TYPED_TEST(NodeWithValueTest, ApplyPostOrderWithValue) {
     EXPECT_EQ(visited_values, expected_visited_values);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(NodeWithParentTest, BirthRank) {
   EXPECT_EQ(BirthRank(this->root), 0);
   EXPECT_EQ(BirthRank(this->NodeAt({0})), 0);
@@ -633,7 +681,9 @@ TYPED_TEST(NodeWithParentTest, BirthRank) {
   EXPECT_EQ(BirthRank(this->NodeAt({3, 2, 1})), 1);
   EXPECT_EQ(BirthRank(this->NodeAt({3, 2, 1, 0})), 0);
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, NumAncestors) {
   EXPECT_EQ(NumAncestors(this->root), 0);
   EXPECT_EQ(NumAncestors(this->NodeAt({0})), 1);
@@ -661,7 +711,9 @@ TYPED_TEST(NodeWithParentTest, NumAncestors) {
   EXPECT_EQ(NumAncestors(this->NodeAt({3, 2, 1})), 3);
   EXPECT_EQ(NumAncestors(this->NodeAt({3, 2, 1, 0})), 4);
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, Root) {
   EXPECT_EQ(Root(this->root), this->root);
   EXPECT_EQ(Root(this->NodeAt({0})), this->root);
@@ -689,7 +741,9 @@ TYPED_TEST(NodeWithParentTest, Root) {
   EXPECT_EQ(Root(this->NodeAt({3, 2, 1})), this->root);
   EXPECT_EQ(Root(this->NodeAt({3, 2, 1, 0})), this->root);
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, IsFirstChild) {
   EXPECT_TRUE(IsFirstChild(this->root));
   EXPECT_TRUE(IsFirstChild(this->NodeAt({0})));
@@ -717,7 +771,9 @@ TYPED_TEST(NodeWithParentTest, IsFirstChild) {
   EXPECT_FALSE(IsFirstChild(this->NodeAt({3, 2, 1})));
   EXPECT_TRUE(IsFirstChild(this->NodeAt({3, 2, 1, 0})));
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, IsLastChild) {
   EXPECT_TRUE(IsLastChild(this->root));
   EXPECT_FALSE(IsLastChild(this->NodeAt({0})));
@@ -745,7 +801,9 @@ TYPED_TEST(NodeWithParentTest, IsLastChild) {
   EXPECT_TRUE(IsLastChild(this->NodeAt({3, 2, 1})));
   EXPECT_TRUE(IsLastChild(this->NodeAt({3, 2, 1, 0})));
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, HasAncestor) {
   EXPECT_FALSE(HasAncestor(this->root, &this->root));
   EXPECT_TRUE(HasAncestor(this->NodeAt({0}), &this->root));
@@ -842,7 +900,9 @@ void TestPath(TestSuite* test_suite, std::initializer_list<size_t> node_path) {
         << "Path container: std::list<size_t>";
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(3)
 TYPED_TEST(NodeWithParentTest, Path) {
   TestPath(this, {});
   TestPath(this, {0});
@@ -870,6 +930,7 @@ TYPED_TEST(NodeWithParentTest, Path) {
   TestPath(this, {3, 2, 1});
   TestPath(this, {3, 2, 1, 0});
 }
+#endif
 
 template <class TestSuite>
 void TestNodePath(TestSuite* test_suite,
@@ -881,6 +942,7 @@ void TestNodePath(TestSuite* test_suite,
   EXPECT_EQ(output.str(), expected_string);
 }
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithParentTest, NodePath) {
   TestNodePath(this, {}, "{}");
   TestNodePath(this, {0}, "{0}");
@@ -908,7 +970,9 @@ TYPED_TEST(NodeWithParentTest, NodePath) {
   TestNodePath(this, {3, 2, 1}, "{3,2,1}");
   TestNodePath(this, {3, 2, 1, 0}, "{3,2,1,0}");
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
   {
     std::ostringstream output;
@@ -979,7 +1043,9 @@ TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
     EXPECT_EQ(output.str(), expected_output);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithValueTest, PrintTree) {
   {
     std::ostringstream output;
@@ -1042,7 +1108,9 @@ TYPED_TEST(NodeWithValueTest, PrintTree) {
     EXPECT_EQ(output.str(), expected_output);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithParentTest, NextSibling) {
   EXPECT_EQ(NextSibling(this->root), nullptr);
   EXPECT_EQ(NextSibling(this->NodeAt({0})), &this->NodeAt({1}));
@@ -1070,7 +1138,9 @@ TYPED_TEST(NodeWithParentTest, NextSibling) {
   EXPECT_EQ(NextSibling(this->NodeAt({3, 2, 1})), nullptr);
   EXPECT_EQ(NextSibling(this->NodeAt({3, 2, 1, 0})), nullptr);
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithParentTest, PreviousSibling) {
   EXPECT_EQ(PreviousSibling(this->root), nullptr);
   EXPECT_EQ(PreviousSibling(this->NodeAt({0})), nullptr);
@@ -1098,7 +1168,9 @@ TYPED_TEST(NodeWithParentTest, PreviousSibling) {
   EXPECT_EQ(PreviousSibling(this->NodeAt({3, 2, 1})), &this->NodeAt({3, 2, 0}));
   EXPECT_EQ(PreviousSibling(this->NodeAt({3, 2, 1, 0})), nullptr);
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(NodeWithParentTest, NextLeaf) {
   EXPECT_EQ(NextLeaf(this->root), nullptr);
   EXPECT_EQ(NextLeaf(this->NodeAt({0})), &this->NodeAt({1, 0}));
@@ -1126,7 +1198,9 @@ TYPED_TEST(NodeWithParentTest, NextLeaf) {
   EXPECT_EQ(NextLeaf(this->NodeAt({3, 2, 1})), nullptr);
   EXPECT_EQ(NextLeaf(this->NodeAt({3, 2, 1, 0})), nullptr);
 }
+#endif
 
+#if CURRENT_SHARD_IS(5)
 TYPED_TEST(NodeWithParentTest, PreviousLeaf) {
   EXPECT_EQ(PreviousLeaf(this->root), nullptr);
   EXPECT_EQ(PreviousLeaf(this->NodeAt({0})), nullptr);
@@ -1159,7 +1233,9 @@ TYPED_TEST(NodeWithParentTest, PreviousLeaf) {
   EXPECT_EQ(PreviousLeaf(this->NodeAt({3, 2, 1, 0})),
             &this->NodeAt({3, 2, 0, 0}));
 }
+#endif
 
+#if CURRENT_SHARD_IS(5)
 TYPED_TEST(NodeWithParentTest, RemoveSelfFromParent) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1196,7 +1272,9 @@ TYPED_TEST(NodeWithParentTest, RemoveSelfFromParent) {
                                      N("3.2.1", {N("3.2.1.0")})})})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(5)
 TYPED_TEST(SimpleNodeTest, HoistOnlyChild) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1270,7 +1348,9 @@ TYPED_TEST(SimpleNodeTest, HoistOnlyChild) {
                                    N("3.0.0.0")}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(5)
 TYPED_TEST(SimpleNodeTest, FlattenOnce) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1316,7 +1396,9 @@ TYPED_TEST(SimpleNodeTest, FlattenOnce) {
                                    N("3.2.1", {N("3.2.1.0")})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(5)
 TYPED_TEST(SimpleNodeTest, FlattenOnlyChildrenWithChildren) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1362,7 +1444,9 @@ TYPED_TEST(SimpleNodeTest, FlattenOnlyChildrenWithChildren) {
                                    N("3.2.1", {N("3.2.1.0")})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(SimpleNodeTest, FlattenOneChild) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1396,7 +1480,9 @@ TYPED_TEST(SimpleNodeTest, FlattenOneChild) {
                                      N("3.2.1", {N("3.2.1.0")})})})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(NodeWithValueTest, MergeConsecutiveSiblings) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1452,7 +1538,9 @@ TYPED_TEST(NodeWithValueTest, MergeConsecutiveSiblings) {
                                              N("3.2.1", {N("3.2.1.0")})})})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(1)
 TYPED_TEST(NodeWithParentTest, NearestCommonAncestor) {
   EXPECT_EQ(NearestCommonAncestor(  //
                 this->NodeAt({0}),  //
@@ -1496,7 +1584,9 @@ TYPED_TEST(NodeWithParentTest, NearestCommonAncestor) {
                 this->NodeAt({0})),
             nullptr);
 }
+#endif
 
+#if CURRENT_SHARD_IS(2)
 TYPED_TEST(SimpleNodeTest, AdoptSubtree) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1573,7 +1663,9 @@ TYPED_TEST(SimpleNodeTest, AdoptSubtree) {
                                            N("TGC", {N("TGCA")})})})})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(4)
 TYPED_TEST(SimpleNodeTest, AdoptSubtreesFrom) {
   using N = TypeParam;
   // Const nodes are not supported
@@ -1639,7 +1731,9 @@ TYPED_TEST(SimpleNodeTest, AdoptSubtreesFrom) {
                                     N("TGC", {N("TGCA")})})})}));
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(6)
 TYPED_TEST(SimpleNodeTest, Transform) {
   using N = TypeParam;
 
@@ -1676,7 +1770,9 @@ TYPED_TEST(SimpleNodeTest, Transform) {
                          N("xxx", {N("xxxxx", {N("xxxxxxx")}),    //
                                    N("xxxxx", {N("xxxxxxx")})})})}));
 }
+#endif
 
+#if CURRENT_SHARD_IS(6)
 TYPED_TEST(NodeWithValueTest, DeepEqual) {
   using N = TypeParam;
 
@@ -1795,7 +1891,9 @@ TYPED_TEST(NodeWithValueTest, DeepEqual) {
     EXPECT_EQ(diff.right, &other);
   }
 }
+#endif
 
+#if CURRENT_SHARD_IS(6)
 TYPED_TEST(NodeWithValueTest, StructureEqual) {
   using N = IntNode;
   {
@@ -1873,6 +1971,6 @@ TYPED_TEST(NodeWithValueTest, StructureEqual) {
     EXPECT_EQ(result.right, &matching_tree.Children()[2]);
   }
 }
-
+#endif
 }  // namespace
 }  // namespace verible
