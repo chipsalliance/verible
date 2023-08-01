@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ static void ObfuscateVerilogCodeInternal(absl::string_view content,
         // needs to be preserved.
       case verilog_tokentype::MacroIdentifier:
       case verilog_tokentype::MacroCallId:
+      case verilog_tokentype::MacroIdItem:
         // TODO(fangism): verilog_tokentype::EscapedIdentifier
         *output << token.text()[0] << (*subst)(token.text().substr(1));
         break;
