@@ -26,12 +26,10 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/strings/naming_utils.h"
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
-#include "dff_name_style_rule.h"
 #include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
@@ -57,15 +55,15 @@ const LintRuleDescriptor &DffNameStyleRule::GetDescriptor() {
       .desc =
           "Checks that D Flip-Flops use appropiate naming conventions in both "
           "input and output ports.",
-      .param = {{"input", kDefaultInputSuffixes,
-                 "Comma separated list of allowed suffixes for the input port. "
-                 "Suffixes should not include the preceding \"_\". Empty field "
-                 "means no checks for the input port."},
-                {"output", kDefaultOutputSuffixes,
-                 "Comma separated list of allowed suffixes for the input port. "
-                 "Should "
-                 "not include the preceding \"_\". Empty field means no checks "
-                 "for the output port."}}};
+      .param = {
+          {"input", kDefaultInputSuffixes,
+           "Comma separated list of allowed suffixes for the input port. "
+           "Suffixes should not include the preceding \"_\". Empty field "
+           "means no checks for the input port."},
+          {"output", kDefaultOutputSuffixes,
+           "Comma separated list of allowed suffixes for the output port. "
+           "Should not include the preceding \"_\". Empty field means no "
+           "checks for the output port."}}};
   return d;
 }
 
@@ -87,7 +85,7 @@ void DffNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   std::vector<verible::TreeSearchMatch> non_blocking_assignments =
       FindAllNonBlockingAssignments(symbol);
 
-  for (auto &tree_match : non_blocking_assignments) {
+  for (const verible::TreeSearchMatch &tree_match : non_blocking_assignments) {
     const verible::Symbol &non_blocking_assigment = *tree_match.match;
     const verible::SyntaxTreeNode &node =
         verible::SymbolCastToNode(non_blocking_assigment);
@@ -119,7 +117,7 @@ void DffNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     if (uint64_t lhs_stage = lhs_pipe_stage.value_or(0)) {
       // "data_qN" should be driven by "data_qN-1", but
       // "data_q2" should be driven by "data_q", not "data_q1"
-      std::string expected_rhs(clean_lhs_str.begin(), clean_lhs_str.size());
+      std::string expected_rhs(clean_lhs_str.cbegin(), clean_lhs_str.size());
       if (lhs_stage != kFirstValidPipeStage) {
         absl::StrAppend(&expected_rhs, lhs_stage - 1);
       }
@@ -186,15 +184,16 @@ absl::string_view DffNameStyleRule::CheckSuffix(
 
   absl::string_view suffix_match;
   // Check if id conforms to any valid suffix
-  const bool id_ok = std::any_of(
-      suffixes.begin(), suffixes.end(), [&](const std::string &suffix) {
-        if (absl::EndsWith(id, suffix)) {
-          base = absl::string_view(id.begin(), id.size() - suffix.size());
-          suffix_match = suffix;
-          return true;
-        }
-        return false;
-      });
+  const bool id_ok = std::any_of(suffixes.cbegin(), suffixes.cend(),
+                                 [&](const std::string &suffix) -> bool {
+                                   if (absl::EndsWith(id, suffix)) {
+                                     base = absl::string_view(
+                                         id.begin(), id.size() - suffix.size());
+                                     suffix_match = suffix;
+                                     return true;
+                                   }
+                                   return false;
+                                 });
 
   // Exact match: id: "_q", suffix: "_q", there is no base
   bool exact_match = suffix_match.size() == id.size();
@@ -233,18 +232,20 @@ absl::Status DffNameStyleRule::Configure(absl::string_view configuration) {
 std::vector<std::string> DffNameStyleRule::ProcessSuffixes(
     absl::string_view config) {
   // Split input string: "q,ff,reg" => {"q", "ff", "reg"}
-  std::vector<std::string> split_suffixes =
+  std::vector<absl::string_view> split_suffixes =
       absl::StrSplit(config, ',', absl::SkipEmpty());
+
+  std::vector<std::string> result(split_suffixes.size());
 
   // Prepend an underscore to the suffixes to check against them
   // {"q", "ff", "reg"} => {"_q", "_ff", "_reg"}
-  auto prepend_underscore = [](const std::string &str) {
+  const auto prepend_underscore = [](absl::string_view str) -> std::string {
     return absl::StrCat("_", str);
   };
-  std::transform(split_suffixes.cbegin(), split_suffixes.cend(),
-                 split_suffixes.begin(), prepend_underscore);
+  std::transform(split_suffixes.cbegin(), split_suffixes.cend(), result.begin(),
+                 prepend_underscore);
 
-  return split_suffixes;
+  return result;
 }
 
 std::pair<absl::string_view, std::optional<uint64_t> >
@@ -262,7 +263,7 @@ DffNameStyleRule::ExtractPipelineStage(absl::string_view id) {
   // Extract the integer value for the pipeline stage
   uint64_t pipe_stage;
   std::from_chars_result result = std::from_chars(
-      id.begin() + id.size() - num_digits, id.end(), pipe_stage);
+      id.cbegin() + id.size() - num_digits, id.cend(), pipe_stage);
 
   // https://en.cppreference.com/w/cpp/utility/from_chars
   // Check whether:

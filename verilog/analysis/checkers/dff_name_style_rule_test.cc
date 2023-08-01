@@ -29,7 +29,6 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
-using verible::RunApplyFixCases;
 using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
@@ -41,7 +40,7 @@ TEST(DffNameStyleRuleTest, AcceptDefaults) {
       {"module m; always_ff @(posedge c) a_q <= a_d; endmodule"},
       {"module m; always_ff @(posedge c) a_reg <= 0; endmodule"},
   };
-  verible::RunLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases);
+  RunLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases);
 }
 
 TEST(DffNameStyleRuleTest, RejectDefaultSuffixes) {
@@ -57,7 +56,7 @@ TEST(DffNameStyleRuleTest, RejectDefaultSuffixes) {
        {SymbolIdentifier, "a_q"},
        " <= b_n; end endmodule"},
   };
-  verible::RunLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases);
+  RunLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases);
 }
 
 TEST(DffNameStyleRuleTest, AcceptTests) {
@@ -68,10 +67,9 @@ TEST(DffNameStyleRuleTest, AcceptTests) {
       {"module m; always_ff @(posedge c) a_ff <= 0; endmodule"},
       {"module m; always_ff @(posedge c) aAaAaAaAaAa_ff <= 0; endmodule"},
   };
-  verible::RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
-      kTestCases,
-      "output:ff;"
-      "input:next");
+  RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases,
+                                                                "output:ff;"
+                                                                "input:next");
 }
 
 TEST(DffNameStyleRuleTest, AcceptPipelineStages) {
@@ -82,10 +80,9 @@ TEST(DffNameStyleRuleTest, AcceptPipelineStages) {
       {"module m; always_ff @(posedge c) a_ff2 <= 0; endmodule"},
       {"module m; always_ff @(posedge c) a_ff3 <= 0; endmodule"},
   };
-  verible::RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
-      kTestCases,
-      "output:ff;"
-      "input:next");
+  RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases,
+                                                                "output:ff;"
+                                                                "input:next");
 }
 
 TEST(DffNameStyleRuleTest, RejectPipelineStages) {
@@ -117,7 +114,7 @@ TEST(DffNameStyleRuleTest, RejectPipelineStages) {
        {SymbolIdentifier, "a_ff"},
        "; end endmodule"},
   };
-  verible::RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
+  RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
       kTestCases, "output:q,ff;input:n");
 }
 
@@ -128,10 +125,9 @@ TEST(DffNameStyleRuleTest, AcceptTestsNoSuffixes) {
       {"module m; always_ff @(posedge c) a_myverylongsuffix <= b_freedom; "
        "endmodule"},
   };
-  verible::RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
-      kTestCases,
-      "output:;"
-      "input:");
+  RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases,
+                                                                "output:;"
+                                                                "input:");
 }
 
 TEST(DffNameStyleRuleTest, Reject) {
@@ -183,7 +179,7 @@ TEST(DffNameStyleRuleTest, Reject) {
        {SymbolIdentifier, "a_q"},
        " <= b_n; end endmodule"},
   };
-  verible::RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
+  RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(
       kTestCases, "output:ff,q;input:n");
 }
 
@@ -203,7 +199,6 @@ TEST(DffNameStyleRuleTest, ExtractPipelineStage) {
         DffNameStyleRule::ExtractPipelineStage(test.str);
     CHECK_EQ(test.expected.first, result_str);
     CHECK_EQ(test.expected.second == result_int, true);
-    // CHECK_EQ(test.result.second, result_int.value());
   }
 }
 
