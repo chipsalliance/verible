@@ -284,11 +284,14 @@ To customize the Language Server with additional flags, type the command flags i
 
 ### Vim
 
-To make LSP work in Vim an dedicated LSP addon is required.
-The recommendeda addon is [vim-lsp](https://github.com/prabirshrestha/vim-lsp).
+To make LSP work in Vim a dedicated LSP plugin is required.
+
+The recommended plugin is [vim-lsp](https://github.com/prabirshrestha/vim-lsp), which is compatible with Vim8 and later releases.
 Please refer to its README for installation guides and configuration recommendations.
 
-To enable Verible with this plugin, add the following snippet to your configuration (e.g. ``~/.vimrc``):
+To enable Verible with the following plugins, add the corresponding snippet to your configuration file (e.g. ``~/.vimrc``):
+
+Configure with [vim-lsp](https://github.com/prabirshrestha/vim-lsp):
 
 ```viml
 if executable('verible-verilog-ls')
@@ -303,6 +306,22 @@ endif
 Make sure ``verible-verilog-ls`` is available in your ``PATH`` and can be executed.
 Alternatively modify the snippet above to use an absolute path.
 To add configuration flags to customize the Language Server, add them to the list in the `server_info`.
+
+
+Alternatively, Verible can be configured with [lsp](https://github.com/yegappan/lsp), which is written in vim9script and compatible with `vim v9+`.
+
+Configure with [lsp](https://github.com/yegappan/lsp):
+
+```viml
+call LspAddServer([#{
+    \   name: 'verible-verilog-ls',
+    \   filetype: ['systemverilog', 'verilog'],
+    \   path: 'verible-verilog-ls',
+    \   args: []
+    \ }])
+```
+
+Add configuration flags to args (eg. `args: ['--column_limit=80']`).
 
 ### VSCode
 
