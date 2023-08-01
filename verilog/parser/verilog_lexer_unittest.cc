@@ -2355,5 +2355,25 @@ TEST(RecursiveLexTextTest, Basic) {
                           TokenInfo(';', text.substr(5, 1))));
 }
 
+TEST(VerilogLexerTest, StrayNulCharacterHandledCorrectly) {
+  {  // baseline
+    FilteredVerilogLexer lexer(absl::string_view("foo bar baz", 11));
+    for (absl::string_view expected : {"foo", "bar", "baz"}) {
+      auto token = lexer.DoNextToken();
+      EXPECT_EQ(token.text(), expected);
+      EXPECT_EQ(token.token_enum(), SymbolIdentifier);
+    }
+    EXPECT_TRUE(lexer.DoNextToken().isEOF());
+  }
+  {  // Stray nul character in text should just be skipped as space
+    FilteredVerilogLexer lexer(absl::string_view("foo bar\0baz", 11));
+    for (absl::string_view expected : {"foo", "bar", "baz"}) {
+      auto token = lexer.DoNextToken();
+      EXPECT_EQ(token.text(), expected);
+      EXPECT_EQ(token.token_enum(), SymbolIdentifier);
+    }
+    EXPECT_TRUE(lexer.DoNextToken().isEOF());
+  }
+}
 }  // namespace
 }  // namespace verilog
