@@ -39,17 +39,11 @@ static constexpr int kGarbledHeader = -2;
 int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
                                                     int *body_size) {
   // TODO(hzeller): Make this more robust. Parse each \r\n section separately.
-  // Also: do we need lenient mode ?
   static constexpr absl::string_view kEndHeaderMarker = "\r\n\r\n";
-  static constexpr absl::string_view kLenientEndHeaderMarker = "\n\n";
   static constexpr absl::string_view kContentLengthHeader = "Content-Length: ";
 
   int header_marker_len = kEndHeaderMarker.length();
   auto end_of_header = data.find(kEndHeaderMarker);
-  if (end_of_header == absl::string_view::npos && lenient_lf_separation_) {
-    end_of_header = data.find(kLenientEndHeaderMarker);
-    header_marker_len = kLenientEndHeaderMarker.length();
-  }
   if (end_of_header == absl::string_view::npos) return kIncompleteHeader;
 
   // Very dirty search for header - we don't check if starts with line.
