@@ -55,6 +55,36 @@ class DataStreamSimulator {
   int read_pos_ = 0;
 };
 
+TEST(MessageStreamSplitterTest, IgnoreHeadersNotNeeded) {
+  MessageStreamSplitter header_test(256);
+  int count_call = 0;
+  header_test.SetMessageProcessor(
+      [&count_call](absl::string_view, absl::string_view body) {
+        EXPECT_EQ(std::string(body), "x");
+        ++count_call;
+      });
+
+  DataStreamSimulator some_messages(
+      "Content-Length: 1\r\n\r\nx"
+      "SomeOther-Header: 42\r\nContent-Length: 1\r\n\r\nx"
+      "Content-Length: 1\r\nSomeOther-Header: 42\r\n\r\nx"
+      // Robustness: ignore non-digit trailing characters in content-length
+      "SomeOther-Header: 42\r\nContent-Length: 1\t\r\n\r\nx"
+      "SomeOther-Header: 42\r\nContent-Length: 1foo\r\n\r\nx"
+      "Content-Length: 1\t\r\nSomeOther-Header: 42\r\n\r\nx"
+      "Content-Length: 1bar\r\nSomeOther-Header: 42\r\n\r\nx");
+
+  absl::Status status = absl::OkStatus();
+  while (status.ok()) {
+    status = header_test.PullFrom(
+        [&](char *buf, int size) { return some_messages.read(buf, size); });
+  }
+
+  // An expected 'read everything reached EOF' status.
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable) << status;
+  EXPECT_EQ(count_call, 7) << status;
+}
+
 TEST(MessageStreamSplitterTest, LenientHeaderNewline) {
   for (const bool strict_header_crlf : {false, true}) {
     MessageStreamSplitter header_test(256, strict_header_crlf);

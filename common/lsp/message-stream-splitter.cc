@@ -14,6 +14,9 @@
 
 #include "common/lsp/message-stream-splitter.h"
 
+#include <algorithm>
+
+#include "absl/strings/escaping.h"
 #include "common/util/status_macros.h"
 
 namespace verible {
@@ -35,6 +38,8 @@ static constexpr int kIncompleteHeader = -1;
 static constexpr int kGarbledHeader = -2;
 int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
                                                     int *body_size) {
+  // TODO(hzeller): Make this more robust. Parse each \r\n section separately.
+  // Also: do we need lenient mode ?
   static constexpr absl::string_view kEndHeaderMarker = "\r\n\r\n";
   static constexpr absl::string_view kLenientEndHeaderMarker = "\n\n";
   static constexpr absl::string_view kContentLengthHeader = "Content-Length: ";
@@ -55,7 +60,11 @@ int MessageStreamSplitter::ParseHeaderGetBodyOffset(absl::string_view data,
   }
 
   size_t end_key = found_ContentLength_header + kContentLengthHeader.size();
-  if (!absl::SimpleAtoi(header_content.substr(end_key), body_size)) {
+  absl::string_view header_value = header_content.substr(end_key);
+  auto end_of_digit = std::find_if(header_value.begin(), header_value.end(),
+                                   [](char c) { return c < '0' || c > '9'; });
+  header_value = header_value.substr(0, end_of_digit - header_value.begin());
+  if (!absl::SimpleAtoi(header_value, body_size)) {
     return kGarbledHeader;
   }
 
@@ -74,7 +83,8 @@ absl::Status MessageStreamSplitter::ProcessContainedMessages(
       absl::string_view limited_view(
           data->data(), std::min(data->size(), static_cast<size_t>(256)));
       return absl::InvalidArgumentError(
-          absl::StrCat("No `Content-Length:` header. '", limited_view, "...'"));
+          absl::StrCat("No `Content-Length:` header. '",
+                       absl::CEscape(limited_view), "...'"));
     }
 
     const int message_size = body_offset + body_size;
