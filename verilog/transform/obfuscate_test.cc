@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ TEST(ObfuscateVerilogCodeTest, PreloadedSubstitutions) {
           "  BBB(); \\\n"
           "  // comment2\n",
       },
+      {"module ccc#(parameter aaa = `aaa, parameter bbb = `bbb)();endmodule",
+       "module CCC#(parameter AAA = `AAA, parameter BBB = `BBB)();endmodule"},
   };
   for (const auto &test : kTestCases) {
     std::ostringstream output;
