@@ -54,16 +54,12 @@ class MessageStreamSplitter {
   using MessageProcessFun =
       std::function<void(absl::string_view header, absl::string_view body)>;
 
-  // Optional parameters are "initial_read_buffer_size" for the initial
+  // Optional parameter is "initial_read_buffer_size" for the initial
   // internal buffer size (will be realloc'ed when needed).
-  // If "strict_crlf_header_separation" is false, also allows for simple
-  // newline as separation character in the header. Useful for manually
-  // speaking the protocol.
-  explicit MessageStreamSplitter(size_t initial_read_buffer_size = 4096,
-                                 bool strict_crlf_header_separation = true)
-      : read_buffer_(initial_read_buffer_size),
-        lenient_lf_separation_(!strict_crlf_header_separation) {}
+  explicit MessageStreamSplitter(size_t initial_read_buffer_size = 4096)
+      : read_buffer_(initial_read_buffer_size) {}
   MessageStreamSplitter(const MessageStreamSplitter &) = delete;
+  MessageStreamSplitter &operator=(const MessageStreamSplitter &) = delete;
 
   // Set the function that will receive extracted message bodies.
   void SetMessageProcessor(const MessageProcessFun &message_processor) {
@@ -100,13 +96,12 @@ class MessageStreamSplitter {
   absl::Status ReadInput(const ReadFun &read_fun);
 
   std::vector<char> read_buffer_;
-  const bool lenient_lf_separation_;
+  absl::string_view pending_data_;
 
   MessageProcessFun message_processor_;
 
   size_t stats_largest_body_ = 0;
   size_t stats_total_bytes_read_ = 0;
-  absl::string_view pending_data_;
 };
 }  // namespace lsp
 }  // namespace verible

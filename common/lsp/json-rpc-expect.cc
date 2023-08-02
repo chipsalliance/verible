@@ -140,10 +140,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0], "Input needs to be a json array");
   }
 
-  // Let's be lenient in parsing.
-  const bool kStrictCRLFrequirement = true;
-  MessageStreamSplitter stream_splitter(4096, !kStrictCRLFrequirement);
-
+  MessageStreamSplitter stream_splitter(4096);
   int first_error = -1;
   size_t expect_pos = 0;
   stream_splitter.SetMessageProcessor(
