@@ -290,13 +290,15 @@ bool AlwaysFFNonBlockingRule::NeedsParenthesis(
   // This could be more precise, but checking every specific
   // case where parenthesis are needed is hard. Adding them
   // doesn't hurt and the user can remove them if needed.
-  bool complex_rhs_expr =
+  const bool complex_rhs_expr =
       verible::GetLeftmostLeaf(rhs) != verible::GetRightmostLeaf(rhs);
+  if (!complex_rhs_expr) return false;
 
-  // Check whether the rhs expression is already inside parenthesis
-  // Avoid searching for kParenGroups, this should be safe and faster
-  return complex_rhs_expr &&
-         !absl::StrContains(verible::StringSpanOfSymbol(rhs), '(');
+  // Check if expression is wrapped in parenthesis
+  const verible::Symbol *inner = verilog::UnwrapExpression(rhs);
+  if (inner->Kind() == verible::SymbolKind::kLeaf) return false;
+
+  return !verible::SymbolCastToNode(*inner).MatchesTag(NodeEnum::kParenGroup);
 }
 
 void AlwaysFFNonBlockingRule::CollectLocalReferences(
