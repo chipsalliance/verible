@@ -19,10 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "common/util/sha256.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
+#include "common/util/sha256.h"
 #include "common/util/simple_zip.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 
