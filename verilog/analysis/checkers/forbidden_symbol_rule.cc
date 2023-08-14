@@ -59,8 +59,8 @@ static const Matcher &IdMatcher() {
 }
 
 // Set of invalid functions and suggested replacements
-const std::map<std::string, std::string> &
-ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
+const std::map<std::string, std::string>
+    &ForbiddenSystemTaskFunctionRule::InvalidSymbolsMap() {
   static const auto *invalid_symbols = new std::map<std::string, std::string>({
       {"$psprintf", "$sformatf"},
       {"$random", "$urandom"},

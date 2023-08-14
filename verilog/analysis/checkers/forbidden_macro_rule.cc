@@ -60,8 +60,8 @@ static const Matcher &MacroCallMatcher() {
 }
 
 // Set of invalid macros and URLs
-const std::map<std::string, std::string> &
-ForbiddenMacroRule::InvalidMacrosMap() {
+const std::map<std::string, std::string>
+    &ForbiddenMacroRule::InvalidMacrosMap() {
   // TODO(hzeller): don't use GetStyleGuideCitation here, more downstream.
   static const auto *invalid_symbols = new std::map<std::string, std::string>({
       {"`uvm_warning", GetStyleGuideCitation("uvm-logging")},
