@@ -242,7 +242,7 @@ std::array<uint8_t, kSha256HashSize> Sha256Context::BuildAndReset() {
   length_low_ = 0;
 
   std::array<uint8_t, kSha256HashSize> message_digest;
-  for (int i = 0; i < message_digest.size(); ++i) {
+  for (size_t i = 0; i < message_digest.size(); ++i) {
     message_digest[i] =
         (uint8_t)(intermediate_hash_[i >> 2] >> 8 * (3 - (i & 0x03)));
   }
