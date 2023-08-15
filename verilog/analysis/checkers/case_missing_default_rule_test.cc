@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ TEST(CaseMissingDefaultRuleTest, BasicTests) {
 // Tests that the expected number of case-missing-default-rule violations inside
 // functions are found.
 TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
-  // Currently, diagnostics point to the leftmost token of the kCaseItemList.
   const std::initializer_list<LintTestCase> kTestCases = {
       // case tests
       {R"(
@@ -56,10 +55,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        )"},
       {R"(
        function automatic int foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: return 0;
          endcase
        endfunction
        )"},
@@ -74,10 +73,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        )"},
       {R"(
        function automatic int foo (input in);
-         casex (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_casex, "casex"},
+       R"( (in)
+           1: return 0;
          endcase
        endfunction
        )"},
@@ -92,10 +91,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideFunctionTests) {
        )"},
       {R"(
        function automatic int foo (input in);
-         casez (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_casez, "casez"},
+       R"( (in)
+           1: return 0;
          endcase
        endfunction
        )"},
@@ -129,10 +128,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideTaskTests) {
        )"},
       {R"(
        task automatic foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: return 0;
          endcase
        endtask
        )"},
@@ -147,10 +146,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideTaskTests) {
        )"},
       {R"(
        task automatic foo (input in);
-         casex (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_casex, "casex"},
+       R"( (in)
+           1: return 0;
          endcase
        endtask
        )"},
@@ -165,10 +164,10 @@ TEST(CaseMissingDefaultRuleTest, CaseInsideTaskTests) {
        )"},
       {R"(
        task automatic foo (input in);
-         casez (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: return 0;
+         )",
+       {TK_casez, "casez"},
+       R"( (in)
+           1: return 0;
          endcase
        endtask
        )"},
@@ -194,13 +193,13 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideFunctionTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       // Inner case doesn't have default, outer case does.
       {R"(
-       function automatic int foo (input in);
+       function automatic foo (input in);
          case (in)
            1: begin;
-             case (in)
-               )",
-       {TK_DecNumber, "1"},
-       R"(: return 1;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
              endcase
            end
            default: return 1;
@@ -210,11 +209,11 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideFunctionTests) {
 
       // Inner case does have default, outer case doesn't.
       {R"(
-       function automatic int foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: begin;
+       function automatic foo (input in);
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: begin;
              case (in)
                1: return 1;
                default: return 1;
@@ -226,7 +225,7 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideFunctionTests) {
 
       // Both inner and outer case have default case statements.
       {R"(
-       function automatic int foo (input in);
+       function automatic foo (input in);
          case (in)
            1: begin;
              case (in)
@@ -241,15 +240,15 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideFunctionTests) {
 
       // Neither of the cases have default case statements.
       {R"(
-       function automatic int foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: begin;
-             case (in)
-               )",
-       {TK_DecNumber, "1"},
-       R"(: return 1;
+       function automatic foo (input in);
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: begin;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
              endcase
            end
          endcase
@@ -269,10 +268,10 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideTaskTests) {
        task automatic foo (input in);
          case (in)
            1: begin;
-             case (in)
-               )",
-       {TK_DecNumber, "1"},
-       R"(: return 1;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
              endcase
            end
            default: return 1;
@@ -283,10 +282,10 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideTaskTests) {
       // Inner case does have default, outer case doesn't.
       {R"(
        task automatic foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: begin;
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: begin;
              case (in)
                1: return 1;
                default: return 1;
@@ -314,14 +313,14 @@ TEST(CaseMissingDefaultRuleTest, NestedCaseInsideTaskTests) {
       // Neither of the cases have default case statements.
       {R"(
        task automatic foo (input in);
-         case (in)
-           )",
-       {TK_DecNumber, "1"},
-       R"(: begin;
-             case (in)
-               )",
-       {TK_DecNumber, "1"},
-       R"(: return 1;
+         )",
+       {TK_case, "case"},
+       R"( (in)
+           1: begin;
+             )",
+       {TK_case, "case"},
+       R"( (in)
+               1: return 1;
              endcase
            end
          endcase
