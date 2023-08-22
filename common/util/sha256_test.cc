@@ -47,19 +47,19 @@ using ::testing::Eq;
 // Alternative: `printf "banana" | sha256sum`
 
 TEST(Sha256, DigestsAreEqual) {
-  const std::string kOpenSslSha256BananaDigest =
+  static constexpr absl::string_view kOpenSslSha256BananaDigest =
       "b493d48364afe44d11c0165cf470a4164d1e2609911ef998be868d46ade3de4e";
   EXPECT_THAT(Sha256Hex("banana"), Eq(kOpenSslSha256BananaDigest));
 }
 
 TEST(Sha256, NonAsciiDigestsAreEqual) {
-  const std::string kOpenSslSha256JaBananaDigest =
+  static constexpr absl::string_view kOpenSslSha256JaBananaDigest =
       "787bcc7042939ad9607bc8ca87332e4178716be0f0b890cbf673884d39d8ff79";
   EXPECT_THAT(Sha256Hex("バナナ"), Eq(kOpenSslSha256JaBananaDigest));
 }
 
 TEST(Sha256, LargeInputDigestsAreEqual) {
-  const std::string kLargeText = R"(
+  static constexpr absl::string_view kLargeText = R"(
 Internet Engineering Task Force (IETF)                   D. Eastlake 3rd
 Request for Comments: 6234                                        Huawei
 Obsoletes: 4634                                                T. Hansen
@@ -86,19 +86,19 @@ Abstract
    HMAC-based extract-and-expand Key Derivation Function, HKDF (RFC
    5869).  As with RFC 4634, code to perform SHA-based Hashed Message
    Authentication Codes (HMACs) is also included.)";
-  const std::string kOpenSslSha256LargeTextDigest =
+  static constexpr absl::string_view kOpenSslSha256LargeTextDigest =
       "11fc4b5feb7b63ddcc15cfb05d1f969da2e0d537ec8eded8370e12811f7ab1a8";
   EXPECT_THAT(Sha256Hex(kLargeText), Eq(kOpenSslSha256LargeTextDigest));
 }
 
 TEST(Sha256, EmptyInputDigestsAreEqual) {
-  const std::string kOpenSslSha256EmptyStringDigest =
+  static constexpr absl::string_view kOpenSslSha256EmptyStringDigest =
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
   EXPECT_THAT(Sha256Hex(""), Eq(kOpenSslSha256EmptyStringDigest));
 }
 
 TEST(Sha256, IncrementallyAddedDigestsAreEqual) {
-  const std::string kOpenSslSha256BananaDigest =
+  static constexpr absl::string_view kOpenSslSha256BananaDigest =
       "b493d48364afe44d11c0165cf470a4164d1e2609911ef998be868d46ade3de4e";
   Sha256Context context;
   context.AddInput("b");

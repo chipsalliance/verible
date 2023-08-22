@@ -59,9 +59,9 @@
 namespace verible {
 
 // The size of SHA256 hash in bytes.
-constexpr int32_t kSha256HashSize = 32;
+inline constexpr int32_t kSha256HashSize = 32;
 // The size of a single message block, in bytes.
-constexpr int32_t kSha256MessageBlockSize = 64;
+inline constexpr int32_t kSha256MessageBlockSize = 64;
 
 // The context information for the SHA-256 hashing operation.
 class Sha256Context {
@@ -79,7 +79,8 @@ class Sha256Context {
   // multiple times to incrementally build the digest.
   bool AddInput(absl::string_view message);
 
-  bool IsOverflowed() { return overflowed_; }
+  // Returns true if the accumulated message is too large (>2 Exabytes).
+  bool IsOverflowed() const { return overflowed_; }
 
  private:
   // Initialize the Sha256Context in preparation for computing a new SHA-256
