@@ -19,11 +19,10 @@
 #include <string>
 #include <vector>
 
-#include "absl/hash/hash.h"
 #include "absl/status/status.h"
-#include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
+#include "common/util/sha256.h"
 #include "common/util/simple_zip.h"
 #include "third_party/proto/kythe/analysis.pb.h"
 
@@ -34,11 +33,8 @@ namespace {
 constexpr absl::string_view kProtoUnitRoot = "root/pbunits/";
 constexpr absl::string_view kFileRoot = "root/files/";
 
-std::string Digest(absl::string_view content) {
-  return absl::StrCat(absl::HashOf(content));
-}
-
 constexpr int kKZipCompressionLevel = 9;
+
 }  // namespace
 
 KzipCreator::KzipCreator(absl::string_view output_path)
@@ -54,7 +50,7 @@ KzipCreator::KzipCreator(absl::string_view output_path)
 
 std::string KzipCreator::AddSourceFile(absl::string_view path,
                                        absl::string_view content) {
-  std::string digest = Digest(content);
+  std::string digest = verible::Sha256Hex(content);
   const std::string archive_path = verible::file::JoinPath(kFileRoot, digest);
   archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));
   return digest;
@@ -66,7 +62,7 @@ absl::Status KzipCreator::AddCompilationUnit(
   if (!unit.SerializeToString(&content)) {
     return absl::InternalError("Failed to serialize the compilation unit");
   }
-  const std::string digest = Digest(content);
+  const std::string digest = verible::Sha256Hex(content);
   const std::string archive_path =
       verible::file::JoinPath(kProtoUnitRoot, digest);
   archive_.AddFile(archive_path, verible::zip::MemoryByteSource(content));

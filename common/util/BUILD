@@ -658,3 +658,22 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "sha256",
+    srcs = ["sha256.cc"],
+    hdrs = ["sha256.h"],
+    deps = [
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "sha256_test",
+    srcs = ["sha256_test.cc"],
+    deps = [
+        ":sha256",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
