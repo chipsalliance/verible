@@ -38,6 +38,15 @@ struct RuleSetting {
   std::string configuration;
 };
 
+// Error to be shown when an invalid flag is
+// encountered while parsing a configuration
+inline constexpr absl::string_view kInvalidFlagMessage = "[ERR] Invalid flag";
+
+// Warning to be shown when an stray comma is
+// encountered while parsing a configuration
+inline constexpr absl::string_view kStrayCommaWarning =
+    "[WARN] Ignoring stray comma at the end of configuration";
+
 // Enum denoting a ruleset
 //   kNone     no rules are enabled
 //   kDefault  default ruleset is enabled
