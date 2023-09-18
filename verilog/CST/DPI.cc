@@ -14,6 +14,8 @@
 
 #include "verilog/CST/DPI.h"
 
+#include <vector>
+
 #include "verilog/CST/verilog_matchers.h"
 
 namespace verilog {

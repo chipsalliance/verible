@@ -14,6 +14,8 @@
 
 #include "verilog/analysis/checkers/void_cast_rule.h"
 
+#include <initializer_list>
+
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "common/text/symbol.h"

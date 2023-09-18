@@ -15,6 +15,7 @@
 #include "common/text/token_info_json.h"
 
 #include <memory>
+#include <ostream>
 
 #include "absl/strings/string_view.h"
 #include "common/text/constants.h"

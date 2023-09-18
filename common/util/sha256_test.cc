@@ -15,9 +15,7 @@
 #include "common/util/sha256.h"
 
 #include <array>
-#include <cstdio>
 #include <string>
-#include <vector>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"

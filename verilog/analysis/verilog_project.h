@@ -15,9 +15,12 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_VERILOG_PROJECT_H_
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_PROJECT_H_
 
+#include <algorithm>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"

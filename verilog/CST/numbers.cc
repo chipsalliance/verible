@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iterator>
+#include <ostream>
 #include <string>
 
 #include "absl/strings/match.h"

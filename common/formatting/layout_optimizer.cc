@@ -20,8 +20,12 @@
 #include "common/formatting/layout_optimizer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
+#include <ios>
+#include <limits>
 #include <ostream>
+#include <utility>
 
 #include "absl/container/fixed_array.h"
 #include "common/formatting/basic_format_style.h"

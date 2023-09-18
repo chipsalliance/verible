@@ -15,6 +15,7 @@
 #include "common/formatting/line_wrap_searcher.h"
 
 #include <memory>
+#include <ostream>
 #include <queue>
 #include <vector>
 

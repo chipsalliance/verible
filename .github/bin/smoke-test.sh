@@ -132,30 +132,30 @@ ExpectedFailCount[lint:ibex]=14
 ExpectedFailCount[project:ibex]=193
 ExpectedFailCount[preprocessor:ibex]=368
 
-ExpectedFailCount[syntax:opentitan]=36
-ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[project:opentitan]=733
-ExpectedFailCount[preprocessor:opentitan]=1957
+ExpectedFailCount[syntax:opentitan]=35
+ExpectedFailCount[lint:opentitan]=35
+ExpectedFailCount[project:opentitan]=739
+ExpectedFailCount[preprocessor:opentitan]=1978
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
 ExpectedFailCount[preprocessor:sv-tests]=139
 
-ExpectedFailCount[syntax:caliptra-rtl]=19
-ExpectedFailCount[lint:caliptra-rtl]=19
-ExpectedFailCount[project:caliptra-rtl]=315
-ExpectedFailCount[preprocessor:caliptra-rtl]=698
+ExpectedFailCount[syntax:caliptra-rtl]=21
+ExpectedFailCount[lint:caliptra-rtl]=21
+ExpectedFailCount[project:caliptra-rtl]=324
+ExpectedFailCount[preprocessor:caliptra-rtl]=758
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
 ExpectedFailCount[project:Cores-VeeR-EH2]=42
 ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
-ExpectedFailCount[syntax:cva6]=4
-ExpectedFailCount[lint:cva6]=4
-ExpectedFailCount[project:cva6]=69
-ExpectedFailCount[preprocessor:cva6]=65
+ExpectedFailCount[syntax:cva6]=5
+ExpectedFailCount[lint:cva6]=5
+ExpectedFailCount[project:cva6]=76
+ExpectedFailCount[preprocessor:cva6]=98
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -175,10 +175,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=156
-ExpectedFailCount[lint:black-parrot]=156
-ExpectedFailCount[project:black-parrot]=171
-ExpectedFailCount[preprocessor:black-parrot]=172
+ExpectedFailCount[syntax:black-parrot]=155
+ExpectedFailCount[lint:black-parrot]=155
+ExpectedFailCount[project:black-parrot]=170
+ExpectedFailCount[preprocessor:black-parrot]=171
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
@@ -190,8 +190,8 @@ ExpectedFailCount[lint:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
 ExpectedFailCount[preprocessor:nontrivial-mips]=78
 
-ExpectedFailCount[project:axi]=73
-ExpectedFailCount[preprocessor:axi]=70
+ExpectedFailCount[project:axi]=74
+ExpectedFailCount[preprocessor:axi]=71
 
 ExpectedFailCount[syntax:rsd]=5
 ExpectedFailCount[lint:rsd]=5
@@ -207,7 +207,7 @@ ExpectedFailCount[preprocessor:serv]=1
 ExpectedFailCount[syntax:basejump_stl]=466
 ExpectedFailCount[lint:basejump_stl]=466
 ExpectedFailCount[project:basejump_stl]=577
-ExpectedFailCount[preprocessor:basejump_stl]=610
+ExpectedFailCount[preprocessor:basejump_stl]=611
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current

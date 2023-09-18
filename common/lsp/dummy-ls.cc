@@ -31,6 +31,8 @@
 #define read(fd, buf, size) _read(fd, buf, size)
 #endif
 
+#include <iostream>
+
 using verible::lsp::BufferCollection;
 using verible::lsp::InitializeResult;
 using verible::lsp::JsonRpcDispatcher;

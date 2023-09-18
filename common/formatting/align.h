@@ -16,6 +16,8 @@
 #define VERIBLE_COMMON_FORMATTING_ALIGN_H_
 
 #include <functional>
+#include <ostream>
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

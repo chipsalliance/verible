@@ -17,6 +17,8 @@
 #include <algorithm>
 
 #include "absl/strings/escaping.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "common/util/status_macros.h"
 
 namespace verible {

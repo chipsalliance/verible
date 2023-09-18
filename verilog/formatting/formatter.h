@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_FORMATTING_FORMATTER_H_
 
 #include <iosfwd>
+#include <string>
 #include <vector>
 
 #include "absl/status/status.h"

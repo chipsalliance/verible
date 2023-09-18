@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <exception>
+#include <iostream>
+#include <stdexcept>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

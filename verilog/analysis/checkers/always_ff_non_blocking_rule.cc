@@ -14,6 +14,8 @@
 
 #include "verilog/analysis/checkers/always_ff_non_blocking_rule.h"
 
+#include <algorithm>
+#include <ostream>
 #include <set>
 #include <string>
 

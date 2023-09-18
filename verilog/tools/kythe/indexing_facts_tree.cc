@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <tuple>
 
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"

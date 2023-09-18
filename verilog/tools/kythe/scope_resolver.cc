@@ -15,6 +15,7 @@
 #include "verilog/tools/kythe/scope_resolver.h"
 
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"

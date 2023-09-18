@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_SUGGEST_PARENTHESES_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_SUGGEST_PARENTHESES_RULE_H_
 
+#include <set>
+
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "verilog/analysis/descriptions.h"
 

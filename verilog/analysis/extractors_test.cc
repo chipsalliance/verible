@@ -14,6 +14,10 @@
 
 #include "verilog/analysis/extractors.h"
 
+#include <set>
+#include <string>
+#include <utility>
+
 #include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 

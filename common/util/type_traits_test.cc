@@ -14,6 +14,8 @@
 
 #include "common/util/type_traits.h"
 
+#include <type_traits>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

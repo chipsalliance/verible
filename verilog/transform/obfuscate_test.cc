@@ -15,6 +15,8 @@
 #include "verilog/transform/obfuscate.h"
 
 #include <sstream>
+#include <string>
+#include <utility>
 
 #include "common/strings/obfuscator.h"
 #include "gmock/gmock.h"

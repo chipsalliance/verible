@@ -20,6 +20,7 @@
 // of std::forward in Make* helper functions.
 
 #include <utility>
+#include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_tree.h"

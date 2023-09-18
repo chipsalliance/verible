@@ -14,8 +14,12 @@
 
 #include "common/formatting/token_partition_tree.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <memory>
+#include <ostream>
+#include <utility>
 #include <vector>
 
 #include "common/formatting/format_token.h"

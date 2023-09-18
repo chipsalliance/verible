@@ -14,6 +14,13 @@
 
 #include "common/analysis/violation_handler.h"
 
+#include <iostream>
+#include <ostream>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "common/strings/diff.h"
 #include "common/util/file_util.h"

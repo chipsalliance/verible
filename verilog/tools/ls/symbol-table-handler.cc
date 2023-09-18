@@ -16,6 +16,10 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 #include <filesystem>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"

@@ -14,10 +14,14 @@
 
 #include "verilog/analysis/symbol_table.h"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <stack>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"

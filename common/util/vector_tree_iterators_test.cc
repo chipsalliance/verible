@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <ostream>
 #include <sstream>
 #include <type_traits>
 #include <vector>

@@ -16,7 +16,9 @@
 #include "common/lsp/lsp-file-utils.h"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
+#include <string>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"

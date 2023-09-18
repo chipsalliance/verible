@@ -19,12 +19,14 @@
 // verilog_syntax --verilog_trace_parser files...
 
 #include <algorithm>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <utility>
 #include <vector>
 
 #include "absl/flags/flag.h"

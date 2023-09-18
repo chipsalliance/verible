@@ -19,6 +19,8 @@
 #include <map>
 #include <regex>  // NOLINT
 #include <set>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"

@@ -15,6 +15,7 @@
 #include "common/analysis/lint_waiver.h"
 
 #include <cstddef>
+#include <set>
 #include <vector>
 
 #include "common/strings/line_column_map.h"

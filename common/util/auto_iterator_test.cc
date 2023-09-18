@@ -17,6 +17,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <type_traits>
 #include <vector>
 
 #include "gmock/gmock.h"

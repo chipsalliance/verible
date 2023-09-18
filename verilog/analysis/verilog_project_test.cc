@@ -15,6 +15,9 @@
 #include "verilog/analysis/verilog_project.h"
 
 #include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "absl/strings/match.h"
 #include "common/text/text_structure.h"

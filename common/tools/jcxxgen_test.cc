@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <exception>
+
 #include "absl/strings/match.h"
 #include "common/tools/jcxxgen_testfile.h"
 #include "gtest/gtest.h"

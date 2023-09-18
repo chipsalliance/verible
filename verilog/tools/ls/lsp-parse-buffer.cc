@@ -15,6 +15,12 @@
 
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/util/logging.h"

@@ -14,6 +14,7 @@
 
 #include "verilog/CST/match_test_utils.h"
 
+#include <functional>
 #include <sstream>
 #include <vector>
 

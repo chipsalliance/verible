@@ -15,6 +15,8 @@
 
 #include "common/lsp/lsp-file-utils.h"
 
+#include <string>
+
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 

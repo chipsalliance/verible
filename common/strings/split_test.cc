@@ -14,6 +14,10 @@
 
 #include "common/strings/split.h"
 
+#include <functional>
+#include <utility>
+#include <vector>
+
 #include "common/strings/range.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"

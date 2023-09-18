@@ -21,7 +21,9 @@
 // Example usage:
 // verilog_diff [options] file1 file2
 
+#include <functional>
 #include <iostream>
+#include <map>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
 

@@ -18,6 +18,8 @@
 
 #include <filesystem>
 #include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"

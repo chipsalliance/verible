@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/extractors.h"
 
+#include <set>
 #include <string>
 
 #include "verilog/CST/identifier.h"

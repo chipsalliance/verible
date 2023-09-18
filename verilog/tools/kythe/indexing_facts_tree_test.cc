@@ -15,6 +15,7 @@
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 
 #include <sstream>
+#include <string>
 
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"

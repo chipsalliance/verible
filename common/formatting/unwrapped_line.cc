@@ -15,6 +15,7 @@
 #include "common/formatting/unwrapped_line.h"
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>

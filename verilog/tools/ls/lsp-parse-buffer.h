@@ -17,6 +17,11 @@
 #define VERILOG_TOOLS_LS_LSP_PARSE_BUFFER_H
 
 #include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "common/lsp/lsp-text-buffer.h"
 #include "verilog/analysis/verilog_analyzer.h"

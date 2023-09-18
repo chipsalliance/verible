@@ -14,6 +14,9 @@
 
 #include "verilog/analysis/verilog_filelist.h"
 
+#include <string>
+#include <vector>
+
 #include "common/util/file_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

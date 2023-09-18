@@ -14,7 +14,13 @@
 
 #include "verilog/tools/ls/autoexpand.h"
 
+#include <algorithm>
 #include <deque>
+#include <functional>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"

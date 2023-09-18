@@ -14,10 +14,13 @@
 
 #include "common/text/config_utils.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <initializer_list>
+#include <iterator>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"

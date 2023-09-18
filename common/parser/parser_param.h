@@ -20,6 +20,7 @@
 #define VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 
 #include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 

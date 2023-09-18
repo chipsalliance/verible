@@ -15,6 +15,7 @@
 #include "common/analysis/text_structure_linter.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "absl/strings/match.h"

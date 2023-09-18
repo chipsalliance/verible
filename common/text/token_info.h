@@ -18,7 +18,9 @@
 #include <algorithm>   // for std::distance, std::copy
 #include <functional>  // for std::function
 #include <iosfwd>
+#include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"

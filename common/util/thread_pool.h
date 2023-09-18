@@ -15,9 +15,12 @@
 #ifndef VERIBLE_COMMON_UTIL_THREAD_POOL_H
 #define VERIBLE_COMMON_UTIL_THREAD_POOL_H
 
+#include <condition_variable>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <future>
+#include <mutex>
 #include <thread>
 #include <vector>
 

@@ -14,7 +14,9 @@
 
 #include "common/text/tree_utils.h"
 
+#include <cstddef>
 #include <memory>
+#include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 #include <vector>

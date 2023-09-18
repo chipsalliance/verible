@@ -14,8 +14,10 @@
 
 #include "verilog/analysis/checkers/port_name_suffix_rule.h"
 
+#include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"

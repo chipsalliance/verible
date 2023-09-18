@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TRANSFORM_OBFUSCATE_H_
 
 #include <iosfwd>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

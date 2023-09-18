@@ -15,6 +15,7 @@
 #include "common/formatting/unwrapped_line.h"
 
 #include <iterator>
+#include <ostream>
 #include <sstream>
 #include <vector>
 

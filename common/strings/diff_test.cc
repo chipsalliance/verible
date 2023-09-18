@@ -15,7 +15,10 @@
 #include "common/strings/diff.h"
 
 #include <initializer_list>
+#include <ostream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"

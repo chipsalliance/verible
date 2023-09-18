@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_COMMENT_CONTROLS_H_
 #define VERIBLE_VERILOG_FORMATTING_COMMENT_CONTROLS_H_
 
+#include <ostream>
+
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"  // for ByteOffsetSet, LineNumberSet

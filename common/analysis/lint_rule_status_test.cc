@@ -14,8 +14,11 @@
 
 #include "common/analysis/lint_rule_status.h"
 
+#include <iostream>
+#include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"

@@ -14,6 +14,8 @@
 
 #include "verilog/tools/ls/document-symbol-filler.h"
 
+#include <string>
+
 #include "absl/flags/flag.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"

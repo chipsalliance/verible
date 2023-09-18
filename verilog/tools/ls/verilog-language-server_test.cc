@@ -14,7 +14,12 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include <algorithm>
 #include <filesystem>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"

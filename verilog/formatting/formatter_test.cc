@@ -20,6 +20,7 @@
 
 #include "verilog/formatting/formatter.h"
 
+#include <cstddef>
 #include <memory>
 #include <sstream>
 #include <string>

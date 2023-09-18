@@ -18,6 +18,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 #include "common/formatting/format_token.h"

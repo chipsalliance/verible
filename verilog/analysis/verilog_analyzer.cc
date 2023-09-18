@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <iterator>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>

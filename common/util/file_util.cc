@@ -21,9 +21,11 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <streambuf>
 #include <string>
 #include <system_error>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

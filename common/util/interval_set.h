@@ -19,7 +19,9 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/random/random.h"
 #include "absl/strings/numbers.h"

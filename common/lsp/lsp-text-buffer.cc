@@ -14,6 +14,10 @@
 
 #include "common/lsp/lsp-text-buffer.h"
 
+#include <numeric>
+#include <string>
+#include <vector>
+
 #include "common/strings/utf8.h"
 
 namespace verible {

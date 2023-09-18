@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/disable_statement_rule.h"
 
+#include <iterator>
 #include <set>
 #include <string>
 

@@ -14,6 +14,8 @@
 
 #include "verilog/CST/macro.h"
 
+#include <vector>
+
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"

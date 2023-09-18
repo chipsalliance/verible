@@ -15,6 +15,7 @@
 #include "common/analysis/syntax_tree_linter.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "common/analysis/lint_rule_status.h"

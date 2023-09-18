@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"

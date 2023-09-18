@@ -18,6 +18,7 @@
 // Example usage:
 // verilog_lint files...
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
