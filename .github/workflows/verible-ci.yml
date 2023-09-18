@@ -500,7 +500,8 @@ jobs:
         restore-keys: bazelcache_windows2_
 
     - name: Install dependencies
-      run: choco install llvm
+      # Bazel breaks on Windows with LLVM 16. Will be fixed in bazel 6.4
+      run: choco install llvm --force --version=15.0.7
 
     - name: Debug bazel directory settings
       run: bazel info
