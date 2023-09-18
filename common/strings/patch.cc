@@ -14,9 +14,13 @@
 
 #include "common/strings/patch.h"
 
+#include <algorithm>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <iterator>
+#include <string>
+#include <vector>
 
 #include "absl/base/macros.h"
 #include "absl/status/status.h"

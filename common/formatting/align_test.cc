@@ -14,6 +14,9 @@
 
 #include "common/formatting/align.h"
 
+#include <algorithm>
+#include <iterator>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>

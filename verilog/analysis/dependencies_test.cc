@@ -14,6 +14,10 @@
 
 #include "verilog/analysis/dependencies.h"
 
+#include <ostream>
+#include <string>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "common/util/file_util.h"
 #include "gmock/gmock.h"

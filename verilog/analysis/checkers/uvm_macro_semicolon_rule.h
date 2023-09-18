@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_UVM_MACRO_SEMICOLON_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_UVM_MACRO_SEMICOLON_RULE_H_
 
+#include <set>
 #include <string>
 
 #include "common/analysis/lint_rule_status.h"

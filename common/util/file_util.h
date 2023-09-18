@@ -17,6 +17,7 @@
 #ifndef VERIBLE_COMMON_UTIL_FILE_UTIL_H_
 #define VERIBLE_COMMON_UTIL_FILE_UTIL_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 

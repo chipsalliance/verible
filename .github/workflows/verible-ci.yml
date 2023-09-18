@@ -507,10 +507,10 @@ jobs:
       run: bazel info
 
     - name: Run Tests
-      run: bazel test --noshow_progress --test_output=errors //...
+      run: bazel test --keep_going --noshow_progress --test_output=errors //...
 
     - name: Build Verible Binaries
-      run: bazel build --noshow_progress -c opt :install-binaries
+      run: bazel build --keep_going --noshow_progress -c opt :install-binaries
 
     - name: Prepare release
       run: |

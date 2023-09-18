@@ -16,6 +16,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <streambuf>
 #include <string>
 

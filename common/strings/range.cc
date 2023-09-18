@@ -15,6 +15,7 @@
 #include "common/strings/range.h"
 
 #include <algorithm>
+#include <iterator>
 #include <utility>
 
 #include "absl/strings/string_view.h"

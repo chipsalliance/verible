@@ -14,8 +14,10 @@
 
 #include "verilog/analysis/verilog_equivalence.h"
 
+#include <functional>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include "absl/status/status.h"

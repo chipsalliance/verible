@@ -15,6 +15,7 @@
 #include "common/util/forward.h"
 
 #include <string>
+#include <type_traits>
 
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"

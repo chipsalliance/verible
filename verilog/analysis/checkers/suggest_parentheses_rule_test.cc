@@ -14,6 +14,8 @@
 
 #include "verilog/analysis/checkers/suggest_parentheses_rule.h"
 
+#include <initializer_list>
+
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 

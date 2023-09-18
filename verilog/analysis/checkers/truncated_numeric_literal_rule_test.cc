@@ -15,6 +15,7 @@
 #include "verilog/analysis/checkers/truncated_numeric_literal_rule.h"
 
 #include <initializer_list>
+#include <string>
 
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"

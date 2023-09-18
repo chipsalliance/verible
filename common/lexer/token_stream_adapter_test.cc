@@ -14,6 +14,8 @@
 
 #include "common/lexer/token_stream_adapter.h"
 
+#include <initializer_list>
+
 #include "absl/status/status.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/lexer_test_util.h"

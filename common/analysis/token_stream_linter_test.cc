@@ -15,6 +15,7 @@
 #include "common/analysis/token_stream_linter.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "absl/strings/string_view.h"

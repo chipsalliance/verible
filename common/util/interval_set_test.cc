@@ -15,7 +15,11 @@
 #include "common/util/interval_set.h"
 
 #include <initializer_list>
+#include <iterator>
+#include <map>
 #include <sstream>
+#include <utility>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

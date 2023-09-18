@@ -27,6 +27,8 @@
 #  undef yyFlexLexer  // this is how FlexLexer.h says to do things
 #  define yyFlexLexer veribleCommandFileFlexLexer
 #  include <FlexLexer.h>
+
+#include <vector>
 #endif
 // clang-format on
 

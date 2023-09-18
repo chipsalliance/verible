@@ -16,6 +16,8 @@
 #ifndef VERIBLE_COMMON_LSP_LSP_FILE_UTILS_H
 #define VERIBLE_COMMON_LSP_LSP_FILE_UTILS_H
 
+#include <string>
+
 #include "absl/strings/string_view.h"
 
 namespace verible::lsp {

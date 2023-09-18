@@ -17,6 +17,7 @@
 #ifndef VERIBLE_COMMON_UTIL_VECTOR_TREE_ITERATORS_H_
 #define VERIBLE_COMMON_UTIL_VECTOR_TREE_ITERATORS_H_
 
+#include <cstddef>
 #include <iterator>
 
 #include "common/util/iterator_range.h"

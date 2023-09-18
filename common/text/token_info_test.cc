@@ -16,6 +16,8 @@
 
 #include "common/text/token_info.h"
 
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <vector>
 

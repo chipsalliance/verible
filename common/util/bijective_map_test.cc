@@ -14,7 +14,10 @@
 
 #include "common/util/bijective_map.h"
 
+#include <functional>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "common/strings/compare.h"
 #include "common/util/logging.h"

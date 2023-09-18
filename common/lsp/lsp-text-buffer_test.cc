@@ -14,6 +14,8 @@
 
 #include "common/lsp/lsp-text-buffer.h"
 
+#include <string>
+
 #include "absl/strings/str_cat.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "gtest/gtest.h"

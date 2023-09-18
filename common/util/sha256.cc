@@ -36,6 +36,7 @@
 #include "common/util/sha256.h"
 
 #include <array>
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/escaping.h"

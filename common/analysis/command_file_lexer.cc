@@ -14,6 +14,9 @@
 
 #include "common/analysis/command_file_lexer.h"
 
+#include <algorithm>
+#include <vector>
+
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_waiver.h"
 #include "common/lexer/token_stream_adapter.h"

@@ -14,7 +14,9 @@
 
 #include "verilog/formatting/token_annotator.h"
 
+#include <algorithm>
 #include <iterator>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"

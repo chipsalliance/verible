@@ -15,6 +15,8 @@
 #include "verilog/formatting/comment_controls.h"
 
 #include <initializer_list>
+#include <sstream>
+#include <utility>
 
 #include "absl/strings/str_join.h"
 #include "common/strings/line_column_map.h"

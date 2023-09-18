@@ -17,6 +17,7 @@
 #include "common/analysis/file_analyzer.h"
 
 #include <algorithm>
+#include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 #include <vector>

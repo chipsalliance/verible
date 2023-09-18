@@ -14,6 +14,9 @@
 //
 #include "common/formatting/layout_optimizer.h"
 
+#include <algorithm>
+#include <limits>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>

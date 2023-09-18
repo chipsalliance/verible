@@ -14,6 +14,7 @@
 
 #include "common/strings/string_memory_map.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 

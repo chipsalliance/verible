@@ -19,6 +19,7 @@
 #include <iostream>
 #include <iterator>
 #include <ostream>
+#include <set>
 #include <string>
 #include <vector>
 

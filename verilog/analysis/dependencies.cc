@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/dependencies.h"
 
+#include <functional>
 #include <iostream>
 
 #include "common/strings/compare.h"

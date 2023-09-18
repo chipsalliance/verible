@@ -16,8 +16,10 @@
 #define VERIBLE_VERILOG_FLOW_TREE_H_
 
 #include <bitset>
+#include <functional>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"

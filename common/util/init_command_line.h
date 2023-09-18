@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_UTIL_INIT_COMMAND_LINE_H_
 #define VERIBLE_COMMON_UTIL_INIT_COMMAND_LINE_H_
 
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

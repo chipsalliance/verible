@@ -14,9 +14,11 @@
 
 #include "common/util/interval_map.h"
 
+#include <iterator>
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"

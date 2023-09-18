@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 #include <vector>

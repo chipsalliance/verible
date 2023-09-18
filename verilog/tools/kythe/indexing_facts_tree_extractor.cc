@@ -15,7 +15,10 @@
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
 #include <iostream>
+#include <iterator>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"

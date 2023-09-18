@@ -14,6 +14,8 @@
 
 #include "verilog/parser/verilog_lexer.h"
 
+#include <functional>
+
 #include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "verilog/parser/verilog_token_enum.h"

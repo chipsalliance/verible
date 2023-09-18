@@ -14,6 +14,8 @@
 
 #include "common/text/tree_context_visitor.h"
 
+#include <sstream>
+#include <utility>
 #include <vector>
 
 #include "common/text/tree_builder_test_util.h"

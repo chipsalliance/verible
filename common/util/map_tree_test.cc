@@ -14,8 +14,10 @@
 
 #include "common/util/map_tree.h"
 
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "common/util/spacer.h"

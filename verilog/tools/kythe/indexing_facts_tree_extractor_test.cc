@@ -16,6 +16,7 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"

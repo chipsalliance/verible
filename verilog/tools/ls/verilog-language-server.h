@@ -15,6 +15,8 @@
 #ifndef VERILOG_TOOLS_LS_LS_WRAPPER_H
 #define VERILOG_TOOLS_LS_LS_WRAPPER_H
 
+#include <string>
+
 #include "absl/status/status.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "common/lsp/lsp-text-buffer.h"

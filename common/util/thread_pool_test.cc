@@ -15,6 +15,7 @@
 #include "common/util/thread_pool.h"
 
 #include <chrono>
+#include <future>
 #include <vector>
 
 #include "absl/time/clock.h"

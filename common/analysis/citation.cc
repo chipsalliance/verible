@@ -14,6 +14,8 @@
 
 #include "common/analysis/citation.h"
 
+#include <string>
+
 #include "absl/strings/str_cat.h"
 
 namespace verible {

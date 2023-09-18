@@ -14,6 +14,10 @@
 
 #include "common/util/thread_pool.h"
 
+#include <functional>
+#include <mutex>
+#include <thread>
+
 namespace verible {
 ThreadPool::ThreadPool(int thread_count) {
   for (int i = 0; i < thread_count; ++i) {

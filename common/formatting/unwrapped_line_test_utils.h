@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_TEST_UTILS_H_
 #define VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_TEST_UTILS_H_
 
+#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

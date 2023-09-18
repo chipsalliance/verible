@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_H_
 
 #include <iosfwd>
+#include <set>
 #include <string>
 #include <vector>
 

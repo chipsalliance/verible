@@ -18,6 +18,11 @@
 #include <functional>
 #include <iosfwd>
 #include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

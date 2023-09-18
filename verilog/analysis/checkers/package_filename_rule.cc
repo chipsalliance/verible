@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/package_filename_rule.h"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>

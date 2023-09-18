@@ -15,11 +15,17 @@
 #include "common/formatting/align.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <numeric>
+#include <sstream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_join.h"

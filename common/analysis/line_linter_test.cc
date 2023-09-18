@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "absl/strings/string_view.h"

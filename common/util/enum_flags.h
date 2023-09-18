@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_UTIL_ENUM_FLAGS_H_
 
 #include <initializer_list>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>

@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 #include <iterator>
+#include <sstream>
 #include <vector>
 
 #include "absl/strings/match.h"

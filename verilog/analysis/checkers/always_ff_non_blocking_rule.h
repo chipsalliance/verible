@@ -18,6 +18,7 @@
 #include <set>
 #include <stack>
 #include <string>
+#include <vector>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"

@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/truncated_numeric_literal_rule.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <set>

@@ -15,6 +15,10 @@
 
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
+#include <iterator>
+#include <string>
+#include <vector>
+
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol-operators.h"
 #include "common/lsp/lsp-protocol.h"

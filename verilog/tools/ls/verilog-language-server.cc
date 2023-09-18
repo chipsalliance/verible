@@ -15,7 +15,9 @@
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <functional>
+#include <iostream>
 #include <memory>
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"

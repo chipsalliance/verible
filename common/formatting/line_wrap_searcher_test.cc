@@ -14,6 +14,7 @@
 
 #include "common/formatting/line_wrap_searcher.h"
 
+#include <sstream>
 #include <vector>
 
 #include "absl/strings/match.h"

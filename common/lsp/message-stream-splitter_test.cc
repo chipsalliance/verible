@@ -15,6 +15,7 @@
 #include "common/lsp/message-stream-splitter.h"
 
 #include <algorithm>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

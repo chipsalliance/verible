@@ -15,6 +15,8 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"

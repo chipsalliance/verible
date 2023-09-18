@@ -14,6 +14,7 @@
 
 #include "common/analysis/linter_test_utils.h"
 
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>

@@ -17,8 +17,11 @@
 #include <cstddef>
 #include <fstream>
 #include <iomanip>
+#include <ios>
 #include <map>
 #include <memory>
+#include <ostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>

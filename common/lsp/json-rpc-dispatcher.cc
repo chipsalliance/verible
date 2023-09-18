@@ -14,6 +14,10 @@
 
 #include "common/lsp/json-rpc-dispatcher.h"
 
+#include <exception>
+#include <sstream>
+#include <string>
+
 #include "common/util/logging.h"
 
 namespace verible {

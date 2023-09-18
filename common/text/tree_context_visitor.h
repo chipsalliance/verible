@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_TEXT_TREE_CONTEXT_VISITOR_H_
 #define VERIBLE_COMMON_TEXT_TREE_CONTEXT_VISITOR_H_
 
+#include <vector>
+
 #include "common/strings/display_utils.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/visitors.h"

@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <string>

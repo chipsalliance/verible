@@ -15,6 +15,7 @@
 #include "verilog/analysis/lint_rule_registry.h"
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 

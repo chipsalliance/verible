@@ -17,6 +17,7 @@
 
 #include <initializer_list>
 #include <utility>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"

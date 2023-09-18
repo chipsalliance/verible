@@ -15,6 +15,7 @@
 #include "common/text/token_info_json.h"
 
 #include <sstream>
+#include <string>
 
 #include "common/text/token_info.h"
 

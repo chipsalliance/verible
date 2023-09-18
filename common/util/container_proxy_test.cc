@@ -15,7 +15,9 @@
 #include "common/util/container_proxy.h"
 
 #include <list>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "common/strings/display_utils.h"

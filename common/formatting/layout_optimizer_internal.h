@@ -18,9 +18,12 @@
 #define VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_INTERNAL_H_
 
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <ostream>
+#include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/container/fixed_array.h"

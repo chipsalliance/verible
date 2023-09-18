@@ -14,7 +14,9 @@
 
 #include "verilog/formatting/comment_controls.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <vector>
 
 #include "absl/strings/match.h"

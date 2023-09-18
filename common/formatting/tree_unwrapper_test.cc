@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 #include "absl/strings/ascii.h"

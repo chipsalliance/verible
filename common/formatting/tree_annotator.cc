@@ -14,6 +14,7 @@
 
 #include "common/formatting/tree_annotator.h"
 
+#include <iterator>
 #include <vector>
 
 #include "common/text/concrete_syntax_leaf.h"
