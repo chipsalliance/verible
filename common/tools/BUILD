@@ -4,6 +4,13 @@ load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
 load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
+package(
+    default_applicable_licenses = ["//:license"],
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
 exports_files([
     "jcxxgen.bzl",
 ])
@@ -12,7 +19,6 @@ cc_binary(
     name = "verible-patch-tool",
     srcs = ["patch_tool.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
-    visibility = ["//:__subpackages__"],
     deps = [
         "//common/strings:patch",
         "//common/util:file-util",
@@ -61,7 +67,6 @@ sh_test_with_runfiles_lib(
 cc_binary(
     name = "jcxxgen",
     srcs = ["jcxxgen.cc"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//common/util:init-command-line",
         "@com_google_absl//absl/container:flat_hash_map",
