@@ -2126,9 +2126,8 @@ absl::StatusOr<SymbolTableNode*> DependentReferences::ResolveOnlyBaseLocally(
   SymbolTableNode& resolved = found->second;
 
   // If metatype doesn't match what is expected, then fail.
-  const auto resolve_status = base.ResolveSymbol(resolved);
-  if (!resolve_status.ok()) {
-    return resolve_status;
+  if (absl::Status status = base.ResolveSymbol(resolved); !status.ok()) {
+    return status;
   }
   return &resolved;
 }

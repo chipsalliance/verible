@@ -14,10 +14,12 @@
 
 #include "external_libs/editscript.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "absl/strings/str_join.h"
