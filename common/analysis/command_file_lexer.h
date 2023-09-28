@@ -15,6 +15,8 @@
 #ifndef VERIBLE_CONFIG_FILE_LEXER_H_
 #define VERIBLE_CONFIG_FILE_LEXER_H_
 
+#include <vector>
+
 // lint_waiver_config.lex has "%prefix=verible", meaning the class flex
 // creates is veribleFlexLexer. Unfortunately, FlexLexer.h doesn't have proper
 // ifdefs around its inclusion, so we have to put a bar around it here.
@@ -27,8 +29,6 @@
 #  undef yyFlexLexer  // this is how FlexLexer.h says to do things
 #  define yyFlexLexer veribleCommandFileFlexLexer
 #  include <FlexLexer.h>
-
-#include <vector>
 #endif
 // clang-format on
 

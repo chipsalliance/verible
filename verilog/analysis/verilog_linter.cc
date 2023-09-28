@@ -315,9 +315,8 @@ absl::StatusOr<std::vector<LintRuleStatus>> VerilogLintTextStructure(
     const TextStructureView& text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
-  const absl::Status configuration_status = linter.Configure(config, filename);
-  if (!configuration_status.ok()) {
-    return configuration_status;
+  if (absl::Status status = linter.Configure(config, filename); !status.ok()) {
+    return status;
   }
 
   linter.Lint(text_structure, filename);

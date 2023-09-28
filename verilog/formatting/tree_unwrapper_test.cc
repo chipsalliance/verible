@@ -209,9 +209,10 @@ bool VerifyUnwrappedLines(std::ostream* stream,
     const auto right_children = diff.right->Children().size();
     EXPECT_EQ(left_children, right_children) << "code:\n"
                                              << test_case.source_code;
-    if (first_diff_stream.str().length()) {
+    const std::string first_diff = first_diff_stream.str();
+    if (!first_diff.empty()) {
       // The Value()s at these nodes are different.
-      *stream << "value difference: " << first_diff_stream.str();
+      *stream << "value difference: " << first_diff;
     }
     return false;
   }

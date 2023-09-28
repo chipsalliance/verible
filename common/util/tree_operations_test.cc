@@ -17,7 +17,10 @@
 #include <charconv>
 #include <initializer_list>
 #include <list>
+#include <ostream>
+#include <sstream>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "absl/strings/str_cat.h"

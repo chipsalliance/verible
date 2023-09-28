@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "referenced path: " << source.ReferencedPath() << std::endl;
   stream << "resolved path: " << source.ResolvedPath() << std::endl;
   stream << "corpus: " << source.Corpus() << std::endl;
-  const auto status = source.Status();
+  const absl::Status status = source.Status();
   stream << "status: " << (status.ok() ? "ok" : status.message()) << std::endl;
   const auto content = source.GetContent();
   stream << "have content? " << (!content.empty() ? "yes" : "no") << std::endl;
@@ -150,8 +150,9 @@ absl::StatusOr<VerilogSourceFile*> VerilogProject::OpenFile(
   VerilogSourceFile& file(*file_iter->second);
 
   // Read the file's contents.
-  const absl::Status status = file.Open();
-  if (!status.ok()) return status;
+  if (absl::Status status = file.Open(); !status.ok()) {
+    return status;
+  }
 
   // NOTE: string view maps don't support removal operation. The following block
   // is valid only if files won't be removed from the project.
@@ -250,8 +251,9 @@ absl::optional<absl::StatusOr<VerilogSourceFile*>>
 VerilogProject::FindOpenedFile(absl::string_view filename) const {
   const auto found = files_.find(filename);
   if (found != files_.end()) {
-    const auto status = found->second->Status();
-    if (!status.ok()) return status;
+    if (absl::Status status = found->second->Status(); !status.ok()) {
+      return status;
+    }
     return found->second.get();
   }
   return absl::nullopt;
