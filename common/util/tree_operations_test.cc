@@ -146,6 +146,7 @@ class SimpleNode {
   void set_id(std::string&& new_id) { id_ = new_id; }
 
   bool operator==(const ThisType& other) const { return this == &other; }
+  bool operator!=(const ThisType& other) const { return !(*this == other); }
 
   friend std::ostream& operator<<(std::ostream& stream, const ThisType& self) {
     self.PrintRecursively(stream, 0);
