@@ -202,6 +202,26 @@ const verible::SyntaxTreeNode *GetProceduralTimingControlFromAlways(
 const verible::Symbol *GetEventControlFromProceduralTimingControl(
     const verible::SyntaxTreeNode &proc_timing_ctrl);
 
+// Return the operator from an AssignModifyStatement
+// Example: get '&' from 'x &= y'
+const verible::SyntaxTreeLeaf *GetAssignModifyOperator(
+    const verible::SyntaxTreeNode &assign_modify);
+
+// Return the right hand side (Rhs) from an AssignModifyStatement
+// Example: get 'y' from 'x &= y'
+const verible::SyntaxTreeNode *GetAssignModifyRhs(
+    const verible::SyntaxTreeNode &assign_modify);
+
+// Return the left hand side (Lhs) from an AssignModifyStatement
+// Example: get 'x' from 'x &= y'
+const verible::SyntaxTreeNode *GetAssignModifyLhs(
+    const verible::SyntaxTreeNode &assign_modify);
+
+// Return the left hand side (Lhs) from a NetVariableAssignment
+// Example: get 'x' from 'x = y'
+const verible::SyntaxTreeNode *GetNetVariableAssignmentLhs(
+    const verible::SyntaxTreeNode &assignment);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_STATEMENT_H_
