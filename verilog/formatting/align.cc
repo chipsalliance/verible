@@ -359,7 +359,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       case NodeEnum::kDimensionRange:
       case NodeEnum::kDimensionSlice: {
         CHECK_NOTNULL(current_dimensions_group_);
-        CHECK_EQ(node.children().size(), 5);
+        CHECK_EQ(node.size(), 5);
 
         SyntaxTreePath dimension_path = Path();
         const bool right_align =
@@ -367,8 +367,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
                 ? style_.port_declarations_right_align_packed_dimensions
                 : style_.port_declarations_right_align_unpacked_dimensions;
         if (right_align) {
-          dimension_path.back() +=
-              kMaxPathIndex - Context().top().children().size();
+          dimension_path.back() += kMaxPathIndex - Context().top().size();
         }
 
         const verible::AlignmentColumnProperties no_border(false, 0);
@@ -385,7 +384,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
       case NodeEnum::kDimensionScalar:
       case NodeEnum::kDimensionAssociativeType: {
         CHECK_NOTNULL(current_dimensions_group_);
-        CHECK_EQ(node.children().size(), 3);
+        CHECK_EQ(node.size(), 3);
 
         SyntaxTreePath dimension_path = Path();
         const bool right_align =
@@ -393,8 +392,7 @@ class PortDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
                 ? style_.port_declarations_right_align_packed_dimensions
                 : style_.port_declarations_right_align_unpacked_dimensions;
         if (right_align) {
-          dimension_path.back() +=
-              kMaxPathIndex - Context().top().children().size();
+          dimension_path.back() += kMaxPathIndex - Context().top().size();
         }
 
         const verible::AlignmentColumnProperties no_border(false, 0);
@@ -731,7 +729,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         break;
       }
       case NodeEnum::kDimensionScalar: {
-        CHECK_EQ(node.children().size(), 3);
+        CHECK_EQ(node.size(), 3);
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         ReserveNewColumn(column, *node[0], FlushLeft);   // '['
@@ -740,7 +738,7 @@ class DataDeclarationColumnSchemaScanner : public VerilogColumnSchemaScanner {
         return;
       }
       case NodeEnum::kDimensionRange: {
-        CHECK_EQ(node.children().size(), 5);
+        CHECK_EQ(node.size(), 5);
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushRight));
 
         // The value returned from this call can be used to
@@ -859,7 +857,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
         break;
       }
       case NodeEnum::kDimensionScalar: {
-        CHECK_EQ(node.children().size(), 3);
+        CHECK_EQ(node.size(), 3);
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         ReserveNewColumn(column, *node[0], FlushLeft);   // '['
@@ -868,7 +866,7 @@ class ClassPropertyColumnSchemaScanner : public VerilogColumnSchemaScanner {
         return;
       }
       case NodeEnum::kDimensionRange: {
-        CHECK_EQ(node.children().size(), 5);
+        CHECK_EQ(node.size(), 5);
         auto* column = ABSL_DIE_IF_NULL(ReserveNewColumn(node, FlushLeft));
 
         SyntaxTreePath np;
@@ -1229,7 +1227,7 @@ class DistItemColumnSchemaScanner : public VerilogColumnSchemaScanner {
         if (!Context().DirectParentIs(NodeEnum::kDistributionItem)) {
           break;
         }
-        CHECK_EQ(node.children().size(), 5);
+        CHECK_EQ(node.size(), 5);
         CHECK_NOTNULL(item_column_);
         ReserveNewColumn(item_column_, *node[0], FlushLeft,
                          GetSubpath(Path(), {0}));  // '['

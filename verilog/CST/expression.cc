@@ -79,8 +79,7 @@ const verible::Symbol *UnwrapExpression(const verible::Symbol &expr) {
 
   if (tag != NodeEnum::kExpression) return &expr;
 
-  const auto &children = node.children();
-  return children.front().get();
+  return node.front().get();
 }
 
 const verible::Symbol *GetConditionExpressionPredicate(
@@ -106,7 +105,7 @@ const verible::TokenInfo *GetUnaryPrefixOperator(
   if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
     return nullptr;
   }
-  const verible::Symbol *leaf_symbol = node->children().front().get();
+  const verible::Symbol *leaf_symbol = node->front().get();
   return &verible::down_cast<const verible::SyntaxTreeLeaf *>(leaf_symbol)
               ->get();
 }
@@ -118,7 +117,7 @@ const verible::Symbol *GetUnaryPrefixOperand(const verible::Symbol &symbol) {
   if (!node || !MatchNodeEnumOrNull(*node, NodeEnum::kUnaryPrefixExpression)) {
     return nullptr;
   }
-  return node->children().back().get();
+  return node->back().get();
 }
 
 std::vector<verible::TreeSearchMatch> FindAllBinaryOperations(
@@ -164,8 +163,7 @@ static const verible::TokenInfo *ReferenceBaseIsSimple(
   // If there are parameters, it is not simple reference.
   // It is most likely a class-qualified static reference.
   return params == nullptr
-             ? &verible::SymbolCastToLeaf(*unqualified_id.children().front())
-                    .get()
+             ? &verible::SymbolCastToLeaf(*unqualified_id.front()).get()
              : nullptr;
 }
 
@@ -178,8 +176,8 @@ const verible::TokenInfo *ReferenceIsSimpleIdentifier(
       verible::CheckSymbolAsNode(reference, NodeEnum::kReference));
   // A simple reference contains one component without hierarchy, indexing, or
   // calls; it looks like just an identifier.
-  if (reference_node.children().size() > 1) return nullptr;
-  const auto &base_symbol = reference_node.children().front();
+  if (reference_node.size() > 1) return nullptr;
+  const auto &base_symbol = reference_node.front();
   if (!base_symbol) return nullptr;
   const auto &base_node = verible::SymbolCastToNode(*base_symbol);
   if (!base_node.MatchesTag(NodeEnum::kLocalRoot)) return nullptr;

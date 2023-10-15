@@ -484,9 +484,8 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesOneLeaf) {
   std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
   std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
   FakeParseToken(&subanalysis->MutableData(), divide, new_node_tag);
-  auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
-                               ->mutable_children()
-                               .front();
+  auto &replacement_node =
+      down_cast<SyntaxTreeNode *>(syntax_tree_.get())->front();
   TextStructureView::DeferredExpansion expansion{&replacement_node,
                                                  std::move(subanalysis)};
   // Expect tree must be built using substrings of contents_.
@@ -518,9 +517,8 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     std::string subtext(tokens_[0].text().data(), tokens_[0].text().length());
     std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide1, new_node_tag1);
-    auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
-                                 ->mutable_children()
-                                 .front();
+    auto &replacement_node =
+        down_cast<SyntaxTreeNode *>(syntax_tree_.get())->front();
     TextStructureView::DeferredExpansion expansion{&replacement_node,
                                                    std::move(subanalysis)};
     expansion_map[tokens_[0].left(contents_)] = std::move(expansion);
@@ -530,9 +528,8 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
     std::string subtext(tokens_[3].text().data(), tokens_[3].text().length());
     std::unique_ptr<TextStructure> subanalysis(new TextStructure(subtext));
     FakeParseToken(&subanalysis->MutableData(), divide2, new_node_tag2);
-    auto &replacement_node = down_cast<SyntaxTreeNode *>(syntax_tree_.get())
-                                 ->mutable_children()
-                                 .back();
+    auto &replacement_node =
+        down_cast<SyntaxTreeNode *>(syntax_tree_.get())->back();
     TextStructureView::DeferredExpansion expansion{&replacement_node,
                                                    std::move(subanalysis)};
     expansion_map[offset2] = std::move(expansion);

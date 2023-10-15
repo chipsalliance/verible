@@ -43,10 +43,9 @@ const Symbol *DescendThroughSingletons(const Symbol &symbol) {
   }
   // else is a kNode
   const auto &node = SymbolCastToNode(symbol);
-  const auto &children = node.children();
-  if (children.size() == 1 && children.front() != nullptr) {
+  if (node.size() == 1 && node.front() != nullptr) {
     // If only child is non-null, descend.
-    return DescendThroughSingletons(*children.front());
+    return DescendThroughSingletons(*node.front());
     // TODO(fangism): rewrite non-recursively.
   }
   return &symbol;

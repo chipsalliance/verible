@@ -339,7 +339,7 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
             const auto *packed_dimension =
                 GetPackedDimensionFromDataDeclaration(*decl.match);
             if (packed_dimension == nullptr) continue;
-            if (packed_dimension->children().empty()) continue;
+            if (packed_dimension->empty()) continue;
             packed_dimensions.emplace_back(
                 TreeSearchMatch{packed_dimension, {/* ignored context */}});
           }

@@ -906,10 +906,10 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
       const verible::Symbol *reference =
           GetSubtreeAsSymbol(*type, NodeEnum::kInstantiationType, 0);
       if (reference->Tag().tag == (int)NodeEnum::kReference &&
-          SymbolCastToNode(*reference).children().size() > 1) {
+          SymbolCastToNode(*reference).size() > 1) {
         const auto &children = SymbolCastToNode(*reference).children();
         for (auto &child :
-             verible::make_range(children.begin() + 1, children.end())) {
+             verible::make_range(++children.begin(), children.end())) {
           if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
             Visit(verible::SymbolCastToNode(*child));
           }
@@ -1298,8 +1298,8 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskOrConstructorPort(
 void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const SyntaxTreeNode &function_call_node) {
   // check if this node contains an actual call
-  if (!function_call_node.children().empty() &&
-      SymbolCastToNode(*function_call_node.children()[0])
+  if (!function_call_node.empty() &&
+      SymbolCastToNode(*function_call_node[0])
           .MatchesTagAnyOf({NodeEnum::kReference, NodeEnum::kMacroCall})) {
     TreeContextVisitor::Visit(function_call_node);
     return;
@@ -1325,10 +1325,10 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
     const verible::Symbol *reference = GetSubtreeAsSymbol(
         *reference_call_base, NodeEnum::kReferenceCallBase, 0);
     if (reference->Tag().tag == (int)NodeEnum::kReference) {
-      if (SymbolCastToNode(*reference).children().size() > 1) {
+      if (SymbolCastToNode(*reference).size() > 1) {
         const auto &children = SymbolCastToNode(*reference).children();
         for (auto &child :
-             verible::make_range(children.begin() + 1, children.end())) {
+             verible::make_range(++children.begin(), children.end())) {
           if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
             Visit(verible::SymbolCastToNode(*child));
           }

@@ -88,8 +88,8 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
 
     case verilog::NodeEnum::kSeqBlock:
     case verilog::NodeEnum::kGenerateBlock:
-      if (!node.children().empty()) {
-        const auto &begin = node.children().front().get();
+      if (!node.empty()) {
+        const auto &begin = node.front().get();
         if (begin) {
           if (const auto *token = GetBeginLabelTokenInfo(*begin); token) {
             is_visible_node = true;

@@ -36,7 +36,7 @@ namespace {
 
 // Helper function for reaching only-child node.
 const Symbol *ExpectOnlyChild(const Symbol &node) {
-  return down_cast<const SyntaxTreeNode &>(node).children()[0].get();
+  return down_cast<const SyntaxTreeNode &>(node)[0].get();
 }
 
 // Tests that leaf is considered an only-child when descending.
