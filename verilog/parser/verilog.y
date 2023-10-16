@@ -103,7 +103,7 @@ static SymbolPtr ExtendFirstSublist(SymbolPtr& pair, SymbolPtr item) {
 static SymbolPtr ExtendLastSublist(SymbolPtr& list, SymbolPtr& item) {
   auto& list_node = down_cast<SyntaxTreeNode&>(*list);
   auto& last_sublist = down_cast<SyntaxTreeNode&>(
-      *list_node.mutable_children().back());
+      *list_node.back());
   last_sublist.Append(std::move(item));
   return std::move(list);
 }
@@ -117,8 +117,7 @@ static SymbolPtr ExtendLastSublistWithSeparator(
   auto& separator = pair_node[1];
   /* Extend the last sublist. */
   auto& list_node = down_cast<SyntaxTreeNode&>(*list);
-  auto& sublist_node = down_cast<SyntaxTreeNode&>(
-      *list_node.mutable_children().back());
+  auto& sublist_node = down_cast<SyntaxTreeNode&>(*list_node.back());
   sublist_node.Append(std::move(separator), std::move(item));
   return std::move(list);
 }

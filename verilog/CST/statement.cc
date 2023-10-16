@@ -50,7 +50,7 @@ static const SyntaxTreeNode *GetGenericStatementBody(
   if (!node) return node;
   // In most controlled constructs, the controlled statement body is
   // in tail position.  Exceptions include: DoWhile.
-  return &SymbolCastToNode(*node->children().back());
+  return &SymbolCastToNode(*node->back());
 }
 
 const SyntaxTreeNode *GetIfClauseGenerateBody(const Symbol &if_clause) {
@@ -82,8 +82,8 @@ const SyntaxTreeNode *GetConditionalGenerateElseClause(
     const Symbol &conditional) {
   const auto *node = MatchNodeEnumOrNull(
       SymbolCastToNode(conditional), NodeEnum::kConditionalGenerateConstruct);
-  if (!node || node->children().size() < 2) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  if (!node || node->size() < 2) return nullptr;
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kGenerateElseClause);
@@ -113,8 +113,8 @@ const SyntaxTreeNode *GetConditionalStatementElseClause(
     const Symbol &conditional) {
   const auto *node = MatchNodeEnumOrNull(SymbolCastToNode(conditional),
                                          NodeEnum::kConditionalStatement);
-  if (!node || node->children().size() < 2) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  if (!node || node->size() < 2) return nullptr;
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
@@ -139,7 +139,7 @@ const SyntaxTreeNode *GetAssertionStatementElseClause(
     const Symbol &assertion_statement) {
   const auto *node = MatchNodeEnumOrNull(SymbolCastToNode(assertion_statement),
                                          NodeEnum::kAssertionStatement);
-  const Symbol *else_ptr = node->children().back().get();
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
@@ -165,7 +165,7 @@ const SyntaxTreeNode *GetAssumeStatementElseClause(
   const auto *node = MatchNodeEnumOrNull(SymbolCastToNode(assume_statement),
                                          NodeEnum::kAssumeStatement);
   if (!node) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
@@ -209,7 +209,7 @@ const SyntaxTreeNode *GetAssertPropertyStatementElseClause(
       MatchNodeEnumOrNull(SymbolCastToNode(assert_property_statement),
                           NodeEnum::kAssertPropertyStatement);
   if (!node) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
@@ -237,7 +237,7 @@ const SyntaxTreeNode *GetAssumePropertyStatementElseClause(
       MatchNodeEnumOrNull(SymbolCastToNode(assume_property_statement),
                           NodeEnum::kAssumePropertyStatement);
   if (!node) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
@@ -265,7 +265,7 @@ const SyntaxTreeNode *GetExpectPropertyStatementElseClause(
       MatchNodeEnumOrNull(SymbolCastToNode(expect_property_statement),
                           NodeEnum::kExpectPropertyStatement);
   if (!node) return nullptr;
-  const Symbol *else_ptr = node->children().back().get();
+  const Symbol *else_ptr = node->back().get();
   if (else_ptr == nullptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);

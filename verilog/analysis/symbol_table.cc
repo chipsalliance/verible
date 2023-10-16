@@ -873,8 +873,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
         Context().NearestParentWithTag(NodeEnum::kQualifiedId);
     const SyntaxTreeNode* unqualified_id =
         Context().NearestParentWithTag(NodeEnum::kUnqualifiedId);
-    return ABSL_DIE_IF_NULL(qualified_id)->children().back().get() ==
-           unqualified_id;
+    return ABSL_DIE_IF_NULL(qualified_id)->back().get() == unqualified_id;
   }
 
   bool ExtendedCallIsLast() const {

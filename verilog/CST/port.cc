@@ -150,7 +150,7 @@ const SyntaxTreeLeaf *GetIdentifierFromTaskFunctionPortItem(
   const auto *type_id_dimensions =
       GetTypeIdDimensionsFromTaskFunctionPortItem(symbol);
   if (!type_id_dimensions) return nullptr;
-  if (type_id_dimensions->children().size() <= 1) return nullptr;
+  if (type_id_dimensions->size() <= 1) return nullptr;
   const auto *port_item = (*type_id_dimensions)[1].get();
   return port_item ? AutoUnwrapIdentifier(*port_item) : nullptr;
 }

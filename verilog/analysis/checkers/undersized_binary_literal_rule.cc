@@ -96,11 +96,10 @@ void UndersizedBinaryLiteralRule::HandleSymbol(
   size_t width;
   if (!absl::SimpleAtoi(width_text, &width)) return;
 
-  const auto& base_digit_part = literal_node->children();
   const auto* base_leaf =
-      down_cast<const SyntaxTreeLeaf*>(base_digit_part[0].get());
+      down_cast<const SyntaxTreeLeaf*>((*literal_node)[0].get());
   const auto* digits_leaf =
-      down_cast<const SyntaxTreeLeaf*>(base_digit_part[1].get());
+      down_cast<const SyntaxTreeLeaf*>((*literal_node)[1].get());
 
   const auto base_text = base_leaf->get().text();
   const auto digits_text = digits_leaf->get().text();

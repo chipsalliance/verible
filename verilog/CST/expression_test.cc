@@ -177,7 +177,6 @@ TEST(AssociativeBinaryExpressionsTest, ThreeFlatOperands) {
           for (const auto& match : matches) {
             // "A op B op C" is 5 sibling tokens, due to flattening
             EXPECT_EQ(verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(match.match))
-                          .children()
                           .size(),
                       5);
           }

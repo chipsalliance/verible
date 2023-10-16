@@ -79,8 +79,7 @@ const SyntaxTreeNode *GetMacroCallArgs(const Symbol &s) {
 
 bool MacroCallArgsIsEmpty(const SyntaxTreeNode &args) {
   const auto &sub =
-      ABSL_DIE_IF_NULL(MatchNodeEnumOrNull(args, NodeEnum::kMacroArgList))
-          ->children();
+      *ABSL_DIE_IF_NULL(MatchNodeEnumOrNull(args, NodeEnum::kMacroArgList));
   // Empty macro args are always constructed with one nullptr child in
   // the semantic actions in verilog.y.
   if (sub.size() != 1) return false;

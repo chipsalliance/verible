@@ -33,17 +33,17 @@ using verible::TokenInfo;
 // kLabel could be prefix "label :" or suffix ": label".  Handle both cases.
 static const verible::SyntaxTreeLeaf &GetLabelLeafText(const Symbol &label) {
   const auto &node = CheckSymbolAsNode(label, NodeEnum::kLabel);
-  CHECK_EQ(node.children().size(), 2);
-  if (node.children().front()->Tag() ==
+  CHECK_EQ(node.size(), 2);
+  if (node.front()->Tag() ==
       verible::SymbolTag{verible::SymbolKind::kLeaf, ':'}) {
-    return verible::SymbolCastToLeaf(*node.children().back());
+    return verible::SymbolCastToLeaf(*node.back());
   }
-  CHECK((node.children().back()->Tag() ==
+  CHECK((node.back()->Tag() ==
          verible::SymbolTag{verible::SymbolKind::kLeaf, ':'}));
   // in verilog.y, a prefix label could be an unqualified_id (to avoid grammar
   // conflicts), so descend to the leftmost leaf.
   return verible::SymbolCastToLeaf(
-      *ABSL_DIE_IF_NULL(verible::GetLeftmostLeaf(*node.children().front())));
+      *ABSL_DIE_IF_NULL(verible::GetLeftmostLeaf(*node.front())));
 }
 
 // Return tehe optional label node from a kBegin node.
@@ -52,17 +52,16 @@ static const verible::SyntaxTreeLeaf &GetLabelLeafText(const Symbol &label) {
 //   label : begin  (shaped as [[label :] begin])
 static const SyntaxTreeNode *GetBeginLabel(const Symbol &begin) {
   const auto &node = CheckSymbolAsNode(begin, NodeEnum::kBegin);
-  CHECK_EQ(node.children().size(), 2);
-  if (node.children().front()->Tag() ==
-      verible::SymbolTag{verible::SymbolKind::kLeaf,
-                         verilog_tokentype::TK_begin}) {
-    return verible::CheckOptionalSymbolAsNode(node.children().back().get(),
+  CHECK_EQ(node.size(), 2);
+  if (node.front()->Tag() == verible::SymbolTag{verible::SymbolKind::kLeaf,
+                                                verilog_tokentype::TK_begin}) {
+    return verible::CheckOptionalSymbolAsNode(node.back().get(),
                                               NodeEnum::kLabel);
   }
-  CHECK((node.children().back()->Tag() ==
-         verible::SymbolTag{verible::SymbolKind::kLeaf,
-                            verilog_tokentype::TK_begin}));
-  return verible::CheckOptionalSymbolAsNode(node.children().front().get(),
+  CHECK(
+      (node.back()->Tag() == verible::SymbolTag{verible::SymbolKind::kLeaf,
+                                                verilog_tokentype::TK_begin}));
+  return verible::CheckOptionalSymbolAsNode(node.front().get(),
                                             NodeEnum::kLabel);
 }
 
@@ -87,7 +86,7 @@ const TokenInfo *GetEndLabelTokenInfo(const Symbol &symbol) {
 const Symbol *GetMatchingEnd(const Symbol &symbol,
                              const SyntaxTreeContext &context) {
   CHECK_EQ(NodeEnum(symbol.Tag().tag), NodeEnum::kBegin);
-  return context.top().children().back().get();
+  return context.top().back().get();
 }
 
 }  // namespace verilog

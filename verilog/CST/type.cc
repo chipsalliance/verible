@@ -34,9 +34,9 @@ using verible::Symbol;
 using verible::SymbolPtr;
 
 static SymbolPtr ReinterpretLocalRootAsType(Symbol &local_root) {  // NOLINT
-  auto &children(verible::SymbolCastToNode(local_root).mutable_children());
-  CHECK(!children.empty());
-  return std::move(children[0]);
+  auto &node{verible::SymbolCastToNode(local_root)};
+  CHECK(!node.empty());
+  return std::move(node.front());
 }
 
 SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
@@ -72,8 +72,7 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
   local_root_with_extension_node.AppendChild(
       ReinterpretLocalRootAsType(*children.front()));
 
-  for (auto &child :
-       verible::make_range(children.begin() + 1, children.end())) {
+  for (auto &child : verible::make_range(++children.begin(), children.end())) {
     // Each child could be a call-extension or an index (bit-select/slice).
     // Only [] indices are valid, any others are syntax errors.
     // We discard syntax errors for now, but in the future should retain these
@@ -170,8 +169,8 @@ const verible::Symbol *GetBaseTypeFromDataType(
   if (!local_root) return nullptr;
   if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) return local_root;
 
+  CHECK(!local_root->empty());
   auto &children = local_root->children();
-  CHECK(!children.empty());
   verible::Symbol *last_child = nullptr;
   for (auto &child : children) {
     if (child != nullptr && child->Kind() == verible::SymbolKind::kNode) {
@@ -277,10 +276,10 @@ const verible::SyntaxTreeNode *GetParamListFromUnqualifiedId(
     const verible::Symbol &unqualified_id) {
   const verible::SyntaxTreeNode &unqualified_id_node =
       verible::CheckSymbolAsNode(unqualified_id, NodeEnum::kUnqualifiedId);
-  if (unqualified_id_node.children().size() < 2) {
+  if (unqualified_id_node.size() < 2) {
     return nullptr;
   }
-  const verible::Symbol *param_list = unqualified_id_node.children()[1].get();
+  const verible::Symbol *param_list = unqualified_id_node[1].get();
   return verible::CheckOptionalSymbolAsNode(param_list,
                                             NodeEnum::kActualParameterList);
 }
@@ -383,7 +382,7 @@ const verible::SyntaxTreeNode *GetTypeIdentifierFromDataType(
   // This is the whole test case.
   // This is a global, implicit-type data declaration, initialized.
   // See https://github.com/chipsalliance/verible/issues/549
-  if (data_type_node.children().empty()) {
+  if (data_type_node.empty()) {
     return nullptr;
   }
   const verible::Symbol *base_type = GetBaseTypeFromDataType(data_type);

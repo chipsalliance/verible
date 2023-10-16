@@ -173,7 +173,7 @@ static size_t ExtractNumDimensions(const verible::Symbol *root) {
   // Only extract from the first match.
   if (matches[0].match == nullptr) return 0;
   const auto &s = *matches[0].match;
-  return (down_cast<const verible::SyntaxTreeNode &>(s).children()).size();
+  return down_cast<const verible::SyntaxTreeNode &>(s).size();
 }
 
 // Test that number of sets of packed dimensions found is correct.

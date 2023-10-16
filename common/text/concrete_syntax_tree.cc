@@ -41,13 +41,13 @@ bool SyntaxTreeNode::equals(const Symbol *symbol,
 bool SyntaxTreeNode::equals(const SyntaxTreeNode *node,
                             const TokenComparator &compare_tokens) const {
   if (Tag().tag != node->Tag().tag) return false;
-  if (children_.size() != node->children().size()) {
+  if (children_.size() != node->size()) {
     return false;
   }
-  int size = children_.size();
-  for (int i = 0; i < size; i++) {
-    if (!EqualTrees(children_[i].get(), node->children()[i].get(),
-                    compare_tokens)) {
+  auto this_it = children_.begin();
+  auto other_it = node->children().begin();
+  for (/**/; this_it != children_.end(); ++this_it, ++other_it) {
+    if (!EqualTrees(this_it->get(), other_it->get(), compare_tokens)) {
       return false;
     }
   }
@@ -89,10 +89,10 @@ void SetChild_(const SymbolPtr &parent, int child_index, SymbolPtr new_child) {
   CHECK_EQ(ABSL_DIE_IF_NULL(parent)->Kind(), SymbolKind::kNode);
 
   auto *parent_node = down_cast<SyntaxTreeNode *>(parent.get());
-  CHECK_LT(child_index, static_cast<int>(parent_node->children().size()));
-  CHECK(parent_node->children()[child_index] == nullptr);
+  CHECK_LT(child_index, static_cast<int>(parent_node->size()));
+  CHECK((*parent_node)[child_index] == nullptr);
 
-  parent_node->mutable_children()[child_index] = std::move(new_child);
+  (*parent_node)[child_index] = std::move(new_child);
 }
 
 }  // namespace verible

@@ -63,7 +63,7 @@ const SyntaxTreeNode *GetModuleHeader(const Symbol &module_declaration) {
   const SyntaxTreeNode &module_node =
       verible::SymbolCastToNode(module_declaration);
   if (!IsModuleOrInterfaceOrProgramDeclaration(module_node)) return nullptr;
-  if (module_node.children().empty()) return nullptr;
+  if (module_node.empty()) return nullptr;
   return &verible::SymbolCastToNode(*module_node[0].get());
 }
 
@@ -127,7 +127,7 @@ const verible::SyntaxTreeNode *GetModuleItemList(
   const SyntaxTreeNode &module_node =
       verible::SymbolCastToNode(module_declaration);
   if (!IsModuleOrInterfaceOrProgramDeclaration(module_node)) return nullptr;
-  if (module_node.children().size() < 2) return nullptr;
+  if (module_node.size() < 2) return nullptr;
   verible::Symbol *item = module_node[1].get();
   return item ? &verible::SymbolCastToNode(*item) : nullptr;
 }

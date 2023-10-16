@@ -188,7 +188,7 @@ typename match_const<Symbol, S>::type *GetSubtreeAsSymbol(
   if (symbol.Kind() != SymbolKind::kNode) return nullptr;
   auto &node = SymbolCastToNode(symbol);
   if (!MatchNodeEnumOrNull(node, parent_must_be_node_enum)) return nullptr;
-  if (node.children().size() <= child_position) return nullptr;
+  if (node.size() <= child_position) return nullptr;
   return node[child_position].get();
 }
 

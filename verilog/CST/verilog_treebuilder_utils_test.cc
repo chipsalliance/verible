@@ -27,14 +27,14 @@ using verible::Leaf;
 TEST(MakeParenGroupTest, Normal) {
   const auto node =
       MakeParenGroup(Leaf('(', "("), Leaf(1, "1"), Leaf(')', ")"));
-  EXPECT_EQ(verible::SymbolCastToNode(*node).children().size(), 3);
+  EXPECT_EQ(verible::SymbolCastToNode(*node).size(), 3);
 }
 
 TEST(MakeParenGroupTest, ErrorRecovered) {
   const auto node1 = MakeParenGroup(Leaf('(', "("), nullptr, Leaf(')', ")"));
-  EXPECT_EQ(verible::SymbolCastToNode(*node1).children().size(), 3);
+  EXPECT_EQ(verible::SymbolCastToNode(*node1).size(), 3);
   const auto node2 = MakeParenGroup(Leaf('(', "("), nullptr, nullptr);
-  EXPECT_EQ(verible::SymbolCastToNode(*node2).children().size(), 3);
+  EXPECT_EQ(verible::SymbolCastToNode(*node2).size(), 3);
 }
 
 TEST(MakeParenGroupTest, MissingOpenParen) {

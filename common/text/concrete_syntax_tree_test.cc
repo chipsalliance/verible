@@ -68,7 +68,7 @@ TEST(SyntaxTreeNodeMatchesTagAnyOf, Matches) {
 TEST(SyntaxTreeNodeAppend, AppendVoid) {
   SyntaxTreeNode node;
   node.Append();
-  EXPECT_THAT(node.children(), IsEmpty());
+  EXPECT_THAT(node, IsEmpty());
 }
 
 // Test that std::move is automated.
@@ -76,7 +76,7 @@ TEST(SyntaxTreeNodeAppend, AppendChildReference) {
   SyntaxTreeNode node;
   SymbolPtr child;
   node.Append(child);
-  EXPECT_THAT(node.children(), SizeIs(1));
+  EXPECT_THAT(node, SizeIs(1));
 }
 
 // Test that redundant move is accepted.
@@ -84,21 +84,21 @@ TEST(SyntaxTreeNodeAppend, AppendChildMoved) {
   SyntaxTreeNode node;
   SymbolPtr child;
   node.Append(std::move(child));
-  EXPECT_THAT(node.children(), SizeIs(1));
+  EXPECT_THAT(node, SizeIs(1));
 }
 
 // Test that temporary value is properly forwarded.
 TEST(SyntaxTreeNodeAppend, AppendChildTemporary) {
   SyntaxTreeNode node;
   node.Append(SymbolPtr());
-  EXPECT_THAT(node.children(), SizeIs(1));
+  EXPECT_THAT(node, SizeIs(1));
 }
 
 // Test that nullptrs can be appended.
 TEST(SyntaxTreeNodeAppend, AppendChildNullPtr) {
   SyntaxTreeNode node;
   node.Append(nullptr);
-  EXPECT_THAT(node.children(), SizeIs(1));
+  EXPECT_THAT(node, SizeIs(1));
 }
 
 // Test that ownership is transferred to sink functions.
@@ -128,14 +128,14 @@ TEST(MakeNodeTest, TaggedEmptyConstructor) {
   const int tag = 10;
   auto node = MakeTaggedNode(tag);
   ASSERT_THAT(node, NotNull());
-  EXPECT_THAT(CheckTree(node)->children(), IsEmpty());
+  EXPECT_THAT(*CheckTree(node), IsEmpty());
 }
 
 // Test construction of tagged node.
 TEST(MakeNodeTest, ImmediateTaggedEmptyConstructor) {
   auto node = MakeTaggedNode(20);
   ASSERT_THAT(node, NotNull());
-  EXPECT_THAT(CheckTree(node)->children(), IsEmpty());
+  EXPECT_THAT(*CheckTree(node), IsEmpty());
 }
 
 // Test construction of untagged node with one child.
@@ -145,14 +145,14 @@ TEST(MakeNodeTest, SingleChild) {
   auto parent = MakeNode(child);
   EXPECT_THAT(parent, NotNull());
   EXPECT_THAT(child, IsNull());
-  EXPECT_THAT(CheckTree(parent)->children(), SizeIs(1));
+  EXPECT_THAT(*CheckTree(parent), SizeIs(1));
 }
 
 // Test construction of untagged node with one (temporary) child.
 TEST(MakeNodeTest, SingleChildTemporary) {
   auto parent = MakeNode(MakeNode());
   EXPECT_THAT(parent, NotNull());
-  EXPECT_THAT(CheckTree(parent)->children(), SizeIs(1));
+  EXPECT_THAT(*CheckTree(parent), SizeIs(1));
 }
 
 // Test construction of untagged node with multiple children.
@@ -168,7 +168,7 @@ TEST(MakeNodeTest, MultiChild) {
   EXPECT_THAT(child1, IsNull());
   EXPECT_THAT(child2, IsNull());
   EXPECT_THAT(child3, IsNull());
-  EXPECT_THAT(CheckTree(parent)->children(), SizeIs(3));
+  EXPECT_THAT(*CheckTree(parent), SizeIs(3));
 }
 
 // Test ExtendNode with nothing to extend (base case).
@@ -178,7 +178,7 @@ TEST(ExtendNodeTest, ExtendNone) {
   auto seq2 = ExtendNode(seq);
   EXPECT_THAT(seq2, NotNull());
   EXPECT_THAT(seq, IsNull());
-  EXPECT_THAT(CheckTree(seq2)->children(), IsEmpty());
+  EXPECT_THAT(*CheckTree(seq2), IsEmpty());
 }
 
 // Test extending node with one child.
@@ -191,7 +191,7 @@ TEST(ExtendNodeTest, ExtendOne) {
   EXPECT_THAT(seq2, NotNull());
   EXPECT_THAT(seq, IsNull());
   EXPECT_THAT(item, IsNull());
-  EXPECT_THAT(CheckTree(seq2)->children(), SizeIs(1));
+  EXPECT_THAT(*CheckTree(seq2), SizeIs(1));
 }
 
 // Test extending node with multiple children.
@@ -210,7 +210,7 @@ TEST(ExtendNodeTest, ExtendMulti) {
   EXPECT_THAT(item1, IsNull());
   EXPECT_THAT(item2, IsNull());
   EXPECT_THAT(item3, IsNull());
-  EXPECT_THAT(CheckTree(seq2)->children(), SizeIs(3));
+  EXPECT_THAT(*CheckTree(seq2), SizeIs(3));
 }
 
 // Test extending node with multiple (temporary) children.
@@ -220,21 +220,21 @@ TEST(ExtendNodeTest, ExtendMultiTemporary) {
   auto seq2 = ExtendNode(seq, MakeNode(), MakeNode());
   ASSERT_THAT(seq2, NotNull());
   EXPECT_THAT(seq, IsNull());
-  EXPECT_THAT(CheckTree(seq2)->children(), SizeIs(2));
+  EXPECT_THAT(*CheckTree(seq2), SizeIs(2));
 }
 
 // Test extending node with temporary parent.
 TEST(ExtendNodeTest, ExtendTemporaryNodeNoChildren) {
   auto seq = ExtendNode(MakeNode());
   ASSERT_THAT(seq, NotNull());
-  EXPECT_THAT(CheckTree(seq)->children(), IsEmpty());
+  EXPECT_THAT(*CheckTree(seq), IsEmpty());
 }
 
 // Test extending node with temporary parent with temporary children.
 TEST(ExtendNodeTest, ExtendTemporaryNode) {
   auto seq = ExtendNode(MakeNode(), MakeNode(), MakeNode());
   ASSERT_THAT(seq, NotNull());
-  EXPECT_THAT(CheckTree(seq)->children(), SizeIs(2));
+  EXPECT_THAT(*CheckTree(seq), SizeIs(2));
 }
 
 // Test forwarding empty set of children to new node.
@@ -242,7 +242,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenNone) {
   auto seq = MakeNode();
   auto parent = MakeNode(ForwardChildren(seq));
   EXPECT_THAT(seq, IsNull());
-  EXPECT_THAT(CheckTree(parent)->children(), IsEmpty());
+  EXPECT_THAT(*CheckTree(parent), IsEmpty());
 }
 
 // Test forwarding empty set of children to new node.
@@ -250,7 +250,7 @@ TEST(SyntaxTreeNodeAppend, AdoptLeaf) {
   SymbolPtr leaf(new SyntaxTreeLeaf(0, "abc"));
   auto parent = MakeNode(ForwardChildren(leaf));
   EXPECT_THAT(leaf, IsNull());
-  EXPECT_THAT(CheckTree(parent)->children(), SizeIs(1));
+  EXPECT_THAT(*CheckTree(parent), SizeIs(1));
 }
 
 // Test forwarding set of children to new node, transferring ownership.
@@ -259,7 +259,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildren) {
   auto parent = MakeNode(ForwardChildren(seq));
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
-  EXPECT_THAT(parentnode->children(), SizeIs(3));
+  EXPECT_THAT(*parentnode, SizeIs(3));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
@@ -271,7 +271,7 @@ TEST(SyntaxTreeNodeAppend, AdoptNullChildren) {
   auto parent = MakeNode(ForwardChildren(seq));
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
-  EXPECT_THAT(parentnode->children(), SizeIs(2));
+  EXPECT_THAT(*parentnode, SizeIs(2));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, IsNull());
   }
@@ -303,7 +303,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenMixed) {
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
   ASSERT_THAT(parentnode, NotNull());
-  EXPECT_THAT(parentnode->children(), SizeIs(5));
+  EXPECT_THAT(*parentnode, SizeIs(5));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
@@ -318,7 +318,7 @@ TEST(SyntaxTreeNodeAppend, AdoptChildrenMultiple) {
   EXPECT_THAT(seq2, IsNull());
   auto parentnode = CheckTree(parent);
   ASSERT_THAT(parentnode, NotNull());
-  EXPECT_THAT(parentnode->children(), SizeIs(7));
+  EXPECT_THAT(*parentnode, SizeIs(7));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
@@ -330,7 +330,7 @@ TEST(ExtendNodeTest, AdoptChildren) {
   auto parent = MakeNode(ForwardChildren(seq));
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
-  EXPECT_THAT(parentnode->children(), SizeIs(2));
+  EXPECT_THAT(*parentnode, SizeIs(2));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
@@ -342,7 +342,7 @@ TEST(ExtendNodeTest, AdoptChildrenMixed) {
   auto parent = ExtendNode(MakeNode(), ForwardChildren(seq), MakeNode());
   EXPECT_THAT(seq, IsNull());
   auto parentnode = CheckTree(parent);
-  EXPECT_THAT(parentnode->children(), SizeIs(4));
+  EXPECT_THAT(*parentnode, SizeIs(4));
   for (const auto &child : parentnode->children()) {
     EXPECT_THAT(child, NotNull());
   }
@@ -357,7 +357,7 @@ TEST(ExtendNodeTest, SetChild0Size1) {
   SetChild(node1, 0, node2);
   EXPECT_THAT(node1, NotNull());
   EXPECT_THAT(node2, IsNull());
-  EXPECT_THAT(CheckTree(node1)->children(), SizeIs(1));
+  EXPECT_THAT(*CheckTree(node1), SizeIs(1));
   EXPECT_TRUE(EqualTreesByEnum(expected.get(), node1.get()));
 }
 
@@ -370,7 +370,7 @@ TEST(ExtendNodeTest, SetChild1Size2) {
   SetChild(node1, 1, node2);
   EXPECT_THAT(node1, NotNull());
   EXPECT_THAT(node2, IsNull());
-  EXPECT_THAT(CheckTree(node1)->children(), SizeIs(2));
+  EXPECT_THAT(*CheckTree(node1), SizeIs(2));
   EXPECT_TRUE(EqualTreesByEnum(expected.get(), node1.get()));
 }
 

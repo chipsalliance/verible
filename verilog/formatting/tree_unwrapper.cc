@@ -86,7 +86,7 @@ static bool NodeIsBeginEndBlock(const SyntaxTreeNode& node) {
 
 static const SyntaxTreeNode& GetBlockEnd(const SyntaxTreeNode& block) {
   CHECK(NodeIsBeginEndBlock(block));
-  return verible::SymbolCastToNode(*block.children().back());
+  return verible::SymbolCastToNode(*block.back());
 }
 
 static const verible::Symbol* GetEndLabel(const SyntaxTreeNode& end_node) {
@@ -999,10 +999,10 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // TODO(fangism): Create own section only for standalone calls
       if (Context().DirectParentsAre(
               {NodeEnum::kFunctionCall, NodeEnum::kStatement})) {
-        const auto& subnode = verible::SymbolCastToNode(
-            *ABSL_DIE_IF_NULL(node.children().back()));
+        const auto& subnode =
+            verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(node.back()));
         if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
-            subnode.children().back() != nullptr) {
+            subnode.back() != nullptr) {
           // TODO(fangism): Handle constriants
           VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
         } else if (subnode.MatchesTagAnyOf(
@@ -1023,7 +1023,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kRandomizeFunctionCall: {
       // TODO(fangism): Create own section only for standalone calls
       if (Context().DirectParentIs(NodeEnum::kStatement)) {
-        if (node.children().back() != nullptr) {
+        if (node.back() != nullptr) {
           // TODO(fangism): Handle constriants
           VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
         } else {
@@ -1241,8 +1241,8 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kMacroArgList: {
-      if (node.children().front() == nullptr ||
-          node.children().front()->Tag().tag == verible::kUntagged) {
+      if (node.front() == nullptr ||
+          node.front()->Tag().tag == verible::kUntagged) {
         // Empty arguments list.
         TraverseChildren(node);
         break;
@@ -2454,9 +2454,9 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
     const verible::Symbol& data_declaration) {
   const auto* instance_list =
       GetInstanceListFromDataDeclaration(data_declaration);
-  if (!instance_list || instance_list->children().empty()) return nullptr;
+  if (!instance_list || instance_list->empty()) return nullptr;
 
-  const auto& variable_or_gate = *instance_list->children().front();
+  const auto& variable_or_gate = *instance_list->front();
   if (variable_or_gate.Tag().kind != verible::SymbolKind::kNode) return nullptr;
 
   const verible::Symbol* trailing_assign;
@@ -2536,8 +2536,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
             &instance_list_partition,
             data_declaration_partition.Value().IndentationSpaces());
         HoistOnlyChildPartition(&instance_list_partition);
-      } else if (GetInstanceListFromDataDeclaration(node)->children().size() ==
-                 1) {
+      } else if (GetInstanceListFromDataDeclaration(node)->size() == 1) {
         VLOG(4) << "Instance list has only one child, singleton.";
 
         // Undo the indentation of the only instance in the hoisted subtree.
@@ -2579,20 +2578,20 @@ void TreeUnwrapper::ReshapeTokenPartitions(
 
       const auto* assigned_expr =
           GetAssignedExpressionFromDataDeclaration(node);
-      if (!assigned_expr || assigned_expr->children().empty()) break;
+      if (!assigned_expr || assigned_expr->empty()) break;
 
       AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
 
       // Special handling for assignment of a string concatenation
 
-      const auto* concat_expr_symbol = assigned_expr->children().front().get();
+      const auto* concat_expr_symbol = assigned_expr->front().get();
       if (concat_expr_symbol->Tag() !=
           verible::NodeTag(NodeEnum::kConcatenationExpression)) {
         break;
       }
 
       const auto* open_range_list_symbol =
-          verible::SymbolCastToNode(*concat_expr_symbol).children()[1].get();
+          verible::SymbolCastToNode(*concat_expr_symbol)[1].get();
       if (open_range_list_symbol->Tag() !=
           verible::NodeTag(NodeEnum::kOpenRangeList)) {
         break;
@@ -2602,13 +2601,13 @@ void TreeUnwrapper::ReshapeTokenPartitions(
           verible::SymbolCastToNode(*open_range_list_symbol);
 
       if (std::all_of(
-              open_range_list.children().cbegin(),
-              open_range_list.children().cend(),
+              open_range_list.children().begin(),
+              open_range_list.children().end(),
               [](const verible::SymbolPtr& sym) {
                 if (sym->Tag() == verible::NodeTag(NodeEnum::kExpression)) {
                   const auto& expr = verible::SymbolCastToNode(*sym.get());
-                  return !expr.children().empty() &&
-                         expr.children().front()->Tag() ==
+                  return !expr.empty() &&
+                         expr.front()->Tag() ==
                              verible::LeafTag(
                                  verilog_tokentype::TK_StringLiteral);
                 }
@@ -2712,9 +2711,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
     case NodeEnum::kFunctionCall: {
       const auto& reference_call_base =
-          verible::SymbolCastToNode(*node.children().front());
+          verible::SymbolCastToNode(*node.front());
       const auto& subnode =
-          verible::SymbolCastToNode(*reference_call_base.children().back());
+          verible::SymbolCastToNode(*reference_call_base.back());
       if (subnode.MatchesTagAnyOf({NodeEnum::kMethodCallExtension,
                                    NodeEnum::kParenGroup,
                                    NodeEnum::kRandomizeMethodCallExtension})) {
@@ -3013,8 +3012,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       // In these cases, merge the 'begin' partition of the statement block
       // with the preceding keyword or header partition.
       if (!verible::is_leaf(partition.Children().back()) &&
-          NodeIsBeginEndBlock(
-              verible::SymbolCastToNode(*node.children().back()))) {
+          NodeIsBeginEndBlock(verible::SymbolCastToNode(*node.back()))) {
         auto& seq_block_partition = partition.Children().back();
         VLOG(4) << "block partition: " << seq_block_partition;
         auto& begin_partition = LeftmostDescendant(seq_block_partition);
@@ -3050,7 +3048,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
 
     case NodeEnum::kAlwaysStatement: {
-      if (GetSubtreeAsNode(node, tag, node.children().size() - 1)
+      if (GetSubtreeAsNode(node, tag, node.size() - 1)
               ->MatchesTagAnyOf({NodeEnum::kProceduralTimingControlStatement,
                                  NodeEnum::kSeqBlock})) {
         // Merge 'always' keyword with next sibling, and adjust subtree indent.

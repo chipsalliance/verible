@@ -109,7 +109,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
             verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
       check_root =
           /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-              node->children()[0].get());
+              node->front().get());
     }
   } else {
     // Not interested in any other blocking assignments unless flagged
@@ -120,7 +120,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
               verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
         check_root =
             /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                node->children()[0].get());
+                node->front().get());
       }
     } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
       check_root = &symbol;
@@ -145,7 +145,7 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
               verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
         if (const auto *const ident =
                 verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                    varn->children()[0].get())) {
+                    varn->front().get())) {
           found = std::find(locals_.begin(), locals_.end(),
                             ident->get().text()) != locals_.end();
           VLOG(4) << "LHS='" << ident->get().text() << "' FOUND=" << found
@@ -211,7 +211,7 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
               verible::down_cast<const verible::SyntaxTreeNode *>(var.match)) {
         if (const auto *const ident =
                 verible::down_cast<const verible::SyntaxTreeLeaf *>(
-                    node->children()[0].get())) {
+                    node->front().get())) {
           const absl::string_view name = ident->get().text();
           VLOG(4) << "Registering '" << name << '\'' << std::endl;
           locals_.emplace_back(name);

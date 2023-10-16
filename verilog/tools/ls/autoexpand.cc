@@ -962,8 +962,7 @@ std::vector<AutoExpander::Dimension> GetDimensionsFromNodes(
     for (const auto &scalar :
          SearchSyntaxTree(*dimension.match, NodekDimensionScalar())) {
       size_t size;
-      const Symbol &scalar_value =
-          *SymbolCastToNode(*scalar.match).children()[1];
+      const Symbol &scalar_value = *SymbolCastToNode(*scalar.match)[1];
       const absl::string_view span = StringSpanOfSymbol(scalar_value);
       const bool result = absl::SimpleAtoi(span, &size);
       dimensions.push_back(result ? Dimension{size} : Dimension{span});

@@ -88,10 +88,10 @@ static const Matcher &CreateAssignmentMatcher() {
 static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
                                 absl::string_view name) {
   if (node.MatchesTag(NodeEnum::kUnqualifiedId)) {
-    if (!node.children().empty()) {
+    if (!node.empty()) {
       // The one-and-only child is the SymbolIdentifier token
       const auto &leaf_ptr =
-          down_cast<const SyntaxTreeLeaf *>(node.children().front().get());
+          down_cast<const SyntaxTreeLeaf *>(node.front().get());
       if (leaf_ptr != nullptr) {
         const TokenInfo &token = leaf_ptr->get();
         return token.token_enum() == SymbolIdentifier && token.text() == name;
@@ -105,16 +105,15 @@ static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
 // TODO(fangism): Refactor into QualifiedCallEndsWith().
 static bool QualifiedCallIsTypeIdCreate(
     const SyntaxTreeNode &qualified_id_node) {
-  const auto &children = qualified_id_node.children();
-  const size_t num_children = children.size();
+  const size_t num_children = qualified_id_node.size();
   // Allow for more than 3 segments, in case of package qualification, e.g.
   // my_pkg::class_type::type_id::create.
   // 5: 3 segments + 2 separators (in alternation), e.g. A::B::C
-  if (qualified_id_node.children().size() >= 5) {
+  if (qualified_id_node.size() >= 5) {
     const auto *create_leaf_ptr =
-        down_cast<const SyntaxTreeNode *>(children.back().get());
-    const auto *type_id_leaf_ptr =
-        down_cast<const SyntaxTreeNode *>(children[num_children - 3].get());
+        down_cast<const SyntaxTreeNode *>(qualified_id_node.back().get());
+    const auto *type_id_leaf_ptr = down_cast<const SyntaxTreeNode *>(
+        qualified_id_node[num_children - 3].get());
     if (create_leaf_ptr != nullptr && type_id_leaf_ptr != nullptr) {
       return UnqualifiedIdEquals(*create_leaf_ptr, "create") &&
              UnqualifiedIdEquals(*type_id_leaf_ptr, "type_id");
@@ -140,13 +139,12 @@ static const TokenInfo *ExtractStringLiteralToken(
   if (!expr_node.MatchesTag(NodeEnum::kExpression)) return nullptr;
 
   // this check is limited to only checking string literal leaf tokens
-  if (expr_node.children().front().get()->Kind() !=
-      verible::SymbolKind::kLeaf) {
+  if (expr_node.front().get()->Kind() != verible::SymbolKind::kLeaf) {
     return nullptr;
   }
 
   const auto *leaf_ptr =
-      down_cast<const SyntaxTreeLeaf *>(expr_node.children().front().get());
+      down_cast<const SyntaxTreeLeaf *>(expr_node.front().get());
   if (leaf_ptr != nullptr) {
     const TokenInfo &token = leaf_ptr->get();
     if (token.token_enum() == TK_StringLiteral) {
@@ -159,8 +157,8 @@ static const TokenInfo *ExtractStringLiteralToken(
 // Returns the first expression from an argument list, if it exists.
 static const SyntaxTreeNode *GetFirstExpressionFromArgs(
     const SyntaxTreeNode &args_node) {
-  if (!args_node.children().empty()) {
-    const auto &first_arg = args_node.children().front();
+  if (!args_node.empty()) {
+    const auto &first_arg = args_node.front();
     if (const auto *first_expr =
             down_cast<const SyntaxTreeNode *>(first_arg.get())) {
       return first_expr;

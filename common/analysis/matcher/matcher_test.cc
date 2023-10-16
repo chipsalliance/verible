@@ -156,8 +156,8 @@ TEST(MatcherTest, BindMatcherNested) {
 static std::vector<const Symbol *> GetFirstChild(const Symbol &symbol) {
   if (symbol.Kind() == SymbolKind::kNode) {
     const auto &node = down_cast<const SyntaxTreeNode &>(symbol);
-    if (node.children().empty()) return {};
-    return {node.children()[0].get()};
+    if (node.empty()) return {};
+    return {node[0].get()};
   }
 
   return {};
