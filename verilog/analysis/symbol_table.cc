@@ -2017,7 +2017,12 @@ static void ResolveReferenceComponentNode(
   switch (component.ref_type) {
     case ReferenceType::kUnqualified: {
       // root node: lookup this symbol from its context upward
-      CHECK(node->Parent() == nullptr);
+      if (node->Parent() != nullptr) {
+        // TODO(hzeller): Is this a situation that should never happen thus
+        // be dealt with further up-stream ? (changed from a CHECK()).
+        LOG(WARNING) << *node << ": Parent exists " << *node->Parent() << "\n";
+        return;
+      }
       ResolveUnqualifiedName(&component, context, diagnostics);
       break;
     }
