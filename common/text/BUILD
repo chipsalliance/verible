@@ -229,6 +229,7 @@ cc_library(
         ":concrete-syntax-tree",
         ":symbol",
         ":tree-utils",
+        "//common/util:logging",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -335,6 +336,7 @@ cc_test(
         ":tree-builder-test-util",
         ":tree-compare",
         ":tree-utils",
+        "//common/util:casts",
         "//common/util:logging",
         "//common/util:range",
         "@com_google_googletest//:gtest_main",
@@ -429,6 +431,7 @@ cc_test(
         ":tree-builder-test-util",
         ":tree-compare",
         "//common/strings:line-column-map",
+        "//common/util:casts",
         "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",

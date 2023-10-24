@@ -415,6 +415,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token-info",
         "//common/text:tree-utils",
+        "//common/util:logging",
     ],
 )
 
@@ -717,6 +718,7 @@ cc_library(
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
         "//common/text:tree-utils",
+        "//common/util:logging",
         "//verilog/parser:verilog-token-enum",
     ],
 )
@@ -838,6 +840,7 @@ cc_library(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:tree-utils",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "//verilog/parser:verilog-token-enum",
     ],
