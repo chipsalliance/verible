@@ -112,6 +112,7 @@ cc_library(
         ":tree-compare",
         ":visitors",
         "//common/util:casts",
+        "//common/util:iterator-range",
         "//common/util:logging",
     ],
 )
