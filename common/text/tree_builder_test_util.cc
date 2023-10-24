@@ -19,6 +19,7 @@
 #include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 
 namespace verible {
 

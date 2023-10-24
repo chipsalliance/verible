@@ -160,6 +160,7 @@ cc_library(
         "//common/text:tree-context-visitor",
         "//common/text:tree-utils",
         "//common/util:file-util",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:tree-operations",
         "//verilog/CST:class",

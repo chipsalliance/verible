@@ -33,6 +33,7 @@
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/text/tree_compare.h"
+#include "common/util/casts.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
