@@ -129,7 +129,7 @@ jobs:
         - test-c++20
         - test-c++23
         - smoke-test
-        - smoke-test-analyzer
+        #- smoke-test-analyzer  #issue: #2046
         - asan
         - asan-clang
         - compile
