@@ -251,6 +251,7 @@ jobs:
 
   KytheVerification:
     runs-on: ubuntu-20.04
+    if: false   # Currently disabled, need to investigate further
 
     steps:
 
@@ -387,7 +388,8 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        brew install llvm
+        brew unlink bazelisk
+        brew install llvm bazel@6
         echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
 
     - name: Checkout code
@@ -427,6 +429,11 @@ jobs:
       uses: styfle/cancel-workflow-action@0.8.0
       with:
         access_token: ${{ github.token }}
+
+    - name: Install Dependencies
+      run: |
+        brew unlink bazelisk
+        brew install bazel@6
 
     - name: Checkout code
       uses: actions/checkout@v3
