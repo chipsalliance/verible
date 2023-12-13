@@ -908,9 +908,12 @@ void IndexingFactsTreeExtractor::ExtractModuleInstantiation(
           GetSubtreeAsSymbol(*type, NodeEnum::kInstantiationType, 0);
       if (reference->Tag().tag == (int)NodeEnum::kReference &&
           SymbolCastToNode(*reference).size() > 1) {
-        const auto &children = SymbolCastToNode(*reference).children();
-        for (auto &child :
-             verible::make_range(++children.begin(), children.end())) {
+        bool is_first = true;
+        for (const auto &child : SymbolCastToNode(*reference).children()) {
+          if (is_first) {  // skip the first one.
+            is_first = false;
+            continue;
+          }
           if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
             Visit(verible::SymbolCastToNode(*child));
           }
@@ -1327,9 +1330,12 @@ void IndexingFactsTreeExtractor::ExtractFunctionOrTaskCall(
         *reference_call_base, NodeEnum::kReferenceCallBase, 0);
     if (reference->Tag().tag == (int)NodeEnum::kReference) {
       if (SymbolCastToNode(*reference).size() > 1) {
-        const auto &children = SymbolCastToNode(*reference).children();
-        for (auto &child :
-             verible::make_range(++children.begin(), children.end())) {
+        bool is_first = true;
+        for (const auto &child : SymbolCastToNode(*reference).children()) {
+          if (is_first) {  // skip the first one
+            is_first = false;
+            continue;
+          }
           if (child->Tag().tag == (int)NodeEnum::kHierarchyExtension) {
             Visit(verible::SymbolCastToNode(*child));
           }

@@ -50,6 +50,14 @@ reversed_view(T &t) {
   // in std:: when compiling with C++14 or newer.
 }
 
+template <class T>
+verible::iterator_range<
+    std::reverse_iterator<typename auto_iterator_selector<T>::type>>
+const_reversed_view(const T &t) {
+  return make_range(verible::make_reverse_iterator(t.end()),
+                    verible::make_reverse_iterator(t.begin()));
+}
+
 // Given a const_iterator and a mutable iterator to the original mutable
 // container, return the corresponding mutable iterator (without resorting to
 // const_cast).
