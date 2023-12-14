@@ -500,22 +500,26 @@ jobs:
         restore-keys: bazelcache_windows2_
 
     - name: Install dependencies
-      # Bazel breaks on Windows with LLVM 16. Will be fixed in bazel 6.4
-      run: choco install llvm --force --version=15.0.7
+      run: |
+        choco install bazel --force --version=6.4.0
+        choco install llvm --force
 
     - name: Debug bazel directory settings
-      run: bazel info
+      # We need to explicitly call the bazel binary from choco, otherwise
+      # the default Windows runner seems to run bazelisk(?) and downloads the
+      # latest bazel, which is incompatible. Should be in variable.
+      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe info
 
     - name: Run Tests
-      run: bazel test --keep_going --noshow_progress --test_output=errors //...
+      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe test --keep_going --noshow_progress --test_output=errors //...
 
     - name: Build Verible Binaries
-      run: bazel build --keep_going --noshow_progress -c opt :install-binaries
+      run: C:/ProgramData/chocolatey/lib/bazel/bazel.exe build --keep_going --noshow_progress -c opt :install-binaries
 
     - name: Prepare release
       run: |
         $VERSION = git describe --match=v*
-        bazel run -c opt :install -- "c:/verible-${VERSION}-win64"
+        C:/ProgramData/chocolatey/lib/bazel/bazel.exe run -c opt :install -- "c:/verible-${VERSION}-win64"
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
@@ -528,7 +532,7 @@ jobs:
     # prevents packaging up the cache.
     - name: Stop Bazel
       run: |
-        bazel shutdown
+        C:/ProgramData/chocolatey/lib/bazel/bazel.exe shutdown
         # The cache pack/restore has issues with these symbolic links
         rm c:/users/runneradmin/_bazel_runneradmin/*/install
         rm c:/users/runneradmin/_bazel_runneradmin/*/java.log
