@@ -14,7 +14,7 @@
 # limitations under the License.
 
 if [ -z "${KYTHE_TOOLS_VERSION}" ]; then
-        echo "Set \$KYTHE_TOOLS_VERSION"
+        echo "Please set \$KYTHE_TOOLS_VERSION"
         exit 1
 fi
 

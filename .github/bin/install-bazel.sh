@@ -14,7 +14,7 @@
 # limitations under the License.
 
 if [ -z "${BAZEL_VERSION}" ]; then
-        echo "Set \$BAZEL_VERSION"
+        echo "Please set \$BAZEL_VERSION"
         exit 1
 fi
 
