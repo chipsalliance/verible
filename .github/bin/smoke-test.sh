@@ -38,14 +38,14 @@ set -u   # Be strict: only allow using a variable after it is assigned
 BAZEL_BUILD_OPTIONS="-c opt"
 
 TMPDIR="${TMPDIR:-/tmp}"
-readonly BASE_TEST_DIR=${TMPDIR}/test/verible-smoke-test
+readonly BASE_TEST_DIR="${TMPDIR}/test/verible-smoke-test"
 
 # Write log files to this directory
-readonly SMOKE_LOGGING_DIR=${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}
+readonly SMOKE_LOGGING_DIR="${SMOKE_LOGGING_DIR:-$BASE_TEST_DIR/error-logs}"
 
 # Make the directory for the logs
-if [ ! -d "$SMOKE_LOGGING_DIR" ]; then
-  mkdir -p $SMOKE_LOGGING_DIR
+if [ ! -d "${SMOKE_LOGGING_DIR}" ]; then
+  mkdir -p "${SMOKE_LOGGING_DIR}"
 fi
 
 # Some terminal codes to highlight
@@ -108,8 +108,9 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 # Any new issues that arise should be recorded in the verible bug-tracker to
 # be fixed.
 # Goal: The following list shall be empty :)
-# Format: <tool-name>:<file-name>
+# Format: <tool-name>:<basename of file-name in project>
 declare -A KnownIssue
+KnownIssue[project:soc_ifc_status_driver.svh]=https://github.com/chipsalliance/verible/issues/1946
 
 # At the moment, the list is empty
 
@@ -129,23 +130,23 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=193
+ExpectedFailCount[project:ibex]=194
 ExpectedFailCount[preprocessor:ibex]=368
 
 ExpectedFailCount[syntax:opentitan]=35
 ExpectedFailCount[lint:opentitan]=35
 ExpectedFailCount[project:opentitan]=752
-ExpectedFailCount[preprocessor:opentitan]=2020
+ExpectedFailCount[preprocessor:opentitan]=2030
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
 ExpectedFailCount[preprocessor:sv-tests]=139
 
-ExpectedFailCount[syntax:caliptra-rtl]=21
-ExpectedFailCount[lint:caliptra-rtl]=21
-ExpectedFailCount[project:caliptra-rtl]=324
-ExpectedFailCount[preprocessor:caliptra-rtl]=761
+ExpectedFailCount[syntax:caliptra-rtl]=24
+ExpectedFailCount[lint:caliptra-rtl]=24
+ExpectedFailCount[project:caliptra-rtl]=333
+ExpectedFailCount[preprocessor:caliptra-rtl]=766
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -154,8 +155,8 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=6
 ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=78
-ExpectedFailCount[preprocessor:cva6]=110
+ExpectedFailCount[project:cva6]=79
+ExpectedFailCount[preprocessor:cva6]=117
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -175,10 +176,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=155
-ExpectedFailCount[lint:black-parrot]=155
-ExpectedFailCount[project:black-parrot]=170
-ExpectedFailCount[preprocessor:black-parrot]=171
+ExpectedFailCount[syntax:black-parrot]=154
+ExpectedFailCount[lint:black-parrot]=154
+ExpectedFailCount[project:black-parrot]=169
+ExpectedFailCount[preprocessor:black-parrot]=170
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
@@ -204,10 +205,11 @@ ExpectedFailCount[preprocessor:scr1]=46
 ExpectedFailCount[project:serv]=1
 ExpectedFailCount[preprocessor:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=466
-ExpectedFailCount[lint:basejump_stl]=466
-ExpectedFailCount[project:basejump_stl]=577
-ExpectedFailCount[preprocessor:basejump_stl]=611
+ExpectedFailCount[syntax:basejump_stl]=469
+ExpectedFailCount[lint:basejump_stl]=469
+ExpectedFailCount[project:basejump_stl]=581
+ExpectedFailCount[formatter:basejump_stl]=1
+ExpectedFailCount[preprocessor:basejump_stl]=615
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
@@ -331,7 +333,7 @@ function run_smoke_test() {
           file_param="<(echo $single_file)"   # make easy to reproduce
         fi
         echo "${TERM_RED}${BINARY_BASE_DIR}/${tool} ${EXTRA_PARAM} ${file_param} ${TERM_RESET}"
-        waive_file_key="${short_tool_name}:${single_file}"
+        waive_file_key="${short_tool_name}:$(basename ${single_file})"
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
           bug_number=${KnownIssue[${waive_file_key}]}
@@ -359,8 +361,8 @@ function run_smoke_test() {
   return ${result}
 }
 
-mkdir -p $BASE_TEST_DIR
-trap 'rm -rf -- "$BASE_TEST_DIR"' EXIT
+mkdir -p "${BASE_TEST_DIR}"
+trap 'rm -rf -- "${BASE_TEST_DIR}"' EXIT
 
 status_sum=0
 
@@ -376,25 +378,30 @@ bazel build ${BAZEL_BUILD_OPTIONS} :install-binaries &
 
 # While compiling, run potentially slow network ops
 for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME=$(basename $git_project)
-  PROJECT_DIR=${BASE_TEST_DIR}/${PROJECT_NAME}
+  PROJECT_NAME="$(basename $git_project)"
+  PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   git clone ${git_project} ${PROJECT_DIR} 2>/dev/null &
 done
 
-echo "Writing logs to $SMOKE_LOGGING_DIR"
+echo "base test dir ${BASE_TEST_DIR}; writing logs to ${SMOKE_LOGGING_DIR}"
 echo "Waiting... for compilation and project download finished"
 wait
 
 for git_project in ${TEST_GIT_PROJECTS} ; do
-  PROJECT_NAME=$(basename $git_project)
-  PROJECT_DIR=${BASE_TEST_DIR}/${PROJECT_NAME}
+  PROJECT_NAME="$(basename $git_project)"
+  PROJECT_DIR="${BASE_TEST_DIR}/${PROJECT_NAME}"
   # Already cloned above
 
-  # Just collect everything that looks like Verilog/SystemVerilog
-  FILELIST=${PROJECT_DIR}/verible.filelist
-  find ${PROJECT_DIR} -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
+  if [ ! -d "${PROJECT_DIR}" ]; then
+    echo "Didn't see ${PROJECT_DIR}. Network connection flaky ? Skipping."
+    continue
+  fi
 
-  run_smoke_test ${PROJECT_NAME} ${FILELIST} ${git_project}
+  # Just collect everything that looks like Verilog/SystemVerilog
+  FILELIST="${PROJECT_DIR}/verible.filelist"
+  find "${PROJECT_DIR}" -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > ${FILELIST}
+
+  run_smoke_test "${PROJECT_NAME}" "${FILELIST}" "${git_project}"
   status_sum=$((${status_sum} + $?))
   echo
 done
@@ -404,7 +411,7 @@ echo "::endgroup::"
 echo "There were a total of ${status_sum} new, undocumented issues."
 
 # Let's see if there are any issues that are fixed in the meantime.
-if [ ${#KnownIssue[@]} -ne 0 ]; then
+if [ "${#KnownIssue[@]}" -ne 0 ]; then
   echo "::warning ::There are ${#KnownIssue[@]} tool/file combinations, that no longer fail"
   declare -A DistinctIssues
   for key in "${!KnownIssue[@]}"; do
