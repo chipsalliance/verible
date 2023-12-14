@@ -38,7 +38,7 @@ constexpr int kKZipCompressionLevel = 9;
 }  // namespace
 
 KzipCreator::KzipCreator(absl::string_view output_path)
-    : zip_file_(fopen(std::string(output_path).c_str(), "wb"), &fclose),
+    : zip_file_(fopen(std::string(output_path).c_str(), "wb")),
       archive_(kKZipCompressionLevel, [this](absl::string_view s) {
         return fwrite(s.data(), 1, s.size(), zip_file_.get()) == s.size();
       }) {
