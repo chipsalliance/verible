@@ -78,6 +78,9 @@ if [[ "${CXX}" == clang* ]]; then
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # utf8_range dependency
 fi
 
+# Protobuf triggers a maybe-uninitialized warning.
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-uninitialized"
+
 # If parameter given and the MODE allows choosing, we build the target
 # as provided, otherwise all. This allows manual invocation of interesting
 # targets.
@@ -111,7 +114,7 @@ case "$MODE" in
   compile|compile-clang|clean)
     bazel build --keep_going $BAZEL_OPTS :install-binaries
     ;;
-  
+
   compile-static|compile-static-clang)
     bazel build --keep_going --config=create_static_linked_executables $BAZEL_OPTS :install-binaries
     ;;
