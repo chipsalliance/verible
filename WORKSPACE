@@ -43,11 +43,10 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         "//bazel:absl.patch",
-        "//bazel:fix-uninitialized-var.patch",
     ],
-    sha256 = "e46fe4fd52b94dc344429b74b9520bead577f1db622def7a69bdefae6908836c",
-    strip_prefix = "abseil-cpp-35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a",
-    urls = ["https://github.com/abseil/abseil-cpp/archive/35e8e3f7a2c6972d4c591448e8bbe4f9ed9f815a.zip"],
+    sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
+    strip_prefix = "abseil-cpp-20230802.1",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz"],
 )
 
 http_archive(
@@ -59,9 +58,9 @@ http_archive(
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "24564e3b712d3eb30ac9a85d92f7d720f60cc0173730ac166f27dda7fed76cb2",
-    strip_prefix = "googletest-release-1.12.1",
-    urls = ["https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip"],
+    sha256 = "1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4",
+    strip_prefix = "googletest-1.14.0",
+    urls = ["https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip"],
 )
 
 http_archive(
@@ -140,10 +139,10 @@ bison_register_toolchains()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "a700a49470d301f1190a487a923b5095bf60f08f4ae4cac9f5f7c36883d17971",
-    strip_prefix = "protobuf-23.4",
+    sha256 = "9bd87b8280ef720d3240514f884e56a712f2218f0d693b48050c836028940a42",
+    strip_prefix = "protobuf-25.1",
     urls = [
-        "https://github.com/protocolbuffers/protobuf/releases/download/v23.4/protobuf-23.4.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz",
     ],
 )
 
@@ -153,10 +152,10 @@ protobuf_deps()
 
 http_archive(
     name = "rules_proto",
-    sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
-    strip_prefix = "rules_proto-4.0.0-3.20.0",
+    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
+    strip_prefix = "rules_proto-5.3.0-21.7",
     urls = [
-        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.20.0.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.7.tar.gz",
     ],
 )
 
