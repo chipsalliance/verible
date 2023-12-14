@@ -42,7 +42,10 @@ class KzipCreator final {
       const ::kythe::proto::IndexedCompilation &unit);
 
  private:
-  std::unique_ptr<FILE, decltype(&fclose)> zip_file_;
+  struct file_closer {
+    void operator()(FILE *f) const noexcept { fclose(f); }
+  };
+  std::unique_ptr<FILE, file_closer> zip_file_;
   verible::zip::Encoder archive_;
 };
 
