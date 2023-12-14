@@ -58,7 +58,7 @@ const SyntaxTreeLeaf *GetRightmostLeaf(const Symbol &symbol) {
 
   const auto &node = SymbolCastToNode(symbol);
 
-  for (const auto &child : reversed_view(node.children())) {
+  for (const auto &child : const_reversed_view(node.children())) {
     if (child != nullptr) {
       const auto *leaf = GetRightmostLeaf(*child);
       if (leaf != nullptr) {

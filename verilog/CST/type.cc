@@ -48,12 +48,11 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
   }
   verible::SyntaxTreeNode &base(verible::CheckSymbolAsNode(
       *ABSL_DIE_IF_NULL(reference_call_base), NodeEnum::kReference));
-  auto &children(base.mutable_children());
-  CHECK(!children.empty());
+  CHECK(!base.empty());
 
-  Symbol &local_root(*children.front());
+  Symbol &local_root(*base.front());
   if (local_root.Kind() != verible::SymbolKind::kNode ||
-      verible::SymbolCastToNode(*children.back())
+      verible::SymbolCastToNode(*base.back())
           .MatchesTag(NodeEnum::kHierarchyExtension)) {
     // function call -like syntax can never be interpreted as a type,
     // so return the whole subtree unmodified.
@@ -71,9 +70,14 @@ SymbolPtr ReinterpretReferenceAsDataTypePackedDimensions(
   verible::SyntaxTreeNode &local_root_with_extension_node(
       verible::SymbolCastToNode(*local_root_with_extension));
   local_root_with_extension_node.AppendChild(
-      ReinterpretLocalRootAsType(*children.front()));
+      ReinterpretLocalRootAsType(*base.front()));
 
-  for (auto &child : verible::make_range(++children.begin(), children.end())) {
+  bool is_first = true;
+  for (auto &child : base.mutable_children()) {
+    if (is_first) {
+      is_first = false;
+      continue;
+    }
     // Each child could be a call-extension or an index (bit-select/slice).
     // Only [] indices are valid, any others are syntax errors.
     // We discard syntax errors for now, but in the future should retain these
@@ -171,7 +175,7 @@ const verible::Symbol *GetBaseTypeFromDataType(
   if (local_root->Tag().tag != (int)NodeEnum::kLocalRoot) return local_root;
 
   CHECK(!local_root->empty());
-  auto &children = local_root->children();
+  const auto &children = local_root->children();
   verible::Symbol *last_child = nullptr;
   for (auto &child : children) {
     if (child != nullptr && child->Kind() == verible::SymbolKind::kNode) {

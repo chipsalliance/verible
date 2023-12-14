@@ -74,6 +74,8 @@ class SyntaxTreeNode final : public Symbol {
   // This container needs to provide a random access [] operator and
   // rbegin(), rend() iterators.
   using ChildContainer = std::vector<SymbolPtr>;
+  using ConstRange = iterator_range<ChildContainer::const_iterator>;
+  using MutableRange = iterator_range<ChildContainer::iterator>;
 
   explicit SyntaxTreeNode(const int tag = kUntagged) : tag_(tag) {}
 
@@ -128,9 +130,17 @@ class SyntaxTreeNode final : public Symbol {
   size_t size() const { return children_.size(); }
   bool empty() const { return children_.empty(); }
 
-  // TODO(hzeller): return ranges for these. Only used in range-loops.
-  const ChildContainer &children() const { return children_; }
+  ConstRange children() const {
+    return ConstRange(children_.cbegin(), children_.cend());
+  }
+
+#if 0  // TODO: to switch, find solution for pop_back() in PruneTreeFromRight()
+  MutableRange mutable_children() {
+    return MutableRange(children_.begin(), children_.end());
+  }
+#else
   ChildContainer &mutable_children() { return children_; }
+#endif
 
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.
