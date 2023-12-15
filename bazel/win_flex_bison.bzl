@@ -107,6 +107,10 @@ remote_win_flex_bison = repository_rule(
 )
 
 def win_flex_configure(name, url, sha256 = ""):
+    # testing. This should be dependent on if we're building for win
+    print("Skipping configure")
+    return
+
     remote_win_flex_bison(
         name = name,
         url = url,

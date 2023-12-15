@@ -56,12 +56,14 @@ OUT_DIR=${TARGET_OS}-${TARGET_VERSION}
 mkdir -p "${OUT_DIR}"
 sed "s#${TARGET_OS}:VERSION#${TARGET_OS}:${TARGET_VERSION}#g" ${TARGET_OS}.dockerfile > ${OUT_DIR}/Dockerfile
 
+BAZEL_OPTS="${BAZEL_OPTS} --java_runtime_version=local_jdk --tool_java_runtime_version=local_jdk"
+
 case "$TARGET_OS" in
   ubuntu)
     # Compiler
     [ "$TARGET_VERSION" = xenial ] || [ "$TARGET_VERSION" = bionic ] && _version="$TARGET_VERSION" || _version="common"
     cat ${TARGET_OS}/${_version}/compiler.dockerstage >> ${OUT_DIR}/Dockerfile
-    
+
     # Use local flex/bison on Jammy
     if [ "$TARGET_VERSION" = jammy ]; then
       BAZEL_OPTS="${BAZEL_OPTS} --//bazel:use_local_flex_bison"

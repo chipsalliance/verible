@@ -14,4 +14,5 @@ RUN apt-get install -y         \
     lsb-release                \
     software-properties-common \
     wget                       \
+    openjdk-11-jdk             \
     python3

@@ -7,4 +7,5 @@ RUN yum install -y \
     redhat-lsb     \
     tar            \
     wget           \
+    java-11-openjdk-devel \
     python3
