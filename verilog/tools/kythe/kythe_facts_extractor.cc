@@ -718,7 +718,7 @@ void KytheFactsExtractor::ReferenceModuleNamedPort(
     const IndexingFactNode &named_port_node) {
   const auto &port_name = named_port_node.Value().Anchors()[0];
 
-  std::optional<ScopedVname> port_name_type = std::nullopt;
+  std::optional<ScopedVname> port_name_type;
   const auto parent_type = GetParentTypeScope(named_port_node);
   if (parent_type) {
     port_name_type =
