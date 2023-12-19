@@ -82,12 +82,15 @@ std::vector<absl::string_view> InitCommandLine(
         static_cast<absl::LogSeverityAtLeast>(std::clamp(log_level, 0, 3)));
   }
 
-  // Until vlog is provided in absl, we use our own global variable, defined
-  // in logging.cc
+  // Set vlog-level with environment variable. The definition of
+  // VERIBLE_INTERNAL_SET_VLOGLEVEL() might be different depending on if we
+  // have an absl implementation or not.
   const char *const vlog_level_env = getenv("VERIBLE_VLOG_DETAIL");
-  if (!vlog_level_env ||
-      !absl::SimpleAtoi(vlog_level_env, &verible::global_vlog_level_)) {
-    global_vlog_level_ = 0;
+  int vlog_level = 0;
+  if (vlog_level_env && absl::SimpleAtoi(vlog_level_env, &vlog_level)) {
+    VERIBLE_INTERNAL_SET_VLOGLEVEL(vlog_level);
+  } else {
+    VERIBLE_INTERNAL_SET_VLOGLEVEL(0);
   }
 
   absl::InitializeLog();
