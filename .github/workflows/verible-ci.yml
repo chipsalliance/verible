@@ -303,80 +303,6 @@ jobs:
       with:
         path: kythe_output/*.kzip
 
-
-  Matrix:
-    runs-on: ubuntu-latest
-    name: Generate Build matrix
-    outputs:
-      matrix: ${{ steps.generate.outputs.matrix }}
-
-    steps:
-
-    - uses: actions/checkout@v3
-
-    - id: generate
-      run: ./.github/bin/generate-matrix.py
-
-
-  Build:
-    needs: Matrix
-    container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
-    # Github actions resources are limited; don't build artifacts for all
-    # platforms on every pull request, only on push.
-    if: ${{github.event_name == 'push'}}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    env:
-      MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
-      LINK_TYPE: '${{ matrix.link }}'
-      ARCH: '${{ matrix.arch }}'
-      DOCKER_DATA_ROOT: "/root/.docker"
-      GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
-    name: "Build ·${{ matrix.arch }}:${{ matrix.os }}:${{ matrix.ver }}${{ matrix.link == 'static' && ':static' || '' }}"
-
-    steps:
-
-    - uses: actions/checkout@v3
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
-
-    - name: Install and setup Docker
-      run: "apt -qqy update && apt -qqy --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates git && cgroupfs-mount"
-
-    - name: Main script
-      run: |
-        set -x
-
-        mkdir -p "$DOCKER_DATA_ROOT"
-        dockerd \
-          -s fuse-overlayfs \
-          --add-runtime=crun=/usr/bin/crun \
-          --default-runtime=crun \
-          --config-file="" \
-          --data-root=$DOCKER_DATA_ROOT > /dev/null 2>&1 &
-        while ! test -S /var/run/docker.sock; do echo "Waiting for Docker..." && sleep 1; done; docker info
-        trap "kill $(cat /var/run/docker.pid)" EXIT
-
-        docker pull $MATRIX_OS
-        source ./.github/settings.sh
-        ARCH="$ARCH" LINK_TYPE="$LINK_TYPE" ./releasing/docker-run.sh $MATRIX_OS
-
-    - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        path: releasing/out/verible-*.tar.gz
-
-    - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
-      if: success() || failure()
-      with:
-        name: "diag"
-        path: "**/plot_*.svg"
-
   MacOsBuildDevTools:
     runs-on: macos-latest
     steps:
@@ -546,7 +472,7 @@ jobs:
 
 
   Release:
-    needs: [ Check, Build, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
+    needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
