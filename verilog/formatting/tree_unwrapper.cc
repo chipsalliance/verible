@@ -2482,14 +2482,121 @@ static const SyntaxTreeNode* GetAssignedExpressionFromDataDeclaration(
   return &verible::SymbolCastToNode(*expression);
 }
 
+static void HandleDataDeclaration(const SyntaxTreeNode& node,
+                                  const FormatStyle& style,
+                                  TokenPartitionTree* partition) {
+  AttachTrailingSemicolonToPreviousPartition(partition);
+  auto& data_declaration_partition = *partition;
+  auto& children = data_declaration_partition.Children();
+  CHECK(!children.empty());
+
+  // TODO(fangism): fuse qualifiers (if any) with type partition
+
+  // The instances/variable declaration list is always in last position.
+  auto& instance_list_partition = children.back();
+  if (  // TODO(fangism): get type and qualifiers from declaration node,
+        // and check whether type node is implicit, using CST functions.
+      verible::BirthRank(instance_list_partition) == 0) {
+    VLOG(4) << "No qualifiers and type is implicit";
+    // This means there are no qualifiers and type was implicit,
+    // so no partition precedes this.
+    // Use the declaration (parent) level's indentation.
+    verible::AdjustIndentationAbsolute(
+        &instance_list_partition,
+        data_declaration_partition.Value().IndentationSpaces());
+    HoistOnlyChildPartition(&instance_list_partition);
+  } else if (GetInstanceListFromDataDeclaration(node)->size() == 1) {
+    VLOG(4) << "Instance list has only one child, singleton.";
+
+    // Undo the indentation of the only instance in the hoisted subtree.
+    verible::AdjustIndentationRelative(&instance_list_partition,
+                                       -style.wrap_spaces);
+    VLOG(4) << "After un-indenting, instance list:\n"
+            << instance_list_partition;
+
+    // Reshape type-instance partitions.
+    auto* instance_type_partition =
+        ABSL_DIE_IF_NULL(PreviousSibling(children.back()));
+    VLOG(4) << "instance type:\n" << *instance_type_partition;
+
+    if (instance_type_partition == &children.front()) {
+      // data_declaration_partition now consists of exactly:
+      //   instance_type_partition, instance_list_partition (single
+      //   instance)
+
+      // Flatten these (which will invalidate their references).
+      std::vector<size_t> offsets;
+      FlattenOnlyChildrenWithChildren(data_declaration_partition, &offsets);
+      // This position in the flattened result will be merged.
+      const size_t fuse_position = offsets.back() - 1;
+
+      // Join the rightmost of instance_type_partition with the leftmost of
+      // instance_list_partition.  Keep the type's indentation.
+      // This can yield an intermediate partition that contains:
+      // ") instance_name (".
+      MergeConsecutiveSiblings(&data_declaration_partition, fuse_position);
+    } else {
+      // There is a qualifier before instance_type_partition.
+      FlattenOnlyChildrenWithChildren(data_declaration_partition);
+    }
+  } else {
+    VLOG(4) << "None of the special cases apply.";
+  }
+
+  // Handle variable declaration with an assignment
+
+  const auto* assigned_expr = GetAssignedExpressionFromDataDeclaration(node);
+  if (!assigned_expr || assigned_expr->empty()) return;
+
+  AttachOpeningBraceToDeclarationsAssignmentOperator(partition);
+
+  // Special handling for assignment of a string concatenation
+
+  const auto* concat_expr_symbol = assigned_expr->front().get();
+  if (concat_expr_symbol->Tag() !=
+      verible::NodeTag(NodeEnum::kConcatenationExpression)) {
+    return;
+  }
+
+  const auto* open_range_list_symbol =
+      verible::SymbolCastToNode(*concat_expr_symbol)[1].get();
+  if (open_range_list_symbol->Tag() !=
+      verible::NodeTag(NodeEnum::kOpenRangeList)) {
+    return;
+  }
+
+  const auto& open_range_list =
+      verible::SymbolCastToNode(*open_range_list_symbol);
+
+  if (std::all_of(
+          open_range_list.children().begin(), open_range_list.children().end(),
+          [](const verible::SymbolPtr& sym) {
+            if (sym->Tag() == verible::NodeTag(NodeEnum::kExpression)) {
+              const auto& expr = verible::SymbolCastToNode(*sym.get());
+              return !expr.empty() &&
+                     expr.front()->Tag() ==
+                         verible::LeafTag(verilog_tokentype::TK_StringLiteral);
+            }
+            return (sym->Kind() == verible::SymbolKind::kLeaf);
+          })) {
+    auto& assigned_value_partition = data_declaration_partition.Children()[1];
+    partition->Value().SetPartitionPolicy(
+        PartitionPolicyEnum::kAppendFittingSubPartitions);
+    assigned_value_partition.Value().SetPartitionPolicy(
+        PartitionPolicyEnum::kAlwaysExpand);
+  }
+}
+
 // This phase is strictly concerned with reshaping token partitions,
 // and occurs on the return path of partition tree construction.
+// TODO: this method is long; possibly break out functionality similar to
+// HandleDataDeclaration().
 void TreeUnwrapper::ReshapeTokenPartitions(
     const SyntaxTreeNode& node, const FormatStyle& style,
     TokenPartitionTree* recent_partition) {
-  const auto tag = static_cast<NodeEnum>(node.Tag().tag);
+  const NodeEnum tag = static_cast<NodeEnum>(node.Tag().tag);
   VLOG(3) << __FUNCTION__ << " node: " << tag;
-  auto& partition = *recent_partition;
+  TokenPartitionTree& partition = *recent_partition;
   VLOG(4) << "before reshaping " << tag << ":\n"
           << VerilogPartitionPrinter(partition);
 
@@ -2515,114 +2622,9 @@ void TreeUnwrapper::ReshapeTokenPartitions(
   switch (tag) {
     // Note: this is also being applied to variable declaration lists,
     // which may want different handling than instantiations.
-    case NodeEnum::kDataDeclaration: {
-      AttachTrailingSemicolonToPreviousPartition(&partition);
-      auto& data_declaration_partition = partition;
-      auto& children = data_declaration_partition.Children();
-      CHECK(!children.empty());
-
-      // TODO(fangism): fuse qualifiers (if any) with type partition
-
-      // The instances/variable declaration list is always in last position.
-      auto& instance_list_partition = children.back();
-      if (  // TODO(fangism): get type and qualifiers from declaration node,
-            // and check whether type node is implicit, using CST functions.
-          verible::BirthRank(instance_list_partition) == 0) {
-        VLOG(4) << "No qualifiers and type is implicit";
-        // This means there are no qualifiers and type was implicit,
-        // so no partition precedes this.
-        // Use the declaration (parent) level's indentation.
-        verible::AdjustIndentationAbsolute(
-            &instance_list_partition,
-            data_declaration_partition.Value().IndentationSpaces());
-        HoistOnlyChildPartition(&instance_list_partition);
-      } else if (GetInstanceListFromDataDeclaration(node)->size() == 1) {
-        VLOG(4) << "Instance list has only one child, singleton.";
-
-        // Undo the indentation of the only instance in the hoisted subtree.
-        verible::AdjustIndentationRelative(&instance_list_partition,
-                                           -style.wrap_spaces);
-        VLOG(4) << "After un-indenting, instance list:\n"
-                << instance_list_partition;
-
-        // Reshape type-instance partitions.
-        auto* instance_type_partition =
-            ABSL_DIE_IF_NULL(PreviousSibling(children.back()));
-        VLOG(4) << "instance type:\n" << *instance_type_partition;
-
-        if (instance_type_partition == &children.front()) {
-          // data_declaration_partition now consists of exactly:
-          //   instance_type_partition, instance_list_partition (single
-          //   instance)
-
-          // Flatten these (which will invalidate their references).
-          std::vector<size_t> offsets;
-          FlattenOnlyChildrenWithChildren(data_declaration_partition, &offsets);
-          // This position in the flattened result will be merged.
-          const size_t fuse_position = offsets.back() - 1;
-
-          // Join the rightmost of instance_type_partition with the leftmost of
-          // instance_list_partition.  Keep the type's indentation.
-          // This can yield an intermediate partition that contains:
-          // ") instance_name (".
-          MergeConsecutiveSiblings(&data_declaration_partition, fuse_position);
-        } else {
-          // There is a qualifier before instance_type_partition.
-          FlattenOnlyChildrenWithChildren(data_declaration_partition);
-        }
-      } else {
-        VLOG(4) << "None of the special cases apply.";
-      }
-
-      // Handle variable declaration with an assignment
-
-      const auto* assigned_expr =
-          GetAssignedExpressionFromDataDeclaration(node);
-      if (!assigned_expr || assigned_expr->empty()) break;
-
-      AttachOpeningBraceToDeclarationsAssignmentOperator(&partition);
-
-      // Special handling for assignment of a string concatenation
-
-      const auto* concat_expr_symbol = assigned_expr->front().get();
-      if (concat_expr_symbol->Tag() !=
-          verible::NodeTag(NodeEnum::kConcatenationExpression)) {
-        break;
-      }
-
-      const auto* open_range_list_symbol =
-          verible::SymbolCastToNode(*concat_expr_symbol)[1].get();
-      if (open_range_list_symbol->Tag() !=
-          verible::NodeTag(NodeEnum::kOpenRangeList)) {
-        break;
-      }
-
-      const auto& open_range_list =
-          verible::SymbolCastToNode(*open_range_list_symbol);
-
-      if (std::all_of(
-              open_range_list.children().begin(),
-              open_range_list.children().end(),
-              [](const verible::SymbolPtr& sym) {
-                if (sym->Tag() == verible::NodeTag(NodeEnum::kExpression)) {
-                  const auto& expr = verible::SymbolCastToNode(*sym.get());
-                  return !expr.empty() &&
-                         expr.front()->Tag() ==
-                             verible::LeafTag(
-                                 verilog_tokentype::TK_StringLiteral);
-                }
-                return (sym->Kind() == verible::SymbolKind::kLeaf);
-              })) {
-        auto& assigned_value_partition =
-            data_declaration_partition.Children()[1];
-        partition.Value().SetPartitionPolicy(
-            PartitionPolicyEnum::kAppendFittingSubPartitions);
-        assigned_value_partition.Value().SetPartitionPolicy(
-            PartitionPolicyEnum::kAlwaysExpand);
-      }
-
+    case NodeEnum::kDataDeclaration:
+      HandleDataDeclaration(node, style, &partition);
       break;
-    }
 
     // For these cases, the leading sub-partition is merged into its next
     // relative.  This is useful for constructs that are repeatedly prefixed
