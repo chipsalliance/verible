@@ -240,6 +240,19 @@ jobs:
         name: verible-bin
         path: verible-bin.tar
 
+    - name: Pack up static results
+      if: matrix.mode == 'compile-static'
+      # Note: generic builds were removed in #2058, so here we pack the
+      # CI results for static binaries.
+      run: |
+        VERSION=$(git describe --match=v*)
+        .github/bin/simple-install.sh verible-${VERSION}/bin
+        tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v2
