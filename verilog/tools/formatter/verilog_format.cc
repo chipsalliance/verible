@@ -129,12 +129,12 @@ static std::ostream& FileMsg(absl::string_view filename) {
 
 static bool formatOneFile(absl::string_view filename,
                           const LineNumberSet& lines_to_format,
-                          bool& lines_changed) {
+                          bool* lines_changed) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
   const bool check = absl::GetFlag(FLAGS_check);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
-  lines_changed = false;
+  *lines_changed = false;
 
   if (inplace && is_stdin) {
     FileMsg(filename)
@@ -209,11 +209,11 @@ static bool formatOneFile(absl::string_view filename,
   }
 
   // Check if the output is the same as the input.
-  lines_changed = (*content_or != formatted_output);
+  *lines_changed = (*content_or != formatted_output);
 
   // Don't output or write if --check is set.
   if (check) {
-    if (lines_changed) {
+    if (*lines_changed) {
       FileMsg(filename) << "Needs formatting." << std::endl;
     } else {
       FileMsg(filename) << "Already formatted, no change." << std::endl;
@@ -223,7 +223,7 @@ static bool formatOneFile(absl::string_view filename,
     if (inplace && !is_stdin) {
       // Don't write if the output is exactly as the input, so that we don't mess
       // with tools that look for timestamp changes (such as make).
-      if (lines_changed) {
+      if (*lines_changed) {
         if (auto status = verible::file::SetContents(filename, formatted_output);
             !status.ok()) {
           FileMsg(filename) << "error writing result " << status << std::endl;
@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
   // All positional arguments are file names.  Exclude program name.
   for (const absl::string_view filename :
        verible::make_range(file_args.begin() + 1, file_args.end())) {
-    all_success &= formatOneFile(filename, lines_to_format, lines_changed);
+    all_success &= formatOneFile(filename, lines_to_format, &lines_changed);
   }
 
   if (absl::GetFlag(FLAGS_check)) {
