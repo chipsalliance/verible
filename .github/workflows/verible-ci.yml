@@ -28,7 +28,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -49,7 +49,7 @@ jobs:
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -65,7 +65,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -83,7 +83,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -110,7 +110,7 @@ jobs:
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -163,7 +163,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -175,7 +175,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -235,7 +235,7 @@ jobs:
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: verible-bin
         path: verible-bin.tar
@@ -250,12 +250,12 @@ jobs:
         tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -312,7 +312,7 @@ jobs:
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe xRefs to the action artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: kythe_output/*.kzip
 
@@ -321,7 +321,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -338,7 +338,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -365,7 +365,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -381,7 +381,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -406,7 +406,7 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.tar.gz
 
@@ -434,7 +434,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -469,7 +469,7 @@ jobs:
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.zip
 
