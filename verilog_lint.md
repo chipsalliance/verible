@@ -390,4 +390,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2023-12-20 03:21:52 -0800 from [5d5835e](https://github.com/google/verible/commit/5d5835e11dbe9cdca1d6e81bfa8621c92a4a9452)
+Generated on 2023-12-20 07:16:15 -0800 from [7fdc287](https://github.com/google/verible/commit/7fdc2876469c63fc46ed7303ca1dc2fb295dbe1b)
