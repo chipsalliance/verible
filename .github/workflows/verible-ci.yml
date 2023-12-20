@@ -28,7 +28,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -49,7 +49,7 @@ jobs:
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -65,7 +65,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -83,7 +83,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -110,7 +110,7 @@ jobs:
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -163,7 +163,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -175,7 +175,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -235,14 +235,27 @@ jobs:
 
     - name: Upload bazel-bin
       if: matrix.mode == 'compile' && matrix.arch == 'x86_64'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: verible-bin
         path: verible-bin.tar
 
+    - name: Pack up static results
+      if: matrix.mode == 'compile-static'
+      # Note: generic builds were removed in #2058, so here we pack the
+      # CI results for static binaries.
+      run: |
+        VERSION=$(git describe --match=v*)
+        .github/bin/simple-install.sh verible-${VERSION}/bin
+        tar cvzf verible-${VERSION}-linux-static-${{matrix.arch}}.tar.gz verible-${VERSION}
+
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        path: verible-*.tar.gz
 
     - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success() || failure()
       with:
         name: "diag"
@@ -299,90 +312,16 @@ jobs:
         ./.github/bin/run-kythe.sh
 
     - name: 📤 Upload Kythe xRefs to the action artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: kythe_output/*.kzip
-
-
-  Matrix:
-    runs-on: ubuntu-latest
-    name: Generate Build matrix
-    outputs:
-      matrix: ${{ steps.generate.outputs.matrix }}
-
-    steps:
-
-    - uses: actions/checkout@v3
-
-    - id: generate
-      run: ./.github/bin/generate-matrix.py
-
-
-  Build:
-    needs: Matrix
-    container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
-    # Github actions resources are limited; don't build artifacts for all
-    # platforms on every pull request, only on push.
-    if: ${{github.event_name == 'push'}}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.Matrix.outputs.matrix) }}
-    env:
-      MATRIX_OS: '${{ matrix.os }}:${{ matrix.ver }}'
-      LINK_TYPE: '${{ matrix.link }}'
-      ARCH: '${{ matrix.arch }}'
-      DOCKER_DATA_ROOT: "/root/.docker"
-      GHA_MACHINE_TYPE: "${{ matrix.arch == 'arm64' && 't2a-standard-8' || 'n2-highcpu-8' }}"
-    name: "Build ·${{ matrix.arch }}:${{ matrix.os }}:${{ matrix.ver }}${{ matrix.link == 'static' && ':static' || '' }}"
-
-    steps:
-
-    - uses: actions/checkout@v3
-      with:
-       # Download complete repository + tags
-       fetch-depth: 0
-
-    - name: Install and setup Docker
-      run: "apt -qqy update && apt -qqy --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates git && cgroupfs-mount"
-
-    - name: Main script
-      run: |
-        set -x
-
-        mkdir -p "$DOCKER_DATA_ROOT"
-        dockerd \
-          -s fuse-overlayfs \
-          --add-runtime=crun=/usr/bin/crun \
-          --default-runtime=crun \
-          --config-file="" \
-          --data-root=$DOCKER_DATA_ROOT > /dev/null 2>&1 &
-        while ! test -S /var/run/docker.sock; do echo "Waiting for Docker..." && sleep 1; done; docker info
-        trap "kill $(cat /var/run/docker.pid)" EXIT
-
-        docker pull $MATRIX_OS
-        source ./.github/settings.sh
-        ARCH="$ARCH" LINK_TYPE="$LINK_TYPE" ./releasing/docker-run.sh $MATRIX_OS
-
-    - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        path: releasing/out/verible-*.tar.gz
-
-    - name: 📤 Upload performance graphs
-      uses: actions/upload-artifact@v2
-      if: success() || failure()
-      with:
-        name: "diag"
-        path: "**/plot_*.svg"
 
   MacOsBuildDevTools:
     runs-on: macos-latest
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -399,7 +338,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -426,7 +365,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.12.0
       with:
         access_token: ${{ github.token }}
 
@@ -442,7 +381,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -467,7 +406,7 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.tar.gz
 
@@ -495,7 +434,7 @@ jobs:
 
     - name: Create Cache Timestamp
       id: cache_timestamp
-      uses: nanzm/get-time-action@v1.1
+      uses: nanzm/get-time-action@v2.0
       with:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
@@ -530,7 +469,7 @@ jobs:
         7z a "verible-${VERSION}-win64.zip" "c:/verible-${VERSION}-win64"
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: verible-*.zip
 
@@ -546,7 +485,7 @@ jobs:
 
 
   Release:
-    needs: [ Check, Build, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
+    needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
     name: 📦 Release
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}

@@ -1,5 +1,0 @@
-centos:7
-ubuntu:bionic
-ubuntu:focal
-ubuntu:jammy
-ubuntu:xenial
