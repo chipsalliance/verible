@@ -269,6 +269,11 @@ Recommend extra parentheses around subexpressions where it helps readability. Se
 
 Enabled by default: true
 
+### suspicious-semicolon
+Checks that there are no suspicious semicolons that might affect code behaviour but escape quick visual inspection See [Style: bugprone].
+
+Enabled by default: false
+
 ### truncated-numeric-literal
 Checks that numeric literals are not longer than their stated bit-width to avoid undesired accidental truncation. See [Style: number-literals].
 
@@ -322,4 +327,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2023-12-21 03:22:01 -0800 from [b2f7d66](https://github.com/google/verible/commit/b2f7d66d7f8b67eadda65b72354fbfd610931c55)
+Generated on 2023-12-21 03:54:40 -0800 from [4e8133d](https://github.com/google/verible/commit/4e8133d1e299b67764b5222657a70cac96798948)
