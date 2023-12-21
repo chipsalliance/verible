@@ -284,9 +284,12 @@ int main(int argc, char** argv) {
     all_success &= formatOneFile(filename, lines_to_format, &lines_changed);
   }
 
+  int ret_val = 0;
   if (absl::GetFlag(FLAGS_check)) {
-    return lines_changed;
+    ret_val = lines_changed;
   } else {
-    return all_success ? 0 : 1;
+    ret_val = all_success ? 0 : 1;
   }
+
+  return ret_val;
 }
