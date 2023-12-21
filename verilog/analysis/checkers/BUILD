@@ -62,6 +62,7 @@ cc_library(
         ":signal-name-style-rule",
         ":struct-union-name-style-rule",
         ":suggest-parentheses-rule",
+        ":suspicious-semicolon-rule",
         ":token-stream-lint-rule",
         ":truncated-numeric-literal-rule",
         ":undersized-binary-literal-rule",
@@ -2122,4 +2123,29 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "suspicious-semicolon-rule",
+    srcs = ["suspicious_semicolon_rule.cc"],
+    hdrs = ["suspicious_semicolon_rule.h"],
+    deps = [
+         "//common/analysis:lint-rule-status",
+         "//common/analysis:syntax-tree-lint-rule",
+         "//verilog/CST:verilog-matchers",
+         "//verilog/analysis:descriptions",
+         "//verilog/analysis:lint-rule-registry",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+  name = "suspicious-semicolon-rule_test",
+  srcs = ["suspicious_semicolon_rule_test.cc"],
+  deps = [
+      ":suspicious-semicolon-rule",
+      "//common/analysis:syntax-tree-linter-test-utils",
+      "//verilog/analysis:verilog-analyzer",
+      "@com_google_googletest//:gtest_main",
+  ],
 )

@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ void RunLintAutoFixCase(const AutoFixInOut &test,
 
 template <class AnalyzerType, class RuleClass>
 void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
-                      absl::string_view configuration) {
+                      absl::string_view configuration = "") {
   using rule_type = typename RuleClass::rule_type;
   auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
     std::unique_ptr<rule_type> instance(new RuleClass());
