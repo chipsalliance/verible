@@ -282,16 +282,16 @@ int main(int argc, char** argv) {
   }
 
   bool all_success = true;
-  bool lines_changed = false;
+  bool any_changes = false;
   // All positional arguments are file names.  Exclude program name.
   for (const absl::string_view filename :
        verible::make_range(file_args.begin() + 1, file_args.end())) {
-    all_success &= formatOneFile(filename, lines_to_format, &lines_changed);
+    all_success &= formatOneFile(filename, lines_to_format, &any_changes);
   }
 
   int ret_val = 0;
   if (absl::GetFlag(FLAGS_verify)) {
-    ret_val = lines_changed;
+    ret_val = any_changes;
   } else {
     ret_val = all_success ? 0 : 1;
   }
