@@ -127,6 +127,8 @@ class SyntaxTreeNode final : public Symbol {
   const SymbolPtr &back() const { return children_.back(); }
   SymbolPtr &back() { return children_.back(); }
 
+  void pop_back() { children_.pop_back(); }
+
   size_t size() const { return children_.size(); }
   bool empty() const { return children_.empty(); }
 
@@ -134,13 +136,9 @@ class SyntaxTreeNode final : public Symbol {
     return ConstRange(children_.cbegin(), children_.cend());
   }
 
-#if 0  // TODO: to switch, find solution for pop_back() in PruneTreeFromRight()
   MutableRange mutable_children() {
     return MutableRange(children_.begin(), children_.end());
   }
-#else
-  ChildContainer &mutable_children() { return children_; }
-#endif
 
   // Compares this node to an arbitrary symbol using the compare_tokens
   // function.
