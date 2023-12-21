@@ -65,6 +65,7 @@ inline constexpr const char* kDefaultRuleSet[] = {
     "positive-meaning-parameter-name",
     "constraint-name-style",
     "suggest-parentheses",
+    "suspicious-semicolon",
     "truncated-numeric-literal",
     // TODO(fangism): enable in production:
     // TODO(b/155128436): "uvm-macro-semicolon"

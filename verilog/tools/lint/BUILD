@@ -69,7 +69,7 @@ _linter_test_configs = [
     ("signal-name-style", "signal_name_style", False),
     ("struct-union-name-style", "struct_name_style", True),
     ("struct-union-name-style", "union_name_style", True),
-    ("suspicious-semicolon", "suspicious_semicolon", False),
+    ("suspicious-semicolon", "suspicious_semicolon", True),
     ("v2001-generate-begin", "generate_begin_module", True),
     ("void-cast", "void-cast", True),
     ("undersized-binary-literal", "undersized_binary_literal", True),
