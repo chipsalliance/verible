@@ -85,8 +85,11 @@ std::string AbslUnparseFlag(LineRanges /* unused */) {
 // TODO(fangism): Provide -i alias, as it is canonical to many formatters
 ABSL_FLAG(bool, inplace, false,
           "If true, overwrite the input file on successful conditions.");
-ABSL_FLAG(bool, check, false,
-          "If true, checks if formatting would be done exiting with 0 if no changes.");
+ABSL_FLAG(
+    bool, verify, false,
+    "If true, only checks if formatting would be done. Return code 0 means "
+    "no files would change. Return code 1 means some files would "
+    "be reformatted.");
 ABSL_FLAG(std::string, stdin_name, "<stdin>",
           "When using '-' to read from stdin, this gives an alternate name for "
           "diagnostic purposes.  Otherwise this is ignored.");
@@ -127,14 +130,15 @@ static std::ostream& FileMsg(absl::string_view filename) {
   return std::cerr;
 }
 
+// TODO: Refactor and simplify
 static bool formatOneFile(absl::string_view filename,
                           const LineNumberSet& lines_to_format,
-                          bool* lines_changed) {
+                          bool* any_changes) {
   const bool inplace = absl::GetFlag(FLAGS_inplace);
-  const bool check = absl::GetFlag(FLAGS_check);
+  const bool check_changes_only = absl::GetFlag(FLAGS_verify);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
-  *lines_changed = false;
+  *any_changes = false;
 
   if (inplace && is_stdin) {
     FileMsg(filename)
@@ -209,22 +213,23 @@ static bool formatOneFile(absl::string_view filename,
   }
 
   // Check if the output is the same as the input.
-  *lines_changed = (*content_or != formatted_output);
+  *any_changes = (*content_or != formatted_output);
 
   // Don't output or write if --check is set.
-  if (check) {
-    if (*lines_changed) {
+  if (check_changes_only) {
+    if (*any_changes) {
       FileMsg(filename) << "Needs formatting." << std::endl;
-    } else {
+    } else if (absl::GetFlag(FLAGS_verbose)) {
       FileMsg(filename) << "Already formatted, no change." << std::endl;
     }
   } else {
     // Safe to write out result, having passed above verification.
     if (inplace && !is_stdin) {
-      // Don't write if the output is exactly as the input, so that we don't mess
-      // with tools that look for timestamp changes (such as make).
-      if (*lines_changed) {
-        if (auto status = verible::file::SetContents(filename, formatted_output);
+      // Don't write if the output is exactly as the input, so that we don't
+      // mess with tools that look for timestamp changes (such as make).
+      if (*any_changes) {
+        if (auto status =
+                verible::file::SetContents(filename, formatted_output);
             !status.ok()) {
           FileMsg(filename) << "error writing result " << status << std::endl;
           return false;
@@ -285,7 +290,7 @@ int main(int argc, char** argv) {
   }
 
   int ret_val = 0;
-  if (absl::GetFlag(FLAGS_check)) {
+  if (absl::GetFlag(FLAGS_verify)) {
     ret_val = lines_changed;
   } else {
     ret_val = all_success ? 0 : 1;

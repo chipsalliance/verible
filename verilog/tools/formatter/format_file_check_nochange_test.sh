@@ -16,22 +16,26 @@
 # Tests verible-verilog-format reading from a file, checking for formatting
 # changes where no changes are needed. This should return 0.
 
-declare -r MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
+declare -r MY_OUTPUT_FILE="${TEST_TMPDIR}/myoutput.txt"
 
 # Get tool from argument
 [[ "$#" == 1 ]] || {
   echo "Expecting 1 positional argument, verible-verilog-format path."
   exit 1
 }
-formatter="$(rlocation ${TEST_WORKSPACE}/${1})"
+formatter="$(rlocation ${TEST_WORKSPACE}/$1)"
 
-cat >${MY_INPUT_FILE} <<EOF
-module m;
-endmodule
+# Will overwrite this file in-place.
+cat >${MY_OUTPUT_FILE} <<EOF
+  module    m   ;endmodule
 EOF
 
 # Run formatter.
-${formatter} --check ${MY_INPUT_FILE}
+${formatter} --inplace ${MY_OUTPUT_FILE} || exit 1
+
+# Now run the verify mode, which should return 0 since changes
+# are already made
+${formatter} --verify ${MY_OUTPUT_FILE}
 if [ "$?" -neq 0 ]; then
     echo "No changes should result in 0 error code"
     echo "FAIL"

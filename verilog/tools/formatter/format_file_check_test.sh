@@ -31,7 +31,7 @@ cat >${MY_INPUT_FILE} <<EOF
 EOF
 
 # Run formatter.
-${formatter} --verbose --check ${MY_INPUT_FILE}
+${formatter} --verbose --verify ${MY_INPUT_FILE}
 if [ "$?" -eq 0 ]; then
     echo "Changes should produce non-zero error code"
     echo "FAIL"
