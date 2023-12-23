@@ -115,6 +115,9 @@ To pipe from stdin, use '-' as <file>.
       name for diagnostic purposes. Otherwise this is ignored.);
       default: "<stdin>";
     --verbose (Be more verbose.); default: false;
+    --verify (If true, only checks if formatting would be done. Return code 0
+      means no files would change. Return code 1 means some files would be
+      reformatted.); default: false;
     --verify_convergence (If true, and not incrementally formatting with
       --lines, verify that re-formatting the formatted output yields no further
       changes, i.e. formatting is convergent.); default: true;
@@ -126,4 +129,4 @@ path.
 
 ## Version
 
-Generated on 2023-12-21 03:54:40 -0800 from [4e8133d](https://github.com/google/verible/commit/4e8133d1e299b67764b5222657a70cac96798948)
+Generated on 2023-12-23 00:05:03 -0800 from [9cb4509](https://github.com/google/verible/commit/9cb450927d79ea42622a4c58de6b07570df4e50e)
