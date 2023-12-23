@@ -140,8 +140,8 @@ class ScopeResolver {
   absl::flat_hash_map<std::string, absl::flat_hash_set<ScopedVname>>
       variable_to_scoped_vname_;
 
-  // Mapping from scope to all its members.
-  absl::flat_hash_map<SignatureDigest, absl::flat_hash_set<VName>>
+  // Mapping from scope to all its members. NOTE: requires pointer stability!
+  absl::node_hash_map<SignatureDigest, absl::flat_hash_set<VName>>
       scope_to_vnames_;
 
   // Maps the scope to the human readable description. Available only when debug
