@@ -68,6 +68,22 @@ sh_test_with_runfiles_lib(
 )
 
 sh_test_with_runfiles_lib(
+    name = "format-file-check_test",
+    size = "small",
+    srcs = ["format_file_check_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test_with_runfiles_lib(
+    name = "format-file-nochange-check_test",
+    size = "small",
+    srcs = ["format_file_check_nochange_test.sh"],
+    args = ["$(location :verible-verilog-format)"],
+    data = [":verible-verilog-format"],
+)
+
+sh_test_with_runfiles_lib(
     name = "format-file-lex-error_test",
     size = "small",
     srcs = ["format_file_lex_error_test.sh"],
