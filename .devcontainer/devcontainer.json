@@ -3,44 +3,40 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
 	"name": "Verible Dev",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	// "image": "amr-registry.caas.intel.com/fpga-simics/devenv/ubuntu22-dev:1.0",
-	//"image": "mcr.microsoft.com/devcontainers/base:jammy",
-	//"image": "mcr.microsoft.com/devcontainers/universal:2-linux",
 
 	"build": {
 	    "dockerfile": "Dockerfile",
-    	"args" : {
-			"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-			"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-			"http_proxy": "http://proxy-dmz.intel.com:912/",
-			"https_proxy": "http://proxy-dmz.intel.com:912/"
-		}
+		// Add any proxy settings if the build of the
+		// container is behind a proxy
+		//
+		// "args" : {
+		// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
+		// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
+		// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
+		// 	"https_proxy": "http://proxy-dmz.intel.com:912/"
+		// }
 	},
 
+// Add any proxy settings if connecting to a container on
+// a remote machine
+//
+//   "remoteEnv": {
+//     "HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
+//     "HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
+//     "http_proxy": "http://proxy-dmz.intel.com:912/",
+//     "https_proxy": "http://proxy-dmz.intel.com:912/",
+//   },
 
-  "remoteEnv": {
-    "HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-    "HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-    "http_proxy": "http://proxy-dmz.intel.com:912/",
-    "https_proxy": "http://proxy-dmz.intel.com:912/",
-	"npm_config_proxy": "http://proxy-dmz.intel.com:912/",
-	"npm_config_https_proxy": "http://proxy-dmz.intel.com:912/"
-  },
+// Add any proxy settings if the container is behind
+// a proxy
+///
+//   "containerEnv": {
+//     "HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
+//     "HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
+//     "http_proxy": "http://proxy-dmz.intel.com:912/",
+//     "https_proxy": "http://proxy-dmz.intel.com:912/"
+//   },
 
-
-  "containerEnv": {
-    "HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-    "HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-    "http_proxy": "http://proxy-dmz.intel.com:912/",
-    "https_proxy": "http://proxy-dmz.intel.com:912/"
-  },
-
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// devcontainer.json
-//	"features": {
-//		"ghcr.io/devcontainers-community/features/bazel:1": {}
-//	},
 
 	// Configure tool-specific properties.
 	"customizations": {
@@ -51,16 +47,6 @@
 				"ms-vscode.cpptools-extension-pack"
 			]
 		}
-	},
+	}
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [3000],
-
-	// Use 'portsAttributes' to set default properties for specific forwarded ports.
-	// More info: https://containers.dev/implementors/json_reference/#port-attributes
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
 }
