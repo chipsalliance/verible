@@ -116,7 +116,7 @@ packages.
 Here is a simple setup: put this in your `~/.emacs` file
 and make sure the binary is in your `$PATH` (or use full path).
 
-```lisp
+```elisp
 (require 'lsp-mode)
 (add-to-list 'lsp-language-id-configuration '(verilog-mode . "verilog"))
 (lsp-register-client
@@ -125,6 +125,15 @@ and make sure the binary is in your `$PATH` (or use full path).
                   :server-id 'verible-ls))
 
 (add-hook 'verilog-mode-hook 'lsp)
+```
+
+It is also possible to automatically configure `eglot` and `lsp-mode` using
+the [verilog-ext](https://github.com/gmlarumbe/verilog-ext.git) package:
+```elisp
+(require 'verilog-ext)
+(verilog-ext-mode-setup)
+(verilog-ext-eglot-set-server 've-verible-ls) ;`eglot' config
+(verilog-ext-lsp-set-server 've-verible-ls)   ; `lsp' config
 ```
 
 ### Kakoune
