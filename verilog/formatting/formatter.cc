@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "common/formatting/format_token.h"
@@ -51,6 +52,7 @@
 #include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
+#include "verilog/analysis/flow_tree.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/formatting/align.h"
@@ -58,8 +60,9 @@
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/token_annotator.h"
 #include "verilog/formatting/tree_unwrapper.h"
+#include "verilog/parser/verilog_lexer.h"
+#include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
-#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 namespace formatter {
@@ -78,31 +81,39 @@ using verible::VectorTreeLeavesIterator;
 
 using partition_node_type = VectorTree<TreeViewNodeInfo<TokenPartitionTree>>;
 
+using PreprocessConfigVariants = std::vector<VerilogPreprocess::Config>;
+
 // Takes a TextStructureView and FormatStyle, and formats UnwrappedLines.
 class Formatter {
  public:
-  Formatter(const verible::TextStructureView& text_structure,
-            const FormatStyle& style)
-      : text_structure_(text_structure), style_(style) {}
+  Formatter(const absl::string_view text, const FormatStyle& style,
+            const PreprocessConfigVariants& preproc_config_variants_ = {{}})
+      : text_(text),
+        preproc_config_variants_(preproc_config_variants_),
+        style_(style) {}
 
   // Formats the source code
-  Status Format(const ExecutionControl&);
+  Status Format(const ExecutionControl&, const verible::LineNumberSet&);
 
-  Status Format() { return Format(ExecutionControl()); }
-
-  void SelectLines(const LineNumberSet& lines);
+  Status Format() { return Format(ExecutionControl(), {}); }
 
   // Outputs all of the FormattedExcerpt lines to stream.
   // If "include_disabled" is false, does not contain the disabled ranges.
   void Emit(bool include_disabled, std::ostream& stream) const;
 
  private:
-  // Contains structural information about the code to format, such as
-  // TokenSequence from lexing, and ConcreteSyntaxTree from parsing
-  const verible::TextStructureView& text_structure_;
+  // The original text to format
+  absl::string_view text_;
+
+  // Preprocessor configuration variants to use for formatting.
+  std::vector<VerilogPreprocess::Config> preproc_config_variants_;
 
   // The style configuration for the formatter
   FormatStyle style_;
+
+  // Contains structural information about the code to format, such as
+  // TokenSequence from lexing, and ConcreteSyntaxTree from parsing
+  std::vector<std::unique_ptr<verible::TextStructure>> text_structures_;
 
   // Ranges of text where formatter is disabled (by comment directives).
   ByteOffsetSet disabled_ranges_;
@@ -112,48 +123,47 @@ class Formatter {
 };
 
 // TODO(b/148482625): make this public/re-usable for general content comparison.
-Status VerifyFormatting(const verible::TextStructureView& text_structure,
-                        absl::string_view formatted_output,
-                        absl::string_view filename) {
+Status VerifyFormatting(
+    absl::string_view text, absl::string_view formatted_output,
+    absl::string_view filename,
+    const PreprocessConfigVariants& preproc_config_variants = {{}}) {
   // Verify that the formatted output creates the same lexical
   // stream (filtered) as the original.  If any tokens were lost, fall back to
   // printing the original source unformatted.
   // Note: We cannot just Tokenize() and compare because Analyze()
   // performs additional transformations like expanding MacroArgs to
   // expression subtrees.
-  const auto reanalyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
-      formatted_output, filename, verilog::VerilogPreprocess::Config());
-  const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
-  const auto reparse_status = reanalyzer->ParseStatus();
+  for (const VerilogPreprocess::Config& config : preproc_config_variants) {
+    {
+      const auto reanalyzer = VerilogAnalyzer::AnalyzeAutomaticMode(
+          formatted_output, filename, config);
+      const auto relex_status = ABSL_DIE_IF_NULL(reanalyzer)->LexStatus();
+      const auto reparse_status = reanalyzer->ParseStatus();
 
-  if (!relex_status.ok() || !reparse_status.ok()) {
-    const auto& token_errors = reanalyzer->TokenErrorMessages();
-    // Only print the first error.
-    if (!token_errors.empty()) {
-      return absl::DataLossError(
-          absl::StrCat("Error lex/parsing-ing formatted output.  "
-                       "Please file a bug.\nFirst error: ",
-                       token_errors.front()));
+      if (!relex_status.ok() || !reparse_status.ok()) {
+        const auto& token_errors = reanalyzer->TokenErrorMessages();
+        // Only print the first error.
+        if (!token_errors.empty()) {
+          return absl::DataLossError(
+              absl::StrCat("Error lexing/parsing formatted output.  "
+                           "Please file a bug.\nFirst error: ",
+                           token_errors.front()));
+        }
+      }
     }
-  }
 
-  {
-    // Filter out only whitespaces and compare.
-    // First difference will be printed to cerr for debugging.
-    std::ostringstream errstream;
-    // Note: text_structure.TokenStream() and reanalyzer->Data().TokenStream()
-    // contain already lexed tokens, so this comparison check is repeating the
-    // work done by the lexers.
-    // Should performance be a concern, we could pass in those tokens to
-    // avoid lexing twice, but for now, using plain strings as an interface
-    // to comparator functions is simpler and more intuitive.
-    // See analysis/verilog_equivalence.cc implementation.
-    if (verilog::FormatEquivalent(text_structure.Contents(), formatted_output,
-                                  &errstream) != DiffStatus::kEquivalent) {
-      return absl::DataLossError(absl::StrCat(
-          "Formatted output is lexically different from the input.    "
-          "Please file a bug.  Details:\n",
-          errstream.str()));
+    {
+      // Filter out only whitespaces and compare.
+      // First difference will be printed to cerr for debugging.
+      std::ostringstream errstream;
+      // See analysis/verilog_equivalence.cc implementation.
+      if (verilog::FormatEquivalent(text, formatted_output, &errstream) !=
+          DiffStatus::kEquivalent) {
+        return absl::DataLossError(absl::StrCat(
+            "Formatted output is lexically different from the input.    "
+            "Please file a bug.  Details:\n",
+            errstream.str()));
+      }
     }
   }
 
@@ -165,7 +175,8 @@ static Status ReformatVerilogIncrementally(absl::string_view original_text,
                                            absl::string_view filename,
                                            const FormatStyle& style,
                                            std::ostream& reformat_stream,
-                                           const ExecutionControl& control) {
+                                           const ExecutionControl& control,
+                                           FormatMethod preprocess) {
   // Differences from the first formatting.
   const verible::LineDiffs formatting_diffs(original_text, formatted_text);
   // Added lines will be re-applied to incremental re-formatting.
@@ -178,16 +189,14 @@ static Status ReformatVerilogIncrementally(absl::string_view original_text,
   formatted_lines.Add(formatting_diffs.after_lines.size() + 1);
   VLOG(1) << "formatted changed lines: " << formatted_lines;
   return FormatVerilog(formatted_text, filename, style, reformat_stream,
-                       formatted_lines, control);
+                       formatted_lines, control, preprocess);
 }
 
-static Status ReformatVerilog(absl::string_view original_text,
-                              absl::string_view formatted_text,
-                              absl::string_view filename,
-                              const FormatStyle& style,
-                              std::ostream& reformat_stream,
-                              const LineNumberSet& lines,
-                              const ExecutionControl& control) {
+static Status ReformatVerilog(
+    absl::string_view original_text, absl::string_view formatted_text,
+    absl::string_view filename, const FormatStyle& style,
+    std::ostream& reformat_stream, const LineNumberSet& lines,
+    const ExecutionControl& control, FormatMethod preprocess) {
   // Disable reformat check to terminate recursion.
   ExecutionControl convergence_control(control);
   convergence_control.verify_convergence = false;
@@ -195,19 +204,19 @@ static Status ReformatVerilog(absl::string_view original_text,
   if (lines.empty()) {
     // format whole file
     return FormatVerilog(formatted_text, filename, style, reformat_stream,
-                         lines, convergence_control);
+                         lines, convergence_control, preprocess);
   }
   // reformat incrementally
   return ReformatVerilogIncrementally(original_text, formatted_text, filename,
                                       style, reformat_stream,
-                                      convergence_control);
+                                      convergence_control, preprocess);
 }
 
 static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
-    absl::string_view text, absl::string_view filename) {
+    absl::string_view text, absl::string_view filename,
+    const verilog::VerilogPreprocess::Config& preprocess_config = {}) {
   std::unique_ptr<VerilogAnalyzer> analyzer =
-      VerilogAnalyzer::AnalyzeAutomaticMode(
-          text, filename, verilog::VerilogPreprocess::Config());
+      VerilogAnalyzer::AnalyzeAutomaticMode(text, filename, preprocess_config);
   {
     // Lex and parse code.  Exit on failure.
     const auto lex_status = ABSL_DIE_IF_NULL(analyzer)->LexStatus();
@@ -227,16 +236,15 @@ static absl::StatusOr<std::unique_ptr<VerilogAnalyzer>> ParseWithStatus(
   return analyzer;
 }
 
-absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
-                           absl::string_view filename, const FormatStyle& style,
-                           std::string* formatted_text,
-                           const verible::LineNumberSet& lines,
-                           const ExecutionControl& control) {
-  Formatter fmt(text_structure, style);
-  fmt.SelectLines(lines);
+absl::Status FormatVerilog(
+    const absl::string_view text, absl::string_view filename,
+    const FormatStyle& style, std::string* formatted_text,
+    const verible::LineNumberSet& lines, const ExecutionControl& control,
+    const std::vector<VerilogPreprocess::Config>& preproc_config_variants) {
+  Formatter fmt(text, style, preproc_config_variants);
 
   // Format code.
-  Status format_status = fmt.Format(control);
+  Status format_status = fmt.Format(control, lines);
   if (!format_status.ok()) {
     if (format_status.code() != StatusCode::kResourceExhausted) {
       // Some more fatal error, halt immediately.
@@ -257,8 +265,8 @@ absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
   *formatted_text = output_buffer.str();
 
   // For now, unconditionally verify.
-  if (Status verify_status =
-          VerifyFormatting(text_structure, *formatted_text, filename);
+  if (Status verify_status = VerifyFormatting(text, *formatted_text, filename,
+                                              preproc_config_variants);
       !verify_status.ok()) {
     return verify_status;
   }
@@ -266,17 +274,54 @@ absl::Status FormatVerilog(const verible::TextStructureView& text_structure,
   return format_status;
 }
 
+// Returns the minimum set of filtering preprocess configs needed to generate
+// token stream variants that cover the entire source.
+absl::StatusOr<PreprocessConfigVariants> GetMinCoverPreprocessConfigs(
+    VerilogAnalyzer* analyzer) {
+  if (Status tokenize_status = analyzer->Tokenize(); !tokenize_status.ok()) {
+    return tokenize_status;
+  }
+  FlowTree control_flow_tree(analyzer->Data().TokenStream());
+  auto define_variants = control_flow_tree.MinCoverDefineVariants();
+  if (!define_variants.ok()) return define_variants.status();
+
+  std::vector<VerilogPreprocess::Config> config_variants;
+  config_variants.reserve(define_variants->size());
+  for (const FlowTree::DefineSet& defines : *define_variants) {
+    VerilogPreprocess::Config config_variant{.filter_branches = true};
+    for (auto define : defines) {
+      config_variant.macro_definitions.emplace(define, std::nullopt);
+    }
+    config_variants.push_back(config_variant);
+  }
+  return config_variants;
+}
+
 Status FormatVerilog(absl::string_view text, absl::string_view filename,
                      const FormatStyle& style, std::ostream& formatted_stream,
                      const LineNumberSet& lines,
-                     const ExecutionControl& control) {
-  const auto analyzer = ParseWithStatus(text, filename);
-  if (!analyzer.ok()) return analyzer.status();
+                     const ExecutionControl& control, FormatMethod preprocess) {
+  // Prepare preprocess config variants
+  std::vector<VerilogPreprocess::Config> preproc_config_variants;
+  // TODO: Make VerilogAnalyzer movable and make this an std::optional
+  std::unique_ptr<VerilogAnalyzer> preprocess_variants_analyzer;
+  // Keep this analyzer alive, as the defines in preprocess_config_variants
+  // refer to its text contents
+  if (preprocess == FormatMethod::kPreprocessVariants) {
+    preprocess_variants_analyzer =
+        std::make_unique<VerilogAnalyzer>(text, filename);
+    auto variants_or =
+        GetMinCoverPreprocessConfigs(&*preprocess_variants_analyzer);
+    if (!variants_or.ok()) return variants_or.status();
+    preproc_config_variants = std::move(*variants_or);
+  } else {
+    preproc_config_variants.push_back(VerilogPreprocess::Config());
+  }
 
-  const verible::TextStructureView& text_structure = analyzer->get()->Data();
   std::string formatted_text;
-  Status format_status = FormatVerilog(text_structure, filename, style,
-                                       &formatted_text, lines, control);
+  Status format_status = FormatVerilog(text, filename, style, &formatted_text,
+                                       lines, control, preproc_config_variants);
+
   // Commit formatted text to the output stream independent of status.
   formatted_stream << formatted_text;
   if (!format_status.ok()) return format_status;
@@ -288,7 +333,7 @@ Status FormatVerilog(absl::string_view text, absl::string_view filename,
     std::ostringstream reformat_stream;
     if (auto reformat_status =
             ReformatVerilog(text, formatted_text, filename, style,
-                            reformat_stream, lines, control);
+                            reformat_stream, lines, control, preprocess);
         !reformat_status.ok()) {
       return reformat_status;
     }
@@ -308,11 +353,10 @@ absl::Status FormatVerilogRange(const verible::TextStructureView& structure,
     return absl::OkStatus();
   }
 
-  Formatter fmt(structure, style);
-  fmt.SelectLines({line_range});
+  Formatter fmt(structure.Contents(), style);
 
   // Format code.
-  Status format_status = fmt.Format(control);
+  Status format_status = fmt.Format(control, {line_range});
   if (!format_status.ok()) return format_status;
 
   // In any diagnostic mode, proceed no further.
@@ -608,11 +652,6 @@ std::ostream& ExecutionControl::Stream() const {
   return (stream != nullptr) ? *stream : std::cout;
 }
 
-void Formatter::SelectLines(const LineNumberSet& lines) {
-  disabled_ranges_ = EnabledLinesToDisabledByteRanges(
-      lines, text_structure_.GetLineColumnMap());
-}
-
 // Given control flags and syntax tree, selectively disable some ranges
 // of text from formatting.  This provides an easy way to preserve spacing on
 // selected syntax subtrees to reduce formatter harm while allowing
@@ -791,44 +830,222 @@ class ContinuationCommentAligner {
   int formatted_column_ = kInvalidColumn;
 };
 
-Status Formatter::Format(const ExecutionControl& control) {
-  const absl::string_view full_text(text_structure_.Contents());
-  const auto& token_stream(text_structure_.TokenStream());
+// Merges the second partition tree into the first one. Whenever there is a
+// discrepancy, it chooses the more granular partition.
+// This function assumes that the two trees point to the same token stream.
+void MergePartitionTrees(verible::TokenPartitionTree* target,
+                         const verible::TokenPartitionTree& source) {
+  const auto tokens_begin = [](const TokenPartitionTree& node) {
+    return node.Value().TokensRange().begin();
+  };
+  const auto tokens_end = [](const TokenPartitionTree& node) {
+    return node.Value().TokensRange().end();
+  };
+  auto target_it = verible::VectorTreePreOrderIterator(target);
+  const auto target_end =
+      ++verible::VectorTreePreOrderIterator(&RightmostDescendant(*target));
+  auto source_it = verible::VectorTreePreOrderIterator(&source);
+  const auto source_end = ++verible::VectorTreePreOrderIterator(
+      &verible::RightmostDescendant(source));
+  while (target_it != target_end && source_it != source_end) {
+    if (tokens_begin(*target_it) == tokens_begin(*source_it) &&
+        target_it->Children().empty()) {
+      // The first tokens of source and target are aligned. This is the only
+      // case that modifies target.
+      if (tokens_end(*target_it) == tokens_end(*source_it)) {
+        VLOG(1) << "Exact match of partitions: " << *target_it;
+        // Assign if the target node has no origin, or if the source node has
+        // children (which means it is more granular).
+        if (!target_it->Value().Origin() || !source_it->Children().empty()) {
+          VLOG(1) << "Assigning to target: " << *source_it;
+          *target_it = *source_it;
+        } else {
+          VLOG(1) << "Skipping";
+        }
+        ++target_it;
+        ++source_it;
+      } else if (tokens_end(*target_it) < tokens_end(*source_it) &&
+                 !source_it->Children().empty()) {
+        // Source node has children, so it should be assigned to target.
+        // However, its token range ends after the target node's. We have to cut
+        // the tokens that exceed the target node.
+        VLOG(1) << "Replacing: " << *target_it;
+        VLOG(1) << "With: " << *source_it;
+        TokenPartitionTree source_copy = *source_it;
+        const auto end = ++verible::VectorTreePreOrderIterator(
+            &RightmostDescendant(source_copy));
+        // Remove surplus nodes from the copied partition tree.
+        for (auto erase_it = verible::VectorTreePreOrderIterator(&source_copy);
+             erase_it != end && tokens_end(*erase_it) <= tokens_end(*source_it);
+             ++erase_it) {
+          // Only erase after we move past target_it
+          if (tokens_begin(*erase_it) < tokens_end(*target_it)) continue;
+          TokenPartitionTree* parent = erase_it->Parent();
+          size_t i = &*erase_it - &parent->Children().front();
+          parent->Children().erase(parent->Children().begin() + i,
+                                   parent->Children().end());
+          // erase_it is invalid, move back by one
+          erase_it = i > 0 ? verible::VectorTreePreOrderIterator(
+                                 &parent->Children()[i - 1])
+                           : verible::VectorTreePreOrderIterator(parent);
+        }
+        // Now we can copy the cut down tree to the target tree
+        *target_it = source_copy;
+        VLOG(1) << "Result: " << *target_it;
+        // Move source_it after target_it
+        while (source_it != source_end &&
+               tokens_begin(*source_it) < tokens_end(*target_it)) {
+          ++source_it;
+        }
+      } else if (tokens_end(*target_it) > tokens_end(*source_it)) {
+        // Target node is longer than source node. To preserve information, we
+        // split the target node into two. The first part is the same length as
+        // the source node, and replaced by it.
+        VLOG(1) << "Splitting partition: " << *target_it;
+        VLOG(1) << "First part will be replaced by: " << *source_it;
+        // Construct the second part
+        TokenPartitionTree second_part = *target_it;
+        second_part.Value().SetTokensRange(
+            source_it->Value().TokensRange().end(),
+            target_it->Value().TokensRange().end());
+        // Replace the first part
+        *target_it = *source_it;
+        // Insert the second part after the first part
+        TokenPartitionTree* parent = target_it->Parent();
+        size_t i = &*target_it - &parent->Children().front();
+        parent->Children().insert(parent->Children().begin() + i + 1,
+                                  second_part);
+        target_it =
+            verible::VectorTreePreOrderIterator(&parent->Children()[i + 1]);
+      } else {
+        // tokens_end(*target_it) < tokens_end(*source_it)
+        VLOG(1) << "Target partition more granular than source partition; "
+                   "moving source forward";
+        ++source_it;
+      }
+    } else if (tokens_begin(*source_it) < tokens_begin(*target_it)) {
+      // Catch up source_it to target_it
+      ++source_it;
+    } else if (tokens_begin(*target_it) < tokens_begin(*source_it)) {
+      // Catch up target_it to source_it
+      ++target_it;
+    } else {
+      // tokens_begin(*source_it) == tokens_begin(*target_it)
+      // But *target_it has children, so we cannot replace it. Iterate forward.
+      ++source_it;
+      ++target_it;
+    }
+  }
+}
 
-  // Initialize auxiliary data needed for TreeUnwrapper.
-  UnwrapperData unwrapper_data(token_stream);
+Status Formatter::Format(const ExecutionControl& control,
+                         const verible::LineNumberSet& lines) {
+  struct FormatVariant {
+    FormatVariant(const FormatVariant&) = delete;
+    FormatVariant(FormatVariant&&) = default;
+
+    const verible::TextStructureView& text_structure;
+    std::unique_ptr<UnwrapperData> unwrapper_data;
+    TreeUnwrapper tree_unwrapper;
+
+    FormatVariant(const verible::TextStructureView& text_struct,
+                  const FormatStyle& style)
+        : text_structure(text_struct),
+          unwrapper_data{
+              std::make_unique<UnwrapperData>(text_structure.TokenStream())},
+          tree_unwrapper{text_structure, style,
+                         unwrapper_data->preformatted_tokens} {}
+  };
+
+  std::vector<FormatVariant> format_variants;
+  format_variants.reserve(preproc_config_variants_.size());
+  size_t color = 0;
+  for (const VerilogPreprocess::Config& config : preproc_config_variants_) {
+    color++;
+
+    const auto analyzer = ParseWithStatus(text_, "", config);
+    if (!analyzer.ok()) return analyzer.status();
+    auto text_structure = (*analyzer)->ReleaseTextStructure();
+
+    if (!text_structures_.empty()) {
+      text_structure->RebaseTokens(*text_structures_.front());
+    }
+
+    text_structure->MutableData().ColorStreamViewTokens(color);
+    format_variants.push_back({text_structure->Data(), style_});
+
+    text_structures_.push_back(std::move(text_structure));
+  }
+  disabled_ranges_ = EnabledLinesToDisabledByteRanges(
+      lines, text_structures_.front()->Data().GetLineColumnMap());
+  // Update text, as it may have been modified by the analyzer.
+  text_ = text_structures_.front()->Data().Contents();
 
   // Partition input token stream into hierarchical set of UnwrappedLines.
-  TreeUnwrapper tree_unwrapper(text_structure_, style_,
-                               unwrapper_data.preformatted_tokens);
 
-  const TokenPartitionTree* format_tokens_partitions = nullptr;
   // TODO(fangism): The following block could be parallelized because
   // full-partitioning does not depend on format annotations.
-  {
+  for (FormatVariant& format_variant : format_variants) {
     // Annotate inter-token information between all adjacent PreFormatTokens.
     // This must be done before any decisions about ExpandableTreeView
     // can be made because they depend on minimum-spacing, and must-break.
-    AnnotateFormattingInformation(style_, text_structure_,
-                                  &unwrapper_data.preformatted_tokens);
+    AnnotateFormattingInformation(
+        style_, format_variant.text_structure,
+        &format_variant.unwrapper_data->preformatted_tokens);
 
     // Determine ranges of disabling the formatter, based on comment controls.
-    disabled_ranges_.Union(DisableFormattingRanges(full_text, token_stream));
+    disabled_ranges_.Union(DisableFormattingRanges(
+        text_, format_variant.text_structure.TokenStream()));
 
     // Find disabled formatting ranges for specific syntax tree node types.
     // These are typically temporary workarounds for sections that users
     // habitually prefer to format themselves.
-    if (const auto& root = text_structure_.SyntaxTree()) {
-      DisableSyntaxBasedRanges(&disabled_ranges_, *root, style_, full_text);
+    if (const auto& root = format_variant.text_structure.SyntaxTree()) {
+      DisableSyntaxBasedRanges(&disabled_ranges_, *root, style_, text_);
     }
 
     // Disable formatting ranges.
     verible::PreserveSpacesOnDisabledTokenRanges(
-        &unwrapper_data.preformatted_tokens, disabled_ranges_, full_text);
+        &format_variant.unwrapper_data->preformatted_tokens, disabled_ranges_,
+        text_);
 
     // Partition PreFormatTokens into candidate unwrapped lines.
-    format_tokens_partitions = tree_unwrapper.Unwrap();
+    format_variant.tree_unwrapper.Unwrap();
   }
+
+  // Merge partition trees from all format variants into the first one.
+  for (auto it = format_variants.begin() + 1; it != format_variants.end();
+       ++it) {
+    // Rebase the the source partitions to the target tree tokens.
+    // This is necessary for MergePartitionTrees to work.
+    auto target =
+        format_variants.front().tree_unwrapper.CurrentTokenPartition();
+    auto source = it->tree_unwrapper.CurrentTokenPartition();
+    auto old_base = source->Value().TokensRange().begin();
+    auto new_base = target->Value().TokensRange().begin();
+    verible::ApplyPostOrder(*source, [old_base,
+                                      new_base](TokenPartitionTree& node) {
+      if (node.Children().empty()) {
+        auto begin =
+            new_base +
+            std::distance(old_base, node.Value().TokensRange().begin());
+        auto end = new_base +
+                   std::distance(old_base, node.Value().TokensRange().end());
+        node.Value().SetTokensRange(begin, end);
+      } else {
+        node.Value().SetTokensRange(
+            node.Children().front().Value().TokensRange().begin(),
+            node.Children().back().Value().TokensRange().end());
+      }
+    });
+    MergePartitionTrees(target, *source);
+  }
+
+  const verible::TextStructureView& text_structure =
+      format_variants.front().text_structure;
+  TreeUnwrapper& tree_unwrapper = format_variants.front().tree_unwrapper;
+  verible::TokenPartitionTree* format_tokens_partitions =
+      tree_unwrapper.UnwrappedLines();
 
   {
     // For debugging only: identify largest leaf partitions, and stop.
@@ -842,7 +1059,7 @@ Status Formatter::Format(const ExecutionControl& control) {
     if (control.show_largest_token_partitions != 0) {
       PrintLargestPartitions(control.Stream(), *format_tokens_partitions,
                              control.show_largest_token_partitions,
-                             text_structure_.GetLineColumnMap(), full_text);
+                             text_structure.GetLineColumnMap(), text_);
     }
     if (control.AnyStop()) {
       return absl::OkStatus();
@@ -867,11 +1084,10 @@ Status Formatter::Format(const ExecutionControl& control) {
           verible::OptimizeTokenPartitionTree(style_, &node);
           break;
         case PartitionPolicyEnum::kTabularAlignment:
-          // TODO(b/145170750): Adjust inter-token spacing to achieve alignment,
-          // but leave partitioning intact.
-          // This relies on inter-token spacing having already been annotated.
-          TabularAlignTokenPartitions(style_, full_text, disabled_ranges_,
-                                      &node);
+          // TODO(b/145170750): Adjust inter-token spacing to achieve
+          // alignment, but leave partitioning intact. This relies on
+          // inter-token spacing having already been annotated.
+          TabularAlignTokenPartitions(style_, text_, disabled_ranges_, &node);
           break;
         default:
           break;
@@ -879,10 +1095,13 @@ Status Formatter::Format(const ExecutionControl& control) {
     });
   }
 
+  verible::TokenPartitionTree* const root =
+      tree_unwrapper.CurrentTokenPartition();
+  const auto unwrapper_data = std::move(format_variants.front().unwrapper_data);
+
   // Apply token spacing from partitions to tokens. This is permanent, so it
   // must be done after all reshaping is done.
   {
-    auto* root = tree_unwrapper.CurrentTokenPartition();
     auto node_iter = VectorTreeLeavesIterator(&LeftmostDescendant(*root));
     const auto end = ++VectorTreeLeavesIterator(&RightmostDescendant(*root));
 
@@ -893,7 +1112,7 @@ Status Formatter::Format(const ExecutionControl& control) {
 
       if (partition_policy == PartitionPolicyEnum::kAlreadyFormatted) {
         verible::ApplyAlreadyFormattedPartitionPropertiesToTokens(
-            &(*node_iter), &unwrapper_data.preformatted_tokens);
+            &(*node_iter), &unwrapper_data->preformatted_tokens);
       } else if (partition_policy == PartitionPolicyEnum::kInline) {
         auto* parent = node_iter->Parent();
         CHECK_NOTNULL(parent);
@@ -902,7 +1121,7 @@ Status Formatter::Format(const ExecutionControl& control) {
         // This removes the node pointed to by node_iter (and all other
         // siblings)
         verible::ApplyAlreadyFormattedPartitionPropertiesToTokens(
-            parent, &unwrapper_data.preformatted_tokens);
+            parent, &unwrapper_data->preformatted_tokens);
         // Move to the parent which is now a leaf
         node_iter = verible::VectorTreeLeavesIterator(parent);
       }
@@ -911,8 +1130,8 @@ Status Formatter::Format(const ExecutionControl& control) {
 
   // Produce sequence of independently operable UnwrappedLines.
   const auto unwrapped_lines = MakeUnwrappedLinesWorklist(
-      style_, full_text, disabled_ranges_, *format_tokens_partitions,
-      &unwrapper_data.preformatted_tokens);
+      style_, text_, disabled_ranges_, *format_tokens_partitions,
+      &unwrapper_data->preformatted_tokens);
 
   // For each UnwrappedLine: minimize total penalty of wrap/break decisions.
   // TODO(fangism): This could be parallelized if results are written
@@ -920,7 +1139,7 @@ Status Formatter::Format(const ExecutionControl& control) {
   std::vector<const UnwrappedLine*> partially_formatted_lines;
   formatted_lines_.reserve(unwrapped_lines.size());
   ContinuationCommentAligner continuation_comment_aligner(
-      text_structure_.GetLineColumnMap(), text_structure_.Contents());
+      text_structure.GetLineColumnMap(), text_);
   for (const auto& uwline : unwrapped_lines) {
     // TODO(fangism): Use different formatting strategies depending on
     // uwline.PartitionPolicy().
@@ -930,6 +1149,12 @@ Status Formatter::Format(const ExecutionControl& control) {
       // For partitions that were successfully aligned, do not search
       // line-wrapping, but instead accept the adjusted padded spacing.
       formatted_lines_.emplace_back(uwline);
+    } else if (IsPreprocessorControlFlow(verilog_tokentype(
+                   uwline.TokensRange().begin()->TokenEnum()))) {
+      // Remove indentation before preprocessing control flow.
+      UnwrappedLine formatted_line = uwline;
+      formatted_line.SetIndentationSpaces(0);
+      formatted_lines_.emplace_back(formatted_line);
     } else {
       // In other case, default to searching for optimal line wrapping.
       const auto optimal_solutions =
@@ -966,13 +1191,12 @@ Status Formatter::Format(const ExecutionControl& control) {
 }
 
 void Formatter::Emit(bool include_disabled, std::ostream& stream) const {
-  const absl::string_view full_text(text_structure_.Contents());
   std::function<bool(const verible::TokenInfo&)> include_token_p;
   if (include_disabled) {
     include_token_p = [](const verible::TokenInfo&) { return true; };
   } else {
-    include_token_p = [this, &full_text](const verible::TokenInfo& tok) {
-      return !disabled_ranges_.Contains(tok.left(full_text));
+    include_token_p = [this](const verible::TokenInfo& tok) {
+      return !disabled_ranges_.Contains(tok.left(text_));
     };
   }
 
@@ -981,14 +1205,13 @@ void Formatter::Emit(bool include_disabled, std::ostream& stream) const {
     // TODO(fangism): The handling of preserved spaces before tokens is messy:
     // some of it is handled here, some of it is inside FormattedToken.
     // TODO(mglb): Test empty line handling when this method becomes testable.
-    const auto front_offset =
-        line.Tokens().empty() ? position
-                              : line.Tokens().front().token->left(full_text);
+    const auto front_offset = line.Tokens().empty()
+                                  ? position
+                                  : line.Tokens().front().token->left(text_);
     const absl::string_view leading_whitespace(
-        full_text.substr(position, front_offset - position));
-    FormatWhitespaceWithDisabledByteRanges(full_text, leading_whitespace,
-                                           disabled_ranges_, include_disabled,
-                                           stream);
+        text_.substr(position, front_offset - position));
+    FormatWhitespaceWithDisabledByteRanges(
+        text_, leading_whitespace, disabled_ranges_, include_disabled, stream);
 
     // When front of first token is format-disabled, the previous call will
     // already cover the space up to the front token, in which case,
@@ -997,15 +1220,14 @@ void Formatter::Emit(bool include_disabled, std::ostream& stream) const {
     if (!line.Tokens().empty()) {
       line.FormattedText(stream, !disabled_ranges_.Contains(front_offset),
                          include_token_p);
-      position = line.Tokens().back().token->right(full_text);
+      position = line.Tokens().back().token->right(text_);
     }
   }
 
   // Handle trailing spaces after last token.
-  const absl::string_view trailing_whitespace(full_text.substr(position));
-  FormatWhitespaceWithDisabledByteRanges(full_text, trailing_whitespace,
-                                         disabled_ranges_, include_disabled,
-                                         stream);
+  const absl::string_view trailing_whitespace(text_.substr(position));
+  FormatWhitespaceWithDisabledByteRanges(
+      text_, trailing_whitespace, disabled_ranges_, include_disabled, stream);
 }
 
 }  // namespace formatter

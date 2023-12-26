@@ -48,6 +48,7 @@
 using absl::StatusCode;
 using verible::LineNumberSet;
 using verilog::formatter::ExecutionControl;
+using verilog::formatter::FormatMethod;
 using verilog::formatter::FormatStyle;
 using verilog::formatter::FormatVerilog;
 
@@ -106,6 +107,11 @@ ABSL_FLAG(bool, verify_convergence, true,
           "If true, and not incrementally formatting with --lines, "
           "verify that re-formatting the formatted output yields "
           "no further changes, i.e. formatting is convergent.");
+ABSL_FLAG(bool, preprocess_variants, false,
+          "Experimental feature. If true, formatting is done on multiple "
+          "preprocessed variants of "
+          "the input file and merged together. This can help with some "
+          "preprocessor-related parsing issues.");
 
 ABSL_FLAG(bool, verbose, false, "Be more verbose.");
 
@@ -185,7 +191,10 @@ static bool formatOneFile(absl::string_view filename,
   std::ostringstream stream;
   const auto format_status =
       FormatVerilog(*content_or, diagnostic_filename, format_style, stream,
-                    lines_to_format, formatter_control);
+                    lines_to_format, formatter_control,
+                    absl::GetFlag(FLAGS_preprocess_variants)
+                        ? FormatMethod::kPreprocessVariants
+                        : FormatMethod::kSinglePass);
 
   const std::string& formatted_output(stream.str());
   if (!format_status.ok()) {

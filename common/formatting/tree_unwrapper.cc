@@ -71,7 +71,22 @@ TreeUnwrapper::TreeUnwrapper(
   // array, and be able to 'extend' into the array of preformatted_tokens_.
 }
 
-const TokenPartitionTree* TreeUnwrapper::Unwrap() {
+TreeUnwrapper::TreeUnwrapper(TreeUnwrapper&& other) noexcept
+    : TreeContextVisitor(std::move(other)),
+      text_structure_view_(other.text_structure_view_),
+      preformatted_tokens_(other.preformatted_tokens_),
+      next_unfiltered_token_(other.next_unfiltered_token_),
+      current_indentation_spaces_(other.current_indentation_spaces_),
+      unwrapped_lines_(std::move(other.unwrapped_lines_)) {
+  // NOLINTNEXTLINE(bugprone-use-after-move)
+  if (other.active_unwrapped_lines_ == &other.unwrapped_lines_) {
+    active_unwrapped_lines_ = &unwrapped_lines_;
+  } else {
+    active_unwrapped_lines_ = other.active_unwrapped_lines_;
+  }
+}
+
+void TreeUnwrapper::Unwrap() {
   // Collect tokens that appear before first syntax tree leaf, e.g. comments.
   CollectLeadingFilteredTokens();
 
@@ -106,8 +121,6 @@ const TokenPartitionTree* TreeUnwrapper::Unwrap() {
   }
 
   VerifyFullTreeFormatTokenRanges();
-
-  return &unwrapped_lines_;
 }
 
 std::vector<UnwrappedLine> TreeUnwrapper::FullyPartitionedUnwrappedLines()

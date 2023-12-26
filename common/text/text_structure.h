@@ -79,6 +79,7 @@ class TextStructureView {
 
   // Do not copy/assign.  This contains pointers/iterators to internals.
   TextStructureView(const TextStructureView&) = delete;
+  TextStructureView(TextStructureView&&) = default;
   TextStructureView& operator=(const TextStructureView&) = delete;
 
   absl::string_view Contents() const { return contents_; }
@@ -171,6 +172,9 @@ class TextStructureView {
   // analysis results passed through the expansions is transferred (consumed)
   // by this function.
   void ExpandSubtrees(NodeExpansionMap* expansions);
+
+  // Sets the 'color' of all tokens in the token stream view.
+  void ColorStreamViewTokens(size_t color);
 
   // All of this class's consistency checks combined.
   absl::Status InternalConsistencyCheck() const;
@@ -282,6 +286,11 @@ class TextStructure {
 
   // DeferredExpansion::subanalysis requires this destructor to be virtual.
   virtual ~TextStructure();
+
+  // Update tokens to point their text into the contents of the given
+  // TextStructure. The contents_ pointer in this TextStructure will point to
+  // the other TextStructure's contents.
+  void RebaseTokens(const TextStructure& other);
 
   const TextStructureView& Data() const { return data_; }
 

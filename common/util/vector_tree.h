@@ -276,6 +276,7 @@ class VectorTree {
   // Only the root node of a tree has a nullptr parent_.
   // This value is managed by ChildrenList, constructors, and
   // operator=(). There should be no need to set it manually in other places.
+ public:
   this_type* parent_ = nullptr;
 
   // Array of nodes/subtrees.

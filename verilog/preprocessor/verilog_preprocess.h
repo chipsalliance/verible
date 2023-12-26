@@ -69,7 +69,8 @@ struct VerilogPreprocessError {
 // Information that results from preprocessing.
 struct VerilogPreprocessData {
   using MacroDefinition = verible::MacroDefinition;
-  using MacroDefinitionRegistry = std::map<absl::string_view, MacroDefinition>;
+  using MacroDefinitionRegistry =
+      std::map<absl::string_view, std::optional<MacroDefinition>>;
   using TokenSequence = std::vector<verible::TokenInfo>;
 
   // Resulting token stream after preprocessing
@@ -94,6 +95,8 @@ struct VerilogPreprocessData {
 class VerilogPreprocess {
   using TokenStreamView = verible::TokenStreamView;
   using MacroDefinition = verible::MacroDefinition;
+  using MacroDefinitionRegistry =
+      std::map<absl::string_view, std::optional<MacroDefinition>>;
   using MacroParameterInfo = verible::MacroParameterInfo;
 
  public:
@@ -115,7 +118,9 @@ class VerilogPreprocess {
 
     // Expand macro definition bodies, this will relexes the macro body.
     bool expand_macros = false;
-    // TODO(hzeller): Provide a map of command-line provided +define+'s
+
+    MacroDefinitionRegistry macro_definitions;
+    // TODO(hzeller): Provide a way to +define+ from the command line.
   };
 
   explicit VerilogPreprocess(const Config& config);
@@ -182,7 +187,7 @@ class VerilogPreprocess {
   void RegisterMacroDefinition(const MacroDefinition&);
   absl::Status ExpandText(const absl::string_view&);
   absl::Status ExpandMacro(const verible::MacroCall&,
-                           const verible::MacroDefinition*);
+                           const verible::MacroDefinition&);
   absl::Status HandleInclude(TokenStreamView::const_iterator,
                              const StreamIteratorGenerator&);
 

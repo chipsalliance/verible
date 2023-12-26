@@ -300,7 +300,8 @@ std::vector<verible::lsp::TextEdit> FormatRange(
         .newText = formatted_range});
   } else {
     std::string newText;
-    if (!FormatVerilog(text, current->uri(), format_style, &newText).ok()) {
+    if (!FormatVerilog(text.Contents(), current->uri(), format_style, &newText)
+             .ok()) {
       return result;
     }
     // Emit a single edit that replaces the full range the file covers.

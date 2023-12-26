@@ -1651,8 +1651,8 @@ std::vector<TextEdit> ConvertAutoExpansionsToFormattedTextEdits(
   }
 
   std::string formatted;
-  const absl::Status format_status =
-      FormatVerilog(analyzer.Data(), "", format_style, &formatted, lines);
+  const absl::Status format_status = FormatVerilog(
+      analyzer.Data().Contents(), "", format_style, &formatted, lines);
 
   std::string &new_text = text;
   if (format_status.ok()) {

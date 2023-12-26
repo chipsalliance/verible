@@ -65,7 +65,7 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   // Deleted standard interfaces:
   TreeUnwrapper() = delete;
   TreeUnwrapper(const TreeUnwrapper&) = delete;
-  TreeUnwrapper(TreeUnwrapper&&) = delete;
+  TreeUnwrapper(TreeUnwrapper&&) noexcept;
   TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
   TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
 
@@ -120,7 +120,7 @@ class TreeUnwrapper final : public verible::TreeUnwrapper {
   void EatSpaces();
 
   // Update token tracking, and possibly start a new partition.
-  void UpdateInterLeafScanner(verilog_tokentype);
+  void UpdateInterLeafScanner(verilog_tokentype, int);
 
   // This should only be called directly from CatchUpToCurrentLeaf and
   // LookAheadBeyondCurrentLeaf.

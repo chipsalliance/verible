@@ -45,10 +45,13 @@ namespace verilog {
 using verible::TokenGenerator;
 using verible::TokenStreamView;
 using verible::container::FindOrNull;
+using verible::container::FindWithDefault;
 using verible::container::InsertOrUpdate;
 
 VerilogPreprocess::VerilogPreprocess(const Config& config)
-    : VerilogPreprocess(config, nullptr) {}
+    : VerilogPreprocess(config, nullptr) {
+  preprocess_data_.macro_definitions = config_.macro_definitions;
+}
 
 VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
     : config_(config), file_opener_(std::move(opener)) {
@@ -56,6 +59,7 @@ VerilogPreprocess::VerilogPreprocess(const Config& config, FileOpener opener)
   // place a toplevel 'conditional' that is always selected.
   // Thus we only need to test in `else and `endif to see if we underrun due
   // to unbalanced statements.
+  preprocess_data_.macro_definitions = config_.macro_definitions;
   conditional_block_.push(
       BranchBlock(true, true, verible::TokenInfo::EOFToken()));
 }
@@ -289,8 +293,8 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
 
   // Finding the macro definition.
   const absl::string_view sv = (*iter)->text();
-  const auto* found =
-      FindOrNull(preprocess_data_.macro_definitions, sv.substr(1));
+  const auto found = FindWithDefault(preprocess_data_.macro_definitions,
+                                     sv.substr(1), std::nullopt);
   if (!found) {
     preprocess_data_.errors.emplace_back(
         **iter,
@@ -303,7 +307,7 @@ absl::Status VerilogPreprocess::HandleMacroIdentifier(
     verible::MacroCall macro_call;
     RETURN_IF_ERROR(
         ConsumeAndParseMacroCall(iter, generator, &macro_call, *found));
-    RETURN_IF_ERROR(ExpandMacro(macro_call, found));
+    RETURN_IF_ERROR(ExpandMacro(macro_call, *found));
   }
   auto& lexed = preprocess_data_.lexed_macros_backup.back();
   if (!forward) return absl::OkStatus();
@@ -379,16 +383,16 @@ absl::Status VerilogPreprocess::ExpandText(
 // `MACRO([param1],[param2],...)
 absl::Status VerilogPreprocess::ExpandMacro(
     const verible::MacroCall& macro_call,
-    const verible::MacroDefinition* macro_definition) {
+    const verible::MacroDefinition& macro_definition) {
   const auto& actual_parameters = macro_call.positional_arguments;
 
   std::map<absl::string_view, verible::DefaultTokenInfo> subs_map;
-  if (macro_definition->IsCallable()) {
-    RETURN_IF_ERROR(macro_definition->PopulateSubstitutionMap(actual_parameters,
-                                                              &subs_map));
+  if (macro_definition.IsCallable()) {
+    RETURN_IF_ERROR(
+        macro_definition.PopulateSubstitutionMap(actual_parameters, &subs_map));
   }
 
-  VerilogLexer lexer(macro_definition->DefinitionText().text());
+  VerilogLexer lexer(macro_definition.DefinitionText().text());
   verible::TokenSequence lexed_sequence;
   verible::TokenSequence expanded_lexed_sequence;
   // Populating the lexed token sequence.
@@ -421,7 +425,7 @@ absl::Status VerilogPreprocess::ExpandMacro(
       for (auto& u : expanded_child) expanded_lexed_sequence.push_back(u);
       continue;
     }
-    if (macro_definition->IsCallable()) {
+    if (macro_definition.IsCallable()) {
       // Check if the last token is a formal parameter
       const auto* replacement = FindOrNull(subs_map, last_token.text());
       if (replacement) {

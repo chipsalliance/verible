@@ -163,6 +163,7 @@ cc_library(
         "//common/util:vector-tree-iterators",
         "//verilog/CST:declaration",
         "//verilog/CST:module",
+        "//verilog/analysis:flow-tree",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-equivalence",
         "//verilog/parser:verilog-token-enum",

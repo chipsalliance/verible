@@ -159,6 +159,11 @@ class TokenInfo {
 
   bool isEOF() const { return token_enum_ == TK_EOF; }
 
+  // The color is used for differentiating tokens from different preprocess
+  // variants. If color equals 0, the token is part of preprocessor-disabled
+  // code. Only used in the formatter.
+  int color = 0;  // FIXME: do this differently
+
  protected:  // protected, as ExpectedTokenInfo accesses it.
   int token_enum_;
 

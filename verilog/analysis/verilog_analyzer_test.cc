@@ -62,7 +62,7 @@ using verible::SyntaxTreeLeaf;
 using verible::TokenInfo;
 using verible::TokenInfoTestData;
 
-static constexpr verilog::VerilogPreprocess::Config kDefaultPreprocess;
+static verilog::VerilogPreprocess::Config kDefaultPreprocess;
 
 bool TreeContainsToken(const ConcreteSyntaxTree& tree, const TokenInfo& token) {
   const auto* matching_leaf =
@@ -509,10 +509,10 @@ TEST(AnalyzeVerilogAutomaticMode, InferredModuleBodyMode) {
 }
 
 TEST(AnalyzeVerilogAutomaticMode, AutomaticWithFallback) {
-  static constexpr verilog::VerilogPreprocess::Config kNoBranchFilter{
+  static verilog::VerilogPreprocess::Config kNoBranchFilter{
       .filter_branches = false,
   };
-  static constexpr verilog::VerilogPreprocess::Config kWithBranchFilter{
+  static verilog::VerilogPreprocess::Config kWithBranchFilter{
       .filter_branches = true,
   };
 

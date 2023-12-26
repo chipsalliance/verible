@@ -30,7 +30,7 @@
 namespace verilog {
 namespace analysis {
 namespace {
-static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+static VerilogPreprocess::Config kDefaultPreprocess;
 
 TEST(CollectInterfaceNamesTest, NonModuleTests) {
   const std::pair<absl::string_view, std::set<std::string>> kTestCases[] = {

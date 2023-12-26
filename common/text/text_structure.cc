@@ -525,6 +525,14 @@ TextStructure::~TextStructure() {
   CHECK(status.ok()) << status.message() << " (in dtor)";
 }
 
+void TextStructure::RebaseTokens(const TextStructure& other) {
+  CHECK_EQ(contents_->AsStringView().length(),
+           other.contents_->AsStringView().length());
+  MutableData().RebaseTokensToSuperstring(other.contents_->AsStringView(),
+                                          contents_->AsStringView(), 0);
+  contents_ = other.contents_;
+}
+
 void TextStructureView::ExpandSubtrees(NodeExpansionMap* expansions) {
   TokenSequence combined_tokens;
   // Gather indices and reconstruct iterators after there are no more
@@ -558,6 +566,23 @@ void TextStructureView::ExpandSubtrees(NodeExpansionMap* expansions) {
   // TODO(fangism): Should be possible to update line_token_map_ incrementally
   // as well.
   CalculateFirstTokensPerLine();
+}
+
+void TextStructureView::ColorStreamViewTokens(size_t color) {
+  auto view_it = GetTokenStreamView().begin();
+  auto stream_it = MutableTokenStream().begin();
+  while (view_it != GetTokenStreamView().end() &&
+         stream_it != MutableTokenStream().end()) {
+    if (*view_it == stream_it) {
+      stream_it->color = color;
+      ++view_it;
+      ++stream_it;
+    } else if (*view_it < stream_it) {
+      ++view_it;
+    } else {
+      ++stream_it;
+    }
+  }
 }
 
 absl::Status TextStructure::StringViewConsistencyCheck() const {

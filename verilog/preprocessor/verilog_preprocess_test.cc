@@ -38,7 +38,7 @@ namespace {
 using testing::ElementsAre;
 using testing::Pair;
 using testing::StartsWith;
-using verible::container::FindOrNull;
+using verible::container::FindWithDefault;
 using verible::file::CreateDir;
 using verible::file::JoinPath;
 using verible::file::testing::ScopedTestFile;
@@ -172,11 +172,13 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
 
     const auto& definitions = tester.PreprocessorData().macro_definitions;
     EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
-    auto macro = FindOrNull(definitions, "FOOOO");
-    ASSERT_NE(macro, nullptr);
+    auto macro = FindWithDefault(definitions, "FOOOO", std::nullopt);
+    ASSERT_TRUE(macro.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_EQ(macro->DefinitionText().text(), "");
     EXPECT_FALSE(macro->IsCallable());
     EXPECT_TRUE(macro->Parameters().empty());
+    // NOLINTEND(bugprone-unchecked-optional-access)
   }
 }
 
@@ -188,11 +190,13 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsSimpleValue) {
 
   const auto& definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
-  auto macro = FindOrNull(definitions, "FOOOO");
-  ASSERT_NE(macro, nullptr);
+  auto macro = FindWithDefault(definitions, "FOOOO", std::nullopt);
+  ASSERT_TRUE(macro.has_value());
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
   EXPECT_EQ(macro->DefinitionText().text(), "\"bar\"");
   EXPECT_FALSE(macro->IsCallable());
   EXPECT_TRUE(macro->Parameters().empty());
+  // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamWithValue) {
@@ -203,11 +207,13 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamWithValue) {
 
   const auto& definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
-  auto macro = FindOrNull(definitions, "FOOOO");
-  ASSERT_NE(macro, nullptr);
+  auto macro = FindWithDefault(definitions, "FOOOO", std::nullopt);
+  ASSERT_TRUE(macro.has_value());
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
   EXPECT_EQ(macro->DefinitionText().text(), "(x+1)");
   EXPECT_TRUE(macro->IsCallable());
   const auto& params = macro->Parameters();
+  // NOLINTEND(bugprone-unchecked-optional-access)
   EXPECT_EQ(params.size(), 1);
   const auto& param(params[0]);
   EXPECT_EQ(param.name.text(), "x");
@@ -222,11 +228,13 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamDefaultWithValue) {
 
   const auto& definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
-  auto macro = FindOrNull(definitions, "FOOOO");
-  ASSERT_NE(macro, nullptr);
+  auto macro = FindWithDefault(definitions, "FOOOO", std::nullopt);
+  ASSERT_TRUE(macro.has_value());
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
   EXPECT_EQ(macro->DefinitionText().text(), "(x+3)");
   EXPECT_TRUE(macro->IsCallable());
   const auto& params = macro->Parameters();
+  // NOLINTEND(bugprone-unchecked-optional-access)
   EXPECT_EQ(params.size(), 1);
   const auto& param(params[0]);
   EXPECT_EQ(param.name.text(), "x");
@@ -244,17 +252,21 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
   EXPECT_THAT(definitions, ElementsAre(Pair("BAAAAR", testing::_),
                                        Pair("FOOOO", testing::_)));
   {
-    auto macro = FindOrNull(definitions, "BAAAAR");
-    ASSERT_NE(macro, nullptr);
+    auto macro = FindWithDefault(definitions, "BAAAAR", std::nullopt);
+    ASSERT_TRUE(macro.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_TRUE(macro->IsCallable());
     const auto& params = macro->Parameters();
+    // NOLINTEND(bugprone-unchecked-optional-access)
     EXPECT_EQ(params.size(), 2);
   }
   {
-    auto macro = FindOrNull(definitions, "FOOOO");
-    ASSERT_NE(macro, nullptr);
+    auto macro = FindWithDefault(definitions, "FOOOO", std::nullopt);
+    ASSERT_TRUE(macro.has_value());
+    // NOLINTBEGIN(bugprone-unchecked-optional-access)
     EXPECT_TRUE(macro->IsCallable());
     const auto& params = macro->Parameters();
+    // NOLINTEND(bugprone-unchecked-optional-access)
     EXPECT_EQ(params.size(), 1);
   }
 }

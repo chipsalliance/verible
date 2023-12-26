@@ -33,7 +33,7 @@
 namespace verilog {
 namespace {
 
-static constexpr VerilogPreprocess::Config kDefaultPreprocess;
+static VerilogPreprocess::Config kDefaultPreprocess;
 
 using verible::SyntaxTreeSearchTestCase;
 using verible::TextStructureView;
