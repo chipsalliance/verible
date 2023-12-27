@@ -129,13 +129,11 @@ std::ostream &FormattedExcerpt::FormattedText(
   const auto &front = tokens_.front();
   if (include_token_p(*front.token)) {
     VLOG(2) << "action: " << front.before.action;
-    switch (front.before.action) {
-      case SpacingDecision::kAlign:
-        // When aligning tokens, the first token might be further indented.
-        stream << Spacer(front.before.spaces) << front.token->text();
-        break;
-      default:
-        stream << front.token->text();
+    if (indent && front.before.action == SpacingDecision::kAlign) {
+      // When aligning tokens, the first token might be further indented.
+      stream << Spacer(front.before.spaces) << front.token->text();
+    } else {
+      stream << front.token->text();
     }
   }
   for (const auto &ftoken :
