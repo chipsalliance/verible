@@ -92,6 +92,7 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
   // Clear the vector to overwrite any existing value.
   rules.clear();
 
+  bool parsed_correctly = true;
   for (absl::string_view part :
        absl::StrSplit(text, separator, absl::SkipEmpty())) {
     if (separator == '\n') {
@@ -108,9 +109,8 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
     part = absl::StripAsciiWhitespace(part);
     while (!part.empty() && part[part.size() - 1] == ',') {
       // Not fatal, just report
-      if (!error->empty()) error->append("\n");
-      error->append(absl::StrCat(
-          "Ignoring stray comma at end of configuration `", part, "`"));
+      absl::StrAppend(error, error->empty() ? "" : "\n", kStrayCommaWarning,
+                      " `", part, "`");
       part = part.substr(0, part.size() - 1);
     }
 
@@ -119,8 +119,8 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
     // '+' to enable rule.
     // Note that part is guaranteed to be at least one character because
     // of absl::SkipEmpty()
-    const bool has_prefix = (part[0] == '+' || part[0] == '-');
     const bool prefix_minus = (part[0] == '-');
+    const bool has_prefix = (part[0] == '+' || prefix_minus);
 
     RuleSetting setting = {!prefix_minus, ""};
 
@@ -148,15 +148,19 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
 
     // Check if text is a valid lint rule.
     if (rule_iter == rule_name_set.end()) {
-      *error = absl::StrCat("invalid flag \"", rule_name, "\"");
-      return false;
+      absl::StrAppend(error, error->empty() ? "" : "\n", kInvalidFlagMessage,
+                      " \"", rule_name, "\"");
+      // If the rule doesn't exist just ignore it. Take note of this information
+      // so it can be reported but keep parsing configuration.
+      parsed_correctly = false;
+      continue;
     }
     // Map keys must use canonical registered string_views for guaranteed
     // lifetime, not just any string-equivalent copy.
     rules[*rule_iter] = setting;
   }
 
-  return true;
+  return parsed_correctly;
 }
 
 // Parse and unparse for RuleBundle (for commandlineflags)
@@ -312,15 +316,13 @@ absl::Status LinterConfiguration::AppendFromFile(
   if (config_or.ok()) {
     RuleBundle local_rules_bundle;
     std::string error;
-    if (local_rules_bundle.ParseConfiguration(*config_or, '\n', &error)) {
-      if (!error.empty()) {
-        std::cerr << "Warnings in parse configuration: " << error << std::endl;
-      }
-      UseRuleBundle(local_rules_bundle);
-    } else {
-      std::cerr << "Unable to fully parse configuration: " << error
-                << std::endl;
+    local_rules_bundle.ParseConfiguration(*config_or, '\n', &error);
+    // Log warnings and errors
+    if (!error.empty()) {
+      std::cerr << "Using a partial version from " << config_filename
+                << ". Found the following issues: " << error;
     }
+    UseRuleBundle(local_rules_bundle);
     return absl::OkStatus();
   }
 

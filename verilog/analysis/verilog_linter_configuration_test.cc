@@ -768,7 +768,7 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
   std::string error;
   bool success = bundle.ParseConfiguration(text, ',', &error);
   EXPECT_FALSE(success);
-  EXPECT_EQ(error, "invalid flag \"bad-flag\"");
+  EXPECT_EQ(error, absl::StrCat(kInvalidFlagMessage, " \"bad-flag\""));
 }
 
 TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
@@ -789,7 +789,7 @@ TEST(RuleBundleTest, ParseRuleBundleRejectMultiline) {
   std::string error;
   bool success = bundle.ParseConfiguration(text, '\n', &error);
   EXPECT_FALSE(success);
-  EXPECT_EQ(error, "invalid flag \"bad-flag\"");
+  EXPECT_EQ(error, absl::StrCat(kInvalidFlagMessage, " \"bad-flag\""));
 }
 
 TEST(RuleBundleTest, ParseRuleBundleSkipComments) {
