@@ -319,7 +319,8 @@ absl::Status LinterConfiguration::AppendFromFile(
     local_rules_bundle.ParseConfiguration(*config_or, '\n', &error);
     // Log warnings and errors
     if (!error.empty()) {
-      std::cerr << error;
+      std::cerr << "Using a partial version from " << config_filename
+                << ". Found the following issues: " << error;
     }
     UseRuleBundle(local_rules_bundle);
     return absl::OkStatus();
