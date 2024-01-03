@@ -14,9 +14,15 @@
 
 #include "verilog/analysis/checkers/suspicious_semicolon_rule.h"
 
+#include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
+#include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
+#include "common/text/concrete_syntax_tree.h"
+#include "common/text/tree_utils.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {
