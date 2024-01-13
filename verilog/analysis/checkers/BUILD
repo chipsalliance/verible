@@ -2130,22 +2130,30 @@ cc_library(
     srcs = ["suspicious_semicolon_rule.cc"],
     hdrs = ["suspicious_semicolon_rule.h"],
     deps = [
-         "//common/analysis:lint-rule-status",
-         "//common/analysis:syntax-tree-lint-rule",
-         "//verilog/CST:verilog-matchers",
-         "//verilog/analysis:descriptions",
-         "//verilog/analysis:lint-rule-registry",
+        "//common/analysis:lint-rule-status",
+        "//common/analysis:syntax-tree-lint-rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound-symbol-manager",
+        "//common/text:concrete-syntax-tree",
+        "//common/text:tree-utils",
+        "//common/text:syntax-tree-context",
+        "//verilog/CST:verilog-matchers",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint-rule-registry",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
 
 cc_test(
-  name = "suspicious-semicolon-rule_test",
-  srcs = ["suspicious_semicolon_rule_test.cc"],
-  deps = [
-      ":suspicious-semicolon-rule",
-      "//common/analysis:syntax-tree-linter-test-utils",
-      "//verilog/analysis:verilog-analyzer",
-      "@com_google_googletest//:gtest_main",
-  ],
+    name = "suspicious-semicolon-rule_test",
+    srcs = ["suspicious_semicolon_rule_test.cc"],
+    deps = [
+        ":suspicious-semicolon-rule",
+        "//common/analysis:linter-test-utils",
+        "//common/analysis:syntax-tree-linter-test-utils",
+        "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest_main",
+    ],
 )

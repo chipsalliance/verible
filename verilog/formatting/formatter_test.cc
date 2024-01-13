@@ -15465,6 +15465,28 @@ static constexpr FormatterTestCase kFormatterTestCases[] = {
      "end\n",
      "always @(  /*t*/ *  /*t*/) begin\n"
      "end\n"},
+    {
+        // Don't touch verilog_format:off region #1538
+        R"(
+module testcode;
+  // verilog_format: off
+  assign a = b
+           & c;
+  // verilog_format: on
+      assign e = d;
+endmodule
+)",
+        R"(
+module testcode;
+  // verilog_format: off
+  assign a = b
+           & c;
+  // verilog_format: on
+  assign e = d;
+endmodule
+)",
+
+    },
 
     // -----------------------------------------------------------------
 };

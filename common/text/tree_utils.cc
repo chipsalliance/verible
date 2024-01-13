@@ -301,13 +301,13 @@ bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
     }
     case SymbolKind::kNode: {
       auto &node = down_cast<SyntaxTreeNode &>(*tree->get());
-      auto &children = node.mutable_children();
-      for (auto &child : reversed_view(children)) {
+      int prune_count = 0;
+      for (auto &child : const_reversed_view(node.mutable_children())) {
         if (child == nullptr) {
-          children.pop_back();  // pop_back() guaranteed to not realloc
+          ++prune_count;
         } else {
           if (PruneTreeFromRight(&child, offset)) {
-            children.pop_back();
+            ++prune_count;
           } else {
             // Since token locations are monotonic, we can stop checking
             // as soon as the above function returns false.
@@ -315,8 +315,12 @@ bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
           }
         }
       }
+      // To avoid iterator invalidation issues in the loop, we erase at end.
+      while (prune_count--) {
+        node.pop_back();
+      }
       // If no children remain, tell caller to delete this node.
-      return children.empty();
+      return node.empty();
     }
   }
 
@@ -343,8 +347,8 @@ ConcreteSyntaxTree *LeftSubtree(ConcreteSyntaxTree *tree) {
     // Leaves don't have subtrees.
     return nullptr;
   }
-  auto &children = down_cast<SyntaxTreeNode &>(*tree->get()).mutable_children();
-  for (auto &child : children) {
+  SyntaxTreeNode *const tree_node = down_cast<SyntaxTreeNode *>(tree->get());
+  for (auto &child : tree_node->mutable_children()) {
     if (child != nullptr) return &child;
   }
   return nullptr;
