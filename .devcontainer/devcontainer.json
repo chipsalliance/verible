@@ -1,39 +1,21 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
+
+// If you are behind a proxy, set the http_proxy and https_proxy environment variables
+// in the container environment. For example:
+///
+// "containerEnv": {
+// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
+// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
+// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
+// 	"https_proxy": "http://proxy-dmz.intel.com:912/"
+// },
+
 {
 	"name": "Verible Dev",
 	"build": {
 		"dockerfile": "Dockerfile",
-		// Add any proxy settings if the build of the
-		// container is behind a proxy
-		//
-		// "args" : {
-		// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-		// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-		// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
-		// 	"https_proxy": "http://proxy-dmz.intel.com:912/"
-		// }
 	},
-
-	// Add any proxy settings if connecting to a container on
-	// a remote machine
-	//
-	// "remoteEnv": {
-	// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-	// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-	// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
-	// 	"https_proxy": "http://proxy-dmz.intel.com:912/",
-	// },
-
-	// Add any proxy settings if the container is behind
-	// a proxy
-	///
-	// "containerEnv": {
-	// 	"HTTP_PROXY": "http://proxy-dmz.intel.com:912/",
-	// 	"HTTPS_PROXY": "http://proxy-dmz.intel.com:912/",
-	// 	"http_proxy": "http://proxy-dmz.intel.com:912/",
-	// 	"https_proxy": "http://proxy-dmz.intel.com:912/"
-	// },
 
 	// Configure tool-specific properties.
 	"customizations": {
