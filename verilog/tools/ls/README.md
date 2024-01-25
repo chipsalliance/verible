@@ -47,14 +47,24 @@ find . -name "*.sv" -o -name "*.svh" -o -name "*.v" | sort > verible.filelist
 ```
 
 The paths in the `verible.filelist` can be either relative to the location of the file or absolute.
-The Language Server looks for the `verible.filelist` file in the workspace directory - a directory delivered by the editor.
+It is possible to change the default name of the filelist with the `--file_list_path <new-file-name>` flag.
+
+### Project Root
+The Language Server looks for the `verible.filelist` file in the project root.
+
+#### From Editor
+The project root is typically determined by the editor and sent to the language server.
 The provided workspace directory can vary between editors, usually it is a directory:
 
-* the editor was started,
-* the editor found the root of the project (e.g. based on `.git` directory)
-* provided by the user in the project's settings.
+* Where the editor was started,
+* Where the editor found the root of the project (e.g. based on `.git` directory)
+* That is provided by the user in the project's settings in the editor.
 
-It is possible to change the default name of the file - it can be done with `--file_list_path <new-file-name>` flag.
+#### Fallback
+If there is no valid project root directory provided by the editor, Verible falls back to use the current directory.
+
+You can override the project root that is used with the environment variable `VERIBLE_LS_PROJECTROOT_OVERRIDE`.
+If that is set, it takes precedence over the editor-provided project root.
 
 ### Adding project-specific linter configuration
 

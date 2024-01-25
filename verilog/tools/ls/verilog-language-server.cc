@@ -185,7 +185,9 @@ void VerilogLanguageServer::PrintStatistics() const {
 verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
     const verible::lsp::InitializeParams &p) {
   // set VerilogProject for the symbol table, if possible
-  if (!p.rootUri.empty()) {
+  if (const char *override_path = getenv("VERIBLE_LS_PROJECTROOT_OVERRIDE")) {
+    ConfigureProject(override_path);
+  } else if (!p.rootUri.empty()) {
     std::string path = verible::lsp::LSPUriToPath(p.rootUri);
     if (path.empty()) {
       LOG(ERROR) << "Unsupported rootUri in initialize request:  " << p.rootUri
@@ -204,6 +206,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::InitializeRequestHandler(
 }
 
 void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
+  LOG(INFO) << "Initializing with project-root '" << project_root << "'";
   std::string proj_root = {project_root.begin(), project_root.end()};
   if (proj_root.empty()) {
     proj_root = std::string(verible::file::Dirname(FindFileList(".")));
