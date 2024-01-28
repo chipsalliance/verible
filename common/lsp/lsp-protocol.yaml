@@ -202,3 +202,17 @@ DocumentLinkParams:
 DocumentLink:
   range: Range
   target?: string  # DocumentUri
+
+# -- textDocument/prepareRename
+PrepareRenameParams:
+  <: TextDocumentPositionParams
+
+# Response: Range
+
+# -- textDocument/rename
+RenameParams:
+  <: TextDocumentPositionParams
+  newName: string
+
+# Response: Range[]
+
