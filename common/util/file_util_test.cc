@@ -248,6 +248,12 @@ TEST(FileUtil, ScopedTestFileEmplace) {
   }
 }
 
+TEST(FileUtil, FileNotExistsTests) {
+  absl::Status s = file::FileExists("not/an/existing/file");
+  EXPECT_FALSE(s.ok());
+  EXPECT_EQ(s.code(), absl::StatusCode::kNotFound);
+}
+
 TEST(FileUtil, FileExistsDirectoryErrorMessage) {
   absl::Status s;
   s = file::FileExists(testing::TempDir());

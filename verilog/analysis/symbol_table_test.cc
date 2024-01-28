@@ -8252,7 +8252,8 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectMissingFile) {
   symbol_table.BuildSingleTranslationUnit("file/not/found.txt",
                                           &build_diagnostics);
   ASSERT_FALSE(build_diagnostics.empty());
-  EXPECT_THAT(build_diagnostics.front().code(), absl::StatusCode::kNotFound);
+  EXPECT_THAT(build_diagnostics.front().code(), absl::StatusCode::kNotFound)
+      << build_diagnostics.front();
 }
 
 TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {

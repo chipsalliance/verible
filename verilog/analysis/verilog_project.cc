@@ -301,14 +301,14 @@ absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenTranslationUnit(
 
 absl::Status VerilogProject::IncludeFileNotFoundError(
     absl::string_view referenced_filename) const {
-  return absl::NotFoundError(absl::StrCat(
-      "Unable to find '", referenced_filename,
-      "' among the included paths: ", absl::StrJoin(include_paths_, ", ")));
+  return absl::NotFoundError(
+      absl::StrCat("'", referenced_filename, "' not in any of the ",
+                   include_paths_.size(), " include paths"));
 }
 
 absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenIncludedFile(
     absl::string_view referenced_filename) {
-  VLOG(1) << __FUNCTION__ << ", referenced: " << referenced_filename;
+  VLOG(2) << __FUNCTION__ << ", referenced: " << referenced_filename;
   // Check for a pre-existing entry to avoid duplicate files.
   {
     const auto opened_file = FindOpenedFile(referenced_filename);
@@ -329,18 +329,16 @@ absl::StatusOr<VerilogSourceFile *> VerilogProject::OpenIncludedFile(
 
   // Locate the file among the base paths.
   for (const auto &include_path : include_paths_) {
-    const std::string resolved_filename =
+    const std::string resolved =
         verible::file::JoinPath(include_path, referenced_filename);
-    if (verible::file::FileExists(resolved_filename).ok()) {
-      VLOG(2) << "File '" << resolved_filename << "' exists. Resolved from '"
-              << referenced_filename << "'";
-      return OpenFile(referenced_filename, resolved_filename, Corpus());
+    if (verible::file::FileExists(resolved).ok()) {
+      VLOG(2) << referenced_filename << " in incdir '" << resolved << "'";
+      return OpenFile(referenced_filename, resolved, Corpus());
     }
-    VLOG(2) << "Checked for file'" << resolved_filename
-            << "', but not found. Resolved from '" << referenced_filename
-            << "'";
+    VLOG(2) << referenced_filename << " not in incdir '" << resolved << "'";
   }
 
+  VLOG(1) << __FUNCTION__ << "': '" << referenced_filename << "' not found";
   // Not found in any path.  Cache this status.
   const auto inserted = files_.emplace(
       referenced_filename,

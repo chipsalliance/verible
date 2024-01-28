@@ -80,12 +80,13 @@ static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
   const char *const system_msg =
       sys_error == 0 ? fallback_msg : strerror(sys_error);
   if (filename.empty()) filename = "<empty-filename>";
-  const std::string msg = absl::StrCat(filename, ": ", system_msg);
+  std::string msg = absl::StrCat(filename, ": ", system_msg);
   switch (sys_error) {
     case EPERM:
     case EACCES:
       return {absl::StatusCode::kPermissionDenied, msg};
     case ENOENT:
+    case ESRCH:  // Win32 returns this for fs::status() on non-existing file.
       return {absl::StatusCode::kNotFound, msg};
     case EEXIST:
       return {absl::StatusCode::kAlreadyExists, msg};
@@ -93,6 +94,7 @@ static absl::Status CreateErrorStatusFromSysError(absl::string_view filename,
     case EISDIR:
       return {absl::StatusCode::kInvalidArgument, msg};
     default:
+      absl::StrAppend(&msg, " (sys_error=", sys_error, ")");
       return {absl::StatusCode::kUnknown, msg};
   }
 }
@@ -133,7 +135,7 @@ absl::Status UpwardFileSearch(absl::string_view start,
 
 absl::Status FileExists(const std::string &filename) {
   std::error_code err;
-  fs::file_status stat = fs::status(filename, err);
+  const fs::file_status stat = fs::status(filename, err);
 
   if (err.value() != 0) {
     return CreateErrorStatusFromErr(filename, err, "file exists check");
