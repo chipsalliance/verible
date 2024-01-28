@@ -206,21 +206,20 @@ TEST(InMemoryVerilogSourceFileTest, ParseInvalidFile) {
   EXPECT_EQ(&text_structure->SyntaxTree(), tree);
 }
 
-TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
+TEST(ParsedVerilogSourceFileTest, PreparsedValidFile) {
   constexpr absl::string_view text("localparam int p = 1;\n");
   std::unique_ptr<VerilogAnalyzer> analyzed_structure =
       std::make_unique<VerilogAnalyzer>(text, "internal");
   absl::Status status = analyzed_structure->Analyze();
   EXPECT_TRUE(status.ok());
-  const TextStructureView &input_text_structure = analyzed_structure->Data();
 
-  ParsedVerilogSourceFile file("internal", &input_text_structure);
+  ParsedVerilogSourceFile file("internal", "resolved", *analyzed_structure);
   // Parse automatically opens.
   EXPECT_TRUE(file.Parse().ok());
   EXPECT_TRUE(file.Status().ok());
   const TextStructureView *text_structure =
       ABSL_DIE_IF_NULL(file.GetTextStructure());
-  EXPECT_EQ(&input_text_structure, text_structure);
+  EXPECT_EQ(&analyzed_structure->Data(), text_structure);
   const absl::string_view owned_string_range(text_structure->Contents());
   EXPECT_EQ(owned_string_range, text);
   const auto *tokens = &text_structure->TokenStream();
@@ -234,6 +233,24 @@ TEST(ParsedVerilogSourceFileTest, ParseValidFile) {
   EXPECT_EQ(file.GetTextStructure(), text_structure);
   EXPECT_EQ(&text_structure->TokenStream(), tokens);
   EXPECT_EQ(&text_structure->SyntaxTree(), tree);
+}
+
+TEST(ParsedVerilogSourceFileTest, PreparsedInvalidValidFile) {
+  constexpr absl::string_view text("localp_TYPO_aram int p = 1;\n");
+  std::unique_ptr<VerilogAnalyzer> analyzed_structure =
+      std::make_unique<VerilogAnalyzer>(text, "internal");
+  absl::Status status = analyzed_structure->Analyze();
+  EXPECT_FALSE(status.ok());
+
+  ParsedVerilogSourceFile file("internal", "resolved", *analyzed_structure);
+  EXPECT_TRUE(file.Open().ok());    // Already successfully implicitly opened.
+  EXPECT_FALSE(file.Parse().ok());  // We expect the same parse failure.
+  EXPECT_FALSE(file.Status().ok());
+  const TextStructureView *text_structure =
+      ABSL_DIE_IF_NULL(file.GetTextStructure());
+  EXPECT_EQ(&analyzed_structure->Data(), text_structure);
+  const absl::string_view owned_string_range(text_structure->Contents());
+  EXPECT_EQ(owned_string_range, text);
 }
 
 TEST(VerilogProjectTest, NonexistentTranslationUnit) {
@@ -264,6 +281,56 @@ TEST(VerilogProjectTest, NonexistentFileLookup) {
         cproject.LookupRegisteredFile("never-there.v");
     EXPECT_EQ(file, nullptr);
   }
+}
+
+TEST(VerilogProjectTest, UpdateFileContents) {
+  // The update file content is used typically by the language server.
+  // By default, we load a file from the filesystem unless we get it from the
+  // editor, which then overrides it. If removed, we should fall back to file
+  // contents.
+  const auto tempdir = ::testing::TempDir();
+  const std::string project_root_dir = JoinPath(tempdir, "srcs");
+  EXPECT_TRUE(CreateDir(project_root_dir).ok());
+
+  // root is director with sources.
+  VerilogProject project(project_root_dir, {});
+
+  // Prepare file to be auto-loaded later
+  constexpr absl::string_view file_content("module foo();\nendmodule\n");
+  const ScopedTestFile tf(project_root_dir, file_content);
+  const absl::string_view reference_name = Basename(tf.filename());
+
+  VerilogSourceFile *from_file;
+  absl::string_view search_substring;
+
+  // Push a local analyzed name under the name of the file.
+  constexpr absl::string_view external_content("localparam int p = 1;\n");
+  std::unique_ptr<VerilogAnalyzer> analyzed_structure =
+      std::make_unique<VerilogAnalyzer>(external_content, "internal");
+  project.UpdateFileContents(tf.filename(), analyzed_structure.get());
+
+  // Look up the file and see that content is the external content
+  from_file = *project.OpenTranslationUnit(reference_name);
+  EXPECT_EQ(from_file->GetContent(), external_content);
+
+  // ... and we find our file given the substring.
+  search_substring = from_file->GetContent().substr(5);
+  EXPECT_EQ(project.LookupFileOrigin(search_substring), from_file);
+
+  // Updating with empty content, i.e. removing the memory virtual file
+  // force reading from file.
+  project.UpdateFileContents(tf.filename(), nullptr);
+
+  // Should be file content.
+  from_file = *project.OpenTranslationUnit(reference_name);
+  EXPECT_EQ(from_file->GetContent(), file_content);
+
+  // Looking up by the old substring should not find anything anymore.
+  EXPECT_EQ(project.LookupFileOrigin(search_substring), nullptr);
+
+  // But we find our file from our substring.
+  search_substring = from_file->GetContent().substr(5);
+  EXPECT_EQ(project.LookupFileOrigin(search_substring), from_file);
 }
 
 TEST(VerilogProjectTest, LookupFileOriginTest) {

@@ -211,7 +211,7 @@ Output: Produces Indexing Facts for kythe (http://kythe.io).
                            file_list.preprocessing.include_dirs.end());
   verilog::VerilogProject project(file_list_root, include_dir_paths,
                                   absl::GetFlag(FLAGS_verilog_project_name),
-                                  /*populate_string_maps=*/false);
+                                  /*provide_lookup_file_origin=*/false);
 
   const std::vector<absl::Status> errors(
       verilog::kythe::ExtractTranslationUnits(file_list_path, &project,

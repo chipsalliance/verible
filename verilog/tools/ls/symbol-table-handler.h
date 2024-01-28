@@ -70,7 +70,7 @@ class SymbolTableHandler {
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
   void UpdateFileContent(absl::string_view path,
-                         const verible::TextStructureView *content);
+                         const verilog::VerilogAnalyzer *parsed);
 
   // Creates a symbol table for entire project (public: needed in unit-test)
   std::vector<absl::Status> BuildProjectSymbolTable();
