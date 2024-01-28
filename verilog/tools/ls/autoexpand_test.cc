@@ -142,7 +142,7 @@ void TestTextEditsWithProject(
   SymbolTableHandler symbol_table_handler;
   symbol_table_handler.SetProject(proj);
   symbol_table_handler.UpdateFileContent(TESTED_FILENAME,
-                                         &tracker.current()->parser().Data());
+                                         &tracker.current()->parser());
   symbol_table_handler.BuildProjectSymbolTable();
   // Run the tested edit function
   std::vector<TextEdit> edits = run.edit_fn(&symbol_table_handler, &tracker);

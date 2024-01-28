@@ -365,9 +365,9 @@ void SymbolTableHandler::CollectReferences(
 }
 
 void SymbolTableHandler::UpdateFileContent(
-    absl::string_view path, const verible::TextStructureView *content) {
+    absl::string_view path, const verilog::VerilogAnalyzer *parsed) {
   files_dirty_ = true;
-  curr_project_->UpdateFileContents(path, content);
+  curr_project_->UpdateFileContents(path, parsed);
 }
 
 };  // namespace verilog

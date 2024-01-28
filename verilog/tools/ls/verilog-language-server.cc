@@ -253,7 +253,7 @@ void VerilogLanguageServer::UpdateEditedFileInProject(
   }
   if (!buffer_tracker->last_good()) return;
   symbol_table_handler_.UpdateFileContent(
-      path, &buffer_tracker->last_good()->parser().Data());
+      path, &buffer_tracker->last_good()->parser());
   VLOG(1) << "Updated file:  " << uri << " (" << path << ")";
 }
 

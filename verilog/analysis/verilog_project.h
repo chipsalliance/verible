@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -177,6 +178,8 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
                             absl::string_view corpus = "")
       : VerilogSourceFile(filename, filename, corpus) {
     content_ = std::move(content);
+    processing_state_ = ProcessingState::kOpened;  // Advance state
+    status_ = absl::OkStatus();
   }
 
   // Legacy
@@ -187,77 +190,78 @@ class InMemoryVerilogSourceFile final : public VerilogSourceFile {
             filename, std::make_shared<verible::StringMemBlock>(contents),
             corpus) {}
 
-  // Load text into analyzer structure without actually opening a file.
-  absl::Status Open() final;
+  // Nothing to do, content already loaded.
+  absl::Status Open() final { return absl::OkStatus(); }
 };
 
-// Source file that was already parsed and got its own TextStructure.
+// Source file that was already parsed.
 // Doesn't require file-system access, nor create temporary files.
+// TODO: reorg class hierachy. The base class contains an owened analyzed
+// structure; simplify to only track ownership in one place.
 class ParsedVerilogSourceFile final : public VerilogSourceFile {
  public:
-  // this constructor is used for updating file contents in the language server
-  // it sets referenced_path and resolved_path based on URI from language server
+  // Construct with an already existing VerilogAnalyzer that already
+  // parsed its content.
+  // Ownership if "analyzer" is not taken over, must outlive this objet.
   ParsedVerilogSourceFile(absl::string_view referenced_path,
                           absl::string_view resolved_path,
-                          const verible::TextStructureView *text_structure,
+                          const verilog::VerilogAnalyzer &analyzer,
                           absl::string_view corpus = "")
       : VerilogSourceFile(referenced_path, resolved_path, corpus),
-        text_structure_(text_structure) {}
-
-  // filename can be fake, it is not used to open any file.
-  // text_structure is a pointer to a TextStructureView object of
-  //     already parsed file. Current implementation does _not_ make a
-  //     copy of it and expects it will be available for the lifetime of
-  //     object of this class.
-  ParsedVerilogSourceFile(absl::string_view filename,
-                          const verible::TextStructureView *text_structure,
-                          absl::string_view corpus = "")
-      : VerilogSourceFile(filename, filename, corpus),
-        text_structure_(text_structure) {}
+        not_owned_analyzer_(&analyzer) {
+    processing_state_ = ProcessingState::kParsed;  // Advance to full parsed.
+    status_ = analyzer.ParseStatus();
+  }
 
   // Do nothing (file contents already loaded)
-  absl::Status Open() final;
+  absl::Status Open() final { return absl::OkStatus(); }
 
   // Do nothing (contents already parsed)
-  absl::Status Parse() final;
+  absl::Status Parse() final { return status_; }
 
   // Return TextStructureView provided previously in constructor
-  const verible::TextStructureView *GetTextStructure() const final;
+  const verible::TextStructureView *GetTextStructure() const final {
+    return &not_owned_analyzer_->Data();
+  }
 
+  // Return string-view content range of text structure.
   absl::string_view GetContent() const final {
-    return text_structure_->Contents();
+    return not_owned_analyzer_->Data().Contents();
   }
 
  private:
-  const verible::TextStructureView *const text_structure_;
+  // TODO: make some sort of owned/non-owned version so that we don't have
+  // two different types.
+  const verilog::VerilogAnalyzer *const not_owned_analyzer_;
 };
 
 // VerilogProject represents a set of files as a cohesive unit of compilation.
 // Files can include top-level translation units and preprocessor included
 // files. This is responsible for owning string memory that corresponds
-// to files' contents.
+// to files' contents and analysis results.
 class VerilogProject {
   // Collection of per-file metadata and analyzer objects
   // key: referenced file name (as opposed to resolved filename)
-  using file_set_type =
+  using NameToFileMap =
       std::map<std::string, std::unique_ptr<VerilogSourceFile>,
                VerilogSourceFile::Less>;
 
  public:
-  using iterator = file_set_type::iterator;
-  using const_iterator = file_set_type::const_iterator;
+  using iterator = NameToFileMap::iterator;
+  using const_iterator = NameToFileMap::const_iterator;
 
-  // Constructor. Note that `populate_string_maps` (populating internal string
-  // view maps) fragments the class's usage. Enabling it prevents removing files
-  // from the project (which is required for Kythe facts extraction).
+  // Construct VerilogProject with a choice of allowing to look up file
+  // origin.
   VerilogProject(absl::string_view root,
                  const std::vector<std::string> &include_paths,
                  absl::string_view corpus = "",
-                 bool populate_string_maps = true)
+                 bool provide_lookup_file_origin = true)
       : translation_unit_root_(root),
-        include_paths_(include_paths),
         corpus_(corpus),
-        populate_string_maps_(populate_string_maps) {}
+        include_paths_(include_paths),
+        content_index_(provide_lookup_file_origin
+                           ? std::make_optional<ContentToFileIndex>()
+                           : std::nullopt) {}
 
   VerilogProject(const VerilogProject &) = delete;
   VerilogProject(VerilogProject &&) = delete;
@@ -289,7 +293,7 @@ class VerilogProject {
       absl::string_view referenced_filename);
 
   // Adds an already opened file by directly passing its content.
-  // TODO(refactor): is this needed ?
+  // This is needed in external kythe backends.
   void AddVirtualFile(absl::string_view resolved_filename,
                       absl::string_view content);
 
@@ -317,9 +321,15 @@ class VerilogProject {
   // Returns relative path to the VerilogProject
   std::string GetRelativePathToSource(absl::string_view absolute_filepath);
 
-  // Updates file from external source, e.g. Language Server
+  // Updates file from external source with an already parsed content.
+  // (e.g. Language Server).
+  // "parsed" needs to be a VerilogAnalyzer that is valid until the given
+  // path is removed.
+  // If "parsed" is nullptr, the old parsed file is removed and replaced
+  // with a standard VerilogSourceFile, reading from a filesystem.
+  // (TODO: this is a fairly specific functionality; make this composed).
   void UpdateFileContents(absl::string_view path,
-                          const verible::TextStructureView *updatedtext);
+                          const verilog::VerilogAnalyzer *parsed);
 
   // Adds include directory to the project
   void AddIncludePath(absl::string_view includepath) {
@@ -348,37 +358,52 @@ class VerilogProject {
   absl::optional<absl::StatusOr<VerilogSourceFile *>> FindOpenedFile(
       absl::string_view filename) const;
 
+  // Attempt to remove file and metadata if it exists. Return 'true' on success.
+  bool RemoveByName(const std::string &filename);
+
   // The path from which top-level translation units are referenced relatively
   // (often from a file list).  This path can be relative or absolute.
   // Default: the working directory of the invoking process.
   const std::string translation_unit_root_ = ".";
 
-  // The sequence of directories from which to search for `included files.
-  // These can be absolute, or relative to the process's working directory.
-  std::vector<std::string> include_paths_;
-
   // The corpus to which this project belongs (e.g.,
   // 'github.com/chipsalliance/verible').
   const std::string corpus_;
 
-  // If true, opening a file will add its contents to string_view_map_ and
-  // buffer_to_analyzer_map_. NOTE: string view maps don't support removal
-  // operation. Setting this option prevents removing of the files from the
-  // project (removing the files leads to undefined behavior).
-  const bool populate_string_maps_;
+  // The sequence of directories from which to search for `included files.
+  // These can be absolute, or relative to the process's working directory.
+  std::vector<std::string> include_paths_;
 
   // Set of opened files, keyed by referenced (not resolved) filename.
-  file_set_type files_;
+  NameToFileMap files_;
 
-  // Maps any string_view (substring) to its full source file text
-  // (superstring).
-  verible::StringViewSuperRangeMap string_view_map_;
+  // Index files by content substrings. Any substring in any of the files
+  // allows to look up the corresponding VerilogSourceFile object.
+  class ContentToFileIndex {
+   public:
+    // Put content range of file into index.
+    void Register(const VerilogSourceFile *file);
 
-  // Maps start of text buffer to its corresponding analyzer object.
-  // key: the starting address of a string buffer belonging to an opened file.
-  //   This can come from the .begin() of any entry in string_view_map_.
-  std::map<absl::string_view::const_iterator, file_set_type::const_iterator>
-      buffer_to_analyzer_map_;
+    // Remove given file from the index.
+    void Unregister(const VerilogSourceFile *file);
+
+    // Given a memory subrange of any of the indexed files, return the
+    // corresponding file or nullptr if none of the files contains that range.
+    const VerilogSourceFile *Lookup(absl::string_view content_substring) const;
+
+   private:
+    // Maps any string_view (substring) to its full source file text
+    // (superstring).
+    verible::StringViewSuperRangeMap string_view_map_;
+
+    // Maps start of text buffer to its corresponding analyzer object.
+    // key: the starting address of a string buffer belonging to an opened file.
+    //   This can come from the .begin() of any entry in string_view_map_.
+    std::map<absl::string_view::const_iterator, const VerilogSourceFile *>
+        buffer_to_analyzer_map_;
+  };
+
+  std::optional<ContentToFileIndex> content_index_;
 };
 
 }  // namespace verilog

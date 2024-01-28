@@ -52,6 +52,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "lsp-parse-buffer_test",
+    srcs = ["lsp-parse-buffer_test.cc"],
+    deps = [
+        ":lsp-parse-buffer",
+        "//common/lsp:lsp-text-buffer",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "verible-lsp-adapter",
     srcs = ["verible-lsp-adapter.cc"],

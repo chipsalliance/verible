@@ -63,13 +63,16 @@ class ParsedBuffer {
   std::vector<verible::LintRuleStatus> lint_statuses_;
 };
 
-// A buffer tracker tracks the EditTextBuffer content and keeps up to
-// two versions of ParsedBuffers - the latest, that might have parse errors,
-// and the last known good that parsed without errors (if available).
+// A buffer tracker tracks of a single file EditTextBuffer content and stores
+// a parsed version.
+// It keeps up to two versions of ParsedBuffers - the latest, that might have
+// parse errors,  and the last known good that parsed without errors
+// (if available).
 class BufferTracker {
  public:
-  void Update(const std::string &filename,
-              const verible::lsp::EditTextBuffer &txt);
+  // Update with a changed text buffer from the LSP subsystem. Triggers
+  // re-parsing and updating our current() and potentially last_good().
+  void Update(const std::string &uri, const verible::lsp::EditTextBuffer &txt);
 
   // ---
   // Thread guarantee for the following functions.
@@ -80,10 +83,10 @@ class BufferTracker {
   // ---
 
   // Get the current ParsedBuffer from the last text update we received
-  // from the editor. This can be nullptr if it could not be parsed.
+  // from the editor.
   //
-  // Use in operations that only really makes sense on the latest view and
-  // only if it was parseable, e.g. suggesting edits.
+  // Use in operations that only really makes sense on the latest view,
+  // e.g. suggesting edits.
   std::shared_ptr<const ParsedBuffer> current() const { return current_; }
 
   // Get the ParsedBuffer that represents that last time we were able to
@@ -91,8 +94,9 @@ class BufferTracker {
   // as current() if the last text update was fully parseable, or nullptr
   // if we never received a buffer that was parseable.
   //
-  // Use in operations that focus on returning something even it it is slightly
-  // outdated, e.g. finding a particular symbol.
+  // Use in operations that focus on returning something that requires a
+  // valid parsed file even it it is slightly outdated, e.g. finding
+  // a particular symbol.
   std::shared_ptr<const ParsedBuffer> last_good() const { return last_good_; }
 
  private:
@@ -107,9 +111,10 @@ class BufferTracker {
   std::shared_ptr<const ParsedBuffer> last_good_;
 };
 
-// Container holding all buffer trackers keyed by file uri.
+// Container holding a buffer tracker per file uri.
 // This is the correspondent to verible::lsp::BufferCollection that
-// internally stores
+// internally stores file content by uri. Here we keep parsed files per uri,
+// whenever we're informed of a change in the buffer collection.
 class BufferTrackerContainer {
  public:
   // Return a callback that allows to subscribe to an lsp::BufferCollection
