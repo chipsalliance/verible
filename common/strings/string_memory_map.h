@@ -65,6 +65,9 @@ class StringViewSuperRangeMap {
     return string_map_.find({substring.begin(), substring.end()});
   }
 
+  // Erase given range.
+  const_iterator erase(const_iterator pos) { return string_map_.erase(pos); }
+
   // Similar to find(), but asserts that a superstring range is found,
   // and converts the result directly to a string_view.
   absl::string_view must_find(absl::string_view substring) const {

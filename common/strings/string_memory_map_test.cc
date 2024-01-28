@@ -106,6 +106,28 @@ TEST(StringViewSuperRangeMapTest, TwoStrings) {
   });
 }
 
+TEST(StringViewSuperRangeMapTest, EraseString) {
+  constexpr absl::string_view text1("onestring");
+  constexpr absl::string_view text2("another");
+  StringViewSuperRangeMap svmap;
+  svmap.must_emplace(text1);
+  svmap.must_emplace(text2);
+
+  auto found = svmap.find(text1);
+  EXPECT_NE(found, svmap.end());
+  svmap.erase(found);
+
+  // should be gone now
+  found = svmap.find(text1);
+  EXPECT_EQ(found, svmap.end());
+
+  found = svmap.find(text2);
+  EXPECT_NE(found, svmap.end());
+  svmap.erase(found);
+
+  EXPECT_TRUE(svmap.empty());
+}
+
 // Function to get the owned address range of the underlying string.
 static absl::string_view StringViewKey(
     const std::unique_ptr<const std::string> &owned) {

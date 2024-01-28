@@ -1123,6 +1123,26 @@ TEST(DisjointIntervalSetTest, MustEmplaceOverlapsUpper) {
   EXPECT_DEATH(iset.must_emplace(45, 55), "Failed to emplace");
 }
 
+TEST(DisjointIntervalSetTest, EraseRange) {
+  IntIntervalSet iset;
+  iset.must_emplace(30, 40);
+  iset.must_emplace(50, 60);
+
+  auto found = iset.find(35);
+  EXPECT_NE(found, iset.end());
+  iset.erase(found);
+
+  // ... should be gone now.
+  found = iset.find(35);
+  EXPECT_EQ(found, iset.end());
+
+  found = iset.find(55);
+  EXPECT_NE(found, iset.end());
+  iset.erase(found);
+
+  EXPECT_TRUE(iset.empty());
+}
+
 TEST(DisjointIntervalMapTest, FindInterval) {
   IntIntervalSet iset;
   iset.must_emplace(20, 25);
