@@ -50,20 +50,19 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
           content, uri)) {
   VLOG(1) << "Analyzed " << uri << " lex:" << parser_->LexStatus()
           << "; parser:" << parser_->ParseStatus() << std::endl;
-  // TODO(hzeller): we should use a filename not URI; strip prefix.
+  // TODO(hzeller): should we use a filename not URI ?
   if (auto lint_result = RunLinter(uri, *parser_); lint_result.ok()) {
     lint_statuses_ = std::move(lint_result.value());
   }
 }
 
-void BufferTracker::Update(const std::string &filename,
+void BufferTracker::Update(const std::string &uri,
                            const verible::lsp::EditTextBuffer &txt) {
   if (current_ && current_->version() == txt.last_global_version()) {
     return;  // Nothing to do (we don't really expect this to happen)
   }
-  txt.RequestContent([&txt, &filename, this](absl::string_view content) {
-    current_ = std::make_shared<ParsedBuffer>(txt.last_global_version(),
-                                              filename, content);
+  txt.RequestContent([&txt, &uri, this](absl::string_view content) {
+    current_.reset(new ParsedBuffer(txt.last_global_version(), uri, content));
   });
   if (current_->parsed_successfully()) {
     last_good_ = current_;
@@ -74,9 +73,19 @@ verible::lsp::BufferCollection::UriBufferCallback
 BufferTrackerContainer::GetSubscriptionCallback() {
   return
       [this](const std::string &uri, const verible::lsp::EditTextBuffer *txt) {
+        // The Update() might replace, thus discard, old parsed buffers.
+        // However, the change listeners we're about to inform might
+        // expect them to be still alive while the update takes place.
+        // So hold on to them here until all updates are performed.
+        // (this copy is cheap as it is just reference counted pointers).
+        BufferTracker remember_previous;
+        if (const BufferTracker *tracker = FindBufferTrackerOrNull(uri)) {
+          remember_previous = *tracker;
+        }
+
         if (txt) {
           const BufferTracker *tracker = Update(uri, *txt);
-          // Now inform our listeners.
+          // Updated current() and last_good(); Now inform our listeners.
           for (const auto &change_listener : change_listeners_) {
             change_listener(uri, tracker);
           }
