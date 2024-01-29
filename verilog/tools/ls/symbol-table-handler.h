@@ -68,10 +68,17 @@ class SymbolTableHandler {
       const verible::lsp::ReferenceParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
+  std::optional<verible::lsp::Range> FindRenameableRangeAtCursor(
+      const verible::lsp::PrepareRenameParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
   // Provide new parsed content for the given path. If "content" is nullptr,
   // opens the given file instead.
   void UpdateFileContent(absl::string_view path,
                          const verilog::VerilogAnalyzer *parsed);
+
+  verible::lsp::WorkspaceEdit FindRenameLocationsAndCreateEdits(
+      const verible::lsp::RenameParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
 
   // Creates a symbol table for entire project (public: needed in unit-test)
   std::vector<absl::Status> BuildProjectSymbolTable();
@@ -88,6 +95,20 @@ class SymbolTableHandler {
   // TextDocumentPositionParams. If text is not found, empty-initialized
   // string_view is returned.
   absl::string_view GetTokenAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns a range in which a token exists in the file by the LSP request
+  // based on TextDocumentPositionParams. If text is not found,
+  // empty-initialized LineColumnRange is returned.
+  verible::LineColumnRange GetTokenRangeAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &document_cursor,
+      const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns a TokenInfo of a token pointed at by the cursor in the file by the
+  // LSP request based on TextDocumentPositionParams. If text is not found,
+  // nullptr is returned.
+  std::optional<verible::TokenInfo> GetTokenInfoAtTextDocumentPosition(
       const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
 
@@ -115,9 +136,8 @@ class SymbolTableHandler {
                          const SymbolTableNode *definition_node,
                          std::vector<verible::lsp::Location> *references);
 
-  // Looks for verible.filelist file down in directory structure and loads data
-  // to project.
-  // It is meant to be executed once per VerilogProject setup
+  // Looks for verible.filelist file down in directory structure and loads
+  // data to project. It is meant to be executed once per VerilogProject setup
   bool LoadProjectFileList(absl::string_view current_dir);
 
   // Parse all the files in the project.
@@ -126,8 +146,8 @@ class SymbolTableHandler {
   // Path to the filelist file for the project
   std::string filelist_path_;
 
-  // Last timestamp of filelist file - used to check whether SymbolTable should
-  // be updated
+  // Last timestamp of filelist file - used to check whether SymbolTable
+  // should be updated
   absl::optional<std::filesystem::file_time_type> last_filelist_update_;
 
   // tells that symbol table should be rebuilt due to changes in files

@@ -77,6 +77,7 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       {"documentHighlightProvider", true},        // Highlight same symbol
       {"definitionProvider", true},               // Provide going to definition
       {"referencesProvider", true},               // Provide going to references
+      {"renameProvider", true},                   // Provide symbol renaming
       {"diagnosticProvider",                      // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
@@ -148,6 +149,19 @@ void VerilogLanguageServer::SetRequestHandlers() {
       [this](const verible::lsp::ReferenceParams &p) {
         return symbol_table_handler_.FindReferencesLocations(p,
                                                              parsed_buffers_);
+      });
+  dispatcher_.AddRequestHandler(
+      "textDocument/prepareRename",
+      [this](const verible::lsp::PrepareRenameParams &p) -> nlohmann::json {
+        auto range = symbol_table_handler_.FindRenameableRangeAtCursor(
+            p, parsed_buffers_);
+        if (range.has_value()) return range.value();
+        return nullptr;
+      });
+  dispatcher_.AddRequestHandler(
+      "textDocument/rename", [this](const verible::lsp::RenameParams &p) {
+        return symbol_table_handler_.FindRenameLocationsAndCreateEdits(
+            p, parsed_buffers_);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {
