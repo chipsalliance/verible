@@ -62,17 +62,7 @@ static std::string GetBuildVersion() {
   return result;
 }
 
-// We might want to have argc edited in the future, hence non-const param.
-std::vector<absl::string_view> InitCommandLine(
-    absl::string_view usage,
-    int *argc,  // NOLINT(readability-non-const-parameter)
-    char ***argv) {
-  absl::InitializeSymbolizer(*argv[0]);
-  absl::FlagsUsageConfig usage_config;
-  usage_config.version_string = GetBuildVersion;
-  absl::SetFlagsUsageConfig(usage_config);
-  absl::SetProgramUsageMessage(usage);  // copies usage string
-
+void SetLoggingLevelsFromEnvironment() {
   // To avoid confusing and rarely used flags, we just enable logging via
   // environment variables.
   const char *const stderr_log_level = getenv("VERIBLE_LOGTHRESHOLD");
@@ -92,7 +82,20 @@ std::vector<absl::string_view> InitCommandLine(
   } else {
     VERIBLE_INTERNAL_SET_VLOGLEVEL(0);
   }
+}
 
+// We might want to have argc edited in the future, hence non-const param.
+std::vector<absl::string_view> InitCommandLine(
+    absl::string_view usage,
+    int *argc,  // NOLINT(readability-non-const-parameter)
+    char ***argv) {
+  absl::InitializeSymbolizer(*argv[0]);
+  absl::FlagsUsageConfig usage_config;
+  usage_config.version_string = GetBuildVersion;
+  absl::SetFlagsUsageConfig(usage_config);
+  absl::SetProgramUsageMessage(usage);  // copies usage string
+
+  SetLoggingLevelsFromEnvironment();
   absl::InitializeLog();
 
   // Print stacktrace on issue, but not if --config=asan
