@@ -16,6 +16,7 @@
 #include "verilog/tools/ls/symbol-table-handler.h"
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -23,12 +24,14 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
+#include "common/util/logging.h"
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_filelist.h"
 #include "verilog/tools/ls/lsp-conversion.h"

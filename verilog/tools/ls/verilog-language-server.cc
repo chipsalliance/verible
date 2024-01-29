@@ -14,6 +14,7 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <memory>
