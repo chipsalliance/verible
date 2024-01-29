@@ -58,6 +58,7 @@ cc_test(
     deps = [
         ":lsp-parse-buffer",
         "//common/lsp:lsp-text-buffer",
+        "//common/text:text-structure",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
