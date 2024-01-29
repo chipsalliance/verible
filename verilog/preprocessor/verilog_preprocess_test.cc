@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
 #include "common/text/token_info.h"
@@ -65,22 +66,22 @@ class LexerTester {
 class PreprocessorTester {
  public:
   PreprocessorTester(absl::string_view text,
-                     const VerilogPreprocess::Config& config)
+                     const VerilogPreprocess::Config &config)
       : analyzer_(text, "<<inline-file>>", config),
         status_(analyzer_.Analyze()) {}
 
   explicit PreprocessorTester(absl::string_view text)
       : PreprocessorTester(text, VerilogPreprocess::Config()) {}
 
-  const VerilogPreprocessData& PreprocessorData() const {
+  const VerilogPreprocessData &PreprocessorData() const {
     return analyzer_.PreprocessorData();
   }
 
-  const verible::TextStructureView& Data() const { return analyzer_.Data(); }
+  const verible::TextStructureView &Data() const { return analyzer_.Data(); }
 
-  const absl::Status& Status() const { return status_; }
+  const absl::Status &Status() const { return status_; }
 
-  const VerilogAnalyzer& Analyzer() const { return analyzer_; }
+  const VerilogAnalyzer &Analyzer() const { return analyzer_; }
 
  private:
   VerilogAnalyzer analyzer_;
@@ -118,12 +119,12 @@ TEST(VerilogPreprocessTest, InvalidPreprocessorInputs) {
       {"`define FOO(aaa = 9, bbb =\n", 27},  // unterminated parameter list
       {"`define FOO(aa = 9, bb = 2\n", 27},  // expecting ',' or ')'
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     PreprocessorTester tester(test_case.input);
     EXPECT_FALSE(tester.Status().ok())
         << "Expected preprocess to fail on invalid input: \"" << test_case.input
         << "\"";
-    const auto& rejected_tokens = tester.Analyzer().GetRejectedTokens();
+    const auto &rejected_tokens = tester.Analyzer().GetRejectedTokens();
     ASSERT_FALSE(rejected_tokens.empty())
         << "on invalid input: \"" << test_case.input << "\"";
     const int rejected_token_offset =
@@ -148,11 +149,11 @@ TEST(VerilogPreprocessTest, WorksWithoutDefinitions) {
       "module foo;\nendmodule\n",
       "module foo(input x, output y);\nendmodule\n",
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     PreprocessorTester tester(test_case);
     EXPECT_PARSE_OK();
 
-    const auto& definitions = tester.PreprocessorData().macro_definitions;
+    const auto &definitions = tester.PreprocessorData().macro_definitions;
     EXPECT_TRUE(definitions.empty());
   }
 }
@@ -166,11 +167,11 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsNoValue) {
       "`define FOOOO\n"
       "module foo;\nendmodule\n",
   };
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     PreprocessorTester tester(test_case);
     EXPECT_PARSE_OK();
 
-    const auto& definitions = tester.PreprocessorData().macro_definitions;
+    const auto &definitions = tester.PreprocessorData().macro_definitions;
     EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
     auto macro = FindOrNull(definitions, "FOOOO");
     ASSERT_NE(macro, nullptr);
@@ -186,7 +187,7 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionNoParamsSimpleValue) {
       "`define FOOOO \"bar\"\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
@@ -201,15 +202,15 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamWithValue) {
       "`define FOOOO(x) (x+1)\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
   EXPECT_EQ(macro->DefinitionText().text(), "(x+1)");
   EXPECT_TRUE(macro->IsCallable());
-  const auto& params = macro->Parameters();
+  const auto &params = macro->Parameters();
   EXPECT_EQ(params.size(), 1);
-  const auto& param(params[0]);
+  const auto &param(params[0]);
   EXPECT_EQ(param.name.text(), "x");
   EXPECT_FALSE(param.HasDefaultText());
 }
@@ -220,15 +221,15 @@ TEST(VerilogPreprocessTest, OneMacroDefinitionOneParamDefaultWithValue) {
       "`define FOOOO(x=22) (x+3)\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("FOOOO", testing::_)));
   auto macro = FindOrNull(definitions, "FOOOO");
   ASSERT_NE(macro, nullptr);
   EXPECT_EQ(macro->DefinitionText().text(), "(x+3)");
   EXPECT_TRUE(macro->IsCallable());
-  const auto& params = macro->Parameters();
+  const auto &params = macro->Parameters();
   EXPECT_EQ(params.size(), 1);
-  const auto& param(params[0]);
+  const auto &param(params[0]);
   EXPECT_EQ(param.name.text(), "x");
   EXPECT_TRUE(param.HasDefaultText());
   EXPECT_EQ(param.default_value.text(), "22");
@@ -240,21 +241,21 @@ TEST(VerilogPreprocessTest, TwoMacroDefinitions) {
       "`define FOOOO(x=22) (x+3)\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_THAT(definitions, ElementsAre(Pair("BAAAAR", testing::_),
                                        Pair("FOOOO", testing::_)));
   {
     auto macro = FindOrNull(definitions, "BAAAAR");
     ASSERT_NE(macro, nullptr);
     EXPECT_TRUE(macro->IsCallable());
-    const auto& params = macro->Parameters();
+    const auto &params = macro->Parameters();
     EXPECT_EQ(params.size(), 2);
   }
   {
     auto macro = FindOrNull(definitions, "FOOOO");
     ASSERT_NE(macro, nullptr);
     EXPECT_TRUE(macro->IsCallable());
-    const auto& params = macro->Parameters();
+    const auto &params = macro->Parameters();
     EXPECT_EQ(params.size(), 1);
   }
 }
@@ -265,7 +266,7 @@ TEST(VerilogPreprocessTest, UndefMacro) {
       "`undef FOO");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_EQ(definitions.size(), 0);
 }
 
@@ -273,7 +274,7 @@ TEST(VerilogPreprocessTest, UndefNonexistentMacro) {
   PreprocessorTester tester("`undef FOO");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_EQ(definitions.size(), 0);
   EXPECT_TRUE(tester.PreprocessorData().warnings.empty());  // not a problem.
 }
@@ -284,10 +285,10 @@ TEST(VerilogPreprocessTest, RedefineMacroWarning) {
       "`define FOO 2\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_EQ(definitions.size(), 1);
 
-  const auto& warnings = tester.PreprocessorData().warnings;
+  const auto &warnings = tester.PreprocessorData().warnings;
   EXPECT_EQ(warnings.size(), 1);
   EXPECT_EQ(warnings.front().error_message, "Re-defining macro");
 }
@@ -302,11 +303,11 @@ TEST(VerilogPreprocessTest, DefaultPreprocessorKeepsDefineInStream) {
       "module x(); endmodule\n");
   EXPECT_PARSE_OK();
 
-  const auto& definitions = tester.PreprocessorData().macro_definitions;
+  const auto &definitions = tester.PreprocessorData().macro_definitions;
   EXPECT_EQ(definitions.size(), 2);
 
   // The original `define tokens are still in the stream
-  const auto& token_stream = tester.Data().GetTokenStreamView();
+  const auto &token_stream = tester.Data().GetTokenStreamView();
   const int count_defines =
       std::count_if(token_stream.begin(), token_stream.end(),
                     [](verible::TokenSequence::const_iterator t) {
@@ -336,13 +337,13 @@ TEST(VerilogPreprocessTest, IncompleteOrUnbalancedIfdef) {
       {"`ifdef FOO\n`elsif BAR\n", 11, "Unterminated preprocessing"},
       {"`ifdef FOO\n`elsif BAR\n`else\n", 22, "Unterminated preprocessing"},
   };
-  for (const BranchFailTest& test : test_cases) {
+  for (const BranchFailTest &test : test_cases) {
     PreprocessorTester tester(
         test.input, VerilogPreprocess::Config({.filter_branches = true}));
 
     EXPECT_FALSE(tester.Status().ok());
     ASSERT_GE(tester.PreprocessorData().errors.size(), 1);
-    const auto& error = tester.PreprocessorData().errors.front();
+    const auto &error = tester.PreprocessorData().errors.front();
     EXPECT_THAT(error.error_message, StartsWith(test.expected_error));
     const int error_token_offset =
         error.token_info.left(tester.Analyzer().Data().Contents());
@@ -562,7 +563,7 @@ module baz(); endmodule
 module baz(); endmodule
 )"}};
 
-  for (const RawAndFiltered& test : test_cases) {
+  for (const RawAndFiltered &test : test_cases) {
     PreprocessorTester with_filter(
         test.pp_input, VerilogPreprocess::Config({.filter_branches = true}));
     EXPECT_TRUE(with_filter.Status().ok())
@@ -572,8 +573,8 @@ module baz(); endmodule
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test.description;
 
-    const auto& filtered_stream = with_filter.Data().GetTokenStreamView();
-    const auto& equivalent_stream = equivalent.Data().GetTokenStreamView();
+    const auto &filtered_stream = with_filter.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
     EXPECT_GT(filtered_stream.size(), 0) << test.description;
     EXPECT_EQ(filtered_stream.size(), equivalent_stream.size())
         << test.description;
@@ -787,7 +788,7 @@ endmodule
 
   };
 
-  for (const auto& test_case : test_cases) {
+  for (const auto &test_case : test_cases) {
     PreprocessorTester expanded(
         test_case.pp_input, VerilogPreprocess::Config({.expand_macros = true}));
     EXPECT_TRUE(expanded.Status().ok())
@@ -797,8 +798,8 @@ endmodule
         VerilogPreprocess::Config({.expand_macros = false}));
     EXPECT_TRUE(equivalent.Status().ok())
         << equivalent.Status() << " " << test_case.description;
-    const auto& expanded_stream = expanded.Data().GetTokenStreamView();
-    const auto& equivalent_stream = equivalent.Data().GetTokenStreamView();
+    const auto &expanded_stream = expanded.Data().GetTokenStreamView();
+    const auto &equivalent_stream = equivalent.Data().GetTokenStreamView();
     EXPECT_GT(expanded_stream.size(), 0) << test_case.description;
     EXPECT_EQ(expanded_stream.size(), equivalent_stream.size())
         << test_case.description;
@@ -838,7 +839,7 @@ TEST(VerilogPreprocessTest, SetExternalDefines) {
 
   preprocessor.setPreprocessingInfo(preprocessing_info);
 
-  const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
+  const auto &pp_data = preprocessor.ScanStream(test_case_stream_view);
 
   EXPECT_THAT(pp_data.preprocessed_token_stream[0]->text(), "VALUE1");
   EXPECT_THAT(pp_data.preprocessed_token_stream[1]->text(), "VALUE2");
@@ -868,17 +869,17 @@ TEST(VerilogPreprocessTest, ExternalDefinesWithUndef) {
 
   preprocessor.setPreprocessingInfo(preprocessing_info);
 
-  const auto& pp_data = preprocessor.ScanStream(test_case_stream_view);
+  const auto &pp_data = preprocessor.ScanStream(test_case_stream_view);
 
-  const auto& errors = pp_data.errors;
+  const auto &errors = pp_data.errors;
 
   EXPECT_THAT(errors.size(), 1);
   EXPECT_THAT(errors.front().error_message,
               StartsWith("Error expanding macro identifier"));
 }
 
-static void IncludeFileTestWithIncludeBracket(const char* start_inc,
-                                              const char* end_inc) {
+static void IncludeFileTestWithIncludeBracket(const char *start_inc,
+                                              const char *end_inc) {
   const auto tempdir = testing::TempDir();
   const std::string includes_dir = JoinPath(tempdir, "includes");
   constexpr absl::string_view included_content(
@@ -906,16 +907,16 @@ static void IncludeFileTestWithIncludeBracket(const char* start_inc,
 
   LexerTester src_lexer(src_content);
   LexerTester equivalent_lexer(equivalent_content);
-  const auto& tester_pp_data =
+  const auto &tester_pp_data =
       tester.ScanStream(src_lexer.GetTokenStreamView());
-  const auto& equivalent_pp_data =
+  const auto &equivalent_pp_data =
       equivalent.ScanStream(equivalent_lexer.GetTokenStreamView());
 
   EXPECT_TRUE(tester_pp_data.errors.empty());
   EXPECT_TRUE(equivalent_pp_data.errors.empty());
 
-  const auto& tester_stream = tester_pp_data.preprocessed_token_stream;
-  const auto& equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
+  const auto &tester_stream = tester_pp_data.preprocessed_token_stream;
+  const auto &equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
   EXPECT_FALSE(tester_stream.empty());
   EXPECT_EQ(tester_stream.size(), equivalent_stream.size());
 
@@ -970,16 +971,16 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
 
   LexerTester src_lexer(src_content);
   LexerTester equivalent_lexer(equivalent_content);
-  const auto& tester_pp_data =
+  const auto &tester_pp_data =
       tester.ScanStream(src_lexer.GetTokenStreamView());
-  const auto& equivalent_pp_data =
+  const auto &equivalent_pp_data =
       equivalent.ScanStream(equivalent_lexer.GetTokenStreamView());
 
   EXPECT_TRUE(tester_pp_data.errors.empty());
   EXPECT_TRUE(equivalent_pp_data.errors.empty());
 
-  const auto& tester_stream = tester_pp_data.preprocessed_token_stream;
-  const auto& equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
+  const auto &tester_stream = tester_pp_data.preprocessed_token_stream;
+  const auto &equivalent_stream = equivalent_pp_data.preprocessed_token_stream;
   EXPECT_FALSE(tester_stream.empty());
   EXPECT_EQ(tester_stream.size(), equivalent_stream.size());
 
@@ -1022,12 +1023,13 @@ TEST(VerilogPreprocessTest,
                            file_opener);
 
   LexerTester src_lexer(src_content);
-  const auto& tester_pp_data =
+  const auto &tester_pp_data =
       tester.ScanStream(src_lexer.GetTokenStreamView());
 
   EXPECT_EQ(tester_pp_data.errors.size(), 1);
-  const auto& error = tester_pp_data.errors.front();
-  EXPECT_THAT(error.error_message, StartsWith("Unable to find"));
+  const auto &error = tester_pp_data.errors.front();
+  EXPECT_TRUE(absl::StrContains(error.error_message, "not in any of"))
+      << error.error_message;
 }
 
 }  // namespace

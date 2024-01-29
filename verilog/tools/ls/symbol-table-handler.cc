@@ -21,12 +21,14 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
+#include "common/util/iterator_adaptors.h"
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_filelist.h"
 #include "verilog/tools/ls/lsp-conversion.h"
@@ -42,16 +44,31 @@ namespace verilog {
 // If vlog(2), output all non-ok messages, with vlog(1) just the first few,
 // else: none
 static void LogFullIfVLog(const std::vector<absl::Status> &statuses) {
-  if (VLOG_IS_ON(1)) {
-    int report_count = 0;
-    for (const auto &s : statuses) {
-      if (s.ok()) continue;
+  if (!VLOG_IS_ON(1)) return;
+
+  constexpr int kMaxEmitNoisyMessagesDirectly = 5;
+  int report_count = 0;
+  absl::flat_hash_map<std::string, int> status_counts;
+  for (const auto &s : statuses) {
+    if (s.ok()) continue;
+    if (++report_count <= kMaxEmitNoisyMessagesDirectly || VLOG_IS_ON(2)) {
       LOG(INFO) << s;
-      if (++report_count > 5 && !VLOG_IS_ON(2)) {
-        LOG(WARNING) << "skipped remaining messages; switch VLOG(2) on for "
-                     << statuses.size() << " statuses";
-        break;  // only more noisy on request.
-      }
+    } else {
+      const std::string partial_msg(s.ToString().substr(0, 25));
+      ++status_counts[partial_msg];
+    }
+  }
+
+  if (!status_counts.empty()) {
+    LOG(WARNING) << "skipped remaining; switch VLOG(2) on for all "
+                 << statuses.size() << " statuses.";
+    LOG(INFO) << "Here a summary";
+    std::map<int, absl::string_view> sort_by_count;
+    for (const auto &stat : status_counts) {
+      sort_by_count.emplace(stat.second, stat.first);
+    }
+    for (const auto &stat : verible::reversed_view(sort_by_count)) {
+      LOG(INFO) << absl::StrFormat("%6d x %s...", stat.first, stat.second);
     }
   }
 }
