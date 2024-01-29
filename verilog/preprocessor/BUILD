@@ -39,6 +39,7 @@ cc_test(
     deps = [
         ":verilog-preprocess",
         "//common/text:macro-definition",
+        "//common/text:text-structure",
         "//common/text:token-info",
         "//common/util:container-util",
         "//common/util:file-util",

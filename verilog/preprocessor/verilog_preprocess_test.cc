@@ -23,6 +23,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/text/macro_definition.h"
+#include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/container_util.h"
 #include "common/util/file_util.h"
