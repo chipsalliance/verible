@@ -25,6 +25,12 @@ namespace verible {
 // Get a one-line build version string that based on the repository version.
 std::string GetRepositoryVersion();
 
+// Set logging thresholds from environment variables.
+//  * VERIBLE_LOGTHRESHOLD corresponds to absl::LogSeverityAtLeast()
+//  * VERIBLE_VLOG_DETAIL  corresponds to absl::SetGlobalVLogLevel()
+// Called in InitCommandLine(), so usually not needed to be called separately.
+void SetLoggingLevelsFromEnvironment();
+
 // Initializes command-line tool, including parsing flags.
 // The recognized flags are initialized and their text removed from the
 // input command line, returning the remaining positional parameters.
