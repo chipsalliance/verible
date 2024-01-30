@@ -103,7 +103,7 @@ std::ostream& operator<<(std::ostream& stream, SymbolMetaType symbol_type) {
   return SymbolMetaTypeNames().Unparse(symbol_type, stream);
 }
 
-static absl::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
+absl::string_view SymbolMetaTypeAsString(SymbolMetaType type) {
   return SymbolMetaTypeNames().EnumName(type);
 }
 

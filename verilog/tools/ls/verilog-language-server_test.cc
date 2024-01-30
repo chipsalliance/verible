@@ -734,6 +734,93 @@ void CheckDefinitionResponseSingleDefinition(const json &response, int id,
   CheckDefinitionEntry(response["result"][0], start, end, file_uri);
 }
 
+// Creates a textDocument/hover request
+std::string HoverRequest(absl::string_view file, int id, int line,
+                         int character) {
+  return TextDocumentPositionBasedRequest("textDocument/hover", file, id, line,
+                                          character);
+}
+
+// Checks if the hover appears on port symbols
+// In this test the hover for "sum" symbol in assign
+// is checked
+TEST_F(VerilogLanguageServerSymbolTableTest, HoverOverSymbol) {
+  absl::string_view filelist_content = "mod.v\n";
+  static constexpr absl::string_view  //
+      module_content(
+          R"(module mod(
+    input clk,
+    input reg [31:0] a,
+    input reg [31:0] b,
+    output reg [31:0] sum);
+  always @(posedge clk) begin : addition
+    assign sum = a + b; // hover over sum
+  end
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module(root_dir, module_content,
+                                                      "mod.v");
+
+  const std::string module_open_request =
+      DidOpenRequest("file://" + module.filename(), module_content);
+  ASSERT_OK(SendRequest(module_open_request));
+
+  GetResponse();
+
+  std::string hover_request = HoverRequest("file://" + module.filename(), 2,
+                                           /* line */ 6, /* column */ 12);
+
+  ASSERT_OK(SendRequest(hover_request));
+  json response = json::parse(GetResponse());
+  verible::lsp::Hover hover = response["result"];
+  ASSERT_EQ(hover.contents.kind, "markdown");
+  ASSERT_TRUE(
+      absl::StrContains(hover.contents.value, "data/net/var/instance sum"));
+  ASSERT_TRUE(absl::StrContains(hover.contents.value, "reg [31:0]"));
+}
+
+// Checks if the hover appears on "end" token when block name is available
+TEST_F(VerilogLanguageServerSymbolTableTest, HoverOverEnd) {
+  absl::string_view filelist_content = "mod.v\n";
+  static constexpr absl::string_view  //
+      module_content(
+          R"(module mod(
+    input clk,
+    input reg [31:0] a,
+    input reg [31:0] b,
+    output reg [31:0] sum);
+  always @(posedge clk) begin : addition
+    assign sum = a + b;
+  end // hover over end
+endmodule
+)");
+
+  const verible::file::testing::ScopedTestFile filelist(
+      root_dir, filelist_content, "verible.filelist");
+  const verible::file::testing::ScopedTestFile module(root_dir, module_content,
+                                                      "mod.v");
+
+  const std::string module_open_request =
+      DidOpenRequest("file://" + module.filename(), module_content);
+  ASSERT_OK(SendRequest(module_open_request));
+
+  GetResponse();
+
+  std::string hover_request = HoverRequest("file://" + module.filename(), 2,
+                                           /* line */ 7, /* column */ 3);
+
+  ASSERT_OK(SendRequest(hover_request));
+  json response = json::parse(GetResponse());
+  verible::lsp::Hover hover = response["result"];
+
+  ASSERT_EQ(hover.contents.kind, "markdown");
+  ASSERT_TRUE(absl::StrContains(hover.contents.value, "End of block"));
+  ASSERT_TRUE(absl::StrContains(hover.contents.value, "Name: addition"));
+}
+
 // Performs simple textDocument/definition request with no VerilogProject set
 TEST_F(VerilogLanguageServerSymbolTableTest, DefinitionRequestNoProjectTest) {
   std::string definition_request = DefinitionRequest("file://b.sv", 2, 3, 18);
@@ -2128,6 +2215,7 @@ TEST_F(VerilogLanguageServerSymbolTableTest, RenameTestPackageDistinction) {
   EXPECT_EQ(response["result"]["changes"][file_uri].size(), 2)
       << "Invalid result size for id:  ";
 }
+
 // Tests correctness of Language Server shutdown request
 TEST_F(VerilogLanguageServerTest, ShutdownTest) {
   const absl::string_view shutdown_request =

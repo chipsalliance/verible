@@ -73,6 +73,8 @@ enum class SymbolMetaType {
 
 std::ostream& operator<<(std::ostream&, SymbolMetaType);
 
+absl::string_view SymbolMetaTypeAsString(SymbolMetaType type);
+
 // This classifies the type of reference that a single identifier is.
 enum class ReferenceType {
   // The base identifier in any chain.
