@@ -15,6 +15,7 @@
 
 #include "verilog/tools/ls/symbol-table-handler.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -29,13 +30,17 @@
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/lsp/lsp-text-buffer.h"
 #include "common/strings/line_column_map.h"
+#include "common/text/text_structure.h"
+#include "common/text/token_info.h"
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "verilog/analysis/verilog_filelist.h"
 #include "verilog/tools/ls/lsp-conversion.h"
+#include "verilog/tools/ls/lsp-parse-buffer.h"
 
 ABSL_FLAG(std::string, file_list_path, "verible.filelist",
           "Name of the file with Verible FileList for the project");
@@ -473,7 +478,6 @@ SymbolTableHandler::FindRenameLocationsAndCreateEdits(
       .changes = {},
   };
   edit.changes = file_edit_pairs;
-  std::cerr << "SIZE: " << edit.changes[locations[0].uri].size() << std::endl;
   return edit;
 }
 void SymbolTableHandler::CollectReferencesReferenceComponents(
