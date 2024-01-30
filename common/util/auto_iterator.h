@@ -39,7 +39,7 @@ namespace verible {
 // Usage: auto_iterator_selector<ContainerType>::type
 template <class T>
 using auto_iterator_selector =
-    std::conditional<std::is_const<T>::value, typename T::const_iterator,
+    std::conditional<std::is_const_v<T>, typename T::const_iterator,
                      typename T::iterator>;
 
 }  // namespace verible

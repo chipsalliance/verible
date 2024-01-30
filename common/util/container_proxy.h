@@ -349,13 +349,13 @@ class ContainerProxyBase {
     return *derived();
   }
 
-  void swap(ContainerType &other) {
+  void swap(ContainerType &other) noexcept {
     CallElementsBeingReplaced();
     container().swap(other);
     CallElementsWereReplaced();
   }
 
-  void swap(DerivedType &other) {
+  void swap(DerivedType &other) noexcept {
     CallElementsBeingReplaced();
     other.CallElementsBeingReplaced();
     container().swap(other.container());
@@ -368,7 +368,7 @@ class ContainerProxyBase {
   // via `using` or implementing their own version).
   template <class DT_ = DerivedType,
             class = decltype(std::declval<DT_>().swap(std::declval<DT_ &>()))>
-  friend void swap(DerivedType &a, DerivedType &b) {
+  friend void swap(DerivedType &a, DerivedType &b) noexcept {
     a.swap(b);
   }
 

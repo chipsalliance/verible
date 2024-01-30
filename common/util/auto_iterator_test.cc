@@ -27,27 +27,30 @@ namespace verible {
 namespace {
 
 TEST(AutoIteratorSelectorTest, NonConst) {
-  static_assert(std::is_same<auto_iterator_selector<std::list<int>>::type,
-                             std::list<int>::iterator>::value);
-  static_assert(std::is_same<auto_iterator_selector<std::map<int, char>>::type,
-                             std::map<int, char>::iterator>::value);
-  static_assert(std::is_same<auto_iterator_selector<std::set<int>>::type,
-                             std::set<int>::iterator>::value);
-  static_assert(std::is_same<auto_iterator_selector<std::vector<int>>::type,
-                             std::vector<int>::iterator>::value);
+  static_assert(std::is_same_v<auto_iterator_selector<std::list<int>>::type,
+                               std::list<int>::iterator>);
+  static_assert(
+      std::is_same_v<auto_iterator_selector<std::map<int, char>>::type,
+                     std::map<int, char>::iterator>);
+  static_assert(std::is_same_v<auto_iterator_selector<std::set<int>>::type,
+                               std::set<int>::iterator>);
+  static_assert(std::is_same_v<auto_iterator_selector<std::vector<int>>::type,
+                               std::vector<int>::iterator>);
 }
 
 TEST(AutoIteratorSelectorTest, Const) {
-  static_assert(std::is_same<auto_iterator_selector<const std::list<int>>::type,
-                             std::list<int>::const_iterator>::value);
   static_assert(
-      std::is_same<auto_iterator_selector<const std::map<int, char>>::type,
-                   std::map<int, char>::const_iterator>::value);
-  static_assert(std::is_same<auto_iterator_selector<const std::set<int>>::type,
-                             std::set<int>::const_iterator>::value);
+      std::is_same_v<auto_iterator_selector<const std::list<int>>::type,
+                     std::list<int>::const_iterator>);
   static_assert(
-      std::is_same<auto_iterator_selector<const std::vector<int>>::type,
-                   std::vector<int>::const_iterator>::value);
+      std::is_same_v<auto_iterator_selector<const std::map<int, char>>::type,
+                     std::map<int, char>::const_iterator>);
+  static_assert(
+      std::is_same_v<auto_iterator_selector<const std::set<int>>::type,
+                     std::set<int>::const_iterator>);
+  static_assert(
+      std::is_same_v<auto_iterator_selector<const std::vector<int>>::type,
+                     std::vector<int>::const_iterator>);
 }
 
 }  // namespace

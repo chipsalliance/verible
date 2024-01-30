@@ -46,7 +46,7 @@ verible_used_stdenv.mkDerivation {
 
       # Ease development
       lcov              # coverage html generation.
-      clang-tools_14    # clang-format, clang-tidy
+      clang-tools_15    # clang-format, clang-tidy
       bazel-buildtools  # buildifier
     ];
 }

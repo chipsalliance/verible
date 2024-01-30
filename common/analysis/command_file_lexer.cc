@@ -43,6 +43,8 @@ CommandFileLexer::CommandFileLexer(absl::string_view config)
         // Skip -- prefix and = suffix
         t.set_text(t.text().substr(2, t.text().length() - 3));
         break;
+      default:
+        break;
     }
   }
   Restart(config);

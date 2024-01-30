@@ -110,9 +110,9 @@ const SyntaxTreeLeaf *MatchLeafEnumOrNull(const SyntaxTreeLeaf &leaf,
 namespace internal {
 template <typename S>
 void StaticAssertMustBeCSTSymbolOrNode(S &) {
-  using base_type = typename std::remove_const<S>::type;
-  static_assert(std::is_same<base_type, Symbol>::value ||
-                std::is_same<base_type, SyntaxTreeNode>::value);
+  using base_type = std::remove_const_t<S>;
+  static_assert(std::is_same_v<base_type, Symbol> ||
+                std::is_same_v<base_type, SyntaxTreeNode>);
 }
 }  // namespace internal
 

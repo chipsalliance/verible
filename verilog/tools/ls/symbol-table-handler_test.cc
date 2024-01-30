@@ -333,7 +333,7 @@ TEST(SymbolTableHandlerTest,
 
   // This was ASSERT_FALSE(), but in fact we get the range of 'vara' back,
   // and renaming that actually works. TODO: Check intent of this test.
-  ASSERT_TRUE(edit_range.has_value()) << (nlohmann::json)*edit_range;
+  ASSERT_TRUE(edit_range.has_value());
 }
 
 TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
@@ -393,8 +393,10 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
       symbol_table_handler.FindRenameableRangeAtCursor(parameters,
                                                        parsed_buffers);
   ASSERT_TRUE(edit_range.has_value());
-  EXPECT_EQ(edit_range.value().start.line, 1);
-  EXPECT_EQ(edit_range.value().start.character, 9);
+  if (edit_range.has_value()) {  // Access after test. Makes .clang-tidy happy
+    EXPECT_EQ(edit_range.value().start.line, 1);
+    EXPECT_EQ(edit_range.value().start.character, 9);
+  }
 }
 TEST(SymbolTableHandlerTest,
      FindRenameLocationsAndCreateEditsReturnsLocationsTest) {

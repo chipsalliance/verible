@@ -41,9 +41,8 @@ namespace verible {
 //
 // Usage: match_const<T, Other>::type
 template <class T, class Other>
-using match_const =
-    typename std::conditional<std::is_const<Other>::value, std::add_const<T>,
-                              std::remove_const<T>>::type;
+using match_const = std::conditional_t<std::is_const_v<Other>,
+                                       std::add_const<T>, std::remove_const<T>>;
 
 template <class T, class Other>
 using match_const_t = typename match_const<T, Other>::type;

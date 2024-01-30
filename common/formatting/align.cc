@@ -264,7 +264,6 @@ static void ColumnsTreeFormatter(
 
     const std::vector<absl::string_view> parts =
         absl::StrSplit(cell.text, '\t');
-    CHECK_LE(parts.size(), 3);
 
     const auto width = cell.width - kCellSeparator.size();
 
@@ -292,6 +291,8 @@ static void ColumnsTreeFormatter(
                         parts[1], right_pad, parts[2]);
         break;
       }
+      default:
+        CHECK_LE(parts.size(), 3);
     }
   }
   for (const auto& line : lines) {

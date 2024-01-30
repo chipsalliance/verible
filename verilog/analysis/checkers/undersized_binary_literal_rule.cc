@@ -183,6 +183,8 @@ std::string UndersizedBinaryLiteralRule::FormatReason(
     case 'o':
       base_describe = "Octal";
       break;
+    default:
+      LOG(FATAL) << "Unexpected base";
   }
   return absl::StrCat(base_describe, " literal ", width, base_text, literal,
                       " has less digits than expected for ", width, " bits.");

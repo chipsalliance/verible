@@ -47,10 +47,11 @@ class ThreadPool {
   // As a special case: if initialized with no threads, the function is
   // executed synchronously.
   template <class T>
-  std::future<T> ExecAsync(const std::function<T()> &f) {
+  [[nodiscard]] std::future<T> ExecAsync(const std::function<T()> &f) {
     auto *p = new std::promise<T>();
     std::future<T> future_result = p->get_future();
-    auto promise_fulfiller = [p, f]() {
+    // NOLINT, as clang-tidy assumes memory leak where is none.
+    auto promise_fulfiller = [p, f]() {  // NOLINT
       try {
         p->set_value(f());
       } catch (...) {

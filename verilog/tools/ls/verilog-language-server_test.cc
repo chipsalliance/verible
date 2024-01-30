@@ -1887,14 +1887,15 @@ endmodule
                        {.line = 5, .column = 17}, module_port_identifier_uri);
 }
 
-std::string RenameRequest(verible::lsp::RenameParams params) {
+std::string RenameRequest(const verible::lsp::RenameParams &params) {
   json request = {{"jsonrpc", "2.0"},
                   {"id", 2},
                   {"method", "textDocument/rename"},
                   {"params", params}};
   return request.dump();
 }
-std::string PrepareRenameRequest(verible::lsp::PrepareRenameParams params) {
+std::string PrepareRenameRequest(
+    const verible::lsp::PrepareRenameParams &params) {
   json request = {{"jsonrpc", "2.0"},
                   {"id", 2},
                   {"method", "textDocument/prepareRename"},

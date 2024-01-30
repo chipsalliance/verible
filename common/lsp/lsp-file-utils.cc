@@ -41,8 +41,9 @@ bool NeedsEscape(char c) {
     case '~':
     case '\\':
       return false;
+    default:
+      return true;
   }
-  return true;
 }
 
 std::string DecodeURI(absl::string_view uri) {

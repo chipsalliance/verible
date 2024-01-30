@@ -55,7 +55,7 @@ std::function<typename Container::const_iterator()> MakeConstIteratorStreamer(
 template <class Container>
 TokenGenerator MakeTokenStreamer(const Container &c) {
   using value_type = typename Container::value_type;
-  static_assert(std::is_same<value_type, TokenInfo>::value,
+  static_assert(std::is_same_v<value_type, TokenInfo>,
                 "Container must have TokenInfo elements.");
   const auto end = c.end();
   auto streamer = MakeConstIteratorStreamer(c);
@@ -71,7 +71,7 @@ TokenGenerator MakeTokenViewer(const Container &c) {
   using value_type = typename Container::value_type;
   using iter_type = std::iterator_traits<value_type>;
   using element_type = typename iter_type::value_type;
-  static_assert(std::is_same<element_type, TokenInfo>::value,
+  static_assert(std::is_same_v<element_type, TokenInfo>,
                 "Container must have iterators to TokenInfo.");
   const auto end = c.end();
   auto streamer = MakeConstIteratorStreamer(c);

@@ -117,7 +117,7 @@ class VectorTree {
   // This operation is safe when the two nodes share a common ancestor,
   // excluding the case where one node is a direct ancestor of the other.
   // TODO(fangism): Add a proper check for this property, and test.
-  void swap(this_type& other) {
+  void swap(this_type& other) noexcept {
     std::swap(node_value_, other.node_value_);
     children_.swap(other.children_);  // efficient O(1) vector::swap
                                       // + O(|children|) linking to parent
@@ -284,7 +284,7 @@ class VectorTree {
 
 // Provide ADL-enabled overload for use by swap implementations.
 template <class T>
-void swap(VectorTree<T>& left, VectorTree<T>& right) {
+void swap(VectorTree<T>& left, VectorTree<T>& right) noexcept {
   left.swap(right);
 }
 
