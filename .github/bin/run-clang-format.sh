@@ -14,10 +14,11 @@
 # limitations under the License.
 
 set -u  # only use variables once assigned
+set -e  # error out on error.
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-CLANG_FORMAT_BINARY=clang-format
+CLANG_FORMAT_BINARY=${CLANG_FORMAT_BINARY:-clang-format}
 
 ${CLANG_FORMAT_BINARY} --version
 

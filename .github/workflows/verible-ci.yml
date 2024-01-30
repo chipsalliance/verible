@@ -40,12 +40,12 @@ jobs:
     - name: Install Dependencies
       run: |
         apt -qqy update
-        apt -qq -y install clang-format git
-        clang-format --version
+        apt -qq -y install clang-format-15 git
+        clang-format-15 --version
 
     - name: Run formatting style check
       run: |
-        ./.github/bin/run-clang-format.sh
+        CLANG_FORMAT_BINARY=clang-format-15 ./.github/bin/run-clang-format.sh
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
@@ -77,7 +77,7 @@ jobs:
     - name: Install Dependencies
       run: |
         apt -qqy update
-        apt -qq -y install clang-tidy-11 clang-tidy-14 build-essential git wget
+        apt -qq -y install clang-tidy-11 clang-tidy-15 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
@@ -106,7 +106,7 @@ jobs:
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        CLANG_TIDY=clang-tidy-14 ./.github/bin/run-clang-tidy-cached.cc \
+        CLANG_TIDY=clang-tidy-15 ./.github/bin/run-clang-tidy-cached.cc \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
