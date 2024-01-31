@@ -30,7 +30,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/time/time.h"
 #include "common/util/generated_verible_build_version.h"
-#include "common/util/logging.h"
 
 namespace verible {
 
@@ -78,9 +77,7 @@ void SetLoggingLevelsFromEnvironment() {
   const char *const vlog_level_env = getenv("VERIBLE_VLOG_DETAIL");
   int vlog_level = 0;
   if (vlog_level_env && absl::SimpleAtoi(vlog_level_env, &vlog_level)) {
-    VERIBLE_INTERNAL_SET_VLOGLEVEL(vlog_level);
-  } else {
-    VERIBLE_INTERNAL_SET_VLOGLEVEL(0);
+    absl::SetGlobalVLogLevel(vlog_level);
   }
 }
 
