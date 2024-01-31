@@ -1,0 +1,13 @@
+diff --git a/installer/def.bzl b/installer/def.bzl
+index 381127e..4dc0e7a 100644
+--- a/installer/def.bzl
++++ b/installer/def.bzl
+@@ -118,7 +118,7 @@ _gen_installer = rule(
+             allow_single_file = True,
+             default = Label(_TEMPLATE_TARGET),
+         ),
+-        "_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
++        #"_whitelist_function_transition": attr.label(default = "@bazel_tools//tools/whitelists/function_transition_whitelist"),
+     },
+     executable = True,
+     outputs = {
