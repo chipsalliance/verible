@@ -482,7 +482,7 @@ TEST(VerilogSyntaxTreeLinterConfigurationTest, UseRuleSetDefault) {
   linter.Lint(text_structure, filename);
 
   auto status = linter.ReportStatus(dummy_map, text_structure.Contents());
-  auto expected_size = std::extent<decltype(analysis::kDefaultRuleSet)>::value;
+  auto expected_size = std::extent_v<decltype(analysis::kDefaultRuleSet)>;
   EXPECT_THAT(config.ActiveRuleIds(), SizeIs(expected_size));
   EXPECT_THAT(status, SizeIs(expected_size));
 }

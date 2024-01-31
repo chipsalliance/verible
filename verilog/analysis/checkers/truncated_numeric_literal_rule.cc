@@ -142,6 +142,8 @@ static size_t GetBitWidthOfNumber(const BasedNumber &n, bool *is_lower_bound) {
       // Uh, more than 300-ish decimal digits ? ... rough estimation it is.
       return ceil((literal.length() - 1) * log(10) / log(2));
     } break;
+    default:
+      break;  // unexpected base
   }
   return 0;  // not reached.
 }

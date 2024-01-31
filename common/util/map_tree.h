@@ -141,7 +141,7 @@ class MapTree {
 
   ~MapTree() { CHECK(CheckIntegrity()); }
 
-  void swap(this_type &other) {
+  void swap(this_type &other) noexcept {
     std::swap(node_value_, other.node_value_);
     subtrees_.swap(other.subtrees_);
     Relink();

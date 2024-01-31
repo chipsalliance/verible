@@ -229,6 +229,8 @@ absl::Status FlowTree::GenerateControlFlowTree() {
           if_blocks_.pop_back();
           break;
         }
+        default:
+          LOG(FATAL) << "IsConditional() not catching " << current_token_enum;
       }
 
     } else {

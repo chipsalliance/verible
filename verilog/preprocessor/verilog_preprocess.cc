@@ -684,6 +684,8 @@ absl::Status VerilogPreprocess::HandleTokenIterator(
       return HandleElse(iter);
     case PP_endif:
       return HandleEndif(iter);
+    default:
+      break;  // not interested in anything else
   }
   if (config_.expand_macros && ((*iter)->token_enum() == MacroIdentifier ||
                                 (*iter)->token_enum() == MacroIdItem ||

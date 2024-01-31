@@ -181,6 +181,8 @@ static void CountMarkedLines(const M &lines, int *before, int *after) {
       case '+':
         ++*after;
         break;
+      default:
+        break;
     }
   }
 }

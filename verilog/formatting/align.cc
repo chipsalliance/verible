@@ -206,8 +206,9 @@ static bool TokenForcesLineBreak(const PreFormatToken& ftoken) {
     case verilog_tokentype::TK_begin:
     case verilog_tokentype::TK_fork:
       return true;
+    default:
+      return false;
   }
-  return false;
 }
 
 static bool IgnoreMultilineCaseStatements(const TokenPartitionTree& partition) {
@@ -538,6 +539,8 @@ class StructUnionMemberColumnSchemaScanner : public VerilogColumnSchemaScanner {
         }
         break;
       }
+      default:
+        break;
     }
     VLOG(2) << __FUNCTION__ << ", leaving leaf: " << leaf.get();
   }

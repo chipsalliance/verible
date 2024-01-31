@@ -188,7 +188,9 @@ class IntervalSet : private internal::IntervalSetImpl {
   // Remove all intervals from the set.
   void clear() { intervals_.clear(); }
 
-  void swap(IntervalSet<T> &other) { intervals_.swap(other.intervals_); }
+  void swap(IntervalSet<T> &other) noexcept {
+    intervals_.swap(other.intervals_);
+  }
 
   bool operator==(const IntervalSet<T> &other) const {
     return intervals_ == other.intervals_;
@@ -518,7 +520,7 @@ class IntervalSet : private internal::IntervalSetImpl {
 };  // class IntervalSet
 
 template <typename T>
-void swap(IntervalSet<T> &t1, IntervalSet<T> &t2) {
+void swap(IntervalSet<T> &t1, IntervalSet<T> &t2) noexcept {
   t1.swap(t2);
 }
 
