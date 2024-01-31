@@ -102,7 +102,6 @@ cc_library(
     hdrs = ["init_command_line.h"],
     deps = [
         # these deps are needed by init_command_line.cc:
-        ":logging",  # buildcleaner: keep
         ":build-version",  # buildcleaner: keep
         "@com_google_absl//absl/debugging:failure_signal_handler",  # buildcleaner: keep
         "@com_google_absl//absl/debugging:symbolize",  # buildcleaner: keep
@@ -110,9 +109,9 @@ cc_library(
         "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
         "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
         "@com_google_absl//absl/flags:usage",  # buildcleaner: keep
-        "@com_google_absl//absl/log:globals",  # buildcleaner: keep
+        "@com_google_absl//absl/log:globals",
         "@com_google_absl//absl/log:initialize",  # buildcleaner: keep
-        "@com_google_absl//absl/strings",  # buildcleaner: keep
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",  # buildcleaner: keep
     ],
 )
@@ -153,7 +152,6 @@ cc_library(
 # this common/util:logging target.
 cc_library(
     name = "logging",
-    srcs = ["logging.cc"],
     hdrs = ["logging.h"],
     deps = [
         "@com_google_absl//absl/log",
