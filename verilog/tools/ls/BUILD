@@ -124,7 +124,10 @@ cc_library(
         ":lsp-parse-buffer",
         "//common/lsp:lsp-file-utils",
         "//common/lsp:lsp-protocol",
+        "//common/lsp:lsp-text-buffer",
         "//common/strings:line-column-map",
+        "//common/text:text-structure",
+        "//common/text:token-info",
         "//common/util:file-util",
         "//common/util:iterator-adaptors",
         "//common/util:logging",
@@ -148,6 +151,7 @@ cc_test(
     srcs = ["symbol-table-handler_test.cc"],
     deps = [
         ":symbol-table-handler",
+        "//common/lsp:lsp-file-utils",
         "//common/util:file-util",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/strings",
@@ -194,12 +198,14 @@ cc_test(
 
 cc_binary(
     name = "verible-verilog-ls",
-    srcs = ["verilog_ls.cc"],
+    srcs = ["verible-verilog-ls.cc"],
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],
     deps = [
         ":verilog-language-server",
         "//common/util:init-command-line",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 

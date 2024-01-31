@@ -13,9 +13,10 @@
 // limitations under the License.
 //
 
-#include <functional>
 #include <iostream>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/util/init_command_line.h"
 #include "verilog/tools/ls/verilog-language-server.h"
 
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]) {
     return read(kInputFD, buf, size);
   });
 
-  std::cerr << status.message() << std::endl;
+  std::cerr << status << '\n';
 
   server.PrintStatistics();
 }
