@@ -525,12 +525,11 @@ SymbolTableHandler::CreateBufferTrackerListener() {
       LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
       return;
     }
-    if (!buffer_tracker) {
-      UpdateFileContent(path, nullptr);
-      return;
-    }
-    if (!buffer_tracker->last_good()) return;
-    UpdateFileContent(path, &buffer_tracker->last_good()->parser());
+    // Note, if we actually got any result we must use it here to update
+    // the file content, as the old one will be deleted.
+    // So must use current() as last_good() might be nullptr.
+    UpdateFileContent(
+        path, buffer_tracker ? &buffer_tracker->current()->parser() : nullptr);
   };
 }
 
