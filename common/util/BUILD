@@ -110,6 +110,7 @@ cc_library(
         "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
         "@com_google_absl//absl/flags:usage",  # buildcleaner: keep
         "@com_google_absl//absl/log:globals",
+        "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/log:initialize",  # buildcleaner: keep
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",  # buildcleaner: keep
