@@ -95,17 +95,6 @@ load("@com_github_google_rules_install//:setup.bzl", "install_rules_setup")
 
 install_rules_setup()
 
-# Need to load before rules_flex/rules_bison to make sure
-# win_flex_bison is the chosen toolchain on Windows
-load("//bazel:win_flex_bison.bzl", "win_flex_configure")
-
-win_flex_configure(
-    name = "win_flex_bison",
-    sha256 = "8d324b62be33604b2c45ad1dd34ab93d722534448f55a16ca7292de32b6ac135",
-    # bison 3.8.2, flex 2.6.4
-    url = "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip",
-)
-
 http_archive(
     name = "rules_m4",
     sha256 = "10ce41f150ccfbfddc9d2394ee680eb984dc8a3dfea613afd013cfb22ea7445c",

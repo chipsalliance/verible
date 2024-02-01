@@ -26,12 +26,12 @@ def genlex(name, src, out):
         outs = [out],
         cmd = select({
             "//bazel:use_local_flex_bison_enabled": "flex --outfile=$@ $<",
-            "@platforms//os:windows": "$(FLEX) --outfile=$@ $<",
+            "@platforms//os:windows": "win_flex.exe --outfile=$@ $<",
             "//conditions:default": "M4=$(M4) $(FLEX) --outfile=$@ $<",
         }),
         toolchains = select({
             "//bazel:use_local_flex_bison_enabled": [],
-            "@platforms//os:windows": ["@rules_flex//flex:current_flex_toolchain"],
+            "@platforms//os:windows": [],
             "//conditions:default": [
                 "@rules_flex//flex:current_flex_toolchain",
                 "@rules_m4//m4:current_m4_toolchain",
