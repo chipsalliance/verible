@@ -233,11 +233,9 @@ void VerilogLanguageServer::ConfigureProject(absl::string_view project_root) {
       proj_root, std::vector<std::string>(), "");
   symbol_table_handler_.SetProject(proj);
 
+  // Whenever an updated buffer in editor is available, update symbol table.
   parsed_buffers_.AddChangeListener(
-      [this](const std::string &uri,
-             const verilog::BufferTracker *buffer_tracker) {
-        UpdateEditedFileInProject(uri, buffer_tracker);
-      });
+      symbol_table_handler_.CreateBufferTrackerListener());
 }
 
 void VerilogLanguageServer::SendDiagnostics(
@@ -256,23 +254,6 @@ void VerilogLanguageServer::SendDiagnostics(
   params.diagnostics =
       verilog::CreateDiagnostics(buffer_tracker, kDiagnosticLimit);
   dispatcher_.SendNotification("textDocument/publishDiagnostics", params);
-}
-
-void VerilogLanguageServer::UpdateEditedFileInProject(
-    const std::string &uri, const verilog::BufferTracker *buffer_tracker) {
-  const std::string path = verible::lsp::LSPUriToPath(uri);
-  if (path.empty()) {
-    LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
-    return;
-  }
-  if (!buffer_tracker) {
-    symbol_table_handler_.UpdateFileContent(path, nullptr);
-    return;
-  }
-  if (!buffer_tracker->last_good()) return;
-  symbol_table_handler_.UpdateFileContent(
-      path, &buffer_tracker->last_good()->parser());
-  VLOG(1) << "Updated file:  " << uri << " (" << path << ")";
 }
 
 };  // namespace verilog

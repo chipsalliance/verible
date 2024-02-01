@@ -71,10 +71,6 @@ class SymbolTableHandler {
   std::optional<verible::lsp::Range> FindRenameableRangeAtCursor(
       const verible::lsp::PrepareRenameParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
-  // Provide new parsed content for the given path. If "content" is nullptr,
-  // opens the given file instead.
-  void UpdateFileContent(absl::string_view path,
-                         const verilog::VerilogAnalyzer *parsed);
 
   verible::lsp::WorkspaceEdit FindRenameLocationsAndCreateEdits(
       const verible::lsp::RenameParams &params,
@@ -82,6 +78,15 @@ class SymbolTableHandler {
 
   // Creates a symbol table for entire project (public: needed in unit-test)
   std::vector<absl::Status> BuildProjectSymbolTable();
+
+  // Provide new parsed content for the given path. If "content" is nullptr,
+  // opens the given file instead.
+  void UpdateFileContent(absl::string_view path,
+                         const verilog::VerilogAnalyzer *parsed);
+
+  // Create a listener to be wired up to a buffer tracker. Whenever we
+  // there is a change in the editor, this will update our internal project.
+  BufferTrackerContainer::ChangeCallback CreateBufferTrackerListener();
 
  private:
   // prepares structures for symbol-based requests

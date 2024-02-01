@@ -242,19 +242,7 @@ TEST(SymbolTableHandlerTest,
 
   verilog::BufferTrackerContainer parsed_buffers;
   parsed_buffers.AddChangeListener(
-      [&symbol_table_handler, parameters](
-          const std::string &uri,
-          const verilog::BufferTracker *buffer_tracker) {
-        if (!buffer_tracker) {
-          symbol_table_handler.UpdateFileContent(
-              verible::lsp::LSPUriToPath(parameters.textDocument.uri), nullptr);
-          return;
-        }
-        if (!buffer_tracker->last_good()) return;
-        symbol_table_handler.UpdateFileContent(
-            verible::lsp::LSPUriToPath(parameters.textDocument.uri),
-            &buffer_tracker->last_good()->parser());
-      });
+      symbol_table_handler.CreateBufferTrackerListener());
 
   // Add trackers for the files we're going to process - normally done by the
   // LSP but we don't have one
@@ -304,19 +292,7 @@ TEST(SymbolTableHandlerTest,
 
   verilog::BufferTrackerContainer parsed_buffers;
   parsed_buffers.AddChangeListener(
-      [&symbol_table_handler, parameters](
-          const std::string &uri,
-          const verilog::BufferTracker *buffer_tracker) {
-        if (!buffer_tracker) {
-          symbol_table_handler.UpdateFileContent(
-              verible::lsp::LSPUriToPath(parameters.textDocument.uri), nullptr);
-          return;
-        }
-        if (!buffer_tracker->last_good()) return;
-        symbol_table_handler.UpdateFileContent(
-            verible::lsp::LSPUriToPath(parameters.textDocument.uri),
-            &buffer_tracker->last_good()->parser());
-      });
+      symbol_table_handler.CreateBufferTrackerListener());
 
   // Add trackers for the files we're going to process - normally done by the
   // LSP but we don't have one
@@ -366,19 +342,7 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
 
   verilog::BufferTrackerContainer parsed_buffers;
   parsed_buffers.AddChangeListener(
-      [&symbol_table_handler, parameters](
-          const std::string &uri,
-          const verilog::BufferTracker *buffer_tracker) {
-        if (!buffer_tracker) {
-          symbol_table_handler.UpdateFileContent(
-              verible::lsp::LSPUriToPath(parameters.textDocument.uri), nullptr);
-          return;
-        }
-        if (!buffer_tracker->last_good()) return;
-        symbol_table_handler.UpdateFileContent(
-            verible::lsp::LSPUriToPath(parameters.textDocument.uri),
-            &buffer_tracker->last_good()->parser());
-      });
+      symbol_table_handler.CreateBufferTrackerListener());
 
   // Add trackers for the files we're going to process - normally done by the
   // LSP but we don't have one
@@ -430,19 +394,7 @@ TEST(SymbolTableHandlerTest,
 
   verilog::BufferTrackerContainer parsed_buffers;
   parsed_buffers.AddChangeListener(
-      [&symbol_table_handler, parameters](
-          const std::string &uri,
-          const verilog::BufferTracker *buffer_tracker) {
-        if (!buffer_tracker) {
-          symbol_table_handler.UpdateFileContent(
-              verible::lsp::LSPUriToPath(parameters.textDocument.uri), nullptr);
-          return;
-        }
-        if (!buffer_tracker->last_good()) return;
-        symbol_table_handler.UpdateFileContent(
-            verible::lsp::LSPUriToPath(parameters.textDocument.uri),
-            &buffer_tracker->last_good()->parser());
-      });
+      symbol_table_handler.CreateBufferTrackerListener());
 
   // Add trackers for the files we're going to process - normally done by the
   // LSP but we don't have one
@@ -495,19 +447,7 @@ TEST(SymbolTableHandlerTest,
 
   verilog::BufferTrackerContainer parsed_buffers;
   parsed_buffers.AddChangeListener(
-      [&symbol_table_handler, parameters](
-          const std::string &uri,
-          const verilog::BufferTracker *buffer_tracker) {
-        if (!buffer_tracker) {
-          symbol_table_handler.UpdateFileContent(
-              verible::lsp::LSPUriToPath(parameters.textDocument.uri), nullptr);
-          return;
-        }
-        if (!buffer_tracker->last_good()) return;
-        symbol_table_handler.UpdateFileContent(
-            verible::lsp::LSPUriToPath(parameters.textDocument.uri),
-            &buffer_tracker->last_good()->parser());
-      });
+      symbol_table_handler.CreateBufferTrackerListener());
 
   // Add trackers for the files we're going to process - normally done by the
   // LSP but we don't have one
