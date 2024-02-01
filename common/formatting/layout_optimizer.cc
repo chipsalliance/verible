@@ -567,7 +567,7 @@ LayoutFunction TokenPartitionsLayoutOptimizer::CalculateOptimalLayout(
         for (const auto& child : iterator_range(node.Children().begin() + 2,
                                                 node.Children().end())) {
           if (child.Value().IndentationSpaces() != indentation) {
-            VLOG(0) << "Indentations of subpartitions from the second to the "
+            VLOG(1) << "Indentations of subpartitions from the second to the "
                        "last are not equal. Using indentation of the second "
                        "subpartition as a hanging indentation. Parent node:\n"
                     << node;

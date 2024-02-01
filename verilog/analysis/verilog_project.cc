@@ -83,7 +83,7 @@ absl::Status VerilogSourceFile::Parse() {
   if (analyze_time > absl::Milliseconds(500)) {
     LOG(WARNING) << "Slow Parse " << ResolvedPath() << " took " << analyze_time;
   } else {
-    VLOG(1) << "Parse " << ResolvedPath() << " in " << analyze_time;
+    VLOG(2) << "Parse " << ResolvedPath() << " in " << analyze_time;
   }
 
   processing_state_ = ProcessingState::kParsed;
