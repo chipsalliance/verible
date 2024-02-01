@@ -155,6 +155,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     }
     filelist_path_ = projectpath;
   }
+
   if (!last_filelist_update_) {
     last_filelist_update_ = std::filesystem::last_write_time(filelist_path_);
   } else if (*last_filelist_update_ ==
@@ -162,6 +163,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     // filelist file is unchanged, keeping it
     return true;
   }
+
   VLOG(1) << "Updating the filelist";
   // fill the FileList object
   FileList filelist;
@@ -174,6 +176,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     last_filelist_update_ = {};
     return false;
   }
+
   // add directory containing filelist to includes
   // TODO (glatosinski): should we do this?
   const absl::string_view filelist_dir = verible::file::Dirname(filelist_path_);
@@ -184,6 +187,7 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     VLOG(1) << "Adding include path:  " << incdir;
     curr_project_->AddIncludePath(incdir);
   }
+
   // Add files from file list to the project
   VLOG(1) << "Resolving " << filelist.file_paths.size() << " files.";
   int actually_opened = 0;
@@ -201,6 +205,11 @@ bool SymbolTableHandler::LoadProjectFileList(absl::string_view current_dir) {
     }
     ++actually_opened;
   }
+
+  // It could be that we just (re-) opened all the exactly same files, so
+  // setting files_dirty_ here might overstate it. However, good conservative
+  // estimate.
+  files_dirty_ |= (actually_opened > 0);
 
   VLOG(1) << "Successfully opened " << actually_opened
           << " files from file-list: " << (absl::Now() - start);
@@ -254,9 +263,7 @@ const SymbolTableNode *SymbolTableHandler::ScanSymbolTreeForDefinition(
 
 void SymbolTableHandler::Prepare() {
   LoadProjectFileList(curr_project_->TranslationUnitRoot());
-  if (files_dirty_) {
-    BuildProjectSymbolTable();
-  }
+  if (files_dirty_) BuildProjectSymbolTable();
 }
 
 std::optional<verible::TokenInfo>
@@ -383,9 +390,7 @@ std::vector<verible::lsp::Location> SymbolTableHandler::FindDefinitionLocation(
 
 const verible::Symbol *SymbolTableHandler::FindDefinitionSymbol(
     absl::string_view symbol) {
-  if (files_dirty_) {
-    BuildProjectSymbolTable();
-  }
+  Prepare();
   const SymbolTableNode *symbol_table_node =
       ScanSymbolTreeForDefinition(&symbol_table_->Root(), symbol);
   if (symbol_table_node) return symbol_table_node->Value().syntax_origin;
@@ -413,9 +418,7 @@ SymbolTableHandler::FindRenameableRangeAtCursor(
     const verible::lsp::PrepareRenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
   Prepare();
-  if (files_dirty_) {
-    BuildProjectSymbolTable();
-  }
+
   std::optional<verible::TokenInfo> symbol =
       GetTokenInfoAtTextDocumentPosition(params, parsed_buffers);
   if (symbol) {
@@ -434,10 +437,8 @@ verible::lsp::WorkspaceEdit
 SymbolTableHandler::FindRenameLocationsAndCreateEdits(
     const verible::lsp::RenameParams &params,
     const verilog::BufferTrackerContainer &parsed_buffers) {
-  if (files_dirty_) {
-    BuildProjectSymbolTable();
-  }
   Prepare();
+
   absl::string_view symbol =
       GetTokenAtTextDocumentPosition(params, parsed_buffers);
   const SymbolTableNode &root = symbol_table_->Root();
@@ -513,6 +514,23 @@ void SymbolTableHandler::UpdateFileContent(
     absl::string_view path, const verilog::VerilogAnalyzer *parsed) {
   files_dirty_ = true;
   curr_project_->UpdateFileContents(path, parsed);
+}
+
+BufferTrackerContainer::ChangeCallback
+SymbolTableHandler::CreateBufferTrackerListener() {
+  return [this](const std::string &uri,
+                const verilog::BufferTracker *buffer_tracker) {
+    const std::string path = verible::lsp::LSPUriToPath(uri);
+    if (path.empty()) {
+      LOG(ERROR) << "Could not convert LS URI to path:  " << uri;
+      return;
+    }
+    // Note, if we actually got any result we must use it here to update
+    // the file content, as the old one will be deleted.
+    // So must use current() as last_good() might be nullptr.
+    UpdateFileContent(
+        path, buffer_tracker ? &buffer_tracker->current()->parser() : nullptr);
+  };
 }
 
 };  // namespace verilog

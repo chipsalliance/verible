@@ -98,9 +98,11 @@ TEST(BufferTrackerConatainer, ParseUpdateNotification) {
 
   EXPECT_EQ(update_remove_count, 0);
 
+  int64_t version_number = 0;
   auto feed_callback = container.GetSubscriptionCallback();
   // Put one document in there.
   verible::lsp::EditTextBuffer foo_doc("module foo(); endmodule");
+  foo_doc.set_last_global_version(++version_number);
   feed_callback("foo.sv", &foo_doc);
 
   EXPECT_EQ(update_remove_count, 1);
@@ -110,6 +112,7 @@ TEST(BufferTrackerConatainer, ParseUpdateNotification) {
   EXPECT_NE(tracker->last_good().get(), nullptr);
 
   verible::lsp::EditTextBuffer updated_foo_doc("module foobar(); endmodule");
+  updated_foo_doc.set_last_global_version(++version_number);
   feed_callback("foo.sv", &updated_foo_doc);
   EXPECT_EQ(update_remove_count, 2);
 

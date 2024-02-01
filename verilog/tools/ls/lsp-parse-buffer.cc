@@ -59,6 +59,7 @@ ParsedBuffer::ParsedBuffer(int64_t version, absl::string_view uri,
 void BufferTracker::Update(const std::string &uri,
                            const verible::lsp::EditTextBuffer &txt) {
   if (current_ && current_->version() == txt.last_global_version()) {
+    LOG(DFATAL) << "Testing: Forgot to update version number ?";
     return;  // Nothing to do (we don't really expect this to happen)
   }
   txt.RequestContent([&txt, &uri, this](absl::string_view content) {
