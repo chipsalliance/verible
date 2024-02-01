@@ -215,6 +215,21 @@ command line:
 bazel build -c opt  --//bazel:use_local_flex_bison //...
 ```
 
+### Building on Windows
+
+Building on Windows requires LLVM, WinFlexBison 3 and Git-bash to be installed. Using package manager [chocolatey], this can be done with
+
+```powershell
+choco install git llvm winflexbison3
+```
+
+Bazel may also require environment variable to use git-bash and LLVM, on powershell
+
+```powershell
+$env:BAZEL_SH="C:\Program Files\Git\git-bash.exe"
+$env:BAZEL_LLVM="C:\Program Files\LLVM"
+```
+
 ### Installation
 
 For simple installation, we provide regular [binary releases].
@@ -280,3 +295,4 @@ abstract syntax tree (AST) or possibly even provide more higher-level
 [UHDM]: https://github.com/chipsalliance/UHDM
 [homebrew]: https://github.com/chipsalliance/homebrew-verible
 [Nix]: https://search.nixos.org/packages?channel=unstable&query=verible
+[chocolatey]: https://chocolatey.org/
