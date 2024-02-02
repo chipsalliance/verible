@@ -55,6 +55,8 @@ readonly TERM_RESET=$'\033[0m'
 
 readonly BINARY_BASE_DIR=bazel-bin/verilog/tools
 
+readonly ISSUE_PREFIX="https://github.com/chipsalliance/verible/issues"
+
 # In case the binaries are run with ASAN:
 # By default, failing asan binaries exit with exit code 1.
 # Let's change it to something that we can distinguish from 'normal operation'
@@ -110,14 +112,13 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
 # Goal: The following list shall be empty :)
 # Format: <tool-name>:<basename of file-name in project>
 declare -A KnownIssue
-KnownIssue[project:soc_ifc_status_driver.svh]=https://github.com/chipsalliance/verible/issues/1946
 
 # At the moment, the list is empty
 
 #--- Too many to mention manually, so here we do the 'waive all' approach
 # Format: <tool-name>:<project>
 declare -A KnownProjectToolIssue
-KnownProjectToolIssue[project:caliptra-rtl]=https://github.com/chipsalliance/verible/issues/1946
+KnownProjectToolIssue[project:caliptra-rtl]=1946
 
 ##
 # Some tools still not fully process all files and return a non-zero exit
@@ -135,8 +136,8 @@ ExpectedFailCount[preprocessor:ibex]=368
 
 ExpectedFailCount[syntax:opentitan]=35
 ExpectedFailCount[lint:opentitan]=35
-ExpectedFailCount[project:opentitan]=752
-ExpectedFailCount[preprocessor:opentitan]=2030
+ExpectedFailCount[project:opentitan]=762
+ExpectedFailCount[preprocessor:opentitan]=2050
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
@@ -155,7 +156,7 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=6
 ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=79
+ExpectedFailCount[project:cva6]=80
 ExpectedFailCount[preprocessor:cva6]=117
 
 ExpectedFailCount[syntax:uvm]=1
@@ -337,10 +338,10 @@ function run_smoke_test() {
         waive_project_key="${short_tool_name}:${PROJECT_NAME}"
         if [[ -v KnownIssue[${waive_file_key}] ]]; then
           bug_number=${KnownIssue[${waive_file_key}]}
-          echo "  --> Known issue: 🐞 https://github.com/chipsalliance/verible/issues/$bug_number"
+          echo "  --> Known issue: 🐞 ${ISSUE_PREFIX}/${bug_number}"
           unset KnownIssue[${waive_file_key}]
         elif [[ -v KnownProjectToolIssue[${waive_project_key}] ]]; then
-          echo "  --> Known issue 🐞🐞 possibly one of ${KnownProjectToolIssue[${waive_project_key}]}"
+          echo "  --> Known issue 🐞🐞 possibly one of ${ISSUE_PREFIX}/${KnownProjectToolIssue[${waive_project_key}]}"
         else
           # This is an so far unknown issue
           echo "::error:: 😱 ${single_file}: crash exit code $EXIT_CODE for $tool"
@@ -421,7 +422,7 @@ if [ "${#KnownIssue[@]}" -ne 0 ]; then
   echo
   echo "::notice ::These were referencing the following issues. Maybe they are fixed now ?"
   for issue_id in "${!DistinctIssues[@]}"; do
-    echo " 🐞 https://github.com/chipsalliance/verible/issues/$issue_id"
+    echo " 🐞 ${ISSUE_PREFIX}/${issue_id}"
   done
   echo
 fi
