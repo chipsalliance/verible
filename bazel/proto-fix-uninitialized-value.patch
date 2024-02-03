@@ -1,0 +1,22 @@
+diff --git a/src/google/protobuf/io/coded_stream.cc b/src/google/protobuf/io/coded_stream.cc
+index 61f639308..6de9ea833 100644
+--- a/src/google/protobuf/io/coded_stream.cc
++++ b/src/google/protobuf/io/coded_stream.cc
+@@ -522,7 +522,7 @@ int CodedInputStream::ReadVarintSizeAsIntFallback() {
+       // Optimization:  We're also safe if the buffer is non-empty and it ends
+       // with a byte that would terminate a varint.
+       (buffer_end_ > buffer_ && !(buffer_end_[-1] & 0x80))) {
+-    uint64_t temp;
++    uint64_t temp = 0;
+     ::std::pair<bool, const uint8_t*> p = ReadVarint64FromArray(buffer_, &temp);
+     if (!p.first || temp > static_cast<uint64_t>(INT_MAX)) return -1;
+     buffer_ = p.second;
+@@ -632,7 +632,7 @@ std::pair<uint64_t, bool> CodedInputStream::ReadVarint64Fallback() {
+       // Optimization:  We're also safe if the buffer is non-empty and it ends
+       // with a byte that would terminate a varint.
+       (buffer_end_ > buffer_ && !(buffer_end_[-1] & 0x80))) {
+-    uint64_t temp;
++    uint64_t temp = 0;
+     ::std::pair<bool, const uint8_t*> p = ReadVarint64FromArray(buffer_, &temp);
+     if (!p.first) {
+       return std::make_pair(0, false);
