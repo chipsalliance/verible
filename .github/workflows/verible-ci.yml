@@ -125,6 +125,7 @@ jobs:
       matrix:
         mode:
         - test
+        - test-clang
         - test-nortti
         - test-c++20
         - test-c++23
