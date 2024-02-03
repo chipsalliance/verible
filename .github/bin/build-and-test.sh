@@ -75,7 +75,13 @@ if [[ "${CXX}" == clang* ]]; then
   # Also warn about string conversion issues.
   BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
 
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # utf8_range dependency
+  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # utf8_range dependencyo
+
+  BAZEL_TEST_OPTS="--copt -D_LIBCPP_ENABLE_DEBUG_MODE"
+else  # gcc
+  # disabled for now https://github.com/chipsalliance/verible/issues/1056
+  #BAZEL_TEST_OPTS="--copt -D_GLIBCXX_DEBUG"
+  PLACEHOLDER_ASSIGNMENT_SO_THAT_ELSE_BRANCH_DOES_NOT_CREATE_SYNTAX_ERROR=1
 fi
 
 # Protobuf triggers a maybe-uninitialized warning.
@@ -88,11 +94,11 @@ CHOSEN_TARGETS=${@:-//...}
 
 case "$MODE" in
   test|test-clang)
-    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS ${CHOSEN_TARGETS}
+    bazel test --keep_going --cache_test_results=no --test_output=errors ${BAZEL_OPTS} ${BAZEL_TEST_OPTS} ${CHOSEN_TARGETS}
     ;;
 
   test-nortti)
-    bazel test --keep_going --cache_test_results=no --test_output=errors $BAZEL_OPTS --cxxopt=-fno-rtti ${CHOSEN_TARGETS}
+    bazel test --keep_going --cache_test_results=no --test_output=errors ${BAZEL_OPTS} --cxxopt=-fno-rtti ${CHOSEN_TARGETS}
     ;;
 
   asan|asan-clang)
@@ -100,7 +106,7 @@ case "$MODE" in
       # Some gcc 12 issue with regexp it seems.
       BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-maybe-uninitialized"
     fi
-    bazel test --config=asan --cache_test_results=no --test_output=errors $BAZEL_OPTS -c fastbuild ${CHOSEN_TARGETS}
+    bazel test --config=asan --cache_test_results=no --test_output=errors ${BAZEL_OPTS} ${BAZEL_TEST_OPTS} -c fastbuild ${CHOSEN_TARGETS}
     ;;
 
   coverage)
@@ -112,11 +118,11 @@ case "$MODE" in
     ;;
 
   compile|compile-clang|clean)
-    bazel build --keep_going $BAZEL_OPTS :install-binaries
+    bazel build --keep_going ${BAZEL_OPTS} :install-binaries
     ;;
 
   compile-static|compile-static-clang)
-    bazel build --keep_going --config=create_static_linked_executables $BAZEL_OPTS :install-binaries
+    bazel build --keep_going --config=create_static_linked_executables ${BAZEL_OPTS} :install-binaries
     ;;
 
   test-c++20|test-c++20-clang)
@@ -125,7 +131,7 @@ case "$MODE" in
        # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
        BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
     fi
-    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++20 -- ${CHOSEN_TARGETS}
+    bazel test --keep_going --test_output=errors ${BAZEL_OPTS} --cxxopt=-std=c++20 -- ${CHOSEN_TARGETS}
     ;;
 
   test-c++23|test-c++23-clang)
@@ -134,7 +140,7 @@ case "$MODE" in
        # Assignment of 1-char strings: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
        BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-restrict"
     fi
-    bazel test --keep_going --test_output=errors $BAZEL_OPTS --cxxopt=-std=c++2b -- ${CHOSEN_TARGETS}
+    bazel test --keep_going --test_output=errors ${BAZEL_OPTS} --cxxopt=-std=c++2b -- ${CHOSEN_TARGETS}
     ;;
 
   smoke-test)

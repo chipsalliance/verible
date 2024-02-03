@@ -1034,14 +1034,14 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
   });
 }
 
+// Note, this https://github.com/chipsalliance/verible/issues/2099
 bool AutoExpander::Module::DependsOn(
     const Module *module, absl::flat_hash_set<const Module *> *visited) const {
-  visited->insert(this);
+  const bool already_visited = !visited->insert(this).second;
+  if (already_visited) return false;
   for (const Module *dependency : dependencies_) {
     if (dependency == module) return true;
-    if (!visited->contains(dependency)) {
-      if (dependency->DependsOn(module, visited)) return true;
-    }
+    if (dependency->DependsOn(module, visited)) return true;
   }
   return false;
 }
