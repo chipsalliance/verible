@@ -37,7 +37,7 @@ find . -name "*.h" -o -name "*.cc" \
 # If we have buildifier installed, use that on BUILD files
 if command -v ${BUILDIFIER_BINARY} >/dev/null; then
   echo "Run $(buildifier --version)"
-  ${BUILDIFIER_BINARY} $(find . -name BUILD -o -name "*.bzl")
+  ${BUILDIFIER_BINARY} WORKSPACE $(find . -name BUILD -o -name "*.bzl")
 fi
 
 # Check if we got any diff
