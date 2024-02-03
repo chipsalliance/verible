@@ -327,9 +327,9 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        brew unlink bazelisk
-        brew install llvm bazel@6
+        brew install llvm
         echo "CLANG_TIDY=$(brew --prefix llvm)/bin/clang-tidy" >> $GITHUB_ENV
+        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -371,8 +371,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        brew unlink bazelisk
-        brew install bazel@6
+        echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
 
     - name: Checkout code
       uses: actions/checkout@v3
