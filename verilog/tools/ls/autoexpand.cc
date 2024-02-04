@@ -267,6 +267,7 @@ class AutoExpander {
 
     // Returns true if the module depends on (uses) a given module
     bool DependsOn(const Module *module) const {
+      if (this == module) return false;
       absl::flat_hash_set<const Module *> visited;
       return DependsOn(module, &visited);
     }
@@ -1034,7 +1035,6 @@ void AutoExpander::Module::PutDeclaredPort(const SyntaxTreeNode &port_node) {
   });
 }
 
-// Note, this https://github.com/chipsalliance/verible/issues/2099
 bool AutoExpander::Module::DependsOn(
     const Module *module, absl::flat_hash_set<const Module *> *visited) const {
   const bool already_visited = !visited->insert(this).second;
