@@ -16,9 +16,6 @@ let
 
   # Testing with specific compilers
   #verible_used_stdenv = pkgs.gcc13Stdenv;
-
-  # Using clang stdenv does not work yet out of the box yet
-  # https://github.com/NixOS/nixpkgs/issues/216047
   #verible_used_stdenv = pkgs.clang13Stdenv;
 in
 verible_used_stdenv.mkDerivation {
