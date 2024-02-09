@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,28 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
+
+TEST(ConstraintNameStyleRuleTest, Configuration) {
+  ConstraintNameStyleRule rule;
+  absl::Status status;
+
+  // Default value
+  EXPECT_EQ(rule.Pattern(), kSuffix);
+
+  // Default value if not overriden
+  EXPECT_TRUE((status = rule.Configure("")).ok());
+  EXPECT_EQ(rule.Pattern(), kSuffix);
+
+  // Correct regex
+  EXPECT_TRUE((status = rule.Configure("pattern:" kPrefix)).ok());
+  EXPECT_EQ(rule.Pattern(), kPrefix);
+
+  // Invalid regex, falling back to the default
+  EXPECT_TRUE((status = rule.Configure("pattern: [a")).ok());
+  EXPECT_EQ(rule.Pattern(), kSuffix);
+}
 
 // Tests that ConstraintNameStyleRule correctly accepts valid names.
 TEST(ConstraintNameStyleRuleTest, AcceptTests) {
@@ -42,6 +63,7 @@ TEST(ConstraintNameStyleRuleTest, AcceptTests) {
       {"class foo; rand logic a; constraint foo_bar_c { a == 16; } endclass"},
       {"class foo; rand logic a; constraint foo2_c { a == 16; } endclass"},
       {"class foo; rand logic a; constraint foo_2_bar_c { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint a_c { a == 16; } endclass"},
 
       /* Ignore out of line definitions */
       {"constraint classname::constraint_c { a <= b; }"},
@@ -49,6 +71,26 @@ TEST(ConstraintNameStyleRuleTest, AcceptTests) {
       {"constraint classname::MyConstraint { a <= b; }"},
   };
   RunLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(kTestCases);
+}
+
+TEST(ConstraintNameStyleRuleTest, VariousPrefixTests) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"class foo; rand logic a; constraint c_foo { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint c_a { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint c_foo_bar { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "c_"},
+       " { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "no_suffix"},
+       " { a == 16; } endclass"},
+      {"class foo; rand logic a; constraint ",
+       {kToken, "suffix_ok_but_we_want_prefix_c"},
+       " { a == 16; } endclass"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, ConstraintNameStyleRule>(
+      kTestCases, "pattern:" kPrefix);
 }
 
 // Tests that ConstraintNameStyleRule rejects invalid names.
