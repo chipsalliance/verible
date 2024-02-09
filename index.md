@@ -58,4 +58,4 @@ See the [README file for further information.](README.md)
 
 ## Version
 
-Generated on 2024-02-03 16:30:29 -0800 from [99d1aa7](https://github.com/google/verible/commit/99d1aa7c65c3b7b1cd1d78a18fe31494d60064f5)
+Generated on 2024-02-09 08:32:51 -0800 from [9442853](https://github.com/google/verible/commit/9442853c1b6e0ec252b55d40c572bfc98b4d1e2d)
