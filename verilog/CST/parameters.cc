@@ -30,6 +30,7 @@
 #include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

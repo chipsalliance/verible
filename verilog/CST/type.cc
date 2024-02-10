@@ -28,6 +28,7 @@
 #include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // pragma IWYU: keep
+#include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {
 

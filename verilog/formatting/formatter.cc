@@ -53,6 +53,7 @@
 #include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/formatting/align.h"

@@ -45,6 +45,7 @@
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 
