@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
