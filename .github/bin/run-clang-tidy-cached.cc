@@ -26,16 +26,13 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 //   run-clang-tidy-cached.cc --checks="-*,modernize-use-override" --fix
 
 #include <algorithm>
-#include <utility>
 #include <cinttypes>
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <system_error>
 #include <fstream>
-#include <vector>
 #include <functional>
 #include <iostream>
 #include <list>
@@ -44,7 +41,10 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 #include <optional>
 #include <regex>
 #include <string>
+#include <system_error>
 #include <thread>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 using filepath_contenthash_t = std::pair<fs::path, uint64_t>;
@@ -156,9 +156,10 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
 int main(int argc, char *argv[]) {
   const std::string kProjectPrefix = "verible_";
   const std::string kSearchDir = ".";
-  const std::string kFileExcludeRe = "vscode/|external_libs/|.github/"
-    "|tree_operations_test"  // very slow
-    "|symbol_table_test";
+  const std::string kFileExcludeRe =
+      "vscode/|external_libs/|.github/"
+      "|tree_operations_test"  // very slow
+      "|symbol_table_test";
 
   const std::string kTidySymlink = kProjectPrefix + "clang-tidy.out";
   const fs::path cache_dir = GetCacheDir() / "clang-tidy";
