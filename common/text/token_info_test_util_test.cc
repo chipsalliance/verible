@@ -18,7 +18,6 @@
 
 #include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
-#include "common/util/logging.h"
 #include "gtest/gtest.h"
 
 namespace verible {

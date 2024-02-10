@@ -34,6 +34,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
+#include "common/util/logging.h"
 #include "re2/re2.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/dimensions.h"

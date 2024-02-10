@@ -22,6 +22,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info_test_util.h"
 #include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

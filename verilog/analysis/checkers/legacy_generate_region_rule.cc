@@ -26,6 +26,7 @@
 #include "common/strings/naming_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

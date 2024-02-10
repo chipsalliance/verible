@@ -28,6 +28,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"

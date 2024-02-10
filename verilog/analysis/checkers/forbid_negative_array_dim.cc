@@ -25,7 +25,6 @@
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/tree_utils.h"
-#include "common/util/logging.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/dimensions.h"
 #include "verilog/CST/expression.h"

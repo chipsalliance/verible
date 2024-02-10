@@ -29,6 +29,7 @@
 #include "common/strings/display_utils.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/logging.h"
 #include "common/util/spacer.h"
 
 namespace verible {

@@ -40,7 +40,6 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/interval_set.h"
-#include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"

@@ -31,6 +31,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
+#include "common/util/logging.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"

@@ -30,6 +30,7 @@
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/format_style.h"

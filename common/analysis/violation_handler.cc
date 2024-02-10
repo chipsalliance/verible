@@ -26,6 +26,7 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/diff.h"
 #include "common/util/file_util.h"
+#include "common/util/logging.h"
 #include "common/util/user_interaction.h"
 
 namespace verible {

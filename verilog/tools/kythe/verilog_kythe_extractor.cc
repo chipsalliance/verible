@@ -28,6 +28,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"

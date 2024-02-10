@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"

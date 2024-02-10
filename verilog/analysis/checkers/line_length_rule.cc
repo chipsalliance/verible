@@ -33,7 +33,6 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/iterator_range.h"
-#include "common/util/logging.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/analysis/verilog_linter_constants.h"

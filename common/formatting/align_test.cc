@@ -29,6 +29,7 @@
 #include "common/formatting/token_partition_tree_test_utils.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/tree_builder_test_util.h"
+#include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"
 #include "common/util/value_saver.h"

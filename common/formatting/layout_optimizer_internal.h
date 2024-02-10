@@ -33,6 +33,7 @@
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 

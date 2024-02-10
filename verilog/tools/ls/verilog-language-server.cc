@@ -26,6 +26,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/logging.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 ABSL_FLAG(bool, variables_in_outline, true,

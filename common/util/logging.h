@@ -20,13 +20,14 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
-#include "absl/log/check.h"
+#include "absl/log/check.h"  // IWYU pragma: export
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
 
-#include "absl/log/die_if_null.h"
-#include "absl/log/log.h"
+#include "absl/log/die_if_null.h"  // IWYU pragma: export
+#include "absl/log/log.h"          // IWYU pragma: export
+#include "absl/log/vlog_is_on.h"   // IWYU pragma: export
 
 #define CHECK_NOTNULL(p) (void)ABSL_DIE_IF_NULL(p)
 

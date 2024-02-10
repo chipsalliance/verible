@@ -37,6 +37,7 @@
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
+#include "common/util/logging.h"
 #include "common/util/status_macros.h"
 #include "common/util/user_interaction.h"
 

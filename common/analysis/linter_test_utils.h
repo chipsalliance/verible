@@ -28,6 +28,7 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info_test_util.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
 
 namespace verible {
