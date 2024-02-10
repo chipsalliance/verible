@@ -18,6 +18,12 @@
 #
 # modernize-make-unique: mostly correct, but wants to also replace .reset()
 #                         which is a more readable way than assign.
+#
+# misc-include-cleaner: we do not exclude it here, as it is useful in itself
+#                       locally running clang tidy checks (and potentially language
+#                       server support); but since code is not 'clean' yet, we
+#                       exclude it in the CI run.
+#
 # NOTE: Below, there must be no comments, otherwise clang tidy silently ignores
 #       rules... (ask me how I know).
 ###
@@ -76,7 +82,6 @@ Checks: >
   -modernize-use-transparent-functors,
   misc-*,
   -misc-const-correctness,
-  -misc-include-cleaner,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-redundant-expression,

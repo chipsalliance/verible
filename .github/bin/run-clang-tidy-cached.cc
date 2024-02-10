@@ -26,13 +26,16 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 //   run-clang-tidy-cached.cc --checks="-*,modernize-use-override" --fix
 
 #include <algorithm>
+#include <utility>
 #include <cinttypes>
 #include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <system_error>
 #include <fstream>
+#include <vector>
 #include <functional>
 #include <iostream>
 #include <list>
@@ -132,16 +135,20 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
                                   "> '" + tmp_out + "' 2>/dev/null";
       const int r = system(command.c_str());
 #ifdef WIFSIGNALED
+      // NOLINTBEGIN
       if (WIFSIGNALED(r) && (WTERMSIG(r) == SIGINT || WTERMSIG(r) == SIGQUIT)) {
         break;  // got Ctrl-C
       }
+      // NOLINTEND
 #endif
       CanonicalizeSourcePaths(tmp_out, tmp_out);
       fs::rename(tmp_out, final_out);  // atomic replacement
     }
   };
   std::vector<std::thread> workers;
-  for (auto i = 0; i < kJobs; ++i) workers.emplace_back(clang_tidy_runner);
+  for (auto i = 0; i < kJobs; ++i) {
+    workers.emplace_back(clang_tidy_runner);  // NOLINT
+  }
   for (auto &t : workers) t.join();
   fprintf(stderr, "     \n");  // Clean out progress counter.
 }

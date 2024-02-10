@@ -45,19 +45,13 @@ verible_used_stdenv.mkDerivation {
       lcov              # coverage html generation.
       bazel-buildtools  # buildifier
 
-      # TODO: would it be possible to define two variables here
-      # clang_for_formatting, clang_for_tidy so that we don't have
-      # to re-type the version below in the shell hook ?
-      clang-tools_15    # For clang-format (see below)
-      clang-tools_17    # For clang-tidy (see below)
+      clang-tools_17    # For clang-tidy; clangd
     ];
+
   shellHook = ''
       # We choose the last clang-format that produces the same result
-      # as the one used on the github CI (newer ones arrange some things
+      # as the one used on the github CI (newer than v15 arrange some things
       # slightly differently, so would result in a conflict).
-      export CLANG_FORMAT=${pkgs.clang-tools_15}/bin/clang-tidy
-
-      # Use latest clang-tidy we can get for most detailed
-      export CLANG_TIDY=${pkgs.clang-tools_17}/bin/clang-tidy
+      export CLANG_FORMAT=${pkgs.clang-tools_15}/bin/clang-format
   '';
 }
