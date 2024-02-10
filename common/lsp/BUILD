@@ -165,6 +165,7 @@ cc_binary(
         ":lsp-protocol",
         ":lsp-text-buffer",
         ":message-stream-splitter",
+        "@com_google_absl//absl/status",
     ],
 )
 

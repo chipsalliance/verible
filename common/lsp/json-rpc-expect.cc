@@ -15,10 +15,10 @@
 // A utility similar to expect(1) but for json-rpc.
 
 #include <cstddef>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <streambuf>
 #include <string>
 
 #include "absl/status/status.h"

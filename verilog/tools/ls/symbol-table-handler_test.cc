@@ -20,6 +20,8 @@
 
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
+#include "common/lsp/lsp-protocol.h"
+#include "common/lsp/lsp-text-buffer.h"
 #include "common/util/file_util.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_project.h"

@@ -20,11 +20,11 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/json-rpc-dispatcher.h"
+#include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 #include "verilog/tools/ls/symbol-table-handler.h"
-#include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
 

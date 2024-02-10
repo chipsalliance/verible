@@ -16,7 +16,9 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
 
+#include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"

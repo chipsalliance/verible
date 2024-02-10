@@ -20,6 +20,7 @@
 
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
+#include "nlohmann/json.hpp"
 
 namespace verible {
 namespace lsp {
