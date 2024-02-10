@@ -43,7 +43,8 @@
 #include <vector>
 
 #include "common/text/constants.h"
-#include "common/text/symbol.h"
+#include "common/text/symbol.h"      // IWYU pragma: export
+#include "common/text/symbol_ptr.h"  // IWYU pragma: export
 #include "common/text/tree_compare.h"
 #include "common/text/visitors.h"
 #include "common/util/casts.h"
