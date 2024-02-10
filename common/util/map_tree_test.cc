@@ -14,6 +14,7 @@
 
 #include "common/util/map_tree.h"
 
+#include <cstddef>
 #include <ostream>
 #include <sstream>
 #include <string>

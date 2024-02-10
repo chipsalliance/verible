@@ -14,6 +14,7 @@
 
 #include "common/strings/patch.h"
 
+#include <cstddef>
 #include <initializer_list>
 #include <sstream>
 #include <string>

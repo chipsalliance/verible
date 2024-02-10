@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/json_diagnostics.h"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 

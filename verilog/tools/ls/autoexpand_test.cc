@@ -15,6 +15,7 @@
 #include "verilog/tools/ls/autoexpand.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <memory>

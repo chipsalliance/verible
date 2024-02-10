@@ -14,6 +14,7 @@
 
 #include "verilog/CST/constraints.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

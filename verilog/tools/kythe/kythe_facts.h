@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_KYTHE_FACTS_H_
 
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>

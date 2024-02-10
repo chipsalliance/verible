@@ -14,6 +14,7 @@
 
 #include "common/util/interval_set.h"
 
+#include <cstdint>
 #include <initializer_list>
 #include <iterator>
 #include <map>

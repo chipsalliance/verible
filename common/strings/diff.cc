@@ -14,6 +14,7 @@
 
 #include "common/strings/diff.h"
 
+#include <cstddef>
 #include <iostream>
 #include <vector>
 

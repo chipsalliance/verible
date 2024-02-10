@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_FF_NON_BLOCKING_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ALWAYS_FF_NON_BLOCKING_RULE_H_
 
+#include <cstddef>
 #include <set>
 #include <stack>
 #include <string>

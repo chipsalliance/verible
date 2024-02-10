@@ -14,6 +14,7 @@
 
 #include "verilog/CST/parameters.h"
 
+#include <initializer_list>
 #include <memory>
 #include <vector>
 

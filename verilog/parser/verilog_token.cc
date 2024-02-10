@@ -14,6 +14,7 @@
 
 #include "verilog/parser/verilog_token.h"
 
+#include <cstddef>
 #include <string>
 
 #include "absl/strings/string_view.h"

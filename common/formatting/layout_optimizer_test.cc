@@ -15,6 +15,8 @@
 #include "common/formatting/layout_optimizer.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <initializer_list>
 #include <limits>
 #include <ostream>
 #include <sstream>

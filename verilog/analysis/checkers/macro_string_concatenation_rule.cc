@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/macro_string_concatenation_rule.h"
 
+#include <cstddef>
 #include <string>
 
 #include "absl/strings/match.h"

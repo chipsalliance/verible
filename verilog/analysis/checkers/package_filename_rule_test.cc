@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/package_filename_rule.h"
 
+#include <initializer_list>
 #include <string>
 
 #include "absl/strings/string_view.h"

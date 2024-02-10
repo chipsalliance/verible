@@ -15,6 +15,7 @@
 #include "common/lsp/message-stream-splitter.h"
 
 #include <algorithm>
+#include <cstddef>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/numbers.h"

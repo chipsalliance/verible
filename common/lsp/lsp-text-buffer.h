@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_LSP_LSP_TEXT_BUFFER_H
 #define VERIBLE_COMMON_LSP_LSP_TEXT_BUFFER_H
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>

@@ -15,6 +15,7 @@
 #include "common/formatting/format_token.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iostream>
 #include <sstream>  // pragma IWYU: keep  // for ostringstream
 #include <string>

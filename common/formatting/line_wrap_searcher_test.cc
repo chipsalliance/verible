@@ -14,6 +14,7 @@
 
 #include "common/formatting/line_wrap_searcher.h"
 
+#include <cstddef>
 #include <sstream>
 #include <vector>
 

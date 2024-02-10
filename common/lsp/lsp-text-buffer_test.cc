@@ -14,6 +14,7 @@
 
 #include "common/lsp/lsp-text-buffer.h"
 
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/str_cat.h"

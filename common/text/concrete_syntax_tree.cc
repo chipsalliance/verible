@@ -14,6 +14,7 @@
 
 #include "common/text/concrete_syntax_tree.h"
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 #include <vector>

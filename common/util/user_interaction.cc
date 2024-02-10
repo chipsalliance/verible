@@ -14,6 +14,7 @@
 
 #include "common/util/user_interaction.h"
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 

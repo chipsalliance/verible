@@ -14,6 +14,7 @@
 
 #include "common/util/container_proxy.h"
 
+#include <initializer_list>
 #include <list>
 #include <ostream>
 #include <string>

@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 #define VERIBLE_COMMON_ANALYSIS_VIOLATION_HANDLER_H_
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <ostream>

@@ -14,6 +14,7 @@
 
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/match.h"

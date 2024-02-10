@@ -14,6 +14,7 @@
 
 #include "verilog/formatting/tree_unwrapper.h"
 
+#include <cstddef>
 #include <initializer_list>
 #include <iostream>
 #include <memory>

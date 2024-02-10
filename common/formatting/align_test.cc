@@ -15,6 +15,7 @@
 #include "common/formatting/align.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <ostream>
 #include <sstream>

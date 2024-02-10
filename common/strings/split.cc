@@ -14,6 +14,7 @@
 
 #include "common/strings/split.h"
 
+#include <cstddef>
 #include <vector>
 
 #include "absl/strings/str_split.h"

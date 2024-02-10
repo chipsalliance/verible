@@ -19,6 +19,7 @@
 #ifndef VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 #define VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>

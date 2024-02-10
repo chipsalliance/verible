@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_TEST_UTILS_H_
 #define VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_TEST_UTILS_H_
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>

@@ -15,6 +15,7 @@
 
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>

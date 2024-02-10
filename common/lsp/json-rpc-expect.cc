@@ -14,6 +14,7 @@
 
 // A utility similar to expect(1) but for json-rpc.
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iterator>

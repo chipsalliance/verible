@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/checkers/parameter_name_style_rule.h"
 
+#include <cstdint>
 #include <set>
 #include <string>
 #include <utility>

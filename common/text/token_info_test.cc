@@ -16,6 +16,7 @@
 
 #include "common/text/token_info.h"
 
+#include <cstddef>
 #include <ostream>
 #include <sstream>
 #include <string>

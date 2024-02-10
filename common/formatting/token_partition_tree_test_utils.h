@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_FORMATTING_TOKEN_PARTITION_TREE_TEST_UTILS_H_
 #define VERIBLE_COMMON_FORMATTING_TOKEN_PARTITION_TREE_TEST_UTILS_H_
 
+#include <initializer_list>
 #include <utility>
 #include <vector>
 

@@ -14,6 +14,8 @@
 
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <iostream>
 #include <map>

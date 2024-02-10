@@ -14,6 +14,7 @@
 
 #include "common/text/tree_builder_test_util.h"
 
+#include <cstddef>
 #include <initializer_list>
 
 #include "absl/strings/string_view.h"

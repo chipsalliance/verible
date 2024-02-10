@@ -17,6 +17,7 @@
 #include "common/parser/parser_param.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <utility>
 #include <vector>

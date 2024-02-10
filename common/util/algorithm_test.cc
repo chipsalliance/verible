@@ -14,6 +14,7 @@
 
 #include "common/util/algorithm.h"
 
+#include <cstddef>
 #include <iterator>  // for std::back_inserter
 #include <list>
 #include <string>

@@ -15,6 +15,7 @@
 #include "verilog/formatting/comment_controls.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 #include <vector>

@@ -14,6 +14,7 @@
 
 #include "verilog/analysis/verilog_equivalence.h"
 
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <memory>

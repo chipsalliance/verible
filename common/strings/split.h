@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_STRINGS_SPLIT_H_
 #define VERIBLE_COMMON_STRINGS_SPLIT_H_
 
+#include <cstddef>
 #include <functional>
 #include <vector>
 

@@ -14,6 +14,7 @@
 
 #include "common/formatting/state_node.h"
 
+#include <cstddef>
 #include <memory>
 #include <sstream>
 #include <stack>

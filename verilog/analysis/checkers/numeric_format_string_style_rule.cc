@@ -15,6 +15,8 @@
 #include "verilog/analysis/checkers/numeric_format_string_style_rule.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <initializer_list>
 #include <set>
 #include <string>
 

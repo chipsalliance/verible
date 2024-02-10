@@ -16,6 +16,7 @@
 
 #include <algorithm>  // for std::next_permutation
 #include <array>
+#include <cstddef>
 #include <functional>  // for std::less
 #include <vector>
 

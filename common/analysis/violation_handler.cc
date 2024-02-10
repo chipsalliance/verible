@@ -14,6 +14,7 @@
 
 #include "common/analysis/violation_handler.h"
 
+#include <cstddef>
 #include <iostream>
 #include <ostream>
 #include <set>

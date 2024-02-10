@@ -15,6 +15,7 @@
 #include "verilog/analysis/lint_rule_registry.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>

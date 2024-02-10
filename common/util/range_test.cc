@@ -14,6 +14,7 @@
 
 #include "common/util/range.h"
 
+#include <cstddef>
 #include <iterator>
 #include <string>
 #include <utility>

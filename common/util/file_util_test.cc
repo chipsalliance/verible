@@ -15,6 +15,7 @@
 #include "common/util/file_util.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <string>
 #include <utility>

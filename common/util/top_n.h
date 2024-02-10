@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_UTIL_TOP_N_H_
 #define VERIBLE_COMMON_UTIL_TOP_N_H_
 
+#include <cstddef>
 #include <functional>  // for std::greater
 #include <queue>       // for std::priority_queue
 #include <vector>

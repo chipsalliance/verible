@@ -15,6 +15,7 @@
 #include "verilog/tools/kythe/kythe_facts.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iostream>
 #include <sstream>
 #include <string>

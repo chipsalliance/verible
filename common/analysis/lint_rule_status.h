@@ -19,6 +19,7 @@
 
 #include <fstream>
 #include <functional>
+#include <initializer_list>
 #include <iosfwd>
 #include <set>
 #include <string>

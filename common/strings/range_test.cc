@@ -14,6 +14,7 @@
 
 #include "common/strings/range.h"
 
+#include <cstddef>
 #include <utility>
 
 #include "absl/strings/string_view.h"

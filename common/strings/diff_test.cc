@@ -14,6 +14,7 @@
 
 #include "common/strings/diff.h"
 
+#include <cstdint>
 #include <initializer_list>
 #include <ostream>
 #include <sstream>

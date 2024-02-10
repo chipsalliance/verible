@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_LSP_MESSAGE_STREAM_SPLITTER_H
 #define VERIBLE_COMMON_LSP_MESSAGE_STREAM_SPLITTER_H
 
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <string>

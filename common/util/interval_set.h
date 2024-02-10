@@ -15,6 +15,8 @@
 #ifndef VERIBLE_COMMON_UTIL_INTERVAL_SET_H_
 #define VERIBLE_COMMON_UTIL_INTERVAL_SET_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <iostream>
 #include <map>

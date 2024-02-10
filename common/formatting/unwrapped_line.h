@@ -15,6 +15,7 @@
 #ifndef VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_H_
 #define VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_H_
 
+#include <cstddef>
 #include <functional>
 #include <iosfwd>
 #include <string>
