@@ -15,7 +15,6 @@
 #include "common/util/vector_tree_iterators.h"
 
 #include <cstddef>
-#include <iterator>
 #include <ostream>
 #include <sstream>
 #include <type_traits>
@@ -24,7 +23,6 @@
 #include "absl/strings/str_join.h"
 #include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

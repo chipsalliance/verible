@@ -21,7 +21,6 @@
 #include <map>
 #include <utility>
 
-#include "common/util/forward.h"
 #include "common/util/logging.h"
 
 namespace verible {

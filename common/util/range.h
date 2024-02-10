@@ -18,7 +18,6 @@
 #ifndef VERIBLE_COMMON_UTIL_RANGE_H_
 #define VERIBLE_COMMON_UTIL_RANGE_H_
 
-#include <algorithm>
 #include <utility>
 
 #include "common/util/logging.h"

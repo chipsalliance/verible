@@ -23,7 +23,6 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

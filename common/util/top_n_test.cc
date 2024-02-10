@@ -18,7 +18,6 @@
 #include <array>
 #include <cstddef>
 #include <functional>  // for std::less
-#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

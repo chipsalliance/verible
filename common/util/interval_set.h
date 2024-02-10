@@ -16,9 +16,10 @@
 #define VERIBLE_COMMON_UTIL_INTERVAL_SET_H_
 
 #include <cstddef>
-#include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <sstream>
 #include <string>

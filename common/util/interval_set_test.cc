@@ -14,7 +14,6 @@
 
 #include "common/util/interval_set.h"
 
-#include <cstdint>
 #include <initializer_list>
 #include <iterator>
 #include <map>
@@ -23,6 +22,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/util/interval.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
