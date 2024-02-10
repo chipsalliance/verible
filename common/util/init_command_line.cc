@@ -28,6 +28,7 @@
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "common/util/generated_verible_build_version.h"
 

@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 // lint_waiver_config.lex has "%prefix=verible", meaning the class flex
 // creates is veribleFlexLexer. Unfortunately, FlexLexer.h doesn't have proper
 // ifdefs around its inclusion, so we have to put a bar around it here.
@@ -31,8 +33,6 @@
 #  include <FlexLexer.h>
 #endif
 // clang-format on
-
-#include "absl/strings/string_view.h"
 
 namespace verible {
 

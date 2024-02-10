@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "common/strings/split.h"
 #include "common/util/iterator_range.h"
 #include "external_libs/editscript.h"

@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/text_structure_test_utils.h"
 #include "common/text/token_info.h"

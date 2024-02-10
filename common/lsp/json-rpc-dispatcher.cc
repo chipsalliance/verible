@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 
 namespace verible {

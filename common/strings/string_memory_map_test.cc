@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 #include "common/strings/range.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"

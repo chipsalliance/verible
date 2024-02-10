@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter.h"

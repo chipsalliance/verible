@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/concrete_syntax_leaf.h"

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "common/strings/comment_utils.h"
 #include "common/strings/range.h"
 #include "common/text/token_info.h"

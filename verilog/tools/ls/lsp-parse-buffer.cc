@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/util/logging.h"
 

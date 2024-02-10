@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/matcher/descent_path.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/symbol.h"

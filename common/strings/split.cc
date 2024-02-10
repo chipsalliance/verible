@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace verible {
 

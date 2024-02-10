@@ -47,6 +47,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/parser/parse.h"
 #include "common/text/text_structure.h"

@@ -22,6 +22,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "common/lsp/message-stream-splitter.h"
 #include "nlohmann/json.hpp"
 

@@ -26,6 +26,7 @@
 #include <sstream>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"

@@ -19,6 +19,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/range.h"
 #include "gmock/gmock.h"

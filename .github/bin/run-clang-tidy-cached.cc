@@ -40,6 +40,7 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <string>
 #include <thread>
 
 namespace fs = std::filesystem;
