@@ -15,10 +15,11 @@
 #include "verilog/tools/ls/verilog-language-server.h"
 
 #include <cstdlib>
-#include <functional>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
