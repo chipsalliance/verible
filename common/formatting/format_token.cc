@@ -27,7 +27,6 @@
 #include "common/strings/display_utils.h"
 #include "common/strings/range.h"
 #include "common/text/token_info.h"
-#include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 

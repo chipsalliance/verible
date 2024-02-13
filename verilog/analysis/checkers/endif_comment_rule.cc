@@ -14,7 +14,6 @@
 
 #include "verilog/analysis/checkers/endif_comment_rule.h"
 
-#include <deque>
 #include <set>
 #include <stack>
 #include <string>

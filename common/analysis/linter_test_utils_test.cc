@@ -17,7 +17,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"

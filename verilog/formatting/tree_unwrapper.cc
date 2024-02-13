@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "absl/base/macros.h"
-#include "absl/container/inlined_vector.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
@@ -49,7 +48,6 @@
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"
-#include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/functions.h"
 #include "verilog/CST/macro.h"

@@ -29,7 +29,6 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/match_test_utils.h"

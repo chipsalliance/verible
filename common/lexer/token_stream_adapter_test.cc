@@ -21,7 +21,6 @@
 #include "common/lexer/lexer.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

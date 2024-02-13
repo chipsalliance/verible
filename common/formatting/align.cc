@@ -41,7 +41,6 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
-#include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
 #include "common/util/iterator_range.h"

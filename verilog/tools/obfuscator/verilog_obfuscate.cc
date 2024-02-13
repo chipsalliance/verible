@@ -24,7 +24,6 @@
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
-#include <utility>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"

@@ -14,11 +14,7 @@
 
 #include "verilog/analysis/checkers/generate_label_prefix_rule.h"
 
-#include <string>
-#include <vector>
-
 #include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"

@@ -15,7 +15,6 @@
 #include "verilog/analysis/verilog_filelist.h"
 
 #include <iosfwd>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>

@@ -23,7 +23,6 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

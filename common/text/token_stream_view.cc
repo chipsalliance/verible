@@ -15,8 +15,6 @@
 #include "common/text/token_stream_view.h"
 
 #include <algorithm>
-#include <cstddef>
-#include <iterator>
 #include <vector>
 
 #include "absl/strings/string_view.h"

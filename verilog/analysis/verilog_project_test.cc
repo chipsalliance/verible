@@ -26,7 +26,6 @@
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/module.h"
 

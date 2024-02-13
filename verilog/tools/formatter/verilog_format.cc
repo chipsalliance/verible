@@ -22,9 +22,7 @@
 //   0: stdout output can be used to replace original file
 //   nonzero: stdout output (if any) should be discarded
 
-#include <fstream>
 #include <iostream>
-#include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
 #include <vector>

@@ -14,7 +14,6 @@
 
 #include "common/analysis/lint_rule_status.h"
 
-#include <cstdint>
 #include <iostream>
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream

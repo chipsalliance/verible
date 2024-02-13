@@ -21,7 +21,6 @@
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 

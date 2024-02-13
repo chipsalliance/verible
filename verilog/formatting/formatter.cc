@@ -19,7 +19,6 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <sstream>
 #include <string>

@@ -15,7 +15,6 @@
 #include "common/analysis/syntax_tree_linter.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <set>
 #include <vector>

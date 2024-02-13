@@ -22,7 +22,6 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"

@@ -22,7 +22,6 @@
 #include <iterator>
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
-#include <string>
 #include <utility>
 #include <vector>
 

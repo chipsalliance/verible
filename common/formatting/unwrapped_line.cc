@@ -18,7 +18,6 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <map>
 #include <sstream>
 #include <string>
 #include <vector>

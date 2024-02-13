@@ -15,7 +15,6 @@
 #include "common/formatting/token_partition_tree.h"
 
 #include <iosfwd>
-#include <iterator>
 #include <string>
 #include <vector>
 

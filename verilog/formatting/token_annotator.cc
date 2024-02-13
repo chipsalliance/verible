@@ -19,7 +19,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/tree_annotator.h"
@@ -27,7 +26,6 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
-#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/with_reason.h"
 #include "verilog/CST/verilog_nonterminals.h"

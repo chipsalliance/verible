@@ -15,7 +15,6 @@
 // Implementation of matcher.h
 #include "common/analysis/matcher/matcher.h"
 
-#include <optional>
 #include <vector>
 
 #include "common/analysis/matcher/bound_symbol_manager.h"

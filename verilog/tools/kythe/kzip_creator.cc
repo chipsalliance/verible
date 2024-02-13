@@ -14,10 +14,8 @@
 
 #include "verilog/tools/kythe/kzip_creator.h"
 
-#include <array>
 #include <cstdio>
 #include <string>
-#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

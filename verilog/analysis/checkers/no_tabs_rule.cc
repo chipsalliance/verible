@@ -14,11 +14,8 @@
 
 #include "verilog/analysis/checkers/no_tabs_rule.h"
 
-#include <cstddef>
 #include <set>
-#include <string>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info.h"

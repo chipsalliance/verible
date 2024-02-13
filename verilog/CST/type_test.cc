@@ -15,7 +15,6 @@
 #include "verilog/CST/type.h"
 
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -25,7 +24,6 @@
 #include "common/text/text_structure.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/declaration.h"

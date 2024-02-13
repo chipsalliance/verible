@@ -14,8 +14,6 @@
 
 #include "common/text/token_info.h"
 
-#include <algorithm>
-#include <cstddef>
 #include <iterator>
 #include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream

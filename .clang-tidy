@@ -23,6 +23,8 @@
 #                       locally running clang tidy checks (and potentially language
 #                       server support); but since code is not 'clean' yet, we
 #                       exclude it in the CI run.
+#       Config: don't flag *_linter_test_utils.h as they define a test
+#       template spezialization that clang-tidy fails to see is necessary.
 #
 # NOTE: Below, there must be no comments, otherwise clang tidy silently ignores
 #       rules... (ask me how I know).
@@ -87,3 +89,7 @@ Checks: >
   -misc-redundant-expression,
   -misc-unused-parameters,
   -misc-use-anonymous-namespace,
+
+CheckOptions:
+  - key:    misc-include-cleaner.IgnoreHeaders
+    value:  .*_linter_test_utils\.h

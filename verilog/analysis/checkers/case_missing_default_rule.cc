@@ -15,9 +15,7 @@
 #include "verilog/analysis/checkers/case_missing_default_rule.h"
 
 #include <set>
-#include <string>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"

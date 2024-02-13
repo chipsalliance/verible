@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <set>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"

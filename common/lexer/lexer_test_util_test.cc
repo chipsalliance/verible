@@ -15,7 +15,6 @@
 #include "common/lexer/lexer_test_util.h"
 
 #include <initializer_list>
-#include <iterator>
 #include <sstream>
 #include <vector>
 

@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <iterator>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"

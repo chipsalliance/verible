@@ -15,9 +15,7 @@
 #include "common/formatting/basic_format_style.h"
 
 #include <string>
-#include <utility>
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

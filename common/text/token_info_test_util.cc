@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
-#include <ostream>
 #include <vector>
 
 #include "absl/strings/string_view.h"

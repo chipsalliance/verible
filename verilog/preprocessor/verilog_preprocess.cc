@@ -14,10 +14,8 @@
 
 #include "verilog/preprocessor/verilog_preprocess.h"
 
-#include <algorithm>
 #include <filesystem>
 #include <functional>
-#include <iterator>
 #include <map>
 #include <memory>
 #include <string>

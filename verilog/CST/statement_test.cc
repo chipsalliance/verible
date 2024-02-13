@@ -29,7 +29,6 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_matchers.h"

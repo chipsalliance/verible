@@ -15,7 +15,6 @@
 #include "verilog/CST/identifier.h"
 
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,7 +25,6 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"

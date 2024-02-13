@@ -14,9 +14,6 @@
 
 #include "common/lexer/lexer_test_util.h"
 
-#include <algorithm>
-#include <initializer_list>
-#include <iterator>
 #include <ostream>
 #include <vector>
 

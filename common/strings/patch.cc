@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/macros.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"

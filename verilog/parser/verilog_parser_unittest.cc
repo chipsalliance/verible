@@ -14,7 +14,6 @@
 
 // Verilog parser unit tests
 
-#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
 #include <string>

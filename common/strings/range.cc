@@ -14,7 +14,6 @@
 
 #include "common/strings/range.h"
 
-#include <algorithm>
 #include <iterator>
 #include <utility>
 

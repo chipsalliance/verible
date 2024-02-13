@@ -18,15 +18,11 @@
 #include <cstddef>
 #include <initializer_list>
 #include <set>
-#include <string>
 
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_split.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
-#include "common/strings/naming_utils.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"

@@ -18,8 +18,6 @@
 #include <memory>
 #include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
-#include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"

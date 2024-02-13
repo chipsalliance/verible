@@ -15,7 +15,6 @@
 #include "verilog/analysis/checkers/positive_meaning_parameter_name_rule.h"
 
 #include <set>
-#include <string>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"

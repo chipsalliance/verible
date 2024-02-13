@@ -15,14 +15,12 @@
 #include "verilog/analysis/checkers/line_length_rule.h"
 
 #include <cstddef>
-#include <iterator>
 #include <set>
 #include <string>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/strings/comment_utils.h"

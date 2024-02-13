@@ -15,7 +15,6 @@
 #include "verilog/analysis/checkers/line_length_rule.h"
 
 #include <initializer_list>
-#include <iostream>
 #include <string>
 
 #include "absl/strings/match.h"

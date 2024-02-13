@@ -19,7 +19,6 @@
 #include "absl/strings/string_view.h"
 #include "common/util/interval_set.h"
 #include "common/util/logging.h"
-#include "common/util/range.h"
 
 namespace verible {
 

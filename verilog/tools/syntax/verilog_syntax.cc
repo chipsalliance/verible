@@ -22,7 +22,6 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
@@ -41,7 +40,6 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_json.h"
-#include "common/util/bijective_map.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
