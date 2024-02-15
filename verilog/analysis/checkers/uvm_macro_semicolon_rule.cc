@@ -55,11 +55,21 @@ static std::string FormatReason(const verible::TokenInfo &macro_id) {
 
 // Returns true if leaf is a macro and matches `uvm_
 static bool IsUvmMacroId(const verible::SyntaxTreeLeaf &leaf) {
+  const absl::string_view text = leaf.get().text();
+  const bool starts_with_uvm = absl::StartsWithIgnoreCase(text, "`uvm_");
+
   if (leaf.Tag().tag == verilog_tokentype::MacroCallId ||
-      leaf.Tag().tag == verilog_tokentype::MacroIdItem ||
-      leaf.Tag().tag == verilog_tokentype::MacroIdentifier) {
-    return absl::StartsWithIgnoreCase(leaf.get().text(), "`uvm_");
+      leaf.Tag().tag == verilog_tokentype::MacroIdItem) {
+    return starts_with_uvm;
   }
+
+  const bool ends_with_end = absl::EndsWithIgnoreCase(text, "_end");
+  // We don't want to complain about macros like:
+  // `UVM_DEFAULT_TIMEOUT, UVM_MAX_STREAMBITS, ...
+  if (leaf.Tag().tag == verilog_tokentype::MacroIdentifier) {
+    return starts_with_uvm && ends_with_end;
+  }
+
   return false;
 }
 
