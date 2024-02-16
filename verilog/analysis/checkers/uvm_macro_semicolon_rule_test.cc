@@ -43,6 +43,15 @@ TEST(UvmMacroSemicolonRuleTest, BaseTests) {
   RunLintTestCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases);
 }
 
+TEST(UvmMacroSemicolonRuleTest, NoFalsePositivesTest) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"module m;\nint k = `UVM_DEFAULT_TIMEOUT; endmodule\n"},
+      {"module m;\nbit [63:0] k = `UVM_REG_ADDR_WIDTH'(0); endmodule\n"},
+  };
+
+  RunLintTestCases<VerilogAnalyzer, UvmMacroSemicolonRule>(kTestCases);
+}
+
 TEST(UvmMacroSemicolonRuleTest, AcceptedUvmMacroCallTests) {
   const std::initializer_list<LintTestCase> kTestCases = {
       // Function/Task scope
