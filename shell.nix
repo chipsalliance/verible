@@ -16,7 +16,7 @@ let
 
   # Testing with specific compilers
   #verible_used_stdenv = pkgs.gcc13Stdenv;
-  #verible_used_stdenv = pkgs.clang13Stdenv;
+  #verible_used_stdenv = pkgs.clang17Stdenv;
 in
 verible_used_stdenv.mkDerivation {
   name = "verible-build-environment";
