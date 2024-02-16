@@ -60,6 +60,7 @@ cc_test(
         "//common/lsp:lsp-text-buffer",
         "//common/text:text-structure",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -155,6 +156,7 @@ cc_test(
         "//common/util:file-util",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -192,6 +194,7 @@ cc_test(
         "//verilog/analysis:verilog-linter",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -233,6 +236,7 @@ cc_test(
         "//common/lsp:lsp-protocol",
         "//verilog/formatting:format-style-init",
         "//verilog/formatting:formatter",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

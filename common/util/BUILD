@@ -335,6 +335,7 @@ cc_test(
         ":algorithm",
         ":iterator-range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -344,6 +345,7 @@ cc_test(
     srcs = ["auto_iterator_test.cc"],
     deps = [
         ":auto-iterator",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -354,6 +356,7 @@ cc_test(
     deps = [
         ":auto-pop-stack",
         ":iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -365,6 +368,7 @@ cc_test(
         ":file-util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -374,6 +378,7 @@ cc_test(
     srcs = ["interval_test.cc"],
     deps = [
         ":interval",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -385,6 +390,7 @@ cc_test(
         ":interval-map",
         ":range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -394,6 +400,7 @@ cc_test(
     srcs = ["interval_set_test.cc"],
     deps = [
         ":interval-set",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -404,6 +411,7 @@ cc_test(
     deps = [
         ":forward",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -415,6 +423,7 @@ cc_test(
         ":iterator-range",
         ":range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -430,6 +439,7 @@ cc_test(
     deps = [
         ":thread-pool",
         "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -439,6 +449,7 @@ cc_test(
     srcs = ["container_iterator_range_test.cc"],
     deps = [
         ":container-iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -448,6 +459,7 @@ cc_test(
     srcs = ["iterator_adaptors_test.cc"],
     deps = [
         ":iterator-adaptors",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -458,6 +470,7 @@ cc_test(
     deps = [
         ":iterator-range",
         ":range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -467,6 +480,7 @@ cc_test(
     srcs = ["spacer_test.cc"],
     deps = [
         ":spacer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -477,6 +491,7 @@ cc_test(
     deps = [
         ":subcommand",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -486,6 +501,7 @@ cc_test(
     srcs = ["top_n_test.cc"],
     deps = [
         ":top-n",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -495,6 +511,7 @@ cc_test(
     srcs = ["type_traits_test.cc"],
     deps = [
         ":type-traits",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -504,6 +521,7 @@ cc_test(
     srcs = ["value_saver_test.cc"],
     deps = [
         ":value-saver",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -514,6 +532,7 @@ cc_test(
     deps = [
         ":enum-flags",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -525,6 +544,7 @@ cc_test(
         ":bijective-map",
         ":logging",
         "//common/strings:compare",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -537,6 +557,7 @@ cc_test(
         ":vector-tree",
         ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -552,6 +573,7 @@ cc_test(
                 ":tree-operations",
                 "@com_google_absl//absl/strings",
                 "@com_google_absl//absl/strings:str_format",
+                "@com_google_googletest//:gtest",
                 "@com_google_googletest//:gtest_main",
             ],
         ),
@@ -574,6 +596,7 @@ cc_test(
         ":vector-tree",
         ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -586,6 +609,7 @@ cc_test(
         ":vector-tree",
         ":vector-tree-iterators",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -601,6 +625,7 @@ cc_test(
         ":map-tree",
         ":spacer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -611,6 +636,7 @@ cc_test(
     deps = [
         ":with-reason",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -621,6 +647,7 @@ cc_test(
     deps = [
         ":user-interaction",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -632,6 +659,7 @@ cc_test(
         ":container-proxy",
         ":type-traits",
         "//common/strings:display-utils",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -654,6 +682,7 @@ cc_test(
         ":file-util",
         ":simple-zip",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -673,6 +702,7 @@ cc_test(
     deps = [
         ":sha256",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

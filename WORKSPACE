@@ -206,6 +206,7 @@ http_archive(
 )
 
 load("@rules_compdb//:deps.bzl", "rules_compdb_deps")
+
 rules_compdb_deps()
 
 # zlib is imported through protobuf. Make the dependency explicit considering

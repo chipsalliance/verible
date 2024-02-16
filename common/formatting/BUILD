@@ -50,6 +50,7 @@ cc_test(
         "//common/util:spacer",
         "//common/util:value-saver",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -79,6 +80,7 @@ cc_test(
     srcs = ["basic_format_style_test.cc"],
     deps = [
         ":basic-format-style",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -112,6 +114,7 @@ cc_test(
         "//common/text:token-info",
         "//common/util:range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -157,6 +160,7 @@ cc_test(
         "//common/util:vector-tree",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -197,6 +201,7 @@ cc_library(
         ":token-partition-tree",
         ":unwrapped-line",
         "//common/util:tree-operations",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -214,6 +219,7 @@ cc_test(
         "//common/util:tree-operations",
         "//common/util:vector-tree",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -257,6 +263,7 @@ cc_test(
         ":unwrapped-line-test-utils",
         "//common/text:tree-builder-test-util",
         "//common/util:container-iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -288,6 +295,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "//common/util:iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -332,6 +340,7 @@ cc_test(
         "//common/util:container-iterator-range",
         "//common/util:range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -385,6 +394,7 @@ cc_test(
         "//common/util:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -399,6 +409,7 @@ cc_test(
         ":unwrapped-line",
         ":unwrapped-line-test-utils",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -421,6 +432,7 @@ cc_test(
     deps = [
         ":verification",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

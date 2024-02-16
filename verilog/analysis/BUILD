@@ -25,6 +25,7 @@ cc_test(
         ":default-rules",
         ":lint-rule-registry",
         "//verilog/analysis/checkers:verilog-lint-rules",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -56,6 +57,7 @@ cc_test(
     deps = [
         ":extractors",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -96,6 +98,7 @@ cc_test(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -126,6 +129,7 @@ cc_test(
         ":verilog-analyzer",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
         "@jsonhpp",
     ],
@@ -148,6 +152,7 @@ cc_test(
         "//common/text:text-structure",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -298,6 +303,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -324,6 +330,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -342,6 +349,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -356,6 +364,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -378,6 +387,7 @@ cc_test(
     deps = [
         ":verilog-filelist",
         "//common/util:file-util",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -412,6 +422,7 @@ cc_test(
         "//common/util:range",
         "//verilog/CST:module",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -476,6 +487,7 @@ cc_test(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -501,6 +513,7 @@ cc_test(
         ":dependencies",
         "//common/util:file-util",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

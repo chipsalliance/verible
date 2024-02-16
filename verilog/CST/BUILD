@@ -49,6 +49,7 @@ cc_test(
     deps = [
         ":verilog-nonterminals",
         "//common/text:constants",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -82,6 +83,7 @@ cc_test(
         "//common/analysis/matcher:matcher-builders",
         "//common/analysis/matcher:matcher-test-utils",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -108,6 +110,7 @@ cc_test(
         ":verilog-treebuilder-utils",
         "//common/text:tree-builder-test-util",
         "//common/text:tree-utils",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -168,6 +171,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -203,6 +207,7 @@ cc_test(
         "//common/text:tree-utils",
         "//common/util:range",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -238,6 +243,7 @@ cc_test(
         "//common/analysis:syntax-tree-search-test-utils",
         "//common/text:text-structure",
         "//common/text:tree-utils",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -275,6 +281,7 @@ cc_test(
         "//common/util:casts",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -315,6 +322,7 @@ cc_test(
         "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -361,6 +369,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -399,6 +408,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -432,6 +442,7 @@ cc_test(
         "//common/text:token-info-test-util",
         "//common/util:range",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -470,6 +481,7 @@ cc_test(
         "//common/util:logging",
         "//common/util:range",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -510,6 +522,7 @@ cc_test(
         "//common/util:logging",
         "//common/util:range",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -546,6 +559,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -579,6 +593,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -616,6 +631,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -662,6 +678,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -702,6 +719,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -736,6 +754,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -780,6 +799,7 @@ cc_test(
         "//common/util:logging",
         "//common/util:range",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -821,6 +841,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -861,6 +882,7 @@ cc_test(
         "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -931,6 +953,7 @@ cc_test(
         "//common/text:syntax-tree-context",
         "//common/text:tree-builder-test-util",
         "//common/util:casts",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -941,6 +964,7 @@ cc_test(
     deps = [
         ":numbers",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -953,6 +977,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/memory",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -966,6 +991,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

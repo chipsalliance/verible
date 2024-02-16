@@ -76,6 +76,7 @@ cc_test(
         "//common/text:token-info",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -89,6 +90,7 @@ cc_test(
         ":token-stream-adapter",
         "//common/text:token-info",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -88,6 +88,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
