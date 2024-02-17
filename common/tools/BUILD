@@ -94,6 +94,7 @@ cc_test(
     deps = [
         ":jcxxgen-testfile",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

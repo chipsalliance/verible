@@ -34,6 +34,7 @@ cc_test(
     deps = [
         ":obfuscate",
         "//common/strings:obfuscator",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -61,6 +62,7 @@ cc_test(
     deps = [
         ":strip-comments",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

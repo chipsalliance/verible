@@ -152,11 +152,9 @@ http_archive(
     ],
 )
 
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies")
 
 rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 http_archive(
     name = "rules_python",
@@ -206,6 +204,7 @@ http_archive(
 )
 
 load("@rules_compdb//:deps.bzl", "rules_compdb_deps")
+
 rules_compdb_deps()
 
 # zlib is imported through protobuf. Make the dependency explicit considering

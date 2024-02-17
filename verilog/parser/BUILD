@@ -53,6 +53,7 @@ cc_test(
         "//common/lexer:lexer-test-util",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -198,6 +199,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -215,6 +217,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -234,6 +237,7 @@ cc_test(
     deps = [
         ":verilog-token-classifications",
         ":verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

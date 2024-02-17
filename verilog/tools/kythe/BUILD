@@ -39,6 +39,7 @@ cc_test(
     srcs = ["kythe_facts_test.cc"],
     deps = [
         ":kythe-facts",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -64,6 +65,7 @@ cc_test(
         ":kythe-facts",
         ":scope-resolver",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -145,6 +147,7 @@ cc_test(
         "//common/util:range",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -202,6 +205,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

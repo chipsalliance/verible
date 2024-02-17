@@ -107,6 +107,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -137,6 +138,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -167,6 +169,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -205,6 +208,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -236,6 +240,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -278,6 +283,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -313,6 +319,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -347,6 +354,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -386,6 +394,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -420,6 +429,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -456,6 +466,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -490,6 +501,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -533,6 +545,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -568,6 +581,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -599,6 +613,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -631,6 +646,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -667,6 +683,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -724,6 +741,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -739,6 +757,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -776,6 +795,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -812,6 +832,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -850,6 +871,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -889,6 +911,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -929,6 +952,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -968,6 +992,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1008,6 +1033,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1053,6 +1079,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1089,6 +1116,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1124,6 +1152,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1150,6 +1179,7 @@ cc_test(
         ":suggest-parentheses-rule",
         "//common/analysis:syntax-tree-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1187,6 +1217,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1225,6 +1256,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1263,6 +1295,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1302,6 +1335,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1341,6 +1375,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1379,6 +1414,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1418,6 +1454,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1454,6 +1491,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1492,6 +1530,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1530,6 +1569,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1563,6 +1603,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1593,6 +1634,7 @@ cc_test(
         "//common/analysis:token-stream-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1626,6 +1668,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1665,6 +1708,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1703,6 +1747,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1740,6 +1785,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1776,6 +1822,7 @@ cc_test(
         "//verilog/CST:verilog-treebuilder-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1815,6 +1862,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1853,6 +1901,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1896,6 +1945,7 @@ cc_test(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1938,6 +1988,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -1976,6 +2027,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -2013,6 +2065,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -2050,6 +2103,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -2086,6 +2140,7 @@ cc_test(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -2121,6 +2176,7 @@ cc_test(
         "//common/text:symbol",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -2154,6 +2210,7 @@ cc_test(
         "//common/analysis:linter-test-utils",
         "//common/analysis:syntax-tree-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

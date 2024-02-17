@@ -100,6 +100,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -123,6 +124,7 @@ cc_test(
         "//common/formatting:format-token",
         "//common/text:token-info",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -186,6 +188,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -200,6 +203,7 @@ cc_test(
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -234,6 +238,7 @@ cc_test(
         "//common/text:token-info-test-util",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -303,6 +308,7 @@ cc_test(
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

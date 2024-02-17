@@ -34,6 +34,7 @@ cc_test(
         ":message-stream-splitter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -66,6 +67,7 @@ cc_test(
         ":json-rpc-dispatcher",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -93,6 +95,7 @@ cc_test(
     srcs = ["lsp-protocol-operators_test.cc"],
     deps = [
         ":lsp-protocol-operators",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -117,6 +120,7 @@ cc_test(
         ":json-rpc-dispatcher",
         ":lsp-text-buffer",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -136,6 +140,7 @@ cc_test(
     deps = [
         ":lsp-file-utils",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

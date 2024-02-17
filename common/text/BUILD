@@ -98,6 +98,7 @@ cc_test(
         ":concrete-syntax-leaf",
         ":token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -135,6 +136,7 @@ cc_test(
         ":config-utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -176,6 +178,7 @@ cc_test(
         ":concrete-syntax-tree",
         ":tree-builder-test-util",
         ":tree-compare",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -197,6 +200,7 @@ cc_test(
     deps = [
         ":tree-builder-test-util",
         ":tree-context-visitor",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -241,6 +245,7 @@ cc_test(
     deps = [
         ":tree-builder-test-util",
         ":tree-utils",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -340,6 +345,7 @@ cc_test(
         "//common/util:casts",
         "//common/util:logging",
         "//common/util:range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -354,6 +360,7 @@ cc_test(
         ":tree-builder-test-util",
         ":tree-compare",
         "//common/util:logging",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -367,6 +374,7 @@ cc_test(
         "//common/util:range",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -379,6 +387,7 @@ cc_test(
         ":token-info",
         ":token-info-json",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -391,6 +400,7 @@ cc_test(
         ":token-info-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -404,6 +414,7 @@ cc_test(
         ":token-info",
         ":token-stream-view",
         "//common/util:iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -415,6 +426,7 @@ cc_test(
         ":concrete-syntax-tree",
         ":syntax-tree-context",
         "//common/util:iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -440,6 +452,7 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -452,6 +465,7 @@ cc_test(
         ":token-info",
         "//common/util:container-util",
         "@com_google_absl//absl/status",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -466,6 +480,7 @@ cc_test(
         ":token-stream-view",
         ":tree-builder-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

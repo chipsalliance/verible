@@ -107,6 +107,7 @@ cc_test(
         "//common/lexer:lexer-test-util",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -368,6 +369,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -382,6 +384,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "//common/util:iterator-range",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -395,6 +398,7 @@ cc_test(
         "//common/text:token-info",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -407,6 +411,7 @@ cc_test(
         ":linter-test-utils",
         "//common/util:range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -420,6 +425,7 @@ cc_test(
         ":lint-rule-status",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -437,6 +443,7 @@ cc_test(
         "//common/text:syntax-tree-context",
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -452,6 +459,7 @@ cc_test(
         "//common/text:syntax-tree-context",
         "//common/text:tree-builder-test-util",
         "//common/text:tree-utils",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -464,6 +472,7 @@ cc_test(
         "//common/text:tree-builder-test-util",
         "//common/util:range",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -478,6 +487,7 @@ cc_test(
         "//common/text:text-structure",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -492,6 +502,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
