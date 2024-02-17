@@ -63,7 +63,6 @@ cc_library(
     ],
     hdrs = [
         "command_file_lexer.h",
-        "lint_waiver.h",
     ],
     copts = select({
         "@platforms//os:windows": [],

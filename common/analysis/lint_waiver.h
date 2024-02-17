@@ -26,7 +26,6 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
-#include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
 #include "common/util/interval_set.h"
 

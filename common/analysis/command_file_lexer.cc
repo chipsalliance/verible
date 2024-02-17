@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/analysis/lint_waiver.h"
 #include "common/lexer/token_stream_adapter.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
