@@ -11,6 +11,7 @@ load("//bazel:variables.bzl", "STATIC_EXECUTABLES_FEATURE")
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//visibility:private"],
+    features = ["layering_check"],
 )
 
 # Integration tests for different flags and configurations

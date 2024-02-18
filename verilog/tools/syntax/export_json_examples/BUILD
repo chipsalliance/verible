@@ -5,6 +5,7 @@ load("@rules_python//python:defs.bzl", "py_test")
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//visibility:public"],  # public examples
+    features = ["layering_check"],
 )
 
 py_library(

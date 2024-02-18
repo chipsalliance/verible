@@ -10,6 +10,7 @@ package(
         "//verilog/parser:__subpackages__",
         "//verilog/preprocessor:__subpackages__",
     ],
+    features = ["layering_check"],
 )
 
 cc_library(

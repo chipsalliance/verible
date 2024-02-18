@@ -13,6 +13,8 @@ package(
     default_visibility = [
         "//verilog:__subpackages__",
     ],
+    # Not yet enabled, lexer does not find FlexLexer.h
+    #features = ["layering_check"],
 )
 
 genlex(

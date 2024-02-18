@@ -14,6 +14,7 @@ package(
     default_visibility = [
         "//verilog/tools/ls:__subpackages__",
     ],
+    features = ["layering_check"],
 )
 
 cc_library(

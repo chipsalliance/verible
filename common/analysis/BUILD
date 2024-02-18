@@ -10,6 +10,8 @@ package(
         "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/lint:__subpackages__",
     ],
+    # Not yet enabled, lexer does not find FlexLexer.
+    #features = ["layering_check"],
 )
 
 cc_library(

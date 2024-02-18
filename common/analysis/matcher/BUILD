@@ -8,6 +8,7 @@ package(
         "//verilog/CST:__subpackages__",
         "//verilog/analysis:__subpackages__",
     ],
+    features = ["layering_check"],
 )
 
 cc_library(

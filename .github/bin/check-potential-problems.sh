@@ -62,9 +62,8 @@ if [ $? -eq 0 ]; then
 fi
 
 # Always use fully qualified include paths.
-# Exclude zlib.h, which is the only allowed header.
 find common verilog -name "*.h" -o -name "*.cc" | \
-  xargs egrep -n '#include "[^/]*"' | grep -v zlib.h
+  xargs egrep -n '#include "[^/]*"'
 if [ $? -eq 0 ]; then
   echo "::error:: always use a fully qualified name for #includes"
   echo
