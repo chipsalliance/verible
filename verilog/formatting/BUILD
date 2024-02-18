@@ -8,6 +8,7 @@ default_visibility = [
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = default_visibility,
+    features = ["layering_check"],
 )
 
 # libraries

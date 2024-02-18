@@ -8,6 +8,7 @@ package(
     default_visibility = [
         "//visibility:private",
     ],
+    features = ["layering_check"],
 )
 
 # Generates foreach list for IndexingFactType enum.

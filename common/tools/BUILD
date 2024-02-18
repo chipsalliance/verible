@@ -9,6 +9,7 @@ package(
     default_visibility = [
         "//:__subpackages__",
     ],
+    features = ["layering_check"],
 )
 
 exports_files([

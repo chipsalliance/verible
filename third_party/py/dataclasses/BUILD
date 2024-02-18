@@ -2,7 +2,10 @@
 #   dataclasses module from the Python 3.7 standard library.
 #   For backporting to Python 3.6 and below.
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_visibility = ["//visibility:public"],
+    features = ["layering_check"],
+)
 
 licenses(["notice"])  # Python Software Foundation
 

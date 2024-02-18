@@ -6,6 +6,7 @@ package(
         "//verilog:__subpackages__",
         # TODO(b/130113490): standalone preprocessor tool
     ],
+    features = ["layering_check"],
 )
 
 cc_library(

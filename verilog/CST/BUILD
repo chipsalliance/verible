@@ -13,6 +13,7 @@ package(
         "//verilog/tools/ls:__pkg__",  # DocumentSymbol
         "//verilog/tools/syntax:__pkg__",  # for printing
     ],
+    features = ["layering_check"],
 )
 
 # Generate foreach list for nonterminal enums.
