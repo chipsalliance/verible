@@ -20,9 +20,9 @@
 // lint_waiver_config.lex has "%prefix=verible", meaning the class flex
 // creates is veribleFlexLexer. Unfortunately, FlexLexer.h doesn't have proper
 // ifdefs around its inclusion, so we have to put a bar around it here.
-#include "common/analysis/lint_waiver.h"
 #include "common/lexer/flex_lexer_adapter.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
 
 // clang-format off
 #ifndef _COMMANDFILE_FLEXLEXER_H_
