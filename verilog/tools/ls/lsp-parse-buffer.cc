@@ -15,6 +15,7 @@
 
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -22,7 +23,9 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
+#include "common/lsp/lsp-text-buffer.h"
 #include "common/util/logging.h"
 
 namespace verilog {

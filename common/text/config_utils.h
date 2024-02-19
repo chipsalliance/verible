@@ -14,6 +14,7 @@
 #ifndef VERIBLE_COMMON_TEXT_CONFIG_UTILS_H_
 #define VERIBLE_COMMON_TEXT_CONFIG_UTILS_H_
 
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <string>

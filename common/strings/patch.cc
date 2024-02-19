@@ -22,13 +22,13 @@
 #include <string>
 #include <vector>
 
-#include "absl/base/macros.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/strings/split.h"
 #include "common/util/algorithm.h"
@@ -36,6 +36,7 @@
 #include "common/util/file_util.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"
+#include "common/util/logging.h"
 #include "common/util/status_macros.h"
 #include "common/util/user_interaction.h"
 

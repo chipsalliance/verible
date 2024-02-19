@@ -14,10 +14,10 @@
 
 #include "common/util/user_interaction.h"
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 #ifndef _WIN32

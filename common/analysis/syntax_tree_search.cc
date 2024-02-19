@@ -15,7 +15,6 @@
 #include "common/analysis/syntax_tree_search.h"
 
 #include <functional>
-#include <memory>
 #include <vector>
 
 #include "common/analysis/matcher/bound_symbol_manager.h"

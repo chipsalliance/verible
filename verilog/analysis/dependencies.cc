@@ -17,6 +17,7 @@
 #include <functional>
 #include <iostream>
 
+#include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/strings/display_utils.h"
 #include "common/util/logging.h"

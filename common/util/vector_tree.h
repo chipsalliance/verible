@@ -16,19 +16,13 @@
 #define VERIBLE_COMMON_UTIL_VECTOR_TREE_H_
 
 #include <algorithm>
-#include <cstddef>
-#include <functional>
 #include <iosfwd>  // IWYU pragma: keep
-#include <iterator>
-#include <numeric>
-#include <set>
 #include <utility>
 #include <vector>
 
 #include "common/util/container_proxy.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
-#include "common/util/type_traits.h"
 
 namespace verible {
 

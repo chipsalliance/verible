@@ -40,7 +40,11 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <string>
+#include <system_error>
 #include <thread>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 using filepath_contenthash_t = std::pair<fs::path, uint64_t>;
@@ -131,16 +135,20 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
                                   "> '" + tmp_out + "' 2>/dev/null";
       const int r = system(command.c_str());
 #ifdef WIFSIGNALED
+      // NOLINTBEGIN
       if (WIFSIGNALED(r) && (WTERMSIG(r) == SIGINT || WTERMSIG(r) == SIGQUIT)) {
         break;  // got Ctrl-C
       }
+      // NOLINTEND
 #endif
       CanonicalizeSourcePaths(tmp_out, tmp_out);
       fs::rename(tmp_out, final_out);  // atomic replacement
     }
   };
   std::vector<std::thread> workers;
-  for (auto i = 0; i < kJobs; ++i) workers.emplace_back(clang_tidy_runner);
+  for (auto i = 0; i < kJobs; ++i) {
+    workers.emplace_back(clang_tidy_runner);  // NOLINT
+  }
   for (auto &t : workers) t.join();
   fprintf(stderr, "     \n");  // Clean out progress counter.
 }
@@ -148,9 +156,10 @@ void ClangTidyProcessFiles(const fs::path &content_dir, const std::string &cmd,
 int main(int argc, char *argv[]) {
   const std::string kProjectPrefix = "verible_";
   const std::string kSearchDir = ".";
-  const std::string kFileExcludeRe = "vscode/|external_libs/|.github/"
-    "|tree_operations_test"  // very slow
-    "|symbol_table_test";
+  const std::string kFileExcludeRe =
+      "vscode/|external_libs/|.github/"
+      "|tree_operations_test"  // very slow
+      "|symbol_table_test";
 
   const std::string kTidySymlink = kProjectPrefix + "clang-tidy.out";
   const fs::path cache_dir = GetCacheDir() / "clang-tidy";

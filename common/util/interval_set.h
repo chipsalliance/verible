@@ -15,8 +15,11 @@
 #ifndef VERIBLE_COMMON_UTIL_INTERVAL_SET_H_
 #define VERIBLE_COMMON_UTIL_INTERVAL_SET_H_
 
+#include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <sstream>
 #include <string>
@@ -27,6 +30,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "common/util/auto_iterator.h"
 #include "common/util/interval.h"
 #include "common/util/iterator_range.h"

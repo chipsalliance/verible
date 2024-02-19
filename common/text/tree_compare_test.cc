@@ -14,6 +14,7 @@
 
 #include "common/text/tree_compare.h"
 
+#include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/tree_builder_test_util.h"
 #include "gtest/gtest.h"

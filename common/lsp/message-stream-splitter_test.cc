@@ -15,9 +15,11 @@
 #include "common/lsp/message-stream-splitter.h"
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

@@ -31,6 +31,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 #include "common/util/spacer.h"
 
 namespace verible {

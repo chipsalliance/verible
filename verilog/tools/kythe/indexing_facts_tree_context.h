@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_CONTEXT_H_
 
 #include "common/util/auto_pop_stack.h"
+#include "common/util/logging.h"
 #include "verilog/tools/kythe/indexing_facts_tree.h"
 
 namespace verilog {

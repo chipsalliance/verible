@@ -17,7 +17,6 @@
 #include <sstream>
 
 #include "absl/strings/string_view.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verilog {

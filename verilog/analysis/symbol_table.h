@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_SYMBOL_TABLE_H_
 #define VERIBLE_VERILOG_ANALYSIS_SYMBOL_TABLE_H_
 
+#include <cstddef>
 #include <functional>
 #include <iosfwd>
 #include <map>

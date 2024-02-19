@@ -14,10 +14,9 @@
 
 #include "verilog/analysis/checkers/macro_string_concatenation_rule.h"
 
-#include <string>
+#include <cstddef>
 
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/value_saver.h"
 #include "verilog/analysis/descriptions.h"

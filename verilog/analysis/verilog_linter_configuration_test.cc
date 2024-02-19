@@ -14,7 +14,6 @@
 
 #include "verilog/analysis/verilog_linter_configuration.h"
 
-#include <cstddef>
 #include <iosfwd>
 #include <map>
 #include <string>

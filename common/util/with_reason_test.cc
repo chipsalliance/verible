@@ -14,8 +14,6 @@
 
 #include "common/util/with_reason.h"
 
-#include "absl/strings/string_view.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

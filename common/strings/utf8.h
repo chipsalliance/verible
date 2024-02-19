@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_STRINGS_UTF8_H_
 
 #include <algorithm>
+#include <cstddef>
 
 #include "absl/strings/string_view.h"
 

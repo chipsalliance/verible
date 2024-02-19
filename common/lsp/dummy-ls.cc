@@ -16,10 +16,15 @@
 // to initialize and shutdown as well as tracking file contents.
 // This is merely to test that the json-rpc plumbing is working.
 
+#include <cstdio>
+
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/lsp/message-stream-splitter.h"
+#include "nlohmann/json.hpp"
 
 #ifndef _WIN32
 #include <unistd.h>

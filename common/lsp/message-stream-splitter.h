@@ -15,14 +15,11 @@
 #ifndef VERIBLE_COMMON_LSP_MESSAGE_STREAM_SPLITTER_H
 #define VERIBLE_COMMON_LSP_MESSAGE_STREAM_SPLITTER_H
 
+#include <cstddef>
 #include <functional>
-#include <memory>
-#include <string>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace verible {

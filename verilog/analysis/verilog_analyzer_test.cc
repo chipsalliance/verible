@@ -14,7 +14,6 @@
 
 #include "verilog/analysis/verilog_analyzer.h"
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>

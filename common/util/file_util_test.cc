@@ -15,16 +15,23 @@
 #include "common/util/file_util.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 using testing::HasSubstr;
 

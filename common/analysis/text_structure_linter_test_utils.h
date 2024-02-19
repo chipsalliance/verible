@@ -15,11 +15,13 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_TEST_UTILS_H_
 #define VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_TEST_UTILS_H_
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_linter.h"

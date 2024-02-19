@@ -30,7 +30,6 @@
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/analysis/verilog_analyzer.h"

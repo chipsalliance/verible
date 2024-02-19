@@ -17,6 +17,7 @@
 #include <functional>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"

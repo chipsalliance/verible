@@ -15,13 +15,13 @@
 #include "verilog/analysis/checkers/line_length_rule.h"
 
 #include <initializer_list>
-#include <iostream>
 #include <string>
 
 #include "absl/strings/match.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_linter_test_utils.h"
 #include "common/text/symbol.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"

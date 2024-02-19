@@ -36,6 +36,7 @@
 #include "common/util/sha256.h"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 

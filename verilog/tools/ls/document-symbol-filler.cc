@@ -25,6 +25,7 @@
 #include "verilog/CST/module.h"
 #include "verilog/CST/package.h"
 #include "verilog/CST/seq_block.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/tools/ls/lsp-conversion.h"
 
 // Magic value to hint that we have to fill out the start range.

@@ -15,7 +15,7 @@
 #ifndef VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_
 #define VERIBLE_COMMON_UTIL_TYPE_TRAITS_H_
 
-#include <type_traits>  // for std::conditional, std::is_const
+#include <type_traits>  // IWYU pragma: export
 
 namespace verible {
 

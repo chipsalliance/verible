@@ -19,8 +19,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "gmock/gmock.h"
+#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {

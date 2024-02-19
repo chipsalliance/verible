@@ -22,7 +22,6 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/formatting/format_style.h"
 

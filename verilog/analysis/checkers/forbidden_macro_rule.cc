@@ -18,7 +18,6 @@
 #include <set>
 #include <string>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
 #include "common/analysis/lint_rule_status.h"

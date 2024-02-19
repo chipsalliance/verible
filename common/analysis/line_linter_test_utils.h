@@ -25,6 +25,7 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/text/text_structure.h"
+#include "common/util/logging.h"
 
 namespace verible {
 

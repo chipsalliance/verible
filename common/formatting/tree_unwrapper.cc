@@ -14,7 +14,6 @@
 
 #include "common/formatting/tree_unwrapper.h"
 
-#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <memory>

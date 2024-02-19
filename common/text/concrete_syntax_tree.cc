@@ -14,9 +14,9 @@
 
 #include "common/text/concrete_syntax_tree.h"
 
+#include <cstddef>
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include "common/text/symbol.h"
 #include "common/text/tree_compare.h"

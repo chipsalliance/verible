@@ -16,11 +16,12 @@
 
 #include "common/parser/parser_param.h"
 
-#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"

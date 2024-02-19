@@ -38,7 +38,6 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"  // only used for lexing
 #include "verilog/parser/verilog_parser.h"      // only used for diagnostics

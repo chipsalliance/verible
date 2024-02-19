@@ -14,20 +14,19 @@
 
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 
-#include <deque>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
-#include <map>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "common/util/auto_pop_stack.h"
 #include "common/util/logging.h"

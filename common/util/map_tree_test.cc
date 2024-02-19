@@ -14,6 +14,7 @@
 
 #include "common/util/map_tree.h"
 
+#include <cstddef>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -21,7 +22,6 @@
 
 #include "absl/strings/string_view.h"
 #include "common/util/spacer.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

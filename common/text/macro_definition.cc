@@ -14,7 +14,6 @@
 
 #include "common/text/macro_definition.h"
 
-#include <iterator>
 #include <map>
 #include <string>
 #include <vector>

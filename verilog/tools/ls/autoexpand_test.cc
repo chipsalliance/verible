@@ -15,6 +15,7 @@
 #include "verilog/tools/ls/autoexpand.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -22,11 +23,13 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/lsp/lsp-text-buffer.h"
 #include "gtest/gtest.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
-#include "verilog/tools/ls/verible-lsp-adapter.h"
 
 namespace verilog {
 namespace {

@@ -15,16 +15,16 @@
 #include "verilog/analysis/checkers/enum_name_style_rule.h"
 
 #include <set>
-#include <string>
 
 #include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/strings/naming_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/util/logging.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/lint_rule_registry.h"

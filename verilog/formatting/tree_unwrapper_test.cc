@@ -14,6 +14,7 @@
 
 #include "verilog/formatting/tree_unwrapper.h"
 
+#include <cstddef>
 #include <initializer_list>
 #include <iostream>
 #include <memory>
@@ -35,7 +36,6 @@
 #include "common/util/spacer.h"
 #include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"
 

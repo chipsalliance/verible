@@ -16,12 +16,9 @@
 #define VERIBLE_COMMON_UTIL_AUTO_POP_STACK_H_
 
 #include <cstddef>
-#include <iterator>
-#include <type_traits>
 #include <vector>
 
 #include "absl/base/attributes.h"
-#include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 
 namespace verible {

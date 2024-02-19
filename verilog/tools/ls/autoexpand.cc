@@ -16,6 +16,7 @@
 #include "verilog/tools/ls/autoexpand.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -31,17 +32,20 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "common/lsp/lsp-protocol.h"
 #include "common/text/text_structure.h"
+#include "common/util/logging.h"
 #include "re2/re2.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/dimensions.h"
-#include "verilog/CST/expression.h"
-#include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 

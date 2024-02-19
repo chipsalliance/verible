@@ -15,10 +15,9 @@
 #include "verilog/analysis/checkers/banned_declared_name_patterns_rule.h"
 
 #include <set>
-#include <string>
 
 #include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/strings/naming_utils.h"

@@ -15,7 +15,6 @@
 #include "common/formatting/token_partition_tree.h"
 
 #include <iosfwd>
-#include <iterator>
 #include <string>
 #include <vector>
 
@@ -26,6 +25,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/vector_tree.h"
 #include "gmock/gmock.h"

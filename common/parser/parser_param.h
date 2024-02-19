@@ -19,11 +19,13 @@
 #ifndef VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 #define VERIBLE_COMMON_PARSER_PARSER_PARAM_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"

@@ -59,6 +59,7 @@ cc_library(
     deps = [
         ":token-info",
         "//common/util:iterator-range",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -113,6 +114,7 @@ cc_library(
         ":symbol",
         ":tree-compare",
         ":visitors",
+        "//common/text:symbol-ptr",
         "//common/util:casts",
         "//common/util:iterator-range",
         "//common/util:logging",
@@ -179,6 +181,7 @@ cc_test(
         ":concrete-syntax-tree",
         ":tree-builder-test-util",
         ":tree-compare",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -192,6 +195,7 @@ cc_library(
         ":syntax-tree-context",
         ":visitors",
         "//common/strings:display-utils",
+        "//common/util:logging",
     ],
 )
 
@@ -201,6 +205,7 @@ cc_test(
     deps = [
         ":tree-builder-test-util",
         ":tree-context-visitor",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -346,6 +351,7 @@ cc_test(
         "//common/util:casts",
         "//common/util:logging",
         "//common/util:range",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -415,6 +421,7 @@ cc_test(
         ":token-info",
         ":token-stream-view",
         "//common/util:iterator-range",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

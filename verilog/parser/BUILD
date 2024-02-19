@@ -197,6 +197,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:token-info",
         "//common/text:token-info-test-util",
+        "//common/util:logging",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",

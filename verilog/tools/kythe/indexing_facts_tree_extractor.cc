@@ -14,7 +14,6 @@
 
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 
-#include <iostream>
 #include <iterator>
 #include <set>
 #include <string>
@@ -22,12 +21,13 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
-#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/CST/class.h"

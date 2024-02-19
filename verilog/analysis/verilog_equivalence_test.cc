@@ -14,9 +14,9 @@
 
 #include "verilog/analysis/verilog_equivalence.h"
 
+#include <cstddef>
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -25,8 +25,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "common/text/token_info.h"
-#include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #undef EXPECT_OK

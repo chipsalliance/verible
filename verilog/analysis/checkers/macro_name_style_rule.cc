@@ -15,10 +15,9 @@
 #include "verilog/analysis/checkers/macro_name_style_rule.h"
 
 #include <set>
-#include <string>
 
 #include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/strings/naming_utils.h"

@@ -45,7 +45,7 @@ jobs:
 
     - name: Run formatting style check
       run: |
-        CLANG_FORMAT_BINARY=clang-format-15 ./.github/bin/run-clang-format.sh
+        CLANG_FORMAT=clang-format-15 ./.github/bin/run-clang-format.sh
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
@@ -102,11 +102,12 @@ jobs:
         .github/bin/make-compilation-db.sh
         wc -l compile_commands.json
         echo "::endgroup::"
-        # For runtime references, use clang-tidy 11, everything else: latest.
+        # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        CLANG_TIDY=clang-tidy-15 ./.github/bin/run-clang-tidy-cached.cc \
+        # Exclude misc-include-cleaner for now as code is not ready yet.
+        CLANG_TIDY=clang-tidy-15 ./.github/bin/run-clang-tidy-cached.cc --checks="-misc-include-cleaner" \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs

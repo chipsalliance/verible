@@ -15,7 +15,6 @@
 #include "common/text/parser_verifier.h"
 
 #include <functional>
-#include <iterator>
 #include <vector>
 
 #include "common/text/concrete_syntax_leaf.h"

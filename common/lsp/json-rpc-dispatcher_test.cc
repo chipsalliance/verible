@@ -14,15 +14,13 @@
 
 #include "common/lsp/json-rpc-dispatcher.h"
 
-#include <algorithm>
-#include <exception>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
-#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
 
 using nlohmann::json;
 

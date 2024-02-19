@@ -22,8 +22,12 @@
 #include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"  // IWYU pragma: export
+#include "common/text/concrete_syntax_tree.h"  // IWYU pragma: export
 #include "common/text/symbol.h"
+#include "common/text/symbol_ptr.h"  // IWYU pragma: export
 #include "common/text/tree_utils.h"
+#include "common/util/logging.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/parser/verilog_token_enum.h"
 

@@ -21,6 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+#include "common/util/interval.h"
+#include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

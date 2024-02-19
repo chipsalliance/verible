@@ -17,6 +17,8 @@
 #include <iomanip>
 #include <iostream>
 
+#include "absl/strings/string_view.h"
+
 namespace verible {
 
 static constexpr absl::string_view kEllipses = "...";

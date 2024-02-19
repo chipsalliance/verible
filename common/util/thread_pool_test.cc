@@ -14,7 +14,7 @@
 
 #include "common/util/thread_pool.h"
 
-#include <chrono>
+#include <chrono>  // IWYU pragma: keep  for chrono_literals
 #include <future>
 #include <vector>
 
@@ -39,7 +39,7 @@ TEST(ThreadPoolTest, SynchronousExecutionIfThreadCountZero) {
     return 42;
   });
 
-  EXPECT_EQ(std::future_status::ready, foo_ture.wait_for(1ms))
+  EXPECT_EQ(std::future_status::ready, foo_ture.wait_for(1ms))  // NOLINT
       << "Must be available immediately after return";
   EXPECT_EQ(foo_ture.get(), 42);
 }

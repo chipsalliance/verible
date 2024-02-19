@@ -16,10 +16,10 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "common/strings/random.h"
 #include "common/util/bijective_map.h"
 #include "common/util/logging.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

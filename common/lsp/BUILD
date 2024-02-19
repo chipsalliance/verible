@@ -70,6 +70,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
+        "@jsonhpp",
     ],
 )
 
@@ -95,6 +96,7 @@ cc_test(
     name = "lsp-protocol-operators_test",
     srcs = ["lsp-protocol-operators_test.cc"],
     deps = [
+        ":lsp-protocol",
         ":lsp-protocol-operators",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -119,6 +121,7 @@ cc_test(
     srcs = ["lsp-text-buffer_test.cc"],
     deps = [
         ":json-rpc-dispatcher",
+        ":lsp-protocol",
         ":lsp-text-buffer",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
@@ -165,6 +168,9 @@ cc_binary(
         ":lsp-protocol",
         ":lsp-text-buffer",
         ":message-stream-splitter",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+        "@jsonhpp",
     ],
 )
 

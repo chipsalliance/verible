@@ -10,7 +10,7 @@ package(
         "//verilog/tools/kythe:__pkg__",
         "//verilog/tools/lint:__subpackages__",
     ],
-    # Not yet enabled, lexer does not find FlexLexer.
+    # Not yet enabled, lexer does not find FlexLexer.h
     #features = ["layering_check"],
 )
 
@@ -93,6 +93,7 @@ cc_library(
         ":lint-rule-status",
         "//common/strings:diff",
         "//common/util:file-util",
+        "//common/util:logging",
         "//common/util:user-interaction",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -170,6 +171,7 @@ cc_library(
         "//common/text:token-info",
         "//common/text:token-info-test-util",
         "//common/util:algorithm",
+        "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",  # for library testonly
@@ -385,6 +387,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "//common/util:iterator-range",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -444,6 +447,7 @@ cc_test(
         "//common/text:syntax-tree-context",
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

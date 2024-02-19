@@ -17,13 +17,8 @@
 
 #include "verilog/analysis/verilog_analyzer.h"
 
-#include <algorithm>
-#include <cstddef>
-#include <iterator>
 #include <memory>
 #include <ostream>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/status/status.h"

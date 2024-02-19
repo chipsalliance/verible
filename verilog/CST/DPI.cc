@@ -16,7 +16,9 @@
 
 #include <vector>
 
+#include "common/text/concrete_syntax_tree.h"
 #include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 
 namespace verilog {
 

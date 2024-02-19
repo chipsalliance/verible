@@ -32,6 +32,7 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
+#include "common/util/logging.h"
 #include "common/util/spacer.h"
 
 namespace verible {

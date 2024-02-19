@@ -14,6 +14,7 @@
 
 #include "common/lsp/lsp-protocol-operators.h"
 
+#include "common/lsp/lsp-protocol.h"
 #include "gtest/gtest.h"
 
 namespace verible {

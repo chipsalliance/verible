@@ -16,6 +16,7 @@
 #define VERIBLE_COMMON_FORMATTING_ALIGN_H_
 
 #include <functional>
+#include <initializer_list>
 #include <ostream>
 #include <string>
 #include <vector>

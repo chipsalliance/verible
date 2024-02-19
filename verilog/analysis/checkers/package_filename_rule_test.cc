@@ -14,8 +14,10 @@
 
 #include "verilog/analysis/checkers/package_filename_rule.h"
 
+#include <initializer_list>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_linter_test_utils.h"
 #include "common/text/symbol.h"

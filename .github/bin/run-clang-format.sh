@@ -18,10 +18,10 @@ set -e  # error out on error.
 
 FORMAT_OUT=${TMPDIR:-/tmp}/clang-format-diff.out
 
-CLANG_FORMAT_BINARY=${CLANG_FORMAT_BINARY:-clang-format}
-BUILDIFIER_BINARY=${BUILDIFIER_BINARY:-buildifier}
+CLANG_FORMAT=${CLANG_FORMAT:-clang-format}
+BUILDIFIER=${BUILDIFIER:-buildifier}
 
-${CLANG_FORMAT_BINARY} --version
+${CLANG_FORMAT} --version
 
 # Run on all files.
 
@@ -32,12 +32,12 @@ ${CLANG_FORMAT_BINARY} --version
 
 find . -name "*.h" -o -name "*.cc" \
   | egrep -v 'third_party/|external_libs/|.github/' \
-  | xargs -P2 ${CLANG_FORMAT_BINARY} --style="Google" -i
+  | xargs -P2 ${CLANG_FORMAT} --style="Google" -i
 
 # If we have buildifier installed, use that on BUILD files
-if command -v ${BUILDIFIER_BINARY} >/dev/null; then
+if command -v ${BUILDIFIER} >/dev/null; then
   echo "Run $(buildifier --version)"
-  ${BUILDIFIER_BINARY} WORKSPACE $(find . -name BUILD -o -name "*.bzl")
+  ${BUILDIFIER} -lint=fix WORKSPACE $(find . -name BUILD -o -name "*.bzl")
 fi
 
 # Check if we got any diff

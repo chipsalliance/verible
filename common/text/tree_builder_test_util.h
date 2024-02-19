@@ -17,6 +17,7 @@
 #ifndef VERIBLE_COMMON_TEXT_TREE_BUILDER_TEST_UTIL_H_
 #define VERIBLE_COMMON_TEXT_TREE_BUILDER_TEST_UTIL_H_
 
+#include <cstddef>
 #include <initializer_list>
 #include <utility>
 

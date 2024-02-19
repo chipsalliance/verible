@@ -16,11 +16,13 @@
 
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/iterator_range.h"
+#include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

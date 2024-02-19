@@ -23,7 +23,6 @@
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
-#include "common/util/vector_tree.h"
 
 namespace verible {
 

@@ -166,12 +166,14 @@ cc_library(
         "//common/util:vector-tree-iterators",
         "//verilog/CST:declaration",
         "//verilog/CST:module",
+        "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-equivalence",
         "//verilog/parser:verilog-token-enum",
         "//verilog/preprocessor:verilog-preprocess",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -305,6 +307,7 @@ cc_test(
         "//common/text:tree-builder-test-util",
         "//common/util:casts",
         "//common/util:iterator-adaptors",
+        "//common/util:logging",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",

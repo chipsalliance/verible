@@ -15,7 +15,6 @@
 #include "common/util/vector_tree_test_util.h"
 
 #include <iostream>
-#include <vector>
 
 #include "absl/strings/string_view.h"
 #include "common/util/vector_tree.h"

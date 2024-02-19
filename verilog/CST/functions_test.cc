@@ -15,8 +15,6 @@
 #include "verilog/CST/functions.h"
 
 #include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -33,7 +31,6 @@
 #include "common/util/casts.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/match_test_utils.h"

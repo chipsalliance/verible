@@ -58,6 +58,7 @@ cc_library(
         "//common/text:concrete-syntax-tree",
         "//common/text:token-info",
         "//common/util:logging",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

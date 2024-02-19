@@ -21,11 +21,13 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/matcher/descent_path.h"
 #include "common/text/parser_verifier.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
 
 namespace verible {

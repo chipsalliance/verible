@@ -19,7 +19,7 @@
 
 #if defined(__linux__) || defined(__CYGWIN__)
 
-#include <endian.h>
+#include <endian.h>  // IWYU pragma: export
 
 #elif defined(__APPLE__)
 
@@ -47,7 +47,7 @@
 
 #elif defined(__OpenBSD__)
 
-#include <endian.h>
+#include <endian.h>  // IWYU pragma: export
 
 #define __BYTE_ORDER BYTE_ORDER
 #define __BIG_ENDIAN BIG_ENDIAN

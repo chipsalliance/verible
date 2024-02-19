@@ -14,10 +14,11 @@
 
 #include "common/strings/range.h"
 
+#include <cstddef>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "common/util/range.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

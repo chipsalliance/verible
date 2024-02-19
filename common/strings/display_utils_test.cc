@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include "gmock/gmock.h"
+#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {

@@ -14,14 +14,12 @@
 
 #include "common/util/enum_flags.h"
 
-#include <initializer_list>
 #include <iostream>
 #include <sstream>
 #include <string>
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {

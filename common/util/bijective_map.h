@@ -15,12 +15,12 @@
 #ifndef VERIBLE_COMMON_UTIL_BIJECTIVE_MAP_H_
 #define VERIBLE_COMMON_UTIL_BIJECTIVE_MAP_H_
 
+#include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <map>
 #include <utility>
 
-#include "common/util/forward.h"
 #include "common/util/logging.h"
 
 namespace verible {

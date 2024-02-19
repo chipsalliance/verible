@@ -28,7 +28,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
@@ -39,7 +41,6 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
-#include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
 #include "common/util/iterator_range.h"

@@ -15,7 +15,8 @@
 #ifndef VERIBLE_COMMON_TEXT_TOKEN_INFO_H_
 #define VERIBLE_COMMON_TEXT_TOKEN_INFO_H_
 
-#include <algorithm>   // for std::distance, std::copy
+#include <algorithm>  // for std::distance, std::copy
+#include <cstddef>
 #include <functional>  // for std::function
 #include <iosfwd>
 #include <iterator>

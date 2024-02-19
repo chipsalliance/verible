@@ -14,7 +14,8 @@
 
 #include "common/strings/random.h"
 
-#include "gmock/gmock.h"
+#include <cctype>
+
 #include "gtest/gtest.h"
 
 namespace verible {

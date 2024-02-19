@@ -17,6 +17,7 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace verible {
 std::string GetStyleGuideCitation(absl::string_view topic) {

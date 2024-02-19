@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_NUMERIC_FORMAT_STRING_STYLE_RULE_H
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_NUMERIC_FORMAT_STRING_STYLE_RULE_H
 
+#include <cstddef>
+#include <initializer_list>
 #include <set>
 #include <string>
 

@@ -22,7 +22,7 @@
 #include <iosfwd>
 #include <memory>
 
-#include "common/text/symbol_ptr.h"
+#include "common/text/symbol_ptr.h"  // IWYU pragma: export
 #include "common/text/token_info.h"
 #include "common/text/visitors.h"
 

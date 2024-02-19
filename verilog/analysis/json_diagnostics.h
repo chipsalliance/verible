@@ -15,6 +15,8 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 #define VERIBLE_VERILOG_ANALYSIS_JSON_DIAGNOSTICS_H_
 
+#include <cstddef>
+
 #include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 

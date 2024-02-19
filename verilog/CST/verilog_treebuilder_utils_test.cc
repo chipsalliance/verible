@@ -16,7 +16,6 @@
 
 #include "common/text/tree_builder_test_util.h"
 #include "common/text/tree_utils.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verilog {

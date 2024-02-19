@@ -14,11 +14,11 @@
 
 #include "common/formatting/unwrapped_line.h"
 
-#include <iterator>
 #include <ostream>
 #include <sstream>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/tree_builder_test_util.h"

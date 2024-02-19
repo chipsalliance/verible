@@ -15,6 +15,8 @@
 #include "verilog/analysis/symbol_table.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -24,8 +26,10 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "common/strings/display_utils.h"

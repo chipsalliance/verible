@@ -14,7 +14,6 @@
 
 #include "common/util/container_iterator_range.h"
 
-#include <iterator>
 #include <list>
 #include <set>
 #include <utility>

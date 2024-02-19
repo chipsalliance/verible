@@ -14,7 +14,6 @@
 
 #include "common/analysis/matcher/descent_path.h"
 
-#include <iterator>
 #include <memory>
 #include <vector>
 

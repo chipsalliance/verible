@@ -21,6 +21,7 @@
 #include <functional>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_range.h"
 

@@ -22,9 +22,7 @@
 //   0: stdout output can be used to replace original file
 //   nonzero: stdout output (if any) should be discarded
 
-#include <fstream>
 #include <iostream>
-#include <memory>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
 #include <vector>
@@ -40,7 +38,6 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/interval_set.h"
-#include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"

@@ -14,7 +14,6 @@
 
 #include "verilog/CST/verilog_treebuilder_utils.h"
 
-#include <memory>
 #include <string>
 
 #include "absl/strings/str_cat.h"

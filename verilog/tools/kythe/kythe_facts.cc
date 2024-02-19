@@ -14,12 +14,9 @@
 
 #include "verilog/tools/kythe/kythe_facts.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "absl/hash/hash.h"

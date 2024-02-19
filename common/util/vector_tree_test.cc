@@ -15,16 +15,15 @@
 #include "common/util/vector_tree.h"
 
 #include <cstddef>
-#include <iterator>
 #include <ostream>
 #include <sstream>
-#include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/vector_tree_test_util.h"
 #include "gmock/gmock.h"

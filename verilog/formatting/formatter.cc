@@ -19,7 +19,6 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -27,6 +26,8 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/layout_optimizer.h"
 #include "common/formatting/line_wrap_searcher.h"
@@ -51,6 +52,7 @@
 #include "common/util/vector_tree_iterators.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/module.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_equivalence.h"
 #include "verilog/formatting/align.h"

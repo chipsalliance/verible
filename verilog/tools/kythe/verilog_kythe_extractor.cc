@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <deque>
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -24,10 +22,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
-#include "common/util/bijective_map.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
+#include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
