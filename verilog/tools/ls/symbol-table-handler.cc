@@ -31,7 +31,6 @@
 #include "absl/time/time.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
-#include "common/lsp/lsp-text-buffer.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"

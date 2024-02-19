@@ -16,7 +16,6 @@
 
 #include <string>
 
-#include "absl/flags/flag.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/value_saver.h"

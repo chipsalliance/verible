@@ -58,7 +58,6 @@ cc_test(
 cc_library(
     name = "verilog-matchers",
     srcs = [
-        "verilog_matchers.cc",
         "verilog_nonterminals_foreach.inc",
         "verilog_nonterminals_foreach-gen.inc",
     ],

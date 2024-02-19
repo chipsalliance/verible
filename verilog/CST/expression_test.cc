@@ -26,7 +26,6 @@
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
 #include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_tree_print.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 

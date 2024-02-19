@@ -15,7 +15,6 @@
 #include "verilog/CST/verilog_matchers.h"
 
 #include "common/analysis/matcher/core_matchers.h"
-#include "common/analysis/matcher/matcher.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/matcher/matcher_test_utils.h"
 #include "gtest/gtest.h"

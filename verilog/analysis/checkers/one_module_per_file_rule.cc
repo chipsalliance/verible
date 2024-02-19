@@ -24,13 +24,9 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
-#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
-#include "common/text/token_info.h"
-#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "verilog/CST/module.h"
-#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

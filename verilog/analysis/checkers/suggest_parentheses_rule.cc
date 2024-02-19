@@ -16,7 +16,6 @@
 
 #include "absl/strings/string_view.h"
 #include "verilog/CST/expression.h"
-#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {

@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"

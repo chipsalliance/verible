@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_tree.h"

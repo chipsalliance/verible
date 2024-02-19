@@ -20,7 +20,6 @@
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "third_party/proto/kythe/storage.pb.h"
 #include "verilog/tools/kythe/kythe_facts.h"
-#include "verilog/tools/kythe/kythe_facts_extractor.h"
 
 namespace verilog {
 namespace kythe {

@@ -25,10 +25,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/macros.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/tree_unwrapper.h"
@@ -47,9 +45,7 @@
 #include "common/util/enum_flags.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
-#include "common/util/value_saver.h"
 #include "verilog/CST/declaration.h"
-#include "verilog/CST/functions.h"
 #include "verilog/CST/macro.h"
 #include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_nonterminals.h"

@@ -26,7 +26,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
-#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef EXPECT_OK

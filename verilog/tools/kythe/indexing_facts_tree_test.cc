@@ -17,9 +17,7 @@
 #include <sstream>
 #include <string>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
-#include "common/text/token_info.h"
 #include "common/util/range.h"
 #include "gtest/gtest.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"

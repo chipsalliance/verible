@@ -33,7 +33,6 @@
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "verilog/CST/module.h"
-#include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

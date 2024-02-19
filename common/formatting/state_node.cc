@@ -25,7 +25,6 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/position.h"
-#include "common/strings/range.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/iterator_range.h"

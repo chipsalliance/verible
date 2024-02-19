@@ -20,7 +20,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
-#include "common/util/status_macros.h"
 #include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {

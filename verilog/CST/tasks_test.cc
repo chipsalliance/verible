@@ -22,7 +22,6 @@
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
-#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"

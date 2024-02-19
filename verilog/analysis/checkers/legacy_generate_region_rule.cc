@@ -18,14 +18,13 @@
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
-#include "common/analysis/matcher/bound_symbol_manager.h"
-#include "common/analysis/matcher/matcher.h"
-#include "common/strings/naming_utils.h"
+#include "common/analysis/matcher/matcher_builders.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
-#include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {

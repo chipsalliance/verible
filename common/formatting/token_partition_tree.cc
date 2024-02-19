@@ -28,7 +28,6 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/display_utils.h"
 #include "common/strings/range.h"
-#include "common/text/tree_utils.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/iterator_adaptors.h"

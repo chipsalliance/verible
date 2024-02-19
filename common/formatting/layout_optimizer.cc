@@ -31,7 +31,6 @@
 #include "absl/container/fixed_array.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
-#include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
