@@ -71,7 +71,7 @@ _syntax_test_attrs = {
         allow_files = True,
         default = Label(_syntax_tool),
         executable = True,
-        cfg = "host",
+        cfg = "exec",
     ),
 }
 
