@@ -44,6 +44,7 @@ cc_library(
     hdrs = ["extractors.h"],
     deps = [
         ":verilog-analyzer",
+        "//common/util:logging",
         "//verilog/CST:identifier",
         "//verilog/CST:module",
         "//verilog/preprocessor:verilog-preprocess",
@@ -388,6 +389,7 @@ cc_test(
     deps = [
         ":verilog-filelist",
         "//common/util:file-util",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -513,7 +515,9 @@ cc_test(
     deps = [
         ":dependencies",
         "//common/util:file-util",
+        "//common/util:logging",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

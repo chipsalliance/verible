@@ -21,6 +21,7 @@ cc_test(
     srcs = ["compare_test.cc"],
     deps = [
         ":compare",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -87,6 +88,7 @@ cc_test(
     srcs = ["display_utils_test.cc"],
     deps = [
         ":display-utils",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -113,6 +115,7 @@ cc_test(
         ":random",
         "//common/util:bijective-map",
         "//common/util:logging",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -194,6 +197,7 @@ cc_test(
     srcs = ["position_test.cc"],
     deps = [
         ":position",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -238,6 +242,7 @@ cc_test(
     deps = [
         ":range",
         "//common/util:range",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -259,6 +264,7 @@ cc_test(
         ":range",
         ":split",
         "//common/util:range",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -351,8 +357,10 @@ cc_test(
     deps = [
         ":range",
         ":string-memory-map",
+        "//common/util:logging",
         "//common/util:range",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

@@ -5,16 +5,6 @@
 { pkgs ? import <nixpkgs> {} }:
 let
   verible_used_stdenv = pkgs.stdenv;
-
-  # Alternatively, use ccache stddev, so after bazel clean
-  # it is much cheaper to rebuild the world.
-  #
-  # This requires that you add a line to your ~/.bazelrc
-  # echo "build --sandbox_writable_path=$HOME/.cache/ccache" >> ~/.bazelrc
-  # Works on nixos, but noticed issues with just nix package manager.
-  #verible_used_stdenv = pkgs.ccacheStdenv;
-
-  # Testing with specific compilers
   #verible_used_stdenv = pkgs.gcc13Stdenv;
   #verible_used_stdenv = pkgs.clang17Stdenv;
 in

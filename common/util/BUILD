@@ -368,6 +368,7 @@ cc_test(
     deps = [
         ":file-util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -400,7 +401,11 @@ cc_test(
     name = "interval-set_test",
     srcs = ["interval_set_test.cc"],
     deps = [
+        ":interval",
         ":interval-set",
+        ":iterator-range",
+        ":logging",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -460,6 +465,7 @@ cc_test(
     srcs = ["iterator_adaptors_test.cc"],
     deps = [
         ":iterator-adaptors",
+        ":iterator-range",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -491,6 +497,7 @@ cc_test(
     srcs = ["subcommand_test.cc"],
     deps = [
         ":subcommand",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -545,6 +552,7 @@ cc_test(
         ":bijective-map",
         ":logging",
         "//common/strings:compare",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -554,6 +562,7 @@ cc_test(
     name = "vector-tree_test",
     srcs = ["vector_tree_test.cc"],
     deps = [
+        ":logging",
         ":tree-operations",
         ":vector-tree",
         ":vector-tree-test-util",
