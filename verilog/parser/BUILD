@@ -41,7 +41,7 @@ cc_library(
         "//bazel:flex",
         "//common/lexer:flex-lexer-adapter",
         "//common/text:token-info",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -55,6 +55,7 @@ cc_test(
         "//common/lexer:lexer-test-util",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -137,7 +138,6 @@ cc_library(
         ],
     }),
     deps = [
-        ":verilog-token-enum",
         "//common/parser:bison-parser-common",
         "//common/parser:parser-param",
         "//common/text:tree-utils",
@@ -154,6 +154,7 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/CST:verilog-treebuilder-utils",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -161,14 +162,13 @@ cc_library(
     srcs = ["verilog_parser.cc"],
     hdrs = ["verilog_parser.h"],
     deps = [
-        ":verilog-y-cc",  # fixdeps: keep
+        ":verilog-y-cc",
         "//common/parser:bison-parser-adapter",
         "//common/parser:parse",
         "//common/parser:parser-param",
         "//common/util:value-saver",
         "@com_google_absl//absl/flags:flag",
     ],
-    alwayslink = 1,
 )
 
 cc_library(
@@ -202,6 +202,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -220,6 +221,7 @@ cc_test(
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -252,6 +254,6 @@ cc_library(
     deps = [
         ":verilog-parser",
         ":verilog-token-enum",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

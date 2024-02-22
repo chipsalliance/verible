@@ -26,6 +26,7 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -56,6 +57,7 @@ cc_library(
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -65,6 +67,7 @@ cc_test(
     deps = [
         ":strip-comments",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

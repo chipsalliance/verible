@@ -21,7 +21,6 @@ cc_library(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "//common/util:container-util",
-        "//common/util:file-util",
         "//common/util:logging",
         "//common/util:status-macros",
         "//verilog/analysis:verilog-filelist",
@@ -31,6 +30,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -50,6 +50,7 @@ cc_test(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

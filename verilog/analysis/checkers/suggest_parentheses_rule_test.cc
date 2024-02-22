@@ -19,6 +19,8 @@
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
+#include "gtest/gtest.h"
+
 namespace verilog {
 namespace analysis {
 namespace {

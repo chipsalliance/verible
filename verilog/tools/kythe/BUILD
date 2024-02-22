@@ -32,6 +32,7 @@ cc_library(
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -56,6 +57,7 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -66,6 +68,7 @@ cc_test(
         ":kythe-facts",
         ":scope-resolver",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -77,13 +80,14 @@ cc_library(
     deps = [
         ":indexing-facts-tree",
         "//common/util:auto-pop-stack",
+        "//common/util:logging",
     ],
 )
 
 cc_library(
     name = "kythe-schema-constants",
     hdrs = ["kythe_schema_constants.h"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 cc_library(
@@ -100,11 +104,11 @@ cc_library(
         "//common/util:logging",
         "//common/util:tree-operations",
         "//verilog/analysis:verilog-project",
-        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -129,12 +133,10 @@ cc_library(
     deps = [
         ":verilog-extractor-indexing-fact-type",
         "//common/text:token-info",
-        "//common/util:range",
         "//common/util:tree-operations",
         "//common/util:vector-tree",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -148,6 +150,7 @@ cc_test(
         "//common/util:range",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -163,8 +166,6 @@ cc_library(
         "//common/text:concrete-syntax-tree",
         "//common/text:tree-context-visitor",
         "//common/text:tree-utils",
-        "//common/util:file-util",
-        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:tree-operations",
         "//verilog/CST:class",
@@ -182,11 +183,10 @@ cc_library(
         "//verilog/CST:type",
         "//verilog/CST:verilog-matchers",
         "//verilog/CST:verilog-nonterminals",
-        "//verilog/CST:verilog-tree-print",
-        "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -207,6 +207,7 @@ cc_test(
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -250,6 +251,7 @@ cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -287,7 +289,7 @@ cc_library(
         "//common/util:simple-zip",
         "//third_party/proto/kythe:analysis_cc_proto",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -307,5 +309,6 @@ cc_binary(
         "//verilog/analysis:verilog-filelist",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )

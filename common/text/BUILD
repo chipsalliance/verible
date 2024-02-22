@@ -26,7 +26,7 @@ cc_library(
         "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -48,7 +48,7 @@ cc_library(
     deps = [
         ":token-info",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -100,6 +100,7 @@ cc_test(
         ":concrete-syntax-leaf",
         ":token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -129,6 +130,7 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -139,6 +141,7 @@ cc_test(
         ":config-utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -170,7 +173,7 @@ cc_library(
     deps = [
         ":symbol",
         ":token-info",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -227,6 +230,7 @@ cc_library(
         "//common/util:type-traits",
         "//common/util:value-saver",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -241,7 +245,7 @@ cc_library(
         ":symbol",
         ":tree-utils",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -275,6 +279,7 @@ cc_library(
         "//common/util:status-macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -290,8 +295,8 @@ cc_library(
         ":token-stream-view",
         ":tree-builder-test-util",
         "//common/util:logging",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -304,6 +309,7 @@ cc_library(
         "//common/util:container-util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -381,6 +387,7 @@ cc_test(
         "//common/util:range",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -394,6 +401,7 @@ cc_test(
         ":token-info",
         ":token-info-json",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -407,6 +415,7 @@ cc_test(
         ":token-info-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -460,6 +469,7 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -488,6 +498,7 @@ cc_test(
         ":token-stream-view",
         ":tree-builder-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

@@ -37,7 +37,7 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -67,19 +67,15 @@ cc_library(
         "//common/util:enum-flags",
         "//common/util:logging",
         "//common/util:tree-operations",
-        "//common/util:value-saver",
-        "//common/util:vector-tree-iterators",
         "//verilog/CST:declaration",
-        "//verilog/CST:functions",
         "//verilog/CST:macro",
         "//verilog/CST:statement",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/parser:verilog-parser",  # only for verilog_symbol_name
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -101,6 +97,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -159,13 +156,11 @@ cc_library(
         "//common/util:interval",
         "//common/util:iterator-range",
         "//common/util:logging",
-        "//common/util:range",
         "//common/util:spacer",
         "//common/util:tree-operations",
         "//common/util:vector-tree",
         "//common/util:vector-tree-iterators",
         "//verilog/CST:declaration",
-        "//verilog/CST:module",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-equivalence",
@@ -174,6 +169,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -191,6 +187,7 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -206,6 +203,7 @@ cc_test(
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -229,6 +227,7 @@ cc_library(
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -241,6 +240,7 @@ cc_test(
         "//common/text:token-info-test-util",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -252,7 +252,7 @@ cc_library(
     deps = [
         "//common/formatting:align",
         "//common/formatting:basic-format-style",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -281,14 +281,13 @@ cc_library(
         "//common/text:syntax-tree-context",
         "//common/text:text-structure",
         "//common/text:token-info",
-        "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:with-reason",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -312,6 +311,7 @@ cc_test(
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
