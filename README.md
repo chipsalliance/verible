@@ -175,10 +175,10 @@ guide and the [development resources](./doc/development.md).
 
 Verible's code base is written in C++.
 
-To build, you need the [bazel] (>= 5.0 and < 7) build system and a C++17
-compatible compiler (e.g. >= g++-10), as well as python3. Note, Verible
-is _not_ yet compatible with bazel-7, so you have to use an older version
-5 or 6. A lot of users of Verible have to work on pretty old installations,
+To build, you need the [bazel] (>= 5.0 and <= 7) build system and a C++17
+compatible compiler (e.g. >= g++-10), as well as python3. Note, to build
+Verible with bazel-7, so you need to add `--noenable_bzlmod` to every bazel
+command. A lot of users of Verible have to work on pretty old installations,
 so we try to keep the requirements as minimal as possible.
 
 Use your package manager to install the dependencies; on a system with
@@ -186,7 +186,10 @@ the nix package manager simply run `nix-shell` to get a build environment.
 
 ```bash
 # Build all tools and libraries
+# bazel 5/6
 bazel build -c opt //...
+# bazel 7
+bazel build --noenable_bzlmod -c opt //...
 ```
 
 You can access the generated artifacts under `bazel-bin/`. For instance the
