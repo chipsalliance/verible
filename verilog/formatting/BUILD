@@ -85,7 +85,6 @@ cc_test(
     deps = [
         ":format-style",
         ":tree-unwrapper",
-        "//common/formatting:basic-format-style",
         "//common/formatting:format-token",
         "//common/formatting:token-partition-tree",
         "//common/formatting:unwrapped-line",
@@ -203,7 +202,6 @@ cc_test(
         "//common/strings:position",
         "//common/util:logging",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -255,7 +253,6 @@ cc_library(
     deps = [
         "//common/formatting:align",
         "//common/formatting:basic-format-style",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -307,14 +304,11 @@ cc_test(
         "//common/text:syntax-tree-context",
         "//common/text:token-info",
         "//common/text:token-info-test-util",
-        "//common/text:tree-builder-test-util",
         "//common/util:casts",
         "//common/util:iterator-adaptors",
         "//common/util:logging",
         "//verilog/CST:verilog-nonterminals",
-        "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",

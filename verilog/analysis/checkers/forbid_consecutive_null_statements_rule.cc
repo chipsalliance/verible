@@ -20,6 +20,7 @@
 #include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

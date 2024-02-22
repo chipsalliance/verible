@@ -63,7 +63,6 @@ cc_library(
         "//common/text:token-info",
         "//common/text:token-info-test-util",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
@@ -76,7 +75,6 @@ cc_test(
         ":lexer-test-util",
         "//common/text:constants",
         "//common/text:token-info",
-        "//common/util:logging",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",

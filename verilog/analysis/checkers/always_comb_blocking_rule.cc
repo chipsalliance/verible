@@ -26,6 +26,7 @@
 #include "common/text/syntax_tree_context.h"
 #include "common/util/casts.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

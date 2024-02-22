@@ -15,14 +15,12 @@ cc_binary(
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],  # for verilog_style_lint.bzl
     deps = [
-        "//common/strings:compare",
         "//common/strings:mem-block",
         "//common/text:concrete-syntax-tree",
         "//common/text:parser-verifier",
         "//common/text:text-structure",
         "//common/text:token-info",
         "//common/text:token-info-json",
-        "//common/util:bijective-map",
         "//common/util:enum-flags",
         "//common/util:file-util",
         "//common/util:init-command-line",
@@ -39,7 +37,6 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/types:span",
         "@jsonhpp",
     ],
 )

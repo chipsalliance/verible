@@ -15,10 +15,7 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_ALIGN_H_
 #define VERIBLE_VERILOG_FORMATTING_ALIGN_H_
 
-#include <vector>
-
 #include "absl/strings/string_view.h"
-#include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
 #include "verilog/formatting/format_style.h"

@@ -32,7 +32,6 @@
 #ifndef VERIBLE_COMMON_LEXER_FLEX_LEXER_ADAPTER_H_
 #define VERIBLE_COMMON_LEXER_FLEX_LEXER_ADAPTER_H_
 
-#include <cstdlib>
 #include <iostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>

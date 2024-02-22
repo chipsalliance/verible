@@ -17,7 +17,6 @@
 
 #include <iosfwd>
 #include <set>
-#include <string>
 #include <vector>
 
 #include "absl/flags/declare.h"

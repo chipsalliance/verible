@@ -15,7 +15,6 @@
 #ifndef VERIBLE_COMMON_FORMATTING_FORMAT_TOKEN_H_
 #define VERIBLE_COMMON_FORMATTING_FORMAT_TOKEN_H_
 
-#include <algorithm>
 #include <cstddef>
 #include <iosfwd>
 #include <string>

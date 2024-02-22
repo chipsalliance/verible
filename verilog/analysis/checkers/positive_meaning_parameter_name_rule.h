@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_POSITIVE_MEANING_PARAMETER_NAME_RULE_H_  // NOLINT
 
 #include <set>
-#include <string>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"

@@ -54,7 +54,6 @@ cc_test(
         ":verilog-token-enum",
         "//common/lexer:lexer-test-util",
         "//common/text:token-info",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -189,7 +188,6 @@ cc_test(
     size = "small",
     srcs = ["verilog_parser_unittest.cc"],
     deps = [
-        ":verilog-parser",
         ":verilog-token-enum",
         "//common/parser:bison-parser-common",
         "//common/parser:parser-test-util",

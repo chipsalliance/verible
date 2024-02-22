@@ -16,9 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_VERILOG_ANALYZER_H_
 
 #include <cstddef>
-#include <iosfwd>
 #include <memory>
-#include <string>
 #include <utility>
 
 #include "absl/status/status.h"

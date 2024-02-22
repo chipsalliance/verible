@@ -53,7 +53,6 @@ cc_library(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@jsonhpp",
     ],
@@ -69,8 +68,6 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",

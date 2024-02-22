@@ -39,6 +39,7 @@
 #include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
+#include "verilog/analysis/symbol_table.h"
 #include "verilog/analysis/verilog_filelist.h"
 #include "verilog/tools/ls/lsp-conversion.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"

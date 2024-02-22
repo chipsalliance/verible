@@ -15,12 +15,9 @@
 #ifndef VERIBLE_VERILOG_TOOLS_KYTHE_SCOPE_RESOLVER_H_
 #define VERIBLE_VERILOG_TOOLS_KYTHE_SCOPE_RESOLVER_H_
 
-#include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"

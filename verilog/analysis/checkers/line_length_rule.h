@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_LINE_LENGTH_RULE_H_
 
 #include <set>
-#include <string>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

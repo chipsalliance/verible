@@ -15,10 +15,6 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 #define VERIBLE_VERILOG_FORMATTING_FORMAT_STYLE_H_
 
-#include <iosfwd>
-#include <string>
-
-#include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
 #include "common/formatting/basic_format_style.h"
 

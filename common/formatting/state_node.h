@@ -17,7 +17,6 @@
 
 #include <cstddef>
 #include <iosfwd>
-#include <iterator>
 #include <memory>
 #include <stack>
 #include <vector>

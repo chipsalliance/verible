@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_PARSER_VERILOG_LEXICAL_CONTEXT_H_
 
 #include <iosfwd>
-#include <iterator>
 #include <stack>
 #include <vector>
 

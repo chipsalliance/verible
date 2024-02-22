@@ -15,7 +15,6 @@
 #ifndef VERIBLE_COMMON_STRINGS_STRING_MEMORY_MAP_H_
 #define VERIBLE_COMMON_STRINGS_STRING_MEMORY_MAP_H_
 
-#include <string>
 #include <utility>
 
 #include "absl/strings/string_view.h"

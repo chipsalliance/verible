@@ -26,6 +26,7 @@
 #include "common/text/tree_utils.h"
 #include "verilog/CST/expression.h"
 #include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

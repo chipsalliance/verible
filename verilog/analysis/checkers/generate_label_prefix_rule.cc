@@ -24,6 +24,7 @@
 #include "common/text/token_info.h"
 #include "verilog/CST/seq_block.h"
 #include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 

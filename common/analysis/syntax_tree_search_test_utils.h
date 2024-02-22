@@ -15,10 +15,8 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_SYNTAX_TREE_SEARCH_TEST_UTILS_H_
 #define VERIBLE_COMMON_ANALYSIS_SYNTAX_TREE_SEARCH_TEST_UTILS_H_
 
-#include <functional>
 #include <initializer_list>
 #include <iosfwd>
-#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

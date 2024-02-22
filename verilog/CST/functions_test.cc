@@ -28,6 +28,7 @@
 #include "gtest/gtest.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 

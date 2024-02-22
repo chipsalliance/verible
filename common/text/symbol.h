@@ -20,7 +20,6 @@
 
 #include <functional>
 #include <iosfwd>
-#include <memory>
 
 #include "common/text/symbol_ptr.h"  // IWYU pragma: export
 #include "common/text/token_info.h"

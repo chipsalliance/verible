@@ -17,7 +17,6 @@
 #ifndef VERIBLE_COMMON_TEXT_TOKEN_STREAM_VIEW_H_
 #define VERIBLE_COMMON_TEXT_TOKEN_STREAM_VIEW_H_
 
-#include <cstddef>
 #include <functional>
 #include <vector>
 

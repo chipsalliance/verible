@@ -15,7 +15,6 @@
 #ifndef VERIBLE_VERILOG_CST_CONSTRAINTS_H_
 #define VERIBLE_VERILOG_CST_CONSTRAINTS_H_
 
-#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"

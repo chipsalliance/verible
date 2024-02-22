@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_TOOLS_KYTHE_INDEXING_FACTS_TREE_H_
 
 #include <cstddef>
-#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>

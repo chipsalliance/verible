@@ -18,8 +18,6 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 #define VERIBLE_COMMON_ANALYSIS_LINT_RULE_H_
 
-#include <string>
-
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"

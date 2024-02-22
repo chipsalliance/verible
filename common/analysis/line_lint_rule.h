@@ -19,8 +19,6 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_LINE_LINT_RULE_H_
 #define VERIBLE_COMMON_ANALYSIS_LINE_LINT_RULE_H_
 
-#include <cstddef>
-
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule.h"
 

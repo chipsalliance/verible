@@ -285,7 +285,6 @@ cc_library(
     deps = [
         ":tree-operations",
         ":vector-tree",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
@@ -333,7 +332,6 @@ cc_test(
     deps = [
         ":algorithm",
         ":iterator-range",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -391,7 +389,6 @@ cc_test(
     deps = [
         ":interval-map",
         ":range",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -404,7 +401,6 @@ cc_test(
     deps = [
         ":interval",
         ":interval-set",
-        ":iterator-range",
         ":logging",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
@@ -417,7 +413,6 @@ cc_test(
     srcs = ["forward_test.cc"],
     deps = [
         ":forward",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -430,7 +425,6 @@ cc_test(
     deps = [
         ":iterator-range",
         ":range",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -641,7 +635,6 @@ cc_test(
     deps = [
         ":map-tree",
         ":spacer",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -653,7 +646,6 @@ cc_test(
     srcs = ["with_reason_test.cc"],
     deps = [
         ":with-reason",
-        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -700,7 +692,6 @@ cc_test(
     deps = [
         ":file-util",
         ":simple-zip",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
