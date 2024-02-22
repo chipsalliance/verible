@@ -31,6 +31,8 @@
 #include "common/util/auto_pop_stack.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
+#include "verilog/tools/kythe/indexing_facts_tree.h"
+#include "verilog/tools/kythe/kythe_facts.h"
 #include "verilog/tools/kythe/kythe_schema_constants.h"
 #include "verilog/tools/kythe/scope_resolver.h"
 #include "verilog/tools/kythe/verilog_extractor_indexing_fact_type.h"

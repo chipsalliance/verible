@@ -15,6 +15,7 @@
 #include "common/formatting/basic_format_style_init.h"
 
 #include "absl/flags/flag.h"
+#include "common/formatting/basic_format_style.h"
 
 ABSL_FLAG(int, indentation_spaces, 2,
           "Each indentation level adds this many spaces.");

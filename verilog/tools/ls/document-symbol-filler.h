@@ -17,6 +17,7 @@
 
 #include "common/lsp/lsp-protocol.h"
 #include "common/text/text_structure.h"
+#include "common/text/token_info.h"
 #include "common/text/visitors.h"
 
 namespace verilog {

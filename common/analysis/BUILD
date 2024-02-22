@@ -137,6 +137,7 @@ cc_library(
         "//common/util:interval-set",
         "//common/util:iterator-range",
         "//common/util:logging",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],

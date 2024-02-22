@@ -83,6 +83,7 @@ cc_test(
     name = "tree-unwrapper_test",
     srcs = ["tree_unwrapper_test.cc"],
     deps = [
+        ":format-style",
         ":tree-unwrapper",
         "//common/formatting:basic-format-style",
         "//common/formatting:format-token",
@@ -218,6 +219,7 @@ cc_library(
         "//common/strings:display-utils",
         "//common/strings:line-column-map",
         "//common/strings:position",
+        "//common/text:token-info",
         "//common/text:token-stream-view",
         "//common/util:interval-set",
         "//common/util:logging",
@@ -237,6 +239,7 @@ cc_test(
     deps = [
         ":comment-controls",
         "//common/strings:line-column-map",
+        "//common/strings:position",
         "//common/text:token-info-test-util",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings",
@@ -302,6 +305,7 @@ cc_test(
         "//common/formatting:unwrapped-line",
         "//common/formatting:unwrapped-line-test-utils",
         "//common/text:syntax-tree-context",
+        "//common/text:token-info",
         "//common/text:token-info-test-util",
         "//common/text:tree-builder-test-util",
         "//common/util:casts",

@@ -26,6 +26,7 @@
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"  // Keep. Figure out what needed
 #include "verilog/analysis/verilog_project.h"
+#include "verilog/tools/kythe/indexing_facts_tree.h"
 #include "verilog/tools/kythe/indexing_facts_tree_extractor.h"
 #include "verilog/tools/kythe/kythe_facts_extractor.h"
 #include "verilog/tools/kythe/kythe_proto_output.h"

@@ -25,6 +25,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
 #include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"

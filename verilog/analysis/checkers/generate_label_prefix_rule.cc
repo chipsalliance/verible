@@ -21,6 +21,7 @@
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 #include "verilog/CST/seq_block.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"

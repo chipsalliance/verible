@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
@@ -31,6 +32,7 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/util/file_util.h"
 #include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_linter.h"
 
 #undef ASSERT_OK

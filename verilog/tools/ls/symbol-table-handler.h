@@ -22,11 +22,11 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/text/token_info.h"
 #include "verilog/analysis/symbol_table.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"

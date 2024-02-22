@@ -18,7 +18,9 @@
 
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/text/token_info.h"
 #include "common/util/value_saver.h"
+#include "nlohmann/json.hpp"
 #include "verilog/CST/class.h"
 #include "verilog/CST/functions.h"
 #include "verilog/CST/module.h"

@@ -26,6 +26,8 @@
 #include "common/strings/comment_utils.h"
 #include "common/strings/display_utils.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/position.h"
+#include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"

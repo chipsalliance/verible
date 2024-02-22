@@ -28,6 +28,8 @@
 #include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
+#include "verilog/formatting/format_style.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 

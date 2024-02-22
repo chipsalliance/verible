@@ -21,6 +21,7 @@
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/symbol.h"
+#include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"

@@ -163,7 +163,9 @@ cc_library(
     deps = [
         ":indexing-facts-tree",
         ":indexing-facts-tree-context",
+        ":verilog-extractor-indexing-fact-type",
         "//common/text:concrete-syntax-tree",
+        "//common/text:token-info",
         "//common/text:tree-context-visitor",
         "//common/text:tree-utils",
         "//common/util:logging",
@@ -235,6 +237,7 @@ cc_binary(
     features = STATIC_EXECUTABLES_FEATURE,
     visibility = ["//visibility:public"],
     deps = [
+        ":indexing-facts-tree",
         ":indexing-facts-tree-extractor",
         ":kythe-facts-extractor",
         ":kythe-proto-output",

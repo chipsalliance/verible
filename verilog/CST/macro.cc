@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"

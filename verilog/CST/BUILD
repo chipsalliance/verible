@@ -325,6 +325,7 @@ cc_test(
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",
         "//common/text:symbol",
+        "//common/text:token-info",
         "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
@@ -545,6 +546,7 @@ cc_library(
         "//common/text:concrete-syntax-leaf",
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
+        "//common/text:token-info",
         "//common/text:tree-utils",
     ],
 )
@@ -582,6 +584,7 @@ cc_library(
         "//common/text:concrete-syntax-leaf",
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
+        "//common/text:token-info",
         "//common/text:tree-utils",
     ],
 )
@@ -736,6 +739,7 @@ cc_library(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
+        "//common/text:token-info",
         "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/parser:verilog-token-enum",
@@ -998,5 +1002,6 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
+        "@jsonhpp",
     ],
 )

@@ -68,6 +68,7 @@ cc_test(
     srcs = ["diff_test.cc"],
     deps = [
         ":diff",
+        "//external_libs:editscript",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",

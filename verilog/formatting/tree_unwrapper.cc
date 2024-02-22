@@ -49,6 +49,7 @@
 #include "verilog/CST/macro.h"
 #include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/formatting/format_style.h"
 #include "verilog/formatting/verilog_token.h"
 #include "verilog/parser/verilog_parser.h"
 #include "verilog/parser/verilog_token_classifications.h"

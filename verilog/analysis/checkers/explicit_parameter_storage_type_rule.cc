@@ -26,6 +26,7 @@
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/verilog_matchers.h"

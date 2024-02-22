@@ -23,10 +23,12 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/line_wrap_searcher.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/strings/display_utils.h"
+#include "common/strings/position.h"
 #include "common/strings/range.h"
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"

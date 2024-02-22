@@ -20,6 +20,7 @@ cc_library(
         ":symbol-table-handler",
         "//common/lsp:lsp-protocol",
         "//common/text:text-structure",
+        "//common/text:token-info",
         "//common/util:logging",
         "//verilog/CST:declaration",
         "//verilog/CST:dimensions",
@@ -32,6 +33,7 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:symbol-table",
+        "//verilog/formatting:format-style",
         "//verilog/formatting:format-style-init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -84,8 +86,10 @@ cc_library(
         "//common/lsp:lsp-protocol-enums",
         "//common/lsp:lsp-protocol-operators",
         "//common/text:text-structure",
+        "//common/text:token-info",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-linter",
+        "//verilog/formatting:format-style",
         "//verilog/formatting:format-style-init",
         "//verilog/formatting:formatter",
         "//verilog/parser:verilog-token-enum",
@@ -113,6 +117,7 @@ cc_library(
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-protocol-enums",
         "//common/text:text-structure",
+        "//common/text:token-info",
         "//common/text:visitors",
         "//common/util:value-saver",
         "//verilog/CST:class",
@@ -122,6 +127,7 @@ cc_library(
         "//verilog/CST:seq-block",
         "//verilog/CST:verilog-nonterminals",
         "@com_google_absl//absl/flags:flag",
+        "@jsonhpp",
     ],
 )
 
@@ -194,6 +200,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@jsonhpp",
     ],
 )
 
@@ -208,10 +215,12 @@ cc_test(
         "//common/util:file-util",
         "//verilog/analysis:verilog-linter",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
+        "@jsonhpp",
     ],
 )
 
@@ -251,11 +260,13 @@ cc_test(
         ":verible-lsp-adapter",
         "//common/lsp:lsp-protocol",
         "//common/lsp:lsp-text-buffer",
+        "//verilog/formatting:format-style",
         "//verilog/formatting:format-style-init",
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
+        "@jsonhpp",
     ],
 )

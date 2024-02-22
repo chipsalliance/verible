@@ -23,6 +23,7 @@
 
 #include "common/formatting/format_token.h"
 #include "common/text/symbol.h"
+#include "common/text/token_info.h"
 
 namespace verible {
 

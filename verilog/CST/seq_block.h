@@ -18,10 +18,10 @@
 #ifndef VERIBLE_VERILOG_CST_SEQ_BLOCK_H_
 #define VERIBLE_VERILOG_CST_SEQ_BLOCK_H_
 
-#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 
 namespace verilog {
 

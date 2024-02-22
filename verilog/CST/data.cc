@@ -21,6 +21,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep

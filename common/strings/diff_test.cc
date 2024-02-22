@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "external_libs/editscript.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

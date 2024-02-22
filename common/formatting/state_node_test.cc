@@ -26,6 +26,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
 

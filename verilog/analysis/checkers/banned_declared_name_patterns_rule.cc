@@ -21,6 +21,7 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 #include "verilog/CST/module.h"
 #include "verilog/CST/package.h"
 #include "verilog/analysis/lint_rule_registry.h"
