@@ -132,6 +132,31 @@ cc_library(
 )
 
 cc_library(
+    name = "hover",
+    srcs = ["hover.cc"],
+    hdrs = ["hover.h"],
+    deps = [
+        ":lsp-parse-buffer",
+        ":symbol-table-handler",
+        "//common/lsp:lsp-protocol",
+        "//common/text:concrete-syntax-leaf",
+        "//common/text:concrete-syntax-tree",
+        "//common/text:symbol",
+        "//common/text:token-info",
+        "//common/text:tree-context-visitor",
+        "//common/text:tree-utils",
+        "//common/util:casts",
+        "//common/util:range",
+        "//verilog/CST:seq-block",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/analysis:symbol-table",
+        "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
     name = "symbol-table-handler",
     srcs = ["symbol-table-handler.cc"],
     hdrs = ["symbol-table-handler.h"],
@@ -185,6 +210,7 @@ cc_library(
     srcs = ["verilog-language-server.cc"],
     hdrs = ["verilog-language-server.h"],
     deps = [
+        ":hover",
         ":lsp-parse-buffer",
         ":symbol-table-handler",
         ":verible-lsp-adapter",

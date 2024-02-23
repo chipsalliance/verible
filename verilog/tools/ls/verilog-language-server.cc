@@ -29,6 +29,7 @@
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
 #include "nlohmann/json.hpp"
+#include "verilog/tools/ls/hover.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 ABSL_FLAG(bool, variables_in_outline, true,
@@ -80,8 +81,10 @@ verible::lsp::InitializeResult VerilogLanguageServer::GetCapabilities() {
       {"documentHighlightProvider", true},        // Highlight same symbol
       {"definitionProvider", true},               // Provide going to definition
       {"referencesProvider", true},               // Provide going to references
-      {"renameProvider", true},                   // Provide symbol renaming
-      {"diagnosticProvider",                      // Pull model of diagnostics.
+      // Hover enabled, but not yet offered to client until tested.
+      {"hoverProvider", false},  // Hover info over cursor
+      {"renameProvider", true},  // Provide symbol renaming
+      {"diagnosticProvider",     // Pull model of diagnostics.
        {
            {"interFileDependencies", false},
            {"workspaceDiagnostics", false},
@@ -165,6 +168,11 @@ void VerilogLanguageServer::SetRequestHandlers() {
       "textDocument/rename", [this](const verible::lsp::RenameParams &p) {
         return symbol_table_handler_.FindRenameLocationsAndCreateEdits(
             p, parsed_buffers_);
+      });
+  dispatcher_.AddRequestHandler(
+      "textDocument/hover", [this](const verible::lsp::HoverParams &p) {
+        return CreateHoverInformation(&symbol_table_handler_, parsed_buffers_,
+                                      p);
       });
   // The client sends a request to shut down. Use that to exit our loop.
   dispatcher_.AddRequestHandler("shutdown", [this](const nlohmann::json &) {

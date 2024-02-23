@@ -55,8 +55,11 @@ class SymbolTableHandler {
   // message delivered i.e. in textDocument/definition message.
   // Provides a list of locations with symbol's definitions.
   std::vector<verible::lsp::Location> FindDefinitionLocation(
-      const verible::lsp::DefinitionParams &params,
+      const verible::lsp::TextDocumentPositionParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Finds the node of the symbol table with definition for a given symbol.
+  const SymbolTableNode *FindDefinitionNode(absl::string_view symbol);
 
   // Finds the symbol of the definition for the given identifier.
   const verible::Symbol *FindDefinitionSymbol(absl::string_view symbol);
@@ -75,6 +78,12 @@ class SymbolTableHandler {
   verible::lsp::WorkspaceEdit FindRenameLocationsAndCreateEdits(
       const verible::lsp::RenameParams &params,
       const verilog::BufferTrackerContainer &parsed_buffers);
+
+  // Returns TokenInfo for token pointed by the LSP request based on
+  // TextDocumentPositionParams. If text is not found, nullopt is returned.
+  std::optional<verible::TokenInfo> GetTokenAtTextDocumentPosition(
+      const verible::lsp::TextDocumentPositionParams &params,
+      const verilog::BufferTrackerContainer &parsed_buffers) const;
 
   // Creates a symbol table for entire project (public: needed in unit-test)
   std::vector<absl::Status> BuildProjectSymbolTable();
@@ -95,13 +104,6 @@ class SymbolTableHandler {
   // Creates a new symbol table given the VerilogProject in setProject
   // method.
   void ResetSymbolTable();
-
-  // Returns text pointed by the LSP request based on
-  // TextDocumentPositionParams. If text is not found, empty-initialized
-  // string_view is returned.
-  absl::string_view GetTokenAtTextDocumentPosition(
-      const verible::lsp::TextDocumentPositionParams &params,
-      const verilog::BufferTrackerContainer &parsed_buffers);
 
   // Returns a range in which a token exists in the file by the LSP request
   // based on TextDocumentPositionParams. If text is not found,
