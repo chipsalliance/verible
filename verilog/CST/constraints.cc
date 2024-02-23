@@ -22,7 +22,6 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
-#include "common/util/casts.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/CST/verilog_nonterminals.h"

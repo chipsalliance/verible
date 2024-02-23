@@ -20,10 +20,13 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree_test_utils.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/strings/position.h"
+#include "common/text/token_info.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"

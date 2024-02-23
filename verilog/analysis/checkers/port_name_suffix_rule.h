@@ -16,13 +16,13 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PORT_NAME_SUFFIX_RULE_H_
 
 #include <set>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {

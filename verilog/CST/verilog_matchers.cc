@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/CST/verilog_matchers.h"
-
 // Nothing in here. Just a place-holder so that bazel knows that this header
 // is C++ and clang-tidy picks up that knowledge.
+// If we don't have a *.cc file, bazel will assume this is a C file and put
+// that in the compilation DB. TL;DR: hacky workaround. Don't remove.
+
+#include "verilog/CST/verilog_matchers.h"

@@ -29,7 +29,7 @@ cc_library(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -40,7 +40,7 @@ cc_library(
         ":lexer",
         "//common/text:token-info",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -49,7 +49,7 @@ cc_library(
     hdrs = ["lexer.h"],
     deps = [
         "//common/text:token-info",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -63,7 +63,7 @@ cc_library(
         "//common/text:token-info",
         "//common/text:token-info-test-util",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -75,8 +75,8 @@ cc_test(
         ":lexer-test-util",
         "//common/text:constants",
         "//common/text:token-info",
-        "//common/util:logging",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

@@ -34,7 +34,7 @@ cc_test(
 cc_library(
     name = "descriptions",
     hdrs = ["descriptions.h"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = ["@com_google_absl//absl/strings:string_view"],
     alwayslink = 1,
 )
 
@@ -49,7 +49,7 @@ cc_library(
         "//verilog/CST:module",
         "//verilog/preprocessor:verilog-preprocess",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -58,7 +58,7 @@ cc_test(
     srcs = ["extractors_test.cc"],
     deps = [
         ":extractors",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -72,7 +72,7 @@ cc_library(
         ":verilog-analyzer",
         "//common/analysis:file-analyzer",
         "//common/strings:line-column-map",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@jsonhpp",
     ],
 )
@@ -84,10 +84,9 @@ cc_library(
     deps = [
         "//common/text:token-stream-view",
         "//common/util:logging",
-        "//common/util:status-macros",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -97,9 +96,8 @@ cc_test(
     deps = [
         ":flow-tree",
         "//verilog/parser:verilog-lexer",
-        "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -119,7 +117,7 @@ cc_library(
         "//common/util:container-util",
         "//common/util:logging",
         "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -130,7 +128,6 @@ cc_test(
         ":json-diagnostics",
         ":verilog-analyzer",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
         "@jsonhpp",
@@ -154,6 +151,7 @@ cc_test(
         "//common/text:text-structure",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -193,6 +191,7 @@ cc_library(
         "//verilog/preprocessor:verilog-preprocess",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -210,7 +209,7 @@ cc_library(
         "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -233,15 +232,14 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
 cc_library(
     name = "verilog-linter-constants",
     hdrs = ["verilog_linter_constants.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 cc_library(
@@ -254,15 +252,11 @@ cc_library(
         ":verilog-analyzer",
         ":verilog-linter-configuration",
         ":verilog-linter-constants",
-        "//common/analysis:line-lint-rule",
         "//common/analysis:line-linter",
         "//common/analysis:lint-rule-status",
         "//common/analysis:lint-waiver",
-        "//common/analysis:syntax-tree-lint-rule",
         "//common/analysis:syntax-tree-linter",
-        "//common/analysis:text-structure-lint-rule",
         "//common/analysis:text-structure-linter",
-        "//common/analysis:token-stream-lint-rule",
         "//common/analysis:token-stream-linter",
         "//common/analysis:violation-handler",
         "//common/strings:line-column-map",
@@ -278,6 +272,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -290,21 +285,17 @@ cc_test(
         "//common/strings:display-utils",
         "//common/text:concrete-syntax-leaf",
         "//common/text:concrete-syntax-tree",
-        "//common/text:constants",
         "//common/text:symbol",
         "//common/text:text-structure",
         "//common/text:token-info",
         "//common/text:token-info-test-util",
-        "//common/text:token-stream-view",
         "//common/text:tree-utils",
         "//common/util:casts",
         "//common/util:logging",
-        "//verilog/parser:verilog-parser",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/base",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -332,6 +323,7 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -351,6 +343,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -361,10 +354,8 @@ cc_test(
     srcs = ["verilog_equivalence_test.cc"],
     deps = [
         ":verilog-equivalence",
-        "//common/text:token-info",
-        "//common/util:logging",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -380,6 +371,7 @@ cc_library(
         "//common/util:iterator-range",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -409,6 +401,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
     ],
@@ -425,6 +418,7 @@ cc_test(
         "//common/util:range",
         "//verilog/CST:module",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -470,7 +464,7 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -489,7 +483,7 @@ cc_test(
         "//common/util:tree-operations",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -505,7 +499,7 @@ cc_library(
         "//common/strings:compare",
         "//common/strings:display-utils",
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -514,6 +508,8 @@ cc_test(
     srcs = ["dependencies_test.cc"],
     deps = [
         ":dependencies",
+        ":symbol-table",
+        ":verilog-project",
         "//common/util:file-util",
         "//common/util:logging",
         "@com_google_absl//absl/status",

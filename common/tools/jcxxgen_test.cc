@@ -17,6 +17,7 @@
 #include "absl/strings/match.h"
 #include "common/tools/jcxxgen_testfile.h"
 #include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
 
 namespace verible {
 

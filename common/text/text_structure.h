@@ -29,7 +29,6 @@
 #include <cstddef>
 #include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -38,6 +37,7 @@
 #include "common/strings/mem_block.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
 

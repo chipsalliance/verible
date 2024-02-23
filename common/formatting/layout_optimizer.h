@@ -20,19 +20,8 @@
 #ifndef VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
 #define VERIBLE_VERILOG_FORMATTING_LAYOUT_OPTIMIZER_H_
 
-#include <algorithm>
-#include <iterator>
-#include <ostream>
-#include <type_traits>
-#include <vector>
-
-#include "absl/container/fixed_array.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_join.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/token_partition_tree.h"
-#include "common/formatting/unwrapped_line.h"
-#include "common/util/vector_tree.h"
 
 namespace verible {
 

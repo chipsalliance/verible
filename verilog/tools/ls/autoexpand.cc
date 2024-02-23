@@ -36,6 +36,7 @@
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/text/text_structure.h"
+#include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "re2/re2.h"
 #include "verilog/CST/declaration.h"
@@ -46,6 +47,7 @@
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/formatting/format_style.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
 

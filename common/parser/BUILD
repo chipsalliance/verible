@@ -19,8 +19,9 @@ cc_library(
         "//common/lexer:token-generator",
         "//common/text:concrete-syntax-tree",
         "//common/text:token-info",
+        "//common/util:logging",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -72,7 +73,9 @@ cc_library(
         "//common/text:symbol",
         "//common/text:token-info",
         "//common/text:token-info-test-util",
+        "//common/util:logging",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -89,7 +92,7 @@ cc_test(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:token-info",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

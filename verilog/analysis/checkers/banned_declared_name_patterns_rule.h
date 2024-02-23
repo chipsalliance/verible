@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_BANNED_DECLARED_NAME_PATTERNS_RULE_H_
 
 #include <set>
-#include <string>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher.h"

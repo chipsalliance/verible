@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <set>
 #include <stack>
-#include <string>
 #include <vector>
 
 #include "absl/strings/string_view.h"

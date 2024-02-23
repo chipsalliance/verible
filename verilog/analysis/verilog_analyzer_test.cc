@@ -19,21 +19,17 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/casts.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "common/analysis/file_analyzer.h"
 #include "common/strings/display_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
-#include "common/text/constants.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
-#include "common/text/token_stream_view.h"
 #include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"

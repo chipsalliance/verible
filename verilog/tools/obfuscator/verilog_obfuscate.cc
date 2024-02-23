@@ -32,7 +32,6 @@
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/extractors.h"
-#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/transform/obfuscate.h"
 
 using verible::IdentifierObfuscator;

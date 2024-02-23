@@ -34,6 +34,7 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/split.h"
+#include "common/text/token_info.h"
 #include "common/util/spacer.h"
 #include "gtest/gtest.h"
 

@@ -21,7 +21,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "verilog/parser/verilog_lexer.h"
-#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace {

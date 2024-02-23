@@ -23,7 +23,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/config_utils.h"

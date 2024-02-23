@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "common/text/concrete_syntax_leaf.h"
-#include "common/text/token_stream_view.h"
+#include "common/text/token_info.h"
 #include "common/text/tree_context_visitor.h"
 
 namespace verible {

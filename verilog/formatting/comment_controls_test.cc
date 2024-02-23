@@ -21,6 +21,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/position.h"
 #include "common/text/token_info_test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

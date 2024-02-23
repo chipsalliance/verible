@@ -19,8 +19,8 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
-#include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/strings/position.h"
 #include "common/text/token_info.h"
 #include "common/util/range.h"
 #include "gtest/gtest.h"

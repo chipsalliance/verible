@@ -17,7 +17,6 @@
 
 #include <set>
 #include <stack>
-#include <string>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"

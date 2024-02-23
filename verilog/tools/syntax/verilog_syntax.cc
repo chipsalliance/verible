@@ -32,8 +32,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"  // for MakeArraySlice
-#include "common/strings/compare.h"
 #include "common/strings/mem_block.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/parser_verifier.h"

@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
 
 #include <set>
-#include <string>
 
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"

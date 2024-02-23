@@ -15,8 +15,9 @@
 #include "verilog/analysis/checkers/suggest_parentheses_rule.h"
 
 #include "absl/strings/string_view.h"
+#include "common/text/token_info.h"
 #include "verilog/CST/expression.h"
-#include "verilog/CST/verilog_matchers.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {

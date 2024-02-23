@@ -15,9 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TABS_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TABS_RULE_H_
 
-#include <cstddef>
 #include <set>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"

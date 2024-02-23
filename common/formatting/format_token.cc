@@ -22,9 +22,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/macros.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/display_utils.h"
+#include "common/strings/position.h"
 #include "common/strings/range.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"

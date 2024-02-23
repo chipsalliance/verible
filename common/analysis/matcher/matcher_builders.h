@@ -15,9 +15,7 @@
 #ifndef VERIBLE_COMMON_ANALYSIS_MATCHER_MATCHER_BUILDERS_H_
 #define VERIBLE_COMMON_ANALYSIS_MATCHER_MATCHER_BUILDERS_H_
 
-#include <algorithm>
 #include <array>
-#include <iterator>
 #include <utility>
 
 #include "common/analysis/matcher/descent_path.h"

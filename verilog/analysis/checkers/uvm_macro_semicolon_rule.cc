@@ -25,8 +25,10 @@
 #include "common/text/token_info.h"
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/macro.h"
+#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {

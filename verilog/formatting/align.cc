@@ -25,6 +25,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/position.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -36,6 +37,7 @@
 #include "verilog/CST/context_functions.h"
 #include "verilog/CST/declaration.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/formatting/format_style.h"
 #include "verilog/parser/verilog_token_classifications.h"
 #include "verilog/parser/verilog_token_enum.h"
 

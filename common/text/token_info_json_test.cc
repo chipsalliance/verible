@@ -20,6 +20,7 @@
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
 #include "gtest/gtest.h"
+#include "nlohmann/json.hpp"
 
 namespace verible {
 namespace {

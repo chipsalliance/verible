@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBIDDEN_ANONYMOUS_STRUCTS_UNIONS_RULE_H_  // NOLINT
 
 #include <set>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"

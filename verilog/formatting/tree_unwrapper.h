@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_FORMATTING_TREE_UNWRAPPER_H_
 
 #include <algorithm>
-#include <functional>
 #include <memory>
 #include <vector>
 

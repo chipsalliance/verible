@@ -16,7 +16,6 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ONE_MODULE_PER_FILE_RULE_H_
 
 #include <set>
-#include <string>
 
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"

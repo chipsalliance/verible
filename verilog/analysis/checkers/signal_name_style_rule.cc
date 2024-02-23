@@ -27,7 +27,6 @@
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
 #include "verilog/CST/data.h"
-#include "verilog/CST/identifier.h"
 #include "verilog/CST/net.h"
 #include "verilog/CST/port.h"
 #include "verilog/CST/verilog_matchers.h"

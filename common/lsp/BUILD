@@ -25,6 +25,7 @@ cc_library(
         "//common/util:status-macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -35,6 +36,7 @@ cc_test(
         ":message-stream-splitter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -51,7 +53,7 @@ cc_library(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         "//common/util:logging",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@jsonhpp",
     ],
 )
@@ -66,8 +68,7 @@ cc_test(
     features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":json-rpc-dispatcher",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
         "@jsonhpp",
@@ -113,6 +114,7 @@ cc_library(
         "//common/strings:utf8",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -124,6 +126,7 @@ cc_test(
         ":lsp-protocol",
         ":lsp-text-buffer",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -135,6 +138,7 @@ cc_library(
     hdrs = ["lsp-file-utils.h"],
     deps = [
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -156,6 +160,7 @@ cc_binary(
         ":message-stream-splitter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@jsonhpp",
     ],
 )

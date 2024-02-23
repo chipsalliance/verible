@@ -23,12 +23,9 @@
 
 #include <vector>
 
-#include "common/analysis/syntax_tree_search.h"
-#include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
 #undef ASSERT_OK

@@ -18,7 +18,6 @@ cc_library(
     name = "auto-pop-stack",
     hdrs = ["auto_pop_stack.h"],
     deps = [
-        ":iterator-adaptors",
         ":logging",
         "@com_google_absl//absl/base:core_headers",
     ],
@@ -50,6 +49,7 @@ cc_library(
         "//common/strings:compare",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -74,6 +74,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -103,18 +104,18 @@ cc_library(
     hdrs = ["init_command_line.h"],
     deps = [
         # these deps are needed by init_command_line.cc:
-        ":build-version",  # buildcleaner: keep
-        "@com_google_absl//absl/debugging:failure_signal_handler",  # buildcleaner: keep
-        "@com_google_absl//absl/debugging:symbolize",  # buildcleaner: keep
-        "@com_google_absl//absl/flags:config",  # buildcleaner: keep
-        "@com_google_absl//absl/flags:flag",  # buildcleaner: keep
-        "@com_google_absl//absl/flags:parse",  # buildcleaner: keep
-        "@com_google_absl//absl/flags:usage",  # buildcleaner: keep
+        ":build-version",
+        "@com_google_absl//absl/debugging:failure_signal_handler",
+        "@com_google_absl//absl/debugging:symbolize",
+        "@com_google_absl//absl/flags:config",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/log:globals",
         "@com_google_absl//absl/base:log_severity",
-        "@com_google_absl//absl/log:initialize",  # buildcleaner: keep
+        "@com_google_absl//absl/log:initialize",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",  # buildcleaner: keep
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -124,6 +125,7 @@ cc_library(
     deps = [
         ":forward",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -146,6 +148,7 @@ cc_library(
         ":logging",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -232,16 +235,14 @@ cc_library(
         ":bijective-map",
         "//common/strings:compare",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
 cc_library(
     name = "bijective-map",
     hdrs = ["bijective_map.h"],
-    deps = [
-        ":forward",
-        ":logging",
-    ],
+    deps = [":logging"],
 )
 
 cc_library(
@@ -251,7 +252,6 @@ cc_library(
         ":container-proxy",
         ":iterator-range",
         ":logging",
-        ":type-traits",
     ],
 )
 
@@ -285,7 +285,7 @@ cc_library(
     deps = [
         ":tree-operations",
         ":vector-tree",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -297,7 +297,6 @@ cc_library(
         ":iterator-range",
         ":logging",
         ":tree-operations",
-        ":vector-tree",
     ],
 )
 
@@ -319,9 +318,7 @@ cc_library(
     name = "user-interaction",
     srcs = ["user_interaction.cc"],
     hdrs = ["user_interaction.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 cc_library(
@@ -335,7 +332,7 @@ cc_test(
     deps = [
         ":algorithm",
         ":iterator-range",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -370,6 +367,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -391,7 +389,7 @@ cc_test(
     deps = [
         ":interval-map",
         ":range",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -403,7 +401,6 @@ cc_test(
     deps = [
         ":interval",
         ":interval-set",
-        ":iterator-range",
         ":logging",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
@@ -416,7 +413,7 @@ cc_test(
     srcs = ["forward_test.cc"],
     deps = [
         ":forward",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -428,7 +425,7 @@ cc_test(
     deps = [
         ":iterator-range",
         ":range",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -499,6 +496,7 @@ cc_test(
         ":subcommand",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -540,6 +538,7 @@ cc_test(
     deps = [
         ":enum-flags",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -567,6 +566,7 @@ cc_test(
         ":vector-tree",
         ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -606,6 +606,7 @@ cc_test(
         ":vector-tree",
         ":vector-tree-test-util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -634,7 +635,7 @@ cc_test(
     deps = [
         ":map-tree",
         ":spacer",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -645,7 +646,6 @@ cc_test(
     srcs = ["with_reason_test.cc"],
     deps = [
         ":with-reason",
-        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -681,6 +681,7 @@ cc_library(
     deps = [
         "//third_party/portable_endian",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@zlib",
     ],
 )
@@ -691,7 +692,7 @@ cc_test(
     deps = [
         ":file-util",
         ":simple-zip",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -703,6 +704,7 @@ cc_library(
     hdrs = ["sha256.h"],
     deps = [
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -712,6 +714,7 @@ cc_test(
     deps = [
         ":sha256",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

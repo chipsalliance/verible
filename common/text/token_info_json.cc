@@ -18,6 +18,7 @@
 #include <string>
 
 #include "common/text/token_info.h"
+#include "nlohmann/json.hpp"
 
 namespace verible {
 

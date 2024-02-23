@@ -31,7 +31,6 @@
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
-#include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "common/util/status_macros.h"
 #include "verilog/parser/verilog_lexer.h"

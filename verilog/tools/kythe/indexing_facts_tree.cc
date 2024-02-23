@@ -19,11 +19,8 @@
 #include <string>
 #include <tuple>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
-#include "common/util/range.h"
 #include "common/util/tree_operations.h"
 
 namespace verilog {

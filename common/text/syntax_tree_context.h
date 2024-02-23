@@ -20,7 +20,6 @@
 #include <functional>
 #include <initializer_list>
 #include <iterator>
-#include <vector>
 
 #include "common/text/concrete_syntax_tree.h"
 #include "common/util/auto_pop_stack.h"
