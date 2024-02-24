@@ -22,7 +22,7 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/lexer/lexer_test_util.h"
-#include "gtest/gtest.h"
+#include "common/text/token_info_test_util.h"
 
 namespace verible {
 

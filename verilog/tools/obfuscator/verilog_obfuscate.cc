@@ -26,12 +26,15 @@
 #include <string>   // for string, allocator, etc
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/obfuscator.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "verilog/analysis/extractors.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 #include "verilog/transform/obfuscate.h"
 
 using verible::IdentifierObfuscator;

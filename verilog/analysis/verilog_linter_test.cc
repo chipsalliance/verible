@@ -37,6 +37,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
 #include "common/analysis/violation_handler.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"

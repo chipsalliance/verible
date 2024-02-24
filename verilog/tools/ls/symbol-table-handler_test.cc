@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
@@ -27,6 +28,7 @@
 #include "common/util/file_util.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_project.h"
+#include "verilog/tools/ls/lsp-parse-buffer.h"
 
 namespace verilog {
 namespace {

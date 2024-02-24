@@ -20,6 +20,7 @@
 
 #include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 #undef EXPECT_OK
 #define EXPECT_OK(value) EXPECT_TRUE((value).ok())

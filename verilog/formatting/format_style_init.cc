@@ -15,7 +15,10 @@
 #include "verilog/formatting/format_style_init.h"
 
 #include "absl/flags/flag.h"
+#include "common/formatting/align.h"
+#include "common/formatting/basic_format_style.h"
 #include "common/formatting/basic_format_style_init.h"
+#include "verilog/formatting/format_style.h"
 
 using verible::AlignmentPolicy;
 using verible::IndentationStyle;

@@ -18,6 +18,7 @@
 #include <initializer_list>
 
 #include "absl/strings/string_view.h"
+#include "common/util/interval.h"
 #include "common/util/interval_set.h"
 
 namespace verible {

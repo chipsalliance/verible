@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -38,11 +39,13 @@
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"
 #include "common/strings/range.h"
+#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/expandable_tree_view.h"
 #include "common/util/interval.h"
+#include "common/util/interval_set.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"

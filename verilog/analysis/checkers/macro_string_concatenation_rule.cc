@@ -17,12 +17,14 @@
 #include <cstddef>
 
 #include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
 #include "common/text/token_info.h"
 #include "common/util/value_saver.h"
 #include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 #include "verilog/parser/verilog_lexer.h"
 #include "verilog/parser/verilog_token_classifications.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 namespace analysis {

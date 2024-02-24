@@ -67,6 +67,7 @@ cc_test(
     srcs = ["diff_test.cc"],
     deps = [
         ":diff",
+        ":position",
         "//external_libs:editscript",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
@@ -117,6 +118,7 @@ cc_test(
         ":random",
         "//common/util:bijective-map",
         "//common/util:logging",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -165,6 +167,7 @@ cc_library(
         "//common/util:logging",
         "//common/util:status-macros",
         "//common/util:user-interaction",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -177,6 +180,7 @@ cc_test(
     srcs = ["patch_test.cc"],
     deps = [
         ":patch",
+        ":position",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -191,6 +195,7 @@ cc_library(
     srcs = ["position.cc"],
     hdrs = ["position.h"],
     deps = [
+        "//common/util:interval",
         "//common/util:interval-set",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -213,6 +218,7 @@ cc_library(
     hdrs = ["random.h"],
     deps = [
         "//common/util:interval-set",
+        "//common/util:iterator-range",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
     ],

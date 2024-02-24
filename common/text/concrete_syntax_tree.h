@@ -42,6 +42,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "common/text/constants.h"
 #include "common/text/symbol.h"      // IWYU pragma: export
 #include "common/text/symbol_ptr.h"  // IWYU pragma: export

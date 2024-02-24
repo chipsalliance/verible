@@ -24,6 +24,7 @@
 #include "common/text/concrete_syntax_tree.h"  // IWYU pragma: export
 #include "common/text/symbol.h"                // IWYU pragma: export
 #include "common/text/token_info.h"
+#include "common/text/visitors.h"
 
 namespace verilog {
 

@@ -24,10 +24,10 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
 #include "common/lsp/lsp-text-buffer.h"
 #include "common/util/logging.h"
 #include "verilog/analysis/verilog_analyzer.h"
-#include "verilog/analysis/verilog_linter.h"
 
 // ParseBuffer and BufferTrackerContainer are tracking fully parsed content
 // and are corresponding to verible::lsp::EditTextBuffer and

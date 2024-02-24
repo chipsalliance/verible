@@ -17,7 +17,10 @@
 #include <iterator>
 #include <vector>
 
+#include "common/formatting/format_token.h"
 #include "common/text/concrete_syntax_leaf.h"
+#include "common/text/symbol.h"
+#include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_context_visitor.h"
 

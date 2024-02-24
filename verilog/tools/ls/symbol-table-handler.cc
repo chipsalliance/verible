@@ -25,7 +25,9 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
@@ -33,6 +35,7 @@
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/strings/line_column_map.h"
+#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "common/util/file_util.h"
@@ -40,7 +43,9 @@
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "verilog/analysis/symbol_table.h"
+#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_filelist.h"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/ls/lsp-conversion.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 

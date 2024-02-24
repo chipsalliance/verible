@@ -29,6 +29,7 @@ cc_binary(
         "//common/util:user-interaction",
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],

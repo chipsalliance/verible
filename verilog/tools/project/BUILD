@@ -22,6 +22,7 @@ cc_binary(
         "//common/util:subcommand",
         "//verilog/analysis:dependencies",
         "//verilog/analysis:symbol-table",
+        "//verilog/analysis:verilog-filelist",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:usage",

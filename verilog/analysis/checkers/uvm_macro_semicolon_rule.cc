@@ -18,6 +18,7 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"

@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "common/lsp/lsp-protocol.h"
-#include "verilog/analysis/symbol_table.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 #include "verilog/tools/ls/symbol-table-handler.h"
 

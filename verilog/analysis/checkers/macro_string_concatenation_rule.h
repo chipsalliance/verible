@@ -17,6 +17,7 @@
 
 #include <set>
 
+#include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"

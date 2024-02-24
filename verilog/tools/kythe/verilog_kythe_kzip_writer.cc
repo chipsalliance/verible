@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/util/file_util.h"

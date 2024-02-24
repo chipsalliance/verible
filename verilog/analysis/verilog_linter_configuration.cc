@@ -26,6 +26,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -41,6 +42,7 @@
 #include "common/util/logging.h"
 #include "common/util/status_macros.h"
 #include "verilog/analysis/default_rules.h"
+#include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {

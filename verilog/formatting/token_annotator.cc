@@ -23,6 +23,7 @@
 #include "common/formatting/format_token.h"
 #include "common/formatting/tree_annotator.h"
 #include "common/strings/range.h"
+#include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"

@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/linter_test_utils.h"

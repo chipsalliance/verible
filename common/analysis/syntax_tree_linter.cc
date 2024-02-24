@@ -22,6 +22,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
+#include "common/text/tree_context_visitor.h"
 #include "common/util/logging.h"
 
 namespace verible {

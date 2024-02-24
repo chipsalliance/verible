@@ -36,6 +36,7 @@
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/text/token_info.h"

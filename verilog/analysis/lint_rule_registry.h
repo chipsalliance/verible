@@ -34,7 +34,6 @@
 #include <set>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/analysis/text_structure_lint_rule.h"

@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 

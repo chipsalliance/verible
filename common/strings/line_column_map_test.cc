@@ -16,6 +16,7 @@
 
 #include "common/strings/line_column_map.h"
 
+#include <cstring>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <vector>
 

@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
@@ -31,8 +32,12 @@
 #include "common/formatting/unwrapped_line.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/position.h"
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
+#include "common/text/symbol_ptr.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"

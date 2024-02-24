@@ -33,6 +33,7 @@
 #include "common/util/algorithm.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/iterator_adaptors.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 #include "common/util/top_n.h"

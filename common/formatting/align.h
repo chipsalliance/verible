@@ -24,9 +24,11 @@
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
+#include "common/formatting/unwrapped_line.h"
 #include "common/strings/position.h"  // for ByteOffsetSet
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/symbol.h"
 #include "common/text/token_info.h"
-#include "common/text/token_stream_view.h"  // for TokenRange
 #include "common/text/tree_context_visitor.h"
 #include "common/text/tree_utils.h"  // for GetRightmostLeaf
 #include "common/util/logging.h"

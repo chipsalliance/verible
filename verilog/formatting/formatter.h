@@ -22,6 +22,7 @@
 #include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
+#include "common/util/interval.h"
 #include "verilog/formatting/format_style.h"
 
 namespace verilog {

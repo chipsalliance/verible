@@ -18,7 +18,6 @@
 #include <cstddef>
 
 #include "absl/strings/string_view.h"
-#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 

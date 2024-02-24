@@ -19,11 +19,14 @@
 
 #include <vector>
 
+#include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 namespace verilog {
 

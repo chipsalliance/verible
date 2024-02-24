@@ -20,6 +20,7 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/range.h"
 #include "gtest/gtest.h"

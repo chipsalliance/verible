@@ -26,6 +26,7 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/value_saver.h"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
 #include "verilog/parser/verilog_parser.h"     // for verilog_symbol_name

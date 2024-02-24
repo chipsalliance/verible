@@ -29,11 +29,13 @@
 #include <utility>
 
 #include "absl/container/fixed_array.h"
+#include "absl/log/log.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "common/util/value_saver.h"

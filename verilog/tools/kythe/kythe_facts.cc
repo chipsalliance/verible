@@ -22,6 +22,7 @@
 #include "absl/hash/hash.h"
 #include "absl/log/check.h"
 #include "absl/strings/escaping.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/util/spacer.h"
 

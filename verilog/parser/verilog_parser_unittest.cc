@@ -24,6 +24,7 @@
 #include "common/parser/bison_parser_common.h"
 #include "common/parser/parser_test_util.h"
 #include "common/text/constants.h"
+#include "common/text/parser_verifier.h"
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_test_util.h"
@@ -33,6 +34,7 @@
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
 #include "verilog/parser/verilog_token_enum.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 

@@ -21,6 +21,7 @@
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line_test_utils.h"
+#include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
 #include "common/util/container_iterator_range.h"

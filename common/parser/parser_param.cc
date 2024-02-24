@@ -26,6 +26,7 @@
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
+#include "common/util/casts.h"
 #include "common/util/logging.h"
 
 namespace verible {

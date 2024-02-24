@@ -20,6 +20,7 @@
 
 #include "verilog/formatting/formatter.h"
 
+#include <cctype>
 #include <cstddef>
 #include <memory>
 #include <sstream>
@@ -28,11 +29,14 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
+#include "common/formatting/basic_format_style.h"
 #include "common/strings/display_utils.h"
 #include "common/strings/position.h"
 #include "common/text/text_structure.h"
+#include "common/util/interval.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

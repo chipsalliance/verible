@@ -25,12 +25,16 @@
 #include <utility>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/tree_unwrapper.h"
 #include "common/formatting/unwrapped_line.h"
+#include "common/strings/display_utils.h"
 #include "common/strings/range.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -43,6 +47,7 @@
 #include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
 #include "common/util/enum_flags.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/tree_operations.h"
 #include "verilog/CST/declaration.h"

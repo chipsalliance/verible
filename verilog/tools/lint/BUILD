@@ -14,6 +14,36 @@ package(
     features = ["layering_check"],
 )
 
+# SystemVerilog-parser based linter
+cc_binary(
+    name = "verible-verilog-lint",
+    srcs = ["verilog_lint.cc"],
+    features = STATIC_EXECUTABLES_FEATURE +
+               select({
+                   "//bazel:static_linked_executables": ["-supports_start_end_lib"],
+                   "//conditions:default": [],
+               }),
+    linkopts = select({
+        "//bazel:static_linked_executables": ["-fuse-ld=bfd"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/analysis:lint-rule-status",
+        "//common/analysis:violation-handler",
+        "//common/util:enum-flags",
+        "//common/util:init-command-line",
+        "//common/util:iterator-range",
+        "//common/util:logging",
+        "//verilog/analysis:verilog-linter",
+        "//verilog/analysis:verilog-linter-configuration",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
 # Integration tests for different flags and configurations
 # These tests help confirm that rules' cc_libraries are properly alwayslink-ed.
 # TODO(fangism): re-organize this into structs instead of tuples,
@@ -224,34 +254,6 @@ verilog_syntax.test(
     name = "verilog-syntax-lexer-fail_test",
     srcs = ["testdata/bad-id-lex.sv"],
     expect_fail = True,
-)
-
-# SystemVerilog-parser based linter
-cc_binary(
-    name = "verible-verilog-lint",
-    srcs = ["verilog_lint.cc"],
-    features = STATIC_EXECUTABLES_FEATURE +
-               select({
-                   "//bazel:static_linked_executables": ["-supports_start_end_lib"],
-                   "//conditions:default": [],
-               }),
-    linkopts = select({
-        "//bazel:static_linked_executables": ["-fuse-ld=bfd"],
-        "//conditions:default": [],
-    }),
-    visibility = ["//visibility:public"],
-    deps = [
-        "//common/analysis:violation-handler",
-        "//common/util:enum-flags",
-        "//common/util:file-util",
-        "//common/util:init-command-line",
-        "//common/util:logging",
-        "//verilog/analysis:verilog-linter",
-        "//verilog/analysis:verilog-linter-configuration",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-    ],
 )
 
 sh_test_with_runfiles_lib(

@@ -23,11 +23,13 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/token_info_json.h"
+#include "common/text/visitors.h"
 #include "common/util/value_saver.h"
 #include "nlohmann/json.hpp"
 #include "verilog/CST/verilog_nonterminals.h"  // for NodeEnumToString
 #include "verilog/parser/verilog_token.h"
 #include "verilog/parser/verilog_token_classifications.h"
+#include "verilog/parser/verilog_token_enum.h"
 
 using nlohmann::json;
 

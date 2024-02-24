@@ -21,11 +21,15 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/file_analyzer.h"
+#include "common/analysis/lint_rule_status.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol-operators.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/util/interval.h"
 #include "nlohmann/json.hpp"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_linter.h"
@@ -36,6 +40,7 @@
 #include "verilog/tools/ls/autoexpand.h"
 #include "verilog/tools/ls/document-symbol-filler.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
 
 namespace verilog {
 // Convert our representation of a linter violation to a LSP-Diagnostic

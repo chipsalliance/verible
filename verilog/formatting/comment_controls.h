@@ -21,7 +21,6 @@
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"  // for ByteOffsetSet, LineNumberSet
 #include "common/text/token_stream_view.h"
-#include "common/util/interval_set.h"
 
 namespace verilog {
 namespace formatter {

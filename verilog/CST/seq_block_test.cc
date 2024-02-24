@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"

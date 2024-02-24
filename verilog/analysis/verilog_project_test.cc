@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -28,6 +29,7 @@
 #include "common/util/range.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/module.h"
+#include "verilog/analysis/verilog_analyzer.h"
 
 namespace verilog {
 namespace {
