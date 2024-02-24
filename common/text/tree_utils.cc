@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -28,6 +29,7 @@
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/visitors.h"
+#include "common/util/casts.h"
 #include "common/util/iterator_adaptors.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"

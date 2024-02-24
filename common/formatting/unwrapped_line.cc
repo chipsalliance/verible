@@ -26,9 +26,11 @@
 #include "absl/strings/str_join.h"
 #include "common/formatting/format_token.h"
 #include "common/strings/display_utils.h"
+#include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_utils.h"
 #include "common/util/container_iterator_range.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 

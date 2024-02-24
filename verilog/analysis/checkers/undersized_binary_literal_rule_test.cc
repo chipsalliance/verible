@@ -16,6 +16,7 @@
 
 #include <initializer_list>
 
+#include "absl/status/status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "gtest/gtest.h"

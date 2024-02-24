@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/status/status.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -32,6 +33,7 @@
 #include "common/util/logging.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
+#include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {

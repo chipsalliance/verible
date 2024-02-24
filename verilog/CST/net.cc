@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "common/analysis/matcher/inner_match_handlers.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"

@@ -30,9 +30,11 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
 #include "common/analysis/violation_handler.h"
 #include "common/util/enum_flags.h"
 #include "common/util/init_command_line.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"  // for operator<<, LOG, LogMessage, etc
 #include "verilog/analysis/verilog_linter.h"
 #include "verilog/analysis/verilog_linter_configuration.h"

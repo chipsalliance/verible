@@ -22,6 +22,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
 #include "gtest/gtest.h"

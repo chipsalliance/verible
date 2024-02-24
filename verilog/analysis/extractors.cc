@@ -17,11 +17,14 @@
 #include <set>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "verilog/CST/identifier.h"
 #include "verilog/CST/module.h"
 #include "verilog/analysis/verilog_analyzer.h"
+#include "verilog/preprocessor/verilog_preprocess.h"
 
 namespace verilog {
 namespace analysis {

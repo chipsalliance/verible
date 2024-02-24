@@ -46,6 +46,7 @@ cc_test(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:tree-builder-test-util",
+        "//common/util:casts",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -112,6 +113,7 @@ cc_test(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:tree-builder-test-util",
+        "//common/util:casts",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -124,6 +126,7 @@ cc_library(
     deps = [
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
+        "//common/util:casts",
     ],
 )
 
@@ -137,6 +140,7 @@ cc_test(
         "//common/text:symbol",
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
+        "//common/util:casts",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

@@ -20,6 +20,8 @@
 #include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
+#include "common/util/iterator_range.h"
 #include "common/util/logging.h"
 
 namespace verible {

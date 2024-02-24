@@ -32,11 +32,18 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
+#include "absl/status/status.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common/analysis/syntax_tree_search.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/strings/line_column_map.h"
+#include "common/strings/position.h"
+#include "common/text/symbol.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "re2/re2.h"
 #include "verilog/CST/declaration.h"
@@ -47,9 +54,12 @@
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"  // IWYU pragma: keep
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/formatting/format_style.h"
 #include "verilog/formatting/format_style_init.h"
 #include "verilog/formatting/formatter.h"
+#include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
 
 namespace verilog {
 using verible::FindLastSubtree;

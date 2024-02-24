@@ -30,6 +30,7 @@
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol-enums.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/strings/line_column_map.h"
 #include "common/util/file_util.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"

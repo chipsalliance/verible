@@ -26,8 +26,11 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 #include "common/lsp/lsp-protocol.h"
+#include "common/strings/line_column_map.h"
+#include "common/text/symbol.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/symbol_table.h"
+#include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/ls/lsp-parse-buffer.h"
 

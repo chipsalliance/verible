@@ -15,6 +15,7 @@
 #include "verilog/analysis/checkers/truncated_numeric_literal_rule.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <set>
@@ -28,6 +29,7 @@
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"

@@ -16,7 +16,9 @@
 
 #include <initializer_list>
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "gtest/gtest.h"
 #include "verilog/analysis/verilog_analyzer.h"

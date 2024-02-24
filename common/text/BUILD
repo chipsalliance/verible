@@ -89,6 +89,7 @@ cc_library(
         ":token-info",
         ":tree-compare",
         ":visitors",
+        "//common/util:casts",
         "//common/util:logging",
     ],
 )
@@ -118,6 +119,7 @@ cc_library(
         "//common/util:casts",
         "//common/util:iterator-range",
         "//common/util:logging",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -194,6 +196,7 @@ cc_library(
     srcs = ["tree_context_visitor.cc"],
     hdrs = ["tree_context_visitor.h"],
     deps = [
+        ":concrete-syntax-tree",
         ":syntax-tree-context",
         ":visitors",
         "//common/strings:display-utils",
@@ -205,6 +208,10 @@ cc_test(
     name = "tree-context-visitor_test",
     srcs = ["tree_context_visitor_test.cc"],
     deps = [
+        ":concrete-syntax-leaf",
+        ":concrete-syntax-tree",
+        ":symbol-ptr",
+        ":syntax-tree-context",
         ":tree-builder-test-util",
         ":tree-context-visitor",
         "@com_google_absl//absl/strings:string_view",
@@ -223,11 +230,13 @@ cc_library(
         ":symbol",
         ":token-info",
         ":visitors",
+        "//common/util:casts",
         "//common/util:iterator-adaptors",
         "//common/util:logging",
         "//common/util:spacer",
         "//common/util:type-traits",
         "//common/util:value-saver",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
@@ -252,6 +261,7 @@ cc_test(
     name = "tree-builder-test-util_test",
     srcs = ["tree_builder_test_util_test.cc"],
     deps = [
+        ":symbol-ptr",
         ":tree-builder-test-util",
         ":tree-utils",
         "@com_google_googletest//:gtest",
@@ -332,6 +342,7 @@ cc_library(
     hdrs = ["constants.h"],
     # TODO(fangism): minimize direct exposure of constants
     visibility = [
+        "//common/analysis:__pkg__",
         "//common/formatting:__pkg__",
         "//common/lexer:__pkg__",
         "//verilog/CST:__pkg__",
@@ -371,6 +382,7 @@ cc_test(
         ":symbol",
         ":tree-builder-test-util",
         ":tree-compare",
+        "//common/util:casts",
         "//common/util:logging",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
@@ -448,6 +460,7 @@ cc_test(
     srcs = ["text_structure_test.cc"],
     deps = [
         ":concrete-syntax-tree",
+        ":constants",
         ":symbol",
         ":text-structure",
         ":text-structure-test-utils",

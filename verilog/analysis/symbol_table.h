@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/compare.h"
 #include "common/text/symbol.h"

@@ -28,6 +28,7 @@
 #include "common/strings/line_column_map.h"
 #include "common/strings/position.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
 #include "common/util/logging.h"
 #include "common/util/range.h"
 #include "common/util/spacer.h"

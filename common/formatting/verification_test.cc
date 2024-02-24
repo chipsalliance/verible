@@ -14,7 +14,9 @@
 
 #include "common/formatting/verification.h"
 
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "common/strings/position.h"
 #include "gtest/gtest.h"
 
 namespace verible {

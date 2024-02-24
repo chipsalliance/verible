@@ -30,6 +30,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
+#include "common/strings/mem_block.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"

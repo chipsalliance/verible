@@ -14,6 +14,7 @@
 
 #include "verilog/tools/ls/verilog-language-server.h"
 
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -22,6 +23,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/lsp/lsp-file-utils.h"
 #include "common/lsp/lsp-protocol.h"
@@ -29,7 +31,10 @@
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
 #include "nlohmann/json.hpp"
+#include "verilog/analysis/verilog_project.h"
 #include "verilog/tools/ls/hover.h"
+#include "verilog/tools/ls/lsp-parse-buffer.h"
+#include "verilog/tools/ls/symbol-table-handler.h"
 #include "verilog/tools/ls/verible-lsp-adapter.h"
 
 ABSL_FLAG(bool, variables_in_outline, true,

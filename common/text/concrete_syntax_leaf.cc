@@ -21,6 +21,7 @@
 #include "common/text/symbol.h"
 #include "common/text/tree_compare.h"
 #include "common/text/visitors.h"
+#include "common/util/casts.h"
 #include "common/util/logging.h"
 
 namespace verible {

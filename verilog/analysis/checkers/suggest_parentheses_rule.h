@@ -17,7 +17,10 @@
 
 #include <set>
 
+#include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
+#include "common/text/concrete_syntax_tree.h"
+#include "common/text/syntax_tree_context.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {

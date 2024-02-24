@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"

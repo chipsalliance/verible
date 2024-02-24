@@ -18,6 +18,8 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "common/analysis/lint_rule_status.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/verilog_nonterminals.h"

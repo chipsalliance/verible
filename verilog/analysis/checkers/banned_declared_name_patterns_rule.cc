@@ -25,6 +25,7 @@
 #include "verilog/CST/module.h"
 #include "verilog/CST/package.h"
 #include "verilog/CST/verilog_nonterminals.h"
+#include "verilog/analysis/descriptions.h"
 #include "verilog/analysis/lint_rule_registry.h"
 
 namespace verilog {

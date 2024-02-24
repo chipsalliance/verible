@@ -28,6 +28,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
+#include "common/formatting/format_token.h"
 #include "common/formatting/layout_optimizer_internal.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/token_partition_tree_test_utils.h"
@@ -35,7 +36,9 @@
 #include "common/formatting/unwrapped_line_test_utils.h"
 #include "common/strings/split.h"
 #include "common/text/token_info.h"
+#include "common/util/iterator_range.h"
 #include "common/util/spacer.h"
+#include "common/util/tree_operations.h"
 #include "gtest/gtest.h"
 
 namespace verible {

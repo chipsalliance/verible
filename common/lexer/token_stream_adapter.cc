@@ -21,6 +21,7 @@
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"
+#include "common/text/token_stream_view.h"
 
 namespace verible {
 

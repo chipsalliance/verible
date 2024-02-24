@@ -19,6 +19,10 @@
 #include <vector>
 
 #include "absl/strings/string_view.h"
+#include "common/text/concrete_syntax_leaf.h"
+#include "common/text/concrete_syntax_tree.h"
+#include "common/text/symbol_ptr.h"
+#include "common/text/syntax_tree_context.h"
 #include "common/text/tree_builder_test_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
