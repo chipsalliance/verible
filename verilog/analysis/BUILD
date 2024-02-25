@@ -75,7 +75,7 @@ cc_library(
         "//common/analysis:file-analyzer",
         "//common/strings:line-column-map",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 
@@ -132,7 +132,7 @@ cc_test(
         "//common/util:logging",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 

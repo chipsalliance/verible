@@ -1,0 +1,11 @@
+--- a/BUILD.bazel	2024-02-25 09:22:53.424710790 -0800
++++ b/BUILD.bazel	2024-02-25 09:24:49.771990947 -0800
+@@ -5,7 +5,7 @@
+ exports_files(["LICENSE"])
+ 
+ cc_library(
+-    name = "jsonhpp",
++    name = "json",  # Be the same for WORKSPACE and MODULE.bazel
+     hdrs = [
+         "single_include/nlohmann/json.hpp",
+     ],
