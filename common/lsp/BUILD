@@ -54,7 +54,7 @@ cc_library(
     deps = [
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 
@@ -71,7 +71,7 @@ cc_test(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 
@@ -161,7 +161,7 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 
@@ -175,7 +175,7 @@ cc_binary(
         ":message-stream-splitter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp",
+        "@jsonhpp//:json",
     ],
 )
 
