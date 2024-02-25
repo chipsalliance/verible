@@ -74,10 +74,18 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install Dependencies
+    - name: Get latest clang-tidy
       run: |
-        apt -qqy update
-        apt -qq -y install clang-tidy-11 clang-tidy-15 build-essential git wget
+        apt -qq -y update
+        apt -qq -y install wget software-properties-common gpg lsb-release
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x ./llvm.sh
+        ./llvm.sh 17
+
+    - name: Install other Dependencies
+      run: |
+        apt -qq -y install clang-tidy-11 clang-tidy-17 build-essential git wget
         source ./.github/settings.sh
         ./.github/bin/install-bazel.sh
 
@@ -106,8 +114,7 @@ jobs:
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
 
-        # Exclude misc-include-cleaner for now as code is not ready yet.
-        CLANG_TIDY=clang-tidy-15 ./.github/bin/run-clang-tidy-cached.cc --checks="-misc-include-cleaner" \
+        CLANG_TIDY=clang-tidy-17 ./.github/bin/run-clang-tidy-cached.cc \
             || ( cat verible_clang-tidy.out ; exit 1)
 
     - name: 📤 Upload performance graphs
