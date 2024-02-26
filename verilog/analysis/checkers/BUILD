@@ -21,6 +21,7 @@ cc_library(
         ":case-missing-default-rule",
         ":constraint-name-style-rule",
         ":create-object-name-match-rule",
+        ":dff-name-style-rule",
         ":disable-statement-rule",
         ":endif-comment-rule",
         ":enum-name-style-rule",
@@ -2177,6 +2178,45 @@ cc_test(
         "//common/analysis:syntax-tree-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "dff-name-style-rule",
+    srcs = ["dff_name_style_rule.cc"],
+    hdrs = ["dff_name_style_rule.h"],
+    deps = [
+        "//common/analysis:lint-rule-status",
+        "//common/analysis:syntax-tree-lint-rule",
+        "//common/analysis/matcher",
+        "//common/analysis/matcher:bound-symbol-manager",
+        "//common/strings:naming-utils",
+        "//common/text:config-utils",
+        "//common/text:symbol",
+        "//common/text:syntax-tree-context",
+        "//common/text:token-info",
+        "//verilog/CST:statement",
+        "//verilog/CST:verilog-matchers",
+        "//verilog/analysis:descriptions",
+        "//verilog/analysis:lint-rule-registry",
+        "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "dff-name-style-rule_test",
+    srcs = ["dff_name_style_rule_test.cc"],
+    deps = [
+        ":dff-name-style-rule",
+        "//common/analysis:linter-test-utils",
+        "//common/analysis:syntax-tree-linter-test-utils",
+        "//common/text:symbol",
+        "//verilog/CST:verilog-nonterminals",
+        "//verilog/analysis:verilog-analyzer",
+        "//verilog/parser:verilog-token-enum",
         "@com_google_googletest//:gtest_main",
     ],
 )
