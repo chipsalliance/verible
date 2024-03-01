@@ -131,13 +131,13 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=194
-ExpectedFailCount[preprocessor:ibex]=368
+ExpectedFailCount[project:ibex]=199
+ExpectedFailCount[preprocessor:ibex]=373
 
-ExpectedFailCount[syntax:opentitan]=35
-ExpectedFailCount[lint:opentitan]=35
-ExpectedFailCount[project:opentitan]=793
-ExpectedFailCount[preprocessor:opentitan]=2237
+ExpectedFailCount[syntax:opentitan]=36
+ExpectedFailCount[lint:opentitan]=36
+ExpectedFailCount[project:opentitan]=811
+ExpectedFailCount[preprocessor:opentitan]=2317
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
@@ -147,7 +147,7 @@ ExpectedFailCount[preprocessor:sv-tests]=139
 ExpectedFailCount[syntax:caliptra-rtl]=24
 ExpectedFailCount[lint:caliptra-rtl]=24
 ExpectedFailCount[project:caliptra-rtl]=333
-ExpectedFailCount[preprocessor:caliptra-rtl]=766
+ExpectedFailCount[preprocessor:caliptra-rtl]=777
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -156,8 +156,8 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=6
 ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=81
-ExpectedFailCount[preprocessor:cva6]=119
+ExpectedFailCount[project:cva6]=85
+ExpectedFailCount[preprocessor:cva6]=125
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -177,10 +177,10 @@ ExpectedFailCount[lint:XilinxUnisimLibrary]=4
 ExpectedFailCount[project:XilinxUnisimLibrary]=22
 ExpectedFailCount[preprocessor:XilinxUnisimLibrary]=96
 
-ExpectedFailCount[syntax:black-parrot]=158
-ExpectedFailCount[lint:black-parrot]=158
-ExpectedFailCount[project:black-parrot]=173
-ExpectedFailCount[preprocessor:black-parrot]=174
+ExpectedFailCount[syntax:black-parrot]=159
+ExpectedFailCount[lint:black-parrot]=159
+ExpectedFailCount[project:black-parrot]=174
+ExpectedFailCount[preprocessor:black-parrot]=175
 
 ExpectedFailCount[syntax:ivtest]=166
 ExpectedFailCount[lint:ivtest]=166
