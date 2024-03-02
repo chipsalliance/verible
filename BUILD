@@ -4,7 +4,6 @@
 # Run tests with
 #  bazel test ...
 
-load("@com_github_google_rules_install//installer:def.bzl", "installer")
 load("@rules_license//rules:license.bzl", "license")
 
 package(
@@ -47,12 +46,10 @@ filegroup(
     ],
 )
 
-installer(
+# Installing; see README.md
+alias(
     name = "install",
-    data = [
-        ":install-binaries",
-        ":install-scripts",
-    ],
+    actual = "//bazel:install",
 )
 
 genrule(
@@ -63,19 +60,4 @@ genrule(
     tools = [
         "//verilog/tools/lint:verible-verilog-lint",
     ],
-)
-
-extra_action(
-    name = "extractor",
-    cmd = ("/opt/kythe/extractors/bazel_cxx_extractor " +
-           "$(EXTRA_ACTION_FILE) $(output $(ACTION_ID).cxx.kzip) $(location :vnames.json)"),
-    data = [":vnames.json"],
-    out_templates = ["$(ACTION_ID).cxx.kzip"],
-)
-
-action_listener(
-    name = "extract_cxx",
-    extra_actions = [":extractor"],
-    mnemonics = ["CppCompile"],
-    visibility = ["//visibility:public"],
 )
