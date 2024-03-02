@@ -28,7 +28,9 @@ Functionality that relies directly on this structure should be isolated under
 //verilog/CST/... (concrete syntax tree) and unit-tested accordingly.
 **/
 
+#include <cstddef>
 #include <utility>
+#include <type_traits>  // std::is_same
 
 #include "common/parser/bison_parser_common.h"
 #include "common/text/tree_utils.h"
@@ -64,7 +66,6 @@ Functionality that relies directly on this structure should be isolated under
 
 namespace verilog {
 
-using verible::ParserParam;
 using verible::MakeNode;
 using verible::MakeTaggedNode;
 using verible::ExtendNode;
