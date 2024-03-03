@@ -37,4 +37,4 @@ build:asan --linkopt -fsanitize=address
 
 build:create_static_linked_executables --linkopt=-fuse-ld=bfd --features=-supports_start_end_lib --//bazel:create_static_linked_executables
 
-try-import %workspace%/.user.bazelrc
+try-import %workspace%/user.bazelrc

@@ -11,3 +11,4 @@ verible_clang-tidy.out
 # Local user config
 .envrc
 .direnv
+user.bazelrc
