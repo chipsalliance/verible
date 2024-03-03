@@ -1,5 +1,4 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
-load("@pip//:requirements.bzl", "requirement")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -15,7 +14,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//third_party/py/dataclasses",
-        requirement("anytree"),
+        "@python_anytree//:anytree",
     ],
 )
 
@@ -41,7 +40,7 @@ py_binary(
     srcs_version = "PY3",
     deps = [
         ":verible-verilog-syntax-py",
-        requirement("anytree"),
+        "@python_anytree//:anytree",
     ],
 )
 
@@ -55,6 +54,6 @@ py_binary(
     srcs_version = "PY3",
     deps = [
         ":verible-verilog-syntax-py",
-        requirement("anytree"),
+        "@python_anytree//:anytree",
     ],
 )

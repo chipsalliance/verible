@@ -9,21 +9,6 @@ bazel_dep(name = "rules_license", version = "0.0.8")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 
-bazel_dep(name = "rules_python", version = "0.31.0")
-python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python_version = "3.11"
-python.toolchain(
-    python_version = python_version,
-    is_default = True,
-)
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "pip",
-    python_version = python_version,
-    requirements_lock = "//:requirements.txt",
-)
-use_repo(pip, "pip")
-
 # Register m4 rules and toolchain.
 bazel_dep(name = "rules_m4", version = "0.2.3")
 m4 = use_extension(
@@ -78,6 +63,8 @@ bazel_dep(name = "re2", version = "2023-09-01", repo_name="com_googlesource_code
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name="com_google_googletest")
 
 bazel_dep(name = "protobuf", version = "25.2", repo_name="com_google_protobuf")
+# This override can be removed once https://registry.bazel.build/modules/protobuf
+# supports a compatible protobuf version for abseil.
 archive_override(
     module_name = "protobuf",
     urls = [
