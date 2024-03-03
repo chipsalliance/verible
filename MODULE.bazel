@@ -8,7 +8,21 @@ bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(name = "rules_license", version = "0.0.8")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
 bazel_dep(name = "rules_cc", version = "0.0.9")
+
 bazel_dep(name = "rules_python", version = "0.31.0")
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python_version = "3.11"
+python.toolchain(
+    python_version = python_version,
+    is_default = True,
+)
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pip",
+    python_version = python_version,
+    requirements_lock = "//:requirements.txt",
+)
+use_repo(pip, "pip")
 
 # Register m4 rules and toolchain.
 bazel_dep(name = "rules_m4", version = "0.2.3")
