@@ -3,6 +3,7 @@
 tags
 releasing/out
 coverage-html/
+__pycache__/
 
 compile_commands.json
 run-clang-tidy-cached
