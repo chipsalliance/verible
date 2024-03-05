@@ -157,15 +157,6 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies")
 rules_proto_dependencies()
 
 http_archive(
-    name = "rules_python",
-    sha256 = "778197e26c5fbeb07ac2a2c5ae405b30f6cb7ad1f5510ea6fdac03bded96cc6f",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_python/releases/download/0.2.0/rules_python-0.2.0.tar.gz",
-        "https://github.com/bazelbuild/rules_python/releases/download/0.2.0/rules_python-0.2.0.tar.gz",
-    ],
-)
-
-http_archive(
     name = "jsonhpp",
     build_file = "//bazel:jsonhpp.BUILD",
     patch_args = ["-p1"],
@@ -176,26 +167,6 @@ http_archive(
     strip_prefix = "json-3.11.3",
     urls = [
         "https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.tar.gz",
-    ],
-)
-
-http_archive(
-    name = "python_six",
-    build_file = "//bazel:python_six.BUILD",
-    sha256 = "30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
-    strip_prefix = "six-1.15.0",
-    urls = [
-        "https://files.pythonhosted.org/packages/6b/34/415834bfdafca3c5f451532e8a8d9ba89a21c9743a0c59fbd0205c7f9426/six-1.15.0.tar.gz",
-    ],
-)
-
-http_archive(
-    name = "python_anytree",
-    build_file = "//bazel:python_anytree.BUILD",
-    sha256 = "79ee0cc74456950003287b0b5c7b76b7d09435563a31d9e553da484325043e1f",
-    strip_prefix = "anytree-2.8.0",
-    urls = [
-        "https://github.com/c0fec0de/anytree/archive/2.8.0.tar.gz",
     ],
 )
 
