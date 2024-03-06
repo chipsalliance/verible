@@ -1,5 +1,6 @@
 *~
 /bazel-*
+MODULE.bazel.lock
 tags
 releasing/out
 coverage-html/
