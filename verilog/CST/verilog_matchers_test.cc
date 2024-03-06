@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -788,5 +788,44 @@ TEST(VerilogMatchers, HasDefaultCaseTests) {
   }
 }
 
+// Tests for HasUniqueQualifier matching.
+TEST(VerilogMatchers, HasUniqueQualifierTests) {
+  const RawMatcherTestCase tests[] = {
+      {HasUniqueQualifier(), "", 0},
+      {HasUniqueQualifier(),
+       R"(
+       function automatic int foo (input in);
+         case (in)
+           default: return 0;
+         endcase
+       endfunction
+       )",
+       0},
+      {HasUniqueQualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique case (in)
+           1: return 0;
+         endcase
+       endfunction
+       )",
+       1},
+      {HasUniqueQualifier(),
+       R"(
+       function automatic int foo (input in);
+         unique if (in) begin
+           return 0;
+         end
+         else if(!in) begin
+           return 1;
+         end
+       endfunction
+       )",
+       1},
+  };
+  for (const auto &test : tests) {
+    verible::matcher::RunRawMatcherTestCase<VerilogAnalyzer>(test);
+  }
+}
 }  // namespace
 }  // namespace verilog
