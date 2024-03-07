@@ -15,11 +15,13 @@
 #include "common/analysis/lint_rule_status.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <iterator>
 #include <ostream>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 

@@ -37,6 +37,7 @@ cc_library(
         ":forbidden-symbol-rule",
         ":generate-label-prefix-rule",
         ":generate-label-rule",
+        ":instance-shadow-rule",
         ":interface-name-style-rule",
         ":legacy-generate-region-rule",
         ":legacy-genvar-declaration-rule",
@@ -71,7 +72,6 @@ cc_library(
         ":uvm-macro-semicolon-rule",
         ":v2001-generate-begin-rule",
         ":void-cast-rule",
-        ":instance-shadow-rule",
     ],
     alwayslink = 1,
 )
@@ -2041,6 +2041,7 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
 cc_library(
     name = "instance-shadow-rule",
     srcs = ["instance_shadow_rule.cc"],
@@ -2049,17 +2050,19 @@ cc_library(
         "//common/analysis:citation",
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
+        "//common/analysis:syntax-tree-search",
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound-symbol-manager",
-        "//common/analysis/matcher:core-matchers",
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
+        "//common/text:tree-utils",
+        "//common/util:iterator-adaptors",
+        "//verilog/CST:identifier",
         "//verilog/CST:verilog-matchers",
         "//verilog/CST:verilog-nonterminals",
-        "//verilog/CST:identifier",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -2070,17 +2073,17 @@ cc_test(
     deps = [
         ":instance-shadow-rule",
         "//common/analysis:linter-test-utils",
+        "//common/analysis:syntax-tree-linter",
         "//common/analysis:syntax-tree-linter-test-utils",
-        "//common/text:symbol",
-        "//verilog/CST:verilog-nonterminals",
-        "//verilog/CST:verilog-treebuilder-utils",
+        "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )
-
-
 
 cc_library(
     name = "legacy-genvar-declaration-rule",

@@ -15,13 +15,15 @@
 #include "verilog/analysis/checkers/instance_shadow_rule.h"
 
 #include <initializer_list>
+#include <memory>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/linter_test_utils.h"
+#include "common/analysis/syntax_tree_linter.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
-#include "common/text/symbol.h"
+#include "common/util/logging.h"
 #include "gtest/gtest.h"
-#include "verilog/CST/verilog_nonterminals.h"
-#include "verilog/CST/verilog_treebuilder_utils.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/parser/verilog_token_enum.h"
 
