@@ -143,7 +143,6 @@ cc_library(
     deps = [
         ":basic-format-style",
         ":format-token",
-        ":line-wrap-searcher",
         ":token-partition-tree",
         ":unwrapped-line",
         "//common/util:container-iterator-range",
