@@ -1,7 +1,6 @@
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 http_archive(
     name = "rules_license",
@@ -126,6 +125,18 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
 bison_register_toolchains()
 
+# We, but also protobuf needs zlib. Make sure we define it first.
+http_archive(
+    name = "zlib",
+    build_file = "//bazel:zlib.BUILD",
+    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+    strip_prefix = "zlib-1.3.1",
+    urls = [
+        "https://zlib.net/zlib-1.3.1.tar.gz",
+        "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
+    ],
+)
+
 http_archive(
     name = "com_google_protobuf",
     patch_args = ["-p1"],
@@ -177,17 +188,3 @@ http_archive(
 load("@rules_compdb//:deps.bzl", "rules_compdb_deps")
 
 rules_compdb_deps()
-
-# zlib is imported through protobuf. Make the dependency explicit considering
-# it's used outside protobuf.
-maybe(
-    http_archive,
-    name = "zlib",
-    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
-    strip_prefix = "zlib-1.3.1",
-    urls = [
-        "https://zlib.net/zlib-1.3.1.tar.gz",
-        "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
-    ],
-)
