@@ -113,9 +113,9 @@ cc_library(
     deps = [
         ":constants",
         ":symbol",
+        ":symbol-ptr",
         ":tree-compare",
         ":visitors",
-        "//common/text:symbol-ptr",
         "//common/util:casts",
         "//common/util:iterator-range",
         "//common/util:logging",

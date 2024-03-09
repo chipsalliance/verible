@@ -116,10 +116,12 @@ cc_library(
     name = "verilog-extractor-indexing-fact-type",
     srcs = [
         "verilog_extractor_indexing_fact_type.cc",
-        "verilog_extractor_indexing_fact_type_foreach.inc",
         "verilog_extractor_indexing_fact_type_foreach-gen.inc",
     ],
-    hdrs = ["verilog_extractor_indexing_fact_type.h"],
+    hdrs = [
+        "verilog_extractor_indexing_fact_type.h",
+        "verilog_extractor_indexing_fact_type_foreach.inc",
+    ],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -225,8 +227,6 @@ cc_library(
 cc_binary(
     name = "verible-verilog-kythe-extractor",
     srcs = [
-        "verilog_extractor_indexing_fact_type_foreach.inc",
-        "verilog_extractor_indexing_fact_type_foreach-gen.inc",
         "verilog_kythe_extractor.cc",
     ],
     features = STATIC_EXECUTABLES_FEATURE,
@@ -237,22 +237,17 @@ cc_binary(
         ":kythe-facts",
         ":kythe-facts-extractor",
         ":kythe-proto-output",
-        "//common/util:bijective-map",
         "//common/util:enum-flags",
-        "//common/util:file-util",
         "//common/util:init-command-line",
         "//common/util:logging",
         "//common/util:tree-operations",
-        "//verilog/analysis:verilog-analyzer",
         "//verilog/analysis:verilog-filelist",
         "//verilog/analysis:verilog-project",
         "//verilog/analysis/checkers:verilog-lint-rules",
-        "//verilog/parser:verilog-parser",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_absl//absl/types:span",
     ],
 )
 

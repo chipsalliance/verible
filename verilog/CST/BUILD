@@ -32,11 +32,11 @@ cc_library(
     name = "verilog-nonterminals",
     srcs = [
         "verilog_nonterminals.cc",
-        "verilog_nonterminals_foreach.inc",
         "verilog_nonterminals_foreach-gen.inc",
     ],
     hdrs = [
         "verilog_nonterminals.h",
+        "verilog_nonterminals_foreach.inc",
     ],
     deps = [
         "//common/text:constants",
