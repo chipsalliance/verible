@@ -835,6 +835,33 @@ TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
   }
 }
 
+TEST(RuleBundleTest, ParseRuleBundleDontWarnIfNoConfig) {
+  constexpr absl::string_view text = "test-rule-1,\ntest-rule-1";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(success) << error;
+    EXPECT_THAT(error, testing::Not(testing::HasSubstr(kRepeatedFlagMessage)))
+        << error;  // don't warn about overriden config if there is no value
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  }
+}
+
+TEST(RuleBundleTest, ParseRuleBundleWarnConfigOverride) {
+  constexpr absl::string_view text = "test-rule-1=a,\ntest-rule-1=b";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(!success) << error;
+    EXPECT_THAT(error, testing::HasSubstr(kRepeatedFlagMessage))
+        << error;  // warning: configuration being overriden
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+    EXPECT_EQ("b", bundle.rules["test-rule-1"].configuration);
+  }
+}
+
 // ConfigureFromOptions Tests
 TEST(ConfigureFromOptionsTest, Basic) {
   LinterConfiguration config;

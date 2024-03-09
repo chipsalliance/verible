@@ -43,6 +43,12 @@ struct RuleSetting {
 // encountered while parsing a configuration
 inline constexpr absl::string_view kInvalidFlagMessage = "[ERR] Invalid flag";
 
+// Warning to be shown when we parse a configuration file that configures the
+// same rule more than once.
+inline constexpr absl::string_view kRepeatedFlagMessage =
+    "[WARN] Repeated flag in the configuration. Last provided value will be "
+    "used";
+
 // Warning to be shown when an stray comma is
 // encountered while parsing a configuration
 inline constexpr absl::string_view kStrayCommaWarning =
