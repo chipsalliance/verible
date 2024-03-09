@@ -7,7 +7,6 @@
 # [2]: https://www.jsonrpc.org/specification
 
 load("//bazel:sh_test_with_runfiles_lib.bzl", "sh_test_with_runfiles_lib")
-load("//common/tools:jcxxgen.bzl", "jcxxgen")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -75,11 +74,18 @@ cc_test(
     ],
 )
 
-jcxxgen(
+genrule(
+    name = "lsp-protocol-gen",
+    srcs = ["lsp-protocol.yaml"],
+    outs = ["lsp-protocol.h"],
+    cmd = "$(location :jcxxgen) --class_namespace verible::lsp --output $@ $<",
+    tools = [":jcxxgen"],
+)
+
+cc_library(
     name = "lsp-protocol",
-    src = "lsp-protocol.yaml",
-    out = "lsp-protocol.h",
-    namespace = "verible::lsp",
+    hdrs = ["lsp-protocol.h"],
+    deps = ["@jsonhpp//:json"],
 )
 
 cc_library(
@@ -192,4 +198,48 @@ sh_test_with_runfiles_lib(
         ":json-rpc-expect",
     ],
     deps = [],
+)
+
+cc_binary(
+    name = "jcxxgen",
+    srcs = ["jcxxgen.cc"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/util:init-command-line",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_googlesource_code_re2//:re2",
+    ],
+)
+
+genrule(
+    name = "jcxxgen-testfile-gen",
+    srcs = ["jcxxgen-testfile.yaml"],
+    outs = ["jcxxgen-testfile.h"],
+    cmd = "$(location :jcxxgen) --class_namespace verible::test --output $@ $<",
+    tools = [":jcxxgen"],
+)
+
+cc_library(
+    name = "jcxxgen-testfile",
+    hdrs = ["jcxxgen-testfile.h"],
+    deps = ["@jsonhpp//:json"],
+)
+
+cc_test(
+    name = "jcxxgen_test",
+    srcs = ["jcxxgen_test.cc"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-fexceptions"],
+    }),
+    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
+    deps = [
+        ":jcxxgen-testfile",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+        "@jsonhpp//:json",
+    ],
 )
