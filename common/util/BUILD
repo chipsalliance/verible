@@ -680,7 +680,6 @@ cc_library(
     hdrs = ["simple_zip.h"],
     deps = [
         "//third_party/portable_endian",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
         "@zlib",
     ],
