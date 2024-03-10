@@ -34,7 +34,6 @@ cc_library(
         "//common/util:vector-tree",
         "//common/util:vector-tree-iterators",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -60,7 +59,6 @@ cc_test(
         "//common/util:spacer",
         "//common/util:value-saver",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -70,10 +68,7 @@ cc_library(
     name = "basic-format-style",
     srcs = ["basic_format_style.cc"],
     hdrs = ["basic_format_style.h"],
-    deps = [
-        "//common/util:enum-flags",
-        "@com_google_absl//absl/strings:string_view",
-    ],
+    deps = ["//common/util:enum-flags"],
 )
 
 cc_library(
@@ -114,7 +109,6 @@ cc_library(
         "//common/util:spacer",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -127,7 +121,6 @@ cc_test(
         "//common/strings:position",
         "//common/text:token-info",
         "//common/util:range",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -154,7 +147,6 @@ cc_library(
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -181,7 +173,6 @@ cc_test(
         "//common/util:vector-tree",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -210,7 +201,6 @@ cc_library(
         "//common/util:top-n",
         "//common/util:tree-operations",
         "//common/util:vector-tree",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -247,7 +237,6 @@ cc_test(
         "//common/util:tree-operations",
         "//common/util:vector-tree",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -283,7 +272,6 @@ cc_library(
         ":unwrapped-line",
         "//common/text:constants",
         "//common/text:token-info",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -298,7 +286,6 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "//common/util:container-iterator-range",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -332,7 +319,6 @@ cc_test(
         "//common/text:tree-builder-test-util",
         "//common/util:iterator-range",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -359,7 +345,6 @@ cc_library(
         "//common/util:tree-operations",
         "//common/util:value-saver",
         "//common/util:vector-tree",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -379,7 +364,6 @@ cc_test(
         "//common/util:container-iterator-range",
         "//common/util:range",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -401,7 +385,6 @@ cc_library(
         "//common/util:iterator-adaptors",
         "//common/util:iterator-range",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -431,7 +414,6 @@ cc_test(
         ":unwrapped-line-test-utils",
         "//common/text:token-info",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -462,7 +444,6 @@ cc_library(
         "//common/strings:position",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

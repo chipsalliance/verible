@@ -21,11 +21,11 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
@@ -93,7 +93,7 @@ static std::ostream& operator<<(std::ostream& stream,
   const auto& dest(*container.begin());
 
 // Shorthand for asserting that a symbol table lookup from
-// (const SymbolTableNode& scope) using (absl::string_view key) must succeed,
+// (const SymbolTableNode& scope) using (std::string_view key) must succeed,
 // and is captured as (const SymbolTableNode& dest).
 // Most of the time, the tester is not interested in the found_* iterator.
 // This also defines 'dest##_info' as the SymbolInfo value attached to the
@@ -433,7 +433,7 @@ TEST(BuildSymbolTableTest, IntegrityCheckDeclaredType) {
 }
 
 TEST(BuildSymbolTableTest, InvalidSyntax) {
-  constexpr absl::string_view invalid_codes[] = {
+  constexpr std::string_view invalid_codes[] = {
       "module;\nendmodule\n",
   };
   for (const auto& code : invalid_codes) {
@@ -459,7 +459,7 @@ TEST(BuildSymbolTableTest, InvalidSyntax) {
 
 TEST(BuildSymbolTableTest, AvoidCrashFromFuzzer) {
   // All that matters is that these test cases do not trigger crashes.
-  constexpr absl::string_view codes[] = {
+  constexpr std::string_view codes[] = {
       // some of these test cases come from fuzz testing
       // and may contain syntax errors
       "`e(C*C);\n",              // expect two distinct reference trees
@@ -528,7 +528,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalNetsVariables) {
             nullptr);  // there is no module meta-type
   EXPECT_EMPTY_STATUSES(build_diagnostics);
 
-  static constexpr absl::string_view members[] = {"w1", "w2", "l1", "l2"};
+  static constexpr std::string_view members[] = {"w1", "w2", "l1", "l2"};
   for (const auto& member : members) {
     MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
     EXPECT_EQ(member_node_info.metatype,
@@ -576,7 +576,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationLocalDuplicateNets) {
 }
 
 TEST(BuildSymbolTableTest, ModuleDeclarationConditionalGenerateAnonymous) {
-  constexpr absl::string_view source_variants[] = {
+  constexpr std::string_view source_variants[] = {
       // with begin/end
       "module m;\n"
       "  if (1) begin\n"
@@ -721,7 +721,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationWithPorts) {
   EXPECT_EQ(module_node_info.declared_type.syntax_origin,
             nullptr);  // there is no module meta-type
 
-  static constexpr absl::string_view members[] = {"clk", "q"};
+  static constexpr std::string_view members[] = {"clk", "q"};
   for (const auto& member : members) {
     MUST_ASSIGN_LOOKUP_SYMBOL(member_node, module_node, member);
     EXPECT_EQ(member_node_info.metatype,
@@ -749,7 +749,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationMultiple) {
   const auto build_diagnostics = BuildSymbolTable(src, &symbol_table);
   EXPECT_EMPTY_STATUSES(build_diagnostics);
 
-  const absl::string_view expected_modules[] = {"m1", "m2"};
+  const std::string_view expected_modules[] = {"m1", "m2"};
   for (const auto& expected_module : expected_modules) {
     MUST_ASSIGN_LOOKUP_SYMBOL(module_node, root_symbol, expected_module);
     EXPECT_EQ(module_node_info.metatype, SymbolMetaType::kModule);
@@ -889,7 +889,7 @@ TEST(BuildSymbolTableTest, ModuleDeclarationNestedDuplicate) {
 
 TEST(BuildSymbolTableTest, ModuleInstance) {
   // The following code variants should yield the same symbol table results:
-  static constexpr absl::string_view source_variants[] = {
+  static constexpr std::string_view source_variants[] = {
       // pp defined earlier in file
       "module pp;\n"
       "endmodule\n"
@@ -1034,7 +1034,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceUndefined) {
 }
 
 TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
-  static constexpr absl::string_view source_variants[] = {
+  static constexpr std::string_view source_variants[] = {
       // The following all yield equivalent symbol tables bindings.
       "module pp;\n"
       "endmodule\n"
@@ -1091,7 +1091,7 @@ TEST(BuildSymbolTableTest, ModuleInstanceTwoInSameDecl) {
     }
 
     // "r1" and "r2" are both instances of type "pp"
-    static constexpr absl::string_view pp_instances[] = {"r1", "r2"};
+    static constexpr std::string_view pp_instances[] = {"r1", "r2"};
     for (const auto& pp_inst : pp_instances) {
       MUST_ASSIGN_LOOKUP_SYMBOL(rr, qq, pp_inst);
       EXPECT_TRUE(rr_info.local_references_to_bind.empty());
@@ -8108,7 +8108,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectOneFileAtATime) {
   VerilogProject project(sources_dir, {/* no include path */});
 
   // Linear dependency chain between 3 files.  Order arbitrarily chosen.
-  constexpr absl::string_view  //
+  constexpr std::string_view  //
       text1(
           "module ss;\n"
           "  qq qq_inst();\n"  // instance
@@ -8264,7 +8264,7 @@ TEST(BuildSymbolTableTest, ModuleInstancesFromProjectFilesGood) {
   VerilogProject project(sources_dir, {/* no include path */});
 
   // Linear dependency chain between 3 files.  Order arbitrarily chosen.
-  constexpr absl::string_view  //
+  constexpr std::string_view  //
       text1(
           "module ss;\n"
           "  qq qq_inst();\n"  // instance
@@ -9227,8 +9227,8 @@ TEST(BuildSymbolTableTest, ModulePortDeclarationTypeMultilineWithPortList) {
 }
 
 struct FileListTestCase {
-  absl::string_view contents;
-  std::vector<absl::string_view> expected_files;
+  std::string_view contents;
+  std::vector<std::string_view> expected_files;
 };
 
 TEST(ParseSourceFileListFromFileTest, FileNotFound) {

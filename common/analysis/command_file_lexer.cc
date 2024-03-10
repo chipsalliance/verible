@@ -15,9 +15,9 @@
 #include "common/analysis/command_file_lexer.h"
 
 #include <algorithm>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/lexer/token_stream_adapter.h"
 #include "common/text/token_info.h"
 #include "common/text/token_stream_view.h"
@@ -26,7 +26,7 @@
 
 namespace verible {
 
-CommandFileLexer::CommandFileLexer(absl::string_view config)
+CommandFileLexer::CommandFileLexer(std::string_view config)
     : parent_lexer_type(config) {
   const auto lex_status = MakeTokenSequence(
       this, config, &tokens_, [&](const TokenInfo &error_token) {

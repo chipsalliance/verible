@@ -19,11 +19,11 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -89,18 +89,17 @@ const SyntaxTreeLeaf *GetLeftmostLeaf(const Symbol &symbol) {
   return nullptr;
 }
 
-absl::string_view StringSpanOfSymbol(const Symbol &symbol) {
+std::string_view StringSpanOfSymbol(const Symbol &symbol) {
   return StringSpanOfSymbol(symbol, symbol);
 }
 
-absl::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym) {
+std::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym) {
   const auto *left = GetLeftmostLeaf(lsym);
   const auto *right = GetRightmostLeaf(rsym);
   if (left != nullptr && right != nullptr) {
     const auto range_begin = left->get().text().begin();
     const auto range_end = right->get().text().end();
-    return absl::string_view(range_begin,
-                             std::distance(range_begin, range_end));
+    return std::string_view(range_begin, std::distance(range_begin, range_end));
   }
   return "";
 }
@@ -356,7 +355,7 @@ ConcreteSyntaxTree *LeftSubtree(ConcreteSyntaxTree *tree) {
 }  // namespace
 
 ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
-                                   absl::string_view trim_range) {
+                                   std::string_view trim_range) {
   if (*tree == nullptr) return nullptr;
 
   const auto left_offset = trim_range.begin();
@@ -373,7 +372,7 @@ ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
   return match;
 }
 
-void TrimSyntaxTree(ConcreteSyntaxTree *tree, absl::string_view trim_range) {
+void TrimSyntaxTree(ConcreteSyntaxTree *tree, std::string_view trim_range) {
   auto *replacement = ZoomSyntaxTree(tree, trim_range);
   if (replacement == nullptr || *replacement == nullptr) {
     *tree = nullptr;

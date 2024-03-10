@@ -24,12 +24,12 @@
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <string_view>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/obfuscator.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
@@ -63,7 +63,7 @@ ABSL_FLAG(                                   //
     bool, preserve_builtin_functions, true,  //
     "If true, preserve built-in function names such as sin(), ceil()..");
 
-static constexpr absl::string_view kBuiltinFunctions[] = {
+static constexpr std::string_view kBuiltinFunctions[] = {
     "abs",  "acos", "acosh", "asin", "asinh", "atan",  "atan2", "atanh",
     "ceil", "cos",  "cosh",  "exp",  "floor", "hypot", "ln",    "log",
     "pow",  "sin",  "sinh",  "sqrt", "tan",   "tanh",
@@ -131,7 +131,7 @@ Output is written to stdout.
   }
 
   if (absl::GetFlag(FLAGS_preserve_builtin_functions)) {
-    for (const absl::string_view f : kBuiltinFunctions) {
+    for (const std::string_view f : kBuiltinFunctions) {
       subst.encode(f, f);
     }
   }

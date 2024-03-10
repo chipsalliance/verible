@@ -16,9 +16,9 @@
 #define VERIBLE_COMMON_FORMATTING_UNWRAPPED_LINE_TEST_UTILS_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/unwrapped_line.h"
 #include "common/text/constants.h"
@@ -56,8 +56,8 @@ class UnwrappedLineMemoryHandler {
   // Points to the end of joined_token_text_ string buffer.
   // Same concept as TextStructureView::EOFToken().
   TokenInfo EOFToken() const {
-    const absl::string_view s(joined_token_text_);
-    return TokenInfo(verible::TK_EOF, absl::string_view(s.end(), 0));
+    const std::string_view s(joined_token_text_);
+    return TokenInfo(verible::TK_EOF, std::string_view(s.end(), 0));
   }
 
  protected:

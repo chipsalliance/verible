@@ -21,10 +21,10 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
@@ -36,21 +36,21 @@
 
 namespace verible {
 
-std::string AutoFix::Apply(absl::string_view base) const {
+std::string AutoFix::Apply(std::string_view base) const {
   std::string result;
   auto prev_start = base.cbegin();
   for (const auto& edit : edits_) {
     CHECK_LE(base.cbegin(), edit.fragment.cbegin());
     CHECK_GE(base.cend(), edit.fragment.cend());
 
-    const absl::string_view text_before(
+    const std::string_view text_before(
         prev_start, std::distance(prev_start, edit.fragment.cbegin()));
     absl::StrAppend(&result, text_before, edit.replacement);
 
     prev_start = edit.fragment.cend();
   }
-  const absl::string_view text_after(prev_start,
-                                     std::distance(prev_start, base.cend()));
+  const std::string_view text_after(prev_start,
+                                    std::distance(prev_start, base.cend()));
   return absl::StrCat(result, text_after);
 }
 
@@ -74,7 +74,7 @@ static TokenInfo SymbolToToken(const Symbol& root) {
   return TokenInfo::EOFToken();
 }
 
-LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
+LintViolation::LintViolation(const Symbol& root, std::string_view reason,
                              const SyntaxTreeContext& context,
                              const std::vector<AutoFix>& autofixes)
     : root(&root),
@@ -85,8 +85,8 @@ LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
 
 void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                                                const LintRuleStatus& status,
-                                               absl::string_view base,
-                                               absl::string_view path) const {
+                                               std::string_view base,
+                                               std::string_view path) const {
   for (const auto& violation : status.violations) {
     FormatViolation(stream, violation, base, path, status.url,
                     status.lint_rule_name);
@@ -96,8 +96,8 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
 
 void LintStatusFormatter::FormatLintRuleStatuses(
     std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
-    absl::string_view base, absl::string_view path,
-    const std::vector<absl::string_view>& lines) const {
+    std::string_view base, std::string_view path,
+    const std::vector<std::string_view>& lines) const {
   std::set<LintViolationWithStatus> violations;
 
   // TODO(fangism): rewrite as a linear time merge of pre-ordered sub-sequences
@@ -127,10 +127,10 @@ void LintStatusFormatter::FormatLintRuleStatuses(
 // Path is file path of original file and url is a link to violated rule
 void LintStatusFormatter::FormatViolation(std::ostream* stream,
                                           const LintViolation& violation,
-                                          absl::string_view base,
-                                          absl::string_view path,
-                                          absl::string_view url,
-                                          absl::string_view rule_name) const {
+                                          std::string_view base,
+                                          std::string_view path,
+                                          std::string_view url,
+                                          std::string_view rule_name) const {
   // TODO(fangism): Use the context member to print which named construct or
   // design element the violation appears in (or full stack thereof).
   const verible::LineColumnRange range{
@@ -144,9 +144,8 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
 // Formats and outputs violation to a file stream in a syntax accepted by
 // --waiver_files flag. Path is file path of original file
 void LintStatusFormatter::FormatViolationWaiver(
-    std::ostream* stream, const LintViolation& violation,
-    absl::string_view base, absl::string_view path,
-    absl::string_view rule_name) const {
+    std::ostream* stream, const LintViolation& violation, std::string_view base,
+    std::string_view path, std::string_view rule_name) const {
   const verible::LineColumnRange range{
       line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
       line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};

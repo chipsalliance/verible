@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
 #include "common/util/logging.h"
@@ -80,7 +80,7 @@ Output: Produces Kythe KZip (https://kythe.io/docs/kythe-kzip.html).
     return 1;
   }
   // Normalize the file list
-  absl::string_view filelist_root = verible::file::Dirname(filelist_path);
+  std::string_view filelist_root = verible::file::Dirname(filelist_path);
   for (std::string &file_path : filelist.file_paths) {
     file_path = verible::file::JoinPath(filelist_root, file_path);
   }

@@ -15,9 +15,9 @@
 #include "verilog/analysis/checkers/forbidden_anonymous_structs_unions_rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -39,9 +39,9 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousStructsUnionsRule);
 
-static constexpr absl::string_view kMessageStruct =
+static constexpr std::string_view kMessageStruct =
     "struct definitions always should be named using typedef.";
-static constexpr absl::string_view kMessageUnion =
+static constexpr std::string_view kMessageUnion =
     "union definitions always should be named using typedef.";
 
 const LintRuleDescriptor &ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
@@ -58,7 +58,7 @@ const LintRuleDescriptor &ForbiddenAnonymousStructsUnionsRule::GetDescriptor() {
 }
 
 absl::Status ForbiddenAnonymousStructsUnionsRule::Configure(
-    absl::string_view configuration) {
+    std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,

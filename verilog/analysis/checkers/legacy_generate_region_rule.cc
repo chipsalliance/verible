@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/legacy_generate_region_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -39,7 +39,7 @@ using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::matcher::EqualTagPredicate;
 
-static constexpr absl::string_view kMessage = "Do not use generate regions.";
+static constexpr std::string_view kMessage = "Do not use generate regions.";
 
 const LintRuleDescriptor &LegacyGenerateRegionRule::GetDescriptor() {
   static const LintRuleDescriptor d{

@@ -16,10 +16,10 @@
 #define VERIBLE_COMMON_ANALYSIS_TEXT_STRUCTURE_LINTER_TEST_UTILS_H_
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/text_structure_lint_rule.h"
@@ -37,7 +37,7 @@ class LintRunner<TextStructureLintRule> {
   }
 
   LintRuleStatus Run(const TextStructureView &text_structure,
-                     absl::string_view filename) {
+                     std::string_view filename) {
     linter_.Lint(text_structure, filename);
     // Looking for one type of rule violation at a time.
     CHECK_EQ(linter_.ReportStatus().size(), 1);

@@ -15,7 +15,7 @@
 #ifndef VERIBLE_COMMON_STRINGS_COMPARE_H_
 #define VERIBLE_COMMON_STRINGS_COMPARE_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
@@ -29,7 +29,7 @@ struct StringViewCompare {
   using is_transparent = void;
 
   // Works on anything that is implicitly convertible to string_view.
-  bool operator()(absl::string_view a, absl::string_view b) const {
+  bool operator()(std::string_view a, std::string_view b) const {
     return a < b;
   }
 };

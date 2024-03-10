@@ -16,15 +16,15 @@
 
 #include <cstddef>
 #include <initializer_list>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 
 namespace verible {
 
-constexpr absl::string_view kDontCareText("");
+constexpr std::string_view kDontCareText("");
 
 SymbolPtr XLeaf(int token_enum) { return Leaf(token_enum, kDontCareText); }
 

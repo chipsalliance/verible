@@ -15,9 +15,9 @@
 #include "common/lexer/lexer_test_util.h"
 
 #include <ostream>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/logging.h"
 

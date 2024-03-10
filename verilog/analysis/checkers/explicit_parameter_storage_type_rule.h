@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_EXPLICIT_PARAMETER_STORAGE_TYPE_RULE_H_
 
 #include <set>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -41,7 +41,7 @@ class ExplicitParameterStorageTypeRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
  private:
   // TODO(hzeller): would other exempt types be interesting?

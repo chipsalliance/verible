@@ -17,8 +17,7 @@
 
 #include <iosfwd>
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
@@ -60,7 +59,7 @@ enum class IndentationStyle {
 
 std::ostream &operator<<(std::ostream &, IndentationStyle);
 
-bool AbslParseFlag(absl::string_view, IndentationStyle *, std::string *);
+bool AbslParseFlag(std::string_view, IndentationStyle *, std::string *);
 
 std::string AbslUnparseFlag(const IndentationStyle &);
 

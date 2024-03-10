@@ -14,7 +14,8 @@
 
 #include "common/text/tree_compare.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "common/text/symbol.h"
 #include "common/text/token_info.h"
 

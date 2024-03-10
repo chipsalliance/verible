@@ -18,9 +18,9 @@
 #include <cstddef>
 #include <iosfwd>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/token_info.h"
@@ -129,13 +129,13 @@ struct PreFormatToken {
   int Length() const { return token->text().length(); }
 
   // Returns the text of the TokenInfo token held by this PreFormatToken
-  absl::string_view Text() const { return token->text(); }
+  std::string_view Text() const { return token->text(); }
 
   // Returns the enum of the TokenInfo token held by this PreFormatToken
   int TokenEnum() const { return token->token_enum(); }
 
   // Reconstructs the original spacing that preceded this token.
-  absl::string_view OriginalLeadingSpaces() const;
+  std::string_view OriginalLeadingSpaces() const;
 
   // Returns OriginalLeadingSpaces().length() - before.spaces_required.
   // If there is no leading spaces text, return 0.
@@ -168,7 +168,7 @@ void ConnectPreFormatTokensPreservedSpaceStarts(
 // as the base reference for 'disabled_byte_ranges' offsets.
 void PreserveSpacesOnDisabledTokenRanges(
     std::vector<PreFormatToken> *ftokens,
-    const ByteOffsetSet &disabled_byte_ranges, absl::string_view base_text);
+    const ByteOffsetSet &disabled_byte_ranges, std::string_view base_text);
 
 using FormatTokenRange =
     container_iterator_range<std::vector<PreFormatToken>::const_iterator>;
@@ -218,7 +218,7 @@ struct FormattedToken {
       : token(ftoken.token), before(ftoken.before) {}
 
   // Reconstructs the original spacing that preceded this token.
-  absl::string_view OriginalLeadingSpaces() const;
+  std::string_view OriginalLeadingSpaces() const;
 
   // Print out formatted result after formatting decision optimization.
   std::ostream &FormattedText(std::ostream &) const;

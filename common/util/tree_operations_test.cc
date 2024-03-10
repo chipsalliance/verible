@@ -20,13 +20,13 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "common/util/spacer.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -131,7 +131,7 @@ class SimpleNode {
  public:
   using ChildrenType = Container<ThisType>;
 
-  explicit SimpleNode(absl::string_view id, ChildrenType&& children = {})
+  explicit SimpleNode(std::string_view id, ChildrenType&& children = {})
       : children_(std::move(children)), id_(id) {
     Relink();
   }
@@ -939,7 +939,7 @@ TYPED_TEST(NodeWithParentTest, Path) {
 template <class TestSuite>
 void TestNodePath(TestSuite* test_suite,
                   std::initializer_list<size_t> node_path,
-                  absl::string_view expected_string) {
+                  std::string_view expected_string) {
   auto& node = test_suite->NodeAt(node_path);
   std::ostringstream output;
   output << NodePath(node);
@@ -985,7 +985,7 @@ TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
         [](std::ostream& stream, const std::string& value) -> std::ostream& {
           return stream << "value=" << value;
         });
-    static const absl::string_view expected_output =
+    static const std::string_view expected_output =
         "{ (value=root)\n"
         "  { (value=0) }\n"
         "  { (value=1)\n"
@@ -1035,7 +1035,7 @@ TYPED_TEST(NodeWithValueTest, PrintTreeWithCustomPrinter) {
         [](std::ostream& stream, const std::string& value) -> std::ostream& {
           return stream << "value=" << value;
         });
-    static const absl::string_view expected_output =
+    static const std::string_view expected_output =
         "{ (value=3.1)\n"
         "  { (value=3.1.0)\n"
         "    { (value=3.1.0.0) }\n"
@@ -1054,7 +1054,7 @@ TYPED_TEST(NodeWithValueTest, PrintTree) {
   {
     std::ostringstream output;
     PrintTree(this->root, &output);
-    static const absl::string_view expected_output =
+    static const std::string_view expected_output =
         "{ (root)\n"
         "  { (0) }\n"
         "  { (1)\n"
@@ -1100,7 +1100,7 @@ TYPED_TEST(NodeWithValueTest, PrintTree) {
   {
     std::ostringstream output;
     PrintTree(this->NodeAt({3, 1}), &output);
-    static const absl::string_view expected_output =
+    static const std::string_view expected_output =
         "{ (3.1)\n"
         "  { (3.1.0)\n"
         "    { (3.1.0.0) }\n"

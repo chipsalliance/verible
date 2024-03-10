@@ -20,8 +20,8 @@
 #include <cstddef>
 #include <functional>
 #include <iosfwd>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -41,10 +41,10 @@ const SyntaxTreeLeaf *GetLeftmostLeaf(const Symbol &symbol);
 const SyntaxTreeLeaf *GetRightmostLeaf(const Symbol &symbol);
 
 // Returns the range of text spanned by a Symbol, which could be a subtree.
-absl::string_view StringSpanOfSymbol(const Symbol &symbol);
+std::string_view StringSpanOfSymbol(const Symbol &symbol);
 
 // Variant that takes the left-bound of lsym, and right-bound of rsym.
-absl::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym);
+std::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym);
 
 // Returns a SyntaxTreeNode down_casted from a Symbol.
 const SyntaxTreeNode &SymbolCastToNode(const Symbol &);
@@ -283,10 +283,10 @@ void PruneSyntaxTreeAfterOffset(ConcreteSyntaxTree *tree, const char *offset);
 // If there are multiple eligible subtrees in range, then this chooses the
 // first one.
 ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
-                                   absl::string_view trim_range);
+                                   std::string_view trim_range);
 
 // Same as ZoomSyntaxTree(), except that it modifies 'tree' in-place.
-void TrimSyntaxTree(ConcreteSyntaxTree *tree, absl::string_view trim_range);
+void TrimSyntaxTree(ConcreteSyntaxTree *tree, std::string_view trim_range);
 
 using LeafMutator = std::function<void(TokenInfo *)>;
 

@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_ONE_MODULE_PER_FILE_RULE_H_
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/text_structure_lint_rule.h"
 #include "common/text/text_structure.h"
@@ -35,7 +35,7 @@ class OneModulePerFileRule : public verible::TextStructureLintRule {
 
   OneModulePerFileRule() = default;
 
-  void Lint(const verible::TextStructureView &, absl::string_view) final;
+  void Lint(const verible::TextStructureView &, std::string_view) final;
 
   verible::LintRuleStatus Report() const final;
 

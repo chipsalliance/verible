@@ -14,7 +14,8 @@
 
 #include "verilog/analysis/checkers/suspicious_semicolon_rule.h"
 
-#include "absl/strings/string_view.h"
+#include <string_view>
+
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -33,8 +34,7 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(SuspiciousSemicolon);
 
-static constexpr absl::string_view kMessage =
-    "Potentially unintended semicolon";
+static constexpr std::string_view kMessage = "Potentially unintended semicolon";
 
 const LintRuleDescriptor &SuspiciousSemicolon::GetDescriptor() {
   static const LintRuleDescriptor d{

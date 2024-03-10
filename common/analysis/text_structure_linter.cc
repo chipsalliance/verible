@@ -14,9 +14,9 @@
 
 #include "common/analysis/text_structure_linter.h"
 
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/text_structure_lint_rule.h"
 #include "common/text/text_structure.h"
@@ -25,7 +25,7 @@
 namespace verible {
 
 void TextStructureLinter::Lint(const TextStructureView &text_structure,
-                               absl::string_view filename) {
+                               std::string_view filename) {
   VLOG(1) << "TextStructureLinter analyzing text with " << rules_.size()
           << " rules.";
   for (const auto &rule : rules_) {

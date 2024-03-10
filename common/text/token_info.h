@@ -21,10 +21,10 @@
 #include <iosfwd>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/text/constants.h"
 #include "common/util/iterator_range.h"
 
@@ -45,13 +45,13 @@ class TokenInfo {
   static TokenInfo EOFToken();
 
   // Construct an EOF token that points to the end of a string buffer.
-  static TokenInfo EOFToken(absl::string_view);
+  static TokenInfo EOFToken(std::string_view);
 
   // Hide default constructor, force explicit initialization or call to
   // EOFToken().
   TokenInfo() = delete;
 
-  TokenInfo(int token_enum, absl::string_view text)
+  TokenInfo(int token_enum, std::string_view text)
       : token_enum_(token_enum), text_(text) {}
 
   TokenInfo(const TokenInfo&) = default;
@@ -63,14 +63,14 @@ class TokenInfo {
   struct Context {
     // Full range of text in which a token appears.
     // This is used to calculate byte offsets.
-    absl::string_view base;
+    std::string_view base;
 
     // Prints a human-readable interpretation form of a token enumeration.
     std::function<void(std::ostream&, int)> token_enum_translator;
 
-    explicit Context(absl::string_view b);
+    explicit Context(std::string_view b);
 
-    Context(absl::string_view b,
+    Context(std::string_view b,
             std::function<void(std::ostream&, int)> translator)
         : base(b), token_enum_translator(std::move(translator)) {}
 
@@ -79,16 +79,16 @@ class TokenInfo {
 
   int token_enum() const { return token_enum_; }
   void set_token_enum(int t) { token_enum_ = t; }
-  absl::string_view text() const { return text_; }
-  void set_text(absl::string_view t) { text_ = t; }
+  std::string_view text() const { return text_; }
+  void set_text(std::string_view t) { text_ = t; }
 
   // Return position of this token's text start relative to a base buffer.
-  int left(absl::string_view base) const {
+  int left(std::string_view base) const {
     return std::distance(base.begin(), text_.begin());
   }
 
   // Return position of this token's text end relative to a base buffer.
-  int right(absl::string_view base) const {
+  int right(std::string_view base) const {
     return std::distance(base.begin(), text_.end());
   }
 
@@ -97,7 +97,7 @@ class TokenInfo {
   // a series of abutting substring ranges.  Useful for lexer operation.
   void AdvanceText(int token_length) {
     // The end of the previous token is the beginning of the next.
-    text_ = absl::string_view(text_.end(), token_length);
+    text_ = std::string_view(text_.end(), token_length);
   }
 
   // Writes a human-readable string representation of the token.
@@ -119,14 +119,14 @@ class TokenInfo {
   // This is a potentially dangerous operation, which can be validated
   // using a combination of object lifetime management and range-checking.
   // It is the caller's responsibility that it points to valid memory.
-  void RebaseStringView(absl::string_view new_text);
+  void RebaseStringView(std::string_view new_text);
 
   // This overload assumes that the string of interest from other has the
   // same length as the current string_view.
   // string_view::iterator happens to be const char*, but don't rely on that
   // fact as it can be implementation-dependent.
   void RebaseStringView(const char* new_text) {
-    RebaseStringView(absl::string_view(new_text, text_.length()));
+    RebaseStringView(std::string_view(new_text, text_.length()));
   }
 
   // Joins the text from a sequence of (text-disjoint) tokens, and also
@@ -164,7 +164,7 @@ class TokenInfo {
   int token_enum_;
 
   // The substring of a larger text that this token represents.
-  absl::string_view text_;
+  std::string_view text_;
 };
 
 std::ostream& operator<<(std::ostream&, const TokenInfo&);
@@ -194,7 +194,7 @@ void ConcatenateTokenInfos(std::string* out, TokenIter begin, TokenIter end) {
     total_length += token.text().length();
   }
   out->resize(total_length);
-  const absl::string_view out_view(*out);
+  const std::string_view out_view(*out);
 
   // Copy text into new buffer.
   auto code_iter = out->begin();  // writeable iterator (like char*)

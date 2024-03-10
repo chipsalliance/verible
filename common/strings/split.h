@@ -17,19 +17,18 @@
 
 #include <cstddef>
 #include <functional>
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace internal {
-inline size_t DelimiterSize(absl::string_view str) { return str.length(); }
+inline size_t DelimiterSize(std::string_view str) { return str.length(); }
 
 inline size_t DelimiterSize(char c) { return 1; }
 }  // namespace internal
 
 // Generator function that returns substrings between delimiters.
-// Behaves like a std::function<absl::string_view(DelimiterType)>.
+// Behaves like a std::function<std::string_view(DelimiterType)>.
 // The delimiter could be different with each call.
 // This can serve as a quick lexer or tokenizer for some applications.
 // Compared to absl::StrSplit, the space needed to store results one at a time
@@ -38,14 +37,14 @@ inline size_t DelimiterSize(char c) { return 1; }
 // Example usage:
 //   StringSpliterator gen("some, text, ...");
 //   do {
-//     absl::string_view token = gen(',');
+//     std::string_view token = gen(',');
 //     // do something with token
 //   } while (gen);
 //
 // See also MakeStringSpliterator().
 class StringSpliterator {
  public:
-  explicit StringSpliterator(absl::string_view original)
+  explicit StringSpliterator(std::string_view original)
       : remainder_(original) {}
 
   // Copy-able, movable, assignable.
@@ -65,16 +64,16 @@ class StringSpliterator {
   // Delimiter type D can be a string_view or char (overloads of
   // string_view::find()).
   // The heterogenous operator() lets objects of this type work as a
-  // std::function<absl::string_view(absl::string_view)> and
-  // std::function<absl::string_view(char)>.
+  // std::function<std::string_view(std::string_view)> and
+  // std::function<std::string_view(char)>.
   template <class D>
-  absl::string_view operator()(const D delimiter) {
+  std::string_view operator()(const D delimiter) {
     const size_t pos = remainder_.find(delimiter);
-    if (pos == absl::string_view::npos) {
+    if (pos == std::string_view::npos) {
       // This is the last partition.
       // If the remainder_ was already empty, this will continue
       // to return empty strings.
-      const absl::string_view result(remainder_);
+      const std::string_view result(remainder_);
       remainder_.remove_prefix(remainder_.length());  // empty
       end_ = true;
       return result;
@@ -82,19 +81,19 @@ class StringSpliterator {
     // More text follows after the next occurrence of the delimiter.
     // If the text ends with the delimiter, then the last string
     // returned before the end() will be empty.
-    const absl::string_view result(remainder_.substr(0, pos));
+    const std::string_view result(remainder_.substr(0, pos));
     // Skip over the delimiter.
     remainder_.remove_prefix(pos + internal::DelimiterSize(delimiter));
     return result;
   }
 
   // Returns the un-scanned portion of text.
-  absl::string_view Remainder() const { return remainder_; }
+  std::string_view Remainder() const { return remainder_; }
 
  private:
   // The remaining substring that has not been consumed.
   // With each call to operator(), this shrinks from the front.
-  absl::string_view remainder_;
+  std::string_view remainder_;
 
   // A split that fails to find a delimiter still returns one element,
   // the original string, thus end_ should always be initialized to false.
@@ -104,8 +103,8 @@ class StringSpliterator {
 // Convenience function that returns a string_view generator using
 // StringSpliterator with the same delimiter on every split.
 template <class D>
-std::function<absl::string_view()> MakeStringSpliterator(
-    absl::string_view original, D delimiter) {
+std::function<std::string_view()> MakeStringSpliterator(
+    std::string_view original, D delimiter) {
   // note: in-lambda initializers require c++14
   auto splitter = StringSpliterator(original);
   return [=]() mutable /* splitter */ { return splitter(delimiter); };
@@ -115,14 +114,14 @@ std::function<absl::string_view()> MakeStringSpliterator(
 // Each line in the returned vector excludes the trailing \n.
 // If original text did not terminate with a \n, interpret the final partial
 // line as a whole line.
-std::vector<absl::string_view> SplitLines(absl::string_view text);
+std::vector<std::string_view> SplitLines(std::string_view text);
 
 // Returns line-based view of original text. Keeps the trailing \n.
 // Lines in the returned vector include the trailing \n.
 // If original text did not terminate with a \n, interpret the final partial
 // line as a whole line.
-std::vector<absl::string_view> SplitLinesKeepLineTerminator(
-    absl::string_view text);
+std::vector<std::string_view> SplitLinesKeepLineTerminator(
+    std::string_view text);
 
 }  // namespace verible
 

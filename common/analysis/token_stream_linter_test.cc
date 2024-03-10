@@ -16,9 +16,9 @@
 
 #include <memory>
 #include <set>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/text/token_info.h"
@@ -77,7 +77,7 @@ TEST(TokenStreamLinterTest, OneRuleAcceptsEmptyStream) {
 
 // This test verifies that TokenStreamLinter can find violations.
 TEST(TokenStreamLinterTest, OneRuleRejectsTokenStream) {
-  const absl::string_view text;
+  const std::string_view text;
   const TokenSequence tokens = {TokenInfo(1, text), TokenInfo(4, text),
                                 TokenInfo(2, text),
                                 TokenInfo::EOFToken()};  // EOF token only

@@ -16,12 +16,11 @@
 
 #include <iomanip>
 #include <iostream>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
-static constexpr absl::string_view kEllipses = "...";
+static constexpr std::string_view kEllipses = "...";
 
 std::ostream &operator<<(std::ostream &stream, const AutoTruncate &trunc) {
   const auto text = trunc.text;

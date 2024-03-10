@@ -15,8 +15,8 @@
 #include "verilog/parser/verilog_lexer.h"
 
 #include <functional>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "verilog/parser/verilog_token_enum.h"
 
@@ -24,9 +24,9 @@ namespace verilog {
 
 using verible::TokenInfo;
 
-VerilogLexer::VerilogLexer(absl::string_view code) : parent_lexer_type(code) {}
+VerilogLexer::VerilogLexer(std::string_view code) : parent_lexer_type(code) {}
 
-void VerilogLexer::Restart(absl::string_view code) {
+void VerilogLexer::Restart(std::string_view code) {
   parent_lexer_type::Restart(code);
   balance_ = 0;
   macro_id_length_ = 0;
@@ -54,7 +54,7 @@ bool VerilogLexer::KeepSyntaxTreeTokens(const TokenInfo &t) {
   }
 }
 
-void RecursiveLexText(absl::string_view text,
+void RecursiveLexText(std::string_view text,
                       const std::function<void(const TokenInfo &)> &func) {
   VerilogLexer lexer(text);
   for (;;) {

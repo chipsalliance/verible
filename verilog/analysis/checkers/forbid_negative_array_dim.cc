@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/forbid_negative_array_dim.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbidNegativeArrayDim);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Avoid using negative constant literals for array dimensions.";
 
 const LintRuleDescriptor &ForbidNegativeArrayDim::GetDescriptor() {

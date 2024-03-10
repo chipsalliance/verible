@@ -17,12 +17,12 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -69,7 +69,7 @@ static const Matcher &ParamDeclMatcher() {
   return matcher;
 }
 
-std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
+std::string ParameterNameStyleRule::ViolationMsg(std::string_view symbol_type,
                                                  uint32_t allowed_bitmap) {
   // TODO(hzeller): there are multiple places in this file referring to the
   // same string representations of these options.
@@ -119,10 +119,9 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
-absl::Status ParameterNameStyleRule::Configure(
-    absl::string_view configuration) {
+absl::Status ParameterNameStyleRule::Configure(std::string_view configuration) {
   // TODO(issue #133) include bitmap choices in generated documentation.
-  static const std::vector<absl::string_view> choices = {
+  static const std::vector<std::string_view> choices = {
       "CamelCase", "ALL_CAPS"};  // same sequence as enum StyleChoicesBits
   using verible::config::SetNamedBits;
   return verible::ParseNameValues(

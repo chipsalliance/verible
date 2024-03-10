@@ -23,9 +23,9 @@
 #include "verilog/CST/class.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/text_structure.h"
@@ -115,7 +115,7 @@ TEST(GetClassNameTest, ClassEndLabel) {
 }
 
 TEST(GetClassNameTest, NoClassEndLabelTest) {
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       {"class foo; endclass"},
   };
   for (const auto &test : kTestCases) {

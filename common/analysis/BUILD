@@ -19,10 +19,7 @@ cc_library(
     name = "citation",
     srcs = ["citation.cc"],
     hdrs = ["citation.h"],
-    deps = [
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
@@ -40,7 +37,6 @@ cc_library(
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -50,7 +46,6 @@ cc_library(
     deps = [
         ":lint-rule-status",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -81,7 +76,6 @@ cc_library(
         "//common/text:token-stream-view",
         "//common/util:iterator-range",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -97,7 +91,6 @@ cc_library(
         "//common/util:user-interaction",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -111,7 +104,6 @@ cc_test(
         "//common/text:constants",
         "//common/text:token-info",
         "//common/text:token-info-test-util",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -142,7 +134,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -163,7 +154,6 @@ cc_library(
         "//common/util:logging",
         "//common/util:spacer",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -180,7 +170,6 @@ cc_library(
         "//common/util:logging",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -198,7 +187,6 @@ cc_library(
         "//common/text:tree-utils",
         "//common/util:algorithm",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -211,7 +199,6 @@ cc_library(
         ":line-lint-rule",
         ":lint-rule-status",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -226,17 +213,13 @@ cc_library(
         ":linter-test-utils",
         "//common/text:text-structure",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
 cc_library(
     name = "line-lint-rule",
     hdrs = ["line_lint_rule.h"],
-    deps = [
-        ":lint-rule",
-        "@com_google_absl//absl/strings:string_view",
-    ],
+    deps = [":lint-rule"],
 )
 
 cc_library(
@@ -265,7 +248,6 @@ cc_library(
         ":syntax-tree-linter",
         "//common/text:text-structure",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -306,7 +288,6 @@ cc_library(
         ":text-structure-lint-rule",
         "//common/text:text-structure",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -321,7 +302,6 @@ cc_library(
         ":text-structure-linter",
         "//common/text:text-structure",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -332,7 +312,6 @@ cc_library(
     deps = [
         ":lint-rule",
         "//common/text:text-structure",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -359,7 +338,6 @@ cc_library(
         ":token-stream-linter",
         "//common/text:text-structure",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -381,7 +359,6 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -397,7 +374,6 @@ cc_test(
         "//common/text:token-info",
         "//common/text:token-stream-view",
         "//common/util:iterator-range",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -413,7 +389,6 @@ cc_test(
         "//common/text:token-info",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -427,7 +402,6 @@ cc_test(
         ":linter-test-utils",
         "//common/util:range",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -441,7 +415,6 @@ cc_test(
         ":line-linter",
         ":lint-rule-status",
         "//common/text:token-info",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -461,7 +434,6 @@ cc_test(
         "//common/text:token-info",
         "//common/text:tree-builder-test-util",
         "//common/util:casts",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -491,7 +463,6 @@ cc_test(
         "//common/text:tree-builder-test-util",
         "//common/util:range",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -507,7 +478,6 @@ cc_test(
         "//common/text:text-structure",
         "//common/text:token-info",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -522,7 +492,6 @@ cc_test(
         ":token-stream-linter",
         "//common/text:token-info",
         "//common/text:token-stream-view",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

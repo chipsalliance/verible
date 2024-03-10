@@ -17,9 +17,9 @@
 // prevent header re-ordering
 
 #include <sstream>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/position.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
@@ -36,8 +36,8 @@ namespace formatter {
 namespace {
 
 struct FormatterTestCase {
-  absl::string_view input;
-  absl::string_view expected;
+  std::string_view input;
+  std::string_view expected;
 };
 
 static const verible::LineNumberSet kEnableAllLines;

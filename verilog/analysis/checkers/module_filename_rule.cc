@@ -19,12 +19,12 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/config_utils.h"
@@ -47,7 +47,7 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ModuleFilenameRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Declared module does not match the first dot-delimited component "
     "of file name: ";
 
@@ -67,14 +67,13 @@ const LintRuleDescriptor &ModuleFilenameRule::GetDescriptor() {
   return d;
 }
 
-static bool ModuleNameMatches(const verible::Symbol &s,
-                              absl::string_view name) {
+static bool ModuleNameMatches(const verible::Symbol &s, std::string_view name) {
   const auto *module_leaf = GetModuleName(s);
   return module_leaf && module_leaf->get().text() == name;
 }
 
 void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
-                              absl::string_view filename) {
+                              std::string_view filename) {
   if (verible::file::IsStdin(filename)) {
     return;
   }
@@ -99,9 +98,9 @@ void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
                       });
 
   // See if any names match the stem of the filename.
-  const absl::string_view basename = verible::file::Basename(filename);
+  const std::string_view basename = verible::file::Basename(filename);
 
-  std::vector<absl::string_view> basename_components =
+  std::vector<std::string_view> basename_components =
       absl::StrSplit(basename, '.');
   std::string unitname(basename_components[0].begin(),
                        basename_components[0].end());
@@ -133,7 +132,7 @@ LintRuleStatus ModuleFilenameRule::Report() const {
   return LintRuleStatus(violations_, GetDescriptor());
 }
 
-absl::Status ModuleFilenameRule::Configure(absl::string_view configuration) {
+absl::Status ModuleFilenameRule::Configure(std::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,

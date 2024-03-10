@@ -16,10 +16,10 @@
 
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
 #include "gmock/gmock.h"
@@ -66,7 +66,7 @@ TEST(FileDependenciesTest, OneFileNoDeps) {
   ASSERT_TRUE(CreateDir(sources_dir).ok());
 
   // None of these test cases will yield any inter-file deps.
-  constexpr absl::string_view kTestCases[] = {
+  constexpr std::string_view kTestCases[] = {
       "",
       // one module
       "module mmm;\n"

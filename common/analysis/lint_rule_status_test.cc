@@ -19,11 +19,11 @@
 #include <set>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/token_info.h"
 #include "common/text/tree_builder_test_util.h"
@@ -81,10 +81,10 @@ struct LintViolationTest {
 // TODO(b/136092807): leverage SynthesizedLexerTestData to produce
 // expected findings.
 struct LintStatusTest {
-  absl::string_view rule_name;
+  std::string_view rule_name;
   std::string url;
-  absl::string_view path;
-  absl::string_view text;
+  std::string_view path;
+  std::string_view text;
   std::vector<LintViolationTest> violations;
 };
 
@@ -116,7 +116,7 @@ void RunLintStatusTest(const LintStatusTest& test) {
 TEST(LintRuleStatusFormatterTest, SimpleOutput) {
   SymbolPtr root = Node();
   static const int dont_care_tag = 0;
-  constexpr absl::string_view text(
+  constexpr std::string_view text(
       "This is some code\n"
       "That you are looking at right now\n"
       "It is nice code, make no mistake\n"
@@ -177,7 +177,7 @@ void RunLintStatusesTest(const LintStatusTest& test, bool show_context) {
   std::ostringstream ss;
 
   LintStatusFormatter formatter(test.text);
-  const std::vector<absl::string_view> lines;
+  const std::vector<std::string_view> lines;
   if (!show_context) {
     formatter.FormatLintRuleStatuses(&ss, statuses, test.text, test.path, {});
   } else {
@@ -203,7 +203,7 @@ void RunLintStatusesTest(const LintStatusTest& test, bool show_context) {
 TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
   SymbolPtr root = Node();
   static const int dont_care_tag = 0;
-  constexpr absl::string_view text(
+  constexpr std::string_view text(
       "This is some code\n"
       "That you are looking at right now\n"
       "It is nice code, make no mistake\n"
@@ -225,7 +225,7 @@ TEST(LintRuleStatusFormatterTest, MultipleStatusesSimpleOutput) {
 TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
   SymbolPtr root = Node();
   static const int dont_care_tag = 0;
-  constexpr absl::string_view text(
+  constexpr std::string_view text(
       "This is some code\n"
       "That you are looking at right now\n"
       "It is nice code, make no mistake\n"
@@ -247,7 +247,7 @@ TEST(LintRuleStatusFormatterTestWithContext, MultipleStatusesSimpleOutput) {
 TEST(LintRuleStatusFormatterTestWithContext, PointToCorrectUtf8Char) {
   SymbolPtr root = Node();
   static const int dont_care_tag = 0;
-  constexpr absl::string_view text("äöüß\n");
+  constexpr std::string_view text("äöüß\n");
   //                                ^ä^ü
   LintStatusTest test = {
       "rule",
@@ -265,7 +265,7 @@ TEST(LintRuleStatusFormatterTestWithContext, PointToCorrectUtf8Char) {
 
 TEST(AutoFixTest, ValidUseCases) {
   //                                       0123456789abcdef
-  static constexpr absl::string_view text("This is an image");
+  static constexpr std::string_view text("This is an image");
 
   // AutoFix(ReplacementEdit)
   const AutoFix singleEdit("e", {text.substr(5, 2), "isn't"});
@@ -326,7 +326,7 @@ TEST(AutoFixTest, ValidUseCases) {
 
 TEST(AutoFixTest, ConflictingEdits) {
   //                                       0123456789abcdef
-  static constexpr absl::string_view text("This is an image");
+  static constexpr std::string_view text("This is an image");
 
   AutoFix fixesCollection;
   EXPECT_TRUE(fixesCollection.AddEdits({{text.substr(8, 8), "a text"}}));
@@ -349,7 +349,7 @@ TEST(AutoFixTest, ConflictingEdits) {
 }
 
 TEST(LintViolationTest, ViolationWithAutoFix) {
-  static constexpr absl::string_view text("This is an image");
+  static constexpr std::string_view text("This is an image");
   static const int dont_care_tag = 0;
   const TokenInfo an_image_token(dont_care_tag, text.substr(8, 5));
 

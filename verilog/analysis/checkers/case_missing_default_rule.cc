@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/case_missing_default_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/core_matchers.h"
@@ -39,7 +39,7 @@ using verible::matcher::Matcher;
 // Register CaseMissingDefaultRule
 VERILOG_REGISTER_LINT_RULE(CaseMissingDefaultRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Explicitly define a default case for every case statement.";
 
 const LintRuleDescriptor &CaseMissingDefaultRule::GetDescriptor() {

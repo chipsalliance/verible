@@ -15,9 +15,8 @@
 #ifndef VERIBLE_COMMON_STRINGS_RANGE_H_
 #define VERIBLE_COMMON_STRINGS_RANGE_H_
 
+#include <string_view>
 #include <utility>
-
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
@@ -25,12 +24,12 @@ namespace verible {
 // string_view lacks the two-iterator constructor that (iterator) ranges and
 // containers do.
 // This exploits the fact that string_view's iterators are just const char*.
-absl::string_view make_string_view_range(const char *begin, const char *end);
+std::string_view make_string_view_range(const char *begin, const char *end);
 
 // Returns [x,y] where superstring.substr(x, y-x) == substring.
 // Precondition: substring must be a sub-range of superstring.
-std::pair<int, int> SubstringOffsets(absl::string_view substring,
-                                     absl::string_view superstring);
+std::pair<int, int> SubstringOffsets(std::string_view substring,
+                                     std::string_view superstring);
 
 }  // namespace verible
 

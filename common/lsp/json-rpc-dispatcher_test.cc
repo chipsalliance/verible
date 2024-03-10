@@ -17,8 +17,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 
@@ -30,7 +30,7 @@ TEST(JsonRpcDispatcherTest, Call_GarbledInputRequest) {
   int write_fun_called = 0;
 
   // If the input can't even be parsed, it is reported back to the client
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kParseError) << s;
@@ -48,7 +48,7 @@ TEST(JsonRpcDispatcherTest, Call_MissingMethodInRequest) {
   int write_fun_called = 0;
   int notification_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
@@ -69,7 +69,7 @@ TEST(JsonRpcDispatcherTest, CallNotification) {
   int write_fun_called = 0;
   int notification_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     std::cerr << s;
     ++write_fun_called;
   });
@@ -94,7 +94,7 @@ TEST(JsonRpcDispatcherTest, CallNotification) {
 TEST(JsonRpcDispatcherTest, CallNotification_WithoutParamsShouldBeBenign) {
   int notification_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) { std::cerr << s; });
+  JsonRpcDispatcher dispatcher([&](std::string_view s) { std::cerr << s; });
   const bool registered =
       dispatcher.AddNotificationHandler("foo", [&](const json &j) {
         EXPECT_TRUE(j.empty());
@@ -113,8 +113,7 @@ TEST(JsonRpcDispatcherTest, CallNotification_NotReportInternalError) {
   int write_fun_called = 0;
   int notification_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher(
-      [&](absl::string_view s) { ++write_fun_called; });
+  JsonRpcDispatcher dispatcher([&](std::string_view s) { ++write_fun_called; });
 
   // This method does not complete but throws an exception.
   dispatcher.AddNotificationHandler("foo", [&](const json &j) -> json {
@@ -135,7 +134,7 @@ TEST(JsonRpcDispatcherTest, CallNotification_MissingMethodImplemented) {
   // No response with error.
   int write_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {  //
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {  //
     ++write_fun_called;
   });
 
@@ -150,7 +149,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler) {
   int write_fun_called = 0;
   int rpc_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_EQ(std::string(j["result"]["some"]), "response");
     EXPECT_TRUE(j.find("error") == j.end());
@@ -180,7 +179,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_WithoutParamsShouldBeBenign) {
   int write_fun_called = 0;
   int rpc_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_EQ(std::string(j["result"]["some"]), "response");
     EXPECT_TRUE(j.find("error") == j.end());
@@ -206,7 +205,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_ReportInternalError) {
   int write_fun_called = 0;
   int rpc_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kInternalError) << s;
@@ -230,7 +229,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_ReportInternalError) {
 TEST(JsonRpcDispatcherTest, CallRpcHandler_MissingMethodImplemented) {
   int write_fun_called = 0;
 
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_TRUE(j.find("error") != j.end());
     EXPECT_EQ(j["error"]["code"], JsonRpcDispatcher::kMethodNotFound) << s;
@@ -246,7 +245,7 @@ TEST(JsonRpcDispatcherTest, CallRpcHandler_MissingMethodImplemented) {
 
 TEST(JsonRpcDispatcherTest, SendNotificationToClient) {
   int write_fun_called = 0;
-  JsonRpcDispatcher dispatcher([&](absl::string_view s) {
+  JsonRpcDispatcher dispatcher([&](std::string_view s) {
     const json j = json::parse(s);
     EXPECT_EQ(j["method"], "greeting_method");
     EXPECT_EQ(j["params"], "Hi, y'all");

@@ -16,8 +16,7 @@
 #define VERIBLE_COMMON_STRINGS_RANDOM_H_
 
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
@@ -28,7 +27,7 @@ char RandomAlphaChar();
 char RandomAlphaNumChar();
 
 // Returns an identifier ([alpha][alnum]*) of equal length to input.
-std::string RandomEqualLengthIdentifier(absl::string_view input);
+std::string RandomEqualLengthIdentifier(std::string_view input);
 
 }  // namespace verible
 

@@ -23,6 +23,7 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -30,7 +31,6 @@
 #include "absl/container/fixed_array.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "common/formatting/basic_format_style.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
@@ -143,7 +143,7 @@ class LayoutItem {
       // TODO (mglb): support all possible break_decisions
       len += token.before.spaces_required;
       if (const auto line_break_pos = token.Text().find('\n');
-          line_break_pos != absl::string_view::npos) {
+          line_break_pos != std::string_view::npos) {
         // Multiline tokens are not really supported.
         // Use number of characters up to the first line break.
         len += line_break_pos;

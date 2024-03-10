@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -40,7 +40,7 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
@@ -49,7 +49,7 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Format diagnostic message.
-  static std::string ViolationMsg(absl::string_view symbol_type,
+  static std::string ViolationMsg(std::string_view symbol_type,
                                   uint32_t allowed_bitmap);
 
   enum StyleChoicesBits {

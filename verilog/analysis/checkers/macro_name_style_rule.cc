@@ -15,9 +15,9 @@
 #include "verilog/analysis/checkers/macro_name_style_rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/strings/naming_utils.h"
@@ -39,7 +39,7 @@ using verible::TokenStreamLintRule;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(MacroNameStyleRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Macro names must contain only CAPITALS, underscores, and digits.  "
     "Exception: UVM-like macros.";
 
@@ -56,7 +56,7 @@ const LintRuleDescriptor &MacroNameStyleRule::GetDescriptor() {
 
 void MacroNameStyleRule::HandleToken(const TokenInfo &token) {
   const auto token_enum = static_cast<verilog_tokentype>(token.token_enum());
-  const absl::string_view text(token.text());
+  const std::string_view text(token.text());
   if (IsUnlexed(verilog_tokentype(token.token_enum()))) {
     // recursively lex to examine inside macro definition bodies, etc.
     RecursiveLexText(

@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/packed_dimensions_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -42,7 +42,7 @@ using verible::matcher::Matcher;
 
 VERILOG_REGISTER_LINT_RULE(PackedDimensionsRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Declare packed dimension range in little-endian (decreasing) order, "
     "e.g. [N-1:0].";
 

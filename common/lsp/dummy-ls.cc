@@ -17,9 +17,9 @@
 // This is merely to test that the json-rpc plumbing is working.
 
 #include <cstdio>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/lsp/json-rpc-dispatcher.h"
 #include "common/lsp/lsp-protocol.h"
 #include "common/lsp/lsp-text-buffer.h"
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
   // Input and output is stdin and stdout
   constexpr int kInputFD = 0;  // STDIN_FILENO, but Win does not have that macro
-  JsonRpcDispatcher::WriteFun write_fun = [](absl::string_view reply) {
+  JsonRpcDispatcher::WriteFun write_fun = [](std::string_view reply) {
     // Output formatting as header/body chunk as required by LSP spec.
     std::cout << "Content-Length: " << reply.size() << "\r\n\r\n";
     std::cout << reply << std::flush;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
   // All bodies the stream splitter extracts are pushed to the json dispatcher
   MessageStreamSplitter stream_splitter;
   stream_splitter.SetMessageProcessor(
-      [&dispatcher](absl::string_view /*header*/, absl::string_view body) {
+      [&dispatcher](std::string_view /*header*/, std::string_view body) {
         return dispatcher.DispatchMessage(body);
       });
 

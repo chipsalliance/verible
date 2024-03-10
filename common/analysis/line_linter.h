@@ -20,10 +20,10 @@
 #define VERIBLE_COMMON_ANALYSIS_LINE_LINTER_H_
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/lint_rule_status.h"
 
@@ -32,7 +32,7 @@ namespace verible {
 class LineLinter {
  public:
   // Analyzes a sequence of lines.
-  void Lint(const std::vector<absl::string_view> &lines);
+  void Lint(const std::vector<std::string_view> &lines);
 
   // Transfers ownership of rule into this Linter
   void AddRule(std::unique_ptr<LineLintRule> rule) {

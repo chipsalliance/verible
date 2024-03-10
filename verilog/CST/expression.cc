@@ -15,10 +15,10 @@
 #include "verilog/CST/expression.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/numbers.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/concrete_syntax_tree.h"
