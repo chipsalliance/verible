@@ -22,9 +22,9 @@ namespace verible {
 
 // Construct a string_view from two end-points.
 // string_view lacks the two-iterator constructor that (iterator) ranges and
-// containers do.
-// This exploits the fact that string_view's iterators are just const char*.
-std::string_view make_string_view_range(const char *begin, const char *end);
+// containers do (C++20 will provide such constructor).
+std::string_view make_string_view_range(std::string_view::const_iterator begin,
+                                        std::string_view::const_iterator end);
 
 // Returns [x,y] where superstring.substr(x, y-x) == substring.
 // Precondition: substring must be a sub-range of superstring.

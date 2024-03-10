@@ -57,7 +57,8 @@ class UnwrappedLineMemoryHandler {
   // Same concept as TextStructureView::EOFToken().
   TokenInfo EOFToken() const {
     const std::string_view s(joined_token_text_);
-    return TokenInfo(verible::TK_EOF, std::string_view(s.end(), 0));
+    const char *end = s.data() + s.length();
+    return TokenInfo(verible::TK_EOF, std::string_view(end, 0));
   }
 
  protected:

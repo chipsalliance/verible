@@ -1000,8 +1000,8 @@ std::vector<AutoExpander::Dimension> GetDimensionsFromNodes(
         const std::string_view left_span = StringSpanOfSymbol(*left);
         const std::string_view right_span = StringSpanOfSymbol(*right);
         dimensions.push_back(std::string_view{
-            left_span.begin(), static_cast<size_t>(std::distance(
-                                   left_span.begin(), right_span.end()))});
+            left_span.data(), static_cast<size_t>(std::distance(
+                                  left_span.begin(), right_span.end()))});
       }
     }
   }
@@ -1122,8 +1122,8 @@ std::optional<AutoExpander::Match> FindMatchInSymbol(const Symbol &symbol,
   std::string_view comment;
   if (RE2::PartialMatch(symbol_span, re, &match, &comment)) {
     return AutoExpander::Match{
-        .auto_span = {match.begin(), match.length()},
-        .comment_span = {comment.begin(), comment.length()}};
+        .auto_span = {match.data(), match.length()},
+        .comment_span = {comment.data(), comment.length()}};
   }
   return std::nullopt;
 }
@@ -1135,7 +1135,7 @@ std::optional<std::string_view> FindSpanInSymbol(const Symbol &symbol,
   std::string_view match;
   if (RE2::PartialMatch({symbol_span.data(), symbol_span.length()}, re,
                         &match)) {
-    return std::string_view{match.begin(), match.length()};
+    return std::string_view{match.data(), match.length()};
   }
   return std::nullopt;
 }
@@ -1573,7 +1573,7 @@ std::optional<std::string_view> AutoExpander::FindSpanToReplace(
   const std::string_view symbol_span = StringSpanOfSymbol(symbol);
   const size_t replaced_length = static_cast<size_t>(
       std::distance(auto_span.begin(), symbol_span.end() - 1));
-  const std::string_view replaced_span{auto_span.begin(), replaced_length};
+  const std::string_view replaced_span{auto_span.data(), replaced_length};
   if (!SpansOverlapping(replaced_span, expand_span_)) {
     return std::nullopt;
   }

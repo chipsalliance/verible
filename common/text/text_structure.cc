@@ -414,11 +414,13 @@ absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
     const SyntaxTreeLeaf* left = GetLeftmostLeaf(*syntax_tree_);
     if (!left) return absl::OkStatus();
     const SyntaxTreeLeaf* right = GetRightmostLeaf(*syntax_tree_);
-    if (lower_bound > left->get().text().cbegin()) {
+    const std::string_view left_text = left->get().text();
+    const std::string_view right_text = right->get().text();
+    if (lower_bound > left_text.data()) {
       return absl::InternalError(
           "Left-most tree leaf points before beginning of contents.");
     }
-    if (right->get().text().cend() > upper_bound) {
+    if (right_text.data() + right_text.length() > upper_bound) {
       return absl::InternalError(
           "Right-most tree leaf points past end of contents.");
     }
@@ -483,7 +485,7 @@ void TextStructureView::ConsumeDeferredExpansion(
   *next_token_view_iter = std::lower_bound(
       token_view_iter, tokens_view_.cend(), offset,
       [](TokenStreamView::const_reference token_ref, const char* target) {
-        return std::distance(target, token_ref->text().begin()) < 0;
+        return std::distance(target, token_ref->text().data()) < 0;
       });
   CHECK(*next_token_view_iter != tokens_view_.cend());
 
@@ -499,9 +501,9 @@ void TextStructureView::ConsumeDeferredExpansion(
   const std::string_view sub_data_text(sub_data.Contents());
   CHECK(!IsSubRange(sub_data_text, contents_));
   CHECK_EQ(sub_data_text, std::string_view(offset, sub_data_text.length()));
-  CHECK_GE(offset, contents_.begin());
+  CHECK_GE(offset, contents_.data());
   sub_data.RebaseTokensToSuperstring(contents_, sub_data_text,
-                                     std::distance(contents_.begin(), offset));
+                                     std::distance(contents_.data(), offset));
 
   // Translate token_view's iterators into array indices.
   if (!sub_data.tokens_.empty() && sub_data.tokens_.back().isEOF()) {
