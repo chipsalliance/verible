@@ -16,8 +16,7 @@
 #define VERIBLE_VERILOG_TOKEN_VERILOG_TOKEN_H_
 
 #include <cstddef>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verilog {
 
@@ -31,7 +30,7 @@ namespace verilog {
 //   "SymbolIdentifier", "TK_DecNumber", "TK_EOL_COMMENT", "TK_NEWLINE"
 //
 // See also: verilog_symbol_name() in verilog_parser.h
-absl::string_view TokenTypeToString(size_t tokentype);
+std::string_view TokenTypeToString(size_t tokentype);
 
 }  // namespace verilog
 

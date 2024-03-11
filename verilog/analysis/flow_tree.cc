@@ -15,10 +15,10 @@
 #include "verilog/analysis/flow_tree.h"
 
 #include <map>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/util/logging.h"
 #include "verilog/parser/verilog_token_enum.h"
 

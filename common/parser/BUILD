@@ -21,7 +21,6 @@ cc_library(
         "//common/text:token-info",
         "//common/util:logging",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -60,7 +59,6 @@ cc_library(
         "//common/text:token-info",
         "//common/util:casts",
         "//common/util:logging",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -75,7 +73,6 @@ cc_library(
         "//common/text:token-info-test-util",
         "//common/util:logging",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
@@ -93,7 +90,6 @@ cc_test(
         "//common/text:symbol",
         "//common/text:token-info",
         "//common/util:casts",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],

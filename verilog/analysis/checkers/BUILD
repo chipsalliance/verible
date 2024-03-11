@@ -93,7 +93,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -123,7 +122,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -154,7 +152,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -190,7 +187,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -221,7 +217,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -262,7 +257,6 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -298,7 +292,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -335,7 +328,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -370,7 +362,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",  # fixdeps: keep
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -403,7 +394,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",  # fixdeps: keep
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -442,7 +432,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -456,7 +445,6 @@ cc_test(
         "//common/analysis:text-structure-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -479,7 +467,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -493,7 +480,6 @@ cc_test(
         "//common/analysis:text-structure-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -521,7 +507,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -555,7 +540,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -587,7 +571,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -621,7 +604,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -658,7 +640,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -695,7 +676,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -717,7 +697,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -769,7 +748,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -803,7 +781,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -841,7 +818,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -877,7 +853,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -917,7 +892,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -958,7 +932,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -998,7 +971,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/numeric:int128",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1013,7 +985,6 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -1041,7 +1012,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1078,7 +1048,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1114,7 +1083,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1150,7 +1118,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1189,7 +1156,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1230,7 +1196,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1270,7 +1235,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1309,7 +1273,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1349,7 +1312,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1390,7 +1352,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1428,7 +1389,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1464,7 +1424,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1501,7 +1460,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1538,7 +1496,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1572,7 +1529,6 @@ cc_library(
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1605,7 +1561,6 @@ cc_library(
         "//verilog/parser:verilog-lexer",
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1638,7 +1593,6 @@ cc_library(
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1678,7 +1632,6 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1715,7 +1668,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1751,7 +1703,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1787,7 +1738,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1824,7 +1774,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1865,7 +1814,6 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1903,7 +1851,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1943,7 +1890,6 @@ cc_library(
         "//verilog/CST:verilog-matchers",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1981,7 +1927,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1997,7 +1942,6 @@ cc_test(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -2022,7 +1966,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -2056,7 +1999,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -2092,7 +2034,6 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -2129,7 +2070,6 @@ cc_library(
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -2163,7 +2103,6 @@ cc_library(
         "//verilog/CST:verilog-nonterminals",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
-        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )

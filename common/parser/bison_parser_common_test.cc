@@ -17,8 +17,8 @@
 #include "common/parser/bison_parser_common.h"
 
 #include <memory>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_stream_adapter.h"
 #include "common/parser/parser_param.h"
@@ -41,7 +41,7 @@ class MockLexer : public Lexer {
 
   const TokenInfo &DoNextToken() final { return token_; }
 
-  void Restart(absl::string_view) final {}
+  void Restart(std::string_view) final {}
 
   bool TokenIsError(const TokenInfo &) const final { return false; }
 

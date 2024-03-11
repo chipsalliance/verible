@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PORT_NAME_SUFFIX_RULE_H_
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -45,10 +45,10 @@ class PortNameSuffixRule : public verible::SyntaxTreeLintRule {
 
  private:
   // Helper functions
-  void Violation(absl::string_view direction, const verible::TokenInfo &token,
+  void Violation(std::string_view direction, const verible::TokenInfo &token,
                  const verible::SyntaxTreeContext &context);
-  static bool IsSuffixCorrect(absl::string_view suffix,
-                              absl::string_view direction);
+  static bool IsSuffixCorrect(std::string_view suffix,
+                              std::string_view direction);
 
   // Violations
   std::set<verible::LintViolation> violations_;

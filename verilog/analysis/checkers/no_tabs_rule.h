@@ -16,8 +16,8 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_NO_TABS_RULE_H_
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/line_lint_rule.h"
 #include "common/analysis/lint_rule_status.h"
 #include "verilog/analysis/descriptions.h"
@@ -34,7 +34,7 @@ class NoTabsRule : public verible::LineLintRule {
 
   NoTabsRule() = default;
 
-  void HandleLine(absl::string_view line) final;
+  void HandleLine(std::string_view line) final;
 
   verible::LintRuleStatus Report() const final;
 

@@ -18,9 +18,9 @@
 #include <functional>
 #include <limits>
 #include <map>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/formatting/align.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
@@ -1541,7 +1541,7 @@ static std::vector<AlignablePartitionGroup> AlignDistItems(
 }
 
 void TabularAlignTokenPartitions(const FormatStyle& style,
-                                 absl::string_view full_text,
+                                 std::string_view full_text,
                                  const ByteOffsetSet& disabled_byte_ranges,
                                  TokenPartitionTree* partition_ptr) {
   VLOG(1) << __FUNCTION__;

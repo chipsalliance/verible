@@ -15,9 +15,9 @@
 #include "verilog/analysis/checkers/interface_name_style_rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,7 +41,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Interface names must use lower_snake_case naming convention "
     "and end with _if.";
 
@@ -64,7 +64,7 @@ static const Matcher& InterfaceMatcher() {
 void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
                                           const SyntaxTreeContext& context) {
   verible::matcher::BoundSymbolManager manager;
-  absl::string_view name;
+  std::string_view name;
   const verible::TokenInfo* identifier_token;
   if (InterfaceMatcher().Matches(symbol, &manager)) {
     identifier_token = GetInterfaceNameToken(symbol);

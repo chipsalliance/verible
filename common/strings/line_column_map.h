@@ -15,7 +15,7 @@
 // LineColumnMap translates byte-offset into line-column.
 //
 // usage:
-// absl::string_view text = ...;
+// std::string_view text = ...;
 // LineColumnMap lcmap(text);
 // token_error_offset = ...;  // some file diagnosis
 // LineColumn error_location = lcmap(token_error_offset);
@@ -27,9 +27,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <iosfwd>
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
@@ -72,13 +71,13 @@ class LineColumnMap {
   // Build line column map from pre-split contiguous blob of content.
   // The distance between consecutive string_views is expected to have
   // a gap of one character (the splitting '\n' character).
-  explicit LineColumnMap(const std::vector<absl::string_view> &lines);
+  explicit LineColumnMap(const std::vector<std::string_view> &lines);
 
   // This constructor is only used in LintStatusFormatter and
   // LintWaiverBuilder.
   // TODO: If these already have access to pre-split lines, then this
   // constructor is not needed.
-  explicit LineColumnMap(absl::string_view);
+  explicit LineColumnMap(std::string_view);
 
   bool empty() const { return beginning_of_line_offsets_.empty(); }
 
@@ -100,7 +99,7 @@ class LineColumnMap {
   // TODO(hzeller): technically, we don't need the base as we already got it
   // in the constructor, but change separately after lifetime questions have
   // been considered.
-  LineColumn GetLineColAtOffset(absl::string_view base, int bytes_offset) const;
+  LineColumn GetLineColAtOffset(std::string_view base, int bytes_offset) const;
 
   const std::vector<int> &GetBeginningOfLineOffsets() const {
     return beginning_of_line_offsets_;

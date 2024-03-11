@@ -15,9 +15,9 @@
 #include "verilog/analysis/checkers/constraint_name_style_rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -41,7 +41,7 @@ using verible::matcher::Matcher;
 // Register ConstraintNameStyleRule.
 VERILOG_REGISTER_LINT_RULE(ConstraintNameStyleRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Constraint names must by styled with lower_snake_case and end with _c.";
 
 const LintRuleDescriptor& ConstraintNameStyleRule::GetDescriptor() {
@@ -76,7 +76,7 @@ void ConstraintNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
         GetSymbolIdentifierFromConstraintDeclaration(symbol);
     if (!identifier_token) return;
 
-    const absl::string_view constraint_name = identifier_token->text();
+    const std::string_view constraint_name = identifier_token->text();
 
     if (!verible::IsLowerSnakeCaseWithDigits(constraint_name) ||
         !absl::EndsWith(constraint_name, "_c")) {

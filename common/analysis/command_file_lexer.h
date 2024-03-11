@@ -15,9 +15,8 @@
 #ifndef VERIBLE_CONFIG_FILE_LEXER_H_
 #define VERIBLE_CONFIG_FILE_LEXER_H_
 
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 // lint_waiver_config.lex has "%prefix=verible", meaning the class flex
 // creates is veribleFlexLexer. Unfortunately, FlexLexer.h doesn't have proper
@@ -55,7 +54,7 @@ class CommandFileLexer : public FlexLexerAdapter<veribleCommandFileFlexLexer> {
     kError,
   };
 
-  explicit CommandFileLexer(absl::string_view config);
+  explicit CommandFileLexer(std::string_view config);
 
   // Returns true if token is invalid.
   bool TokenIsError(const verible::TokenInfo &) const final;

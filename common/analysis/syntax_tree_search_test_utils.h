@@ -17,9 +17,9 @@
 
 #include <initializer_list>
 #include <iosfwd>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/token_info_test_util.h"
@@ -46,7 +46,7 @@ struct SyntaxTreeSearchTestCase : public SynthesizedLexerTestData {
   // TODO(b/141875806): Take a symbol translator function to produce a
   // human-readable, language-specific enum name.
   bool ExactMatchFindings(const std::vector<TreeSearchMatch> &actual_findings,
-                          absl::string_view base,
+                          std::string_view base,
                           std::ostream *diffstream) const;
 };
 

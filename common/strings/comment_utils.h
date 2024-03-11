@@ -15,7 +15,7 @@
 #ifndef VERIBLE_COMMON_STRINGS_COMMENT_UTILS_H_
 #define VERIBLE_COMMON_STRINGS_COMMENT_UTILS_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
@@ -24,10 +24,10 @@ namespace verible {
 // If text is not a comment, it is returned unmodified, but in general, do not
 // rely on any specific behavior for non-comments.
 // Result is always a substring of the original (bounds may be equal).
-absl::string_view StripComment(absl::string_view);
+std::string_view StripComment(std::string_view);
 
 // Same as StripComment, but also removes leading and trailing whitespace.
-absl::string_view StripCommentAndSpacePadding(absl::string_view);
+std::string_view StripCommentAndSpacePadding(std::string_view);
 
 }  // namespace verible
 

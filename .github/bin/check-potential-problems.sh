@@ -26,12 +26,12 @@ EXIT_CODE=0
 #
 # So, we need to use absl::string_view that comes with the same implementation
 # everywhere.
-find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
-if [ $? -eq 0 ]; then
-  echo "::error:: use absl::string_view instead of std::string_view"
-  echo
-  EXIT_CODE=1
-fi
+#find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
+#if [ $? -eq 0 ]; then
+#  echo "::error:: use absl::string_view instead of std::string_view"
+#  echo
+#  EXIT_CODE=1
+#fi
 
 # The status macros pollute the global namespace with names that might
 # clash in other environments that include these headers and have that name

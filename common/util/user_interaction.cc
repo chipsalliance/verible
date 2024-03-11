@@ -17,8 +17,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 #ifndef _WIN32
 #include <unistd.h>  // for isatty
@@ -41,7 +40,7 @@ bool IsInteractiveTerminalSession(const std::ostream &s) {
 }
 
 char ReadCharFromUser(std::istream &input, std::ostream &output,
-                      bool input_is_terminal, absl::string_view prompt) {
+                      bool input_is_terminal, std::string_view prompt) {
   if (input_is_terminal) {
     // Terminal input: print prompt, read whole line and return first character.
     term::bold(output, prompt) << std::flush;
@@ -66,12 +65,12 @@ char ReadCharFromUser(std::istream &input, std::ostream &output,
 namespace term {
 // TODO(hzeller): assumption here that basic ANSI codes work on all
 // platforms, but if not, change this with ifdef.
-static constexpr absl::string_view kBoldEscape("\033[1m");
-static constexpr absl::string_view kInverseEscape("\033[7m");
-static constexpr absl::string_view kNormalEscape("\033[0m");
+static constexpr std::string_view kBoldEscape("\033[1m");
+static constexpr std::string_view kInverseEscape("\033[7m");
+static constexpr std::string_view kNormalEscape("\033[0m");
 
 // clang-format off
-static constexpr absl::string_view kColorsStart[static_cast<uint32_t>(Color::kNumColors)] = {
+static constexpr std::string_view kColorsStart[static_cast<uint32_t>(Color::kNumColors)] = {
     "\033[1;32m", // GREEN
     "\033[1;36m", // CYAN
     "\033[1;31m", // RED
@@ -79,7 +78,7 @@ static constexpr absl::string_view kColorsStart[static_cast<uint32_t>(Color::kNu
 };
 // clang-format on
 
-std::ostream &bold(std::ostream &out, absl::string_view s) {
+std::ostream &bold(std::ostream &out, std::string_view s) {
   if (IsInteractiveTerminalSession(out)) {
     out << kBoldEscape << s << kNormalEscape;
   } else {
@@ -87,7 +86,7 @@ std::ostream &bold(std::ostream &out, absl::string_view s) {
   }
   return out;
 }
-std::ostream &inverse(std::ostream &out, absl::string_view s) {
+std::ostream &inverse(std::ostream &out, std::string_view s) {
   if (IsInteractiveTerminalSession(out)) {
     out << kInverseEscape << s << kNormalEscape;
   } else {
@@ -95,7 +94,7 @@ std::ostream &inverse(std::ostream &out, absl::string_view s) {
   }
   return out;
 }
-std::ostream &Colored(std::ostream &out, absl::string_view s, Color c) {
+std::ostream &Colored(std::ostream &out, std::string_view s, Color c) {
   if (IsInteractiveTerminalSession(out) && c != Color::kNone) {
     out << kColorsStart[static_cast<uint32_t>(c)] << s << kNormalEscape;
   } else {

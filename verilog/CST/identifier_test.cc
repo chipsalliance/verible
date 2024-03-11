@@ -15,10 +15,10 @@
 #include "verilog/CST/identifier.h"
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -41,7 +41,7 @@ using verible::TreeSearchMatch;
 // Finds all qualified ids are found.
 TEST(IdIsQualifiedTest, VariousIds) {
   // Each test should have only 1 id, qualified or unqualified
-  constexpr std::pair<absl::string_view, int> kTestCases[] = {
+  constexpr std::pair<std::string_view, int> kTestCases[] = {
       {"function foo(); endfunction", 0 /* foo */},
       {"function myclass::foo(); endfunction", 1 /* myclass::foo */},
       {"task goo(); endtask", 0 /* goo */},

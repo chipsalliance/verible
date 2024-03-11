@@ -17,10 +17,10 @@
 #include <algorithm>
 #include <cstring>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -41,7 +41,7 @@ TEST(MessageStreamSplitterTest, NotRegisteredMessageProcessor) {
 // simulate partial reads.
 class DataStreamSimulator {
  public:
-  explicit DataStreamSimulator(absl::string_view content, int max_chunk = -1)
+  explicit DataStreamSimulator(std::string_view content, int max_chunk = -1)
       : content_(content), max_chunk_(max_chunk) {}
 
   int read(char *buf, int size) {
@@ -62,7 +62,7 @@ TEST(MessageStreamSplitterTest, IgnoreHeadersNotNeeded) {
   MessageStreamSplitter header_test(256);
   int count_call = 0;
   header_test.SetMessageProcessor(
-      [&count_call](absl::string_view, absl::string_view body) {
+      [&count_call](std::string_view, std::string_view body) {
         EXPECT_EQ(std::string(body), "x");
         ++count_call;
       });
@@ -89,13 +89,13 @@ TEST(MessageStreamSplitterTest, IgnoreHeadersNotNeeded) {
 }
 
 TEST(MessageStreamSplitterTest, CompleteReadValidMessage) {
-  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody = "foo";
+  static constexpr std::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr std::string_view kBody = "foo";
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     ++processor_call_count;
     EXPECT_EQ(std::string(header), kHeader);
     EXPECT_EQ(std::string(body), kBody);
@@ -118,13 +118,13 @@ TEST(MessageStreamSplitterTest, CompleteReadValidMessage) {
 }
 
 TEST(MessageStreamSplitterTest, BufferSizeReallocated) {
-  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody = "foo";
+  static constexpr std::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr std::string_view kBody = "foo";
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
   MessageStreamSplitter s(2);  // Start with way too small buffer
   int processor_call_count = 0;
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     EXPECT_EQ(std::string(body), "foo");
     ++processor_call_count;
   });
@@ -141,14 +141,14 @@ TEST(MessageStreamSplitterTest, BufferSizeReallocated) {
 }
 
 TEST(MessageStreamSplitterTest, StreamDoesNotContainCompleteData) {
-  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody = "fo";  // <- too short
+  static constexpr std::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr std::string_view kBody = "fo";  // <- too short
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
   s.SetMessageProcessor(
-      [&](absl::string_view, absl::string_view) { ++processor_call_count; });
+      [&](std::string_view, std::string_view) { ++processor_call_count; });
 
   absl::Status status = absl::OkStatus();
   while (status.ok()) {
@@ -164,15 +164,15 @@ TEST(MessageStreamSplitterTest, StreamDoesNotContainCompleteData) {
 }
 
 TEST(MessageStreamSplitterTest, CompleteReadMultipleMessages) {
-  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody[2] = {"foo", "bar"};
+  static constexpr std::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr std::string_view kBody[2] = {"foo", "bar"};
 
   DataStreamSimulator stream(
       absl::StrCat(kHeader, kBody[0], kHeader, kBody[1]));
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
   // We expect one call per complete header/body pair.
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     EXPECT_EQ(std::string(header), kHeader);
     EXPECT_EQ(std::string(body), kBody[processor_call_count]);
     ++processor_call_count;
@@ -185,15 +185,15 @@ TEST(MessageStreamSplitterTest, CompleteReadMultipleMessages) {
 
 // Simulate short reads. Each read call only trickles out a few bytes.
 TEST(MessageStreamSplitterTest, CompleteReadMultipleMessagesShortRead) {
-  static constexpr absl::string_view kHeader = "Content-Length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody[2] = {"foo", "bar"};
+  static constexpr std::string_view kHeader = "Content-Length: 3\r\n\r\n";
+  static constexpr std::string_view kBody[2] = {"foo", "bar"};
   static constexpr int kTrickleReadSize = 2;
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody[0], kHeader, kBody[1]),
                              kTrickleReadSize);
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     EXPECT_EQ(std::string(header), kHeader);
     EXPECT_EQ(std::string(body), kBody[processor_call_count]);
     ++processor_call_count;
@@ -214,13 +214,13 @@ TEST(MessageStreamSplitterTest, CompleteReadMultipleMessagesShortRead) {
 }
 
 TEST(MessageStreamSplitterTest, NotAvailableContentHeaderReadError) {
-  static constexpr absl::string_view kHeader = "not-content-length: 3\r\n\r\n";
-  static constexpr absl::string_view kBody = "foo";
+  static constexpr std::string_view kHeader = "not-content-length: 3\r\n\r\n";
+  static constexpr std::string_view kBody = "foo";
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     ++processor_call_count;
   });
   auto status =
@@ -232,13 +232,13 @@ TEST(MessageStreamSplitterTest, NotAvailableContentHeaderReadError) {
 }
 
 TEST(MessageStreamSplitterTest, GarbledSizeInContentHeader) {
-  static constexpr absl::string_view kHeader = "Content-Length: xyz\r\n\r\n";
-  static constexpr absl::string_view kBody = "foo";
+  static constexpr std::string_view kHeader = "Content-Length: xyz\r\n\r\n";
+  static constexpr std::string_view kBody = "foo";
 
   DataStreamSimulator stream(absl::StrCat(kHeader, kBody));
   MessageStreamSplitter s(4096);
   int processor_call_count = 0;
-  s.SetMessageProcessor([&](absl::string_view header, absl::string_view body) {
+  s.SetMessageProcessor([&](std::string_view header, std::string_view body) {
     ++processor_call_count;
   });
   auto status =

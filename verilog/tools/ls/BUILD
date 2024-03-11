@@ -44,7 +44,6 @@ cc_library(
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_googlesource_code_re2//:re2",
     ],
 )
@@ -63,7 +62,6 @@ cc_library(
         "//verilog/analysis:verilog-linter-configuration",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -105,7 +103,6 @@ cc_library(
         "//verilog/formatting:formatter",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@jsonhpp//:json",
     ],
 )
@@ -163,7 +160,6 @@ cc_library(
         "//verilog/analysis:symbol-table",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -194,7 +190,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
     ],
@@ -212,7 +207,6 @@ cc_test(
         "//common/util:file-util",
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -238,7 +232,6 @@ cc_library(
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
         "@jsonhpp//:json",
     ],
 )
@@ -257,7 +250,6 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
         "@jsonhpp//:json",
@@ -273,7 +265,6 @@ cc_binary(
         ":verilog-language-server",
         "//common/util:init-command-line",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -309,7 +300,6 @@ cc_test(
         "//verilog/formatting:formatter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
         "@jsonhpp//:json",

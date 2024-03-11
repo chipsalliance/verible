@@ -16,8 +16,8 @@
 
 #include <cstddef>
 #include <iterator>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/text/text_structure.h"
 #include "common/text/text_structure_test_utils.h"
 #include "common/text/token_info.h"
@@ -103,7 +103,7 @@ TEST_F(TokenViewRangeTest, TokenViewRangeSpanningOffsetsNonEmpty) {
   };
   for (const auto &test_case : test_cases) {
     const int length = test_case.right_offset - test_case.left_offset;
-    const absl::string_view text_range(
+    const std::string_view text_range(
         data_.Contents().substr(test_case.left_offset, length));
     const auto token_view_range =
         TokenViewRangeSpanningOffsets(view_, text_range);

@@ -18,9 +18,9 @@
 #include <ostream>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/strings/rebase.h"
 #include "common/text/constants.h"
 #include "common/util/logging.h"
@@ -29,12 +29,12 @@
 namespace verible {
 
 TokenInfo TokenInfo::EOFToken() {
-  static constexpr absl::string_view null_text;
+  static constexpr std::string_view null_text;
   return {TK_EOF, null_text};
 }
 
-TokenInfo TokenInfo::EOFToken(absl::string_view buffer) {
-  return {TK_EOF, absl::string_view(buffer.end(), 0)};
+TokenInfo TokenInfo::EOFToken(std::string_view buffer) {
+  return {TK_EOF, std::string_view(buffer.end(), 0)};
 }
 
 bool TokenInfo::operator==(const TokenInfo &token) const {
@@ -43,7 +43,7 @@ bool TokenInfo::operator==(const TokenInfo &token) const {
           BoundsEqual(text_, token.text_));
 }
 
-TokenInfo::Context::Context(absl::string_view b)
+TokenInfo::Context::Context(std::string_view b)
     : base(b),
       // By default, just print the enum integer value, un-translated.
       token_enum_translator([](std::ostream &stream, int e) { stream << e; }) {}
@@ -75,7 +75,7 @@ std::string TokenInfo::ToString() const {
   return output_stream.str();
 }
 
-void TokenInfo::RebaseStringView(absl::string_view new_text) {
+void TokenInfo::RebaseStringView(std::string_view new_text) {
   verible::RebaseStringView(&text_, new_text);
 }
 

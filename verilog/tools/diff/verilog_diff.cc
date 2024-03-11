@@ -26,10 +26,10 @@
 #include <map>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
+#include <string_view>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/util/enum_flags.h"
 #include "common/util/file_util.h"
 #include "common/util/init_command_line.h"
@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &stream, DiffMode p) {
   return DiffModeStringMap().Unparse(p, stream);
 }
 
-bool AbslParseFlag(absl::string_view text, DiffMode *mode, std::string *error) {
+bool AbslParseFlag(std::string_view text, DiffMode *mode, std::string *error) {
   return DiffModeStringMap().Parse(text, mode, error, "--mode value");
 }
 
@@ -75,7 +75,7 @@ ABSL_FLAG(DiffMode, mode, DiffMode::kFormat,
 )");
 
 using EquivalenceFunctionType = std::function<verilog::DiffStatus(
-    absl::string_view, absl::string_view, std::ostream *)>;
+    std::string_view, std::string_view, std::ostream *)>;
 
 static const std::map<DiffMode, EquivalenceFunctionType> diff_func_map({
     {DiffMode::kFormat, verilog::FormatEquivalent},

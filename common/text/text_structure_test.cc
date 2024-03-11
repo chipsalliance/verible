@@ -19,11 +19,11 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/constants.h"
@@ -95,7 +95,7 @@ void MultiTokenTextStructureViewNoTree(TextStructureView *view) {
 
 // Test that filtering can keep tokens.
 TEST(FilterTokensTest, OneTokenKept) {
-  const absl::string_view text = "blah";
+  const std::string_view text = "blah";
   TextStructureView test_view(text);
   // Pretend to lex and parse text.
   OneTokenTextStructureView(&test_view);
@@ -106,7 +106,7 @@ TEST(FilterTokensTest, OneTokenKept) {
 
 // Test that filtering can remove tokens.
 TEST(FilterTokensTest, OneTokenRemoved) {
-  const absl::string_view text = "blah";
+  const std::string_view text = "blah";
   TextStructureView test_view(text);
   // Pretend to lex and parse text.
   OneTokenTextStructureView(&test_view);
@@ -139,7 +139,7 @@ TEST(TokenStreamReferenceViewTest, ShiftRight) {
 
 // Test that EOFToken is properly constructed to the correct range.
 TEST(EOFTokenTest, TokenRange) {
-  const absl::string_view kTestCases[] = {
+  const std::string_view kTestCases[] = {
       "",
       "\n",
       "foobar",
@@ -158,8 +158,8 @@ TEST(EOFTokenTest, TokenRange) {
 // Test that string_views can point to memory owned in new location,
 // where new location is a superstring of the original.
 TEST(RebaseTokensToSuperstringTest, NewOwner) {
-  const absl::string_view superstring = "abcdefgh";
-  const absl::string_view substring = "cdef";
+  const std::string_view superstring = "abcdefgh";
+  const std::string_view substring = "cdef";
   EXPECT_FALSE(IsSubRange(substring, superstring));
   TextStructureView test_view(substring);
   OneTokenTextStructureView(&test_view);
@@ -248,7 +248,7 @@ TEST_F(TokenRangeTest, GetRangeForTokenOrText) {
 
 TEST_F(TokenRangeTest, CheckContainsText) {
   const TokenInfo &token = data_.FindTokenAt({0, 7});
-  const absl::string_view other_string = "other_string";
+  const std::string_view other_string = "other_string";
   EXPECT_TRUE(data_.ContainsText(token.text()));
   EXPECT_FALSE(data_.ContainsText(other_string));
 }
@@ -560,7 +560,7 @@ TEST_F(TextStructureViewPublicTest, ExpandSubtreesMultipleLeaves) {
 
 // Test that FastLineRangeConsistencyCheck catches text mismatch at first line.
 TEST_F(TextStructureViewInternalsTest, LineConsistencyFailsBeginning) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(1);
   EXPECT_FALSE(FastLineRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
@@ -568,7 +568,7 @@ TEST_F(TextStructureViewInternalsTest, LineConsistencyFailsBeginning) {
 
 // Test that FastLineRangeConsistencyCheck catches text mismatch at last line.
 TEST_F(TextStructureViewInternalsTest, LineConsistencyFailsEnd) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(0, contents_.length() - 1);
   EXPECT_FALSE(FastLineRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
@@ -576,7 +576,7 @@ TEST_F(TextStructureViewInternalsTest, LineConsistencyFailsEnd) {
 
 // Test that FastTokenRangeConsistencyCheck catches location past end.
 TEST_F(TextStructureViewInternalsTest, RangeConsistencyFailPastContentsEnd) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(0, contents_.length() - 1);
   EXPECT_FALSE(FastTokenRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
@@ -584,7 +584,7 @@ TEST_F(TextStructureViewInternalsTest, RangeConsistencyFailPastContentsEnd) {
 
 // Test that FastTokenRangeConsistencyCheck catches location past begin.
 TEST_F(TextStructureViewInternalsTest, RangeConsistencyFailPastContentsBegin) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(1);
   EXPECT_FALSE(FastTokenRangeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
@@ -643,7 +643,7 @@ TEST_F(TextStructureViewInternalsTest,
 // located past the begin.
 TEST_F(TextStructureViewInternalsTest,
        SyntaxTreeConsistencyFailViewRightmostLeafPastBegin) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(1);
   EXPECT_FALSE(SyntaxTreeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());
@@ -653,7 +653,7 @@ TEST_F(TextStructureViewInternalsTest,
 // located past the end.
 TEST_F(TextStructureViewInternalsTest,
        SyntaxTreeConsistencyFailViewRightmostLeafPastEnd) {
-  const ValueSaver<absl::string_view> save_contents(&contents_);
+  const ValueSaver<std::string_view> save_contents(&contents_);
   contents_ = contents_.substr(0, contents_.length() - 1);
   EXPECT_FALSE(SyntaxTreeConsistencyCheck().ok());
   EXPECT_FALSE(InternalConsistencyCheck().ok());

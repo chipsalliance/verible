@@ -18,10 +18,10 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -76,7 +76,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLine) {
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
-           absl::string_view token_text, absl::string_view context_line,
+           std::string_view token_text, std::string_view context_line,
            const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 1);
@@ -114,7 +114,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageSameLineWithContext) {
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
-           absl::string_view token_text, absl::string_view context_line,
+           std::string_view token_text, std::string_view context_line,
            const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 1);
@@ -150,7 +150,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageOneChar) {
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
-           absl::string_view token_text, absl::string_view context_line,
+           std::string_view token_text, std::string_view context_line,
            const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 0);
@@ -207,7 +207,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageDifferentLine) {
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
-           absl::string_view token_text, absl::string_view context_line,
+           std::string_view token_text, std::string_view context_line,
            const std::string &message) {
           EXPECT_EQ(filename, "hello.txt");
           EXPECT_EQ(range.start.line, 0);
@@ -285,7 +285,7 @@ TEST(FileAnalyzerTest, TokenErrorMessageEOFWithContext) {
         {error_token, AnalysisPhase::kParsePhase},
         [](const std::string &filename, LineColumnRange range,
            ErrorSeverity severity, AnalysisPhase phase,
-           absl::string_view token_text, absl::string_view context_line,
+           std::string_view token_text, std::string_view context_line,
            const std::string &message) {
           EXPECT_EQ(filename, "unbalanced.txt");
           EXPECT_EQ(range.start.line, 2);

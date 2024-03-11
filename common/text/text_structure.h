@@ -29,10 +29,10 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/strings/mem_block.h"
 #include "common/text/concrete_syntax_tree.h"
@@ -73,7 +73,7 @@ class TextStructureView {
   // expansion is encountered.
   using NodeExpansionMap = std::map<int, DeferredExpansion>;
 
-  explicit TextStructureView(absl::string_view contents);
+  explicit TextStructureView(std::string_view contents);
 
   ~TextStructureView();
 
@@ -81,9 +81,9 @@ class TextStructureView {
   TextStructureView(const TextStructureView&) = delete;
   TextStructureView& operator=(const TextStructureView&) = delete;
 
-  absl::string_view Contents() const { return contents_; }
+  std::string_view Contents() const { return contents_; }
 
-  const std::vector<absl::string_view>& Lines() const {
+  const std::vector<std::string_view>& Lines() const {
     return lazy_lines_info_.Get(contents_).lines;
   }
 
@@ -118,10 +118,10 @@ class TextStructureView {
 
   // Convenience function: Given a text snippet, that needs to be a substring
   // of Contents(), return the range it covers.
-  LineColumnRange GetRangeForText(absl::string_view text) const;
+  LineColumnRange GetRangeForText(std::string_view text) const;
 
   // checks if a given text belongs to the TextStructure
-  bool ContainsText(absl::string_view text) const;
+  bool ContainsText(std::string_view text) const;
 
   const std::vector<TokenSequence::const_iterator>& GetLineTokenMap() const;
 
@@ -156,8 +156,8 @@ class TextStructureView {
   // Update tokens to point their text into new (superstring) owner.
   // This is done to prepare for transfer of ownership of syntax_tree_
   // to a new owner.
-  void RebaseTokensToSuperstring(absl::string_view superstring,
-                                 absl::string_view src_base, int offset);
+  void RebaseTokensToSuperstring(std::string_view superstring,
+                                 std::string_view src_base, int offset);
 
   // Narrows the view of text, tokens, and syntax tree to the node that starts
   // at left_offset.  The resulting state looks as if only a snippet of
@@ -180,7 +180,7 @@ class TextStructureView {
   // This is required for calculating byte offsets to substrings contained
   // within this structure.  Pass this (via Contents()) to TokenInfo::left() and
   // TokenInfo::right() to calculate byte offsets, useful for diagnostics.
-  absl::string_view contents_;
+  std::string_view contents_;
 
   // TODO(hzeller): These lazily generated elements are good candidates
   // for breaking out into their own abstraction.
@@ -188,12 +188,12 @@ class TextStructureView {
     bool valid = false;
 
     // Line-by-line view of contents_.
-    std::vector<absl::string_view> lines;
+    std::vector<std::string_view> lines;
 
     // Map to translate byte-offsets to line and column for diagnostics.
     std::unique_ptr<LineColumnMap> line_column_map;
 
-    const LinesInfo& Get(absl::string_view contents);
+    const LinesInfo& Get(std::string_view contents);
   };
   // Mutable as we fill it lazily on request; conceptually the data is const.
   mutable LinesInfo lazy_lines_info_;
@@ -272,7 +272,7 @@ class TextStructure {
   explicit TextStructure(std::shared_ptr<MemBlock> contents);
 
   // Convenience constructor in case our input is a string.
-  explicit TextStructure(absl::string_view contents);
+  explicit TextStructure(std::string_view contents);
 
  public:
   TextStructure(const TextStructure&) = delete;

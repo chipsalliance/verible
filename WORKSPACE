@@ -39,10 +39,10 @@ http_archive(
     # On MSVC's STL implementation, string_view cannot be constructed from
     # a string_view::iterator. This patch forces the use of absl's string_view
     # implementation to solve the issue
-    patch_args = ["-p1"],
-    patches = [
-        "//bazel:absl.patch",
-    ],
+    #    patch_args = ["-p1"],
+    #    patches = [
+    #        "//bazel:absl.patch",
+    #    ],
     sha256 = "338420448b140f0dfd1a1ea3c3ce71b3bc172071f24f4d9a57d59b45037da440",
     strip_prefix = "abseil-cpp-20240116.0",
     urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.0.tar.gz"],

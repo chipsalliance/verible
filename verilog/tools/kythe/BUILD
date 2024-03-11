@@ -32,7 +32,6 @@ cc_library(
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -57,7 +56,6 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -67,7 +65,6 @@ cc_test(
     deps = [
         ":kythe-facts",
         ":scope-resolver",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -86,7 +83,6 @@ cc_library(
 cc_library(
     name = "kythe-schema-constants",
     hdrs = ["kythe_schema_constants.h"],
-    deps = ["@com_google_absl//absl/strings:string_view"],
 )
 
 cc_library(
@@ -107,7 +103,6 @@ cc_library(
         "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/hash",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
     ],
 )
@@ -137,7 +132,6 @@ cc_library(
         "//common/util:tree-operations",
         "//common/util:vector-tree",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -148,7 +142,6 @@ cc_test(
         ":indexing-facts-tree",
         ":verilog-extractor-indexing-fact-type",
         "//common/util:range",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -188,7 +181,6 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -206,7 +198,6 @@ cc_test(
         "//verilog/analysis:verilog-project",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
@@ -247,7 +238,6 @@ cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -284,7 +274,6 @@ cc_library(
         "//common/util:simple-zip",
         "//third_party/proto/kythe:analysis_cc_proto",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
 
@@ -305,6 +294,5 @@ cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )

@@ -15,9 +15,9 @@
 #include "common/lexer/token_stream_adapter.h"
 
 #include <functional>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/token_generator.h"
 #include "common/text/token_info.h"
@@ -30,7 +30,7 @@ TokenGenerator MakeTokenGenerator(Lexer *l) {
 }
 
 absl::Status MakeTokenSequence(
-    Lexer *lexer, absl::string_view text, TokenSequence *tokens,
+    Lexer *lexer, std::string_view text, TokenSequence *tokens,
     const std::function<void(const TokenInfo &)> &error_token_handler) {
   // TODO(fangism): provide a Lexer interface to grab all tokens en masse,
   // which would save virtual function dispatch overhead.

@@ -22,9 +22,9 @@
 #include <iosfwd>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/citation.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/symbol.h"
@@ -42,7 +42,7 @@ namespace verible {
 // ReplacementEdit differs from editscript's Edit in that it stores a
 // replacement string, so it doesn't need the "after" text to be useful.
 struct ReplacementEdit {
-  ReplacementEdit(absl::string_view fragment, const std::string& replacement)
+  ReplacementEdit(std::string_view fragment, const std::string& replacement)
       : fragment(fragment), replacement(replacement) {}
 
   ReplacementEdit(const TokenInfo& token, const std::string& replacement)
@@ -55,7 +55,7 @@ struct ReplacementEdit {
     return (fragment.data() + fragment.size()) <= other.fragment.data();
   }
 
-  absl::string_view fragment;
+  std::string_view fragment;
   std::string replacement;
 };
 
@@ -66,17 +66,17 @@ class AutoFix {
   AutoFix(const AutoFix& other) = default;
   AutoFix(AutoFix&& other) = default;
 
-  AutoFix(absl::string_view description,
+  AutoFix(std::string_view description,
           std::initializer_list<ReplacementEdit> edits)
       : description_(description), edits_(edits) {
     CHECK_EQ(edits_.size(), edits.size()) << "Edits must not overlap.";
   }
 
-  AutoFix(absl::string_view description, const ReplacementEdit& edit)
+  AutoFix(std::string_view description, const ReplacementEdit& edit)
       : AutoFix(description, {edit}) {}
 
   // Applies the fix on a `base` and returns modified text.
-  std::string Apply(absl::string_view base) const;
+  std::string Apply(std::string_view base) const;
 
   bool AddEdits(const std::set<ReplacementEdit>& new_edits);
 
@@ -91,13 +91,13 @@ class AutoFix {
 // LintViolation is a class that represents a single rule violation.
 struct LintViolation {
   // This construct records a token stream lint violation.
-  LintViolation(const TokenInfo& token, absl::string_view reason,
+  LintViolation(const TokenInfo& token, std::string_view reason,
                 const std::vector<AutoFix>& autofixes = {})
       : token(token), reason(reason), context(), autofixes(autofixes) {}
 
   // This construct records a syntax tree lint violation.
   // Use this variation when the violation can be localized to a single token.
-  LintViolation(const TokenInfo& token, absl::string_view reason,
+  LintViolation(const TokenInfo& token, std::string_view reason,
                 const SyntaxTreeContext& context,
                 const std::vector<AutoFix>& autofixes = {})
       : token(token), reason(reason), context(context), autofixes(autofixes) {}
@@ -106,7 +106,7 @@ struct LintViolation {
   // Use this variation when the range of violation is a subtree that spans
   // multiple tokens.  The violation will be reported at the location of
   // the left-most leaf of the subtree.
-  LintViolation(const Symbol& root, absl::string_view reason,
+  LintViolation(const Symbol& root, std::string_view reason,
                 const SyntaxTreeContext& context,
                 const std::vector<AutoFix>& autofixes = {});
 
@@ -138,7 +138,7 @@ struct LintViolation {
 struct LintRuleStatus {
   LintRuleStatus() = default;
 
-  LintRuleStatus(const std::set<LintViolation>& vs, absl::string_view rule_name,
+  LintRuleStatus(const std::set<LintViolation>& vs, std::string_view rule_name,
                  const std::string& url)
       : lint_rule_name(rule_name), url(url), violations(vs) {}
 
@@ -161,7 +161,7 @@ struct LintRuleStatus {
   void WaiveViolations(std::function<bool(const LintViolation&)>&& is_waived);
 
   // Name of the lint rule that produced this status.
-  absl::string_view lint_rule_name;
+  std::string_view lint_rule_name;
 
   // Hold link to engdoc summary of violated rule
   std::string url;
@@ -195,7 +195,7 @@ class LintStatusFormatter {
  public:
   // Constructor takes a reference to the original text in order to setup
   // line_column_map
-  explicit LintStatusFormatter(absl::string_view text)
+  explicit LintStatusFormatter(std::string_view text)
       : line_column_map_(text) {}
 
   // Formats and outputs status to stream.
@@ -204,8 +204,7 @@ class LintStatusFormatter {
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
   void FormatLintRuleStatus(std::ostream* stream, const LintRuleStatus& status,
-                            absl::string_view base,
-                            absl::string_view path) const;
+                            std::string_view base, std::string_view path) const;
 
   // Formats, sorts and outputs status to stream with additional vulnerable code
   // line printed when enabled.
@@ -215,10 +214,10 @@ class LintStatusFormatter {
   // contained in status.
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
-  void FormatLintRuleStatuses(
-      std::ostream* stream, const std::vector<LintRuleStatus>& statuses,
-      absl::string_view base, absl::string_view path,
-      const std::vector<absl::string_view>& lines) const;
+  void FormatLintRuleStatuses(std::ostream* stream,
+                              const std::vector<LintRuleStatus>& statuses,
+                              std::string_view base, std::string_view path,
+                              const std::vector<std::string_view>& lines) const;
 
   // Formats and outputs violation on stream.
   // Path is file path of original file and url is a link to the ratified rule
@@ -226,9 +225,8 @@ class LintStatusFormatter {
   // Base is the string_view of the entire contents, used only for byte offset
   // calculation.
   void FormatViolation(std::ostream* stream, const LintViolation& violation,
-                       absl::string_view base, absl::string_view path,
-                       absl::string_view url,
-                       absl::string_view rule_name) const;
+                       std::string_view base, std::string_view path,
+                       std::string_view url, std::string_view rule_name) const;
 
   // Formats and outputs violation to a file stream in a syntax accepted by
   // --waiver_files flag. Path is file path of original file that is being
@@ -236,8 +234,8 @@ class LintStatusFormatter {
   // byte offset calculation.
   void FormatViolationWaiver(std::ostream* stream,
                              const LintViolation& violation,
-                             absl::string_view base, absl::string_view path,
-                             absl::string_view rule_name) const;
+                             std::string_view base, std::string_view path,
+                             std::string_view rule_name) const;
 
  private:
   // Translates byte offsets, which are supplied by LintViolations via

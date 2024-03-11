@@ -19,15 +19,15 @@
 #include <cctype>
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 namespace verible::lsp {
 
-static constexpr absl::string_view kFileSchemePrefix = "file://";
+static constexpr std::string_view kFileSchemePrefix = "file://";
 
 namespace {
 
@@ -46,10 +46,10 @@ bool NeedsEscape(char c) {
   }
 }
 
-std::string DecodeURI(absl::string_view uri) {
+std::string DecodeURI(std::string_view uri) {
   std::string result;
   result.reserve(uri.size() - 2 * std::count(uri.begin(), uri.end(), '%'));
-  absl::string_view::size_type pos = 0;
+  std::string_view::size_type pos = 0;
 
   while (pos < uri.size()) {
     if (uri[pos] == '%') {
@@ -63,18 +63,18 @@ std::string DecodeURI(absl::string_view uri) {
         absl::StrAppend(&result, "%");
       }
     }
-    absl::string_view::size_type nextpos = uri.find('%', pos);
-    if (nextpos > absl::string_view::npos) nextpos = uri.size();
+    std::string_view::size_type nextpos = uri.find('%', pos);
+    if (nextpos > std::string_view::npos) nextpos = uri.size();
     absl::StrAppend(&result, uri.substr(pos, nextpos - pos));
     pos = nextpos;
   }
   return result;
 }
 
-std::string EncodeURI(absl::string_view uri) {
+std::string EncodeURI(std::string_view uri) {
   std::string result;
 
-  absl::string_view::size_type pos = 0;
+  std::string_view::size_type pos = 0;
 
   int prevpos = 0;
   while (pos < uri.size()) {
@@ -91,7 +91,7 @@ std::string EncodeURI(absl::string_view uri) {
 }
 }  // namespace
 
-std::string LSPUriToPath(absl::string_view uri) {
+std::string LSPUriToPath(std::string_view uri) {
   if (!absl::StartsWith(uri, kFileSchemePrefix)) return "";
   std::string path = DecodeURI(uri.substr(kFileSchemePrefix.size()));
   // In Windows, paths in URIs are represented as
@@ -108,7 +108,7 @@ std::string LSPUriToPath(absl::string_view uri) {
   return path;
 }
 
-std::string PathToLSPUri(absl::string_view path) {
+std::string PathToLSPUri(std::string_view path) {
   std::filesystem::path p(path.begin(), path.end());
   std::string normalized_path;
   normalized_path = std::filesystem::absolute(p).string();

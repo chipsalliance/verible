@@ -18,8 +18,7 @@
 
 #include <functional>
 #include <memory>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 namespace zip {
@@ -35,15 +34,15 @@ namespace zip {
 // The fact that ByteSource returns different results on each call implies that
 // it has a state (e.g. successive read() calls); implementations need to make
 // sure that even partial reads don't result in leaked resources.
-using ByteSource = std::function<absl::string_view()>;
+using ByteSource = std::function<std::string_view()>;
 
 // A function that receives bytes. Consecutive calls concatenate. Return
 // value 'true' indicates operation succeeded.
-using ByteSink = std::function<bool(absl::string_view out)>;
+using ByteSink = std::function<bool(std::string_view out)>;
 
 // Utility function that wraps a string_view and provides a ByteSource. Use
 // this if you have an in-memory representation of your content.
-ByteSource MemoryByteSource(absl::string_view input);
+ByteSource MemoryByteSource(std::string_view input);
 
 // Utility function that reads the content of a file and provides a ByteSource.
 // May return an empty function if file could not be opened
@@ -62,7 +61,7 @@ class Encoder {
   ~Encoder();
 
   // Add a file with given filename and content from the generator function.
-  bool AddFile(absl::string_view filename, const ByteSource &content_generator);
+  bool AddFile(std::string_view filename, const ByteSource &content_generator);
 
   // Finalize container.
   // After this, no new files can be added.

@@ -18,10 +18,10 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "gtest/gtest.h"
 
@@ -60,9 +60,9 @@ static DiffStatus FlipStatus(DiffStatus status) {
 }
 
 static void ExpectCompareWithErrstream(
-    const std::function<DiffStatus(absl::string_view, absl::string_view,
+    const std::function<DiffStatus(std::string_view, std::string_view,
                                    std::ostream *)> &func,
-    DiffStatus expect_compare, absl::string_view left, absl::string_view right,
+    DiffStatus expect_compare, std::string_view left, std::string_view right,
     std::ostream *errstream = &std::cout) {
   EXPECT_EQ(func(left, right, errstream), expect_compare)
       << "left:\n"
@@ -357,8 +357,8 @@ TEST(FormatEquivalentTest, LexErrorOnRightInMacroDefinitionBody) {
 }
 
 struct ObfuscationTestCase {
-  absl::string_view before;
-  absl::string_view after;
+  std::string_view before;
+  std::string_view after;
   DiffStatus expect_match;
 };
 

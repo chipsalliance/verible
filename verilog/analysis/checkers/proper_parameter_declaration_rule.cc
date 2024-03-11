@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/proper_parameter_declaration_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -40,10 +40,10 @@ using verible::matcher::Matcher;
 // Register ProperParameterDeclarationRule
 VERILOG_REGISTER_LINT_RULE(ProperParameterDeclarationRule);
 
-static constexpr absl::string_view kParameterMessage =
+static constexpr std::string_view kParameterMessage =
     "\'parameter\' declarations should only be within packages or in the "
     "formal parameter list of modules/classes.";
-static constexpr absl::string_view kLocalParamMessage =
+static constexpr std::string_view kLocalParamMessage =
     "\'localparam\' declarations should only be within modules\' or classes\' "
     "definition bodies.";
 

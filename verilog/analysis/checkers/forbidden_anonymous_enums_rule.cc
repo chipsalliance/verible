@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/forbidden_anonymous_enums_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -37,7 +37,7 @@ using Matcher = verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(ForbiddenAnonymousEnumsRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "enum types always should be named using typedef.";
 
 const LintRuleDescriptor &ForbiddenAnonymousEnumsRule::GetDescriptor() {

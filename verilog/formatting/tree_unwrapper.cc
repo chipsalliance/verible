@@ -21,6 +21,7 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -29,7 +30,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 #include "common/formatting/format_token.h"
 #include "common/formatting/token_partition_tree.h"
 #include "common/formatting/tree_unwrapper.h"
@@ -1573,7 +1573,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
     if (!previous_partition->Value().TokensRange().empty()) {
       const auto& previous_token =
           previous_partition->Value().TokensRange().back();
-      absl::string_view original_text_between = verible::make_string_view_range(
+      std::string_view original_text_between = verible::make_string_view_range(
           previous_token.Text().end(), separator->Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
         VLOG(5) << "  merge into previous partition.";
@@ -1589,7 +1589,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   if (next_partition != nullptr) {
     if (!next_partition->Value().TokensRange().empty()) {
       const auto& next_token = next_partition->Value().TokensRange().front();
-      absl::string_view original_text_between = verible::make_string_view_range(
+      std::string_view original_text_between = verible::make_string_view_range(
           separator->Text().end(), next_token.Text().begin());
       if (!absl::StrContains(original_text_between, '\n')) {
         VLOG(5) << "  merge into next partition.";

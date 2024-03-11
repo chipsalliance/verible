@@ -18,10 +18,10 @@
 
 #include <cstring>
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {
@@ -125,7 +125,7 @@ TEST(LineColumnMapTest, Offsets) {
 TEST(LineColumnMapTest, OffsetsFromLines) {
   for (const auto &test_case : map_test_data) {
     const LineColumnMap line_map(test_case.text);
-    std::vector<absl::string_view> lines = absl::StrSplit(test_case.text, '\n');
+    std::vector<std::string_view> lines = absl::StrSplit(test_case.text, '\n');
     const LineColumnMap alt_line_map(lines);
     EXPECT_EQ(line_map.GetBeginningOfLineOffsets(),
               alt_line_map.GetBeginningOfLineOffsets())
@@ -134,13 +134,13 @@ TEST(LineColumnMapTest, OffsetsFromLines) {
 }
 
 TEST(LineColumnMapTest, EndOffsetNoLines) {
-  const std::vector<absl::string_view> lines;
+  const std::vector<std::string_view> lines;
   const LineColumnMap map(lines);
   EXPECT_EQ(map.LastLineOffset(), 0);
 }
 
 struct EndOffsetTestCase {
-  absl::string_view text;
+  std::string_view text;
   int expected_offset;
 };
 

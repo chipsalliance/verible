@@ -17,8 +17,7 @@
 
 #include <iosfwd>
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verilog {
 namespace analysis {
@@ -45,9 +44,9 @@ struct BasedNumber {
   // Construct parses a literal string based on
   // '{Dec|Bin|Oct|Hex}{Base|Digits}' from verilog.lex.
   // base_sign is lexed as one token, e.g. 'b, 'sb (signed).
-  BasedNumber(absl::string_view base_sign, absl::string_view digits);
+  BasedNumber(std::string_view base_sign, std::string_view digits);
 
-  BasedNumber(char base_, bool sign_, absl::string_view text)
+  BasedNumber(char base_, bool sign_, std::string_view text)
       : base(base_), signedness(sign_), literal(text), ok(true) {}
 
   bool operator==(const BasedNumber &rhs) const {

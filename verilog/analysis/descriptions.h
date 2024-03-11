@@ -20,25 +20,24 @@
 #define VERIBLE_VERILOG_ANALYSIS_DESCRIPTIONS_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 namespace verilog {
 namespace analysis {
 
-using LintRuleId = absl::string_view;
+using LintRuleId = std::string_view;
 
 struct LintConfigParameterDescriptor {
-  absl::string_view name;
+  std::string_view name;
   std::string default_value;
   std::string description;
 };
 
 struct LintRuleDescriptor {
-  LintRuleId name;          // ID/name of the rule.
-  absl::string_view topic;  // section in style-guide
-  std::string desc;         // Detailed description.
+  LintRuleId name;         // ID/name of the rule.
+  std::string_view topic;  // section in style-guide
+  std::string desc;        // Detailed description.
   std::vector<LintConfigParameterDescriptor> param;
 };
 

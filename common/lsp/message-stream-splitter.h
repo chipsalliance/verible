@@ -17,10 +17,10 @@
 
 #include <cstddef>
 #include <functional>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 namespace lsp {
@@ -50,7 +50,7 @@ class MessageStreamSplitter {
   // Function called with each complete message that has been extracted from
   // the stream.
   using MessageProcessFun =
-      std::function<void(absl::string_view header, absl::string_view body)>;
+      std::function<void(std::string_view header, std::string_view body)>;
 
   // Optional parameter is "initial_read_buffer_size" for the initial
   // internal buffer size (will be realloc'ed when needed).
@@ -89,12 +89,12 @@ class MessageStreamSplitter {
   size_t StatTotalBytesRead() const { return stats_total_bytes_read_; }
 
  private:
-  int ParseHeaderGetBodyOffset(absl::string_view data, int *body_size);
-  absl::Status ProcessContainedMessages(absl::string_view *data);
+  int ParseHeaderGetBodyOffset(std::string_view data, int *body_size);
+  absl::Status ProcessContainedMessages(std::string_view *data);
   absl::Status ReadInput(const ReadFun &read_fun);
 
   std::vector<char> read_buffer_;
-  absl::string_view pending_data_;
+  std::string_view pending_data_;
 
   MessageProcessFun message_processor_;
 

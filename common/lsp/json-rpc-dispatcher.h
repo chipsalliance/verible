@@ -18,10 +18,10 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "nlohmann/json.hpp"
 
 namespace verible {
@@ -69,7 +69,7 @@ class JsonRpcDispatcher {
   // A function of type WriteFun is called by the dispatcher to send the
   // string-formatted json response. The user of the JsonRpcDispatcher then
   // can wire that to the underlying transport.
-  using WriteFun = std::function<void(absl::string_view response)>;
+  using WriteFun = std::function<void(std::string_view response)>;
 
   // Some statistical counters of method calls or exceptions encountered.
   using StatsMap = std::map<std::string, int>;
@@ -95,7 +95,7 @@ class JsonRpcDispatcher {
   // Dispatch incoming message, a string view with json data.
   // Call this with the content of exactly one message.
   // If this is an RPC call, response will call WriteFun.
-  void DispatchMessage(absl::string_view data);
+  void DispatchMessage(std::string_view data);
 
   // Send a notification to the client side. Parameters will be wrapped
   // in a JSON-RPC message and pushed out to the WriteFun
@@ -118,7 +118,7 @@ class JsonRpcDispatcher {
   void SendReply(const nlohmann::json &response);
 
   static nlohmann::json CreateError(const nlohmann::json &request, int code,
-                                    absl::string_view message);
+                                    std::string_view message);
   static nlohmann::json MakeResponse(const nlohmann::json &request,
                                      const nlohmann::json &call_result);
 

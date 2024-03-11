@@ -53,8 +53,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
@@ -77,7 +76,7 @@ class Sha256Context {
   // Adds an array of octets as the next portion of the message.  Returns false
   // if the accumulated message is too large (>2 Exabytes). Can be called
   // multiple times to incrementally build the digest.
-  bool AddInput(absl::string_view message);
+  bool AddInput(std::string_view message);
 
   // Returns true if the accumulated message is too large (>2 Exabytes).
   bool IsOverflowed() const { return overflowed_; }
@@ -129,10 +128,10 @@ class Sha256Context {
 };
 
 // Returns the SHA256 hash of the given content.
-std::array<uint8_t, kSha256HashSize> Sha256(absl::string_view content);
+std::array<uint8_t, kSha256HashSize> Sha256(std::string_view content);
 
 // Returns the HEX string representation of SHA256 hash of the given content.
-std::string Sha256Hex(absl::string_view content);
+std::string Sha256Hex(std::string_view content);
 
 }  // namespace verible
 

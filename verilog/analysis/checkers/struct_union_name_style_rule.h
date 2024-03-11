@@ -17,9 +17,9 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -40,7 +40,7 @@ class StructUnionNameStyleRule : public verible::SyntaxTreeLintRule {
   void HandleSymbol(const verible::Symbol& symbol,
                     const verible::SyntaxTreeContext& context) final;
 
-  absl::Status Configure(absl::string_view configuration) final;
+  absl::Status Configure(std::string_view configuration) final;
 
   verible::LintRuleStatus Report() const final;
 

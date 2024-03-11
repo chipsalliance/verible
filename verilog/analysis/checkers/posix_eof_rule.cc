@@ -16,8 +16,8 @@
 
 #include <set>
 #include <string>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/text_structure.h"
 #include "common/text/token_info.h"
@@ -37,7 +37,7 @@ using verible::TokenInfo;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PosixEOFRule);
 
-static constexpr absl::string_view kMessage = "File must end with a newline.";
+static constexpr std::string_view kMessage = "File must end with a newline.";
 
 const LintRuleDescriptor &PosixEOFRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -49,7 +49,7 @@ const LintRuleDescriptor &PosixEOFRule::GetDescriptor() {
 }
 
 void PosixEOFRule::Lint(const TextStructureView &text_structure,
-                        absl::string_view) {
+                        std::string_view) {
   if (!text_structure.Contents().empty()) {
     const auto &last_line = text_structure.Lines().back();
     if (!last_line.empty()) {

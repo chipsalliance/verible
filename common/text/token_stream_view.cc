@@ -15,9 +15,9 @@
 #include "common/text/token_stream_view.h"
 
 #include <algorithm>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/text/token_info.h"
 #include "common/util/iterator_range.h"
 
@@ -57,7 +57,7 @@ static bool TokenLocationLess(const TokenSequence::const_iterator &token_iter,
 }
 
 TokenViewRange TokenViewRangeSpanningOffsets(const TokenStreamView &view,
-                                             absl::string_view range) {
+                                             std::string_view range) {
   const auto lower = range.begin();
   const auto upper = range.end();
   const auto left =

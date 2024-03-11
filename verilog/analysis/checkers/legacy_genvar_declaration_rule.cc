@@ -15,8 +15,8 @@
 #include "verilog/analysis/checkers/legacy_genvar_declaration_rule.h"
 
 #include <set>
+#include <string_view>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -35,7 +35,7 @@ VERILOG_REGISTER_LINT_RULE(LegacyGenvarDeclarationRule);
 using verible::LintRuleStatus;
 using verible::LintViolation;
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Do not use separate genvar declaration.";
 
 const LintRuleDescriptor &LegacyGenvarDeclarationRule::GetDescriptor() {

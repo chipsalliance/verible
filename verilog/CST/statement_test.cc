@@ -15,9 +15,9 @@
 #include "verilog/CST/statement.h"
 
 #include <memory>
+#include <string_view>
 #include <vector>
 
-#include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher_builders.h"
 #include "common/analysis/syntax_tree_search.h"
 #include "common/analysis/syntax_tree_search_test_utils.h"
@@ -826,7 +826,7 @@ TEST(GetAnyConditionalElseClauseTest, NoElseClause) {
         "endtask\n"}},
   };
   for (const auto &test : kTestCases) {
-    const absl::string_view code(test.token_data.code);
+    const std::string_view code(test.token_data.code);
     VerilogAnalyzer analyzer(code, "test-file");
     ASSERT_OK(analyzer.Analyze()) << "failed on:\n" << code;
     const auto &root = analyzer.Data().SyntaxTree();

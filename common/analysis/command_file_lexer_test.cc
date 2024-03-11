@@ -15,9 +15,9 @@
 #include "common/analysis/command_file_lexer.h"
 
 #include <initializer_list>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/constants.h"
 #include "common/text/token_info.h"
@@ -30,7 +30,7 @@ namespace {
 // Removes non-essential tokens from token output stream, such as spaces.
 class FilteredCommandFileLexer : public CommandFileLexer {
  public:
-  explicit FilteredCommandFileLexer(absl::string_view code)
+  explicit FilteredCommandFileLexer(std::string_view code)
       : CommandFileLexer(code) {}
 
   bool KeepSyntaxTreeTokens(const verible::TokenInfo &t) {

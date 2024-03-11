@@ -16,13 +16,12 @@
 #define VERIBLE_COMMON_ANALYSIS_CITATION_H_
 
 #include <string>
-
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 // Given a styleguide topic, return a reference to some styleguide
 // citation for the given topic (e.g. just the topic-name or an URL).
-std::string GetStyleGuideCitation(absl::string_view topic);
+std::string GetStyleGuideCitation(std::string_view topic);
 }  // namespace verible
 
 #endif  // VERIBLE_COMMON_ANALYSIS_CITATION_H_

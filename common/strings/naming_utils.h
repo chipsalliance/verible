@@ -15,23 +15,23 @@
 #ifndef VERIBLE_COMMON_STRINGS_NAMING_UTILS_H_
 #define VERIBLE_COMMON_STRINGS_NAMING_UTILS_H_
 
-#include "absl/strings/string_view.h"
+#include <string_view>
 
 namespace verible {
 
 // Returns true if the string contains only capital letters, digits, and
 // underscores.
-bool IsNameAllCapsUnderscoresDigits(absl::string_view);
+bool IsNameAllCapsUnderscoresDigits(std::string_view);
 
 // Returns true if the all the underscores in the string are followed by digits.
-bool AllUnderscoresFollowedByDigits(absl::string_view);
+bool AllUnderscoresFollowedByDigits(std::string_view);
 
 // Returns true if the string follows UpperCamelCase naming convention, where
 // underscores are allowed when separating a digit.
-bool IsUpperCamelCaseWithDigits(absl::string_view);
+bool IsUpperCamelCaseWithDigits(std::string_view);
 
 // Returns true if the string follows lower_snake_case naming convention.
-bool IsLowerSnakeCaseWithDigits(absl::string_view);
+bool IsLowerSnakeCaseWithDigits(std::string_view);
 
 }  // namespace verible
 

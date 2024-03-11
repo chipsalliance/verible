@@ -16,9 +16,8 @@
 #define VERIBLE_COMMON_UTIL_INIT_COMMAND_LINE_H_
 
 #include <string>
+#include <string_view>
 #include <vector>
-
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
@@ -37,8 +36,8 @@ void SetLoggingLevelsFromEnvironment();
 // Positional parameters after `--` are returned as-is and not interpreted
 // as flags.
 // Returns positional arguments, where element[0] is the program name.
-std::vector<absl::string_view> InitCommandLine(absl::string_view usage,
-                                               int *argc, char ***argv);
+std::vector<std::string_view> InitCommandLine(std::string_view usage, int *argc,
+                                              char ***argv);
 
 }  // namespace verible
 

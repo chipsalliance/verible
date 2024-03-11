@@ -15,9 +15,9 @@
 #include "common/lexer/token_stream_adapter.h"
 
 #include <initializer_list>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/lexer/lexer.h"
 #include "common/lexer/lexer_test_util.h"
 #include "common/text/constants.h"
@@ -36,14 +36,14 @@ class FakeTokenSequenceLexer : public Lexer, public FakeLexer {
 
   const TokenInfo &DoNextToken() final { return FakeLexer::DoNextToken(); }
 
-  void Restart(absl::string_view) final {}
+  void Restart(std::string_view) final {}
 
   bool TokenIsError(const TokenInfo &) const override { return false; }
 };
 
 TEST(MakeTokenGeneratorTest, Generate) {
-  static constexpr absl::string_view abc("abc");
-  static constexpr absl::string_view xyz("xyz");
+  static constexpr std::string_view abc("abc");
+  static constexpr std::string_view xyz("xyz");
   FakeTokenSequenceLexer lexer;
   std::initializer_list<TokenInfo> tokens = {
       {1, abc},
@@ -60,7 +60,7 @@ TEST(MakeTokenGeneratorTest, Generate) {
 
 TEST(MakeTokenSequenceTest, Sequencer) {
   FakeTokenSequenceLexer lexer;
-  constexpr absl::string_view text("abcxyz");
+  constexpr std::string_view text("abcxyz");
   std::initializer_list<TokenInfo> tokens = {
       {1, text.substr(0, 3)},
       {2, text.substr(3, 3)},
@@ -82,7 +82,7 @@ class TheNumberTwoIsErrorLexer : public FakeTokenSequenceLexer {
 
 TEST(MakeTokenSequenceTest, SequencerWithError) {
   TheNumberTwoIsErrorLexer lexer;
-  constexpr absl::string_view text("abcxyz");
+  constexpr std::string_view text("abcxyz");
   std::initializer_list<TokenInfo> tokens = {
       {1, text.substr(0, 3)},
       {2, text.substr(3, 3)},  // error token

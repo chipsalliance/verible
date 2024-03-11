@@ -14,8 +14,9 @@
 
 #include "verilog/analysis/checkers/generate_label_prefix_rule.h"
 
+#include <string_view>
+
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -37,7 +38,7 @@ using verible::matcher::Matcher;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(GenerateLabelPrefixRule);
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "All generate block labels must start with g_ or gen_";
 
 // TODO(fangism): and be lower_snake_case?

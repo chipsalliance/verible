@@ -20,18 +20,18 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
-#include "absl/strings/string_view.h"
 #include "third_party/portable_endian/portable_endian.h"
 #include "zlib/include/zlib.h"
 
 namespace verible {
 namespace zip {
 
-ByteSource MemoryByteSource(absl::string_view input) {
+ByteSource MemoryByteSource(std::string_view input) {
   auto is_called = std::make_shared<bool>(false);
-  return [is_called, input]() -> absl::string_view {
+  return [is_called, input]() -> std::string_view {
     if (!*is_called) {
       *is_called = true;
       return input;
@@ -50,7 +50,7 @@ ByteSource FileByteSource(const char *filename) {
     char buffer[65536];
   };
   auto state = std::make_shared<State>(f);  // capture req. copy-constructable
-  return [state]() -> absl::string_view {
+  return [state]() -> std::string_view {
     size_t r = fread(state->buffer, 1, sizeof(State::buffer), state->file);
     return {state->buffer, r};
   };
@@ -75,7 +75,7 @@ class HeaderWriter {
     pos_ += 4;
     return *this;
   }
-  HeaderWriter &AddLiteral(absl::string_view str) {
+  HeaderWriter &AddLiteral(std::string_view str) {
     memcpy(pos_, str.data(), str.size());
     pos_ += str.size();
     return *this;
@@ -104,13 +104,12 @@ struct Encoder::Impl {
   Impl(int compression_level, ByteSink out)
       : compression_level_(std::clamp(compression_level, 0, 9)),
         delegate_write_(std::move(out)),
-        out_([this](absl::string_view s) {
+        out_([this](std::string_view s) {
           output_file_offset_ += s.size();  // Keep track of offsets.
           return delegate_write_(s);
         }) {}
 
-  bool AddFile(absl::string_view filename,
-               const ByteSource &content_generator) {
+  bool AddFile(std::string_view filename, const ByteSource &content_generator) {
     if (is_finished_) return false;  // Can't add more files.
     if (!content_generator) return false;
 
@@ -183,7 +182,7 @@ struct Encoder::Impl {
     }
 
     // End of central directory record
-    constexpr absl::string_view comment("Created with Verible simple zip");
+    constexpr std::string_view comment("Created with Verible simple zip");
     return HeaderWriter(scratch_space_)
         .AddLiteral("PK\x05\x06")  // End of central directory signature
         .AddInt16(0)               // our disk number
@@ -200,7 +199,7 @@ struct Encoder::Impl {
   CompressResult CopyDataToOutput(const ByteSource &generator) {
     uint32_t crc = 0;
     size_t processed_size = 0;
-    absl::string_view chunk;
+    std::string_view chunk;
     while (!(chunk = generator()).empty()) {
       crc = crc32(crc, reinterpret_cast<const uint8_t *>(chunk.data()),
                   chunk.size());
@@ -212,7 +211,7 @@ struct Encoder::Impl {
 
   CompressResult CompressDataToOutput(const ByteSource &generator) {
     uint32_t crc = 0;
-    absl::string_view chunk;
+    std::string_view chunk;
     z_stream stream;
     memset(&stream, 0x00, sizeof(stream));
 
@@ -262,7 +261,7 @@ Encoder::Encoder(int compression_level, ByteSink out)
 
 Encoder::~Encoder() { Finish(); }
 
-bool Encoder::AddFile(absl::string_view filename,
+bool Encoder::AddFile(std::string_view filename,
                       const ByteSource &content_generator) {
   return impl_->AddFile(filename, content_generator);
 }

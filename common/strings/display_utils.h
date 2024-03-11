@@ -16,9 +16,9 @@
 #define VERIBLE_COMMON_STRINGS_DISPLAY_UTILS_H_
 
 #include <iosfwd>
+#include <string_view>
 
 #include "absl/strings/str_join.h"
-#include "absl/strings/string_view.h"
 
 namespace verible {
 
@@ -30,7 +30,7 @@ namespace verible {
 //
 // example output (limit: 9): "abc...xyz"
 struct AutoTruncate {
-  const absl::string_view text;
+  const std::string_view text;
   // Maximum number of characters to show, including "..."
   const int max_chars;
 };
@@ -43,9 +43,9 @@ std::ostream &operator<<(std::ostream &, const AutoTruncate &trunc);
 //
 // usage: stream << EscapeString(text);
 struct EscapeString {
-  const absl::string_view text;  // original text to be printed
+  const std::string_view text;  // original text to be printed
 
-  explicit EscapeString(absl::string_view text) : text(text) {}
+  explicit EscapeString(std::string_view text) : text(text) {}
 };
 
 std::ostream &operator<<(std::ostream &, const EscapeString &vis);
@@ -56,16 +56,16 @@ std::ostream &operator<<(std::ostream &, const EscapeString &vis);
 //
 // usage: stream << VisualizeWhitespace(text_with_lots_of_spaces);
 struct VisualizeWhitespace {
-  const absl::string_view text;  // original text to be printed
+  const std::string_view text;  // original text to be printed
 
-  const char space_alt;                 // spaces replacement
-  const absl::string_view newline_alt;  // newline replacement
-  const absl::string_view tab_alt;      // tab replacement
+  const char space_alt;                // spaces replacement
+  const std::string_view newline_alt;  // newline replacement
+  const std::string_view tab_alt;      // tab replacement
 
   // constructor needed for C++11
-  explicit VisualizeWhitespace(absl::string_view text, char space_alt = '.',
-                               absl::string_view newline_alt = "\\\n",
-                               absl::string_view tab_alt = "#")
+  explicit VisualizeWhitespace(std::string_view text, char space_alt = '.',
+                               std::string_view newline_alt = "\\\n",
+                               std::string_view tab_alt = "#")
       : text(text),
         space_alt(space_alt),
         newline_alt(newline_alt),
@@ -88,9 +88,9 @@ std::ostream &operator<<(std::ostream &, const VisualizeWhitespace &vis);
 template <class T>
 struct SequenceStreamFormatter {
   const T &sequence;  // binds to object that is to be printed
-  absl::string_view separator;
-  absl::string_view prefix;
-  absl::string_view suffix;
+  std::string_view separator;
+  std::string_view prefix;
+  std::string_view suffix;
   // TODO(fangism): pass in custom formatter object, and be able to nest
   // multiple levels of formatters.
 };
@@ -136,9 +136,9 @@ std::ostream &operator<<(std::ostream &stream,
 //
 template <class T>
 SequenceStreamFormatter<T> SequenceFormatter(const T &t,
-                                             absl::string_view sep = ", ",
-                                             absl::string_view prefix = "",
-                                             absl::string_view suffix = "") {
+                                             std::string_view sep = ", ",
+                                             std::string_view prefix = "",
+                                             std::string_view suffix = "") {
   return SequenceStreamFormatter<T>{t, sep, prefix, suffix};
 }
 

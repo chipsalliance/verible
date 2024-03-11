@@ -17,11 +17,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace verible {
@@ -41,7 +41,7 @@ TEST(SubcommandRegistryTest, HelpNoArgsTest) {
   const SubcommandEntry &help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
-  std::vector<absl::string_view> args;
+  std::vector<std::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const auto status = help.main(range, ins, outs, errs);
   EXPECT_TRUE(status.ok()) << "Unexpected error:\n" << status.message();
@@ -55,7 +55,7 @@ TEST(SubcommandRegistryTest, HelpHelpCommand) {
   const SubcommandEntry &help(registry.GetSubcommandEntry("help"));
   std::istringstream ins;
   std::ostringstream outs, errs;
-  std::vector<absl::string_view> args{"help"};
+  std::vector<std::string_view> args{"help"};
   const SubcommandArgsRange range(args.begin(), args.end());
 
   const auto status = help.main(range, ins, outs, errs);
@@ -82,7 +82,7 @@ TEST(SubcommandRegistryTest, RegisterCommandPublicOk) {
     EXPECT_TRUE(absl::StrContains(registry.ListCommands(), "fizz"));
   }
 
-  std::vector<absl::string_view> args;
+  std::vector<std::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const SubcommandEntry &fizz_entry(registry.GetSubcommandEntry("fizz"));
 
@@ -102,7 +102,7 @@ TEST(SubcommandRegistryTest, ShowRegisteredCommandsOnWrongCommandRequest) {
 
   const SubcommandEntry &cmd(registry.GetSubcommandEntry("wrong_command"));
 
-  std::vector<absl::string_view> args{"foo", "bar"};
+  std::vector<std::string_view> args{"foo", "bar"};
   const SubcommandArgsRange range(args.begin(), args.end());
   std::istringstream ins;
   std::ostringstream outs, errs;
@@ -130,7 +130,7 @@ TEST(SubcommandRegistryTest, RegisterCommandHiddenOk) {
     EXPECT_FALSE(absl::StrContains(registry.ListCommands(), "buzz"));
   }
 
-  std::vector<absl::string_view> args;
+  std::vector<std::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   const SubcommandEntry &buzz_entry(registry.GetSubcommandEntry("buzz"));
 
@@ -167,7 +167,7 @@ TEST(SubcommandRegistryTest, RegisterCommandMultipleCommands) {
   }
 
   // Run each subcommand once.
-  std::vector<absl::string_view> args;
+  std::vector<std::string_view> args;
   const SubcommandArgsRange range(args.begin(), args.end());
   {
     const SubcommandEntry &fizz_entry(registry.GetSubcommandEntry("fizz"));

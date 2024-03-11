@@ -15,9 +15,9 @@
 #include "verilog/analysis/checkers/enum_name_style_rule.h"
 
 #include <set>
+#include <string_view>
 
 #include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
@@ -40,7 +40,7 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kMessage =
+static constexpr std::string_view kMessage =
     "Enum names must use lower_snake_case naming convention "
     "and end with _t or _e.";
 

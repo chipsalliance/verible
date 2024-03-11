@@ -15,10 +15,10 @@
 #include "verilog/analysis/checkers/uvm_macro_semicolon_rule.h"
 
 #include <string>
+#include <string_view>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/text/concrete_syntax_leaf.h"
 #include "common/text/symbol.h"
@@ -58,7 +58,7 @@ static std::string FormatReason(const verible::TokenInfo &macro_id) {
 
 // Returns true if leaf is a macro and matches `uvm_
 static bool IsUvmMacroId(const verible::SyntaxTreeLeaf &leaf) {
-  const absl::string_view text = leaf.get().text();
+  const std::string_view text = leaf.get().text();
   const bool starts_with_uvm = absl::StartsWithIgnoreCase(text, "`uvm_");
 
   if (leaf.Tag().tag == verilog_tokentype::MacroCallId ||

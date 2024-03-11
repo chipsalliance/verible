@@ -17,9 +17,9 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 #include "common/analysis/matcher/matcher.h"
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
@@ -42,7 +42,7 @@ struct RawMatcherTestCase {
 };
 
 void ExpectMatchesInAST(const Symbol &tree, const Matcher &matcher,
-                        int num_matches, absl::string_view code);
+                        int num_matches, std::string_view code);
 
 // Runs a raw test case. Expects test.code to be correctly parsed by
 // analyzer A.
