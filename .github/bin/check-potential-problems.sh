@@ -19,13 +19,13 @@
 
 EXIT_CODE=0
 
-# std::string_view has different semantics on Windows compared to gcc or clang
-# c++ libraries: the iterators don't return const char*, but a wrapping object.
+# std::string_view::iterator is a const char* in gcc, clang, and absl C++ libs.
+# This resulted into the assumption that it is in many places in this code base.
 #
-# There are a few assumptions in the code that assumes const char*, however.
+# On Windows the iterator is a wrapping object, so breaking that assumption.
 #
-# So, we need to use absl::string_view that comes with the same implementation
-# everywhere.
+# So, until these assumptions are fixed, we need to use absl::string_view that
+# comes with the same implementation everywhere.
 find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
 if [ $? -eq 0 ]; then
   echo "::error:: use absl::string_view instead of std::string_view"
@@ -66,6 +66,18 @@ find common verilog -name "*.h" -o -name "*.cc" | \
   xargs egrep -n '#include "[^/]*"'
 if [ $? -eq 0 ]; then
   echo "::error:: always use a fully qualified name for #includes"
+  echo
+  EXIT_CODE=1
+fi
+
+# bazelbuild/rules_python is broken as it downloads a dynamically
+# linked pre-built binary - This makes it _very_ platform specific.
+# This should either compile Python from scratch or use the local system Python.
+# So before rules_python() is added here, this needs to be fixed first upstream.
+# https://github.com/bazelbuild/rules_python/issues/1211
+grep rules_python WORKSPACE* MODULE.bazel
+if [ $? -eq 0 ]; then
+  echo "::error:: rules_python() breaks platform independence with shared libs."
   echo
   EXIT_CODE=1
 fi
