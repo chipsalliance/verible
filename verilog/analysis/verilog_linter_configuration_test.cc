@@ -771,6 +771,20 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
   EXPECT_EQ(error, absl::StrCat(kInvalidFlagMessage, " \"bad-flag\""));
 }
 
+TEST(RuleBundleTest, ParseRuleBundleAcceptGoodRulesEvenWhenRejecting) {
+  constexpr absl::string_view text = "test-rule-unknown-rules\ntest-rule-1";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(!success) << error;
+    EXPECT_THAT(error, testing::HasSubstr(kInvalidFlagMessage))
+        << error;  // invalid flag report
+    // Enable test-rule-1 even though we saw an invalid flag
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  }
+}
+
 TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
   constexpr absl::string_view text = "test-rule-1\n-test-rule-2";
   RuleBundle bundle;
