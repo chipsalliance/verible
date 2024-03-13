@@ -158,6 +158,17 @@ bool RuleBundle::ParseConfiguration(absl::string_view text, char separator,
       parsed_correctly = false;
       continue;
     }
+
+    // If we are about to override a rule which was previously configured in the
+    // same configuration file, warn the user about it.
+    // NOTE: ignore producing a warning if there is no configuration, just
+    // disabing/enabling
+    if (!setting.configuration.empty() && rules.count(*rule_iter)) {
+      absl::StrAppend(error, error->empty() ? "" : "\n", kRepeatedFlagMessage,
+                      " \"", rule_name, "\" = ", setting.configuration);
+      parsed_correctly = false;
+    }
+
     // Map keys must use canonical registered string_views for guaranteed
     // lifetime, not just any string-equivalent copy.
     rules[*rule_iter] = setting;

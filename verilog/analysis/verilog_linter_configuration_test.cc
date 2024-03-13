@@ -771,6 +771,20 @@ TEST(RuleBundleTest, ParseRuleBundleReject) {
   EXPECT_EQ(error, absl::StrCat(kInvalidFlagMessage, " \"bad-flag\""));
 }
 
+TEST(RuleBundleTest, ParseRuleBundleAcceptGoodRulesEvenWhenRejecting) {
+  constexpr absl::string_view text = "test-rule-unknown-rules\ntest-rule-1";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(!success) << error;
+    EXPECT_THAT(error, testing::HasSubstr(kInvalidFlagMessage))
+        << error;  // invalid flag report
+    // Enable test-rule-1 even though we saw an invalid flag
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  }
+}
+
 TEST(RuleBundleTest, ParseRuleBundleAcceptMultiline) {
   constexpr absl::string_view text = "test-rule-1\n-test-rule-2";
   RuleBundle bundle;
@@ -832,6 +846,33 @@ TEST(RuleBundleTest, ParseRuleBundleIgnoreExtraComma) {
     EXPECT_EQ("a:b", bundle.rules["test-rule-2"].configuration);
     EXPECT_TRUE(bundle.rules["test-rule-3"].enabled);
     EXPECT_EQ("bar:baz", bundle.rules["test-rule-3"].configuration);
+  }
+}
+
+TEST(RuleBundleTest, ParseRuleBundleDontWarnIfNoConfig) {
+  constexpr absl::string_view text = "test-rule-1,\ntest-rule-1";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(success) << error;
+    EXPECT_THAT(error, testing::Not(testing::HasSubstr(kRepeatedFlagMessage)))
+        << error;  // don't warn about overriden config if there is no value
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+  }
+}
+
+TEST(RuleBundleTest, ParseRuleBundleWarnConfigOverride) {
+  constexpr absl::string_view text = "test-rule-1=a,\ntest-rule-1=b";
+  {
+    RuleBundle bundle;
+    std::string error;
+    bool success = bundle.ParseConfiguration(text, '\n', &error);
+    ASSERT_TRUE(!success) << error;
+    EXPECT_THAT(error, testing::HasSubstr(kRepeatedFlagMessage))
+        << error;  // warning: configuration being overriden
+    EXPECT_TRUE(bundle.rules["test-rule-1"].enabled);
+    EXPECT_EQ("b", bundle.rules["test-rule-1"].configuration);
   }
 }
 
