@@ -75,6 +75,7 @@ inline constexpr const char* kDefaultRuleSet[] = {
     // TODO: "banned-declared-name-patterns",
     // TODO: "port-name-suffix",
     // "endif-comment",
+    // "instance-shadowing",
 };
 // LINT.ThenChange(../tools/lint/BUILD)
 //   Update integration tests for rulesets.

@@ -71,6 +71,7 @@ _linter_test_configs = [
     ("generate-label", "generate_label_module", True),
     ("generate-label", "generate-label-module-body", True),  # uses parse directive
     ("generate-label-prefix", "generate_label_prefix", True),
+    ("instance-shadowing", "shadow_parameter", False),
     ("invalid-system-task-function", "psprintf", True),
     ("interface-name-style", "interface_type_name_style", True),
     ("legacy-genvar-declaration", "legacy_genvar_declaration", False),
