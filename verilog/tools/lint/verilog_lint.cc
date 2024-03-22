@@ -92,7 +92,11 @@ ABSL_FLAG(
     "If true, print the description of every rule formatted for the "
     "Markdown and exit immediately. Intended for the output to be written "
     "to a snippet of Markdown.");
-
+ABSL_FLAG(
+    bool, print_rules_file, false,
+    "Print the default lint rules in a format that can be used to create a "
+    "lint rules configuration file (i.e. .rules.verible_lint) and exit "
+    "immediately.");
 ABSL_FLAG(bool, show_diagnostic_context, false,
           "prints an additional "
           "line on which the diagnostic was found,"
@@ -129,6 +133,14 @@ int main(int argc, char** argv) {
   bool generate_markdown_flag = absl::GetFlag(FLAGS_generate_markdown);
   if (generate_markdown_flag) {
     verilog::GetLintRuleDescriptionsMarkdown(&std::cout);
+    return 0;
+  }
+
+  // In documentation generation mode, print lint rule file and exit
+  // immediately.
+  bool print_rules_file_flag = absl::GetFlag(FLAGS_print_rules_file);
+  if (print_rules_file_flag) {
+    verilog::GetLintRuleFile(&std::cout);
     return 0;
   }
 

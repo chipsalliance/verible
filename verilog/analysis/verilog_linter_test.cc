@@ -439,6 +439,17 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
   EXPECT_TRUE(absl::StrContains(stream.str(), "Enabled by default:"));
 }
 
+TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
+  std::ostringstream stream;
+  verilog::GetLintRuleFile(&stream);
+  // Spot-check a few patterns, must mostly make sure generation
+  // works without any fatal errors.
+  EXPECT_TRUE(absl::StrContains(stream.str(), "+always-comb"));
+  EXPECT_TRUE(absl::StrContains(
+      stream.str(), "+module-filename=allow-dash-for-underscore:false"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "-forbid-negative-array-dim"));
+}
+
 class ViolationFixerTest : public testing::Test {
  public:
   ViolationFixerTest() {

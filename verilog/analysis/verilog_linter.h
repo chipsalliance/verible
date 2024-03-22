@@ -144,6 +144,10 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view);
 // Outputs the descriptions for every rule, formatted for markdown.
 void GetLintRuleDescriptionsMarkdown(std::ostream*);
 
+// Outputs the default linting rules in a format suitable to produce a
+// .rules.verible_lint file
+void GetLintRuleFile(std::ostream* os);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_ANALYSIS_VERILOG_LINTER_H_
