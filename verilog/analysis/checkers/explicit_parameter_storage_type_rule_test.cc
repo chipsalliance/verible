@@ -44,8 +44,7 @@ TEST(ExplicitParameterStorageTypeRuleTest, Configuration) {
 
   EXPECT_FALSE((status = rule.Configure("exempt_type:int")).ok());
   EXPECT_EQ(status.message(),
-            "exempt_type: Value can only be 'string'; "
-            "got 'int'");
+            "exempt_type: Value can only be one of ['', 'string']; got 'int'");
 }
 
 // Tests that ExplicitParameterStorageTypeRule correctly accepts

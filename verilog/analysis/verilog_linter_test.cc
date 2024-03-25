@@ -36,7 +36,9 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/violation_handler.h"
 #include "common/util/file_util.h"
@@ -440,20 +442,27 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
 }
 
 TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
-  // Generate the default rules
+  auto config_status = verilog::LinterConfigurationFromFlags("");
+  EXPECT_TRUE(config_status.ok());
+  if (!config_status.ok()) {
+    return;
+  }
+  const LinterConfiguration &config = *config_status;
+
+  // Generate Line Rule File
   std::ostringstream stream;
-  verilog::GetLintRuleFile(&stream);
+  verilog::GetLintRuleFile(&stream, config);
 
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   // NOTE: This will break if/when the rules change so this part
   // of the test is not ideal.
-  EXPECT_TRUE(absl::StrContains(stream.str(), "+always-comb"));
+  EXPECT_TRUE(absl::StrContains(stream.str(), "always-comb"));
   EXPECT_TRUE(absl::StrContains(
-      stream.str(), "+module-filename=allow-dash-for-underscore:false"));
+      stream.str(), "module-filename=allow-dash-for-underscore:false"));
   EXPECT_TRUE(absl::StrContains(stream.str(), "-forbid-negative-array-dim"));
 
-  // Roundtrip test, first parse the rules 
+  // Roundtrip test, first parse the rules
   std::string generated_default_rules_str = stream.str();
   absl::StatusOr<std::string> generated_default_rules =
       generated_default_rules_str;
