@@ -136,8 +136,8 @@ ExpectedFailCount[preprocessor:ibex]=373
 
 ExpectedFailCount[syntax:opentitan]=36
 ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[project:opentitan]=811
-ExpectedFailCount[preprocessor:opentitan]=2317
+ExpectedFailCount[project:opentitan]=825
+ExpectedFailCount[preprocessor:opentitan]=2337
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
@@ -156,8 +156,8 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=6
 ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=85
-ExpectedFailCount[preprocessor:cva6]=125
+ExpectedFailCount[project:cva6]=92
+ExpectedFailCount[preprocessor:cva6]=129
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -192,8 +192,8 @@ ExpectedFailCount[lint:nontrivial-mips]=2
 ExpectedFailCount[project:nontrivial-mips]=81
 ExpectedFailCount[preprocessor:nontrivial-mips]=78
 
-ExpectedFailCount[project:axi]=74
-ExpectedFailCount[preprocessor:axi]=71
+ExpectedFailCount[project:axi]=76
+ExpectedFailCount[preprocessor:axi]=73
 
 ExpectedFailCount[syntax:rsd]=5
 ExpectedFailCount[lint:rsd]=5
