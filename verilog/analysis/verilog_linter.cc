@@ -383,29 +383,50 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream *os,
   }
 }
 
-void GetLintRuleFile(std::ostream *os) {
-  // Set up the map.
-  auto rule_map = analysis::GetAllRuleDescriptions();
-  for (const auto &rule_id : analysis::kDefaultRuleSet) {
-    rule_map[rule_id].default_enabled = true;
-  }
+void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config) {
+  // This rule bundle contains only a list of enabled rules. There
+  // are also no param's defined (an empty string), unless the user
+  // assigns them.
+  RuleBundle rule_bundle;
+  config.GetRuleBundle(&rule_bundle);
 
-  // Print all the rules
-  for (const auto &rule : rule_map) {
-    *os << (rule.second.default_enabled ? "+" : "-");
-    *os << rule.second.descriptor.name;
+  // Grab all the rule descriptions, so we can get default
+  // configuration and disabled rules
+  auto rule_descriptions = analysis::GetAllRuleDescriptions();
 
-    bool first = true;
-    for (const auto &rule_param : rule.second.descriptor.param) {
-      *os << (first ? "=" : ";");
-      *os << rule_param.name << ":";
-      *os << rule_param.default_value;
+  // Update the rule_bundle with default configration if none was
+  // provided and add disabled rules with default configuration
+  for (const auto &rule : rule_descriptions) {
+    // Form the rules default_configuration string
+    std::string default_configuration;
+    bool first_param = true;
+    for (const auto &param : rule.second.descriptor.param) {
+      if (!first_param) {
+        default_configuration.append(";");
+      }
 
-      first = false;
+      default_configuration.append(std::string(param.name));
+      default_configuration.append(":");
+      default_configuration.append(param.default_value);
+
+      first_param = false;
     }
 
-    *os << "\n";
+    if (auto found_rule = rule_bundle.rules.find(rule.first); found_rule != rule_bundle.rules.end()) {
+      // Rule is enabled, add default configuration if none exists
+      if (found_rule->second.configuration.empty()) {
+        found_rule->second.configuration = default_configuration;
+      }
+    } else {
+      // Add disbaled rule, along with its default configuration
+      rule_bundle.rules[rule.first].enabled = false;
+      rule_bundle.rules[rule.first].configuration = default_configuration;
+    }
   }
+
+  // Print the rules
+  std::string rules = rule_bundle.UnparseConfiguration('\n', false);
+  *os << rules << "\n";
 }
 
 void GetLintRuleDescriptionsMarkdown(std::ostream *os) {
