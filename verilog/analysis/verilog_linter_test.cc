@@ -208,19 +208,19 @@ class VerilogLinterTest : public DefaultLinterConfigTestFixture,
       bool with_diagnostic_contex = false;
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages(with_diagnostic_contex));
-      for (const auto& message : syntax_error_messages) {
+      for (const auto &message : syntax_error_messages) {
         diagnostics << message << std::endl;
       }
 
       with_diagnostic_contex = true;
       const std::vector<std::string> syntax_error_messages_with_context(
           analyzer->LinterTokenErrorMessages(with_diagnostic_contex));
-      for (const auto& message : syntax_error_messages_with_context) {
+      for (const auto &message : syntax_error_messages_with_context) {
         diagnostics << message << std::endl;
       }
     }
 
-    const auto& text_structure = analyzer->Data();
+    const auto &text_structure = analyzer->Data();
 
     // For testing purposes we want the status returned to reflect
     // lint success, so as long as we have a syntax tree (even if there
@@ -440,14 +440,77 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
 }
 
 TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
+  // Generate the default rules
   std::ostringstream stream;
   verilog::GetLintRuleFile(&stream);
+
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
+  // NOTE: This will break if/when the rules change so this part
+  // of the test is not ideal.
   EXPECT_TRUE(absl::StrContains(stream.str(), "+always-comb"));
   EXPECT_TRUE(absl::StrContains(
       stream.str(), "+module-filename=allow-dash-for-underscore:false"));
   EXPECT_TRUE(absl::StrContains(stream.str(), "-forbid-negative-array-dim"));
+
+  // Roundtrip test, first parse the rules 
+  std::string generated_default_rules_str = stream.str();
+  absl::StatusOr<std::string> generated_default_rules =
+      generated_default_rules_str;
+  RuleBundle parsed_rules;
+  std::string error;
+  parsed_rules.ParseConfiguration(*generated_default_rules, '\n', &error);
+  EXPECT_TRUE(error.empty());
+
+  // Check the parsed_rules against original set of rules
+  // (generated_default_rules_str)
+  auto generated_default_rules_split =
+      absl::StrSplit(generated_default_rules_str, '\n');
+  for (const auto &r : generated_default_rules_split) {
+    // rules can begin with a '+' for enabled, and '-' for disabled
+    if (r.length() == 0) {
+      continue;
+    }
+
+    absl::string_view rule = absl::string_view(r);
+
+    RuleSetting generated_rule;
+    absl::string_view generated_rule_name;
+
+    if (absl::ConsumePrefix(&rule, "-")) {
+      generated_rule.enabled = false;
+    } else {
+      // Get rid of any "+" prefixes
+      absl::ConsumePrefix(&rule, "+");
+      generated_rule.enabled = true;
+    }
+
+    // Split out the rule name and configuration (params)
+    int position = rule.find("=");
+
+    if (position < 0) {
+      // No configuration
+      generated_rule_name = rule;
+      generated_rule.configuration = "";
+    } else {
+      // extract the rule and configuration
+      generated_rule_name = rule.substr(0, position);
+      generated_rule.configuration = std::string(
+          rule.substr(position + 1, rule.length() - (position - 1)));
+    }
+
+    // Make sure each of the generated rules exists in the parsed_rules
+    auto parsed_rule_iterator = parsed_rules.rules.find(generated_rule_name);
+    EXPECT_TRUE(parsed_rule_iterator != parsed_rules.rules.end());
+
+    // Make sure the the configraion and enable state match too
+    if (parsed_rule_iterator != parsed_rules.rules.end()) {
+      auto parsed_rule = parsed_rule_iterator->second;
+
+      EXPECT_TRUE(parsed_rule.enabled == generated_rule.enabled);
+      EXPECT_TRUE(parsed_rule.configuration == generated_rule.configuration);
+    }
+  }
 }
 
 class ViolationFixerTest : public testing::Test {
@@ -463,8 +526,8 @@ class ViolationFixerTest : public testing::Test {
   LinterConfiguration config_;
 
   absl::Status LintAnalyzeFixText(absl::string_view content,
-                                  ViolationFixer* violation_fixer,
-                                  std::string* fixed_content) const {
+                                  ViolationFixer *violation_fixer,
+                                  std::string *fixed_content) const {
     const ScopedTestFile temp_file(testing::TempDir(), content);
 
     // Run the analyzer to produce a syntax tree from source code.
@@ -472,7 +535,7 @@ class ViolationFixerTest : public testing::Test {
         std::make_unique<VerilogAnalyzer>(content, temp_file.filename());
     const absl::Status status = ABSL_DIE_IF_NULL(analyzer)->Analyze();
 
-    const auto& text_structure = analyzer->Data();
+    const auto &text_structure = analyzer->Data();
 
     const absl::StatusOr<std::vector<verible::LintRuleStatus>> lint_result =
         VerilogLintTextStructure(temp_file.filename(), config_, text_structure);
@@ -525,7 +588,7 @@ class ViolationFixerTest : public testing::Test {
 
     std::initializer_list<ViolationFixer::Answer>::iterator choice_it;
     const ViolationFixer::AnswerChooser answer_chooser =
-        [&choice_it, &choices](const verible::LintViolation&,
+        [&choice_it, &choices](const verible::LintViolation &,
                                absl::string_view) {
           EXPECT_NE(choice_it, choices.end())
               << "AnswerChooser called more times than expected.";
@@ -542,7 +605,7 @@ class ViolationFixerTest : public testing::Test {
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
         const absl::string_view input_source = input_sources[i];
-        std::string& fixed_source = fixed_sources[i];
+        std::string &fixed_source = fixed_sources[i];
 
         const absl::Status status =
             LintAnalyzeFixText(input_source, &violation_fixer, &fixed_source);
@@ -553,7 +616,7 @@ class ViolationFixerTest : public testing::Test {
           << "AnswerChooser called fewer times than expected.";
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
-        const std::string& fixed_source = fixed_sources[i];
+        const std::string &fixed_source = fixed_sources[i];
         const absl::string_view expected_fixed_source =
             *(expected_fixed_sources.begin() + i);
 
@@ -572,7 +635,7 @@ class ViolationFixerTest : public testing::Test {
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
         const absl::string_view input_source = input_sources[i];
-        std::string& fixed_source = fixed_sources[i];
+        std::string &fixed_source = fixed_sources[i];
 
         const absl::Status status =
             LintAnalyzeFixText(input_source, &violation_fixer, &fixed_source);
@@ -586,7 +649,7 @@ class ViolationFixerTest : public testing::Test {
 
       for (size_t i = 0; i < input_sources.size(); ++i) {
         const absl::string_view input_source = input_sources[i];
-        const std::string& fixed_source = fixed_sources[i];
+        const std::string &fixed_source = fixed_sources[i];
         const absl::string_view expected_fixed_source =
             *(expected_fixed_sources.begin() + i);
 
