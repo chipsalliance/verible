@@ -124,8 +124,13 @@ void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
   const auto *last_module_id = GetModuleName(*module_cleaned.back().match);
   if (!last_module_id) LOG(ERROR) << "Couldn't extract module name";
   if (last_module_id) {
-    violations_.insert(verible::LintViolation(
-        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\"")));
+    std::string autofix_msg =
+        absl::StrCat("Rename module to '", unitname, "' to match filename");
+    verible::LintViolation violation = verible::LintViolation(
+        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\""),
+        {verible::AutoFix(autofix_msg, {last_module_id->get(), unitname})});
+
+    violations_.insert(violation);
   }
 }
 
