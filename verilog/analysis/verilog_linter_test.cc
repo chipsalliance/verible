@@ -442,84 +442,43 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
 }
 
 TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
-  auto config_status = verilog::LinterConfigurationFromFlags("");
-  EXPECT_TRUE(config_status.ok());
-  if (!config_status.ok()) {
-    return;
-  }
-  const LinterConfiguration &config = *config_status;
+  auto config_status_or = verilog::LinterConfigurationFromFlags("");
+  ASSERT_TRUE(config_status_or.ok());
+  
+  const LinterConfiguration &config = *config_status_or;
 
   // Generate Line Rule File
   std::ostringstream stream;
   verilog::GetLintRuleFile(&stream, config);
 
+  std::string generated_default_rules_str = stream.str();
+
   // Spot-check a few patterns, must mostly make sure generation
   // works without any fatal errors.
   // NOTE: This will break if/when the rules change so this part
   // of the test is not ideal.
-  EXPECT_TRUE(absl::StrContains(stream.str(), "always-comb"));
-  EXPECT_TRUE(absl::StrContains(
-      stream.str(), "module-filename=allow-dash-for-underscore:false"));
-  EXPECT_TRUE(absl::StrContains(stream.str(), "-forbid-negative-array-dim"));
+  EXPECT_THAT(generated_default_rules_str,
+                testing::HasSubstr("always-comb"));
+  EXPECT_THAT(generated_default_rules_str,
+                testing::HasSubstr("module-filename=allow-dash-for-underscore:false"));
+  EXPECT_THAT(generated_default_rules_str,
+                testing::HasSubstr("-forbid-negative-array-dim"));
 
   // Roundtrip test, first parse the rules
-  std::string generated_default_rules_str = stream.str();
-  absl::StatusOr<std::string> generated_default_rules =
+  absl::StatusOr<std::string> generated_default_rules_or =
       generated_default_rules_str;
-  RuleBundle parsed_rules;
+  RuleBundle parsed_rule_bundle;
   std::string error;
-  parsed_rules.ParseConfiguration(*generated_default_rules, '\n', &error);
+  parsed_rule_bundle.ParseConfiguration(*generated_default_rules_or, '\n', &error);
   EXPECT_TRUE(error.empty());
 
-  // Check the parsed_rules against original set of rules
-  // (generated_default_rules_str)
-  auto generated_default_rules_split =
-      absl::StrSplit(generated_default_rules_str, '\n');
-  for (const auto &r : generated_default_rules_split) {
-    // rules can begin with a '+' for enabled, and '-' for disabled
-    if (r.length() == 0) {
-      continue;
-    }
+  // Convert the parsed_rule_bundle back to a string
+  std::string unparsed_rule_bundle = parsed_rule_bundle.UnparseConfiguration('\n', false);
 
-    absl::string_view rule = absl::string_view(r);
-
-    RuleSetting generated_rule;
-    absl::string_view generated_rule_name;
-
-    if (absl::ConsumePrefix(&rule, "-")) {
-      generated_rule.enabled = false;
-    } else {
-      // Get rid of any "+" prefixes
-      absl::ConsumePrefix(&rule, "+");
-      generated_rule.enabled = true;
-    }
-
-    // Split out the rule name and configuration (params)
-    int position = rule.find("=");
-
-    if (position < 0) {
-      // No configuration
-      generated_rule_name = rule;
-      generated_rule.configuration = "";
-    } else {
-      // extract the rule and configuration
-      generated_rule_name = rule.substr(0, position);
-      generated_rule.configuration = std::string(
-          rule.substr(position + 1, rule.length() - (position - 1)));
-    }
-
-    // Make sure each of the generated rules exists in the parsed_rules
-    auto parsed_rule_iterator = parsed_rules.rules.find(generated_rule_name);
-    EXPECT_TRUE(parsed_rule_iterator != parsed_rules.rules.end());
-
-    // Make sure the the configraion and enable state match too
-    if (parsed_rule_iterator != parsed_rules.rules.end()) {
-      auto parsed_rule = parsed_rule_iterator->second;
-
-      EXPECT_TRUE(parsed_rule.enabled == generated_rule.enabled);
-      EXPECT_TRUE(parsed_rule.configuration == generated_rule.configuration);
-    }
-  }
+  // compare the unparsed_rule_bundle to the generated_default_rules_str
+  // NOTE: Triming the extra extra white space from the generated output 
+  // as it has some extra return characters to make things look pretty on print
+  EXPECT_TRUE(unparsed_rule_bundle == std::string(absl::StripTrailingAsciiWhitespace(generated_default_rules_str)));
 }
 
 class ViolationFixerTest : public testing::Test {
