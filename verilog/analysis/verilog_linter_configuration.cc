@@ -298,11 +298,8 @@ static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
     if (!setting.configuration.empty()) {
       if (absl::Status status = rule_ptr->Configure(setting.configuration);
           !status.ok()) {
-        std::string error_msg;
-
-        error_msg.append(std::string(rule_pair.first));
-        error_msg.append(" ");
-        error_msg.append(std::string(status.message()));
+        std::string error_msg =
+            absl::StrCat(rule_pair.first, " ", status.message());
         return absl::InvalidArgumentError(error_msg);
       }
     }
