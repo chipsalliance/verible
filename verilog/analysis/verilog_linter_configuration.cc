@@ -269,12 +269,7 @@ std::set<analysis::LintRuleId> LinterConfiguration::ActiveRuleIds() const {
 }
 
 void LinterConfiguration::GetRuleBundle(RuleBundle *rule_bundle) const {
-  // Clear the vector to overwrite any existing value.
-  rule_bundle->rules.clear();
-
-  for (const auto &rule_pair : configuration_) {
-    rule_bundle->rules[rule_pair.first] = rule_pair.second;
-  }
+  rule_bundle->rules = configuration_;
 }
 
 // Iterates through all rules that are mentioned and enabled
@@ -351,7 +346,7 @@ absl::Status LinterConfiguration::AppendFromFile(
     // Log warnings and errors
     if (!error.empty()) {
       std::cerr << "Using a partial version from " << config_filename
-                << ". Found the following issues: " << error << std::endl;
+                << ". Found the following issues: " << error << "\n";
     }
 
     UseRuleBundle(local_rules_bundle);

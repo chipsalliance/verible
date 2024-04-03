@@ -412,7 +412,8 @@ void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config) {
       first_param = false;
     }
 
-    if (auto found_rule = rule_bundle.rules.find(rule.first); found_rule != rule_bundle.rules.end()) {
+    if (auto found_rule = rule_bundle.rules.find(rule.first);
+        found_rule != rule_bundle.rules.end()) {
       // Rule is enabled, add default configuration if none exists
       if (found_rule->second.configuration.empty()) {
         found_rule->second.configuration = default_configuration;

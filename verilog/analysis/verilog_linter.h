@@ -139,16 +139,19 @@ absl::Status PrintRuleInfo(std::ostream *,
                            absl::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
-// TODO(sconwayaus): These are really printers and not getters. Consider renaming
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
 void GetLintRuleDescriptionsHelpFlag(std::ostream *, absl::string_view);
 
 // Outputs the descriptions for every rule, formatted for markdown.
-// TODO(sconwayaus): These are really printers and not getters. Consider renaming
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
 void GetLintRuleDescriptionsMarkdown(std::ostream *);
 
 // Outputs the default linting rules in a format suitable to produce a
 // .rules.verible_lint file
-// TODO(sconwayaus): These are really printers and not getters. Consider renaming
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
 void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config);
 
 }  // namespace verilog

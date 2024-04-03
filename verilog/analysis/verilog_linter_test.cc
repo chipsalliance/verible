@@ -35,10 +35,9 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/violation_handler.h"
 #include "common/util/file_util.h"
@@ -442,10 +441,10 @@ TEST(VerilogLinterDocumentationTest, AllRulesMarkdown) {
 }
 
 TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
-  auto config_status_or = verilog::LinterConfigurationFromFlags("");
-  ASSERT_TRUE(config_status_or.ok());
-  
-  const LinterConfiguration &config = *config_status_or;
+  auto config_or = verilog::LinterConfigurationFromFlags("");
+  ASSERT_TRUE(config_or.ok());
+
+  const LinterConfiguration &config = *config_or;
 
   // Generate Line Rule File
   std::ostringstream stream;
@@ -457,28 +456,32 @@ TEST(VerilogLinterDocumentationTest, PrintLintRuleFile) {
   // works without any fatal errors.
   // NOTE: This will break if/when the rules change so this part
   // of the test is not ideal.
+  EXPECT_THAT(generated_default_rules_str, testing::HasSubstr("always-comb"));
+  EXPECT_THAT(
+      generated_default_rules_str,
+      testing::HasSubstr("module-filename=allow-dash-for-underscore:false"));
   EXPECT_THAT(generated_default_rules_str,
-                testing::HasSubstr("always-comb"));
-  EXPECT_THAT(generated_default_rules_str,
-                testing::HasSubstr("module-filename=allow-dash-for-underscore:false"));
-  EXPECT_THAT(generated_default_rules_str,
-                testing::HasSubstr("-forbid-negative-array-dim"));
+              testing::HasSubstr("-forbid-negative-array-dim"));
 
   // Roundtrip test, first parse the rules
   absl::StatusOr<std::string> generated_default_rules_or =
       generated_default_rules_str;
   RuleBundle parsed_rule_bundle;
   std::string error;
-  parsed_rule_bundle.ParseConfiguration(*generated_default_rules_or, '\n', &error);
+  parsed_rule_bundle.ParseConfiguration(*generated_default_rules_or, '\n',
+                                        &error);
   EXPECT_TRUE(error.empty());
 
   // Convert the parsed_rule_bundle back to a string
-  std::string unparsed_rule_bundle = parsed_rule_bundle.UnparseConfiguration('\n', false);
+  std::string unparsed_rule_bundle =
+      parsed_rule_bundle.UnparseConfiguration('\n', false);
 
   // compare the unparsed_rule_bundle to the generated_default_rules_str
-  // NOTE: Triming the extra extra white space from the generated output 
+  // NOTE: Triming the extra extra white space from the generated output
   // as it has some extra return characters to make things look pretty on print
-  EXPECT_TRUE(unparsed_rule_bundle == std::string(absl::StripTrailingAsciiWhitespace(generated_default_rules_str)));
+  EXPECT_EQ(unparsed_rule_bundle,
+            std::string(absl::StripTrailingAsciiWhitespace(
+                generated_default_rules_str)));
 }
 
 class ViolationFixerTest : public testing::Test {

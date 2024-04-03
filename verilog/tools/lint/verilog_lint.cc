@@ -92,11 +92,10 @@ ABSL_FLAG(
     "If true, print the description of every rule formatted for the "
     "Markdown and exit immediately. Intended for the output to be written "
     "to a snippet of Markdown.");
-ABSL_FLAG(
-    bool, print_rules_file, false,
-    "Print the current set of lint rules in a format that can be used to create "
-    "a lint rules configuration file (i.e. .rules.verible_lint) and exit "
-    "immediately.");
+ABSL_FLAG(bool, print_rules_file, false,
+          "Print the current set of lint rules in a format that can be used to "
+          "create a lint rules configuration file (i.e. .rules.verible_lint) "
+          "and exit immediately.");
 ABSL_FLAG(bool, show_diagnostic_context, false,
           "prints an additional "
           "line on which the diagnostic was found,"
