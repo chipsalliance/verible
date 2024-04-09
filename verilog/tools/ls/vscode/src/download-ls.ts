@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { platform, arch } from "os";
+import { homedir, platform, arch } from "os";
 import * as fs from "fs";
 import * as path from "path";
 import { IncomingMessage } from "http";
@@ -11,13 +11,19 @@ const TAG = require("../package.json").repository.tag;
 
 
 function checkIfBinaryExists(binaryPath: string) {
-  let whichCommand: string, binaryExists: boolean;
-  if (platform() == "win32") whichCommand = "where";
-  else whichCommand = "command -v";
+  let whichCommand: string;
+  let binaryExists: boolean;
+
+  if (platform() == "win32") {
+    let parsedBinPath = path.parse(binaryPath);
+    whichCommand = `where.exe ${parsedBinPath.dir}:${parsedBinPath.base}`;
+  } else {
+    whichCommand = `command -v ${binaryPath}`;
+  }
 
   binaryExists = true;
   try {
-    execSync(`${whichCommand} ${binaryPath}`, { windowsHide: true });
+    execSync(whichCommand, { windowsHide: true });
   } catch {
     binaryExists = false;
   }
@@ -29,6 +35,16 @@ export async function checkAndDownloadBinaries(
   binaryPath: string,
   output: vscode.OutputChannel
 ): Promise<string> {
+
+  output.appendLine("Platform: '" + platform() + "'");
+
+  // Update home paths to an absolute path
+  if(platform() != "win32" && binaryPath.startsWith("~/")) {
+    binaryPath = binaryPath.replace("~", "");
+    binaryPath = path.join(homedir(), binaryPath);
+    output.appendLine(`Adjusted server path: ${binaryPath}`);
+  }
+
   if (checkIfBinaryExists(binaryPath)) {
     // Language server binary exists -- nothing to do
     return binaryPath;
@@ -50,7 +66,6 @@ export async function checkAndDownloadBinaries(
   );
   if (checkIfBinaryExists(pluginBinaryPath)) {
     // Language server binary already downloaded
-    output.appendLine(`Using executable from path: ${pluginBinaryPath}`);
     return pluginBinaryPath;
   }
 
