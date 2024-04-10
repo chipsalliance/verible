@@ -7,6 +7,7 @@ import { https as httpsFr } from "follow-redirects";
 import { execSync } from "child_process";
 import * as decompress from "decompress";
 const decompressTargz = require("decompress-targz");
+const decompressUnzip = require("decompress-unzip");
 const TAG = require("../package.json").repository.tag;
 
 
@@ -16,7 +17,7 @@ function checkIfBinaryExists(binaryPath: string) {
 
   if (platform() == "win32") {
     let parsedBinPath = path.parse(binaryPath);
-    whichCommand = `where.exe ${parsedBinPath.dir}:${parsedBinPath.base}`;
+    whichCommand = `where "${parsedBinPath.dir}:${parsedBinPath.base}"`;
   } else {
     whichCommand = `command -v ${binaryPath}`;
   }
@@ -39,7 +40,7 @@ export async function checkAndDownloadBinaries(
   output.appendLine("Platform: '" + platform() + "'");
 
   // Update home paths to an absolute path
-  if(platform() != "win32" && binaryPath.startsWith("~/")) {
+  if (platform() != "win32" && binaryPath.startsWith("~/")) {
     binaryPath = binaryPath.replace("~", "");
     binaryPath = path.join(homedir(), binaryPath);
     output.appendLine(`Adjusted server path: ${binaryPath}`);
@@ -65,7 +66,7 @@ export async function checkAndDownloadBinaries(
     "verible-verilog-ls" + (platform() === "win32" ? ".exe" : "")
   );
   if (checkIfBinaryExists(pluginBinaryPath)) {
-    // Language server binary already downloaded
+    output.appendLine("Language server binary already downloaded");
     return pluginBinaryPath;
   }
 
@@ -100,6 +101,7 @@ export async function checkAndDownloadBinaries(
   await new Promise<void>((resolve, reject) =>
     httpsFr.get(releaseUrl, (response: IncomingMessage) => {
       if (response.statusCode !== 200){
+        output.appendLine("Download failed with status code " + response.statusCode);
         reject("Status code " + response.statusCode);
       }
       response.pipe(archive);
@@ -109,6 +111,7 @@ export async function checkAndDownloadBinaries(
         resolve();
       });
     }).on("error", (_err) =>{
+      output.appendLine("Failed to start download");
       return binaryPath;
     })
   );
@@ -120,7 +123,7 @@ export async function checkAndDownloadBinaries(
       file.path = path.basename(file.path);
       return file;
     },
-    plugins: platform() === "win32" ? [] : [decompressTargz()],
+    plugins: platform() === "win32" ? [decompressUnzip()] : [decompressTargz()],
   }).catch((_err) => {
     return binaryPath;
   })
@@ -128,6 +131,5 @@ export async function checkAndDownloadBinaries(
     fs.rm(archivePath, () => null);
   });
 
-  output.appendLine(`Using executable from path: ${pluginBinaryPath}`);
   return pluginBinaryPath;
 }
