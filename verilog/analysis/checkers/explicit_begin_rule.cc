@@ -42,7 +42,7 @@ using verible::TokenStreamLintRule;
 VERILOG_REGISTER_LINT_RULE(ExplicitBeginRule);
 
 static const char kMessage[] =
-    "All block construct shall explicitely use begin/end.";
+    " block constructs shall explicitly use begin/end.";
 
 const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -50,51 +50,93 @@ const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
       .topic = "explicit-begin",
       .desc =
           "Checks that a Verilog ``begin`` directive follows all "
-          "if, else and for loops.",
+          "if, else, always, always_comb, always_latch, always_ff,"
+          " forever, initial, for, foreach and while statements.",
   };
   return d;
 }
 
 void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
+  // Ignore all white space and comments and return immediately
+  switch (token.token_enum()) {
+    case TK_SPACE:
+    case TK_NEWLINE:
+    case TK_COMMENT_BLOCK:
+    case TK_EOL_COMMENT:
+      return;
+    default:
+      break;
+  }
+
   // Responds to a token by updating the state of the analysis.
   bool raise_violation = false;
   switch (state_) {
-    case State::kNormal: {
-      // On if/else/for tokens;
-      // Also, skip all conditional statement after a for or a if
-      // Then, expect a `begin` token or record a violation.
+    case State::kNormal:  {
       switch (token.token_enum()) {
-        case TK_if:
+        // After token expect "begin"
+        case TK_always_comb:
+        case TK_always_latch:
+        case TK_forever:
+        case TK_initial:
+          start_token_ = token;
+          state_ = State::kExpectBegin;
+          break;
+        // After token expect a "condition" followed by "begin". NOTE: there may
+        // be tokens prior to the condition (like in an "always_ff" statement)
+        // and these are all ignored.
+        case TK_always_ff:
+        case TK_foreach:
         case TK_for:
+        case TK_if:
+        case TK_while:
           condition_expr_level_ = 0;
-          last_condition_start_ = token;
+          start_token_ = token;
           state_ = State::kInCondition;
           break;
+        // always gets special handling, as somtimes there is a "condition" or
+        // not before a "begin".
+        case TK_always:
+          condition_expr_level_ = 0;
+          start_token_ = token;
+          state_ = State::kInAlways;
+          break;
+        // else is also special as "if" or "begin" can follow
         case TK_else:
-          last_condition_start_ = token;
-          end_of_condition_statement_ = token;
+          start_token_ = token;
           state_ = State::kInElse;
           break;
         default:
           break;
-      }  // switch (token)
+      }
+      break;
+    }
+    case State::kInAlways: {
+      // always is a little more complicated in that it can be imediattly
+      // followed by a "begin" or followed by some special characters ("@" or
+      // "*") and maybe a condition.
+      switch (token.token_enum()) {
+        case '@':
+        case '*':
+          break;
+        case TK_begin:
+          state_ = State::kNormal;
+          break;
+        case '(':
+          condition_expr_level_ = 1;
+          state_ = State::kInCondition;
+          break;
+        default:
+          raise_violation = true;
+          break;
+      }
       break;
     }
     case State::kInElse: {
-      // If we are in a else statement, we can either have a if (and need to
-      // skip cond. statement) Or directly wait for a begin. We make use of the
-      // boolean raise_violation in order to avoid code duplication.
+      // An else statement can be followed by either a begin or an if.
       switch (token.token_enum()) {
-        case TK_SPACE:  // stay in the same state
-          break;
-        case TK_COMMENT_BLOCK:
-        case TK_EOL_COMMENT:
-        case TK_NEWLINE:
-          break;
         case TK_if:
-        case TK_for:
           condition_expr_level_ = 0;
-          last_condition_start_ = token;
+          start_token_ = token;
           state_ = State::kInCondition;
           break;
         case TK_begin:
@@ -103,29 +145,34 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
         default:
           raise_violation = true;
           break;
-      }  // switch (token)
+      }
       break;
     }
     case State::kInCondition: {
-      if (token.text() == "(") {
-        condition_expr_level_++;
-      } else if (token.text() == ")") {
-        condition_expr_level_--;
-        if (condition_expr_level_ == 0) {
-          end_of_condition_statement_ = token;
-          state_ = State::kExpectBegin;
+      // The last token expects a condition statement enclosed in a pair of
+      // parentheses "()". This process also ignores any tokens between the last
+      // token and the opening parentheses which simplifies "always_ff".
+      switch (token.token_enum()) {
+        case '(': {
+          condition_expr_level_++;
+          break;
+        }
+        case ')': {
+          condition_expr_level_--;
+          if (condition_expr_level_ == 0) {
+            state_ = State::kExpectBegin;
+          }
+        }
+        default: {
+          // throw away everything else
+          break;
         }
       }
       break;
     }
     case State::kExpectBegin: {
+      // The next token must be a "begin"
       switch (token.token_enum()) {
-        case TK_SPACE:  // stay in the same state
-          break;
-        case TK_COMMENT_BLOCK:
-        case TK_EOL_COMMENT:
-        case TK_NEWLINE:
-          break;
         case TK_begin:
           // If we got our begin token, we go back to normal status
           state_ = State::kNormal;
@@ -134,15 +181,15 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
           raise_violation = true;
           break;
         }
-      }  // switch (token)
+      }
       break;
     }
   }  // switch (state_)
 
   if (raise_violation) {
     violations_.insert(LintViolation(
-        last_condition_start_,
-        absl::StrCat(kMessage, " Expected begin, got ", token.text())));
+        start_token_,
+        absl::StrCat(start_token_.text(), kMessage, " Expected begin, got ", token.text())));
 
     // Once the violation is raised, we go back to a normal, default, state
     condition_expr_level_ = 0;

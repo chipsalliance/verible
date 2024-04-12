@@ -45,22 +45,70 @@ TEST(ExplicitBeginRuleTest, AcceptsBlank) {
 // Tests that properly matched if/begin passes.
 TEST(ExplicitBeginRuleTest, AcceptsBlocksWithBegin) {
   const std::initializer_list<LintTestCase> kTestCases = {
-      {"if (FOO) begin"},
-      {"if (FOO)\n begin"},
-      {"if (FOO) //Comment\n begin"},
+      {"if (FOO) /*block comment */ begin a <= 1;"},
+      {"if (FOO) begin  a <= 1;"},
+      {"if (FOO)begin : name_statement a <= 1;"},
+      {"if (FOO)\n begin  a <= 1;"},
+      {"if (FOO) //Comment\n begin a <= 1;"},
+      
       {"else begin \n FOO"},
       {"else \nbegin \n FOO"},
       {"else //Comment\n begin \n FOO"},
       {"else \n //Comment\n begin \n FOO"},
-      {"else if (FOO) begin"},
-      {"else if (FOO)\n begin"},
-      {"else if (FOO) //Comment\n begin"},
-      {"else if (FOO)\n //Comment\n begin"},
-      {"for(i = 0; i < N; i++) begin"},
-      {"for(i = 0; i < N; i++)\nbegin"},
-      {"for(i = 0; i < N; i++) // Comment\n begin"},
-      {"for(i = 0; i < N; i++)\n // Comment\nbegin"},
-      // {"forever begin"},     // Not supported
+      {"else if (FOO) begin a <= 1;"},
+      {"else if (FOO)\n begin a <= 1;"},
+      {"else if (FOO) //Comment\n begin a <= 1;"},
+      {"else if (FOO)\n //Comment\n begin a <= 1;"},
+      
+      {"for(i = 0; i < N; i++) begin a <= 1;"},
+      {"for(i = 0; i < N; i++)\nbegin a <= 1;"},
+      {"for(i = 0; i < N; i++) // Comment\n begin a <= 1;"},
+      {"for(i = 0; i < N; i++)\n // Comment\nbegin a <= 1;"},
+      
+      {"foreach(array[i]) begin a <= 1;"},
+      {"foreach(array[i])\nbegin a <= 1;"},
+      {"foreach(array[i]) // Comment\n begin a <= 1;"},
+      {"foreach(array[i])\n // Comment\nbegin a <= 1;"},
+
+      {"while (a < 3) begin a = a + 1;"},
+      {"while(a < 3)\nbegin a = a + 1;"},
+      {"while (a < 3) // Comment\n begin a = a + 1;"},
+      {"while(a < 3)\n // Comment\nbegin a = a + 1;"},
+      
+      {"forever begin a <= 1;"},
+      {"forever\nbegin a <= 1;"},
+      {"forever // Comment\n begin a <= 1;"},
+      {"forever\n // Comment\nbegin a <= 1;"},
+
+      {"initial begin a <= 1;"},
+      {"initial\nbegin a <= 1;"},
+      {"initial // Comment\n begin a <= 1;"},
+      {"initial\n // Comment\nbegin a <= 1;"},
+      
+      {"always_comb begin a = 1;"},
+      {"always_comb\nbegin a = 1;"},
+      {"always_comb // Comment\n begin a = 1;"},
+      {"always_comb\n // Comment\nbegin a = 1;"},
+
+      {"always_latch begin a <= 1;"},
+      {"always_latch\nbegin a <= 1;"},
+      {"always_latch // Comment\n begin a <= 1;"},
+      {"always_latch\n // Comment\nbegin a <= 1;"},
+      
+      {"always_ff @( a or b) begin a <= 1;"},
+      {"always_ff @ ( a or b)\nbegin a <= 1;"},
+      {"always_ff @( (a) and b) // Comment\n begin a <= 1;"},
+      {"always_ff @( a or ((b)))\n // Comment\nbegin a <= 1;"},
+
+      {"always @( a or b) begin a <= 1;"},
+      {"always @ ( a or b)\nbegin a <= 1;"},
+      {"always @( (a) and b) // Comment\n begin a <= 1;"},
+      {"always @( a or ((b)))\n // Comment\nbegin a <= 1;"},
+      {"always@* begin a = 1'b1;"},
+      {"always@(*) begin a = 1'b1;"},
+      {"always @* begin a = 1'b1;"},
+      {"always begin a = 1'b1;"},
+      {"always begin #10 a = 1'b1;"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
 }
@@ -71,6 +119,7 @@ TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
       {{TK_if, "if"}, " (FOO) BAR"},
       {{TK_if, "if"}, " (FOO)\n BAR"},
       {{TK_if, "if"}, " (FOO) //Comment\n BAR"},
+      
       {{TK_else, "else"}, " \n FOO"},
       {{TK_else, "else"}, " \n \n FOO"},
       {{TK_else, "else"}, " //Comment\n  FOO"},
@@ -79,11 +128,56 @@ TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
       {"else ", {TK_if, "if"}, " (FOO)\n BAR"},
       {"else ", {TK_if, "if"}, " (FOO) //Comment\n BAR"},
       {"else ", {TK_if, "if"}, " (FOO)\n //Comment\n BAR"},
+      
       {{TK_for, "for"}, "(i = 0; i < N; i++) a <= 1'b1;"},
       {{TK_for, "for"}, "(i = 0; i < N; i++)\n a <= 1'b1;"},
       {{TK_for, "for"}, "(i = 0; i < N; i++) // Comment \n a <= 1'b1;"},
       {{TK_for, "for"}, "(i = 0; i < N; i++)\n // Comment\n a <= 1'b1;"},
-      // {{TK_forever, "forever"}, "a <= 1'b1;"},   // Not supported
+      
+      {{TK_foreach, "foreach"}, "(array[i]) a <= 1'b1;"},
+      {{TK_foreach, "foreach"}, "(array[i])\n a <= 1'b1;"},
+      {{TK_foreach, "foreach"}, "(array[i]) // Comment \n a <= 1'b1;"},
+      {{TK_foreach, "foreach"}, "(array[i])\n // Comment\n a <= 1'b1;"},
+
+      {{TK_while, "while"}, "(array[i]) a <= 1'b1;"},
+      {{TK_while, "while"}, " (array[i])\n a <= 1'b1;"},
+      {{TK_while, "while"}, "(array[i]) // Comment \n a <= 1'b1;"},
+      {{TK_while, "while"}, " (array[i])\n // Comment\n a <= 1'b1;"},
+      
+      {{TK_forever, "forever"}, " a <= 1'b1;\n"},
+      {{TK_forever, "forever"}, "\n a <= 1'b1;"},
+      {{TK_forever, "forever"}, " // Comment \n a <= 1'b1;"},
+      {{TK_forever, "forever"}, "\n // Comment\n a <= 1'b1;"},
+      
+      {{TK_initial, "initial"}, " a = 1'b1;\n"},
+      {{TK_initial, "initial"}, "\n a = 1'b1;"},
+      {{TK_initial, "initial"}, " // Comment \n a = 1'b1;"},
+      {{TK_initial, "initial"}, "\n // Comment\n a = 1'b1;"},
+      
+      {{TK_always_comb, "always_comb"}, " a = 1'b1;\n"},
+      {{TK_always_comb, "always_comb"}, "\n a = 1'b1;"},
+      {{TK_always_comb, "always_comb"}, " // Comment \n a = 1'b1;"},
+      {{TK_always_comb, "always_comb"}, "\n // Comment\n a = 1'b1;"},
+
+      {{TK_always_latch, "always_latch"}, " a = 1'b1;\n"},
+      {{TK_always_latch, "always_latch"}, "\n a = 1'b1;"},
+      {{TK_always_latch, "always_latch"}, " // Comment \n a = 1'b1;"},
+      {{TK_always_latch, "always_latch"}, "\n // Comment\n a = 1'b1;"},
+      
+      {{TK_always_ff, "always_ff"}, " @(a or b) a <= 1'b1;\n"},
+      {{TK_always_ff, "always_ff"}, "@(a or b)\n a <= 1'b1;"},
+      {{TK_always_ff, "always_ff"}, " @(posedge a or negedge b) // Comment \n a <= 1'b1;"},
+      {{TK_always_ff, "always_ff"}, "@(a || b)\n // Comment\n a <= 1'b1;"},
+      
+      {{TK_always, "always"}, " @(a or b) a = 1'b1;\n"},
+      {{TK_always, "always"}, "@(a or b)\n a = 1'b1;"},
+      {{TK_always, "always"}, " @(posedge a or negedge b) // Comment \n a <= 1'b1;"},
+      {{TK_always, "always"}, "@(a || b)\n // Comment\n  <= 1'b1;"},
+      {{TK_always, "always"}, "@* a = 1'b1;"},
+      {{TK_always, "always"}, "@(*) a = 1'b1;"},
+      {{TK_always, "always"}, " @* a = 1'b1;"},
+      {{TK_always, "always"}, " a = 1'b1;"},
+      {{TK_always, "always"}, " #10 a = 1'b1;"},
   };
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
 }

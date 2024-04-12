@@ -42,7 +42,7 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
 
  private:
   // States of the internal token-based analysis.
-  enum class State { kNormal, kInCondition, kInElse, kExpectBegin };
+  enum class State { kNormal, kInAlways, kInCondition, kInElse, kExpectBegin };
 
   // Internal lexical analysis state.
   State state_;
@@ -51,9 +51,7 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   int condition_expr_level_;
 
   // Token information for the last seen block opening (for/if/else).
-  verible::TokenInfo last_condition_start_ = verible::TokenInfo::EOFToken();
-  verible::TokenInfo end_of_condition_statement_ =
-      verible::TokenInfo::EOFToken();
+  verible::TokenInfo start_token_ = verible::TokenInfo::EOFToken();
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
