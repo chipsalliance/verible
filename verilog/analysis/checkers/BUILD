@@ -1258,6 +1258,7 @@ cc_library(
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
         "//common/strings:comment-utils",
+        "//common/text:config-utils",
         "//common/text:token-info",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
