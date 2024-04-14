@@ -82,7 +82,11 @@ struct RuleBundle {
   // typically that would be a comma or newline.
   bool ParseConfiguration(absl::string_view text, char separator,
                           std::string *error);
-  std::string UnparseConfiguration(char separator) const;
+  // Unparse the rules structure back to a string. Separator between rules
+  // is 'separator', typically that would be a comma or newline. The String
+  // is constructed by iterrating over the map, with 'reverse=true' used to
+  // construct the string in reverse order.
+  std::string UnparseConfiguration(char separator, bool reverse = true) const;
 };
 
 // Pair of functions that perform stringification and destringification
@@ -211,6 +215,9 @@ class LinterConfiguration {
   // Updates LinterConfiguration to enabled/disable all lint rules
   // in rule_bundle
   void UseRuleBundle(const RuleBundle &rule_bundle);
+
+  // Gets a rule_bundle of the LinterConfiguration
+  void GetRuleBundle(RuleBundle *rule_bundle) const;
 
   // Adjust set of active rules based on the filename.
   void UseProjectPolicy(const ProjectPolicy &policy,

@@ -100,7 +100,7 @@ void ExplicitParameterStorageTypeRule::HandleSymbol(
 // a common type that can't be handled well in some old tools.
 absl::Status ExplicitParameterStorageTypeRule::Configure(
     absl::string_view configuration) {
-  static const std::vector<absl::string_view> allowed = {"string"};
+  static const std::vector<absl::string_view> allowed = {"", "string"};
   using verible::config::SetStringOneOf;
   std::string value;
   auto s = verible::ParseNameValues(
