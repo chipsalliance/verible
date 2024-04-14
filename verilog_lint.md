@@ -59,6 +59,9 @@ verible-verilog-lint: usage: /tmp/verible-bin/verible-verilog-lint [options] <fi
       default: true;
     --parse_fatal (If true, exit nonzero if there are any syntax errors.);
       default: true;
+    --print_rules_file (Print the current set of lint rules in a format that can
+      be used to create a lint rules configuration file (i.e.
+      .rules.verible_lint) and exit immediately.); default: false;
     --show_diagnostic_context (prints an additional line on which the diagnostic
       was found,followed by a line with a position marker); default: false;
 
@@ -395,4 +398,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-03-23 09:59:03 -0700 from [d256d77](https://github.com/google/verible/commit/d256d779aded5f90ad7935193594d80953330ff2)
+Generated on 2024-04-14 13:46:58 -0700 from [386f717](https://github.com/google/verible/commit/386f7175dfcd84cc3c02cee5c26f6c88958c09b9)
