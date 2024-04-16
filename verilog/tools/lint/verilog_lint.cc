@@ -49,7 +49,7 @@ enum class AutofixMode {
   kGenerateWaiver,      // Generate waiver file for violations
 };
 
-static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
+static const verible::EnumNameMap<AutofixMode> &AutofixModeEnumStringMap() {
   static const verible::EnumNameMap<AutofixMode> kAutofixModeEnumStringMap({
       {"no", AutofixMode::kNo},
       {"patch-interactive", AutofixMode::kPatchInteractive},
@@ -61,18 +61,18 @@ static const verible::EnumNameMap<AutofixMode>& AutofixModeEnumStringMap() {
   return kAutofixModeEnumStringMap;
 }
 
-std::ostream& operator<<(std::ostream& stream, AutofixMode mode) {
+std::ostream &operator<<(std::ostream &stream, AutofixMode mode) {
   return AutofixModeEnumStringMap().Unparse(mode, stream);
 }
 
-std::string AbslUnparseFlag(const AutofixMode& mode) {
+std::string AbslUnparseFlag(const AutofixMode &mode) {
   std::ostringstream stream;
   AutofixModeEnumStringMap().Unparse(mode, stream);
   return stream.str();
 }
 
-bool AbslParseFlag(absl::string_view text, AutofixMode* mode,
-                   std::string* error) {
+bool AbslParseFlag(absl::string_view text, AutofixMode *mode,
+                   std::string *error) {
   return AutofixModeEnumStringMap().Parse(text, mode, error, "--autofix value");
 }
 
@@ -92,12 +92,14 @@ ABSL_FLAG(
     "If true, print the description of every rule formatted for the "
     "Markdown and exit immediately. Intended for the output to be written "
     "to a snippet of Markdown.");
-
+ABSL_FLAG(bool, print_rules_file, false,
+          "Print the current set of lint rules in a format that can be used to "
+          "create a lint rules configuration file (i.e. .rules.verible_lint) "
+          "and exit immediately.");
 ABSL_FLAG(bool, show_diagnostic_context, false,
           "prints an additional "
           "line on which the diagnostic was found,"
           "followed by a line with a position marker");
-
 ABSL_FLAG(
     AutofixMode, autofix, AutofixMode::kNo,
     "autofix mode; one of "
@@ -114,7 +116,7 @@ using verilog::LinterConfiguration;
 // LintOneFile returns 0, 1, or 2
 static const int kAutofixErrorExitStatus = 3;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   const auto usage =
       absl::StrCat("usage: ", argv[0], " [options] <file> [<file>...]");
   const auto args = verible::InitCommandLine(usage, &argc, &argv);
@@ -139,7 +141,7 @@ int main(int argc, char** argv) {
       absl::GetFlag(FLAGS_autofix_output_file);
 
   std::unique_ptr<std::ostream> stream_closer;
-  std::ostream* autofix_output_stream = nullptr;
+  std::ostream *autofix_output_stream = nullptr;
 
   if (autofix_mode == AutofixMode::kPatch ||
       autofix_mode == AutofixMode::kPatchInteractive ||
@@ -166,7 +168,7 @@ int main(int argc, char** argv) {
   }
 
   const verible::ViolationFixer::AnswerChooser applyAllFixes =
-      [](const verible::LintViolation&,
+      [](const verible::LintViolation &,
          absl::string_view) -> verible::ViolationFixer::Answer {
     return {verible::ViolationFixer::AnswerChoice::kApplyAll, 0};
   };
@@ -199,6 +201,21 @@ int main(int argc, char** argv) {
       break;
   }
 
+  // In documentation generation mode, print lint rule file and exit
+  // immediately.
+  bool print_rules_file_flag = absl::GetFlag(FLAGS_print_rules_file);
+  if (print_rules_file_flag) {
+    auto config_status = verilog::LinterConfigurationFromFlags("");
+    if (!config_status.ok()) {
+      std::cerr << config_status.status().message() << std::endl;
+      return 1;
+    }
+    const LinterConfiguration &config = *config_status;
+
+    verilog::GetLintRuleFile(&std::cout, config);
+    return 0;
+  }
+
   // All positional arguments are file names.  Exclude program name.
   for (const absl::string_view filename :
        verible::make_range(args.begin() + 1, args.end())) {
@@ -209,7 +226,7 @@ int main(int argc, char** argv) {
       exit_status = 1;
       continue;
     }
-    const LinterConfiguration& config = *config_status;
+    const LinterConfiguration &config = *config_status;
 
     const int lint_status = verilog::LintOneFile(
         &std::cout, filename, config, violation_handler.get(),
