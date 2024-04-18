@@ -44,7 +44,7 @@ namespace verilog {
 // Returns violations from multiple `LintRuleStatus`es sorted by position
 // of their occurrence in source code.
 std::set<verible::LintViolationWithStatus> GetSortedViolations(
-    const std::vector<verible::LintRuleStatus>& statuses);
+    const std::vector<verible::LintRuleStatus> &statuses);
 
 // Checks a single file for Verilog style lint violations.
 // This is suitable for calling from main().
@@ -63,9 +63,9 @@ std::set<verible::LintViolationWithStatus> GetSortedViolations(
 // TODO(hzeller): the options to this function are a lot and many of them
 //   the same type does not help. Make at least the bool options a struct with
 //   names parameters.
-int LintOneFile(std::ostream* stream, absl::string_view filename,
-                const LinterConfiguration& config,
-                verible::ViolationHandler* violation_handler, bool check_syntax,
+int LintOneFile(std::ostream *stream, absl::string_view filename,
+                const LinterConfiguration &config,
+                verible::ViolationHandler *violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context = false);
 
 // VerilogLinter analyzes a TextStructureView of Verilog source code.
@@ -75,16 +75,16 @@ class VerilogLinter {
   VerilogLinter();
 
   // Configures the internal linters, enabling select rules.
-  absl::Status Configure(const LinterConfiguration& configuration,
+  absl::Status Configure(const LinterConfiguration &configuration,
                          absl::string_view lintee_filename);
 
   // Analyzes text structure.
-  void Lint(const verible::TextStructureView& text_structure,
+  void Lint(const verible::TextStructureView &text_structure,
             absl::string_view filename);
 
   // Reports lint findings.
   std::vector<verible::LintRuleStatus> ReportStatus(
-      const verible::LineColumnMap&, absl::string_view text_base);
+      const verible::LineColumnMap &, absl::string_view text_base);
 
  private:
   // Line based linter.
@@ -111,7 +111,7 @@ absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
 
 // Expands linter configuration from a text file
 absl::Status AppendLinterConfigurationFromFile(
-    LinterConfiguration* config, absl::string_view config_filename);
+    LinterConfiguration *config, absl::string_view config_filename);
 
 // VerilogLintTextStructure analyzes Verilog syntax tree for style violations
 // and syntactically detectable pitfalls.
@@ -130,19 +130,29 @@ absl::Status AppendLinterConfigurationFromFile(
 // Returns:
 //   Vector of LintRuleStatuses on success, otherwise error code.
 absl::StatusOr<std::vector<verible::LintRuleStatus>> VerilogLintTextStructure(
-    absl::string_view filename, const LinterConfiguration& config,
-    const verible::TextStructureView& text_structure);
+    absl::string_view filename, const LinterConfiguration &config,
+    const verible::TextStructureView &text_structure);
 
 // Prints the rule, description and default_enabled.
-absl::Status PrintRuleInfo(std::ostream*,
-                           const analysis::LintRuleDescriptionsMap&,
+absl::Status PrintRuleInfo(std::ostream *,
+                           const analysis::LintRuleDescriptionsMap &,
                            absl::string_view);
 
 // Outputs the descriptions for every rule for the --help_rules flag.
-void GetLintRuleDescriptionsHelpFlag(std::ostream*, absl::string_view);
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
+void GetLintRuleDescriptionsHelpFlag(std::ostream *, absl::string_view);
 
 // Outputs the descriptions for every rule, formatted for markdown.
-void GetLintRuleDescriptionsMarkdown(std::ostream*);
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
+void GetLintRuleDescriptionsMarkdown(std::ostream *);
+
+// Outputs the default linting rules in a format suitable to produce a
+// .rules.verible_lint file
+// TODO(sconwayaus): These are really printers and not getters. Consider
+// renaming
+void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config);
 
 }  // namespace verilog
 
