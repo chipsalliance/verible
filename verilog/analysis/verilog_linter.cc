@@ -83,11 +83,11 @@ using verible::TextStructureView;
 using verible::TokenInfo;
 
 std::set<LintViolationWithStatus> GetSortedViolations(
-    const std::vector<LintRuleStatus>& statuses) {
+    const std::vector<LintRuleStatus> &statuses) {
   std::set<LintViolationWithStatus> violations;
 
-  for (const auto& status : statuses) {
-    for (const auto& violation : status.violations) {
+  for (const auto &status : statuses) {
+    for (const auto &violation : status.violations) {
       violations.insert(LintViolationWithStatus(&violation, &status));
     }
   }
@@ -99,9 +99,9 @@ std::set<LintViolationWithStatus> GetSortedViolations(
 //  0: success
 //  1: linting error (if parse_fatal == true)
 //  2..: other fatal issues such as file not found.
-int LintOneFile(std::ostream* stream, absl::string_view filename,
-                const LinterConfiguration& config,
-                verible::ViolationHandler* violation_handler, bool check_syntax,
+int LintOneFile(std::ostream *stream, absl::string_view filename,
+                const LinterConfiguration &config,
+                verible::ViolationHandler *violation_handler, bool check_syntax,
                 bool parse_fatal, bool lint_fatal, bool show_context) {
   const absl::StatusOr<std::string> content_or =
       verible::file::GetContentAsString(filename);
@@ -126,7 +126,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
     if (!lex_status.ok() || !parse_status.ok()) {
       const std::vector<std::string> syntax_error_messages(
           analyzer->LinterTokenErrorMessages(show_context));
-      for (const auto& message : syntax_error_messages) {
+      for (const auto &message : syntax_error_messages) {
         *stream << message << std::endl;
       }
       if (parse_fatal) {
@@ -138,7 +138,7 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
   }
 
   // Analyze the parsed structure for lint violations.
-  const auto& text_structure = analyzer->Data();
+  const auto &text_structure = analyzer->Data();
   const auto linter_result =
       VerilogLintTextStructure(filename, config, text_structure);
   if (!linter_result.ok()) {
@@ -147,10 +147,10 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
     return 2;
   }
 
-  const std::vector<LintRuleStatus>& linter_statuses = linter_result.value();
+  const std::vector<LintRuleStatus> &linter_statuses = linter_result.value();
 
   size_t total_violations = 0;
-  for (const auto& rule_status : linter_statuses) {
+  for (const auto &rule_status : linter_statuses) {
     total_violations += rule_status.violations.size();
   }
 
@@ -174,45 +174,45 @@ int LintOneFile(std::ostream* stream, absl::string_view filename,
 
 VerilogLinter::VerilogLinter()
     : lint_waiver_(
-          [](const TokenInfo& t) {
+          [](const TokenInfo &t) {
             return IsComment(verilog_tokentype(t.token_enum()));
           },
-          [](const TokenInfo& t) {
+          [](const TokenInfo &t) {
             return IsWhitespace(verilog_tokentype(t.token_enum()));
           },
           kLinterTrigger, kLinterWaiveLineCommand, kLinterWaiveStartCommand,
           kLinterWaiveStopCommand) {}
 
-absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
+absl::Status VerilogLinter::Configure(const LinterConfiguration &configuration,
                                       absl::string_view lintee_filename) {
   if (VLOG_IS_ON(2)) {
-    for (const auto& name : configuration.ActiveRuleIds()) {
+    for (const auto &name : configuration.ActiveRuleIds()) {
       LOG(INFO) << "active rule: '" << name << '\'';
     }
   }
   auto text_rules = configuration.CreateTextStructureRules();
   if (!text_rules.ok()) return text_rules.status();
-  for (auto& rule : *text_rules) {
+  for (auto &rule : *text_rules) {
     text_structure_linter_.AddRule(std::move(rule));
   }
   auto line_rules = configuration.CreateLineRules();
   if (!line_rules.ok()) return line_rules.status();
-  for (auto& rule : *line_rules) {
+  for (auto &rule : *line_rules) {
     line_linter_.AddRule(std::move(rule));
   }
   auto token_rules = configuration.CreateTokenStreamRules();
   if (!token_rules.ok()) return token_rules.status();
-  for (auto& rule : *token_rules) {
+  for (auto &rule : *token_rules) {
     token_stream_linter_.AddRule(std::move(rule));
   }
   auto syntax_rules = configuration.CreateSyntaxTreeRules();
   if (!syntax_rules.ok()) return syntax_rules.status();
-  for (auto& rule : *syntax_rules) {
+  for (auto &rule : *syntax_rules) {
     syntax_tree_linter_.AddRule(std::move(rule));
   }
 
   absl::Status rc = absl::OkStatus();
-  for (const auto& waiver_file :
+  for (const auto &waiver_file :
        absl::StrSplit(configuration.external_waivers, ',', absl::SkipEmpty())) {
     auto content_or = verible::file::GetContentAsString(waiver_file);
     if (!content_or.ok()) continue;  // Couldn't read lint file: ignore
@@ -227,7 +227,7 @@ absl::Status VerilogLinter::Configure(const LinterConfiguration& configuration,
   return rc;
 }
 
-void VerilogLinter::Lint(const TextStructureView& text_structure,
+void VerilogLinter::Lint(const TextStructureView &text_structure,
                          absl::string_view filename) {
   // Collect all lint waivers in an initial pass.
   lint_waiver_.ProcessTokenRangesByLine(text_structure);
@@ -242,24 +242,24 @@ void VerilogLinter::Lint(const TextStructureView& text_structure,
   token_stream_linter_.Lint(text_structure.TokenStream());
 
   // Analyze syntax tree.
-  const verible::ConcreteSyntaxTree& syntax_tree = text_structure.SyntaxTree();
+  const verible::ConcreteSyntaxTree &syntax_tree = text_structure.SyntaxTree();
   if (syntax_tree != nullptr) {
     syntax_tree_linter_.Lint(*syntax_tree);
   }
 }
 
 static void AppendLintRuleStatuses(
-    const std::vector<LintRuleStatus>& new_statuses,
-    const verible::LintWaiver& waivers, const LineColumnMap& line_map,
+    const std::vector<LintRuleStatus> &new_statuses,
+    const verible::LintWaiver &waivers, const LineColumnMap &line_map,
     absl::string_view text_base,
-    std::vector<LintRuleStatus>* cumulative_statuses) {
-  for (const auto& status : new_statuses) {
+    std::vector<LintRuleStatus> *cumulative_statuses) {
+  for (const auto &status : new_statuses) {
     cumulative_statuses->push_back(status);
-    const auto* waived_lines =
+    const auto *waived_lines =
         waivers.LookupLineNumberSet(status.lint_rule_name);
     if (waived_lines) {
       cumulative_statuses->back().WaiveViolations(
-          [&](const verible::LintViolation& violation) {
+          [&](const verible::LintViolation &violation) {
             // Lookup the line number on which the offending token resides.
             const size_t offset = violation.token.left(text_base);
             const size_t line = line_map.LineAtOffset(offset);
@@ -276,9 +276,9 @@ static void AppendLintRuleStatuses(
 }
 
 std::vector<LintRuleStatus> VerilogLinter::ReportStatus(
-    const LineColumnMap& line_map, absl::string_view text_base) {
+    const LineColumnMap &line_map, absl::string_view text_base) {
   std::vector<LintRuleStatus> statuses;
-  const verible::LintWaiver& waivers = lint_waiver_.GetLintWaiver();
+  const verible::LintWaiver &waivers = lint_waiver_.GetLintWaiver();
   AppendLintRuleStatuses(line_linter_.ReportStatus(), waivers, line_map,
                          text_base, &statuses);
   AppendLintRuleStatuses(text_structure_linter_.ReportStatus(), waivers,
@@ -309,8 +309,8 @@ absl::StatusOr<LinterConfiguration> LinterConfigurationFromFlags(
 }
 
 absl::StatusOr<std::vector<LintRuleStatus>> VerilogLintTextStructure(
-    absl::string_view filename, const LinterConfiguration& config,
-    const TextStructureView& text_structure) {
+    absl::string_view filename, const LinterConfiguration &config,
+    const TextStructureView &text_structure) {
   // Create the linter, add rules, and run it.
   VerilogLinter linter;
   if (absl::Status status = linter.Configure(config, filename); !status.ok()) {
@@ -324,8 +324,8 @@ absl::StatusOr<std::vector<LintRuleStatus>> VerilogLintTextStructure(
   return linter.ReportStatus(text_structure.GetLineColumnMap(), text_base);
 }
 
-absl::Status PrintRuleInfo(std::ostream* os,
-                           const analysis::LintRuleDescriptionsMap& rule_map,
+absl::Status PrintRuleInfo(std::ostream *os,
+                           const analysis::LintRuleDescriptionsMap &rule_map,
                            absl::string_view rule_name) {
   constexpr int kRuleWidth = 35;
   constexpr int kParamIndent = kRuleWidth + 4;
@@ -338,14 +338,14 @@ absl::Status PrintRuleInfo(std::ostream* os,
         "\' not found. Please specify a rule name or \"all\" for help on "
         "the rules.\n"));
   }
-  const auto& d = it->second.descriptor;
+  const auto &d = it->second.descriptor;
   // Print description.
   *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << rule_name
       << d.desc << "\n";
   if (!d.param.empty()) {
     *os << std::left << std::setw(kRuleWidth) << std::setfill(kFill) << " "
         << "Parameter" << (d.param.size() > 1 ? "s" : "") << ":\n";
-    for (const auto& p : d.param) {
+    for (const auto &p : d.param) {
       *os << std::left << std::setw(kParamIndent) << std::setfill(kFill) << " "
           << "* `" << p.name << "` Default: `" << p.default_value << "` "
           << p.description << "\n";
@@ -359,11 +359,11 @@ absl::Status PrintRuleInfo(std::ostream* os,
   return absl::OkStatus();
 }
 
-void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
+void GetLintRuleDescriptionsHelpFlag(std::ostream *os,
                                      absl::string_view flag_value) {
   // Set up the map.
   auto rule_map = analysis::GetAllRuleDescriptions();
-  for (const auto& rule_id : analysis::kDefaultRuleSet) {
+  for (const auto &rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }
 
@@ -374,7 +374,7 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
   }
 
   // Print all rules.
-  for (const auto& rule : rule_map) {
+  for (const auto &rule : rule_map) {
     const auto status = PrintRuleInfo(os, rule_map, rule.first);
     if (!status.ok()) {
       *os << status.message();
@@ -383,22 +383,69 @@ void GetLintRuleDescriptionsHelpFlag(std::ostream* os,
   }
 }
 
-void GetLintRuleDescriptionsMarkdown(std::ostream* os) {
+void GetLintRuleFile(std::ostream *os, const LinterConfiguration &config) {
+  // This rule bundle contains only a list of enabled rules. There
+  // are also no param's defined (an empty string), unless the user
+  // assigns them.
+  RuleBundle rule_bundle;
+  config.GetRuleBundle(&rule_bundle);
+
+  // Grab all the rule descriptions, so we can get default
+  // configuration and disabled rules
+  auto rule_descriptions = analysis::GetAllRuleDescriptions();
+
+  // Update the rule_bundle with default configration if none was
+  // provided and add disabled rules with default configuration
+  for (const auto &rule : rule_descriptions) {
+    // Form the rules default_configuration string
+    std::string default_configuration;
+    bool first_param = true;
+    for (const auto &param : rule.second.descriptor.param) {
+      if (!first_param) {
+        default_configuration.append(";");
+      }
+
+      default_configuration.append(std::string(param.name));
+      default_configuration.append(":");
+      default_configuration.append(param.default_value);
+
+      first_param = false;
+    }
+
+    if (auto found_rule = rule_bundle.rules.find(rule.first);
+        found_rule != rule_bundle.rules.end()) {
+      // Rule is enabled, add default configuration if none exists
+      if (found_rule->second.configuration.empty()) {
+        found_rule->second.configuration = default_configuration;
+      }
+    } else {
+      // Add disbaled rule, along with its default configuration
+      rule_bundle.rules[rule.first].enabled = false;
+      rule_bundle.rules[rule.first].configuration = default_configuration;
+    }
+  }
+
+  // Print the rules
+  std::string rules = rule_bundle.UnparseConfiguration('\n', false);
+  *os << rules << "\n";
+}
+
+void GetLintRuleDescriptionsMarkdown(std::ostream *os) {
   auto rule_map = analysis::GetAllRuleDescriptions();
-  for (const auto& rule_id : analysis::kDefaultRuleSet) {
+  for (const auto &rule_id : analysis::kDefaultRuleSet) {
     rule_map[rule_id].default_enabled = true;
   }
 
-  for (const auto& rule : rule_map) {
+  for (const auto &rule : rule_map) {
     // Print the rule, description and if it is enabled by default.
-    const auto& d = rule.second.descriptor;
+    const auto &d = rule.second.descriptor;
     *os << "### " << rule.first << "\n";
     *os << d.desc;
     *os << " See " << verible::GetStyleGuideCitation(d.topic) << ".\n\n";
 
     if (!d.param.empty()) {
       *os << "##### Parameter" << (d.param.size() > 1 ? "s" : "") << "\n";
-      for (const auto& p : d.param) {
+      for (const auto &p : d.param) {
         *os << "  * `" << p.name << "` Default: `" << p.default_value << "` "
             << p.description << "\n";
       }
