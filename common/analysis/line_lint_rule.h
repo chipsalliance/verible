@@ -26,7 +26,7 @@ namespace verible {
 
 class LineLintRule : public LintRule {
  public:
-  ~LineLintRule() override = default;
+  ~LineLintRule() override = default;  // not yet final
 
   // Scans a single line during analysis.
   virtual void HandleLine(absl::string_view line) = 0;
