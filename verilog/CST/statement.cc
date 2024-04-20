@@ -82,7 +82,7 @@ const SyntaxTreeNode *GetConditionalGenerateElseClause(
       SymbolCastToNode(conditional), NodeEnum::kConditionalGenerateConstruct);
   if (!node || node->size() < 2) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kGenerateElseClause);
 }
@@ -113,7 +113,7 @@ const SyntaxTreeNode *GetConditionalStatementElseClause(
                                          NodeEnum::kConditionalStatement);
   if (!node || node->size() < 2) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -138,7 +138,7 @@ const SyntaxTreeNode *GetAssertionStatementElseClause(
   const auto *node = MatchNodeEnumOrNull(SymbolCastToNode(assertion_statement),
                                          NodeEnum::kAssertionStatement);
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -164,7 +164,7 @@ const SyntaxTreeNode *GetAssumeStatementElseClause(
                                          NodeEnum::kAssumeStatement);
   if (!node) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -208,7 +208,7 @@ const SyntaxTreeNode *GetAssertPropertyStatementElseClause(
                           NodeEnum::kAssertPropertyStatement);
   if (!node) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -236,7 +236,7 @@ const SyntaxTreeNode *GetAssumePropertyStatementElseClause(
                           NodeEnum::kAssumePropertyStatement);
   if (!node) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -264,7 +264,7 @@ const SyntaxTreeNode *GetExpectPropertyStatementElseClause(
                           NodeEnum::kExpectPropertyStatement);
   if (!node) return nullptr;
   const Symbol *else_ptr = node->back().get();
-  if (else_ptr == nullptr) return nullptr;
+  if (!else_ptr) return nullptr;
   return MatchNodeEnumOrNull(SymbolCastToNode(*else_ptr),
                              NodeEnum::kElseClause);
 }
@@ -446,7 +446,7 @@ const verible::SyntaxTreeNode *GetDataTypeFromForInitialization(
     const verible::Symbol &for_initialization) {
   const auto *data_type = verible::GetSubtreeAsSymbol(
       for_initialization, NodeEnum::kForInitialization, 1);
-  if (data_type == nullptr) {
+  if (!data_type) {
     return nullptr;
   }
   return &verible::SymbolCastToNode(*data_type);

@@ -608,7 +608,7 @@ static void PrintLargestPartitions(
 }
 
 std::ostream& ExecutionControl::Stream() const {
-  return (stream != nullptr) ? *stream : std::cout;
+  return (stream) ? *stream : std::cout;
 }
 
 void Formatter::SelectLines(const LineNumberSet& lines) {
@@ -742,7 +742,7 @@ class ContinuationCommentAligner {
       const verible::FormattedToken& token, int* column) {
     switch (token.before.action) {
       case verible::SpacingDecision::kPreserve: {
-        if (token.before.preserved_space_start != nullptr) {
+        if (token.before.preserved_space_start) {
           *column += token.OriginalLeadingSpaces().length();
         } else {
           *column += token.before.spaces;

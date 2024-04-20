@@ -113,7 +113,7 @@ struct StateNode {
 
   // Returns true if this state was initialized with an unwrapped line and
   // has no parent state.
-  bool IsRootState() const { return prev_state == nullptr; }
+  bool IsRootState() const { return !prev_state; }
 
   // Returns the total number of nodes in state ancestry, including itself.
   // This occurs in O(N) time, and is only suitable for testing/debug.

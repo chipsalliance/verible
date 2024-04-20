@@ -76,7 +76,7 @@ void ExplicitFunctionLifetimeRule::HandleSymbol(
     if (IdIsQualified(*function_id)) return;
 
     // Make sure the lifetime was set
-    if (GetFunctionLifetime(symbol) == nullptr) {
+    if (!GetFunctionLifetime(symbol)) {
       // Point to the function id.
       const verible::TokenInfo token(SymbolIdentifier,
                                      verible::StringSpanOfSymbol(*function_id));

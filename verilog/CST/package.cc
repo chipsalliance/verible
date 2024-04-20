@@ -52,7 +52,7 @@ const verible::SyntaxTreeLeaf *GetPackageNameEndLabel(
     const verible::Symbol &package_declaration) {
   const auto *label_node = verible::GetSubtreeAsSymbol(
       package_declaration, NodeEnum::kPackageDeclaration, 6);
-  if (label_node == nullptr) {
+  if (!label_node) {
     return nullptr;
   }
   return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),

@@ -108,7 +108,7 @@ void ExpectLayoutFunctionsEqual(const LayoutFunction& actual,
                                expected[i].span, 2);
     }
     auto layout_diff = DeepEqual(actual[i].layout, expected[i].layout);
-    if (layout_diff.left != nullptr) {
+    if (layout_diff.left) {
       PrintInvalidValueMessage(segment_msg, "layout (fragment)",
                                *layout_diff.left, *layout_diff.right, 2, true);
     }

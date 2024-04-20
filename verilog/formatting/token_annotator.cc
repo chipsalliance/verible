@@ -965,7 +965,7 @@ void AnnotateFormattingInformation(
     return;
   }
 
-  if (buffer_start != nullptr) {
+  if (buffer_start) {
     // For unit testing, tokens' text snippets don't necessarily originate
     // from the same contiguous string buffer, so skip this step.
     ConnectPreFormatTokensPreservedSpaceStarts(buffer_start, format_tokens);

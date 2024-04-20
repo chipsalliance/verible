@@ -128,7 +128,7 @@ class EnumNameMap {
   bool Parse(key_type text, EnumType *enum_value, std::ostream &errstream,
              absl::string_view type_name) const {
     const EnumType *found_value = enum_name_map_.find_forward(text);
-    if (found_value != nullptr) {
+    if (found_value) {
       *enum_value = *found_value;
       return true;
     }
@@ -151,7 +151,7 @@ class EnumNameMap {
   // Returns the string representation of an enum.
   absl::string_view EnumName(EnumType value) const {
     const auto *key = enum_name_map_.find_reverse(value);
-    if (key == nullptr) return "???";
+    if (!key) return "???";
     return *key;
   }
 

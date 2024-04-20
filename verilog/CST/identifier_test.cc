@@ -118,7 +118,7 @@ TEST(GetIdentifierTest, UnqualifiedIds) {
           for (const auto &id : ids) {
             const verible::SyntaxTreeLeaf *base =
                 AutoUnwrapIdentifier(*id.match);
-            if (base == nullptr) continue;
+            if (!base) continue;
             got_ids.push_back(TreeSearchMatch{base, /* ignored context */});
             EXPECT_EQ(AutoUnwrapIdentifier(*base), base);  // check convergence
           }

@@ -391,7 +391,7 @@ TEST(MapTreeTest, TraversePrint) {
     std::ostringstream stream;
     m.ApplyPreOrder([&stream](const MapTreeTestType &node) {
       const auto *key = node.Key();
-      stream << (key == nullptr ? 0 : *key) << " ";
+      stream << (key ? *key : 0) << " ";
     });
     EXPECT_EQ(stream.str(), "0 3 2 6 5 1 4 ");
   }
@@ -408,7 +408,7 @@ TEST(MapTreeTest, TraversePrint) {
     std::ostringstream stream;
     m.ApplyPostOrder([&stream](const MapTreeTestType &node) {
       const auto *key = node.Key();
-      stream << (key == nullptr ? 0 : *key) << " ";
+      stream << (key ? *key : 0) << " ";
     });
     EXPECT_EQ(stream.str(), "2 6 3 1 4 5 0 ");
   }

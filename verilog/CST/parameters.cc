@@ -54,7 +54,7 @@ verilog_tokentype GetParamKeyword(const verible::Symbol &symbol) {
   //
   const auto *param_keyword_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 0);
-  if (param_keyword_symbol == nullptr) return TK_parameter;
+  if (!param_keyword_symbol) return TK_parameter;
   const auto *leaf = down_cast<const SyntaxTreeLeaf *>(param_keyword_symbol);
   return static_cast<verilog_tokentype>(leaf->get().token_enum());
 }
@@ -147,7 +147,7 @@ const verible::SyntaxTreeNode *GetTypeAssignmentFromParamDeclaration(
   // Get the Type AssignmentList or kTypeAssignment symbol.
   const auto *assignment_symbol =
       verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 2);
-  if (assignment_symbol == nullptr) {
+  if (!assignment_symbol) {
     return nullptr;
   }
 
@@ -177,8 +177,7 @@ const verible::SyntaxTreeNode *GetExpressionFromTypeAssignment(
     const verible::Symbol &type_assignment) {
   const verible::Symbol *expression = verible::GetSubtreeAsSymbol(
       type_assignment, NodeEnum::kTypeAssignment, 2);
-  if (expression == nullptr ||
-      NodeEnum(expression->Tag().tag) != NodeEnum::kExpression) {
+  if (!expression || NodeEnum(expression->Tag().tag) != NodeEnum::kExpression) {
     return nullptr;
   }
   return &verible::SymbolCastToNode(*expression);
@@ -202,7 +201,7 @@ const verible::Symbol *TryDescentPath(
   for (auto p : path) {
     if (NodeEnum(value->Tag().tag) != p.expected_type) return nullptr;
     value = GetSubtreeAsSymbol(*value, p.expected_type, p.next_index);
-    if (value == nullptr) return nullptr;
+    if (!value) return nullptr;
   }
   return value;
 }
@@ -221,8 +220,7 @@ bool IsTypeInfoEmpty(const verible::Symbol &symbol) {
 
   const auto &type_info_node = verible::SymbolCastToNode(symbol);
 
-  return (type_info_node[0] == nullptr && type_info_node[1] == nullptr &&
-          type_info_node[2] == nullptr);
+  return (!type_info_node[0] && !type_info_node[1] && !type_info_node[2]);
 }
 
 const verible::SyntaxTreeLeaf *GetNamedParamFromActualParam(

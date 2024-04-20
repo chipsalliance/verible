@@ -427,8 +427,7 @@ void LastSemicolonStateMachine::UpdateState(verible::TokenInfo* token) {
         semicolons_.push(token);
       } else if (token->token_enum() == finish_token_enum_) {
         // Replace the desired ';' and return to dormant state.
-        if (previous_token_ != nullptr &&
-            previous_token_->token_enum() == ';') {
+        if (previous_token_ && previous_token_->token_enum() == ';') {
           // Discard the optional ';' right before the end-keyword.
           // <jedi>This is not the semicolon you are looking for.</jedi>
           semicolons_.pop();
@@ -724,7 +723,7 @@ WithReason<bool> LexicalContext::ExpectingBodyItemStart() const {
   if (InFlowControlHeader()) return {false, "in flow control header"};
   if (InAnyDeclarationHeader()) return {false, "in other declaration header"};
   if (!balance_stack_.empty()) return {false, "balance stack not empty"};
-  if (previous_token_ == nullptr) {
+  if (!previous_token_) {
     // First token should be start of a description/package item.
     return {true, "first token"};
   }

@@ -194,7 +194,7 @@ TEST(FindAllModuleDeclarationTest, FindClassParameters) {
           for (const auto &instance : instances) {
             const auto *decl =
                 GetParamDeclarationListFromClassDeclaration(*instance.match);
-            if (decl == nullptr) {
+            if (!decl) {
               continue;
             }
             params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
@@ -224,7 +224,7 @@ TEST(GetClassExtendTest, GetExtendListIdentifiers) {
           std::vector<TreeSearchMatch> identifiers;
           for (const auto &decl : members) {
             const auto *identifier = GetExtendedClass(*decl.match);
-            if (identifier == nullptr) {
+            if (!identifier) {
               continue;
             }
             identifiers.emplace_back(

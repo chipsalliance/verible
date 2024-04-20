@@ -67,7 +67,7 @@ TokenPartitionTree TokenPartitionTreeBuilder::build(
     const char* actual_expr, const char* expected_expr,
     const TokenPartitionTree& actual, const TokenPartitionTree& expected) {
   const auto diff = DeepEqual(actual, expected, PartitionsEqual);
-  if (diff.left != nullptr) {
+  if (diff.left) {
     return ::testing::AssertionFailure()
            << "Expected equality of these trees:\n"
               "Actual:\n"

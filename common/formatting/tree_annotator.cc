@@ -89,7 +89,7 @@ void TreeAnnotator::Annotate() {
 
   // Visit the tokens from the beginning of the token stream through
   // the last syntax tree node.
-  if (syntax_tree_root_ != nullptr) {
+  if (syntax_tree_root_) {
     syntax_tree_root_->Accept(this);
   }
   // Else without a syntax tree, the following code will still annotate

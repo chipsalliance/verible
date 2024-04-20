@@ -251,7 +251,7 @@ class HunkSplitter {
   HunkSplitter() = default;
 
   bool operator()(const MarkedLine &line) {
-    if (previous_line_ == nullptr) {
+    if (!previous_line_) {
       // first line
       previous_line_ = &line;
       return true;

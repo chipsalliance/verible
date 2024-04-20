@@ -74,7 +74,7 @@ const verible::SyntaxTreeLeaf *GetClassEndLabel(
     const verible::Symbol &class_declaration) {
   const auto *label_node = verible::GetSubtreeAsSymbol(
       class_declaration, NodeEnum::kClassDeclaration, 3);
-  if (label_node == nullptr) {
+  if (!label_node) {
     return nullptr;
   }
   return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),

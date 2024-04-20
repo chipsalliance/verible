@@ -243,7 +243,7 @@ void VerilogLinter::Lint(const TextStructureView &text_structure,
 
   // Analyze syntax tree.
   const verible::ConcreteSyntaxTree &syntax_tree = text_structure.SyntaxTree();
-  if (syntax_tree != nullptr) {
+  if (syntax_tree) {
     syntax_tree_linter_.Lint(*syntax_tree);
   }
 }

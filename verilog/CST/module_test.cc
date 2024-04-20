@@ -197,7 +197,7 @@ TEST(GetModulePortDeclarationListTest, ModulePorts) {
           std::vector<TreeSearchMatch> groups;
           for (const auto &instance : modules) {
             const auto *group = GetModulePortParenGroup(*instance.match);
-            if (group == nullptr) {
+            if (!group) {
               continue;
             }
             groups.emplace_back(
@@ -232,7 +232,7 @@ TEST(FindAllModuleDeclarationTest, FindModuleParameters) {
           for (const auto &instance : instances) {
             const auto *decl =
                 GetParamDeclarationListFromModuleDeclaration(*instance.match);
-            if (decl == nullptr) {
+            if (!decl) {
               continue;
             }
             params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
@@ -266,7 +266,7 @@ TEST(FindAllInterfaceDeclarationTest, FindInterfaceParameters) {
           for (const auto &instance : instances) {
             const auto *decl = GetParamDeclarationListFromInterfaceDeclaration(
                 *instance.match);
-            if (decl == nullptr) {
+            if (!decl) {
               continue;
             }
             params.emplace_back(TreeSearchMatch{decl, {/* ignored context */}});
@@ -294,7 +294,7 @@ TEST(GetModulePortDeclarationListTest, ModulePortList) {
           std::vector<TreeSearchMatch> lists;
           for (const auto &instance : instances) {
             const auto *list = GetModulePortDeclarationList(*instance.match);
-            if (list == nullptr) {
+            if (!list) {
               continue;
             }
             lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
@@ -322,7 +322,7 @@ TEST(GetInterfacePortDeclarationListTest, InterfacePortList) {
           std::vector<TreeSearchMatch> lists;
           for (const auto &instance : instances) {
             const auto *list = GetModulePortDeclarationList(*instance.match);
-            if (list == nullptr) {
+            if (!list) {
               continue;
             }
             lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
@@ -350,7 +350,7 @@ TEST(GetProgramPortDeclarationListTest, ProgramPortList) {
           std::vector<TreeSearchMatch> lists;
           for (const auto &instance : instances) {
             const auto *list = GetModulePortDeclarationList(*instance.match);
-            if (list == nullptr) {
+            if (!list) {
               continue;
             }
             lists.emplace_back(TreeSearchMatch{list, {/* ignored context */}});
@@ -381,7 +381,7 @@ TEST(FindModuleEndTest, ModuleEndName) {
           std::vector<TreeSearchMatch> labels;
           for (const auto &instance : instances) {
             const auto *label = GetModuleEndLabel(*instance.match);
-            if (label == nullptr) {
+            if (!label) {
               continue;
             }
             labels.emplace_back(
@@ -413,7 +413,7 @@ TEST(FindInterfaceEndTest, InterfaceEndName) {
           std::vector<TreeSearchMatch> labels;
           for (const auto &instance : instances) {
             const auto *label = GetModuleEndLabel(*instance.match);
-            if (label == nullptr) {
+            if (!label) {
               continue;
             }
             labels.emplace_back(
@@ -445,7 +445,7 @@ TEST(FindProgramEndTest, ProgramEndName) {
           std::vector<TreeSearchMatch> labels;
           for (const auto &instance : instances) {
             const auto *label = GetModuleEndLabel(*instance.match);
-            if (label == nullptr) {
+            if (!label) {
               continue;
             }
             labels.emplace_back(

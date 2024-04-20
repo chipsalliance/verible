@@ -134,9 +134,8 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
   for (auto &scope_member : scope->second) {
     SignatureDigest digest = scope_member.instantiation_scope;
     if (scope_focus.rolling_hash.size() < digest.rolling_hash.size() ||
-        (match != nullptr &&
-         digest.rolling_hash.size() <
-             match->instantiation_scope.rolling_hash.size())) {
+        (match && digest.rolling_hash.size() <
+                      match->instantiation_scope.rolling_hash.size())) {
       // Mismatch, or not interesting (worse match).
       VLOG(2) << "Scope resolution mismatch for '" << name << "' at scope "
               << ScopeDebug(digest);
@@ -147,7 +146,7 @@ std::optional<ScopedVname> ScopeResolver::FindScopeAndDefinition(
       match = &scope_member;
     }
   }
-  if (match != nullptr) {
+  if (match) {
     VLOG(2) << "Found definition for '" << name << "' within scope "
             << ScopeDebug(scope_focus);
     return *match;
