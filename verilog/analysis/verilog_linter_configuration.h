@@ -188,9 +188,6 @@ class LinterConfiguration {
   // Constructor has no rules enabled by default;
   LinterConfiguration() = default;
 
-  // This is copy-able.
-  LinterConfiguration(const LinterConfiguration &) = default;
-
   void TurnOn(const analysis::LintRuleId &rule) {
     configuration_[rule] = {true, ""};
   }
