@@ -363,7 +363,7 @@ class TextStructureViewInternalsTest : public TextStructureViewPublicTest {
   // modifications.  This is only appropriate for tests on private or protected
   // methods; public methods should always leave the structure in a consistent
   // state.
-  ~TextStructureViewInternalsTest() override { Clear(); }
+  ~TextStructureViewInternalsTest() override { Clear(); }  // not yet final
 };
 
 // Test that whole tree is returned with offset 0.
