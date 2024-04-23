@@ -398,4 +398,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-04-20 11:47:46 -0700 from [ec69cae](https://github.com/google/verible/commit/ec69caeba8e704bbe3db70374ff6ef853023c427)
+Generated on 2024-04-22 21:18:14 -0700 from [6882622](https://github.com/google/verible/commit/6882622df8dc99c05b28fe420f3be6c396e07752)
