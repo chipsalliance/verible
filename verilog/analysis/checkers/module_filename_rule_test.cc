@@ -116,11 +116,7 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameAbsPath) {
       {""},
       {"package q; endpackage\n"},
       {"module ", {kToken, "m"}, "; endmodule"},
-      {"module ",
-       {kToken, "m"},
-       "; endmodule\nmodule ",
-       {kToken, "n"},
-       "; endmodule"},
+      {"module m; endmodule\nmodule ", {kToken, "n"}, "; endmodule"},
       {"module ",
        {kToken, "m"},
        ";\n"
@@ -157,11 +153,7 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameRelPath) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {""},
       {"module ", {kToken, "m"}, "; endmodule"},
-      {"module ",
-       {kToken, "m"},
-       "; endmodule\nmodule ",
-       {kToken, "n"},
-       "; endmodule"},
+      {"module m; endmodule\nmodule ", {kToken, "n"}, "; endmodule"},
       {"module ",
        {kToken, "m"},
        ";\n"

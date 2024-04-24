@@ -121,32 +121,28 @@ void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
     return;
   }
 
-  // Because we can't be certain which module the autofix should be applied to,
-  // raise a violation for all found modules in the clean list and let the user
-  // decide.
-  for (const auto &module_match : module_cleaned) {
-    const verible::Symbol *module_symbol = module_match.match;
-    const auto *module_id = GetModuleName(*module_symbol);
-    if (!module_id) LOG(ERROR) << "Couldn't extract module name";
-    if (module_id) {
-      const std::string autofix_msg =
-          absl::StrCat("Rename module to '", unitname, "' to match filename");
+  // Only report a violation on the last module declaration.
+  const verible::Symbol &last_module = *module_cleaned.back().match;
+  const auto *last_module_id = GetModuleName(last_module);
+  if (!last_module_id) LOG(ERROR) << "Couldn't extract module name";
+  if (last_module_id) {
+    const std::string autofix_msg =
+        absl::StrCat("Rename module to '", unitname, "' to match filename");
 
-      auto autofix =
-          verible::AutoFix(autofix_msg, {module_id->get(), unitname});
+    auto autofix =
+        verible::AutoFix(autofix_msg, {last_module_id->get(), unitname});
 
-      const verible::SyntaxTreeLeaf *module_end_label =
-          GetModuleEndLabel(*module_symbol);
-      if (module_end_label) {
-        autofix.AddEdits({{module_end_label->get(), unitname}});
-      }
-
-      verible::LintViolation violation = verible::LintViolation(
-          module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\""),
-          {autofix});
-
-      violations_.insert(violation);
+    const verible::SyntaxTreeLeaf *module_end_label =
+        GetModuleEndLabel(last_module);
+    if (module_end_label) {
+      autofix.AddEdits({{module_end_label->get(), unitname}});
     }
+
+    verible::LintViolation violation = verible::LintViolation(
+        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\""),
+        {autofix});
+
+    violations_.insert(violation);
   }
 }
 
