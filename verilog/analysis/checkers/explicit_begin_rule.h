@@ -27,63 +27,54 @@
 namespace verilog {
 namespace analysis {
 
-// Detects whether a Verilog `endif directive is followed by a comment that
-// matches the opening `ifdef or `ifndef.
-//
-// Accepted examples:
-//   if (FOO) begin
-//
-//   else begin
-//
-//   else if (FOO) begin
-//
-//   for (FOO) begin
-//
-// Rejected examples:
-//   if (FOO)
-//       BAR
-//
-//   else
-//       BAR
-//
-//   else if (FOO)
-//       BAR
-//
-//   for (FOO) begin
-//       BAR
-//
-//
+using verible::TokenInfo;
+
+// Detects whether if and for loop statements use verilog block statements
+// (begin/end)
 class ExplicitBeginRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
 
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
+
+  absl::Status Configure(absl::string_view configuration) final;
 
   ExplicitBeginRule() : state_(State::kNormal), condition_expr_level_(0) {}
 
-  void HandleToken(const verible::TokenInfo& token) final;
+  void HandleToken(const verible::TokenInfo &token) final;
 
   verible::LintRuleStatus Report() const final;
 
  private:
+  bool IsTokenEnabled(const TokenInfo &token);
+
   // States of the internal token-based analysis.
-  enum class State { kNormal, kInCondition, kInElse, kExpectBegin };
+  enum class State { kNormal, kInAlways, kInCondition, kInElse, kExpectBegin };
 
   // Internal lexical analysis state.
   State state_;
 
-  // Level of nested parenthesis when analizing conditional expressions.
+  // Level of nested parenthesis when analysing conditional expressions.
   int condition_expr_level_;
 
-  // Token information for the last seen block opening (for/if/else).
-  verible::TokenInfo last_condition_start_ = verible::TokenInfo::EOFToken();
-  verible::TokenInfo end_of_condition_statement_ =
-      verible::TokenInfo::EOFToken();
+  // Configuration
+  bool if_enable_ = true;
+  bool else_enable_ = true;
+  bool always_enable_ = true;
+  bool always_comb_enable_ = true;
+  bool always_latch_enable_ = true;
+  bool always_ff_enable_ = true;
+  bool forever_enable_ = true;
+  bool initial_enable_ = true;
+  bool for_enable_ = true;
+  bool foreach_enable_ = true;
+  bool while_enable_ = true;
+
+  // Token that requires blocking statement.
+  verible::TokenInfo start_token_ = verible::TokenInfo::EOFToken();
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
-
-  void trigger_violation_();
 };
 
 }  // namespace analysis
