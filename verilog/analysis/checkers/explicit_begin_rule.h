@@ -46,6 +46,8 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   verible::LintRuleStatus Report() const final;
 
  private:
+  bool HandleTokenStateMachine(const TokenInfo &token);
+
   bool IsTokenEnabled(const TokenInfo &token);
 
   // States of the internal token-based analysis.

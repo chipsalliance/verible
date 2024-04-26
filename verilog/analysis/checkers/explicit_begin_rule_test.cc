@@ -110,6 +110,18 @@ TEST(ExplicitBeginRuleTest, AcceptsBlocksWithBegin) {
       {"always @* begin a = 1'b1;"},
       {"always begin a = 1'b1;"},
       {"always begin #10 a = 1'b1;"},
+
+      // Multiple consecutive failures
+      {"if(FOO) begin for(i = 0; i < N; i++) begin a <= i;"},
+      {"if(FOO) begin foreach(array[i]) begin a <= i;"},
+      {"if(FOO) begin while(i < N) begin i++;"},
+      {"always @* begin if(FOO) begin a = 1; end else begin a = 0;"},
+      {"always @(*) begin if(FOO) begin a = 1; end else begin a = 0;"},
+      {"always @(posedge c) begin if(FOO) begin a <= 1; end else begin "
+       "a <= 0;"},
+      {"always_comb begin if(FOO) begin a = 1; end else begin a = 0;"},
+      {"always_ff @(posedge c) begin if(FOO) begin a <= 1; end else begin "
+       "a <= 0;"},
   };
 
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
@@ -135,16 +147,20 @@ TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
       {{TK_for, "for"}, "(i = 0; i < N; i++)\n a <= 1'b1;"},
       {{TK_for, "for"}, "(i = 0; i < N; i++) // Comment \n a <= 1'b1;"},
       {{TK_for, "for"}, "(i = 0; i < N; i++)\n // Comment\n a <= 1'b1;"},
+      {{TK_for, "for"},
+       "(i = 0; i < N; i++)\n",
+       {TK_if, "if"},
+       " (FOO) a <= 1'b1;"},
 
       {{TK_foreach, "foreach"}, "(array[i]) a <= 1'b1;"},
       {{TK_foreach, "foreach"}, "(array[i])\n a <= 1'b1;"},
       {{TK_foreach, "foreach"}, "(array[i]) // Comment \n a <= 1'b1;"},
       {{TK_foreach, "foreach"}, "(array[i])\n // Comment\n a <= 1'b1;"},
 
-      {{TK_while, "while"}, "(array[i]) a <= 1'b1;"},
-      {{TK_while, "while"}, " (array[i])\n a <= 1'b1;"},
-      {{TK_while, "while"}, "(array[i]) // Comment \n a <= 1'b1;"},
-      {{TK_while, "while"}, " (array[i])\n // Comment\n a <= 1'b1;"},
+      {{TK_while, "while"}, "(i < N) a <= 1'b1;"},
+      {{TK_while, "while"}, " (i < N)\n a <= 1'b1;"},
+      {{TK_while, "while"}, "(i < N) // Comment \n a <= 1'b1;"},
+      {{TK_while, "while"}, " (i < N)\n // Comment\n a <= 1'b1;"},
 
       {{TK_forever, "forever"}, " a <= 1'b1;\n"},
       {{TK_forever, "forever"}, "\n a <= 1'b1;"},
@@ -182,6 +198,41 @@ TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
       {{TK_always, "always"}, " @* a = 1'b1;"},
       {{TK_always, "always"}, " a = 1'b1;"},
       {{TK_always, "always"}, " #10 a = 1'b1;"},
+
+      // Multiple consecutive failures
+      {{TK_if, "if"}, "(FOO) ", {TK_for, "for"}, "(i = 0; i < N; i++) a <= i;"},
+      {{TK_if, "if"}, "(FOO) ", {TK_foreach, "foreach"}, "(array[i]) a <= i;"},
+      {{TK_if, "if"}, "(FOO) ", {TK_while, "while"}, "(i < N) i++;"},
+      {{TK_always, "always"},
+       " @* ",
+       {TK_if, "if"},
+       "(FOO) a = 1;",
+       {TK_else, "else"},
+       " a = 0;"},
+      {{TK_always, "always"},
+       " @(*) ",
+       {TK_if, "if"},
+       "(FOO) a = 1;",
+       {TK_else, "else"},
+       " a = 0;"},
+      {{TK_always, "always"},
+       " @(posedge c) ",
+       {TK_if, "if"},
+       "(FOO) a <= 1;",
+       {TK_else, "else"},
+       " a <= 0;"},
+      {{TK_always_comb, "always_comb"},
+       " ",
+       {TK_if, "if"},
+       "(FOO) a = 1;",
+       {TK_else, "else"},
+       " a = 0;"},
+      {{TK_always_ff, "always_ff"},
+       " @(posedge c) ",
+       {TK_if, "if"},
+       "(FOO) a <= 1;",
+       {TK_else, "else"},
+       " a <= 0;"},
   };
 
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);

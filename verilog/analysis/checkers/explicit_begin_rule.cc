@@ -138,24 +138,13 @@ bool ExplicitBeginRule::IsTokenEnabled(const TokenInfo &token) {
   }
 }
 
-void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
-  // Ignore all white space and comments and return immediately
-  switch (token.token_enum()) {
-    case TK_SPACE:
-    case TK_NEWLINE:
-    case TK_COMMENT_BLOCK:
-    case TK_EOL_COMMENT:
-      return;
-    default:
-      break;
-  }
-
+bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
   // Responds to a token by updating the state of the analysis.
   bool raise_violation = false;
   switch (state_) {
     case State::kNormal: {
       if (!IsTokenEnabled(token)) {
-        return;
+        break;
       }
 
       switch (token.token_enum()) {
@@ -198,7 +187,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
       break;
     }
     case State::kInAlways: {
-      // always is a little more complicated in that it can be imediattly
+      // always is a little more complicated in that it can be immediately
       // followed by a "begin" or followed by some special characters ("@" or
       // "*") and maybe a condition.
       switch (token.token_enum()) {
@@ -209,7 +198,7 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
           state_ = State::kNormal;
           break;
         case '(':
-          condition_expr_level_ = 1;
+          condition_expr_level_++;
           state_ = State::kInCondition;
           break;
         default:
@@ -283,9 +272,33 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
                                    " Expected begin, got ", token.text())));
 
     // Once the violation is raised, we go back to a normal, default, state
-    condition_expr_level_ = 0;
     state_ = State::kNormal;
-    raise_violation = false;
+  }
+
+  return raise_violation;
+}
+
+void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
+  // Ignore all white space and comments and return immediately
+  switch (token.token_enum()) {
+    case TK_SPACE:
+    case TK_NEWLINE:
+    case TK_COMMENT_BLOCK:
+    case TK_EOL_COMMENT:
+      return;
+    default:
+      break;
+  }
+
+  bool retry = HandleTokenStateMachine(token);
+
+  // If this token raises a violation, it was because the statemachine was
+  // expecting a begin token. This token may expect a begin token too, so
+  // check it.
+  // Consider: forever if(a) #10; else #20; // 3 violations could be raised
+  // [forever, if, else].
+  if (retry) {
+    HandleTokenStateMachine(token);
   }
 }
 
