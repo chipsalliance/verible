@@ -66,11 +66,11 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   bool always_comb_enable_ = true;
   bool always_latch_enable_ = true;
   bool always_ff_enable_ = true;
-  bool forever_enable_ = true;
-  bool initial_enable_ = true;
   bool for_enable_ = true;
+  bool forever_enable_ = true;
   bool foreach_enable_ = true;
   bool while_enable_ = true;
+  bool initial_enable_ = true;
 
   // Token that requires blocking statement.
   verible::TokenInfo start_token_ = verible::TokenInfo::EOFToken();

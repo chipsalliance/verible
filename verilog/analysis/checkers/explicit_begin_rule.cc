@@ -51,8 +51,8 @@ const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
       .topic = "explicit-begin",
       .desc =
           "Checks that a Verilog ``begin`` directive follows all "
-          "if, else, always, always_comb, always_latch, always_ff,"
-          " forever, initial, for, foreach and while statements.",
+          "if, else, always, always_comb, always_latch, always_ff, "
+          "for, forever, foreach, while and initial statements.",
       .param =
           {
               {"if_enable", "true",
@@ -69,28 +69,22 @@ const LintRuleDescriptor &ExplicitBeginRule::GetDescriptor() {
                "block"},
               {"always_ff_enable", "true",
                "All always_ff statements require an explicit begin-end block"},
-              {"forever_enable", "true",
-               "All forever statements require an explicit begin-end block"},
-              {"initial_enable", "true",
-               "All initial statements require an explicit begin-end block"},
               {"for_enable", "true",
                "All for statements require an explicit begin-end block"},
+              {"forever_enable", "true",
+               "All forever statements require an explicit begin-end block"},
               {"foreach_enable", "true",
                "All foreach statements require an explicit begin-end block"},
               {"while_enable", "true",
                "All while statements require an explicit begin-end block"},
+              {"initial_enable", "true",
+               "All initial statements require an explicit begin-end block"},
           },
   };
   return d;
 }
 
 absl::Status ExplicitBeginRule::Configure(absl::string_view configuration) {
-  static const std::vector<absl::string_view> supported_statements = {
-      "if",           "else",      "always",  "always_comb",
-      "always_latch", "always_ff", "forever", "initial",
-      "for",          "foreach",   "while"};  // same sequence as enum
-                                              // StyleChoicesBits
-
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,
@@ -101,38 +95,38 @@ absl::Status ExplicitBeginRule::Configure(absl::string_view configuration) {
           {"always_comb_enable", SetBool(&always_comb_enable_)},
           {"always_latch_enable", SetBool(&always_latch_enable_)},
           {"always_ff_enable", SetBool(&always_ff_enable_)},
-          {"forever_enable", SetBool(&forever_enable_)},
-          {"initial_enable", SetBool(&initial_enable_)},
           {"for_enable", SetBool(&for_enable_)},
+          {"forever_enable", SetBool(&forever_enable_)},
           {"foreach_enable", SetBool(&foreach_enable_)},
           {"while_enable", SetBool(&while_enable_)},
+          {"initial_enable", SetBool(&initial_enable_)},
       });
 }
 
 bool ExplicitBeginRule::IsTokenEnabled(const TokenInfo &token) {
   switch (token.token_enum()) {
+    case TK_if:
+      return if_enable_;
+    case TK_else:
+      return else_enable_;
+    case TK_always:
+      return always_enable_;
     case TK_always_comb:
       return always_comb_enable_;
     case TK_always_latch:
       return always_latch_enable_;
-    case TK_forever:
-      return forever_enable_;
-    case TK_initial:
-      return initial_enable_;
     case TK_always_ff:
       return always_ff_enable_;
-    case TK_foreach:
-      return foreach_enable_;
     case TK_for:
       return for_enable_;
-    case TK_if:
-      return if_enable_;
+    case TK_forever:
+      return forever_enable_;
+    case TK_foreach:
+      return foreach_enable_;
     case TK_while:
       return while_enable_;
-    case TK_always:
-      return always_enable_;
-    case TK_else:
-      return else_enable_;
+    case TK_initial:
+      return initial_enable_;
     default:
       return false;
   }
@@ -159,10 +153,10 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
         // After token expect a "condition" followed by "begin". NOTE: there may
         // be tokens prior to the condition (like in an "always_ff" statement)
         // and these are all ignored.
-        case TK_always_ff:
-        case TK_foreach:
-        case TK_for:
         case TK_if:
+        case TK_always_ff:
+        case TK_for:
+        case TK_foreach:
         case TK_while:
           condition_expr_level_ = 0;
           start_token_ = token;
