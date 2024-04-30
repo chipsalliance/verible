@@ -61,6 +61,7 @@ _linter_test_configs = [
     ("disable-statement", "disable_statement", False),
     ("endif-comment", "endif_comment", False),
     ("enum-name-style", "enum_name_style", True),
+    ("explicit-begin", "explicit_begin", False),
     ("explicit-function-lifetime", "explicit_function_lifetime", True),
     ("explicit-function-task-parameter-type", "explicit_function_parameter_type", True),
     ("explicit-function-task-parameter-type", "explicit_task_parameter_type", True),
