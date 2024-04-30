@@ -123,7 +123,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
   // Sets up the testing environment - creates Language Server object and
   // sends textDocument/initialize request.
   // It stores the response in initialize_response field for further processing
-  void SetUp() override {
+  void SetUp() override {  // not yet final
     server_ = std::make_unique<VerilogLanguageServer>(
         [this](absl::string_view response) { response_stream_ << response; });
 
@@ -148,7 +148,7 @@ class VerilogLanguageServerTest : public ::testing::Test {
 
 class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
  public:
-  absl::Status InitializeCommunication() override {
+  absl::Status InitializeCommunication() final {
     json initialize_request = {
         {"jsonrpc", "2.0"},
         {"id", 1},
@@ -158,7 +158,7 @@ class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
   }
 
  protected:
-  void SetUp() override {
+  void SetUp() final {
     absl::SetFlag(&FLAGS_rules_config_search, true);
     root_dir = verible::file::JoinPath(
         ::testing::TempDir(),
@@ -168,7 +168,7 @@ class VerilogLanguageServerSymbolTableTest : public VerilogLanguageServerTest {
     VerilogLanguageServerTest::SetUp();
   }
 
-  void TearDown() override { std::filesystem::remove(root_dir); }
+  void TearDown() final { std::filesystem::remove(root_dir); }
 
   // path to the project
   std::string root_dir;

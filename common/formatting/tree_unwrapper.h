@@ -52,7 +52,7 @@ class TreeUnwrapper : public TreeContextVisitor {
   TreeUnwrapper& operator=(const TreeUnwrapper&) = delete;
   TreeUnwrapper& operator=(TreeUnwrapper&&) = delete;
 
-  ~TreeUnwrapper() override = default;
+  ~TreeUnwrapper() override = default;  // not yet final.
 
   // Partitions the token stream (in text_structure_view_) into
   // unwrapped_lines_ by traversing the syntax tree representation.

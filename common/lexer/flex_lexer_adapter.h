@@ -77,7 +77,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   const TokenInfo &GetLastToken() const final { return last_token_; }
 
   // Returns next token and updates its location.
-  const TokenInfo &DoNextToken() override {
+  const TokenInfo &DoNextToken() override {  // not yet final
     if (at_eof_) {
       // Do not call yylex(), because that will result in the fatal error:
       // "fatal flex scanner internal error--end of buffer missed"
@@ -108,7 +108,7 @@ class FlexLexerAdapter : private CodeStreamHolder, protected L, public Lexer {
   }
 
   // Restart lexer by pointing to new input stream, and reset all state.
-  void Restart(absl::string_view code) override {
+  void Restart(absl::string_view code) override {  // not yet final
     at_eof_ = false;
     code_ = code;
     code_stream_.str(std::string(code_));

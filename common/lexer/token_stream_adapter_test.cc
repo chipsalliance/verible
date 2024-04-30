@@ -38,7 +38,9 @@ class FakeTokenSequenceLexer : public Lexer, public FakeLexer {
 
   void Restart(absl::string_view) final {}
 
-  bool TokenIsError(const TokenInfo &) const override { return false; }
+  bool TokenIsError(const TokenInfo &) const override {  // not yet final.
+    return false;
+  }
 };
 
 TEST(MakeTokenGeneratorTest, Generate) {

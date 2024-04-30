@@ -1743,6 +1743,7 @@ cc_library(
         "//common/analysis:syntax-tree-lint-rule",
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound-symbol-manager",
+        "//common/text:config-utils",
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
         "//verilog/CST:context-functions",

@@ -38,7 +38,7 @@ namespace verible {
 // top of the stack/back of vector.
 class SyntaxTreeLintRule : public LintRule {
  public:
-  ~SyntaxTreeLintRule() override = default;
+  ~SyntaxTreeLintRule() override = default;  // not yet final
 
   virtual void HandleLeaf(const SyntaxTreeLeaf &leaf,
                           const SyntaxTreeContext &context) {}

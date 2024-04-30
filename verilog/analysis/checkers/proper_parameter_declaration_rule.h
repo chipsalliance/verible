@@ -40,8 +40,13 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
+  absl::Status Configure(const absl::string_view configuration);
+
  private:
   std::set<verible::LintViolation> violations_;
+
+  bool package_allow_parameter_ = false;
+  bool package_allow_localparam_ = true;
 };
 
 }  // namespace analysis

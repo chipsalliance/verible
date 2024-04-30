@@ -51,7 +51,7 @@ class ViolationPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
-      absl::string_view base, absl::string_view path) override;
+      absl::string_view base, absl::string_view path) final;
 
  protected:
   std::ostream* const stream_;
@@ -68,7 +68,7 @@ class ViolationWaiverPrinter : public ViolationHandler {
 
   void HandleViolations(
       const std::set<verible::LintViolationWithStatus>& violations,
-      absl::string_view base, absl::string_view path) override;
+      absl::string_view base, absl::string_view path) final;
 
  protected:
   std::ostream* const message_stream_;

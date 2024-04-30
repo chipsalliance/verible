@@ -73,8 +73,6 @@ class TokenInfo {
     Context(absl::string_view b,
             std::function<void(std::ostream&, int)> translator)
         : base(b), token_enum_translator(std::move(translator)) {}
-
-    Context(const Context&) = default;
   };
 
   int token_enum() const { return token_enum_; }
