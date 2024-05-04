@@ -560,6 +560,10 @@ status="$?"
   echo "Expected exit code 0 from 'patch' tool, but got $status"
   echo "--- 'patch' output ---"
   echo "$patch_out"
+  echo "Patch was"
+  echo "------------------"
+  cat "${PATCH_FILE}"
+  echo "------------------"
   exit 1
 }
 
@@ -618,6 +622,10 @@ status="$?"
   echo "Expected exit code 0 from 'patch' tool, but got $status"
   echo "--- 'patch' output ---"
   echo "$patch_out"
+  echo "Patch was"
+  echo "------------------"
+  cat "${PATCH_FILE}"
+  echo "------------------"
   exit 1
 }
 
@@ -716,6 +724,10 @@ interactive_autofix_test() {
     echo "Expected exit code 0 from 'patch' tool, but got $status"
     echo "--- 'patch' output ---"
     echo "$patch_out"
+    echo "Patch was"
+    echo "------------------"
+    cat "${PATCH_FILE}"
+    echo "------------------"
     exit 1
   }
 
@@ -956,7 +968,7 @@ echo "=== Test --autofix=generate-waiver --autofix_output_file: run linter on a 
 TEST_FILE="${TEST_TMPDIR}/generate-waiver.sv"
 cat >"${TEST_FILE}" <<EOF
 module m;
-wire x = y;      
+wire x = y;
 always @* x=y;
 always @* x=y;
 endmodule
@@ -964,24 +976,24 @@ endmodule
 
 module m;
 
-begin 
-    wire x=y; 
+begin
+    wire x=y;
 end
-begin 
-   wire s=y; 
+begin
+   wire s=y;
 end
 endmodule
 
 
 module m;
-wire x = y;      
+wire x = y;
 always @* x=y;
 always @* x=y;
 endmodule
 EOF
 
 
-"$lint_tool" "${TEST_FILE}" --autofix=generate-waiver --autofix_output_file "${MY_OUTPUT_FILE}"  &> /dev/null 
+"$lint_tool" "${TEST_FILE}" --autofix=generate-waiver --autofix_output_file "${MY_OUTPUT_FILE}"  &> /dev/null
 status="$?"
 [[ $status == 1 ]] || {
   echo "Expected exit code 1, but got $status"
