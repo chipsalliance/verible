@@ -409,6 +409,12 @@ jobs:
     - name: Build
       run: bazel build -c opt --noshow_progress --test_output=errors --cxxopt=-Wno-range-loop-analysis :install-binaries
 
+    - name: Test Pack Up
+      run: |
+        mkdir test-install
+        bazel run -c opt :install -- `pwd`/test-install
+        tar cvzf verible-testinstall-macOS.tar.gz test-install
+
     - name: Pack up
       run: |
         VERSION=$(git describe --match=v*)
