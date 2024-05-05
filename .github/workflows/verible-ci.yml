@@ -370,7 +370,9 @@ jobs:
         .github/bin/run-clang-tidy-cached.cc --checks="-*"
 
   MacOsBuild:
-    runs-on: macos-latest
+    # New MacOS has a broken patch utility:
+    # //verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
+    runs-on: macos-12
     steps:
 
     - name: Cancel previous
