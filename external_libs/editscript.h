@@ -29,10 +29,8 @@
 #define EDITSCRIPT_H_
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <iterator>
-#include <map>
 #include <tuple>
 #include <utility>
 #include <vector>

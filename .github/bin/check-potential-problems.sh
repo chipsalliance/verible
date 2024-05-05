@@ -26,7 +26,8 @@ EXIT_CODE=0
 #
 # So, until these assumptions are fixed, we need to use absl::string_view that
 # comes with the same implementation everywhere.
-find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs grep -n "std::string_view"
 if [ $? -eq 0 ]; then
   echo "::error:: use absl::string_view instead of std::string_view"
   echo
