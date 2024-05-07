@@ -558,8 +558,12 @@ patch_out="$(patch "${TEST_FILE}" "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
-  echo "--- 'patch' output ---"
+  echo "--- 'patch' output [#1] ---"
   echo "$patch_out"
+  echo "Patch was"
+  echo "------------------"
+  cat "${PATCH_FILE}"
+  echo "------------------"
   exit 1
 }
 
@@ -616,8 +620,12 @@ patch_out="$(cd $TEST_TMPDIR; patch -p1 < "${PATCH_FILE}" 2>&1)"
 status="$?"
 (( $status )) && {
   echo "Expected exit code 0 from 'patch' tool, but got $status"
-  echo "--- 'patch' output ---"
+  echo "--- 'patch' output [#2] ---"
   echo "$patch_out"
+  echo "Patch was"
+  echo "------------------"
+  cat "${PATCH_FILE}"
+  echo "------------------"
   exit 1
 }
 
@@ -714,8 +722,12 @@ interactive_autofix_test() {
   status="$?"
   (( $status )) && {
     echo "Expected exit code 0 from 'patch' tool, but got $status"
-    echo "--- 'patch' output ---"
+    echo "--- 'patch' output (interactive_autofix_test) ---"
     echo "$patch_out"
+    echo "Patch was"
+    echo "------------------"
+    cat "${PATCH_FILE}"
+    echo "------------------"
     exit 1
   }
 
