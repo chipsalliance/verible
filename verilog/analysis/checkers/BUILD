@@ -430,6 +430,7 @@ cc_library(
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-search",
         "//common/analysis:text-structure-lint-rule",
+        "//common/text:concrete-syntax-leaf",
         "//common/text:config-utils",
         "//common/text:symbol",
         "//common/text:text-structure",
