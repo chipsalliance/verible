@@ -336,6 +336,66 @@ TEST(VerilogProjectTest, UpdateFileContents) {
   EXPECT_EQ(project.LookupFileOrigin(search_substring), from_file);
 }
 
+TEST(VerilogProjectTest, UpdateFileContentsEmptyFile) {
+  // Users can add empty files to the filelist and subsequently
+  // remove them.
+  const auto tempdir = ::testing::TempDir();
+  const std::string project_root_dir = JoinPath(tempdir, "srcs");
+  EXPECT_TRUE(CreateDir(project_root_dir).ok());
+
+  // root is directory with sources.
+  VerilogProject project(project_root_dir, {});
+
+  // Prepare file to be auto-loaded later
+  const ScopedTestFile tf(project_root_dir, "");
+  const absl::string_view reference_name = Basename(tf.filename());
+
+  // Push a local analyzed name under the name of the file.
+  constexpr absl::string_view external_content("localparam int p = 1;\n");
+  std::unique_ptr<VerilogAnalyzer> analyzed_structure =
+      std::make_unique<VerilogAnalyzer>(external_content, "internal");
+  project.UpdateFileContents(tf.filename(), analyzed_structure.get());
+
+  // Look up the file and see that content is the external content
+  VerilogSourceFile *from_file;
+  absl::string_view search_substring;
+  from_file = *project.OpenTranslationUnit(reference_name);
+  EXPECT_EQ(from_file->GetContent(), external_content);
+
+  // ... and we find our file given the substring.
+  search_substring = from_file->GetContent().substr(5);
+  EXPECT_EQ(project.LookupFileOrigin(search_substring), from_file);
+
+  // Prepare an empty file
+  constexpr absl::string_view empty_file_content("");
+  const ScopedTestFile empty_file(project_root_dir, empty_file_content);
+  const absl::string_view empty_file_reference =
+      Basename(empty_file.filename());
+
+  // Push the empty file into the project
+  std::unique_ptr<VerilogAnalyzer> analyzed_empty_structure =
+      std::make_unique<VerilogAnalyzer>(empty_file_content, "internal");
+  project.UpdateFileContents(empty_file.filename(),
+                             analyzed_empty_structure.get());
+
+  // Check the content from the two files are present
+  from_file = *project.OpenTranslationUnit(reference_name);
+  EXPECT_EQ(from_file->GetContent(), external_content);
+
+  from_file = *project.OpenTranslationUnit(empty_file_reference);
+  EXPECT_EQ(from_file->GetContent(), empty_file_content);
+
+  // Remove the empty file
+  project.UpdateFileContents(empty_file.filename(), nullptr);
+
+  // Make sure the remaining file is still present
+  from_file = *project.OpenTranslationUnit(reference_name);
+  EXPECT_EQ(from_file->GetContent(), external_content);
+
+  // Make sure the empty file was removed
+  EXPECT_EQ(project.LookupFileOrigin(empty_file.filename()), nullptr);
+}
+
 TEST(VerilogProjectTest, LookupFileOriginTest) {
   const auto tempdir = ::testing::TempDir();
   const std::string sources_dir = JoinPath(tempdir, "srcs");
