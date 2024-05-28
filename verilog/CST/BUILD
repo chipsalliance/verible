@@ -755,6 +755,7 @@ cc_test(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:text-structure",
+        "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings:string_view",

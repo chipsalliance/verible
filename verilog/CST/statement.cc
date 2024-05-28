@@ -43,6 +43,11 @@ std::vector<verible::TreeSearchMatch> FindAllGenerateBlocks(
   return SearchSyntaxTree(root, NodekGenerateBlock());
 }
 
+std::vector<verible::TreeSearchMatch> FindAllNonBlockingAssignments(
+    const verible::Symbol &root) {
+  return SearchSyntaxTree(root, NodekNonblockingAssignmentStatement());
+}
+
 static const SyntaxTreeNode *GetGenericStatementBody(
     const SyntaxTreeNode *node) {
   if (!node) return node;
@@ -501,6 +506,18 @@ const verible::Symbol *GetEventControlFromProceduralTimingControl(
   return verible::GetSubtreeAsNode(proc_timing_ctrl,
                                    NodeEnum::kProceduralTimingControlStatement,
                                    0, NodeEnum::kEventControl);
+}
+
+const verible::SyntaxTreeNode *GetNonBlockingAssignmentLhs(
+    const verible::SyntaxTreeNode &non_blocking_assignment) {
+  return verible::GetSubtreeAsNode(
+      non_blocking_assignment, NodeEnum::kNonblockingAssignmentStatement, 0);
+}
+
+const verible::SyntaxTreeNode *GetNonBlockingAssignmentRhs(
+    const verible::SyntaxTreeNode &non_blocking_assignment) {
+  return verible::GetSubtreeAsNode(
+      non_blocking_assignment, NodeEnum::kNonblockingAssignmentStatement, 3);
 }
 
 }  // namespace verilog
