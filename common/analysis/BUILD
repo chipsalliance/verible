@@ -199,7 +199,6 @@ cc_library(
         "//common/util:algorithm",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -266,7 +265,6 @@ cc_library(
         "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -322,7 +320,6 @@ cc_library(
         "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
