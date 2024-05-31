@@ -3516,8 +3516,18 @@ instantiation_type
 instantiation_base
   : instantiation_type non_anonymous_gate_instance_or_register_variable_list
     { $$ = MakeInstantiationBase($1, $2); }
-  | reference call_base ',' gate_instance_or_register_variable_list
-    {$$ = MakeInstantiationBase(ReinterpretReferenceAsDataTypePackedDimensions($1), ExtendNode($4,$3,$2)); }
+  /*
+   * TODO: support mixed anonymous declarations
+   * 
+   * This production rule was commented out because it caused
+   * verible-verilog-syntax to crash for some inputs. It may be necessary to
+   * re-enable it in the future to support declarations that mix anonymous and
+   * named instances.
+   * 
+   * For more details, see https://github.com/chipsalliance/verible/issues/2181
+   */
+  // | reference call_base ',' gate_instance_or_register_variable_list
+  //   {$$ = MakeInstantiationBase(ReinterpretReferenceAsDataTypePackedDimensions($1), ExtendNode($4,$3,$2)); }
   | reference_or_call_base
     {$$ = MakeTaggedNode(N::kFunctionCall,$1); }
   ;
