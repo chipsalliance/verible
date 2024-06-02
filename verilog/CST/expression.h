@@ -116,6 +116,16 @@ std::vector<verible::TreeSearchMatch> FindAllReferenceFullExpressions(
 const verible::TokenInfo *ReferenceIsSimpleIdentifier(
     const verible::Symbol &reference);
 
+// Return the operator for a kIncrementDecrementExpression
+// This function would extract the leaf containing '++' from expression '++a'
+const verible::SyntaxTreeLeaf *GetIncrementDecrementOperator(
+    const verible::Symbol &expr);
+
+// Return the operator for a kIncrementDecrementExpression
+// This function would extract the leaf containing 'a' from expression '++a'
+const verible::SyntaxTreeNode *GetIncrementDecrementOperand(
+    const verible::Symbol &expr);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_EXPRESSION_H_
