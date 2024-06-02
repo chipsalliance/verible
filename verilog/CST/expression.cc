@@ -183,4 +183,33 @@ const verible::TokenInfo *ReferenceIsSimpleIdentifier(
   return ReferenceBaseIsSimple(base_node);
 }
 
+const verible::SyntaxTreeLeaf *GetIncrementDecrementOperator(
+    const verible::Symbol &expr) {
+  if (expr.Kind() != SymbolKind::kNode) return nullptr;
+
+  const SyntaxTreeNode &node = verible::SymbolCastToNode(expr);
+
+  if (!node.MatchesTag(NodeEnum::kIncrementDecrementExpression)) return nullptr;
+
+  // Structure changes depending on the type of IncrementDecrement
+  bool is_post = node.front().get()->Kind() == SymbolKind::kNode;
+
+  return verible::GetSubtreeAsLeaf(
+      expr, NodeEnum::kIncrementDecrementExpression, is_post ? 1 : 0);
+}
+
+const verible::SyntaxTreeNode *GetIncrementDecrementOperand(
+    const verible::Symbol &expr) {
+  if (expr.Kind() != SymbolKind::kNode) return nullptr;
+
+  const SyntaxTreeNode &node = verible::SymbolCastToNode(expr);
+
+  if (!node.MatchesTag(NodeEnum::kIncrementDecrementExpression)) return nullptr;
+
+  // Structure changes depending on the type of IncrementDecrement
+  bool is_post = node.front().get()->Kind() == SymbolKind::kNode;
+  return verible::GetSubtreeAsNode(
+      expr, NodeEnum::kIncrementDecrementExpression, is_post ? 0 : 1);
+}
+
 }  // namespace verilog

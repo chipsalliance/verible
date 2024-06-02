@@ -299,6 +299,7 @@ cc_test(
     deps = [
         ":expression",
         ":match-test-utils",
+        ":verilog-matchers",  # fixdeps: keep
         ":verilog-nonterminals",
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",

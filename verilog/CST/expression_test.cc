@@ -28,6 +28,7 @@
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
@@ -692,6 +693,94 @@ TEST(ReferenceIsSimpleTest, NotSimple) {
       EXPECT_FALSE(ReferenceIsSimpleIdentifier(*ref.match))
           << "reference: " << code;
     }
+  }
+}
+
+TEST(GetIncrementDecrementOperatorTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"module m;\nalways_comb begin\n"
+       "a",
+       {kTag, "++"},
+       ";\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n",
+       {kTag, "++"},
+       "a;"
+       "\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n"
+       "somelargename",
+       {kTag, "++"},
+       ";\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n",
+       {kTag, "++"},
+       "somelargename;\n"
+       "end\nendmodule"},
+      {"module m;\nalways_comb begin\nk = a + 2;\nend\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto exprs = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekIncrementDecrementExpression());
+
+          std::vector<TreeSearchMatch> operators;
+          for (const auto &expr : exprs) {
+            const auto *operator_ = GetIncrementDecrementOperator(*expr.match);
+            operators.push_back(
+                TreeSearchMatch{operator_, {/* ignored context */}});
+          }
+          return operators;
+        });
+  }
+}
+
+TEST(GetIncrementDecrementOperandTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n",
+       {kTag, "a"},
+       "++;\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "++",
+       {kTag, "a"},
+       ";\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n",
+       {kTag, "somelargename"},
+       "++;\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n++",
+       {kTag, "somelargename"},
+       ";\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "k = a + 2;\n"
+       "end\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto exprs = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekIncrementDecrementExpression());
+
+          std::vector<TreeSearchMatch> operands;
+          for (const auto &expr : exprs) {
+            const auto *operand = GetIncrementDecrementOperand(*expr.match);
+            operands.push_back(
+                TreeSearchMatch{operand, {/* ignored context */}});
+          }
+          return operands;
+        });
   }
 }
 
