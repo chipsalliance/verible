@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -411,8 +411,32 @@ inline constexpr auto DeclarationDimensionsHasRanges =
 //   endcase
 //
 inline constexpr auto HasDefaultCase =
-    verible::matcher::MakePathMatcher(N(kDefaultItem));
+    verible::matcher::MakePathMatcher(N(kCaseItemList), N(kDefaultItem));
 
+// Matches with statements qualified with "unique"
+// For instance, matches:
+//
+//   unique case (in)
+//     default: return 0;
+//   endcase
+//
+//   unique if (a)
+//     ...
+//   else if (!a)
+//     ...
+//
+// but not:
+//
+//   case (in)
+//     default: return 0;
+//   endcase
+//
+//   if (a)
+//     ...
+//   else if (!a)
+//     ...
+inline constexpr auto HasUniqueQualifier =
+    verible::matcher::MakePathMatcher(L(TK_unique));
 // Clean up macros
 #undef N
 #undef L

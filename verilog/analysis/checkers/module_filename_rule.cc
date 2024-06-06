@@ -27,6 +27,7 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_search.h"
+#include "common/text/concrete_syntax_leaf.h"
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
@@ -121,11 +122,27 @@ void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
   }
 
   // Only report a violation on the last module declaration.
-  const auto *last_module_id = GetModuleName(*module_cleaned.back().match);
+  const verible::Symbol &last_module = *module_cleaned.back().match;
+  const auto *last_module_id = GetModuleName(last_module);
   if (!last_module_id) LOG(ERROR) << "Couldn't extract module name";
   if (last_module_id) {
-    violations_.insert(verible::LintViolation(
-        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\"")));
+    const std::string autofix_msg =
+        absl::StrCat("Rename module to '", unitname, "' to match filename");
+
+    auto autofix =
+        verible::AutoFix(autofix_msg, {last_module_id->get(), unitname});
+
+    const verible::SyntaxTreeLeaf *module_end_label =
+        GetModuleEndLabel(last_module);
+    if (module_end_label) {
+      autofix.AddEdits({{module_end_label->get(), unitname}});
+    }
+
+    verible::LintViolation violation = verible::LintViolation(
+        last_module_id->get(), absl::StrCat(kMessage, "\"", unitname, "\""),
+        {autofix});
+
+    violations_.insert(violation);
   }
 }
 

@@ -29,6 +29,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
@@ -178,6 +179,74 @@ TEST(ModuleFilenameRuleTest, NoModuleMatchesFilenameRelPath) {
   };
   const std::string filename = "path/to/r.sv";
   RunLintTestCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases, filename);
+}
+
+TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRule) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module a;\n\nendmodule", "module r;\n\nendmodule"},
+      {"module some_name1;\n\nendmodule", "module r;\n\nendmodule"},
+      {"module some_name2();\n\nendmodule", "module r();\n\nendmodule"},
+      {"module some_name3#()();\n\nendmodule", "module r#()();\n\nendmodule"},
+      {"module a;\n\nendmodule : a", "module r;\n\nendmodule : r"},
+      {"module some_name1;\n\nendmodule: some_name1",
+       "module r;\n\nendmodule: r"},
+      {"module some_name2();\n\nendmodule :some_name2",
+       "module r();\n\nendmodule :r"},
+      {"module some_name3#()();\n\nendmodule:some_name3",
+       "module r#()();\n\nendmodule:r"},
+
+  };
+  const std::string filename = "path/to/r.sv";
+  RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(kTestCases, "",
+                                                        filename);
+}
+
+TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRuleWithDashes) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module a;\n\nendmodule", "module file_with_dashes;\n\nendmodule"},
+      {"module some_name1;\n\nendmodule",
+       "module file_with_dashes;\n\nendmodule"},
+      {"module some_name2();\n\nendmodule",
+       "module file_with_dashes();\n\nendmodule"},
+      {"module some_name3#()();\n\nendmodule",
+       "module file_with_dashes#()();\n\nendmodule"},
+      {"module a;\n\nendmodule : a",
+       "module file_with_dashes;\n\nendmodule : file_with_dashes"},
+      {"module some_name1;\n\nendmodule :some_name1",
+       "module file_with_dashes;\n\nendmodule :file_with_dashes"},
+      {"module some_name2();\n\nendmodule: some_name2",
+       "module file_with_dashes();\n\nendmodule: file_with_dashes"},
+      {"module some_name3#()();\n\nendmodule:some_name3",
+       "module file_with_dashes#()();\n\nendmodule:file_with_dashes"},
+  };
+  const std::string filename = "path/to/file-with-dashes.sv";
+  RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(
+      kTestCases, "allow-dash-for-underscore:on", filename);
+}
+
+TEST(ModuleFilenameRuleTest, AutoFixModuleFilenameRuleWithUnderscore) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module a;\n\nendmodule", "module file_no_dashes;\n\nendmodule"},
+      {"module some_name1;\n\nendmodule",
+       "module file_no_dashes;\n\nendmodule"},
+      {"module some_name2();\n\nendmodule",
+       "module file_no_dashes();\n\nendmodule"},
+      {"module some_name3#()();\n\nendmodule",
+       "module file_no_dashes#()();\n\nendmodule"},
+      {"module a;\n\nendmodule : a",
+       "module file_no_dashes;\n\nendmodule : file_no_dashes"},
+      {"module some_name1;\n\nendmodule :some_name1",
+       "module file_no_dashes;\n\nendmodule :file_no_dashes"},
+      {"module some_name2();\n\nendmodule: some_name2",
+       "module file_no_dashes();\n\nendmodule: file_no_dashes"},
+      {"module some_name3#()();\n\nendmodule:some_name3",
+       "module file_no_dashes#()();\n\nendmodule:file_no_dashes"},
+  };
+  const std::string filename = "path/to/file_no_dashes.sv";
+  RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(
+      kTestCases, "allow-dash-for-underscore:off", filename);
+  RunApplyFixCases<VerilogAnalyzer, ModuleFilenameRule>(
+      kTestCases, "allow-dash-for-underscore:on", filename);
 }
 
 }  // namespace

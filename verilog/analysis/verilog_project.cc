@@ -133,8 +133,9 @@ void VerilogProject::ContentToFileIndex::Unregister(
   CHECK(file);
   const absl::string_view content = file->GetContent();
   auto full_content_found = string_view_map_.find(content);
-  CHECK(full_content_found != string_view_map_.end());
-  string_view_map_.erase(full_content_found);
+  if (full_content_found != string_view_map_.end()) {
+    string_view_map_.erase(full_content_found);
+  }
   buffer_to_analyzer_map_.erase(content.begin());
 }
 
