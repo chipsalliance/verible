@@ -86,7 +86,7 @@ const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
 absl::Status ProperParameterDeclarationRule::Configure(
     absl::string_view configuration) {
   using verible::config::SetBool;
-  return verible::ParseNameValues(
+  auto status = verible::ParseNameValues(
       configuration,
       {
           {"package_allow_parameter", SetBool(&package_allow_parameter_)},
@@ -99,6 +99,7 @@ absl::Status ProperParameterDeclarationRule::Configure(
   kLocalParamMessage = package_allow_localparam_
                            ? kLocalParamAllowPackageMessage
                            : kLocalParamNotInPackageMessage;
+  return status;
 }
 
 static const Matcher &ParamDeclMatcher() {
