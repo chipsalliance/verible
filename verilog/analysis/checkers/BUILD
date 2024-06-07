@@ -1754,6 +1754,7 @@ cc_library(
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
