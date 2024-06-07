@@ -16,6 +16,7 @@
 
 #include <set>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
@@ -83,7 +84,7 @@ const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
 }
 
 absl::Status ProperParameterDeclarationRule::Configure(
-    const absl::string_view configuration) {
+    absl::string_view configuration) {
   using verible::config::SetBool;
   return verible::ParseNameValues(
       configuration,

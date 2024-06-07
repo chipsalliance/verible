@@ -153,7 +153,6 @@ TEST(ProperParameterDeclarationRuleTest, CombinationParametersTest) {
 }
 
 TEST(ProperParameterDeclarationRuleTest, AllowPackageParameters) {
-  constexpr int kToken = SymbolIdentifier;
   const std::initializer_list<LintTestCase> kAllowPackageParametersTestCases = {
       {"parameter int Foo = 1;"},
       {"package foo; ", "parameter int Bar = 1; endpackage"},

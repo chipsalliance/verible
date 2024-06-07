@@ -17,6 +17,8 @@
 
 #include <set>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
@@ -40,7 +42,7 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
 
   verible::LintRuleStatus Report() const final;
 
-  absl::Status Configure(const absl::string_view configuration);
+  absl::Status Configure(absl::string_view configuration) final;
 
  private:
   std::set<verible::LintViolation> violations_;
