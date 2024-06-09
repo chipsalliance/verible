@@ -28,12 +28,12 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
+      uses: styfle/cancel-workflow-action@0.12.1
       with:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -65,12 +65,12 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
+      uses: styfle/cancel-workflow-action@0.12.1
       with:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -96,7 +96,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Retrieve cached results
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           /root/.cache/clang-tidy
@@ -213,12 +213,12 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
+      uses: styfle/cancel-workflow-action@0.12.1
       with:
         access_token: ${{ github.token }}
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -230,7 +230,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       if: matrix.mode != 'clean' && matrix.mode != 'coverage'
       with:
         path: "/root/.cache/bazel"
@@ -319,7 +319,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -344,7 +344,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -371,7 +371,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
+      uses: styfle/cancel-workflow-action@0.12.1
       with:
         access_token: ${{ github.token }}
 
@@ -382,7 +382,7 @@ jobs:
         echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -393,7 +393,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           /private/var/tmp/_bazel_runner
@@ -417,7 +417,7 @@ jobs:
     steps:
 
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
+      uses: styfle/cancel-workflow-action@0.12.1
       with:
         access_token: ${{ github.token }}
 
@@ -426,7 +426,7 @@ jobs:
         echo "USE_BAZEL_VERSION=6.5.0" >> $GITHUB_ENV
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -437,7 +437,7 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           /private/var/tmp/_bazel_runner
@@ -457,7 +457,7 @@ jobs:
         tar cvzf verible-${VERSION}-macOS.tar.gz verible-${VERSION}-macOS
 
     - name: 📤 Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: verible-*.tar.gz
 
@@ -466,7 +466,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -479,7 +479,7 @@ jobs:
     runs-on: windows-2022
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -490,11 +490,11 @@ jobs:
         format: 'YYYY-MM-DD-HH-mm-ss'
 
     - name: Mount bazel cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows2_
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows_
 
     - name: Install dependencies
       run: |
@@ -543,7 +543,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
        # Download complete repository + tags
        fetch-depth: 0
@@ -593,9 +593,9 @@ jobs:
     needs: [Check]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: verible-bin
 
