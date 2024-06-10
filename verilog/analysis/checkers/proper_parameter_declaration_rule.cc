@@ -16,10 +16,12 @@
 
 #include <set>
 
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/CST/context_functions.h"
@@ -40,12 +42,21 @@ using verible::matcher::Matcher;
 // Register ProperParameterDeclarationRule
 VERILOG_REGISTER_LINT_RULE(ProperParameterDeclarationRule);
 
-static constexpr absl::string_view kParameterMessage =
-    "\'parameter\' declarations should only be within packages or in the "
-    "formal parameter list of modules/classes.";
-static constexpr absl::string_view kLocalParamMessage =
-    "\'localparam\' declarations should only be within modules\' or classes\' "
+static constexpr absl::string_view kParameterNotInPackageMessage =
+    "\'parameter\' declarations should only be in the formal parameter list of "
+    "modules/classes.";
+static constexpr absl::string_view kParameterAllowPackageMessage =
+    "\'parameter\' declarations should only be in the formal parameter list of "
+    "modules and classes or in package definition bodies.";
+static constexpr absl::string_view kLocalParamNotInPackageMessage =
+    "\'localparam\' declarations should only be within modules or class "
     "definition bodies.";
+static constexpr absl::string_view kLocalParamAllowPackageMessage =
+    "\'localparam\' declarations should only be within modules, packages or "
+    "class definition bodies.";
+
+static absl::string_view kParameterMessage = kParameterNotInPackageMessage;
+static absl::string_view kLocalParamMessage = kLocalParamAllowPackageMessage;
 
 const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -53,10 +64,42 @@ const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
       .topic = "constants",
       .desc =
           "Checks that every `parameter` declaration is inside a "
-          "package or in the formal parameter list of modules/classes and "
-          "every `localparam` declaration is inside a module or class.",
-  };
+          "formal parameter list of modules/classes and "
+          "every `localparam` declaration is inside a module, class or "
+          "package.",
+      .param = {
+          {
+              .name = "package_allow_parameter",
+              .default_value = "true",
+              .description = "Allow parameters in packages (treated as a "
+                             "synonym for localparam).",
+          },
+          {
+              .name = "package_allow_localparam",
+              .default_value = "false",
+              .description = "Allow localparams in packages.",
+          },
+      }};
   return d;
+}
+
+absl::Status ProperParameterDeclarationRule::Configure(
+    absl::string_view configuration) {
+  using verible::config::SetBool;
+  auto status = verible::ParseNameValues(
+      configuration,
+      {
+          {"package_allow_parameter", SetBool(&package_allow_parameter_)},
+          {"package_allow_localparam", SetBool(&package_allow_localparam_)},
+      });
+
+  // Change the message slightly
+  kParameterMessage = package_allow_parameter_ ? kParameterAllowPackageMessage
+                                               : kParameterNotInPackageMessage;
+  kLocalParamMessage = package_allow_localparam_
+                           ? kLocalParamAllowPackageMessage
+                           : kLocalParamNotInPackageMessage;
+  return status;
 }
 
 static const Matcher &ParamDeclMatcher() {
@@ -79,11 +122,24 @@ void ProperParameterDeclarationRule::HandleSymbol(
       } else if (ContextIsInsideModule(context) &&
                  !ContextIsInsideFormalParameterList(context)) {
         violations_.insert(LintViolation(symbol, kParameterMessage, context));
+      } else if (ContextIsInsidePackage(context)) {
+        if (!package_allow_parameter_) {
+          violations_.insert(LintViolation(symbol, kParameterMessage, context));
+        }
       }
     } else if (param_decl_token == TK_localparam) {
-      // If the context is not inside a class or module, report violation.
+      // Raise violation if the context is not inside a class, package or
+      // module, report violation.
       if (!ContextIsInsideClass(context) && !ContextIsInsideModule(context)) {
-        violations_.insert(LintViolation(symbol, kLocalParamMessage, context));
+        if (!ContextIsInsidePackage(context)) {
+          violations_.insert(
+              LintViolation(symbol, kLocalParamMessage, context));
+        } else {
+          if (!package_allow_localparam_) {
+            violations_.insert(
+                LintViolation(symbol, kLocalParamMessage, context));
+          }
+        }
       }
     }
   }
