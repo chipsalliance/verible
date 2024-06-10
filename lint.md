@@ -247,7 +247,11 @@ Checks that the file ends with a newline. See [Style: posix-file-endings].
 Enabled by default: true
 
 ### proper-parameter-declaration
-Checks that every `parameter` declaration is inside a package or in the formal parameter list of modules/classes and every `localparam` declaration is inside a module or class. See [Style: constants].
+Checks that every `parameter` declaration is inside a formal parameter list of modules/classes and every `localparam` declaration is inside a module, class or package. See [Style: constants].
+
+##### Parameters
+  * `package_allow_parameter` Default: `true` Allow parameters in packages (treated as a synonym for localparam).
+  * `package_allow_localparam` Default: `false` Allow localparams in packages.
 
 Enabled by default: false
 
@@ -327,4 +331,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-06-09 15:43:36 -0700 from [f273154](https://github.com/google/verible/commit/f27315442892d00a0b6323ae7c877ed60f3e3e36)
+Generated on 2024-06-10 15:17:12 -0700 from [48a03f3](https://github.com/google/verible/commit/48a03f3cc2870081f767d11be64a390c03defd90)
