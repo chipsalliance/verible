@@ -42,8 +42,8 @@ TEST(ProperParameterDeclarationRuleTest, BasicTests) {
   RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
 }
 
-// Tests that the expected number of parameter usage violations are found.
-TEST(ProperParameterDeclarationRuleTest, ParameterTests) {
+// Tests rejection of package parameters and allow package localparams
+TEST(ProperParameterDeclarationRuleTest, RejectPackageParameters) {
   const std::initializer_list<LintTestCase> kTestCases = {
       {"parameter int Foo = 1;"},
       {"package foo; ",
@@ -88,7 +88,10 @@ TEST(ProperParameterDeclarationRuleTest, ParameterTests) {
        "endmodule "
        "endmodule"},
   };
-  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
+
+  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
+      kTestCases,
+      "package_allow_parameter:false;package_allow_localparam:true");
 }
 
 // Tests that the expected number of localparam usage violations are found.
@@ -101,14 +104,17 @@ TEST(ProperParameterDeclarationRuleTest, LocalParamTests) {
       {"module foo #(localparam int Bar = 1); endmodule"},
       {"module foo #(localparam type Bar); endmodule"},
       {"class foo #(localparam int Bar = 1); endclass"},
-      {{TK_localparam, "localparam"}, " int Bar = 1;"},
+      {{TK_localparam, "localparam"},
+       " int Bar = 1;"},  // localparam defined outside a module or package
       {"package foo; localparam int Bar = 1; endpackage"},
       {"package foo; class bar; endclass localparam int HelloWorld = 1; "
        "endpackage"},
       {"package foo; class bar; localparam int HelloWorld = 1; endclass "
        "endpackage"},
   };
-  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
+  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
+      kTestCases,
+      "package_allow_parameter:false;package_allow_localparam:true");
 }
 
 // Tests that the expected number of localparam and parameter usage violations
@@ -149,13 +155,19 @@ TEST(ProperParameterDeclarationRuleTest, CombinationParametersTest) {
       {"parameter int Foo = 1; module bar; localparam int Bar2 = 2; "
        "endmodule"},
   };
-  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
+  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
+      kTestCases,
+      "package_allow_parameter:false;package_allow_localparam:true");
 }
 
+// package parameters allowed, package localparam's are rejected
 TEST(ProperParameterDeclarationRuleTest, AllowPackageParameters) {
-  const std::initializer_list<LintTestCase> kAllowPackageParametersTestCases = {
+  const std::initializer_list<LintTestCase> kTestCases = {
       {"parameter int Foo = 1;"},
-      {"package foo; ", "parameter int Bar = 1; endpackage"},
+      {"package foo; parameter int Bar = 1; endpackage"},
+      {"package foo; ",
+       {TK_localparam, "localparam"},
+       " int Bar = 1; endpackage"},
       {"package foo; parameter int Bar = 1; "
        "parameter int Bar2 = 2; "
        "endpackage"},
@@ -209,9 +221,7 @@ TEST(ProperParameterDeclarationRuleTest, AllowPackageParameters) {
        "endpackage"},
   };
 
-  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
-      kAllowPackageParametersTestCases,
-      "package_allow_parameter:true;package_allow_localparam:false");
+  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
 }
 
 }  // namespace

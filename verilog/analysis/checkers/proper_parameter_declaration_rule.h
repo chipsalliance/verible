@@ -47,8 +47,8 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
  private:
   std::set<verible::LintViolation> violations_;
 
-  bool package_allow_parameter_ = false;
-  bool package_allow_localparam_ = true;
+  bool package_allow_parameter_ = true;
+  bool package_allow_localparam_ = false;
 };
 
 }  // namespace analysis
