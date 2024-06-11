@@ -5188,13 +5188,26 @@ preprocessor_list_of_ports_or_port_declarations_opt
     { $$ = std::move($1); }
   | list_of_ports_or_port_declarations_trailing_comma
     { $$ = std::move($1); }
+  | list_of_ports_or_port_declarations_trailing_comma_ansi
+    { $$ = std::move($1); }
   ;
 list_of_ports_or_port_declarations_opt
   : list_of_ports_or_port_declarations
     { $$ = std::move($1); }
+  | list_of_ports_or_port_declarations_ansi
+    { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kPortDeclarationList); }
   ;
+
+list_of_ports_or_port_declarations_ansi
+  : list_of_ports_or_port_declarations_preprocessor_last_ansi
+    { $$ = std::move($1); }
+  | list_of_ports_or_port_declarations_item_last_ansi
+    { $$ = std::move($1); }
+   
+  ;
+
 list_of_ports_or_port_declarations
   /* This serves as list_of_ports or list_of_port_declarations.
    * The LRM grammar does not permit mixing the two styles of lists (ANSI and
@@ -5206,6 +5219,18 @@ list_of_ports_or_port_declarations
   | list_of_ports_or_port_declarations_item_last
     { $$ = std::move($1); }
   ;
+
+list_of_ports_or_port_declarations_preprocessor_last_ansi
+  : list_of_ports_or_port_declarations_ansi
+    preprocessor_balanced_port_declarations
+    { $$ = ExtendNode($1, $2); }
+  | list_of_ports_or_port_declarations_trailing_comma_ansi
+    preprocessor_balanced_port_declarations
+    { $$ = ExtendNode($1, $2); }
+  | preprocessor_balanced_port_declarations
+    { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
+  ;
+
 list_of_ports_or_port_declarations_preprocessor_last
   : list_of_ports_or_port_declarations
     preprocessor_balanced_port_declarations
@@ -5216,6 +5241,18 @@ list_of_ports_or_port_declarations_preprocessor_last
   | preprocessor_balanced_port_declarations
     { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
   ;
+
+
+list_of_ports_or_port_declarations_item_last_ansi
+  : list_of_ports_or_port_declarations_preprocessor_last_ansi port_declaration_ansi
+    { $$ = ExtendNode($1, $2); }
+  | list_of_ports_or_port_declarations_trailing_comma_ansi port_declaration_ansi
+    { $$ = ExtendNode($1, $2); }
+  | port_declaration_ansi
+    { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
+  ;
+
+
 list_of_ports_or_port_declarations_item_last
   : list_of_ports_or_port_declarations_preprocessor_last port_or_port_declaration
     { $$ = ExtendNode($1, $2); }
@@ -5224,10 +5261,18 @@ list_of_ports_or_port_declarations_item_last
   | port_or_port_declaration
     { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
   ;
+
+list_of_ports_or_port_declarations_trailing_comma_ansi
+  : list_of_ports_or_port_declarations_ansi ','
+    { $$ = ExtendNode($1, $2); }
+  ;
+
 list_of_ports_or_port_declarations_trailing_comma
   : list_of_ports_or_port_declarations ','
     { $$ = ExtendNode($1, $2); }
   ;
+
+
 port_or_port_declaration
   : port
     { $$ = std::move($1); }
@@ -5304,6 +5349,13 @@ port_declaration
   : /* attribute_list_opt */ port_declaration_noattr
   { $$ = std::move($1); }
   ;
+port_declaration_ansi
+: port_direction var_or_net_type_opt
+    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
+    trailing_assign_opt
+    { $$ = MakeTaggedNode(N::kPortDeclaration, $1, $2, ForwardChildren($3), $4); }
+  ;
+
 port_declaration_noattr
   /* should consist of:
    *   inout_declaration
@@ -5321,13 +5373,10 @@ port_declaration_noattr
   // dir, var_or_net_type_opt, data_type (includes packed dimensions), id,
   // unpacked dimensions, trailing_assign_opt
   //
-  : port_direction var_or_net_type_opt
-    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
-    trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, $1, $2, ForwardChildren($3), $4); }
+  : 
     // TODO(fangism): inout's cannot have variable port types,
     // so this needs to be enforced in CST validation.
-  | net_type data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
+   net_type data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
     trailing_assign_opt
     { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, $1,
                           ForwardChildren($2), $3); }
