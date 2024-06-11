@@ -70,13 +70,13 @@ const LintRuleDescriptor &ProperParameterDeclarationRule::GetDescriptor() {
       .param = {
           {
               .name = "package_allow_parameter",
-              .default_value = "true",
+              .default_value = "false",
               .description = "Allow parameters in packages (treated as a "
                              "synonym for localparam).",
           },
           {
               .name = "package_allow_localparam",
-              .default_value = "false",
+              .default_value = "true",
               .description = "Allow localparams in packages.",
           },
       }};
