@@ -138,7 +138,6 @@ static SymbolPtr MakeUnpackedDimensionsNode(SymbolPtr& arg) {
 
 %debug
 %verbose
-%expect 0
 %define api.pure
 %param { ::verible::ParserParam* param }
 /* TODO(fangism): this prefix name should point to an adaptation of yylex */
@@ -6379,64 +6378,71 @@ port
     { $$ = MakeTaggedNode(N::kPort, $1, $2, MakeParenGroup($3, $4, $5)); }
   ;
 any_port_list_opt
-  : any_port_list
+  : any_port_list_named
+    { $$ = std::move($1); }
+  | any_port_list_positional
     { $$ = std::move($1); }
   | /* empty */
     { $$ = nullptr; }
   ;
-any_port_list
-  : any_port_list_item_last
+
+any_port_list_named
+  : any_port_list_item_last_named
     { $$ = std::move($1); }
-  | any_port_list_preprocessor_last
+  | any_port_list_preprocessor_last_named
     { $$ = std::move($1); }
-  | any_port_list_trailing_comma
-    { $$ = std::move($1); }
-/* TODO(b/36237582): accept a macro item here
-  | any_port_list_trailing_macro_item
+  | any_port_list_trailing_comma_named
     { $$ = std::move($1); }
   ;
-*/
-any_port_list_trailing_comma
-  : any_port_list ','
+
+any_port_list_trailing_comma_named
+  : any_port_list_named ','
     { $$ = ExtendNode($1, $2); }
   | ','
     { $$ = MakeTaggedNode(N::kPortActualList, $1); }
   ;
-/* TODO(b/36237582): accept a macro item here
-   The difficulty around this lies with the reduction path from
-   MacroGenericItem -> expr_primary_no_groups -> expression.
-   Allowing MacroGenericItem here will hit R/R conflicts.
-   Ideally, what we want to express is that commas are optional following
-   MacroGenericItems.  If we made commas optional entirely, it would be
-   too permissive w.r.t. actual LRM grammar, and would push the responsibility
-   to CST validation.
-any_port_list_trailing_macro_item
-  : any_port_list MacroGenericItem
-    { $$ = ExtendNode($1, $2); }
-  | MacroGenericItem
-    { $$ = MakeTaggedNode(N::kPortActualList, $1); }
+any_port_list_item_last_named
+  : any_port_list_trailing_comma_named port_named
+    { $$ = ExtendNode($1, std::move($2)); }
+  | any_port_list_preprocessor_last_named port_named
+    { $$ = ExtendNode($1, std::move($2)); }
+  | port_named
+    { $$ = MakeTaggedNode(N::kPortActualList, std::move($1)); }
   ;
-*/
-any_port_list_item_last
-  : any_port_list_trailing_comma any_port
-    { $$ = ExtendNode($1, $2); }
-  | any_port_list_preprocessor_last any_port
-    { $$ = ExtendNode($1, $2); }
-  | any_port
-    { $$ = MakeTaggedNode(N::kPortActualList, $1); }
-  ;
-any_port_list_preprocessor_last
-  : any_port_list preprocessor_directive
+any_port_list_preprocessor_last_named
+  : any_port_list_named preprocessor_directive
     { $$ = ExtendNode($1, $2); }
   | preprocessor_directive
     { $$ = MakeTaggedNode(N::kPortActualList, $1); }
   ;
-any_port
-  : port_named
+
+any_port_list_positional
+  : any_port_list_item_last_positional
     { $$ = std::move($1); }
+  | any_port_list_preprocessor_last_positional
+    { $$ = std::move($1); }
+  | any_port_list_trailing_comma_positional
+    { $$ = std::move($1); }
+  ;
+any_port_list_trailing_comma_positional
+  : any_port_list_positional ','
+    { $$ = ExtendNode($1, $2); }
+  | ','
+    { $$ = MakeTaggedNode(N::kPortActualList, $1); }
+  ;
+any_port_list_item_last_positional
+  : any_port_list_trailing_comma_positional expression
+    { $$ = ExtendNode($1, MakeTaggedNode(N::kActualPositionalPort, std::move($2))); }
+  | any_port_list_preprocessor_last_positional expression
+    { $$ = ExtendNode($1, MakeTaggedNode(N::kActualPositionalPort, std::move($2))); }
   | expression
-    /* Note: expr_primary_no_groups already covers MacroGenericItem */
-    { $$ = MakeTaggedNode(N::kActualPositionalPort, std::move($1)); }
+    { $$ = MakeTaggedNode(N::kPortActualList, MakeTaggedNode(N::kActualPositionalPort, std::move($1))); }
+  ;
+any_port_list_preprocessor_last_positional
+  : any_port_list_positional preprocessor_directive
+    { $$ = ExtendNode($1, $2); }
+  | preprocessor_directive
+    { $$ = MakeTaggedNode(N::kPortActualList, $1); }
   ;
 port_named
   : '.' member_name '(' expression ')'
@@ -8639,7 +8645,9 @@ rs_prod
   ;
 
 production_item
-  : GenericIdentifier '(' any_port_list ')'
+  : GenericIdentifier '(' any_port_list_named ')'
+    { $$ = MakeTaggedNode(N::kProductionItem, $1, MakeParenGroup($2, $3, $4)); }
+  | GenericIdentifier '(' any_port_list_positional ')'
     { $$ = MakeTaggedNode(N::kProductionItem, $1, MakeParenGroup($2, $3, $4)); }
   | GenericIdentifier
     { $$ = MakeTaggedNode(N::kProductionItem, $1); }
@@ -8709,3 +8717,4 @@ const char* verilog_symbol_name(size_t symbol_enum) {
 }
 
 }  // namespace verilog
+
