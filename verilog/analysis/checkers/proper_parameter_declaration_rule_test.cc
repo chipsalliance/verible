@@ -89,9 +89,7 @@ TEST(ProperParameterDeclarationRuleTest, RejectPackageParameters) {
        "endmodule"},
   };
 
-  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
-      kTestCases,
-      "package_allow_parameter:false;package_allow_localparam:true");
+  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
 }
 
 // Tests that the expected number of localparam usage violations are found.
@@ -221,7 +219,9 @@ TEST(ProperParameterDeclarationRuleTest, AllowPackageParameters) {
        "endpackage"},
   };
 
-  RunLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(kTestCases);
+  RunConfiguredLintTestCases<VerilogAnalyzer, ProperParameterDeclarationRule>(
+      kTestCases,
+      "package_allow_parameter:true;package_allow_localparam:false");
 }
 
 }  // namespace
