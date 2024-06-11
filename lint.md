@@ -250,8 +250,8 @@ Enabled by default: true
 Checks that every `parameter` declaration is inside a formal parameter list of modules/classes and every `localparam` declaration is inside a module, class or package. See [Style: constants].
 
 ##### Parameters
-  * `package_allow_parameter` Default: `true` Allow parameters in packages (treated as a synonym for localparam).
-  * `package_allow_localparam` Default: `false` Allow localparams in packages.
+  * `package_allow_parameter` Default: `false` Allow parameters in packages (treated as a synonym for localparam).
+  * `package_allow_localparam` Default: `true` Allow localparams in packages.
 
 Enabled by default: false
 
@@ -331,4 +331,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-06-10 15:17:12 -0700 from [48a03f3](https://github.com/google/verible/commit/48a03f3cc2870081f767d11be64a390c03defd90)
+Generated on 2024-06-11 09:56:29 -0700 from [23cda0c](https://github.com/google/verible/commit/23cda0c4f378bf201a28c953d987a75c49a9a7ba)
