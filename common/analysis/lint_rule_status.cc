@@ -15,15 +15,18 @@
 #include "common/analysis/lint_rule_status.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <iterator>
 #include <ostream>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
 #include "common/text/concrete_syntax_leaf.h"
@@ -76,12 +79,14 @@ static TokenInfo SymbolToToken(const Symbol& root) {
 
 LintViolation::LintViolation(const Symbol& root, absl::string_view reason,
                              const SyntaxTreeContext& context,
-                             const std::vector<AutoFix>& autofixes)
+                             const std::vector<AutoFix>& autofixes,
+                             const std::vector<TokenInfo>& tokens)
     : root(&root),
       token(SymbolToToken(root)),
       reason(reason),
       context(context),
-      autofixes(autofixes) {}
+      autofixes(autofixes),
+      related_tokens(tokens) {}
 
 void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                                                const LintRuleStatus& status,
@@ -92,6 +97,35 @@ void LintStatusFormatter::FormatLintRuleStatus(std::ostream* stream,
                     status.lint_rule_name);
     (*stream) << std::endl;
   }
+}
+
+std::string LintStatusFormatter::FormatWithRelatedTokens(
+    const std::vector<verible::TokenInfo>& tokens, absl::string_view message,
+    absl::string_view path, absl::string_view base) const {
+  if (tokens.empty()) {
+    return std::string(message);
+  }
+  size_t beg_pos = 0;
+  size_t end_pos = message.find("@", beg_pos);
+  std::ostringstream s;
+  for (const auto& token : tokens) {
+    if (end_pos == absl::string_view::npos) {
+      s << message.substr(beg_pos);
+      break;
+    }
+    if (!(end_pos != 0 && message[end_pos - 1] == '\\')) {
+      s << message.substr(beg_pos, end_pos - beg_pos);
+      s << path << ":";
+      s << line_column_map_.GetLineColAtOffset(base, token.left(base));
+    } else {
+      s << message.substr(beg_pos, end_pos - beg_pos + 1);
+    }
+
+    beg_pos = end_pos + 1;
+    end_pos = message.find("@", beg_pos);
+  }
+
+  return absl::StrReplaceAll(s.str(), {{"\\@", "@"}});
 }
 
 void LintStatusFormatter::FormatLintRuleStatuses(
@@ -137,8 +171,10 @@ void LintStatusFormatter::FormatViolation(std::ostream* stream,
       line_column_map_.GetLineColAtOffset(base, violation.token.left(base)),
       line_column_map_.GetLineColAtOffset(base, violation.token.right(base))};
 
-  (*stream) << path << ':' << range << ' ' << violation.reason << ' ' << url
-            << " [" << rule_name << ']';
+  (*stream) << path << ':' << range << " "
+            << FormatWithRelatedTokens(violation.related_tokens,
+                                       violation.reason, path, base)
+            << ' ' << url << " [" << rule_name << ']';
 }
 
 // Formats and outputs violation to a file stream in a syntax accepted by
