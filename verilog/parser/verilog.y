@@ -5186,40 +5186,36 @@ identifier_opt
 preprocessor_list_of_ports_or_port_declarations_opt
   : list_of_ports_or_port_declarations_opt
     { $$ = std::move($1); }
-  | list_of_ports_or_port_declarations_trailing_comma
-    { $$ = std::move($1); }
   | list_of_ports_or_port_declarations_trailing_comma_ansi
+    { $$ = std::move($1); }
+  | list_of_ports_or_port_declarations_trailing_comma_non_ansi
     { $$ = std::move($1); }
   ;
 list_of_ports_or_port_declarations_opt
-  : list_of_ports_or_port_declarations
+  : list_of_ports_or_port_declarations_ansi
     { $$ = std::move($1); }
-  | list_of_ports_or_port_declarations_ansi
+  | list_of_ports_or_port_declarations_non_ansi
     { $$ = std::move($1); }
   | /* empty */
     { $$ = MakeTaggedNode(N::kPortDeclarationList); }
   ;
-
 list_of_ports_or_port_declarations_ansi
-  : list_of_ports_or_port_declarations_preprocessor_last_ansi
-    { $$ = std::move($1); }
-  | list_of_ports_or_port_declarations_item_last_ansi
-    { $$ = std::move($1); }
-   
-  ;
-
-list_of_ports_or_port_declarations
   /* This serves as list_of_ports or list_of_port_declarations.
    * The LRM grammar does not permit mixing the two styles of lists (ANSI and
    * non-ANSI), but combining them was necessary to accommodate preprocessing
    * directives without ambiguity.
    */
-  : list_of_ports_or_port_declarations_preprocessor_last
+  : list_of_ports_or_port_declarations_preprocessor_last_ansi
     { $$ = std::move($1); }
-  | list_of_ports_or_port_declarations_item_last
+  | list_of_ports_or_port_declarations_item_last_ansi
     { $$ = std::move($1); }
   ;
-
+list_of_ports_or_port_declarations_non_ansi
+  : list_of_ports_or_port_declarations_preprocessor_last_non_ansi
+    { $$ = std::move($1); }
+  | list_of_ports_or_port_declarations_item_last_non_ansi
+    { $$ = std::move($1); }
+  ;
 list_of_ports_or_port_declarations_preprocessor_last_ansi
   : list_of_ports_or_port_declarations_ansi
     preprocessor_balanced_port_declarations
@@ -5230,57 +5226,86 @@ list_of_ports_or_port_declarations_preprocessor_last_ansi
   | preprocessor_balanced_port_declarations
     { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
   ;
-
-list_of_ports_or_port_declarations_preprocessor_last
-  : list_of_ports_or_port_declarations
+list_of_ports_or_port_declarations_preprocessor_last_non_ansi
+  : list_of_ports_or_port_declarations_non_ansi
     preprocessor_balanced_port_declarations
     { $$ = ExtendNode($1, $2); }
-  | list_of_ports_or_port_declarations_trailing_comma
+  | list_of_ports_or_port_declarations_trailing_comma_non_ansi
     preprocessor_balanced_port_declarations
     { $$ = ExtendNode($1, $2); }
   | preprocessor_balanced_port_declarations
     { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
   ;
-
-
 list_of_ports_or_port_declarations_item_last_ansi
   : list_of_ports_or_port_declarations_preprocessor_last_ansi port_declaration_ansi
     { $$ = ExtendNode($1, $2); }
   | list_of_ports_or_port_declarations_trailing_comma_ansi port_declaration_ansi
     { $$ = ExtendNode($1, $2); }
+  | list_of_ports_or_port_declarations_trailing_comma_ansi class_id
+    { $$ = ExtendNode($1, $2); }
   | port_declaration_ansi
+    { $$ = MakeTaggedNode(N::kPortDeclarationList, std::move($1)); }
+  ;
+list_of_ports_or_port_declarations_item_last_non_ansi
+  : list_of_ports_or_port_declarations_item_last_non_ansi port_declaration_non_ansi
+    { $$ = ExtendNode($1, $2); }
+  | list_of_ports_or_port_declarations_trailing_comma_non_ansi port_declaration_non_ansi
+    { $$ = ExtendNode($1, $2); }
+  | port_declaration_non_ansi
     { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
   ;
-
-
-list_of_ports_or_port_declarations_item_last
-  : list_of_ports_or_port_declarations_preprocessor_last port_or_port_declaration
-    { $$ = ExtendNode($1, $2); }
-  | list_of_ports_or_port_declarations_trailing_comma port_or_port_declaration
-    { $$ = ExtendNode($1, $2); }
-  | port_or_port_declaration
-    { $$ = MakeTaggedNode(N::kPortDeclarationList, $1); }
-  ;
-
 list_of_ports_or_port_declarations_trailing_comma_ansi
   : list_of_ports_or_port_declarations_ansi ','
     { $$ = ExtendNode($1, $2); }
   ;
-
-list_of_ports_or_port_declarations_trailing_comma
-  : list_of_ports_or_port_declarations ','
+list_of_ports_or_port_declarations_trailing_comma_non_ansi
+  : list_of_ports_or_port_declarations_non_ansi ','
     { $$ = ExtendNode($1, $2); }
   ;
 
-
-port_or_port_declaration
+port_declaration_ansi
+  /* should consist of:
+   *   inout_declaration
+   *   input_declaration
+   *   output_declaration
+   *   ref_declaration
+   *   interface_port_declaration
+   */
+  // TODO(jeremycs): make this look more like type_identifier_followed_by_ ... rules
+  /* originally: data_type_or_implicit, but restricted to resolve conflict */
+  // : dir var_or_net_type_opt data_type_or_implicit GenericIdentifier decl_dimensions_opt
+  // | dir var_or_net_type_opt data_type_or_implicit GenericIdentifier '=' expression
+  //
+  // NodekPortDeclaration will have children in the following format:
+  // dir, var_or_net_type_opt, data_type (includes packed dimensions), id,
+  // unpacked dimensions, trailing_assign_opt
+  //
+  : port_direction var_or_net_type_opt
+    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
+    trailing_assign_opt
+    { $$ = MakeTaggedNode(N::kPortDeclaration, $1, $2, ForwardChildren($3), $4); }
+  | net_type data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
+    trailing_assign_opt
+    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, $1,
+                          ForwardChildren($2), $3); }
+  | data_type_primitive GenericIdentifier decl_dimensions_opt trailing_assign_opt
+    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr,
+                          // just expand without ForwardChildren:
+                          // MakeTypeIdDimensionsTuple(
+                              $1,
+                              MakeTaggedNode(N::kUnqualifiedId, $2),
+                              MakeUnpackedDimensionsNode($3)
+                          // )
+                          ,  //
+                          $4); }
+  /* user-defined types: including interface_port_declaration */
+  | type_identifier_followed_by_id decl_dimensions_opt trailing_assign_opt
+    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr, ForwardChildren($1),
+                          MakeUnpackedDimensionsNode($2), $3); }
+  ;
+port_declaration_non_ansi
   : port
     { $$ = std::move($1); }
-  | port_declaration
-    { $$ = std::move($1); }
-  /** The following has been incorporated into the 'port' rule:
-  | GenericIdentifier trailing_assign_opt
-  **/
   ;
 
 preprocessor_balanced_port_declarations
@@ -5345,56 +5370,6 @@ dir
     { $$ = std::move($1); }
   ;
 
-port_declaration
-  : /* attribute_list_opt */ port_declaration_noattr
-  { $$ = std::move($1); }
-  ;
-port_declaration_ansi
-: port_direction var_or_net_type_opt
-    data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
-    trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, $1, $2, ForwardChildren($3), $4); }
-  ;
-
-port_declaration_noattr
-  /* should consist of:
-   *   inout_declaration
-   *   input_declaration
-   *   output_declaration
-   *   ref_declaration
-   *   interface_port_declaration
-   */
-  // TODO(jeremycs): make this look more like type_identifier_followed_by_ ... rules
-  /* originally: data_type_or_implicit, but restricted to resolve conflict */
-  // : dir var_or_net_type_opt data_type_or_implicit GenericIdentifier decl_dimensions_opt
-  // | dir var_or_net_type_opt data_type_or_implicit GenericIdentifier '=' expression
-  //
-  // NodekPortDeclaration will have children in the following format:
-  // dir, var_or_net_type_opt, data_type (includes packed dimensions), id,
-  // unpacked dimensions, trailing_assign_opt
-  //
-  : 
-    // TODO(fangism): inout's cannot have variable port types,
-    // so this needs to be enforced in CST validation.
-   net_type data_type_or_implicit_basic_followed_by_id_and_dimensions_opt
-    trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, $1,
-                          ForwardChildren($2), $3); }
-  | data_type_primitive GenericIdentifier decl_dimensions_opt trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr,
-                          // just expand without ForwardChildren:
-                          // MakeTypeIdDimensionsTuple(
-                              $1,
-                              MakeTaggedNode(N::kUnqualifiedId, $2),
-                              MakeUnpackedDimensionsNode($3)
-                          // )
-                          ,  //
-                          $4); }
-  /* user-defined types: including interface_port_declaration */
-  | type_identifier_followed_by_id decl_dimensions_opt trailing_assign_opt
-    { $$ = MakeTaggedNode(N::kPortDeclaration, nullptr, nullptr, ForwardChildren($1),
-                          MakeUnpackedDimensionsNode($2), $3); }
-  ;
 var_or_net_type_opt
   : net_type
     { $$ = std::move($1); }
@@ -8766,4 +8741,3 @@ const char* verilog_symbol_name(size_t symbol_enum) {
 }
 
 }  // namespace verilog
-
