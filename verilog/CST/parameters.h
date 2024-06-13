@@ -71,6 +71,9 @@ std::vector<verible::TreeSearchMatch> FindAllNamedParams(
 // kParamDeclaration (either TK_parameter or TK_localparam).
 verilog_tokentype GetParamKeyword(const verible::Symbol &);
 
+// Returns the token for kParamDeclaration symbol
+const verible::TokenInfo *GetParameterToken(const verible::Symbol &symbol);
+
 // Returns a pointer to either TK_type or kParamType node, which holds the param
 // type, id, and dimensions info for that parameter.
 const verible::Symbol *GetParamTypeSymbol(const verible::Symbol &);
