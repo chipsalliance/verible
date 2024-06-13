@@ -17,11 +17,13 @@
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "re2/re2.h"
 
 namespace verible {
 namespace config {
@@ -94,6 +96,10 @@ ConfigValueSetter SetStringOneOf(std::string *value,
 // up to 32 choices.
 ConfigValueSetter SetNamedBits(uint32_t *value,
                                const std::vector<absl::string_view> &choices);
+
+// Set a Regex
+ConfigValueSetter SetRegex(std::unique_ptr<re2::RE2> *regex);
+
 }  // namespace config
 }  // namespace verible
 

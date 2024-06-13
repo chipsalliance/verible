@@ -21,8 +21,10 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
+#include "re2/re2.h"
 
 namespace verible {
 namespace config {
@@ -91,6 +93,19 @@ TEST(ConfigUtilsTest, ParseBool) {
   EXPECT_FALSE(s.ok());
   EXPECT_TRUE(
       absl::StartsWith(s.message(), "baz: Boolean value should be one of"));
+}
+
+TEST(ConfigUtilsTest, ParseRegex) {
+  absl::Status s;
+  std::unique_ptr<re2::RE2> regex;
+  s = ParseNameValues("regex:[a-b0-9_]", {{"regex", SetRegex(&regex)}});
+  EXPECT_TRUE(s.ok());
+  EXPECT_EQ(regex->pattern(), "[a-b0-9_]");
+
+  s = ParseNameValues("regex:[a-b0-9_", {{"regex", SetRegex(&regex)}});
+  EXPECT_FALSE(s.ok());
+  EXPECT_EQ(s.message(),
+            "regex: Failed to parse regular expression: missing ]: [a-b0-9_");
 }
 
 TEST(ConfigUtilsTest, ParseString) {
@@ -170,6 +185,21 @@ TEST(ConfigUtilsTest, ParseMultipleParameters) {
   EXPECT_TRUE(s.ok()) << s.message();
   EXPECT_TRUE(panic);
   EXPECT_EQ(answer, 43);
+
+  std::string str1;
+  std::string str2;
+  s = ParseNameValues("baz:hello world;fry:multiple spaces in this one",
+                      {{"baz", SetString(&str1)}, {"fry", SetString(&str2)}});
+  EXPECT_TRUE(s.ok());
+  EXPECT_EQ(str1, "hello world");
+  EXPECT_EQ(str2, "multiple spaces in this one");
+
+  std::unique_ptr<re2::RE2> regex;
+  s = ParseNameValues("baz:some text string;regex:[A-B0-9_]",
+                      {{"baz", SetString(&str1)}, {"regex", SetRegex(&regex)}});
+  EXPECT_TRUE(s.ok());
+  EXPECT_EQ(str1, "some text string");
+  EXPECT_EQ(regex->pattern(), "[A-B0-9_]");
 }
 }  // namespace config
 }  // namespace verible

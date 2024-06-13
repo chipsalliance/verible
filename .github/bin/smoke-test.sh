@@ -99,7 +99,8 @@ readonly TEST_GIT_PROJECTS="https://github.com/lowRISC/ibex \
          https://github.com/rsd-devel/rsd \
          https://github.com/syntacore/scr1 \
          https://github.com/olofk/serv \
-         https://github.com/bespoke-silicon-group/basejump_stl"
+         https://github.com/bespoke-silicon-group/basejump_stl \
+         https://github.com/gtaylormb/opl3_fpga"
 
 ##
 # Some of the files in the projects will have issues.
@@ -131,22 +132,22 @@ declare -A ExpectedFailCount
 
 ExpectedFailCount[syntax:ibex]=14
 ExpectedFailCount[lint:ibex]=14
-ExpectedFailCount[project:ibex]=199
-ExpectedFailCount[preprocessor:ibex]=373
+ExpectedFailCount[project:ibex]=211
+ExpectedFailCount[preprocessor:ibex]=385
 
 ExpectedFailCount[syntax:opentitan]=36
 ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[project:opentitan]=825
-ExpectedFailCount[preprocessor:opentitan]=2337
+ExpectedFailCount[project:opentitan]=800
+ExpectedFailCount[preprocessor:opentitan]=2238
 
 ExpectedFailCount[syntax:sv-tests]=77
 ExpectedFailCount[lint:sv-tests]=76
 ExpectedFailCount[project:sv-tests]=187
 ExpectedFailCount[preprocessor:sv-tests]=139
 
-ExpectedFailCount[syntax:caliptra-rtl]=24
-ExpectedFailCount[lint:caliptra-rtl]=24
-ExpectedFailCount[project:caliptra-rtl]=333
+ExpectedFailCount[syntax:caliptra-rtl]=25
+ExpectedFailCount[lint:caliptra-rtl]=25
+ExpectedFailCount[project:caliptra-rtl]=335
 ExpectedFailCount[preprocessor:caliptra-rtl]=777
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
@@ -154,10 +155,10 @@ ExpectedFailCount[lint:Cores-VeeR-EH2]=2
 ExpectedFailCount[project:Cores-VeeR-EH2]=42
 ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
-ExpectedFailCount[syntax:cva6]=6
-ExpectedFailCount[lint:cva6]=6
-ExpectedFailCount[project:cva6]=92
-ExpectedFailCount[preprocessor:cva6]=129
+ExpectedFailCount[syntax:cva6]=7
+ExpectedFailCount[lint:cva6]=7
+ExpectedFailCount[project:cva6]=86
+ExpectedFailCount[preprocessor:cva6]=124
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -211,6 +212,11 @@ ExpectedFailCount[lint:basejump_stl]=469
 ExpectedFailCount[project:basejump_stl]=581
 ExpectedFailCount[formatter:basejump_stl]=1
 ExpectedFailCount[preprocessor:basejump_stl]=615
+
+ExpectedFailCount[syntax:opl3_fpga]=2
+ExpectedFailCount[lint:opl3_fpga]=2
+ExpectedFailCount[project:opl3_fpga]=4
+ExpectedFailCount[preprocessor:opl3_fpga]=4
 
 # Ideally, we expect all tools to process all files with a zero exit code.
 # However, that is not always the case, so we document the current
