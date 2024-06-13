@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
 #include "verilog/analysis/checkers/always_ff_non_blocking_rule.h"
 
 #include <algorithm>
+#include <iterator>
 #include <ostream>
 #include <set>
+#include <string>
+#include <vector>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
@@ -29,8 +33,11 @@
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "common/text/tree_utils.h"
 #include "common/util/casts.h"
 #include "common/util/logging.h"
+#include "verilog/CST/expression.h"
+#include "verilog/CST/statement.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/descriptions.h"
@@ -39,6 +46,7 @@
 namespace verilog {
 namespace analysis {
 
+using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SearchSyntaxTree;
@@ -102,31 +110,78 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   static const Matcher asgn_incdec_matcher{NodekIncrementDecrementExpression()};
   static const Matcher ident_matcher{NodekUnqualifiedId()};
 
+  std::vector<AutoFix> autofixes;
+
   // Rule may be waived if complete lhs consists of local variables
   //  -> determine root of lhs
   const verible::Symbol *check_root = nullptr;
+  absl::string_view lhs_id;
 
   verible::matcher::BoundSymbolManager symbol_man;
   if (asgn_blocking_matcher.Matches(symbol, &symbol_man)) {
-    if (const auto *const node =
-            verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-      check_root =
-          /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-              node->front().get());
-    }
+    const verible::SyntaxTreeNode *node = &verible::SymbolCastToNode(symbol);
+    check_root = verilog::GetNetVariableAssignmentLhs(*node);
+    lhs_id = verible::StringSpanOfSymbol(*check_root);
+
+    const verible::SyntaxTreeLeaf *equals =
+        verible::GetSubtreeAsLeaf(symbol, NodeEnum::kNetVariableAssignment, 1);
+
+    autofixes.emplace_back(AutoFix(
+        "Substitute blocking assignment '=' for nonblocking assignment '<='",
+        {equals->get(), "<="}));
   } else {
     // Not interested in any other blocking assignments unless flagged
     if (!catch_modifying_assignments_) return;
 
+    // These autofixes require substituting the whole expression
+    absl::string_view original = verible::StringSpanOfSymbol(symbol);
     if (asgn_modify_matcher.Matches(symbol, &symbol_man)) {
-      if (const auto *const node =
-              verible::down_cast<const verible::SyntaxTreeNode *>(&symbol)) {
-        check_root =
-            /* lhs */ verible::down_cast<const verible::SyntaxTreeNode *>(
-                node->front().get());
-      }
+      const verible::SyntaxTreeNode *node = &verible::SymbolCastToNode(symbol);
+      const verible::SyntaxTreeNode &lhs = *GetAssignModifyLhs(*node);
+      const verible::SyntaxTreeNode &rhs = *GetAssignModifyRhs(*node);
+      const verible::SyntaxTreeLeaf &operator_ =
+          *GetAssignModifyOperator(*node);
+      check_root = &lhs;
+
+      // Extract just the operation. Just '+' from '+='
+      const absl::string_view op =
+          verible::StringSpanOfSymbol(operator_).substr(0, 1);
+      bool needs_parenthesis = NeedsParenthesis(rhs);
+      lhs_id = verible::StringSpanOfSymbol(lhs);
+
+      absl::string_view start_rhs_expr = needs_parenthesis ? " (" : " ";
+      absl::string_view end_rhs_expr = needs_parenthesis ? ");" : ";";
+
+      const std::string fix =
+          absl::StrCat(lhs_id, " <= ", lhs_id, " ", op, start_rhs_expr,
+                       verible::StringSpanOfSymbol(rhs), end_rhs_expr);
+
+      autofixes.emplace_back(
+          AutoFix("Substitute assignment operator for equivalent "
+                  "nonblocking assignment",
+                  {original, fix}));
     } else if (asgn_incdec_matcher.Matches(symbol, &symbol_man)) {
-      check_root = &symbol;
+      const verible::SyntaxTreeNode *operand =
+          GetIncrementDecrementOperand(symbol);
+      const verible::SyntaxTreeLeaf *operator_ =
+          GetIncrementDecrementOperator(symbol);
+      check_root = operand;
+
+      lhs_id = verible::StringSpanOfSymbol(*operand);
+      // Extract just the operation. Just '+' from '++'
+      const absl::string_view op =
+          verible::StringSpanOfSymbol(*operator_).substr(0, 1);
+
+      // Equivalent nonblocking assignment
+      // {'x++', '++x'} become 'x <= x + 1'
+      // {'x--', '--x'} become 'x <= x - 1'
+      const std::string fix =
+          absl::StrCat(lhs_id, " <= ", lhs_id, " ", op, " 1;");
+
+      autofixes.emplace_back(
+          AutoFix("Substitute increment/decrement operator for "
+                  "equivalent nonblocking assignment",
+                  {original, fix}));
     } else {
       // Not a blocking assignment
       return;
@@ -160,7 +215,16 @@ void AlwaysFFNonBlockingRule::HandleSymbol(const verible::Symbol &symbol,
   }
 
   // Enqueue detected violation unless waived
-  if (!waived) violations_.insert(LintViolation(symbol, kMessage, context));
+  if (waived) return;
+
+  // Dont autofix if the faulting expression is inside an expression
+  // Example: "p <= k++"
+  if (IsAutoFixSafe(symbol, lhs_id) &&
+      !context.IsInside(NodeEnum::kExpression)) {
+    violations_.insert(LintViolation(symbol, kMessage, context, autofixes));
+  } else {
+    violations_.insert(LintViolation(symbol, kMessage, context));
+  }
 }  // HandleSymbol()
 
 bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
@@ -185,6 +249,7 @@ bool AlwaysFFNonBlockingRule::InsideBlock(const verible::Symbol &symbol,
     if (always_ff_matcher.Matches(symbol, &symbol_man)) {
       VLOG(4) << "always_ff @DEPTH=" << depth << std::endl;
       inside_ = depth;
+      CollectLocalReferences(symbol);
     }
     return false;
   }
@@ -226,6 +291,97 @@ bool AlwaysFFNonBlockingRule::LocalDeclaration(const verible::Symbol &symbol) {
   }
   return false;
 }  // LocalDeclaration()
+
+bool AlwaysFFNonBlockingRule::NeedsParenthesis(
+    const verible::Symbol &rhs) const {
+  // Avoid inserting parenthesis for simple expressions
+  // For example: x &= 1 -> x <= x & 1, and not x <= x & (1)
+  // This could be more precise, but checking every specific
+  // case where parenthesis are needed is hard. Adding them
+  // doesn't hurt and the user can remove them if needed.
+  const bool complex_rhs_expr =
+      verible::GetLeftmostLeaf(rhs) != verible::GetRightmostLeaf(rhs);
+  if (!complex_rhs_expr) return false;
+
+  // Check if expression is wrapped in parenthesis
+  const verible::Symbol *inner = verilog::UnwrapExpression(rhs);
+  if (inner->Kind() == verible::SymbolKind::kLeaf) return false;
+
+  return !verible::SymbolCastToNode(*inner).MatchesTag(NodeEnum::kParenGroup);
+}
+
+void AlwaysFFNonBlockingRule::CollectLocalReferences(
+    const verible::Symbol &root) {
+  const Matcher reference_matcher{NodekReference()};
+
+  const std::vector<verible::TreeSearchMatch> references_ =
+      verible::SearchSyntaxTree(root, reference_matcher);
+
+  // Precompute the StringSpan of every identifier referenced to.
+  // Avoid recomputing it several times
+  references.resize(references_.size());
+  std::transform(references_.cbegin(), references_.cend(), references.begin(),
+                 [](const verible::TreeSearchMatch &match) {
+                   return ReferenceWithId{
+                       match, verible::StringSpanOfSymbol(*match.match)};
+                 });
+}
+
+bool AlwaysFFNonBlockingRule::IsAutoFixSafe(
+    const verible::Symbol &faulting_assignment,
+    absl::string_view lhs_id) const {
+  std::vector<ReferenceWithId>::const_iterator itr = references.end();
+
+  // Let's assume that 'x' is the variable affected by the faulting
+  // assignment. In order to ensure that the autofix is safe we have
+  // to ensure that there is no later reference to 'x'
+  //
+  // Can't autofix        Can autofix
+  // begin                begin
+  //   x = x + 1;           x = x + 1;
+  //   y = x;               y <= y + 1;
+  // end                  end
+  //
+  // In practical terms: we'll scan the 'references' vector for kReferences
+  // to 'x' that appear after the faulting assignment in the always_ff block
+
+  const Matcher reference_matcher{NodekReference()};
+
+  // Extract kReferences inside the faulting expression
+  const std::vector<verible::TreeSearchMatch> references_ =
+      verible::SearchSyntaxTree(faulting_assignment, reference_matcher);
+
+  // ref points to the latest reference to 'x' in our faulting expression
+  // 'x++', 'x = x + 1', 'x &= x + 1'
+  //  ^          ^             ^
+  //  We need this to know from where to start searching for later references
+  //  to 'x', and decide whether the AutoFix is safe or not
+  const verible::Symbol *ref =
+      std::find_if(std::rbegin(references_), std::rend(references_),
+                   [&](const verible::TreeSearchMatch &m) {
+                     return verible::StringSpanOfSymbol(*m.match) == lhs_id;
+                   })
+          ->match;
+
+  // Shouldn't happen, sanity check to avoid crashes
+  if (!ref) return false;
+
+  // Find the last reference to 'x' in the faulting assignment
+  itr = std::find_if(
+      std::begin(references), std::end(references),
+      [&](const ReferenceWithId &r) { return r.match.match == ref; });
+
+  // Search from the last reference to 'x' onwards. If there is any,
+  // we can't apply the autofix safely
+  itr = std::find_if(
+      std::next(itr), std::end(references),
+      [&](const ReferenceWithId &ref) { return ref.id == lhs_id; });
+
+  // Let's say 'x' is affected by a flagged operation { 'x = 1', 'x++', ... }
+  // We can safely autofix if after the flagged operation there are no
+  // more references to 'x'
+  return references.end() == itr;
+}
 
 }  // namespace analysis
 }  // namespace verilog

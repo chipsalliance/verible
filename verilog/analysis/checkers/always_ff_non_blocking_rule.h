@@ -1,4 +1,4 @@
-// Copyright 2017-2020 The Verible Authors.
+// Copyright 2017-2023 The Verible Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
+#include "common/analysis/syntax_tree_search.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "verilog/analysis/descriptions.h"
@@ -48,6 +49,16 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
   bool InsideBlock(const verible::Symbol &symbol, int depth);
   // Processes local declarations
   bool LocalDeclaration(const verible::Symbol &symbol);
+  // Check the need of parenthesis in certain autofixes
+  // Might have false positives. Example:
+  // Fixing 'x *= y + 1' requires adding parenthesis
+  // 'x <= x & (y + 1)'
+  bool NeedsParenthesis(const verible::Symbol &rhs) const;
+  // Collect local references inside an always_ff block
+  void CollectLocalReferences(const verible::Symbol &root);
+  // Check if is safe to autofix
+  bool IsAutoFixSafe(const verible::Symbol &faulting_assignment,
+                     absl::string_view lhs_id) const;
 
  private:
   // Collected violations.
@@ -72,6 +83,16 @@ class AlwaysFFNonBlockingRule : public verible::SyntaxTreeLintRule {
 
   // In-order stack of local variable names
   std::vector<absl::string_view> locals_;
+
+  // NodekReference + string representation
+  // of the ID they're referring to
+  struct ReferenceWithId {
+    verible::TreeSearchMatch match;
+    absl::string_view id;
+  };
+  // Collection of references to variables
+  // assumed to be in program order
+  std::vector<ReferenceWithId> references;
 };
 
 }  // namespace analysis
