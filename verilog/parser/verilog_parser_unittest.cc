@@ -1773,6 +1773,7 @@ static constexpr ParserTestCaseArray kModuleTests = {
     // keyword tests
     "module keyword_identifiers;\n"
     "reg branch;  // branch is a Verilog-AMS keyword\n"
+    "reg analog;  // analog is a Verilog-AMS keyword\n"
     "input from;  // from is a Verilog-AMS keyword\n"
     "wire access;  // access is a Verilog-AMS keyword\n"
     "wire exclude;  // exclude is a Verilog-AMS keyword\n"
