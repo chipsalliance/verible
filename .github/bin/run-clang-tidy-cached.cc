@@ -153,11 +153,15 @@ class ClangTidyRunner {
   const fs::path &project_cache_dir() const { return project_cache_dir_; }
 
   // Given a work-queue in/out-file, process it. Using system() for portability.
+  // Empties work_queue.
   void RunClangTidyOn(ContentAddressedStore &output_store,
-                      std::list<filepath_contenthash_t> work_queue) {
-    if (work_queue.empty()) return;
+                      std::list<filepath_contenthash_t> *work_queue) {
+    if (work_queue->empty()) return;
     const int kJobs = std::thread::hardware_concurrency();
-    std::cerr << work_queue.size() << " files to process...";
+    std::cerr << work_queue->size() << " files to process...";
+
+    const bool print_progress = isatty(STDERR_FILENO);
+    if (!print_progress) std::cerr << "\n";
 
     std::mutex queue_access_lock;
     auto clang_tidy_runner = [&]() {
@@ -165,10 +169,12 @@ class ClangTidyRunner {
         filepath_contenthash_t work;
         {
           const std::lock_guard<std::mutex> lock(queue_access_lock);
-          if (work_queue.empty()) return;
-          fprintf(stderr, "%5d\b\b\b\b\b", static_cast<int>(work_queue.size()));
-          work = work_queue.front();
-          work_queue.pop_front();
+          if (work_queue->empty()) return;
+          if (print_progress) {
+            fprintf(stderr, "%5d\b\b\b\b\b", (int)(work_queue->size()));
+          }
+          work = work_queue->front();
+          work_queue->pop_front();
         }
         const fs::path final_out = output_store.PathFor(work);
         const std::string tmp_out = final_out.string() + ".tmp";
@@ -196,7 +202,9 @@ class ClangTidyRunner {
       workers.emplace_back(clang_tidy_runner);  // NOLINT
     }
     for (auto &t : workers) t.join();
-    fprintf(stderr, "     \n");  // Clean out progress counter.
+    if (print_progress) {
+      fprintf(stderr, "     \n");  // Clean out progress counter.
+    }
   }
 
  private:
@@ -365,7 +373,7 @@ int main(int argc, char *argv[]) {
 
   FileGatherer cc_file_gatherer(store, kSearchDir);
   auto work_list = cc_file_gatherer.BuildWorkList(build_env_latest_change);
-  runner.RunClangTidyOn(store, work_list);
+  runner.RunClangTidyOn(store, &work_list);
   auto checks_seen =
       cc_file_gatherer.CreateReport(runner.project_cache_dir(), kTidySymlink);
 
