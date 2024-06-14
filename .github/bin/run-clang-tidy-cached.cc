@@ -30,6 +30,8 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 //  CACHE_DIR  = where to put the cached content; default ~/.cache
 
 // This file shall be self-contained, so we don't use any re2 or absl niceties
+#include <unistd.h>
+
 #include <algorithm>
 #include <cerrno>
 #include <cinttypes>
