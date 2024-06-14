@@ -501,6 +501,7 @@ jobs:
       run: |
         choco install bazel --force --version=6.4.0
         choco install winflexbison3
+        choco install llvm --allow-downgrade --version=16.0.6
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise
