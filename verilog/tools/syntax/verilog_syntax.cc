@@ -307,6 +307,7 @@ int main(int argc, char **argv) {
     // to use the preprocessor ?
     const verilog::VerilogPreprocess::Config preprocess_config{
         .filter_branches = true,
+        .expand_macros = true,
     };
     json file_json;
     int file_status =
@@ -321,6 +322,6 @@ int main(int argc, char **argv) {
   if (absl::GetFlag(FLAGS_export_json)) {
     std::cout << std::setw(2) << json_out << std::endl;
   }
-
+ 
   return exit_status;
 }
