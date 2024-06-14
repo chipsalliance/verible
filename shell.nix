@@ -40,11 +40,4 @@ verible_used_stdenv.mkDerivation {
 
       clang-tools_17    # For clang-tidy; clangd
     ];
-
-  shellHook = ''
-      # We choose the last clang-format that produces the same result
-      # as the one used on the github CI (newer than v15 arrange some things
-      # slightly differently, so would result in a conflict).
-      export CLANG_FORMAT=${pkgs.clang-tools_15}/bin/clang-format
-  '';
 }
