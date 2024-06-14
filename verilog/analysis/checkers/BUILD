@@ -1748,6 +1748,7 @@ cc_library(
         "//common/text:config-utils",
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
+        "//common/text:token-info",
         "//verilog/CST:context-functions",
         "//verilog/CST:parameters",
         "//verilog/CST:verilog-matchers",

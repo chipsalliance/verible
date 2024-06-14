@@ -37,6 +37,12 @@ class ProperParameterDeclarationRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
+  void AddParameterViolation(const verible::Symbol &symbol,
+                             const verible::SyntaxTreeContext &context);
+
+  void AddLocalparamViolation(const verible::Symbol &symbol,
+                              const verible::SyntaxTreeContext &context);
+
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 

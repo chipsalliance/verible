@@ -59,6 +59,14 @@ verilog_tokentype GetParamKeyword(const verible::Symbol &symbol) {
   return static_cast<verilog_tokentype>(leaf->get().token_enum());
 }
 
+const verible::TokenInfo *GetParameterToken(const verible::Symbol &symbol) {
+  const auto *param_keyword_symbol =
+      verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 0);
+  if (param_keyword_symbol == nullptr) return nullptr;
+  const auto *leaf = down_cast<const SyntaxTreeLeaf *>(param_keyword_symbol);
+  return &leaf->get();
+}
+
 const verible::Symbol *GetParamTypeSymbol(const verible::Symbol &symbol) {
   return verible::GetSubtreeAsSymbol(symbol, NodeEnum::kParamDeclaration, 1);
 }
