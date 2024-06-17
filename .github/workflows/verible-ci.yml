@@ -22,9 +22,7 @@ jobs:
 
 
   VerifyFormatting:
-    container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
-
+    runs-on: ubuntu-24.04
     steps:
 
     - name: Cancel previous
@@ -39,13 +37,16 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        apt -qqy update
-        apt -qq -y install clang-format-15 git
-        clang-format-15 --version
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x ./llvm.sh
+        sudo ./llvm.sh 17
+        sudo apt-get install clang-format-17
+        go install github.com/bazelbuild/buildtools/buildifier@latest
+        echo "PATH=$PATH:$(go env GOPATH)/bin/" >> $GITHUB_ENV
 
     - name: Run formatting style check
       run: |
-        CLANG_FORMAT=clang-format-15 ./.github/bin/run-clang-format.sh
+        CLANG_FORMAT=clang-format-17 ./.github/bin/run-clang-format.sh
         ./.github/bin/check-potential-problems.sh
 
     - name: 📤 Upload performance graphs
@@ -500,6 +501,7 @@ jobs:
       run: |
         choco install bazel --force --version=6.4.0
         choco install winflexbison3
+        choco install llvm --allow-downgrade --version=16.0.6
 
     - name: Debug bazel directory settings
       # We need to explicitly call the bazel binary from choco, otherwise
