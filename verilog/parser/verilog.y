@@ -5241,8 +5241,8 @@ list_of_ports_or_port_declarations_item_last_ansi
     { $$ = ExtendNode($1, $2); }
   | list_of_ports_or_port_declarations_trailing_comma_ansi port_declaration_ansi
     { $$ = ExtendNode($1, $2); }
-  | list_of_ports_or_port_declarations_trailing_comma_ansi class_id
-    { $$ = ExtendNode($1, $2); }
+  | list_of_ports_or_port_declarations_trailing_comma_ansi class_id trailing_assign_opt
+    { $$ = ExtendNode($1, $2, $3); }
   | port_declaration_ansi
     { $$ = MakeTaggedNode(N::kPortDeclarationList, std::move($1)); }
   ;
