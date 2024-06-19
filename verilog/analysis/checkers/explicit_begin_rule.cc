@@ -137,6 +137,20 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
   bool raise_violation = false;
   switch (state_) {
     case State::kNormal: {
+      // Special handling for constraints
+      switch (token.token_enum()) {
+        case TK_constraint: {
+          constraint_expr_level_ = 0;
+          state_ = State::kConstraint;
+          return false;
+        }
+        case TK_with: {
+          constraint_expr_level_ = 0;
+          state_ = State::kInlineConstraint;
+          return false;
+        }
+      }
+
       if (!IsTokenEnabled(token)) {
         break;
       }
@@ -257,6 +271,41 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
         }
       }
       break;
+    }
+    case State::kInlineConstraint: {
+      switch (token.token_enum()) {
+        case '{': {
+          // An InlineConstraint
+          constraint_expr_level_++;
+          state_ = State::kConstraint;
+          break;
+        }
+        default: {
+          // throw away everything else
+          state_ = State::kNormal;
+          break;
+        }
+      }
+    }
+    case State::kConstraint: {
+      // System Verilog constraints are special and use curly braces {}
+      // instead of begin-end. So ignore all constraints
+      switch (token.token_enum()) {
+        case '{': {
+          constraint_expr_level_++;
+          break;
+        }
+        case '}': {
+          constraint_expr_level_--;
+          if (constraint_expr_level_ == 0) {
+            state_ = State::kNormal;
+          }
+        }
+        default: {
+          // throw away everything else
+          break;
+        }
+      }
     }
   }  // switch (state_)
 

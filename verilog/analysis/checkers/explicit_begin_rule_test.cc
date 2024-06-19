@@ -111,6 +111,16 @@ TEST(ExplicitBeginRuleTest, AcceptsBlocksWithBegin) {
       {"always begin a = 1'b1;"},
       {"always begin #10 a = 1'b1;"},
 
+      // Ignore constraints
+      {"constraint c_array { foreach (array[i]) {array[i] == i;}}"},
+      {"constraint c {if(a == 2){b == 1;}else{b == 2;}}"},
+
+      // Ignore inline constraints
+      {"task a(); std::randomize(b) with {foreach(b[i]){b[i] inside "
+       "{[0:1024]};}}; endtask"},
+      {"task a(); std::randomize(b) with {if(a == 2){b == 1;}else{b == 2;}}; "
+       "endtask"},
+
       // Multiple consecutive failures
       {"if(FOO) begin for(i = 0; i < N; i++) begin a <= i;"},
       {"if(FOO) begin foreach(array[i]) begin a <= i;"},
@@ -123,6 +133,10 @@ TEST(ExplicitBeginRuleTest, AcceptsBlocksWithBegin) {
       {"always_comb begin if(FOO) begin a = 1; end else begin a = 0;"},
       {"always_ff @(posedge c) begin if(FOO) begin a <= 1; end else begin "
        "a <= 0;"},
+      {"constraint c_array { foreach (array[i]) {array[i] == i;}}if(FOO) begin "
+       "a <= 1;end"},
+      {"if(FOO) begin a <= 1;end constraint c {if(a == 2){b == 1;}else{b == "
+       "2;}}"},
   };
 
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);
@@ -234,6 +248,11 @@ TEST(ExplicitBeginRuleTest, RejectBlocksWithoutBegin) {
        "(FOO) a <= 1;",
        {TK_else, "else"},
        " a <= 0;"},
+      {"constraint c_array { foreach (array[i]) array[i] == i;}",
+       {TK_if, "if"},
+       "(FOO) a <= 1;"},
+      {{TK_if, "if"},
+       "(FOO) a <= 1; constraint c {if(a == 2) b == 1;else b == 2;}"},
   };
 
   RunLintTestCases<VerilogAnalyzer, ExplicitBeginRule>(kTestCases);

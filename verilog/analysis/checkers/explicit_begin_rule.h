@@ -51,13 +51,24 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   bool IsTokenEnabled(const TokenInfo &token);
 
   // States of the internal token-based analysis.
-  enum class State { kNormal, kInAlways, kInCondition, kInElse, kExpectBegin };
+  enum class State {
+    kNormal,
+    kInAlways,
+    kInCondition,
+    kInElse,
+    kExpectBegin,
+    kConstraint,
+    kInlineConstraint
+  };
 
   // Internal lexical analysis state.
   State state_;
 
-  // Level of nested parenthesis when analysing conditional expressions.
+  // Level of nested parenthesis when analysing conditional expressions
   int condition_expr_level_;
+
+  // Level inside a constraint expression
+  int constraint_expr_level_;
 
   // Configuration
   bool if_enable_ = true;
