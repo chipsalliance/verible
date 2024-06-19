@@ -402,4 +402,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-06-14 13:16:24 -0700 from [73f291d](https://github.com/google/verible/commit/73f291dc73d38e8f876ce9cc35aad62ff932f138)
+Generated on 2024-06-18 23:48:10 -0700 from [1d393d4](https://github.com/google/verible/commit/1d393d43b7eadc3cd196ed47a870ee4a5d8e0796)
