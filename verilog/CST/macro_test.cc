@@ -305,7 +305,7 @@ TEST(FindAllPreprocessorInclude, IncludedFileName) {
           for (const auto &include : includes) {
             const auto *filename =
                 GetFileFromPreprocessorInclude(*include.match);
-            if (filename == nullptr) {
+            if (!filename) {
               continue;
             }
             names.emplace_back(

@@ -468,7 +468,7 @@ TEST(GetActualNamedPort, GetActualNamedPortParenGroup) {
           std::vector<TreeSearchMatch> paren_groups;
           for (const auto &port : ports) {
             const auto *paren_group = GetActualNamedPortParenGroup(*port.match);
-            if (paren_group == nullptr) {
+            if (!paren_group) {
               continue;
             }
             paren_groups.emplace_back(

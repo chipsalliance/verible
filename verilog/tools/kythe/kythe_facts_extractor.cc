@@ -311,7 +311,7 @@ void KytheFactsExtractor::ExtractFile(const IndexingFactNode &root) {
 std::optional<SignatureDigest> KytheFactsExtractor::GetParentTypeScope(
     const IndexingFactNode &node) const {
   absl::string_view node_name = node.Value().Anchors()[0].Text();
-  if (node.Parent() == nullptr) {
+  if (!node.Parent()) {
     return std::nullopt;
   }
   const auto &parent_anchors = node.Parent()->Value().Anchors();

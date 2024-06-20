@@ -66,7 +66,7 @@ bool TreeContainsToken(const ConcreteSyntaxTree& tree, const TokenInfo& token) {
         const auto* leaf_ptr = down_cast<const SyntaxTreeLeaf*>(&symbol);
         return leaf_ptr->get() == token;
       });
-  return matching_leaf != nullptr;
+  return matching_leaf;
 }
 
 void DiagnosticMessagesContainFilename(const VerilogAnalyzer& analyzer,

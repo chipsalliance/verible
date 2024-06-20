@@ -71,10 +71,22 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
+# Improve readability of pointer comparisons. We always use pointers in a
+# 'does this thing (not) exist' context, and comparing it as boolean makes
+# such expressions read more naturally.
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs egrep -n ' [=!]= nullptr' | grep -v "// NOLINT"
+if [ $? -eq 0 ]; then
+  echo "::error:: Avoid comparing against nullptr, use boolean identiy instead."
+  echo
+  EXIT_CODE=1
+fi
+
 # bazelbuild/rules_python is broken as it downloads a dynamically
 # linked pre-built binary - This makes it _very_ platform specific.
 # This should either compile Python from scratch or use the local system Python.
-# So before rules_python() is added here, this needs to be fixed first upstream.
+# So if Python is ever needed and before rules_python() is added here, this
+# needs to be fixed first upstream.
 # https://github.com/bazelbuild/rules_python/issues/1211
 grep rules_python WORKSPACE* MODULE.bazel
 if [ $? -eq 0 ]; then

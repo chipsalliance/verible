@@ -91,7 +91,7 @@ static bool UnqualifiedIdEquals(const SyntaxTreeNode &node,
       // The one-and-only child is the SymbolIdentifier token
       const auto &leaf_ptr =
           down_cast<const SyntaxTreeLeaf *>(node.front().get());
-      if (leaf_ptr != nullptr) {
+      if (leaf_ptr) {
         const TokenInfo &token = leaf_ptr->get();
         return token.token_enum() == SymbolIdentifier && token.text() == name;
       }
@@ -113,7 +113,7 @@ static bool QualifiedCallIsTypeIdCreate(
         down_cast<const SyntaxTreeNode *>(qualified_id_node.back().get());
     const auto *type_id_leaf_ptr = down_cast<const SyntaxTreeNode *>(
         qualified_id_node[num_children - 3].get());
-    if (create_leaf_ptr != nullptr && type_id_leaf_ptr != nullptr) {
+    if (create_leaf_ptr && type_id_leaf_ptr) {
       return UnqualifiedIdEquals(*create_leaf_ptr, "create") &&
              UnqualifiedIdEquals(*type_id_leaf_ptr, "type_id");
     }
@@ -144,7 +144,7 @@ static const TokenInfo *ExtractStringLiteralToken(
 
   const auto *leaf_ptr =
       down_cast<const SyntaxTreeLeaf *>(expr_node.front().get());
-  if (leaf_ptr != nullptr) {
+  if (leaf_ptr) {
     const TokenInfo &token = leaf_ptr->get();
     if (token.token_enum() == TK_StringLiteral) {
       return &token;
@@ -184,16 +184,16 @@ void CreateObjectNameMatchRule::HandleSymbol(const verible::Symbol &symbol,
   // Extract named bindings for matched nodes within this match.
 
   const auto *lval_ref = manager.GetAs<SyntaxTreeNode>("lval_ref");
-  if (lval_ref == nullptr) return;
+  if (!lval_ref) return;
 
   const TokenInfo *lval_id = ReferenceIsSimpleIdentifier(*lval_ref);
-  if (lval_id == nullptr) return;
+  if (!lval_id) return;
   if (lval_id->token_enum() != SymbolIdentifier) return;
 
   const auto *call = manager.GetAs<SyntaxTreeNode>("func");
   const auto *args = manager.GetAs<SyntaxTreeNode>("args");
-  if (call == nullptr) return;
-  if (args == nullptr) return;
+  if (!call) return;
+  if (!args) return;
   if (!QualifiedCallIsTypeIdCreate(*call)) return;
 
   // The first argument is a string that must match the variable name, lval.

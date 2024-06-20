@@ -204,7 +204,7 @@ TEST(FunctionPrototypesReturnTypesTest, Various) {
           for (const auto &proto : protos) {
             const auto *return_type = GetFunctionHeaderReturnType(
                 *GetFunctionPrototypeHeader(*proto.match));
-            if (return_type == nullptr) continue;
+            if (!return_type) continue;
             if (verible::StringSpanOfSymbol(*return_type).empty()) continue;
             returns.push_back(TreeSearchMatch{return_type, /* no context */});
           }
@@ -252,7 +252,7 @@ TEST(FunctionPrototypesIdsTest, Various) {
           for (const auto &proto : protos) {
             const auto *id =
                 GetFunctionHeaderId(*GetFunctionPrototypeHeader(*proto.match));
-            if (id == nullptr) continue;
+            if (!id) continue;
             if (verible::StringSpanOfSymbol(*id).empty()) continue;
             ids.push_back(TreeSearchMatch{id, /* no context */});
           }
@@ -484,7 +484,7 @@ TEST(GetFunctionReturnTypeTest, VariousReturnTypes) {
             const auto &statement = *decl.match;
             const auto *return_type = GetFunctionReturnType(statement);
             // Expect a type node, even when type is implicit or empty.
-            if (return_type == nullptr) continue;
+            if (!return_type) continue;
             const auto return_type_span =
                 verible::StringSpanOfSymbol(*return_type);
             if (!return_type_span.empty()) {
@@ -526,7 +526,7 @@ TEST(GetFunctionFormalPortsGroupTest, MixedFormalPorts) {
           for (const auto &decl : decls) {
             const auto &statement = *decl.match;
             const auto *port_formals = GetFunctionFormalPortsGroup(statement);
-            if (port_formals == nullptr) continue;
+            if (!port_formals) continue;
             const auto port_formals_span =
                 verible::StringSpanOfSymbol(*port_formals);
             if (port_formals_span.empty()) continue;
@@ -696,7 +696,7 @@ TEST(FunctionCallTest, GetFunctionCallName) {
           for (const auto &call : calls) {
             const auto *identifier =
                 GetIdentifiersFromFunctionCall(*call.match);
-            if (identifier == nullptr) {
+            if (!identifier) {
               continue;
             }
             identifiers.emplace_back(

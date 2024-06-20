@@ -249,7 +249,7 @@ void GenerateCode(const std::string &filename,
       is_first = false;
     }
     fprintf(out, " {\n");
-    for (const auto &p : obj->properties) {
+    for (const Property &p : obj->properties) {
       std::string type;
       if (p.object_type) {
         type = p.object_type->name;
@@ -290,7 +290,7 @@ void GenerateCode(const std::string &filename,
     for (const auto &e : obj->extends) {
       fprintf(out, "    %s::Deserialize(j);\n", e.c_str());
     }
-    for (const auto &p : obj->properties) {
+    for (const Property &p : obj->properties) {
       int indent = 4;
       std::string access_call = "j.at(\"" + p.name + "\")";
       std::string access_deref = access_call + ".";
@@ -304,7 +304,7 @@ void GenerateCode(const std::string &filename,
         access_call = "*found";
         access_deref = "found->";
       }
-      if (p.object_type == nullptr || p.is_array) {
+      if (!p.object_type || p.is_array) {
         fprintf(out, "%*s%sget_to(%s);\n", indent, "", access_deref.c_str(),
                 p.name.c_str());
       } else {
@@ -327,7 +327,7 @@ void GenerateCode(const std::string &filename,
         fprintf(out, "%*sif (has_%s)", indent, "", p.name.c_str());
         indent = 1;
       }
-      if (p.object_type == nullptr || p.is_array) {
+      if (!p.object_type || p.is_array) {
         fprintf(out, "%*s(*j)[\"%s\"] = %s;\n", indent, "", p.name.c_str(),
                 p.name.c_str());
       } else {

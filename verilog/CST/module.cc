@@ -114,7 +114,7 @@ const verible::SyntaxTreeLeaf *GetModuleEndLabel(
   CHECK(IsModuleOrInterfaceOrProgramDeclaration(module_node));
 
   const auto *label_node = module_node[3].get();
-  if (label_node == nullptr) {
+  if (!label_node) {
     return nullptr;
   }
   return verible::GetSubtreeAsLeaf(verible::SymbolCastToNode(*label_node),

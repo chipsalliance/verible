@@ -192,7 +192,7 @@ void ModulePortRule::HandleSymbol(const verible::Symbol &symbol,
   }
 
   for (const auto &child : port_list_node.children()) {
-    if (child == nullptr) continue;
+    if (!child) continue;
 
     // If child is a node, then it must be a kPort
     if (child->Kind() == verible::SymbolKind::kNode) {

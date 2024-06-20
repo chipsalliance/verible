@@ -112,7 +112,7 @@ class ExpandableTreeView {
               return node_type(other);
             })) {
     // Guarantee structural equivalence with original tree.
-    CHECK(StructureEqual(view_, tree).left == nullptr);
+    CHECK(!StructureEqual(view_, tree).left);
   }
 
   // TODO(fangism): implement later as needed
@@ -171,7 +171,7 @@ class ExpandableTreeView {
   // \precondition this->parent_->expand_ is true (for all ancestors),
   //   otherwise we would have never reached this node.
   static const impl_type *next_sibling(const impl_type &current) {
-    if (current.Parent() == nullptr) return nullptr;
+    if (!current.Parent()) return nullptr;
 
     // Find the next sibling, if there is one.
     const size_t birth_rank = verible::BirthRank(current);

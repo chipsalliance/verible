@@ -343,7 +343,7 @@ ColumnPositionTree ScanPartitionForAlignmentCells(
   // this 'row', and detect the sparse set of columns found by the scanner.
   ScannerType scanner = scanner_factory();
   const Symbol *origin = unwrapped_line.Origin();
-  if (origin != nullptr) origin->Accept(&scanner);
+  if (origin) origin->Accept(&scanner);
   return scanner.SparseColumns();
 }
 
@@ -385,7 +385,7 @@ ColumnPositionTree ScanPartitionForAlignmentCells_WithNonTreeTokens(
 
   FormatTokenRange leading_tokens(ftokens.begin(), ftokens.begin());
   FormatTokenRange trailing_tokens(ftokens.end(), ftokens.end());
-  if (origin != nullptr) {
+  if (origin) {
     // Identify the last token covered by the origin tree.
     const SyntaxTreeLeaf *first_leaf = GetLeftmostLeaf(*origin);
     const SyntaxTreeLeaf *last_leaf = GetRightmostLeaf(*origin);

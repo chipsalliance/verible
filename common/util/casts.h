@@ -26,7 +26,7 @@ inline To down_cast(From *f) {
 
   // We skip the assert and hence the dynamic_cast if RTTI is disabled.
 #if !defined(__GNUC__) || defined(__GXX_RTTI)
-  assert(f == nullptr || dynamic_cast<To>(f) != nullptr);
+  assert(!f || dynamic_cast<To>(f));
 #endif  // !defined(__GNUC__) || defined(__GXX_RTTI)
 
   return static_cast<To>(f);

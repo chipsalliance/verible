@@ -664,7 +664,7 @@ void TreeUnwrapper::Visit(const SyntaxTreeNode& node) {
   // return path of tree traversal (here).
 
   auto* partition = PreviousSibling(*CurrentTokenPartition());
-  if (partition != nullptr) {
+  if (partition) {
     ReshapeTokenPartitions(node, style_, partition);
   }
 
@@ -906,10 +906,9 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
       // section.  Othewise for single statements/items, indent here.
       const auto* subnode =
           verible::CheckOptionalSymbolAsNode(GetSubtreeAsSymbol(node, tag, 0));
-      const auto next_indent =
-          (subnode != nullptr && NodeIsBeginEndBlock(*subnode))
-              ? 0
-              : style_.indentation_spaces;
+      const auto next_indent = (subnode && NodeIsBeginEndBlock(*subnode))
+                                   ? 0
+                                   : style_.indentation_spaces;
       VisitIndentedSection(node, next_indent,
                            PartitionPolicyEnum::kFitOnLineElseExpand);
       break;
@@ -1003,7 +1002,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
         const auto& subnode =
             verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(node.back()));
         if (subnode.MatchesTag(NodeEnum::kRandomizeMethodCallExtension) &&
-            subnode.back() != nullptr) {
+            subnode.back()) {
           // TODO(fangism): Handle constriants
           VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
         } else if (subnode.MatchesTagAnyOf(
@@ -1024,7 +1023,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     case NodeEnum::kRandomizeFunctionCall: {
       // TODO(fangism): Create own section only for standalone calls
       if (Context().DirectParentIs(NodeEnum::kStatement)) {
-        if (node.back() != nullptr) {
+        if (node.back()) {
           // TODO(fangism): Handle constriants
           VisitIndentedSection(node, 0, PartitionPolicyEnum::kAlwaysExpand);
         } else {
@@ -1242,8 +1241,7 @@ void TreeUnwrapper::SetIndentationsAndCreatePartitions(
     }
 
     case NodeEnum::kMacroArgList: {
-      if (node.front() == nullptr ||
-          node.front()->Tag().tag == verible::kUntagged) {
+      if (!node.front() || node.front()->Tag().tag == verible::kUntagged) {
         // Empty arguments list.
         TraverseChildren(node);
         break;
@@ -1551,7 +1549,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
         break;
       case ',':
       case ':':
-        if (separator == nullptr) {
+        if (!separator) {
           separator = &token;
           break;
         }
@@ -1561,7 +1559,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
         return;
     }
   }
-  if (separator == nullptr) {
+  if (!separator) {
     VLOG(5) << "  skip: separator token not found.";
     return;
   }
@@ -1569,7 +1567,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   // Merge with previous partition if both partitions are in the same line in
   // original text
   const auto* previous_partition = PreviousLeaf(*partition);
-  if (previous_partition != nullptr) {
+  if (previous_partition) {
     if (!previous_partition->Value().TokensRange().empty()) {
       const auto& previous_token =
           previous_partition->Value().TokensRange().back();
@@ -1586,7 +1584,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
   // Merge with next partition if both partitions are in the same line in
   // original text
   const auto* next_partition = NextLeaf(*partition);
-  if (next_partition != nullptr) {
+  if (next_partition) {
     if (!next_partition->Value().TokensRange().empty()) {
       const auto& next_token = next_partition->Value().TokensRange().front();
       absl::string_view original_text_between = verible::make_string_view_range(
@@ -1609,8 +1607,7 @@ static void AttachSeparatorToPreviousOrNextPartition(
     }
 
     // Try merging with next partition
-    if (next_partition != nullptr &&
-        !PartitionIsForcedIntoNewLine(*next_partition)) {
+    if (next_partition && !PartitionIsForcedIntoNewLine(*next_partition)) {
       VLOG(5) << "  merge into next partition.";
       verible::MergeLeafIntoNextLeaf(partition);
       return;
@@ -1741,7 +1738,7 @@ static void ReshapeIfClause(const SyntaxTreeNode& node,
                             TokenPartitionTree* partition_ptr) {
   auto& partition = *partition_ptr;
   const SyntaxTreeNode* body = GetAnyControlStatementBody(node);
-  if (body == nullptr || !NodeIsBeginEndBlock(*body)) {
+  if (!body || !NodeIsBeginEndBlock(*body)) {
     VLOG(4) << "if-body was not a begin-end block.";
     // If body is a null statement, attach it to the previous partition.
     AttachTrailingSemicolonToPreviousPartition(partition_ptr);
@@ -1821,7 +1818,7 @@ static void PushEndIntoElsePartition(TokenPartitionTree* partition_ptr) {
   auto* end_partition = &RightmostDescendant(if_clause_partition);
   auto* end_parent = verible::MergeLeafIntoNextLeaf(end_partition);
   // if moving leaf results in any singleton partitions, hoist.
-  if (end_parent != nullptr) {
+  if (end_parent) {
     HoistOnlyChildPartition(end_parent);
   }
 }
@@ -1835,13 +1832,13 @@ static void MergeEndElseWithoutLabel(const SyntaxTreeNode& conditional,
   // decisions independently from each other.
   const auto* if_body_subnode =
       GetAnyControlStatementBody(*GetAnyConditionalIfClause(conditional));
-  if (if_body_subnode == nullptr || !NodeIsBeginEndBlock(*if_body_subnode)) {
+  if (!if_body_subnode || !NodeIsBeginEndBlock(*if_body_subnode)) {
     VLOG(4) << "if-body was not begin-end block";
     return;
   }
   VLOG(4) << "if body was a begin-end block";
   const auto* end_label = GetEndLabel(GetBlockEnd(*if_body_subnode));
-  if (end_label != nullptr) {
+  if (end_label) {
     VLOG(4) << "'end' came with label, no merge";
     return;
   }
@@ -1855,7 +1852,7 @@ static void FlattenElseIfElse(const SyntaxTreeNode& else_clause,
   auto& partition = *partition_ptr;
   const auto& else_body_subnode = *GetAnyControlStatementBody(else_clause);
   if (NodeIsConditionalConstruct(else_body_subnode) &&
-      GetAnyConditionalElseClause(else_body_subnode) != nullptr) {
+      GetAnyConditionalElseClause(else_body_subnode)) {
     FlattenOneChild(partition, partition.Children().size() - 1);
   }
 }
@@ -1864,7 +1861,7 @@ static void ReshapeConditionalConstruct(const SyntaxTreeNode& conditional,
                                         TokenPartitionTree* partition_ptr,
                                         const FormatStyle& style) {
   const auto* else_clause = GetAnyConditionalElseClause(conditional);
-  if (else_clause == nullptr) {
+  if (!else_clause) {
     VLOG(4) << "there was no else clause";
     return;
   }
@@ -2936,7 +2933,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
       AttachTrailingSemicolonToPreviousPartition(&partition);
       // Check body, for kSeqBlock, merge 'begin' with previous sibling
       if (const auto* tbody = GetProceduralTimingControlStatementBody(node);
-          tbody != nullptr && NodeIsBeginEndBlock(*tbody)) {
+          tbody && NodeIsBeginEndBlock(*tbody)) {
         verible::MergeConsecutiveSiblings(&partition, offsets[1] - 1);
         VLOG(4) << "after merge siblings:\n" << partition;
       }
@@ -3031,7 +3028,7 @@ void TreeUnwrapper::ReshapeTokenPartitions(
     }
     case NodeEnum::kDoWhileLoopStatement: {
       if (const auto* dw = GetDoWhileStatementBody(node);
-          dw != nullptr && NodeIsBeginEndBlock(*dw)) {
+          dw && NodeIsBeginEndBlock(*dw)) {
         // between do... and while (...);
         auto& seq_block_partition = partition.Children()[1];
 
@@ -3216,7 +3213,7 @@ void TreeUnwrapper::Visit(const verible::SyntaxTreeLeaf& leaf) {
   // FIXME: Pretty sure that this should be handled in an other way,
   //    e.g. in common/formatting/tree_unwrapper.cc similarly
   //    to StartNewUnwrappedLine()
-  if (CurrentUnwrappedLine().Origin() == nullptr &&
+  if (!CurrentUnwrappedLine().Origin() &&
       CurrentUnwrappedLine().TokensRange().size() == 1) {
     CurrentUnwrappedLine().SetOrigin(&leaf);
   }

@@ -74,11 +74,11 @@ std::ostream &operator<<(std::ostream &stream, GroupBalancing b) {
 }
 
 std::ostream &operator<<(std::ostream &stream, const InterTokenInfo &t) {
+  const int print_preserve_space = t.preserved_space_start ? 1 : 0;
   stream << "{\n  spaces_required: " << t.spaces_required
          << "\n  break_penalty: " << t.break_penalty
          << "\n  break_decision: " << t.break_decision
-         << "\n  preserve_space?: " << (t.preserved_space_start != nullptr)
-         << "\n}";
+         << "\n  preserve_space?: " << print_preserve_space << "\n}";
   return stream;
 }
 
@@ -145,7 +145,7 @@ InterTokenDecision::InterTokenDecision(const InterTokenInfo &info)
 
 static absl::string_view OriginalLeadingSpacesRange(const char *begin,
                                                     const char *end) {
-  if (begin == nullptr) {
+  if (!begin) {
     VLOG(4) << "no original space range";
     return make_string_view_range(end, end);  // empty range
   }
@@ -163,7 +163,7 @@ absl::string_view FormattedToken::OriginalLeadingSpaces() const {
 std::ostream &FormattedToken::FormattedText(std::ostream &stream) const {
   switch (before.action) {
     case SpacingDecision::kPreserve: {
-      if (before.preserved_space_start != nullptr) {
+      if (before.preserved_space_start) {
         // Calculate string_view range of pre-existing spaces, and print that.
         stream << OriginalLeadingSpaces();
       } else {
@@ -196,7 +196,7 @@ absl::string_view PreFormatToken::OriginalLeadingSpaces() const {
 
 size_t PreFormatToken::LeadingSpacesLength() const {
   if (before.break_decision == SpacingOptions::kPreserve &&
-      before.preserved_space_start != nullptr) {
+      before.preserved_space_start) {
     return OriginalLeadingSpaces().length();
   }
   // in other cases (append, wrap), take the spaces_required value.
@@ -204,7 +204,7 @@ size_t PreFormatToken::LeadingSpacesLength() const {
 }
 
 int PreFormatToken::ExcessSpaces() const {
-  if (before.preserved_space_start == nullptr) return 0;
+  if (!before.preserved_space_start) return 0;
   const absl::string_view leading_spaces = OriginalLeadingSpaces();
   int delta = 0;
   if (!absl::StrContains(leading_spaces, "\n")) {
@@ -230,7 +230,7 @@ std::ostream &operator<<(std::ostream &stream, const PreFormatToken &t) {
 void ConnectPreFormatTokensPreservedSpaceStarts(
     const char *buffer_start, std::vector<PreFormatToken> *format_tokens) {
   VLOG(4) << __FUNCTION__;
-  CHECK(buffer_start != nullptr);
+  CHECK(buffer_start);
   for (auto &ftoken : *format_tokens) {
     ftoken.before.preserved_space_start = buffer_start;
     VLOG(4) << "space: " << VisualizeWhitespace(ftoken.OriginalLeadingSpaces());

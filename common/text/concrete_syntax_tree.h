@@ -91,7 +91,7 @@ class SyntaxTreeNode final : public Symbol {
   // Call MakeNode or ExtendNode instead of calling this directly.
   // If node is actually a leaf, just append the leaf.
   void AppendChild(ForwardChildren forwarded_children) {
-    if (forwarded_children.node == nullptr) return;
+    if (!forwarded_children.node) return;
     if (forwarded_children.node->Kind() != SymbolKind::kNode) {
       children_.emplace_back(std::move(forwarded_children.node));
       return;

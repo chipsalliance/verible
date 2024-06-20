@@ -391,7 +391,7 @@ TEST(GetTypeAssignmentFromParamDeclarationTests, BasicTests) {
     const auto param_declarations = FindAllParamDeclarations(*root);
     const auto *type_assignment_symbol = GetTypeAssignmentFromParamDeclaration(
         *param_declarations.front().match);
-    if (type_assignment_symbol == nullptr) {
+    if (!type_assignment_symbol) {
       continue;
     }
     const auto t = type_assignment_symbol->Tag();
@@ -582,7 +582,7 @@ TEST(FindAllParamByNameTest, FindParenGroupOfNamedParam) {
           for (const auto &instance : instances) {
             const auto *paren_group =
                 GetParenGroupFromActualParam(*instance.match);
-            if (paren_group == nullptr) {
+            if (!paren_group) {
               continue;
             }
             paren_groups.emplace_back(
@@ -624,12 +624,12 @@ TEST(FindAllParamTest, FindExpressionFromParameterType) {
           for (const auto &type : types) {
             const auto *type_assignment =
                 GetTypeAssignmentFromParamDeclaration(*type.match);
-            if (type_assignment == nullptr) {
+            if (!type_assignment) {
               continue;
             }
             const auto *expression =
                 GetExpressionFromTypeAssignment(*type_assignment);
-            if (expression == nullptr) {
+            if (!expression) {
               continue;
             }
             expressions.emplace_back(

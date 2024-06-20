@@ -69,7 +69,7 @@ const SymbolPtr &SyntaxTreeNode::operator[](const size_t i) const {
 void SyntaxTreeNode::Accept(TreeVisitorRecursive *visitor) const {
   visitor->Visit(*this);
   for (const auto &child : children_) {
-    if (child != nullptr) child->Accept(visitor);
+    if (child) child->Accept(visitor);
   }
 }
 
@@ -78,7 +78,7 @@ void SyntaxTreeNode::Accept(MutableTreeVisitorRecursive *visitor,
   CHECK_EQ(ABSL_DIE_IF_NULL(this_owned)->get(), this);
   visitor->Visit(*this, this_owned);
   for (auto &child : children_) {
-    if (child != nullptr) child->Accept(visitor, &child);
+    if (child) child->Accept(visitor, &child);
   }
 }
 
@@ -89,11 +89,11 @@ void SyntaxTreeNode::Accept(SymbolVisitor *visitor) const {
 void SetChild_(const SymbolPtr &parent, int child_index, SymbolPtr new_child) {
   CHECK_EQ(ABSL_DIE_IF_NULL(parent)->Kind(), SymbolKind::kNode);
 
-  auto *parent_node = down_cast<SyntaxTreeNode *>(parent.get());
-  CHECK_LT(child_index, static_cast<int>(parent_node->size()));
-  CHECK((*parent_node)[child_index] == nullptr);
+  SyntaxTreeNode &parent_node = down_cast<SyntaxTreeNode &>(*parent);
+  CHECK_LT(child_index, static_cast<int>(parent_node.size()));
+  CHECK(!parent_node[child_index]);
 
-  (*parent_node)[child_index] = std::move(new_child);
+  parent_node[child_index] = std::move(new_child);
 }
 
 }  // namespace verible

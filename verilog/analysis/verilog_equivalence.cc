@@ -70,7 +70,7 @@ static bool LexText(absl::string_view text, TokenSequence *subtokens,
       &lexer, text, subtokens, [&](const TokenInfo &err) { err_tok = err; });
   if (!status.ok()) {
     VLOG(1) << "lex error on: " << err_tok;
-    if (errstream != nullptr) {
+    if (errstream) {
       (*errstream) << "Error lexing text: " << text << std::endl
                    << "subtoken: " << err_tok << std::endl
                    << status.message() << std::endl;
@@ -124,14 +124,14 @@ DiffStatus LexicallyEquivalent(
   {
     const bool left_success = lexer(left_text, &left_tokens);
     if (!left_success) {
-      if (errstream != nullptr) {
+      if (errstream) {
         *errstream << "Lexical error from left input text." << std::endl;
       }
       return DiffStatus::kLeftError;
     }
     const bool right_success = lexer(right_text, &right_tokens);
     if (!right_success) {
-      if (errstream != nullptr) {
+      if (errstream) {
         *errstream << "Lexical error from right input text." << std::endl;
       }
       return DiffStatus::kRightError;
@@ -153,7 +153,7 @@ DiffStatus LexicallyEquivalent(
   const size_t r_size = right_filtered.size();
   const bool size_match = l_size == r_size;
   if (!size_match) {
-    if (errstream != nullptr) {
+    if (errstream) {
       *errstream << "Mismatch in token sequence lengths: " << l_size << " vs. "
                  << r_size << std::endl;
     }
@@ -172,7 +172,7 @@ DiffStatus LexicallyEquivalent(
            r->text() == ")") ||
           (r->token_enum() == verilog_tokentype::MacroCallCloseToEndLine &&
            l->text() == ")"))) {
-      if (errstream != nullptr) {
+      if (errstream) {
         *errstream << "Mismatched token enums.  got: ";
         token_printer(*l, *errstream);
         *errstream << " vs. ";
@@ -227,7 +227,7 @@ DiffStatus LexicallyEquivalent(
     return DiffStatus::kDifferent;
   }
   // else there was a mismatch
-  if (errstream != nullptr) {
+  if (errstream) {
     const size_t mismatch_index =
         std::distance(left_filtered.begin(), mismatch_pair.first);
     const auto &left_token = **mismatch_pair.first;

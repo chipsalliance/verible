@@ -41,7 +41,7 @@ using verible::SyntaxTreeNode;
 using verible::TreeSearchMatch;
 
 bool IsExpression(const verible::SymbolPtr &symbol_ptr) {
-  if (symbol_ptr == nullptr) return false;
+  if (!symbol_ptr) return false;
   if (symbol_ptr->Kind() != SymbolKind::kNode) return false;
   const auto &node = down_cast<const SyntaxTreeNode &>(*symbol_ptr);
   return node.MatchesTag(NodeEnum::kExpression);
@@ -161,9 +161,8 @@ static const verible::TokenInfo *ReferenceBaseIsSimple(
   const auto *params = GetParamListFromUnqualifiedId(unqualified_id);
   // If there are parameters, it is not simple reference.
   // It is most likely a class-qualified static reference.
-  return params == nullptr
-             ? &verible::SymbolCastToLeaf(*unqualified_id.front()).get()
-             : nullptr;
+  return !params ? &verible::SymbolCastToLeaf(*unqualified_id.front()).get()
+                 : nullptr;
 }
 
 const verible::TokenInfo *ReferenceIsSimpleIdentifier(

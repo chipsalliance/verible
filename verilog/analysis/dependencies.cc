@@ -28,8 +28,7 @@ namespace verilog {
 static FileDependencies::symbol_index_type CreateSymbolMapFromSymbolTable(
     const SymbolTableNode &root, const VerilogProject *project) {
   VLOG(1) << __FUNCTION__ << ": collecting definitions";
-  CHECK(project != nullptr)
-      << "VerilogProject* is required for dependency analysis.";
+  CHECK(project) << "VerilogProject* is required for dependency analysis.";
   FileDependencies::symbol_index_type symbols_index;
 
   using SymbolData = FileDependencies::SymbolData;
@@ -38,10 +37,10 @@ static FileDependencies::symbol_index_type CreateSymbolMapFromSymbolTable(
   for (const SymbolTableNode::key_value_type &child : root) {
     const absl::string_view symbol_name(child.first);
     const VerilogSourceFile *file_origin = child.second.Value().file_origin;
-    if (file_origin == nullptr) continue;
+    if (!file_origin) continue;
 
     SymbolData &symbol_data(symbols_index[symbol_name]);
-    if (symbol_data.definer == nullptr) {
+    if (!symbol_data.definer) {
       // Take the first definition, arbitrarily.
       symbol_data.definer = file_origin;
     }
@@ -60,9 +59,9 @@ static FileDependencies::symbol_index_type CreateSymbolMapFromSymbolTable(
 
       const VerilogSourceFile *ref_file_origin =
           project->LookupFileOrigin(ref_id);
-      if (ref_file_origin == nullptr) continue;  // unknown file
+      if (!ref_file_origin) continue;  // unknown file
 
-      if (ref_comp.resolved_symbol != nullptr) {
+      if (ref_comp.resolved_symbol) {
         const VerilogSourceFile *def_file_origin =
             ref_comp.resolved_symbol->Value().file_origin;
         if (ref_file_origin == def_file_origin) {
@@ -102,7 +101,7 @@ CreateFileDependenciesFromSymbolMap(
     const FileDependencies::SymbolData &symbol_info(symbol_entry.second);
     const VerilogSourceFile *def = symbol_info.definer;
     // If no definition is found, then do not create any edges for it.
-    if (def == nullptr) continue;
+    if (!def) continue;
 
     for (const VerilogSourceFile *ref : symbol_info.referencers) {
       // Skip self-edges.

@@ -153,7 +153,7 @@ std::ostream& TokenPartitionTreePrinter::PrintTree(std::ostream& stream,
            // <auto> just means the concatenation of all subpartitions
            << "[<auto>], policy: " << value.PartitionPolicy() << ") @"
            << NodePath(node);
-    if (value.Origin() != nullptr) {
+    if (value.Origin()) {
       stream << ", (origin: ";
       origin_printer(stream, value.Origin());
       stream << ")";
@@ -384,8 +384,7 @@ void MergeConsecutiveSiblings(TokenPartitionTree* tree, size_t pos) {
 static void UpdateTokenRangeLowerBound(TokenPartitionTree* leaf,
                                        TokenPartitionTree* last,
                                        format_token_iterator token_iter) {
-  for (auto* node = leaf; node != nullptr && node != last;
-       node = node->Parent()) {
+  for (auto* node = leaf; node && node != last; node = node->Parent()) {
     node->Value().SpanBackToToken(token_iter);
   }
 }
@@ -395,8 +394,7 @@ static void UpdateTokenRangeLowerBound(TokenPartitionTree* leaf,
 static void UpdateTokenRangeUpperBound(TokenPartitionTree* leaf,
                                        TokenPartitionTree* last,
                                        format_token_iterator token_iter) {
-  for (auto* node = leaf; node != nullptr && node != last;
-       node = node->Parent()) {
+  for (auto* node = leaf; node && node != last; node = node->Parent()) {
     node->Value().SpanUpToToken(token_iter);
   }
 }
@@ -405,7 +403,7 @@ TokenPartitionTree* GroupLeafWithPreviousLeaf(TokenPartitionTree* leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* previous_leaf = PreviousLeaf(*leaf);
-  if (previous_leaf == nullptr) return nullptr;
+  if (!previous_leaf) return nullptr;
   VLOG(4) << "previous leaf:\n" << *previous_leaf;
 
   // If there is no common ancestor, do nothing and return.
@@ -455,7 +453,7 @@ TokenPartitionTree* MergeLeafIntoPreviousLeaf(TokenPartitionTree* leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* target_leaf = PreviousLeaf(*leaf);
-  if (target_leaf == nullptr) return nullptr;
+  if (!target_leaf) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
@@ -501,7 +499,7 @@ TokenPartitionTree* MergeLeafIntoNextLeaf(TokenPartitionTree* leaf) {
   CHECK_NOTNULL(leaf);
   VLOG(4) << "origin leaf:\n" << *leaf;
   auto* target_leaf = NextLeaf(*leaf);
-  if (target_leaf == nullptr) return nullptr;
+  if (!target_leaf) return nullptr;
   VLOG(4) << "target leaf:\n" << *target_leaf;
 
   // If there is no common ancestor, do nothing and return.
@@ -565,7 +563,7 @@ class TokenPartitionTreeWrapper {
   TokenPartitionTreeWrapper() = delete;
 
   TokenPartitionTreeWrapper(const TokenPartitionTreeWrapper& other) {
-    CHECK((other.node_ != nullptr) || (other.unwrapped_line_ != nullptr));
+    CHECK(other.node_ || other.unwrapped_line_);
 
     if (other.node_) {
       node_ = other.node_;
@@ -582,7 +580,7 @@ class TokenPartitionTreeWrapper {
 
   // Concatenate subnodes value with other node value
   UnwrappedLine Value(const TokenPartitionTree& other) const {
-    CHECK((node_ == nullptr) && (unwrapped_line_ != nullptr));
+    CHECK(!node_ && unwrapped_line_);
     UnwrappedLine uw = *unwrapped_line_;
     uw.SpanUpToToken(other.Value().TokensRange().end());
     return uw;
@@ -598,7 +596,7 @@ class TokenPartitionTreeWrapper {
 
   // Fix concatenated value indentation
   void SetIndentationSpaces(int indent) {
-    CHECK((node_ == nullptr) && (unwrapped_line_ != nullptr));
+    CHECK(!node_ && unwrapped_line_);
     unwrapped_line_->SetIndentationSpaces(indent);
   }
 

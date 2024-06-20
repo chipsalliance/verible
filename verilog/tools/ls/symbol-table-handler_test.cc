@@ -256,8 +256,8 @@ TEST(SymbolTableHandlerTest,
   parsed_buffers.GetSubscriptionCallback()(
       verible::lsp::PathToLSPUri(sources_dir + "/a.sv"), &a_buffer);
   symbol_table_handler.BuildProjectSymbolTable();
-  ASSERT_FALSE(parsed_buffers.FindBufferTrackerOrNull(
-                   parameters.textDocument.uri) != nullptr);
+  ASSERT_FALSE(
+      parsed_buffers.FindBufferTrackerOrNull(parameters.textDocument.uri));
 
   std::optional<verible::lsp::Range> edit_range =
       symbol_table_handler.FindRenameableRangeAtCursor(parameters,
@@ -306,8 +306,8 @@ TEST(SymbolTableHandlerTest,
   parsed_buffers.GetSubscriptionCallback()(parameters.textDocument.uri,
                                            &b_buffer);
   symbol_table_handler.BuildProjectSymbolTable();
-  ASSERT_TRUE(parsed_buffers.FindBufferTrackerOrNull(
-                  parameters.textDocument.uri) != nullptr);
+  ASSERT_TRUE(
+      parsed_buffers.FindBufferTrackerOrNull(parameters.textDocument.uri));
 
   std::optional<verible::lsp::Range> edit_range =
       symbol_table_handler.FindRenameableRangeAtCursor(parameters,
@@ -356,8 +356,8 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
   parsed_buffers.GetSubscriptionCallback()(parameters.textDocument.uri,
                                            &a_buffer);
   symbol_table_handler.BuildProjectSymbolTable();
-  ASSERT_TRUE(parsed_buffers.FindBufferTrackerOrNull(
-                  parameters.textDocument.uri) != nullptr);
+  ASSERT_TRUE(
+      parsed_buffers.FindBufferTrackerOrNull(parameters.textDocument.uri));
 
   std::optional<verible::lsp::Range> edit_range =
       symbol_table_handler.FindRenameableRangeAtCursor(parameters,
@@ -408,8 +408,8 @@ TEST(SymbolTableHandlerTest,
   parsed_buffers.GetSubscriptionCallback()(parameters.textDocument.uri,
                                            &a_buffer);
   symbol_table_handler.BuildProjectSymbolTable();
-  ASSERT_TRUE(parsed_buffers.FindBufferTrackerOrNull(
-                  parameters.textDocument.uri) != nullptr);
+  ASSERT_TRUE(
+      parsed_buffers.FindBufferTrackerOrNull(parameters.textDocument.uri));
 
   verible::lsp::WorkspaceEdit edit_range =
       symbol_table_handler.FindRenameLocationsAndCreateEdits(parameters,
@@ -461,8 +461,8 @@ TEST(SymbolTableHandlerTest,
   parsed_buffers.GetSubscriptionCallback()(parameters.textDocument.uri,
                                            &a_buffer);
   symbol_table_handler.BuildProjectSymbolTable();
-  ASSERT_TRUE(parsed_buffers.FindBufferTrackerOrNull(
-                  parameters.textDocument.uri) != nullptr);
+  ASSERT_TRUE(
+      parsed_buffers.FindBufferTrackerOrNull(parameters.textDocument.uri));
 
   verible::lsp::WorkspaceEdit edit_range =
       symbol_table_handler.FindRenameLocationsAndCreateEdits(parameters,

@@ -198,7 +198,7 @@ bool VerifyUnwrappedLines(std::ostream* stream,
         return expect.EqualsUnwrappedLine(&first_diff_stream, actual);
       });
 
-  if (diff.left != nullptr) {
+  if (diff.left) {
     *stream << "error: test case: " << test_case.test_name << std::endl;
     *stream << "first difference at subnode " << verible::NodePath(*diff.left)
             << std::endl;

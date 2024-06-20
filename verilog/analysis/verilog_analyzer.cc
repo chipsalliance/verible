@@ -132,7 +132,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
   VLOG(2) << __FUNCTION__;
   auto analyzer =
       std::make_unique<VerilogAnalyzer>(text, name, preprocess_config);
-  if (analyzer == nullptr) return analyzer;
+  if (!analyzer) return analyzer;
   const absl::string_view text_base = analyzer->Data().Contents();
   // If there is any lexical error, stop right away.
   const auto lex_status = analyzer->Tokenize();
@@ -146,7 +146,7 @@ std::unique_ptr<VerilogAnalyzer> VerilogAnalyzer::AnalyzeAutomaticMode(
     VLOG(1) << "Analyzing using parse mode directive: " << parse_mode;
     auto mode_analyzer = AnalyzeVerilogWithMode(text->AsStringView(), name,
                                                 parse_mode, preprocess_config);
-    if (mode_analyzer != nullptr) return mode_analyzer;
+    if (mode_analyzer) return mode_analyzer;
     // Silently ignore any unknown parsing modes.
   }
 
@@ -294,7 +294,7 @@ absl::Status VerilogAnalyzer::Analyze() {
   max_used_stack_size_ = parser.MaxUsedStackSize();
 
   // Expand macro arguments that are parseable as expressions.
-  if (parse_status_.ok() && Data().SyntaxTree() != nullptr) {
+  if (parse_status_.ok() && Data().SyntaxTree()) {
     ExpandMacroCallArgExpressions();
   }
 
@@ -363,7 +363,7 @@ class MacroCallArgExpander : public MutableTreeVisitorRecursive {
         // and causing excessive reallocation).
         TextStructureView::DeferredExpansion& analysis_slot =
             InsertKeyOrDie(&subtrees_to_splice_, token.left(full_text_));
-        CHECK(analysis_slot.subanalysis.get() == nullptr)
+        CHECK(!analysis_slot.subanalysis)
             << "Cannot expand the same location twice.  Token: " << token;
         analysis_slot.expansion_point = leaf_owner;
         analysis_slot.subanalysis = expr_analyzer->ReleaseTextStructure();

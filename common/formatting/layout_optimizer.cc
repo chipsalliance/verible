@@ -678,14 +678,14 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
   // Setting indentation for a line that is going to be appended is invalid and
   // probably has been done for some reason that is not going to work as
   // intended.
-  LOG_IF(WARNING, ((relative_indentation > 0) && (current_node_ != nullptr)))
+  LOG_IF(WARNING, ((relative_indentation > 0) && current_node_))
       << "Discarding indentation of a line that's going to be appended.";
 
   switch (layout.Type()) {
     case LayoutType::kLine: {
       CHECK(layout_tree.Children().empty());
 
-      if (current_node_ == nullptr) {
+      if (!current_node_) {
         auto uwline = UnwrappedLine(current_indentation_spaces_,
                                     layout.TokensRange().begin(),
                                     PartitionPolicyEnum::kAlreadyFormatted);
@@ -744,7 +744,7 @@ void TreeReconstructor::TraverseTree(const LayoutTree& layout_tree) {
 
       // Calculate indent for 2nd and further lines.
       int indentation = current_indentation_spaces_;
-      if (current_node_ != nullptr) {
+      if (current_node_) {
         indentation = AlreadyFormattedPartitionLength(*current_node_) +
                       layout.SpacesBefore();
       }

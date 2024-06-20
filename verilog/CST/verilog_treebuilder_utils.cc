@@ -49,7 +49,7 @@ std::string EmbedInClassMethod(absl::string_view text) {
 void ExpectString(const verible::SymbolPtr &symbol,
                   absl::string_view expected) {
   const auto *leaf = down_cast<const verible::SyntaxTreeLeaf *>(symbol.get());
-  CHECK(leaf != nullptr) << "expected: " << expected;
+  CHECK(leaf) << "expected: " << expected;
   CHECK_EQ(leaf->get().text(), expected);
 }
 

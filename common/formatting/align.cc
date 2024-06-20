@@ -325,8 +325,8 @@ struct AlignedColumnConfiguration {
   // constructs.
   const SyntaxTreeLeaf* leaf = GetLeftmostLeaf(symbol);
   // It is possible for a node to be empty, in which case, ignore.
-  if (leaf == nullptr) return nullptr;
-  if (parent_column->Parent() != nullptr && parent_column->Children().empty()) {
+  if (!leaf) return nullptr;
+  if (parent_column->Parent() && parent_column->Children().empty()) {
     // Starting token of a column and its first subcolumn must be the same.
     // (subcolumns overlap their parent column).
     CHECK_EQ(parent_column->Value().starting_token, leaf->get());
@@ -559,7 +559,7 @@ static void FillAlignmentRow(
       CHECK(token_iter != remaining_tokens_range.end());
       remaining_tokens_range.set_begin(token_iter);
 
-      if (prev_cell_tokens != nullptr) prev_cell_tokens->set_end(token_iter);
+      if (prev_cell_tokens) prev_cell_tokens->set_end(token_iter);
 
       AlignmentRow& row_cell = verible::DescendPath(
           *row, column_loc_iter->second.begin(), column_loc_iter->second.end());

@@ -57,7 +57,7 @@ template <typename T1, typename T2, typename T3>
 verible::SymbolPtr MakeParenGroup(T1 &&left_paren, T2 &&contents,
                                   T3 &&right_paren) {
   ExpectString(left_paren, "(");
-  if (contents != nullptr) {
+  if (contents != nullptr) {  // NOLINT
     ExpectString(right_paren, ")");
   }  // else right_paren might be dropped due to error-recovery
   return verible::MakeTaggedNode(

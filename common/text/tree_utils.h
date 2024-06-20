@@ -141,7 +141,7 @@ const SyntaxTreeLeaf &CheckSymbolAsLeaf(const Symbol &symbol, E token_enum) {
 // Succeeds if symbol is a node, or nullptr (returning nullptr).
 template <typename SPtr>
 const SyntaxTreeNode *CheckOptionalSymbolAsNode(const SPtr &symbol) {
-  if (symbol == nullptr) return nullptr;
+  if (!symbol) return nullptr;
   return &SymbolCastToNode(*symbol);
 }
 
@@ -150,7 +150,7 @@ const SyntaxTreeNode *CheckOptionalSymbolAsNode(const SPtr &symbol) {
 template <typename SPtr, typename E>
 const SyntaxTreeNode *CheckOptionalSymbolAsNode(const SPtr &symbol,
                                                 E node_enum) {
-  if (symbol == nullptr) return nullptr;
+  if (!symbol) return nullptr;
   return &CheckSymbolAsNode(*symbol, node_enum);
 }
 
@@ -166,7 +166,7 @@ const SyntaxTreeNode *CheckOptionalSymbolAsNode(const std::nullptr_t &symbol,
 template <typename SPtr, typename E>
 const SyntaxTreeLeaf *CheckOptionalSymbolAsLeaf(const SPtr &symbol,
                                                 E token_enum) {
-  if (symbol == nullptr) return nullptr;
+  if (!symbol) return nullptr;
   return &CheckSymbolAsLeaf(*symbol, token_enum);
 }
 

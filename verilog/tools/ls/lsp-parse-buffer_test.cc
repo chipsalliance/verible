@@ -77,7 +77,7 @@ TEST(BufferTrackerConatainer, ParseUpdateNotification) {
   container.AddChangeListener([&update_remove_count, &last_text_structure](
                                   const std::string &,
                                   const BufferTracker *tracker) {
-    if (tracker != nullptr) {
+    if (tracker) {
       ++update_remove_count;
     } else {
       --update_remove_count;

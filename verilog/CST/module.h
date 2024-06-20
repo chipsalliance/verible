@@ -36,7 +36,7 @@ verible::SymbolPtr MakeModuleHeader(T0 &&keyword, T1 &&lifetime, T2 &&id,
                                     T3 &&imports, T4 &&parameters, T5 &&ports,
                                     T6 &&attribute, T7 &&semi) {
   verible::SymbolCastToLeaf(*keyword);
-  if (lifetime != nullptr) verible::SymbolCastToLeaf(*lifetime);
+  if (lifetime) verible::SymbolCastToLeaf(*lifetime);
   verible::SymbolCastToLeaf(*id);  // SymbolIdentifier or other identifier
   verible::CheckOptionalSymbolAsNode(imports, NodeEnum::kPackageImportList);
   verible::CheckOptionalSymbolAsNode(parameters,

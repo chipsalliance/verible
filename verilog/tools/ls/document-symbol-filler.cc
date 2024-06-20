@@ -172,7 +172,7 @@ void DocumentSymbolFiller::Visit(const verible::SyntaxTreeNode &node) {
       if (child) child->Accept(this);
     }
     // Update our parent with what we found
-    if (parent->children == nullptr) {
+    if (parent->children.is_null()) {
       if (parent->range.start.line == kUninitializedStartLine) {
         parent->range.start = node_symbol.range.start;
       }

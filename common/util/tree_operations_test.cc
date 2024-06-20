@@ -155,7 +155,7 @@ class SimpleNode {
 
   friend std::ostream& operator<<(std::ostream& stream,
                                   const ThisType* self_ptr) {
-    if (self_ptr == nullptr) {
+    if (!self_ptr) {
       return stream << "nullptr";
     }
     return stream << absl::StreamFormat("%p (%s; parent=%p)\n", self_ptr,
@@ -257,7 +257,7 @@ class IntNode {
 
   friend std::ostream& operator<<(std::ostream& stream,
                                   const IntNode* self_ptr) {
-    if (self_ptr == nullptr) {
+    if (!self_ptr) {
       return stream << "nullptr";
     }
     return stream << absl::StreamFormat("%p (%d)\n", self_ptr,

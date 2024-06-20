@@ -69,7 +69,7 @@ static const Matcher &ParamMatcher() {
 
 static bool HasStringAssignment(const verible::Symbol &param_decl) {
   const auto *s = GetParamAssignExpression(param_decl);
-  if (s == nullptr) return false;
+  if (!s) return false;
   // We can't really do expression evaluation and determine the type of the
   // RHS, so here we focus on the simple case in which the RHS is a
   // string literal.

@@ -55,7 +55,7 @@ const LintRuleDescriptor &OneModulePerFileRule::GetDescriptor() {
 void OneModulePerFileRule::Lint(const TextStructureView &text_structure,
                                 absl::string_view) {
   const auto &tree = text_structure.SyntaxTree();
-  if (tree == nullptr) return;
+  if (!tree) return;
 
   auto module_matches = FindAllModuleDeclarations(*tree);
   if (module_matches.empty()) {

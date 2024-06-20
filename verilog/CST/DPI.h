@@ -41,7 +41,7 @@ verible::SymbolPtr MakeDPIImport(T0 &&keyword, T1 &&spec, T2 &&property,
                                  T3 &&id, T4 &&equals, T5 &&proto) {
   verible::CheckSymbolAsLeaf(*keyword, verilog_tokentype::TK_import);
   verible::CheckSymbolAsLeaf(*spec, verilog_tokentype::TK_StringLiteral);
-  if (id != nullptr) {
+  if (id) {
     CHECK(IsIdentifierLike(
         verilog_tokentype(verible::SymbolCastToLeaf(*id).get().token_enum())));
   }

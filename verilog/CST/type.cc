@@ -154,7 +154,7 @@ std::vector<verible::TreeSearchMatch> FindAllInterfaceTypes(
 
 bool IsStorageTypeOfDataTypeSpecified(const verible::Symbol &symbol) {
   const auto *storage = GetBaseTypeFromDataType(symbol);
-  return (storage != nullptr);
+  return (storage);
 }
 
 const verible::SyntaxTreeLeaf *GetIdentifierFromTypeDeclaration(
@@ -176,7 +176,7 @@ const verible::Symbol *GetBaseTypeFromDataType(
   const auto &children = local_root->children();
   verible::Symbol *last_child = nullptr;
   for (auto &child : children) {
-    if (child != nullptr && child->Kind() == verible::SymbolKind::kNode) {
+    if (child && child->Kind() == verible::SymbolKind::kNode) {
       last_child = child.get();
     }
   }
@@ -239,9 +239,8 @@ const verible::SyntaxTreeNode *GetStructOrUnionOrEnumTypeFromDataType(
     const verible::Symbol &data_type) {
   const verible::Symbol *type = GetBaseTypeFromDataType(data_type);
 
-  if (type == nullptr ||
-      (NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive &&
-       NodeEnum(type->Tag().tag) != NodeEnum::kLocalRoot)) {
+  if (!type || (NodeEnum(type->Tag().tag) != NodeEnum::kDataTypePrimitive &&
+                NodeEnum(type->Tag().tag) != NodeEnum::kLocalRoot)) {
     return nullptr;
   }
   const verible::Symbol *inner_type =
@@ -258,7 +257,7 @@ const verible::SyntaxTreeNode *GetStructOrUnionOrEnumTypeFromInstantiationType(
     const verible::Symbol &instantiation_type) {
   const verible::Symbol *type =
       GetDataTypeFromInstantiationType(instantiation_type);
-  if (type == nullptr || NodeEnum(type->Tag().tag) != NodeEnum::kDataType) {
+  if (!type || NodeEnum(type->Tag().tag) != NodeEnum::kDataType) {
     return nullptr;
   }
   return GetStructOrUnionOrEnumTypeFromDataType(*type);
@@ -299,7 +298,7 @@ const verible::SyntaxTreeNode *GetParamListFromInstantiationType(
     const verible::Symbol &instantiation_type) {
   const verible::Symbol *base_type =
       GetBaseTypeFromInstantiationType(instantiation_type);
-  if (base_type == nullptr) {
+  if (!base_type) {
     return nullptr;
   }
   return GetParamListFromBaseType(*base_type);
@@ -311,8 +310,7 @@ GetSymbolIdentifierFromDataTypeImplicitIdDimensions(
   // The Identifier can be at index 1 or 2.
   const verible::Symbol *identifier = verible::GetSubtreeAsSymbol(
       struct_union_member, NodeEnum::kDataTypeImplicitIdDimensions, 2);
-  if (identifier != nullptr &&
-      identifier->Kind() == verible::SymbolKind::kLeaf) {
+  if (identifier && identifier->Kind() == verible::SymbolKind::kLeaf) {
     return {&verible::SymbolCastToLeaf(*identifier), 2};
   }
   return {verible::GetSubtreeAsLeaf(struct_union_member,
@@ -331,8 +329,7 @@ const verible::SyntaxTreeLeaf *GetNonprimitiveTypeOfDataTypeImplicitDimensions(
   const verible::Symbol *type_id = GetTypeIdentifierFromBaseType(*base_type);
   if (!type_id) return nullptr;
   const verible::Symbol *identifier = verible::GetLeftmostLeaf(*type_id);
-  if (identifier == nullptr ||
-      identifier->Kind() != verible::SymbolKind::kLeaf) {
+  if (!identifier || identifier->Kind() != verible::SymbolKind::kLeaf) {
     return nullptr;
   }
   return &verible::SymbolCastToLeaf(*identifier);
@@ -389,7 +386,7 @@ const verible::SyntaxTreeNode *GetTypeIdentifierFromDataType(
     return nullptr;
   }
   const verible::Symbol *base_type = GetBaseTypeFromDataType(data_type);
-  if (base_type == nullptr) return nullptr;
+  if (!base_type) return nullptr;
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 

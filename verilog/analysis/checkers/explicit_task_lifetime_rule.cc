@@ -75,7 +75,7 @@ void ExplicitTaskLifetimeRule::HandleSymbol(const verible::Symbol &symbol,
     if (IdIsQualified(*task_id)) return;
 
     // Make sure the lifetime was set
-    if (GetTaskLifetime(symbol) == nullptr) {
+    if (!GetTaskLifetime(symbol)) {
       // Point to the task id.
       const verible::TokenInfo token(SymbolIdentifier,
                                      verible::StringSpanOfSymbol(*task_id));

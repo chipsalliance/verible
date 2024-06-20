@@ -22,10 +22,10 @@ namespace verible {
 
 bool EqualTrees(const Symbol *lhs, const Symbol *rhs,
                 const TokenComparator &compare_tokens) {
-  if (lhs == nullptr && rhs == nullptr) {
+  if (!lhs && !rhs) {
     return true;
   }
-  if (lhs == nullptr || rhs == nullptr) {
+  if (!lhs || !rhs) {
     return false;
   }
   const Symbol *rhs_pointer = rhs;
