@@ -14,17 +14,21 @@
 
 #include "verilog/analysis/checkers/enum_name_style_rule.h"
 
+#include <memory>
 #include <set>
+#include <string>
 
-#include "absl/strings/match.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/strings/naming_utils.h"
+#include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/util/logging.h"
+#include "re2/re2.h"
 #include "verilog/CST/type.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
@@ -40,45 +44,73 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view kMessage =
-    "Enum names must use lower_snake_case naming convention "
-    "and end with _t or _e.";
+static constexpr absl::string_view style_default_regex = "[a-z_0-9]+(_t|_e)";
 
-const LintRuleDescriptor& EnumNameStyleRule::GetDescriptor() {
+EnumNameStyleRule::EnumNameStyleRule()
+    : style_regex_(
+          std::make_unique<re2::RE2>(style_default_regex, re2::RE2::Quiet)),
+      violation_message_(absl::StrCat(
+          "Enum type name does not match the naming convention ",
+          "defined by regex pattern: ", style_regex_->pattern())) {}
+
+const LintRuleDescriptor &EnumNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "enum-name-style",
       .topic = "enumerations",
       .desc =
-          "Checks that `enum` names use lower_snake_case naming convention "
-          "and end with '_t' or '_e'.",
+          "Checks that enum type names follow a naming convention defined by "
+          "a RE2 regular expression.\n"
+          "Example common regex patterns:\n"
+          "  lower_snake_case: \"[a-z_0-9]+\"\n"
+          "  UPPER_SNAKE_CASE: \"[A-Z_0-9]+\"\n"
+          "  Title_Snake_Case: \"[A-Z]+[a-z0-9]*(_[A-Z0-9]+[a-z0-9]*)*\"\n"
+          "  Sentence_snake_case: \"([A-Z0-9]+[a-z0-9]*_?)([a-z0-9]*_*)*\"\n"
+          "  camelCase: \"([a-z0-9]+[A-Z0-9]*)+\"\n"
+          "  PascalCaseRegexPattern: \"([A-Z0-9]+[a-z0-9]*)+\"\n"
+          "RE2 regular expression syntax documentation can be found at "
+          "https://github.com/google/re2/wiki/syntax\n",
+      .param = {{"style_regex", std::string(style_default_regex),
+                 "A regex used to check enum type name style."}},
   };
   return d;
 }
 
-static const Matcher& TypedefMatcher() {
+static const Matcher &TypedefMatcher() {
   static const Matcher matcher(NodekTypeDeclaration());
   return matcher;
 }
 
-void EnumNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                     const SyntaxTreeContext& context) {
+void EnumNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                     const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (TypedefMatcher().Matches(symbol, &manager)) {
     // TODO: This can be changed to checking type of child (by index) when we
     // have consistent shape for all kTypeDeclaration nodes.
     if (!FindAllEnumTypes(symbol).empty()) {
-      const auto* identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
+      const auto *identifier_leaf = GetIdentifierFromTypeDeclaration(symbol);
       const auto name = ABSL_DIE_IF_NULL(identifier_leaf)->get().text();
-      if (!verible::IsLowerSnakeCaseWithDigits(name) ||
-          !(absl::EndsWith(name, "_t") || absl::EndsWith(name, "_e"))) {
+      if (!RE2::FullMatch(name, *style_regex_)) {
         violations_.insert(
-            LintViolation(identifier_leaf->get(), kMessage, context));
+            LintViolation(identifier_leaf->get(), violation_message_, context));
       }
     } else {
       // Not an enum definition
       return;
     }
   }
+}
+
+absl::Status EnumNameStyleRule::Configure(absl::string_view configuration) {
+  using verible::config::SetRegex;
+  absl::Status s = verible::ParseNameValues(
+      configuration, {{"style_regex", SetRegex(&style_regex_)}});
+  if (!s.ok()) return s;
+
+  violation_message_ =
+      absl::StrCat("Enum type name does not match the naming convention ",
+                   "defined by regex pattern: ", style_regex_->pattern());
+
+  return absl::OkStatus();
 }
 
 LintRuleStatus EnumNameStyleRule::Report() const {

@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 TEST(EnumNameStyleRuleTest, ValidEnumNames) {
@@ -153,6 +154,57 @@ TEST(EnumNameStyleRuleTest, UncheckedCases) {
   };
   RunLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(kTestCases);
 }
+
+TEST(EnumNameStyleRuleTest, UpperSnakeCaseTests) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {""},
+      {"typedef enum BAZ_T;"},
+      {"typedef enum GOOD_NAME_T;"},
+      {"typedef enum B_A_Z_T;"},
+      {"typedef enum BAZ_E;"},
+      {"typedef enum GOOD_NAME_E;"},
+      {"typedef enum B_A_Z_E;"},
+      {"typedef enum { OneValue, TwoValue } MY_NAME_E;\nmy_name_e a_instance;"},
+      {"typedef enum logic [1:0] { Fir, Oak, Pine } TREE_E;\ntree_e a_tree;"},
+      {"typedef enum { Red=3, Green=5 } STATE_E;\nstate_e a_state;"},
+      {"typedef // We declare a type here"
+       "enum { Idle, Busy } STATUS_E;\nstatus_e a_status;"},
+      {"typedef enum { OneValue, TwoValue } MY_NAME_T;\nmy_name_t a_instance;"},
+      {"typedef enum logic [1:0] { Fir, Oak, Pine } TREE_T;\ntree_t a_tree;"},
+      {"typedef enum { Red=3, Green=5 } STATE_T;\nstate_t a_state;"},
+      {"typedef // We declare a type here"
+       "enum { Idle, Busy } STATUS_T;\nstatus_t a_status;"},
+      // Declarations inside a class
+      {"class foo;\n"
+       "typedef enum { Red=3, Green=5 } STATE_E;\n"
+       "state_e a_state;\n"
+       "endclass"},
+      {"class foo;\n"
+       "typedef enum logic [1:0] { Fir, Oak, Pine } TREE_T;\n"
+       "tree_t a_tree;\n"
+       "endclass"},
+      // Declarations inside a module
+      {"module foo;\n"
+       "typedef enum { Red=3, Green=5 } STATE_E;\n"
+       "state_e a_state;\n"
+       "endmodule"},
+      {"module foo;\n"
+       "typedef enum logic [1:0] { Fir, Oak, Pine } TREE_T;\n"
+       "tree_t a_tree;\n"
+       "endmodule"},
+      {"typedef enum ", {kToken, "HelloWorld"}, ";"},
+      {"typedef enum ", {kToken, "_baz"}, ";"},
+      {"typedef enum ", {kToken, "Bad_name"}, ";"},
+      {"typedef enum ", {kToken, "bad_Name"}, ";"},
+      {"typedef enum ", {kToken, "Bad2"}, ";"},
+
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, EnumNameStyleRule>(
+      kTestCases, "style_regex:[A-Z_0-9]+(_T|_E)");
+}
+
 }  // namespace
 }  // namespace analysis
 }  // namespace verilog
