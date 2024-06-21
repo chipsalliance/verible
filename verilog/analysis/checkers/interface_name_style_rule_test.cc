@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 TEST(InterfaceNameStyleRuleTest, ValidInterfaceDeclarationNames) {
@@ -88,6 +89,30 @@ TEST(InterfaceNameStyleRuleTest, InvalidInterfaceDeclarationNames) {
       {"interface ", {kToken, "foo_"}, "; endinterface"},
   };
   RunLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(kTestCases);
+}
+
+TEST(InterfaceNameStyleRuleTest, UpperSnakeCaseTests) {
+  constexpr int kToken = SymbolIdentifier;
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"interface FOO_IF; endinterface"},
+      {"interface GOOD_NAME_IF; endinterface"},
+      {"interface B_A_Z_IF; endinterface"},
+      {"interface ", {kToken, "HelloWorld"}, "; endinterface"},
+      {"interface ", {kToken, "_baz"}, "; endinterface"},
+      {"interface ", {kToken, "Bad_name"}, "; endinterface"},
+      {"interface ", {kToken, "bad_Name"}, "; endinterface"},
+      {"interface ", {kToken, "Bad2"}, "; endinterface"},
+      {"interface ", {kToken, "very_Bad_name"}, "; endinterface"},
+      {"interface ", {kToken, "wrong_ending"}, "; endinterface"},
+      {"interface ", {kToken, "_if"}, "; endinterface"},
+      {"interface ", {kToken, "_i_f"}, "; endinterface"},
+      {"interface ", {kToken, "i_f"}, "; endinterface"},
+      {"interface ", {kToken, "_"}, "; endinterface"},
+      {"interface ", {kToken, "foo_"}, "; endinterface"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, InterfaceNameStyleRule>(
+      kTestCases, "style_regex:[A-Z_0-9]+(_IF)");
 }
 
 }  // namespace
