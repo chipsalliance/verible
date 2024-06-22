@@ -1566,15 +1566,17 @@ cc_library(
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
-        "//common/strings:naming-utils",
+        "//common/text:config-utils",
         "//common/text:token-info",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-lexer",
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_googlesource_code_re2//:re2",
     ],
     alwayslink = 1,
 )

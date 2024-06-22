@@ -15,29 +15,39 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_MACRO_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_MACRO_NAME_STYLE_RULE_H_
 
+#include <memory>
 #include <set>
+#include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/text/token_info.h"
+#include "re2/re2.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
 namespace analysis {
 
-// MacroNameStyleRule checks that every macro name contains only all capital
-// letters, underscores, and digits.
+// MacroNameStyleRule checks that macro names follow
+// a naming convention matching a regex pattern. Exceptions
+// are made for uvm_* and UVM_* named macros.
 class MacroNameStyleRule : public verible::TokenStreamLintRule {
  public:
   using rule_type = verible::TokenStreamLintRule;
 
+  MacroNameStyleRule();
+
   static const LintRuleDescriptor &GetDescriptor();
 
-  MacroNameStyleRule() = default;
+  std::string CreateViolationMessage();
 
   void HandleToken(const verible::TokenInfo &token) final;
 
   verible::LintRuleStatus Report() const final;
+
+  absl::Status Configure(absl::string_view configuration) final;
 
  private:
   // States of the internal token-based analysis.
@@ -50,6 +60,11 @@ class MacroNameStyleRule : public verible::TokenStreamLintRule {
   State state_ = State::kNormal;
 
   std::set<verible::LintViolation> violations_;
+
+  // A regex to check the style against
+  std::unique_ptr<re2::RE2> style_regex_;
+  std::unique_ptr<re2::RE2> style_lower_snake_case_regex_;
+  std::unique_ptr<re2::RE2> style_upper_snake_case_regex_;
 };
 
 }  // namespace analysis
