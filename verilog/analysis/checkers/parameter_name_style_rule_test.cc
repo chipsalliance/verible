@@ -119,7 +119,8 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
 
   // Make sure configuration parameter name matches corresponding style
 
-  {  // parameter:CamelCase, localparam:ALL_CAPS
+  {  // parameter:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? (PascalCase),
+     // localparam:[A-Z_0-9]+ (UPPER_SNAKE_CASE)
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int FooBar = 1; endpackage"},
         {"package a; parameter int ", {kToken, "FOO_BAR"}, " = 1; endpackage"},
@@ -127,9 +128,12 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style:CamelCase;localparam_style:ALL_CAPS");
+        kTestCases,
+        "parameter_style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?;localparam_"
+        "style_regex:[A-Z_0-9]+");
   }
-  {  // parameter:ALL_CAPS, localparam:CamelCase
+  {  // parameter:[A-Z_0-9]+ (UPPER_SNAKE_CASE),
+     // localparam:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? (PascalCase)
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int ", {kToken, "FooBar"}, " = 1; endpackage"},
         {"package a; parameter int FOO_BAR = 1; endpackage"},
@@ -137,13 +141,16 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
         {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style:ALL_CAPS;localparam_style:CamelCase");
+        kTestCases,
+        "parameter_style_regex:[A-Z_0-9]+;localparam_style_regex:([A-Z0-9]+[a-"
+        "z0-9]*)+(_[0-9]+)?");
   }
 }
 
 TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
   constexpr int kToken = SymbolIdentifier;
-  {  // CamelCase|ALL_CAPS configured
+  {  // (([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+)
+     // (PascalCase|UPPER_SNAKE_CASE) configured
     const std::initializer_list<LintTestCase> kTestCases = {
         // Single-letter uppercase matches both styles:
         {"package a; parameter int N = 1; endpackage"},
@@ -161,10 +168,11 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
         kTestCases,
-        "parameter_style:CamelCase|ALL_CAPS;"
-        "localparam_style:CamelCase|ALL_CAPS");
+        "parameter_style_regex:(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+);"
+        "localparam_style_regex:(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+"
+        ")");
   }
-  {  // CamelCase configured
+  {  // ([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? configured (PascalCase)
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
@@ -178,9 +186,11 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style:CamelCase;localparam_style:CamelCase");
+        kTestCases,
+        "parameter_style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?;localparam_"
+        "style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?");
   }
-  {  // ALL_CAPS configured
+  {  // ([A-Z_0-9]+) configured (UPPER_SNAKE_CASE)
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
@@ -194,9 +204,11 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style:ALL_CAPS;localparam_style:ALL_CAPS");
+        kTestCases,
+        "parameter_style_regex:([A-Z_0-9]+);localparam_style_regex:([A-Z_0-9]+"
+        ")");
   }
-  {  // No styles configured
+  {  // No styles enforcement (.*)
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int no_style = 1; endpackage"},
@@ -210,7 +222,7 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style:;localparam_style:");
+        kTestCases, "parameter_style_regex:.*;localparam_style_regex:.*");
   }
 }
 

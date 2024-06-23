@@ -1668,7 +1668,6 @@ cc_library(
         "//common/analysis:syntax-tree-lint-rule",
         "//common/analysis/matcher",
         "//common/analysis/matcher:bound-symbol-manager",
-        "//common/strings:naming-utils",
         "//common/text:config-utils",
         "//common/text:symbol",
         "//common/text:syntax-tree-context",
@@ -1681,6 +1680,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_googlesource_code_re2//:re2",
     ],
     alwayslink = 1,
 )

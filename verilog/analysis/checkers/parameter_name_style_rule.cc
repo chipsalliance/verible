@@ -14,11 +14,9 @@
 
 #include "verilog/analysis/checkers/parameter_name_style_rule.h"
 
-#include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -26,11 +24,11 @@
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/matcher/bound_symbol_manager.h"
 #include "common/analysis/matcher/matcher.h"
-#include "common/strings/naming_utils.h"
 #include "common/text/config_utils.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
 #include "common/text/token_info.h"
+#include "re2/re2.h"
 #include "verilog/CST/parameters.h"
 #include "verilog/CST/verilog_matchers.h"
 #include "verilog/analysis/descriptions.h"
@@ -40,27 +38,47 @@
 namespace verilog {
 namespace analysis {
 
+VERILOG_REGISTER_LINT_RULE(ParameterNameStyleRule);
+
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using Matcher = verible::matcher::Matcher;
 
-// Register ParameterNameStyleRule.
-VERILOG_REGISTER_LINT_RULE(ParameterNameStyleRule);
+// PascalCase, may end in _[0-9]+
+static constexpr absl::string_view localparam_default_regex =
+    "([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?";
+
+// PascalCase (may end in _[0-9]+) or UPPER_SNAKE_CASE
+static constexpr absl::string_view parameter_default_regex =
+    "(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+)";
+
+ParameterNameStyleRule::ParameterNameStyleRule()
+    : localparam_style_regex_(std::make_unique<re2::RE2>(
+          localparam_default_regex, re2::RE2::Quiet)),
+      parameter_style_regex_(std::make_unique<re2::RE2>(parameter_default_regex,
+                                                        re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &ParameterNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "parameter-name-style",
       .topic = "constants",
       .desc =
-          "Checks that non-type parameter and localparam names follow at least "
-          "one of the naming conventions from a choice of "
-          "CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). "
-          "Empty configuration: no style enforcement.",
-      .param = {{"localparam_style", "CamelCase", "Style of localparam name"},
-                {"parameter_style", "CamelCase|ALL_CAPS",
-                 "Style of parameter names"}},
+          "Checks that parameter and localparm names conform to a naming "
+          "convention defined by RE2 regular expressions. The default regex "
+          "pattern for boht localparam and parameter names is PascalCase with "
+          "an optional _digit suffix. Parameters may also be UPPER_SNAKE_CASE. "
+          "Refer "
+          "to "
+          "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
+          "lint#readme for more detail on verible regex patterns.",
+      .param = {{"localparam_style_regex",
+                 std::string(localparam_default_regex),
+                 "A regex used to check localparam name style."},
+                {"parameter_style_regex", std::string(parameter_default_regex),
+                 "A regex used to check parameter name style."}},
   };
+
   return d;
 }
 
@@ -69,21 +87,16 @@ static const Matcher &ParamDeclMatcher() {
   return matcher;
 }
 
-std::string ParameterNameStyleRule::ViolationMsg(absl::string_view symbol_type,
-                                                 uint32_t allowed_bitmap) {
-  // TODO(hzeller): there are multiple places in this file referring to the
-  // same string representations of these options.
-  static constexpr std::pair<uint32_t, const char *> kBitNames[] = {
-      {kUpperCamelCase, "CamelCase"}, {kAllCaps, "ALL_CAPS"}};
-  std::string bit_list;
-  for (const auto &b : kBitNames) {
-    if (allowed_bitmap & b.first) {
-      if (!bit_list.empty()) bit_list.append(" or ");
-      bit_list.append(b.second);
-    }
-  }
-  return absl::StrCat("Non-type ", symbol_type, " names must be styled with ",
-                      bit_list);
+std::string ParameterNameStyleRule::CreateLocalparamViolationMessage() {
+  return absl::StrCat(
+      "Localparam name does not match the naming convention ",
+      "defined by regex pattern: ", localparam_style_regex_->pattern());
+}
+
+std::string ParameterNameStyleRule::CreateParameterViolationMessage() {
+  return absl::StrCat(
+      "Parameter name does not match the naming convention ",
+      "defined by regex pattern: ", parameter_style_regex_->pattern());
 }
 
 void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
@@ -92,28 +105,29 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   if (ParamDeclMatcher().Matches(symbol, &manager)) {
     if (IsParamTypeDeclaration(symbol)) return;
 
-    const auto param_decl_token = GetParamKeyword(symbol);
+    const verilog_tokentype param_decl_token = GetParamKeyword(symbol);
 
     auto identifiers = GetAllParameterNameTokens(symbol);
 
     for (const auto *id : identifiers) {
-      const auto param_name = id->text();
-      uint32_t observed_style = 0;
-      if (verible::IsUpperCamelCaseWithDigits(param_name)) {
-        observed_style |= kUpperCamelCase;
-      }
-      if (verible::IsNameAllCapsUnderscoresDigits(param_name)) {
-        observed_style |= kAllCaps;
-      }
-      if (param_decl_token == TK_localparam && localparam_allowed_style_ &&
-          (observed_style & localparam_allowed_style_) == 0) {
-        violations_.insert(LintViolation(
-            *id, ViolationMsg("localparam", localparam_allowed_style_),
-            context));
-      } else if (param_decl_token == TK_parameter && parameter_allowed_style_ &&
-                 (observed_style & parameter_allowed_style_) == 0) {
-        violations_.insert(LintViolation(
-            *id, ViolationMsg("parameter", parameter_allowed_style_), context));
+      const auto name = id->text();
+      switch (param_decl_token) {
+        case TK_localparam:
+          if (!RE2::FullMatch(name, *localparam_style_regex_)) {
+            violations_.insert(LintViolation(
+                *id, CreateLocalparamViolationMessage(), context));
+          }
+          break;
+
+        case TK_parameter:
+          if (!RE2::FullMatch(name, *parameter_style_regex_)) {
+            violations_.insert(
+                LintViolation(*id, CreateParameterViolationMessage(), context));
+          }
+          break;
+
+        default:
+          break;
       }
     }
   }
@@ -121,14 +135,13 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
 
 absl::Status ParameterNameStyleRule::Configure(
     absl::string_view configuration) {
-  // TODO(issue #133) include bitmap choices in generated documentation.
-  static const std::vector<absl::string_view> choices = {
-      "CamelCase", "ALL_CAPS"};  // same sequence as enum StyleChoicesBits
-  using verible::config::SetNamedBits;
-  return verible::ParseNameValues(
+  using verible::config::SetRegex;
+  absl::Status s = verible::ParseNameValues(
       configuration,
-      {{"localparam_style", SetNamedBits(&localparam_allowed_style_, choices)},
-       {"parameter_style", SetNamedBits(&parameter_allowed_style_, choices)}});
+      {{"localparam_style_regex", SetRegex(&localparam_style_regex_)},
+       {"parameter_style_regex", SetRegex(&parameter_style_regex_)}});
+
+  return s;
 }
 
 LintRuleStatus ParameterNameStyleRule::Report() const {
