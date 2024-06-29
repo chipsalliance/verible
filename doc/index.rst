@@ -4,9 +4,9 @@ Using Verible
 .. toctree::
    :maxdepth: 2
 
-   style_lint.md
-   formatter.md
-   indexing.md
+   ../README.md
+   ../common/README.md
+   ../verilog/tools/lint/README.md
 
 Developing Verible
 ==================
@@ -16,3 +16,6 @@ Developing Verible
 
    development.md
    parser_design.md
+   style_lint.md
+   formatter.md
+   indexing.md
