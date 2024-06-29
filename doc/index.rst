@@ -4,9 +4,9 @@ Using Verible
 .. toctree::
    :maxdepth: 2
 
-   style_lint
-   formatter
-   indexing
+   style_lint.md
+   formatter.md
+   indexing.md
 
 Developing Verible
 ==================
@@ -14,5 +14,5 @@ Developing Verible
 .. toctree::
    :maxdepth: 2
 
-   development
-   parser_design
+   development.md
+   parser_design.md
