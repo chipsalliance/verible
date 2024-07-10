@@ -41,7 +41,7 @@ any Linux distribution.
 
 There are also some distributions that include Verible
 
-  * [Nix] has binaries for Linux and MacOS for x86 and Arm.
+  * [Nix] has binaries for Linux x86 and Arm.
   * There is a [homebrew] package for MacOS.
 
 If you prefer to build and install the binaries locally yourself, see
