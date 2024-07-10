@@ -41,6 +41,8 @@ class EnumNameStyleRule : public verible::SyntaxTreeLintRule {
 
   static const LintRuleDescriptor &GetDescriptor();
 
+  std::string CreateViolationMessage();
+
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
@@ -53,8 +55,6 @@ class EnumNameStyleRule : public verible::SyntaxTreeLintRule {
 
   // A regex to check the style against
   std::unique_ptr<re2::RE2> style_regex_;
-
-  std::string violation_message_;
 };
 
 }  // namespace analysis
