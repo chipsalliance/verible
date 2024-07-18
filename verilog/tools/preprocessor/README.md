@@ -29,7 +29,7 @@ verible-verilog-preprocessor preprocess [define-include-flags] file [file...]
   Each one of them will be prepropcessed independently which means that
   declaration scopes will end by the end of each file, and won't be seen from
   other files (so multiple files will _not_ be treated as compilation unit).
-  The `+define+` and `+include+` directives on the commandline are honored by
+  The `+define+` and `+incdir+` directives on the commandline are honored by
   the preprocessor.
 
 #### Output
