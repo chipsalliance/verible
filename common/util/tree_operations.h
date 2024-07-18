@@ -132,7 +132,7 @@ struct TreeNodeParentTraits : FeatureTraits {};
 // This overload is a linear-time operation.
 template <class T>
 size_t BirthRank(const T& node, std::input_iterator_tag) {
-  if (node.Parent() != nullptr) {
+  if (node.Parent()) {
     size_t index = 0;
     for (const auto& child : node.Parent()->Children()) {
       if (&node == &child) return index;
@@ -145,7 +145,7 @@ size_t BirthRank(const T& node, std::input_iterator_tag) {
 // BirthRank optimized for random access containers.
 template <class T>
 size_t BirthRank(const T& node, std::random_access_iterator_tag) {
-  if (node.Parent() != nullptr) {
+  if (node.Parent()) {
     return std::distance(&*(node.Parent()->Children().begin()), &node);
   }
   return 0;
@@ -378,7 +378,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 size_t NumAncestors(const T& node) {
   size_t depth = 0;
-  for (const T* p = node.Parent(); p != nullptr; p = p->Parent()) {
+  for (const T* p = node.Parent(); p; p = p->Parent()) {
     ++depth;
   }
   return depth;
@@ -394,8 +394,8 @@ size_t NumAncestors(const T& node) {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool HasAncestor(const T& node, const T* other) {
-  if (other == nullptr) return false;
-  for (const auto* p = node.Parent(); p != nullptr; p = p->Parent()) {
+  if (!other) return false;
+  for (const auto* p = node.Parent(); p; p = p->Parent()) {
     if (p == other) return true;
   }
   return false;
@@ -419,7 +419,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T& Root(T& node) {
   T* root = &node;
-  while (root->Parent() != nullptr) {
+  while (root->Parent()) {
     root = root->Parent();
   }
   return *root;
@@ -439,15 +439,15 @@ T* NearestCommonAncestor(T& node_a, T& node_b) {
   // In alternation, insert a/b into its respective set of ancestors,
   // and check for membership in the other ancestor set.
   // Return as soon as one is found in the other's set of ancestors.
-  while (a != nullptr || b != nullptr) {
-    if (a != nullptr) {
+  while (a || b) {
+    if (a) {
       if (ancestors_b.find(a) != ancestors_b.end()) {
         return a;
       }
       ancestors_a.insert(a);
       a = a->Parent();
     }
-    if (b != nullptr) {
+    if (b) {
       if (ancestors_a.find(b) != ancestors_a.end()) {
         return b;
       }
@@ -465,7 +465,7 @@ T* NearestCommonAncestor(T& node_a, T& node_b) {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 bool IsFirstChild(const T& node) {
-  if (node.Parent() == nullptr) return true;
+  if (!node.Parent()) return true;
   return &*node.Parent()->Children().begin() == &node;
 }
 
@@ -479,7 +479,7 @@ template <
     std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr,
     std::void_t<decltype(std::declval<const T>().Children().back())>* = nullptr>
 bool IsLastChild(const T& node) {
-  if (node.Parent() == nullptr) return true;
+  if (!node.Parent()) return true;
   return &node.Parent()->Children().back() == &node;
 }
 
@@ -493,7 +493,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* NextLeaf(T& node) {
   auto* parent = node.Parent();
-  if (parent == nullptr) {
+  if (!parent) {
     // Root node has no next sibling, this is the end().
     return nullptr;
   }
@@ -511,7 +511,7 @@ T* NextLeaf(T& node) {
   // Find the nearest parent that has a next child (ascending).
   // TODO(fangism): rewrite without recursion
   auto* next_ancestor = NextLeaf(*parent);
-  if (next_ancestor == nullptr) return nullptr;
+  if (!next_ancestor) return nullptr;
 
   // next_ancestor is the NearestCommonAncestor() to the original
   // node and the resulting node.
@@ -528,7 +528,7 @@ template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* PreviousLeaf(T& node) {
   auto* parent = node.Parent();
-  if (parent == nullptr) {
+  if (!parent) {
     // Root node has no previous sibling, this is the reverse-end().
     return nullptr;
   }
@@ -545,7 +545,7 @@ T* PreviousLeaf(T& node) {
   // Find the nearest parent that has a previous child (descending).
   // TODO(fangism): rewrite without recursion
   auto* prev_ancestor = PreviousLeaf(*parent);
-  if (prev_ancestor == nullptr) return nullptr;
+  if (!prev_ancestor) return nullptr;
 
   // prev_ancestor is the NearestCommonAncestor() to the original
   // node and the resulting node.
@@ -560,7 +560,7 @@ T* PreviousLeaf(T& node) {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* NextSibling(T& node) {
-  if (node.Parent() == nullptr) {
+  if (!node.Parent()) {
     return nullptr;
   }
   const size_t birth_rank = BirthRank(node);
@@ -580,7 +580,7 @@ T* NextSibling(T& node) {
 template <class T,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 T* PreviousSibling(T& node) {
-  if (node.Parent() == nullptr) {
+  if (!node.Parent()) {
     return nullptr;
   }
   const size_t birth_rank = BirthRank(node);
@@ -772,7 +772,7 @@ void FlattenOnlyChildrenWithChildren(
 
   ReserveIfSupported(new_children, new_children_count);
 
-  if (new_offsets != nullptr) {
+  if (new_offsets) {
     new_offsets->clear();
     new_offsets->reserve(std::size(node.Children()));
   }
@@ -836,7 +836,7 @@ void FlattenOneChild(T& node, size_t i) {
 template <class T, class PathType,  //
           std::enable_if_t<TreeNodeTraits<T>::Parent::available>* = nullptr>
 void Path(const T& node, PathType& path) {
-  if (node.Parent() != nullptr) {
+  if (node.Parent()) {
     Path(*node.Parent(), path);
     path.push_back(verible::BirthRank(node));
   }
@@ -922,7 +922,7 @@ TreeNodePair<LT, RT> DeepEqual(
                       right_children.begin(),
                       [&comp, &first_diff](const LT& l, const RT& r) -> bool {
                         const auto result = DeepEqual(l, r, comp);
-                        if (result.left == nullptr) {
+                        if (!result.left) {
                           return true;
                         }
                         first_diff = result;  // Capture first difference.

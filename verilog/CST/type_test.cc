@@ -337,7 +337,7 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
             VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
             const auto *packed_dimension =
                 GetPackedDimensionFromDataDeclaration(*decl.match);
-            if (packed_dimension == nullptr) continue;
+            if (!packed_dimension) continue;
             if (packed_dimension->empty()) continue;
             packed_dimensions.emplace_back(
                 TreeSearchMatch{packed_dimension, {/* ignored context */}});
@@ -380,7 +380,7 @@ TEST(GetType, GetStructOrUnionOrEnumType) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : types) {
             const auto *name = GetReferencedTypeOfTypeDeclaration(*decl.match);
-            if (name == nullptr) continue;
+            if (!name) continue;
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
           }
           return names;
@@ -405,7 +405,7 @@ TEST(GetTypeIdentifier, GetNameOfDataType) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : types) {
             const auto *name = GetTypeIdentifierFromDataType(*decl.match);
-            if (name == nullptr) {
+            if (!name) {
               continue;
             }
             names.emplace_back(TreeSearchMatch{name, {/* ignored context */}});
@@ -437,7 +437,7 @@ TEST(GetDataImplicitIdDimensions, GetTypeOfDataImplicitIdDimensions) {
           for (const auto &decl : types) {
             const auto *inner_type =
                 GetNonprimitiveTypeOfDataTypeImplicitDimensions(*decl.match);
-            if (inner_type == nullptr) {
+            if (!inner_type) {
               continue;
             }
             inner_types.emplace_back(

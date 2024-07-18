@@ -352,7 +352,7 @@ TEST(GetPackageNameTest, GetPackageEndLabelName) {
           std::vector<TreeSearchMatch> names;
           for (const auto &decl : declarations) {
             const auto *package_name = GetPackageNameEndLabel(*decl.match);
-            if (package_name == nullptr) continue;
+            if (!package_name) continue;
             names.push_back(TreeSearchMatch{package_name, {}});
           }
           return names;
@@ -385,7 +385,7 @@ TEST(GetPackageBodyTest, GetPackageItemList) {
           std::vector<TreeSearchMatch> lists;
           for (const auto &decl : declarations) {
             const auto *package_item_list = GetPackageItemList(*decl.match);
-            if (package_item_list == nullptr) continue;
+            if (!package_item_list) continue;
             lists.push_back(TreeSearchMatch{package_item_list, {}});
           }
           return lists;
@@ -458,7 +458,7 @@ TEST(PackageImportTest, GetImportedItemName) {
           for (const auto &decl : decls) {
             const auto *name =
                 GeImportedItemNameFromPackageImportItem(*decl.match);
-            if (name == nullptr) continue;
+            if (!name) continue;
             names.emplace_back(TreeSearchMatch{name, {/* ignored context*/}});
           }
           return names;

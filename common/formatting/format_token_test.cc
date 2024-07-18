@@ -151,7 +151,7 @@ TEST(PreFormatTokenTest, OriginalLeadingSpaces) {
 TEST(PreFormatTokenTest, ExcessSpacesNoNewline) {
   const absl::string_view text("abcdefgh");
   const TokenInfo tok(1, text.substr(1, 3));
-  PreFormatToken p(&tok);  // before.preserved_space_start == nullptr
+  PreFormatToken p(&tok);  //! before.preserved_space_start
   EXPECT_EQ(p.ExcessSpaces(), 0);
 
   p.before.preserved_space_start = text.begin();
@@ -165,7 +165,7 @@ TEST(PreFormatTokenTest, ExcessSpacesNoNewline) {
 TEST(PreFormatTokenTest, ExcessSpacesNewline) {
   const absl::string_view text("\nbcdefgh");
   const TokenInfo tok(1, text.substr(1, 3));
-  PreFormatToken p(&tok);  // before.preserved_space_start == nullptr
+  PreFormatToken p(&tok);  //! before.preserved_space_start
   EXPECT_EQ(p.ExcessSpaces(), 0);
 
   p.before.preserved_space_start = text.begin();

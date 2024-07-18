@@ -217,8 +217,7 @@ class MapTree {
 
   size_t NumAncestors() const {
     size_t depth = 0;
-    for (const this_type *iter = Parent(); iter != nullptr;
-         iter = iter->Parent()) {
+    for (const this_type *iter = Parent(); iter; iter = iter->Parent()) {
       ++depth;
     }
     return depth;
@@ -230,9 +229,8 @@ class MapTree {
   // nullptr is never considered an ancestor of any node.
   // 'this' node is not considered an ancestor of itself.
   bool HasAncestor(const this_type *other) const {
-    if (other == nullptr) return false;
-    for (const this_type *iter = Parent(); iter != nullptr;
-         iter = iter->Parent()) {
+    if (!other) return false;
+    for (const this_type *iter = Parent(); iter; iter = iter->Parent()) {
       if (iter == other) return true;
     }
     return false;
@@ -241,7 +239,7 @@ class MapTree {
   // Returns pointer to the tree root, the greatest ancestor of this node.
   const this_type *Root() const {
     const this_type *node = this;
-    while (node->Parent() != nullptr) node = node->Parent();
+    while (node->Parent()) node = node->Parent();
     return node;
   }
 
@@ -261,7 +259,7 @@ class MapTree {
 #endif
     // Compute offset of member &key_value_type::second (built-in function).
     static constexpr auto value_offset = offsetof(key_value_type, second);
-    if (Parent() == nullptr) return nullptr;  // Root node has no key
+    if (!Parent()) return nullptr;  // Root node has no key
     // All non-root nodes belong to a parent's map, and thus are
     // pair-co-located with a key.
     // Use pointer arithmetic to recover location of the key-value pair to which
@@ -277,7 +275,7 @@ class MapTree {
   // Returns the key associated with this node (if this is not a root),
   // otherwise return nullptr.
   const key_type *Key() const {
-    if (Parent() == nullptr) return nullptr;  // Root node has no key
+    if (!Parent()) return nullptr;  // Root node has no key
     return &KeyValuePair()->first;
   }
 

@@ -67,12 +67,12 @@ void MismatchedLabelsRule::HandleSymbol(
     const auto *end_label = GetEndLabelTokenInfo(*matchingEnd);
 
     // Don't check anything if there is no end label
-    if (end_label == nullptr) {
+    if (!end_label) {
       return;
     }
 
     // Error if there is no begin label
-    if (begin_label == nullptr) {
+    if (!begin_label) {
       violations_.insert(
           verible::LintViolation(symbol, kMessageMissing, context));
 

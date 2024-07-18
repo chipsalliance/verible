@@ -116,7 +116,7 @@ static constexpr absl::string_view kRoot("$root");
 
 std::ostream& SymbolTableNodeFullPath(std::ostream& stream,
                                       const SymbolTableNode& node) {
-  if (node.Parent() != nullptr) {
+  if (node.Parent()) {
     SymbolTableNodeFullPath(stream, *node.Parent()) << "::" << *node.Key();
   } else {
     stream << kRoot;
@@ -132,7 +132,7 @@ static std::string ContextFullPath(const SymbolTableNode& context) {
 
 std::ostream& ReferenceNodeFullPath(std::ostream& stream,
                                     const ReferenceComponentNode& node) {
-  if (node.Parent() != nullptr) {
+  if (node.Parent()) {
     ReferenceNodeFullPath(stream, *node.Parent());  // recursive
   }
   return node.Value().PrintPathComponent(stream);
@@ -174,7 +174,7 @@ static ReferenceComponentNode* CheckedNewChildReferenceNode(
 static absl::Status DiagnoseMemberSymbolResolutionFailure(
     absl::string_view name, const SymbolTableNode& context) {
   const absl::string_view context_name =
-      context.Parent() == nullptr ? kRoot : *context.Key();
+      context.Parent() ? *context.Key() : kRoot;
   return absl::NotFoundError(
       absl::StrCat("No member symbol \"", name, "\" in parent scope (",
                    SymbolMetaTypeAsString(context.Value().metatype), ") ",
@@ -429,9 +429,9 @@ class SymbolTable::Builder : public TreeContextVisitor {
       // declaration_type_info_ will be restored after this closes.
     }
 
-    if (declaration_type_info_ != nullptr) {
+    if (declaration_type_info_) {
       // 'declaration_type_info_' holds the declared type we want to capture.
-      if (verible::GetLeftmostLeaf(data_type_node) != nullptr) {
+      if (verible::GetLeftmostLeaf(data_type_node)) {
         declaration_type_info_->syntax_origin = &data_type_node;
         // Otherwise, if the type subtree contains no leaves (e.g. implicit or
         // void), then do not assign a syntax origin.
@@ -454,7 +454,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DescendActualParameterList(const SyntaxTreeNode& node) {
-    if (reference_branch_point_ != nullptr) {
+    if (reference_branch_point_) {
       // Pre-allocate siblings to guarantee pointer/iterator stability.
       // FindAll* will also catch actual port connections inside preprocessing
       // conditionals.
@@ -467,7 +467,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DescendPortActualList(const SyntaxTreeNode& node) {
-    if (reference_branch_point_ != nullptr) {
+    if (reference_branch_point_) {
       // Pre-allocate siblings to guarantee pointer/iterator stability.
       // FindAll* will also catch actual port connections inside preprocessing
       // conditionals.
@@ -478,7 +478,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   }
 
   void DescendCallArgumentList(const SyntaxTreeNode& node) {
-    if (reference_branch_point_ != nullptr) {
+    if (reference_branch_point_) {
       // Pre-allocate siblings to guarantee pointer/iterator stability.
       // FindAll* will also catch call arguments inside preprocessing
       // conditionals.
@@ -514,7 +514,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(anon_type_ref);
 
-    if (declaration_type_info_ != nullptr) {
+    if (declaration_type_info_) {
       declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
     }
   }
@@ -537,7 +537,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     const CaptureDependentReference capture(this);
     capture.Ref().PushReferenceComponent(anon_type_ref);
 
-    if (declaration_type_info_ != nullptr) {
+    if (declaration_type_info_) {
       declaration_type_info_->user_defined_type = capture.Ref().LastLeaf();
     }
 
@@ -671,7 +671,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
             return node.MatchesTagAnyOf(
                 {NodeEnum::kFunctionDeclaration, NodeEnum::kFunctionPrototype});
           });
-      if (decl_syntax == nullptr) return;
+      if (!decl_syntax) return;
       SymbolTableNode* declared_function = &EmplaceTypedElementInCurrentScope(
           *decl_syntax, text, SymbolMetaType::kFunction);
       // After this point, we've registered the new function with its return
@@ -704,7 +704,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
             return node.MatchesTagAnyOf(
                 {NodeEnum::kTaskDeclaration, NodeEnum::kTaskPrototype});
           });
-      if (decl_syntax == nullptr) return;
+      if (!decl_syntax) return;
       SymbolTableNode* declared_task = EmplaceElementInCurrentScope(
           *decl_syntax, text, SymbolMetaType::kTask);
       // After this point, we've registered the new task,
@@ -778,10 +778,10 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     // Handle possible implicit declarations here
-    if (declaration_type_info_ != nullptr && declaration_type_info_->implicit) {
+    if (declaration_type_info_ && declaration_type_info_->implicit) {
       const SymbolTableNode* resolved =
           LookupSymbolUpwards(*ABSL_DIE_IF_NULL(current_scope_), text);
-      if (resolved == nullptr) {
+      if (!resolved) {
         // No explicit declaration found, declare here
         SymbolTableNode& implicit_declaration =
             EmplaceTypedElementInCurrentScope(
@@ -845,7 +845,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     CHECK(!reference_builders_.empty())
         << "Not currently in a reference context.";
     const DependentReferences& ref(reference_builders_.top());
-    if (ref.Empty() || last_hierarchy_operator_ == nullptr) {
+    if (ref.Empty() || !last_hierarchy_operator_) {
       // The root component is always treated as unqualified.
 
       // Out-of-line definitions' base/outer references must be resolved
@@ -886,7 +886,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   bool ExtendedCallIsLast() const {
     const SyntaxTreeNode* reference_call_base =
         Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
-    if (reference_call_base == nullptr) return false;
+    if (!reference_call_base) return false;
     for (auto& child : reference_call_base->children()) {
       if (SymbolCastToNode(*child).MatchesTagAnyOf(
               {NodeEnum::kHierarchyExtension})) {
@@ -899,7 +899,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   bool UnextendedCall() const {
     const SyntaxTreeNode* rcb =
         Context().NearestParentWithTag(NodeEnum::kReferenceCallBase);
-    if (rcb == nullptr) return false;
+    if (!rcb) return false;
     for (auto& reference : rcb->children()) {
       if (reference && SymbolCastToNode(*reference)
                            .MatchesTagAnyOf({NodeEnum::kReference})) {
@@ -1245,7 +1245,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
       const SyntaxTreeNode* gen_block = GetGenerateBlockBegin(body);
       const TokenInfo* label =
           gen_block ? GetBeginLabelTokenInfo(*gen_block) : nullptr;
-      if (label != nullptr) {
+      if (label) {
         // TODO: Check for a matching end-label here, and if its name matches
         // the begin label, then immediately create a resolved reference because
         // it only makes sense for it resolve to this begin.
@@ -1358,7 +1358,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
           Context().NearestParentMatching([](const SyntaxTreeNode& node) {
             return node.MatchesTag(NodeEnum::kFunctionHeader);
           });
-      if (function_header != nullptr) {
+      if (function_header) {
         const SyntaxTreeNode& id = verible::SymbolCastToNode(
             *ABSL_DIE_IF_NULL(GetFunctionHeaderId(*function_header)));
         if (id.MatchesTag(NodeEnum::kQualifiedId)) {
@@ -1374,7 +1374,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
           Context().NearestParentMatching([](const SyntaxTreeNode& node) {
             return node.MatchesTag(NodeEnum::kTaskHeader);
           });
-      if (task_header != nullptr) {
+      if (task_header) {
         const SyntaxTreeNode& id = verible::SymbolCastToNode(
             *ABSL_DIE_IF_NULL(GetTaskHeaderId(*task_header)));
         if (id.MatchesTag(NodeEnum::kQualifiedId)) {
@@ -1607,7 +1607,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
   void EnterIncludeFile(const SyntaxTreeNode& preprocessor_include) {
     const SyntaxTreeLeaf* included_filename =
         GetFileFromPreprocessorInclude(preprocessor_include);
-    if (included_filename == nullptr) return;
+    if (!included_filename) return;
 
     const absl::string_view filename_text = included_filename->get().text();
 
@@ -1618,7 +1618,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     // Opening included file requires a VerilogProject.
     // Open this file (could be first time, or previously opened).
     VerilogProject* project = symbol_table_->project_;
-    if (project == nullptr) return;  // Without project, ignore.
+    if (!project) return;  // Without project, ignore.
 
     const auto status_or_file = project->OpenIncludedFile(filename_unquoted);
     if (!status_or_file.ok()) {
@@ -1628,7 +1628,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
     }
 
     VerilogSourceFile* const included_file = *status_or_file;
-    if (included_file == nullptr) return;
+    if (!included_file) return;
     VLOG(3) << "opened include file: " << included_file->ResolvedPath();
 
     const auto parse_status = included_file->Parse();
@@ -1717,7 +1717,7 @@ class SymbolTable::Builder : public TreeContextVisitor {
 
 void ReferenceComponent::VerifySymbolTableRoot(
     const SymbolTableNode* root) const {
-  if (resolved_symbol != nullptr) {
+  if (resolved_symbol) {
     CHECK_EQ(resolved_symbol->Root(), root)
         << "Resolved symbols must point to a node in the same SymbolTable.";
   }
@@ -1767,7 +1767,7 @@ absl::Status ReferenceComponent::ResolveSymbol(
 }
 
 const ReferenceComponentNode* DependentReferences::LastLeaf() const {
-  if (components == nullptr) return nullptr;
+  if (!components) return nullptr;
   const ReferenceComponentNode* node = components.get();
   while (!is_leaf(*node)) node = &node->Children().front();
   return node;
@@ -1799,13 +1799,13 @@ static RefType* ReferenceLastTypeComponent(RefType* node) {
 const ReferenceComponentNode* DependentReferences::LastTypeComponent() const {
   // This references a type that may be nested and have name parameters.
   // From A#(.B())::C#(.D()), we want C as the desired type component.
-  if (components == nullptr) return nullptr;
+  if (!components) return nullptr;
   const ReferenceComponentNode* node = components.get();
   return ReferenceLastTypeComponent(node);
 }
 
 ReferenceComponentNode* DependentReferences::LastTypeComponent() {
-  if (components == nullptr) return nullptr;
+  if (!components) return nullptr;
   ReferenceComponentNode* node = components.get();
   return ReferenceLastTypeComponent(node);
 }
@@ -1829,7 +1829,7 @@ ReferenceComponentNode* DependentReferences::PushReferenceComponent(
 
 void DependentReferences::VerifySymbolTableRoot(
     const SymbolTableNode* root) const {
-  if (components != nullptr) {
+  if (components) {
     ApplyPreOrder(*components, [=](const ReferenceComponent& component) {
       component.VerifySymbolTableRoot(root);
     });
@@ -1838,7 +1838,7 @@ void DependentReferences::VerifySymbolTableRoot(
 
 std::ostream& operator<<(std::ostream& stream,
                          const DependentReferences& dep_refs) {
-  if (dep_refs.components == nullptr) return stream << "(empty-ref)";
+  if (!dep_refs.components) return stream << "(empty-ref)";
   return stream << *dep_refs.components;
 }
 
@@ -1852,14 +1852,14 @@ static const SymbolTableNode* CanonicalizeTypeForMemberLookup(
     if (current_context->Value().metatype != SymbolMetaType::kTypeAlias) break;
     const ReferenceComponentNode* ref_type =
         current_context->Value().declared_type.user_defined_type;
-    if (ref_type == nullptr) {
+    if (!ref_type) {
       // Could be a primitive type.
       return nullptr;
     }
     current_context = ref_type->Value().resolved_symbol;
     // TODO: We haven't guaranteed that typedefs have been resolved in order,
     // so these will need to be resolved on-demand in the future.
-  } while (current_context != nullptr);
+  } while (current_context);
   // TODO: the return value currently does not distinguish between a failed
   // resolution of a dependent symbol and a primitive referenced type;
   // both yield a nullptr.
@@ -1881,16 +1881,16 @@ static const SymbolTableNode* LookupSymbolThroughInheritedScopes(
     // Point to next inherited scope.
     const auto* base_type =
         current_context->Value().parent_type.user_defined_type;
-    if (base_type == nullptr) break;
+    if (!base_type) break;
 
     const SymbolTableNode* resolved_base = base_type->Value().resolved_symbol;
     // TODO: attempt to resolve on-demand because resolve ordering is not
     // guaranteed.
-    if (resolved_base == nullptr) return nullptr;
+    if (!resolved_base) return nullptr;
 
     // base type could be a typedef, so canonicalize
     current_context = CanonicalizeTypeForMemberLookup(*resolved_base);
-  } while (current_context != nullptr);
+  } while (current_context);
   return nullptr;  // resolution failed
 }
 
@@ -1901,11 +1901,11 @@ static const SymbolTableNode* LookupSymbolUpwards(
   do {
     const SymbolTableNode* found =
         LookupSymbolThroughInheritedScopes(*current_context, symbol);
-    if (found != nullptr) return found;
+    if (found) return found;
 
     // Point to next enclosing scope.
     current_context = current_context->Parent();
-  } while (current_context != nullptr);
+  } while (current_context);
   return nullptr;  // resolution failed
 }
 
@@ -1921,9 +1921,9 @@ static void ResolveReferenceComponentNodeLocal(ReferenceComponentNode* node,
   ReferenceComponent& component(node->Value());
   VLOG(2) << __FUNCTION__ << ": " << component;
   // If already resolved, skip.
-  if (component.resolved_symbol != nullptr) return;  // already bound
+  if (component.resolved_symbol) return;  // already bound
   const absl::string_view key(component.identifier);
-  CHECK(node->Parent() == nullptr);  // is root
+  CHECK(!node->Parent());  // is root
   // root node: lookup this symbol from its context upward
   CHECK_EQ(component.ref_type, ReferenceType::kUnqualified);
 
@@ -1942,7 +1942,7 @@ static void ResolveUnqualifiedName(ReferenceComponent* component,
   const absl::string_view key(component->identifier);
   // Find the first symbol whose name matches, without regard to its metatype.
   const SymbolTableNode* resolved = LookupSymbolUpwards(context, key);
-  if (resolved == nullptr) {
+  if (!resolved) {
     diagnostics->emplace_back(
         DiagnoseUnqualifiedSymbolResolutionFailure(key, context));
     return;
@@ -1985,7 +1985,7 @@ static void ResolveDirectMember(ReferenceComponent* component,
   // Canonicalize context if it an alias.
   const SymbolTableNode* canonical_context =
       CanonicalizeTypeForMemberLookup(context);
-  if (canonical_context == nullptr) {
+  if (!canonical_context) {
     // TODO: diagnostic could be improved by following each typedef indirection.
     diagnostics->push_back(absl::InvalidArgumentError(
         absl::StrCat("Canonical type of ", ContextFullPath(context),
@@ -1996,7 +1996,7 @@ static void ResolveDirectMember(ReferenceComponent* component,
   const absl::string_view key(component->identifier);
   const auto* found =
       LookupSymbolThroughInheritedScopes(*canonical_context, key);
-  if (found == nullptr) {
+  if (!found) {
     diagnostics->emplace_back(
         DiagnoseMemberSymbolResolutionFailure(key, *canonical_context));
     return;
@@ -2019,12 +2019,12 @@ static void ResolveReferenceComponentNode(
     std::vector<absl::Status>* diagnostics) {
   ReferenceComponent& component(node->Value());
   VLOG(2) << __FUNCTION__ << ": " << component;
-  if (component.resolved_symbol != nullptr) return;  // already bound
+  if (component.resolved_symbol) return;  // already bound
 
   switch (component.ref_type) {
     case ReferenceType::kUnqualified: {
       // root node: lookup this symbol from its context upward
-      if (node->Parent() != nullptr) {
+      if (node->Parent()) {
         // TODO(hzeller): Is this a situation that should never happen thus
         // be dealt with further up-stream ? (changed from a CHECK()).
         LOG(WARNING) << *node << ": Parent exists " << *node->Parent() << "\n";
@@ -2042,7 +2042,7 @@ static void ResolveReferenceComponentNode(
       const ReferenceComponent& parent_component(node->Parent()->Value());
 
       const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
-      if (parent_scope == nullptr) return;  // leave this subtree unresolved
+      if (!parent_scope) return;  // leave this subtree unresolved
 
       ResolveDirectMember(&component, *parent_scope, diagnostics);
       break;
@@ -2052,13 +2052,13 @@ static void ResolveReferenceComponentNode(
       // node. Get the type of the object from the parent component.
       const ReferenceComponent& parent_component(node->Parent()->Value());
       const SymbolTableNode* parent_scope = parent_component.resolved_symbol;
-      if (parent_scope == nullptr) return;  // leave this subtree unresolved
+      if (!parent_scope) return;  // leave this subtree unresolved
 
       const DeclarationTypeInfo& type_info =
           parent_scope->Value().declared_type;
       // Primitive types do not have members.
-      if (type_info.user_defined_type == nullptr) {
-        if (type_info.syntax_origin == nullptr) {
+      if (!type_info.user_defined_type) {
+        if (!type_info.syntax_origin) {
           diagnostics->push_back(absl::InvalidArgumentError(
               absl::StrCat("Type of parent reference ",
                            ReferenceNodeFullPathString(*node->Parent()),
@@ -2079,7 +2079,7 @@ static void ResolveReferenceComponentNode(
       // TODO(fangism): resolve on-demand
       const SymbolTableNode* type_scope =
           type_info.user_defined_type->Value().resolved_symbol;
-      if (type_scope == nullptr) return;
+      if (!type_scope) return;
 
       ResolveDirectMember(&component, *type_scope, diagnostics);
       break;
@@ -2101,7 +2101,7 @@ void DependentReferences::Resolve(
     const SymbolTableNode& context,
     std::vector<absl::Status>* diagnostics) const {
   VLOG(2) << __FUNCTION__;
-  if (components == nullptr) return;
+  if (!components) return;
   // References are arranged in dependency trees.
   // Parent node references must be resolved before children nodes,
   // hence a pre-order traversal.
@@ -2115,7 +2115,7 @@ void DependentReferences::Resolve(
 }
 
 void DependentReferences::ResolveLocally(const SymbolTableNode& context) const {
-  if (components == nullptr) return;
+  if (!components) return;
   // Only attempt to resolve the reference root, and none of its subtrees.
   ResolveReferenceComponentNodeLocal(components.get(), context);
 }
@@ -2165,7 +2165,7 @@ std::ostream& ReferenceComponent::PrintPathComponent(
 
 std::ostream& ReferenceComponent::PrintVerbose(std::ostream& stream) const {
   PrintPathComponent(stream) << " -> ";
-  if (resolved_symbol == nullptr) {
+  if (!resolved_symbol) {
     return stream << "<unresolved>";
   }
   return stream << ContextFullPath(*resolved_symbol);
@@ -2178,7 +2178,7 @@ std::ostream& operator<<(std::ostream& stream,
 
 void DeclarationTypeInfo::VerifySymbolTableRoot(
     const SymbolTableNode* root) const {
-  if (user_defined_type != nullptr) {
+  if (user_defined_type) {
     ApplyPreOrder(*user_defined_type, [=](const ReferenceComponent& component) {
       component.VerifySymbolTableRoot(root);
     });
@@ -2199,7 +2199,7 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "type-info { ";
 
   stream << "source: ";
-  if (decl_type_info.syntax_origin != nullptr) {
+  if (decl_type_info.syntax_origin) {
     stream << "\""
            << AutoTruncate{.text = StringSpanOfSymbol(
                                *decl_type_info.syntax_origin),
@@ -2210,7 +2210,7 @@ std::ostream& operator<<(std::ostream& stream,
   }
 
   stream << ", type ref: ";
-  if (decl_type_info.user_defined_type != nullptr) {
+  if (decl_type_info.user_defined_type) {
     stream << *decl_type_info.user_defined_type;
   } else {
     stream << "(primitive)";
@@ -2248,7 +2248,7 @@ std::ostream& SymbolInfo::PrintDefinition(std::ostream& stream,
   // print everything except local_references_to_bind
   const verible::Spacer wrap(indent);
   stream << wrap << "metatype: " << metatype << std::endl;
-  if (file_origin != nullptr) {
+  if (file_origin) {
     stream << wrap << "file: " << file_origin->ResolvedPath() << std::endl;
   }
   // declared_type only makes sense for elements with potentially user-defined
@@ -2367,9 +2367,9 @@ std::vector<absl::Status> BuildSymbolTable(const VerilogSourceFile& source,
                                            VerilogProject* project) {
   VLOG(2) << __FUNCTION__ << " " << source.ResolvedPath();
   const auto* text_structure = source.GetTextStructure();
-  if (text_structure == nullptr) return std::vector<absl::Status>();
+  if (!text_structure) return std::vector<absl::Status>();
   const auto& syntax_tree = text_structure->SyntaxTree();
-  if (syntax_tree == nullptr) return std::vector<absl::Status>();
+  if (!syntax_tree) return std::vector<absl::Status>();
 
   SymbolTable::Builder builder(source, symbol_table, project);
   syntax_tree->Accept(&builder);

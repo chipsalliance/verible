@@ -164,11 +164,11 @@ static const MatchTestCase kMatchTestCases[] = {
 };
 
 static size_t ExtractNumDimensions(const verible::Symbol *root) {
-  if (root == nullptr) return 0;
+  if (!root) return 0;
   const auto matches = FindAllDeclarationDimensions(*root);
   if (matches.empty()) return 0;
   // Only extract from the first match.
-  if (matches[0].match == nullptr) return 0;
+  if (!matches[0].match) return 0;
   const auto &s = *matches[0].match;
   return down_cast<const verible::SyntaxTreeNode &>(s).size();
 }

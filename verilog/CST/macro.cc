@@ -88,7 +88,7 @@ bool MacroCallArgsIsEmpty(const SyntaxTreeNode &args) {
   // Empty macro args are always constructed with one nullptr child in
   // the semantic actions in verilog.y.
   if (sub.size() != 1) return false;
-  return sub.front() == nullptr;
+  return !sub.front();
 }
 
 const verible::SyntaxTreeLeaf *GetMacroName(

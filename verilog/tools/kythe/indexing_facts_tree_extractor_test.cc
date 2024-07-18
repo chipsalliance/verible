@@ -78,12 +78,12 @@ struct TestFileEntry {
 
   // Returns the string_view of text owned by this->source_file.
   absl::string_view SourceText() const {
-    CHECK(source_file != nullptr);
+    CHECK(source_file);
     return source_file->GetContent();
   }
 
   T::value_type ExpectedFileData() const {
-    CHECK(source_file != nullptr);
+    CHECK(source_file);
     return {
         IndexingFactType::kFile,
         Anchor(source_file->ResolvedPath()),

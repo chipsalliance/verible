@@ -199,7 +199,7 @@ struct DependentReferences {
   DependentReferences& operator=(DependentReferences&&) = delete;
 
   // Returns true of no references were collected.
-  bool Empty() const { return components == nullptr; }
+  bool Empty() const { return !components; }
 
   // Returns the current terminal descendant.
   const ReferenceComponentNode* LastLeaf() const;

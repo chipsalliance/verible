@@ -43,7 +43,7 @@ const Symbol *DescendThroughSingletons(const Symbol &symbol) {
   }
   // else is a kNode
   const auto &node = SymbolCastToNode(symbol);
-  if (node.size() == 1 && node.front() != nullptr) {
+  if (node.size() == 1 && node.front()) {
     // If only child is non-null, descend.
     return DescendThroughSingletons(*node.front());
     // TODO(fangism): rewrite non-recursively.
@@ -59,9 +59,9 @@ const SyntaxTreeLeaf *GetRightmostLeaf(const Symbol &symbol) {
   const auto &node = SymbolCastToNode(symbol);
 
   for (const auto &child : const_reversed_view(node.children())) {
-    if (child != nullptr) {
+    if (child) {
       const auto *leaf = GetRightmostLeaf(*child);
-      if (leaf != nullptr) {
+      if (leaf) {
         return leaf;
       }
     }
@@ -78,9 +78,9 @@ const SyntaxTreeLeaf *GetLeftmostLeaf(const Symbol &symbol) {
   const auto &node = SymbolCastToNode(symbol);
 
   for (const auto &child : node.children()) {
-    if (child != nullptr) {
+    if (child) {
       const auto *leaf = GetLeftmostLeaf(*child);
-      if (leaf != nullptr) {
+      if (leaf) {
         return leaf;
       }
     }
@@ -96,7 +96,7 @@ absl::string_view StringSpanOfSymbol(const Symbol &symbol) {
 absl::string_view StringSpanOfSymbol(const Symbol &lsym, const Symbol &rsym) {
   const auto *left = GetLeftmostLeaf(lsym);
   const auto *right = GetRightmostLeaf(rsym);
-  if (left != nullptr && right != nullptr) {
+  if (left && right) {
     const auto range_begin = left->get().text().begin();
     const auto range_end = right->get().text().end();
     return absl::string_view(range_begin,
@@ -138,7 +138,7 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
 
   void Visit(const SyntaxTreeNode &node, SymbolPtr *symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &node);  // symbol_ptr owns node.
-    if (result_ == nullptr) {
+    if (!result_) {
       // If this node matches, return it, and skip evaluating children.
       if (predicate_(node)) {
         result_ = symbol_ptr;
@@ -147,11 +147,11 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
         auto *const mutable_node =
             down_cast<SyntaxTreeNode *>(symbol_ptr->get());
         for (SymbolPtr &child : mutable_node->mutable_children()) {
-          if (child != nullptr) {
+          if (child) {
             child->Accept(this, &child);
           }
           // Stop as soon as first result is found.
-          if (result_ != nullptr) return;
+          if (result_) return;
         }
       }
     }
@@ -160,7 +160,7 @@ class FirstSubtreeFinderMutable : public MutableTreeVisitorRecursive {
   void Visit(const SyntaxTreeLeaf &leaf, SymbolPtr *symbol_ptr) final {
     CHECK_EQ(symbol_ptr->get(), &leaf);  // symbol_ptr owns leaf.
     // If already have a result, stop checking and return right away.
-    if (result_ == nullptr) {
+    if (!result_) {
       if (predicate_(leaf)) {
         result_ = symbol_ptr;
       }
@@ -186,17 +186,17 @@ class FirstSubtreeFinder : public SymbolVisitor {
       : predicate_(predicate) {}
 
   void Visit(const SyntaxTreeNode &node) final {
-    if (result_ == nullptr) {
+    if (!result_) {
       // If this node matches, return it, and skip evaluating children.
       if (predicate_(node)) {
         result_ = &node;
       } else {
         for (const SymbolPtr &child : node.children()) {
-          if (child != nullptr) {
+          if (child) {
             child->Accept(this);
           }
           // Stop as soon as first result is found.
-          if (result_ != nullptr) return;
+          if (result_) return;
         }
       }
     }
@@ -204,7 +204,7 @@ class FirstSubtreeFinder : public SymbolVisitor {
 
   void Visit(const SyntaxTreeLeaf &leaf) final {
     // If already have a result, stop checking and return right away.
-    if (result_ == nullptr) {
+    if (!result_) {
       if (predicate_(leaf)) {
         result_ = &leaf;
       }
@@ -249,21 +249,21 @@ class LastSubtreeFinder : public TreeVisitorRecursive {
 
 ConcreteSyntaxTree *FindFirstSubtreeMutable(ConcreteSyntaxTree *tree,
                                             const TreePredicate &pred) {
-  if (*ABSL_DIE_IF_NULL(tree) == nullptr) return nullptr;
+  if (!*ABSL_DIE_IF_NULL(tree)) return nullptr;
   FirstSubtreeFinderMutable finder(pred);
   (*tree)->Accept(&finder, tree);
   return finder.result();
 }
 
 const Symbol *FindFirstSubtree(const Symbol *tree, const TreePredicate &pred) {
-  if (tree == nullptr) return nullptr;
+  if (!tree) return nullptr;
   FirstSubtreeFinder finder(pred);
   tree->Accept(&finder);
   return finder.result();
 }
 
 const Symbol *FindLastSubtree(const Symbol *tree, const TreePredicate &pred) {
-  if (tree == nullptr) return nullptr;
+  if (!tree) return nullptr;
   LastSubtreeFinder finder(pred);
   tree->Accept(&finder);
   return finder.result();
@@ -273,7 +273,7 @@ ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
     ConcreteSyntaxTree *tree, const char *first_token_offset) {
   auto predicate = [=](const Symbol &s) {
     const SyntaxTreeLeaf *leftmost = GetLeftmostLeaf(s);
-    if (leftmost != nullptr) {
+    if (leftmost) {
       if (std::distance(first_token_offset, leftmost->get().text().begin()) >=
           0) {
         return true;
@@ -285,7 +285,7 @@ ConcreteSyntaxTree *FindSubtreeStartingAtOffset(
       FindFirstSubtreeMutable(ABSL_DIE_IF_NULL(tree), predicate);
   // This cannot return a null tree node because it would have been skipped
   // by FirstSubtreeFinderMutable.
-  if (result != nullptr) CHECK(*result != nullptr);
+  if (result) CHECK(*result);
   return result;
 }
 
@@ -303,7 +303,7 @@ bool PruneTreeFromRight(ConcreteSyntaxTree *tree, const char *offset) {
       auto &node = down_cast<SyntaxTreeNode &>(*tree->get());
       int prune_count = 0;
       for (auto &child : const_reversed_view(node.mutable_children())) {
-        if (child == nullptr) {
+        if (!child) {
           ++prune_count;
         } else {
           if (PruneTreeFromRight(&child, offset)) {
@@ -349,7 +349,7 @@ ConcreteSyntaxTree *LeftSubtree(ConcreteSyntaxTree *tree) {
   }
   SyntaxTreeNode *const tree_node = down_cast<SyntaxTreeNode *>(tree->get());
   for (auto &child : tree_node->mutable_children()) {
-    if (child != nullptr) return &child;
+    if (child) return &child;
   }
   return nullptr;
 }
@@ -357,7 +357,7 @@ ConcreteSyntaxTree *LeftSubtree(ConcreteSyntaxTree *tree) {
 
 ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
                                    absl::string_view trim_range) {
-  if (*tree == nullptr) return nullptr;
+  if (!*tree) return nullptr;
 
   const auto left_offset = trim_range.begin();
   // Find shallowest syntax tree node that starts at the given byte offset.
@@ -366,7 +366,7 @@ ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
 
   // Take leftmost subtree until its right bound falls within offset.
   const auto right_offset = trim_range.end();
-  while (match != nullptr && *match != nullptr &&
+  while (match && *match &&
          RightmostOffset(*ABSL_DIE_IF_NULL(*match)) > right_offset) {
     match = LeftSubtree(match);
   }
@@ -375,7 +375,7 @@ ConcreteSyntaxTree *ZoomSyntaxTree(ConcreteSyntaxTree *tree,
 
 void TrimSyntaxTree(ConcreteSyntaxTree *tree, absl::string_view trim_range) {
   auto *replacement = ZoomSyntaxTree(tree, trim_range);
-  if (replacement == nullptr || *replacement == nullptr) {
+  if (!replacement || !*replacement) {
     *tree = nullptr;
   } else {
     *tree = std::move(*replacement);
@@ -407,7 +407,7 @@ class LeafMutatorVisitor : public MutableTreeVisitorRecursive {
 }  // namespace
 
 void MutateLeaves(ConcreteSyntaxTree *tree, const LeafMutator &mutator) {
-  if (*ABSL_DIE_IF_NULL(tree) != nullptr) {
+  if (*ABSL_DIE_IF_NULL(tree)) {
     LeafMutatorVisitor visitor(&mutator);
     (*tree)->Accept(&visitor, tree);
   }

@@ -202,7 +202,7 @@ std::string RuleBundle::UnparseConfiguration(const char separator,
 
 bool LinterConfiguration::RuleIsOn(const analysis::LintRuleId &rule) const {
   const auto *entry = FindOrNull(configuration_, rule);
-  if (entry == nullptr) return false;
+  if (!entry) return false;
   return entry->enabled;
 }
 
@@ -288,7 +288,7 @@ static absl::StatusOr<std::vector<std::unique_ptr<T>>> CreateRules(
     if (!setting.enabled) continue;
 
     std::unique_ptr<T> rule_ptr = factory(rule_pair.first);
-    if (rule_ptr == nullptr) continue;
+    if (!rule_ptr) continue;
 
     if (!setting.configuration.empty()) {
       if (absl::Status status = rule_ptr->Configure(setting.configuration);

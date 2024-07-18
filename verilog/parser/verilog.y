@@ -8100,9 +8100,10 @@ sequence_expr_match_primary
 sequence_repetition_expr
   /* Highest precedence sequence_expr. */
   : expression_or_dist boolean_abbrev_opt
-    { $$ = ($2 == nullptr) ? std::move($1) :
-                             MakeTaggedNode(N::kSequenceRepetitionExpression,
-                                            $1, $2); }
+    { $$ = ($2)
+        ? MakeTaggedNode(N::kSequenceRepetitionExpression, $1, $2)
+        : std::move($1);
+    }
   /* This covers a simple expression.
    *
    * More importantly, this also covers sequence_expr_match_primary without conflict:
@@ -8120,7 +8121,7 @@ expression_or_dist
     {
       // If dist_opt is nullptr, then we can just forward expression
       // without introducing another layer
-      if ($2 == nullptr)  {
+      if (!$2)  {
         $$ = std::move($1);
       } else {
         SetChild($2, 0, $1);

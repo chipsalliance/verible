@@ -68,19 +68,19 @@ static const SyntaxTreeNode *GetBeginLabel(const Symbol &begin) {
 
 static const SyntaxTreeNode *GetEndLabel(const Symbol &end) {
   const auto *label = verible::GetSubtreeAsSymbol(end, NodeEnum::kEnd, 1);
-  if (label == nullptr) return nullptr;
+  if (!label) return nullptr;
   return verible::CheckOptionalSymbolAsNode(label, NodeEnum::kLabel);
 }
 
 const TokenInfo *GetBeginLabelTokenInfo(const Symbol &symbol) {
   const SyntaxTreeNode *label = GetBeginLabel(symbol);
-  if (label == nullptr) return nullptr;
+  if (!label) return nullptr;
   return &GetLabelLeafText(*label).get();
 }
 
 const TokenInfo *GetEndLabelTokenInfo(const Symbol &symbol) {
   const SyntaxTreeNode *label = GetEndLabel(symbol);
-  if (label == nullptr) return nullptr;
+  if (!label) return nullptr;
   return &GetLabelLeafText(*label).get();
 }
 

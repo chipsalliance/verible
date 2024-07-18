@@ -202,7 +202,7 @@ void TextStructureView::FocusOnSubtreeSpanningSubstring(int left_offset,
   // Don't let the syntax tree be empty.
   // Always return a tree with one node.
   // This can happen when TrimSyntaxTree() yields a nullptr syntax tree
-  if (syntax_tree_ == nullptr) {
+  if (!syntax_tree_) {
     syntax_tree_ = MakeNode();
   }
   TrimTokensToSubstring(left_offset, right_offset);
@@ -319,7 +319,7 @@ void TextStructureView::MutateTokens(const LeafMutator& mutator) {
   }
   // No need to touch tokens_view_, all transformations are in-place.
 
-  if (syntax_tree_ != nullptr) {
+  if (syntax_tree_) {
     // The tokens at the leaves of the tree are their own copies, and thus
     // need to re-apply the same transformation.
     MutateLeaves(&syntax_tree_, mutator);
@@ -349,7 +349,7 @@ absl::Status TextStructureView::FastTokenRangeConsistencyCheck() const {
           std::distance(first.text().cbegin(), lower_bound)));
     }
     const TokenInfo* last = FindLastNonEOFToken(tokens_);
-    if (last != nullptr && last->text().cend() > upper_bound) {
+    if (last && last->text().cend() > upper_bound) {
       return absl::InternalError(absl::StrCat(
           "Token offset points past end of string contents.  delta=",
           std::distance(upper_bound, last->text().cend())));
@@ -410,7 +410,7 @@ absl::Status TextStructureView::SyntaxTreeConsistencyCheck() const {
   // inside contents_.
   const char* const lower_bound = contents_.data();
   const char* const upper_bound = lower_bound + contents_.length();
-  if (syntax_tree_ != nullptr) {
+  if (syntax_tree_) {
     const SyntaxTreeLeaf* left = GetLeftmostLeaf(*syntax_tree_);
     if (!left) return absl::OkStatus();
     const SyntaxTreeLeaf* right = GetRightmostLeaf(*syntax_tree_);

@@ -182,7 +182,7 @@ const verible::SyntaxTreeNode *GetPackedDimensionFromDataDeclaration(
   if (!instantiation_type) return nullptr;
   const verible::Symbol *data_type = verible::GetSubtreeAsSymbol(
       *instantiation_type, NodeEnum::kInstantiationType, 0);
-  if (data_type == nullptr) return nullptr;
+  if (!data_type) return nullptr;
 
   return GetPackedDimensionFromDataType(*data_type);
 }
@@ -209,13 +209,13 @@ const verible::Symbol *GetTypeIdentifierFromDataDeclaration(
   if (!instantiation_type) return nullptr;
   const verible::Symbol *identifier =
       GetTypeIdentifierFromInstantiationType(*instantiation_type);
-  if (identifier != nullptr) {
+  if (identifier) {
     return identifier;
   }
 
   const verible::Symbol *base_type =
       GetBaseTypeFromInstantiationType(*instantiation_type);
-  if (base_type == nullptr) return nullptr;
+  if (!base_type) return nullptr;
   return GetTypeIdentifierFromBaseType(*base_type);
 }
 

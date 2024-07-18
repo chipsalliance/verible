@@ -1207,7 +1207,7 @@ TEST(FindAllForLoopsInitializations, FindForInitializationDataTypes) {
           for (const auto &instance : instances) {
             const auto *type =
                 GetDataTypeFromForInitialization(*instance.match);
-            if (type == nullptr) {
+            if (!type) {
               continue;
             }
             types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});

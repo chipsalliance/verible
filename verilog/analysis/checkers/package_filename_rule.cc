@@ -71,7 +71,7 @@ void PackageFilenameRule::Lint(const TextStructureView &text_structure,
   }
 
   const auto &tree = text_structure.SyntaxTree();
-  if (tree == nullptr) return;
+  if (!tree) return;
 
   // Find all package declarations.
   auto package_matches = FindAllPackageDeclarations(*tree);

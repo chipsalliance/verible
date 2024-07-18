@@ -6319,7 +6319,7 @@ static void TestVerilogLibraryParserMatchAll(const ParserTestCaseArray& data) {
 
     const Symbol* tree_ptr = analyzer->SyntaxTree().get();
     EXPECT_NE(tree_ptr, nullptr) << "Missing syntax tree with input:\n" << code;
-    if (tree_ptr == nullptr) return;  // Already failed, abort this test case.
+    if (!tree_ptr) return;  // Already failed, abort this test case.
     const Symbol& root = *tree_ptr;
 
     verible::ParserVerifier verifier(root,

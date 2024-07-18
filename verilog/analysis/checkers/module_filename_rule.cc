@@ -81,7 +81,7 @@ void ModuleFilenameRule::Lint(const TextStructureView &text_structure,
   }
 
   const auto &tree = text_structure.SyntaxTree();
-  if (tree == nullptr) return;
+  if (!tree) return;
 
   // Find all module declarations.
   auto module_matches = FindAllModuleDeclarations(*tree);

@@ -84,7 +84,7 @@ void LintWaiver::RegexToLines(absl::string_view contents,
 bool LintWaiver::RuleIsWaivedOnLine(absl::string_view rule_name,
                                     int line_number) const {
   const auto *line_set = verible::container::FindOrNull(waiver_map_, rule_name);
-  return line_set != nullptr && LineNumberSetContains(*line_set, line_number);
+  return line_set && LineNumberSetContains(*line_set, line_number);
 }
 
 bool LintWaiver::Empty() const {

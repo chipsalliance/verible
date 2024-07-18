@@ -239,7 +239,7 @@ TEST(GetConditionExpressionPredicateTest, Various) {
           for (const auto& expr : exprs) {
             const auto* predicate =
                 GetConditionExpressionPredicate(*expr.match);
-            if (predicate != nullptr) {
+            if (predicate) {
               predicates.push_back(
                   TreeSearchMatch{predicate, {/* ignored context */}});
             } else {
@@ -325,7 +325,7 @@ TEST(GetConditionExpressionTrueCaseTest, Various) {
           std::vector<TreeSearchMatch> predicates;
           for (const auto& expr : exprs) {
             const auto* predicate = GetConditionExpressionTrueCase(*expr.match);
-            if (predicate != nullptr) {
+            if (predicate) {
               predicates.push_back(
                   TreeSearchMatch{predicate, {/* ignored context */}});
             } else {
@@ -412,7 +412,7 @@ TEST(GetConditionExpressionFalseCaseTest, Various) {
           for (const auto& expr : exprs) {
             const auto* predicate =
                 GetConditionExpressionFalseCase(*expr.match);
-            if (predicate != nullptr) {
+            if (predicate) {
               predicates.push_back(
                   TreeSearchMatch{predicate, {/* ignored context */}});
             } else {

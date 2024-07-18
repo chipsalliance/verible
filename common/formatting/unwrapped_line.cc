@@ -95,7 +95,7 @@ std::ostream *UnwrappedLine::AsCode(
                              TokenFormatter(out, token, verbose);
                            })
           << "], policy: " << partition_policy_;
-  if (origin_ != nullptr) {
+  if (origin_) {
     *stream << ", (origin: ";
     origin_printer(*stream, origin_);
     *stream << ")";

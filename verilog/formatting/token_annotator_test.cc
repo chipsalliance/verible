@@ -148,7 +148,7 @@ class InitializedSyntaxTreeContext : public verible::SyntaxTreeContext {
     std::vector<verible::SyntaxTreeNode *> parents;
     parents.reserve(ancestors.size());
     for (const auto ancestor : verible::reversed_view(ancestors)) {
-      if (root_ == nullptr) {
+      if (!root_) {
         root_ = verible::MakeTaggedNode(ancestor);
       } else {
         root_ = verible::MakeTaggedNode(ancestor, root_);

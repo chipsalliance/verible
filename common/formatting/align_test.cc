@@ -1089,7 +1089,7 @@ class SubcolumnsTreeAlignmentTest : public MatrixTreeAlignmentTestFixture {
       const std::vector<verible::PreFormatToken>::iterator& end) {
     SymbolPtr list = TNode(0);
     SymbolPtr item;
-    while ((item = ParseItem(it, end)) != nullptr) {
+    while ((item = ParseItem(it, end))) {
       SymbolCastToNode(*list).AppendChild(std::move(item));
     }
     return list;

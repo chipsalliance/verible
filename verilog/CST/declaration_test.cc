@@ -265,7 +265,7 @@ TEST(GetQualifiersOfDataDeclarationTest, NoQualifiers) {
           // nullptrs.
           for (const auto &decl : decls) {
             const auto *quals = GetQualifiersOfDataDeclaration(*decl.match);
-            if (quals != nullptr) {
+            if (quals) {
               for (const auto &child : quals->children()) {
                 EXPECT_EQ(child, nullptr)
                     << "unexpected qualifiers:\n"
@@ -410,7 +410,7 @@ TEST(GetQualifiersOfDataDeclarationTest, SomeQualifiers) {
           std::vector<TreeSearchMatch> quals;
           for (const auto &decl : decls) {
             const auto *qual = GetQualifiersOfDataDeclaration(*decl.match);
-            if (qual != nullptr) {
+            if (qual) {
               quals.push_back(TreeSearchMatch{qual, {/* ignored context */}});
             } else {
               EXPECT_NE(qual, nullptr) << "decl:\n"
@@ -627,7 +627,7 @@ TEST(GetStructTypeFromDeclaration, GetStructOrUnionOrEnumType) {
           for (const auto &decl : instances) {
             const auto *type =
                 GetStructOrUnionOrEnumTypeFromDataDeclaration(*decl.match);
-            if (type == nullptr) {
+            if (!type) {
               continue;
             }
             types.emplace_back(TreeSearchMatch{type, {/* ignored context */}});
@@ -753,7 +753,7 @@ TEST(FindAllDataDeclarationTest, FindDataDeclarationParameters) {
             VLOG(1) << "decl: " << verible::StringSpanOfSymbol(*decl.match);
             const auto *param_list =
                 GetParamListFromDataDeclaration(*decl.match);
-            if (param_list == nullptr) {
+            if (!param_list) {
               continue;
             }
             params.emplace_back(
@@ -933,7 +933,7 @@ TEST(GetVariableDeclaration, FindPackedDimensionFromDataDeclaration) {
           for (const auto &decl : instances) {
             const auto *packed_dimension =
                 GetPackedDimensionFromDataDeclaration(*decl.match);
-            if (packed_dimension == nullptr) {
+            if (!packed_dimension) {
               continue;
             }
             packed_dimensions.emplace_back(

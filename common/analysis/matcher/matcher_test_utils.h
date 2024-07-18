@@ -53,7 +53,7 @@ void RunRawMatcherTestCase(const RawMatcherTestCase &test) {
   EXPECT_TRUE(status.ok()) << "code with error:\n" << test.code;
 
   auto *tree = analyzer.SyntaxTree().get();
-  EXPECT_TRUE(tree != nullptr);
+  EXPECT_TRUE(tree);
 
   ExpectMatchesInAST(*tree, test.matcher, test.num_matches, test.code);
 }

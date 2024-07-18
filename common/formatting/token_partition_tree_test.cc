@@ -450,9 +450,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, RootOnly) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(GroupLeafWithPreviousLeafTest, OneChild) {
@@ -474,9 +474,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, OneChild) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(GroupLeafWithPreviousLeafTest, TwoChild) {
@@ -520,9 +520,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, TwoChild) {
   EXPECT_EQ(group, &tree.Children().back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(GroupLeafWithPreviousLeafTest, TwoGenerations) {
@@ -571,9 +571,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, TwoGenerations) {
   EXPECT_EQ(group, &tree.Children().back().Children().back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(GroupLeafWithPreviousLeafTest, Cousins) {
@@ -637,9 +637,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, Cousins) {
   EXPECT_EQ(group, &tree.Children().front().Children().back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(GroupLeafWithPreviousLeafTest, ExtendCommonAncestor) {
@@ -682,9 +682,9 @@ TEST_F(GroupLeafWithPreviousLeafTest, ExtendCommonAncestor) {
   EXPECT_EQ(group, &tree.Children().back());
 
   const auto diff = DeepEqual(tree, expected_tree, PropertiesEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 static bool TokenRangeEqual(const UnwrappedLine& left,
@@ -712,9 +712,9 @@ TEST_F(MergeLeafIntoPreviousLeafTest, RootOnly) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoPreviousLeafTest, OneChild) {
@@ -736,9 +736,9 @@ TEST_F(MergeLeafIntoPreviousLeafTest, OneChild) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoPreviousLeafTest, TwoChild) {
@@ -769,9 +769,9 @@ TEST_F(MergeLeafIntoPreviousLeafTest, TwoChild) {
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoPreviousLeafTest, TwoGenerations) {
@@ -816,9 +816,9 @@ TEST_F(MergeLeafIntoPreviousLeafTest, TwoGenerations) {
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoPreviousLeafTest, Cousins) {
@@ -878,9 +878,9 @@ TEST_F(MergeLeafIntoPreviousLeafTest, Cousins) {
   EXPECT_EQ(parent, &tree.Children().back());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 class MergeLeafIntoNextLeafTest : public TokenPartitionTreeTestFixture {};
@@ -903,9 +903,9 @@ TEST_F(MergeLeafIntoNextLeafTest, RootOnly) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoNextLeafTest, OneChild) {
@@ -927,9 +927,9 @@ TEST_F(MergeLeafIntoNextLeafTest, OneChild) {
 
   // Expect no change.
   const auto diff = DeepEqual(tree, saved_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoNextLeafTest, TwoChild) {
@@ -960,9 +960,9 @@ TEST_F(MergeLeafIntoNextLeafTest, TwoChild) {
   EXPECT_EQ(parent, &tree);
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoNextLeafTest, TwoGenerations) {
@@ -1009,9 +1009,9 @@ TEST_F(MergeLeafIntoNextLeafTest, TwoGenerations) {
   EXPECT_EQ(parent, &tree.Children().front());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeLeafIntoNextLeafTest, Cousins) {
@@ -1072,9 +1072,9 @@ TEST_F(MergeLeafIntoNextLeafTest, Cousins) {
   EXPECT_EQ(parent, &tree.Children().front());
 
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 class MergeConsecutiveSiblingsTest : public TokenPartitionTreeTestFixture {};
@@ -1120,9 +1120,9 @@ TEST_F(MergeConsecutiveSiblingsTest, TwoChild) {
 
   MergeConsecutiveSiblings(&tree, 0);
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
@@ -1174,9 +1174,9 @@ TEST_F(MergeConsecutiveSiblingsTest, TwoGenerations) {
 
   MergeConsecutiveSiblings(&tree, 0);
   const auto diff = DeepEqual(tree, expected_tree, TokenRangeEqual);
-  EXPECT_TRUE(diff.left == nullptr) << "First differing node at:\n"
-                                    << *diff.left << "\nand:\n"
-                                    << *diff.right << '\n';
+  EXPECT_FALSE(diff.left) << "First differing node at:\n"
+                          << *diff.left << "\nand:\n"
+                          << *diff.right << '\n';
 }
 
 class AnyPartitionSubRangeIsDisabledTest

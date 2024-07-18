@@ -152,7 +152,7 @@ static bool IgnoreWithinStructUnionMemberPartitionGroup(
           partition.Value().Origin(), [](const Symbol& symbol) {
             return symbol.Tag() ==
                    verible::NodeTag(NodeEnum::kStructUnionMemberList);
-          }) != nullptr) {
+          })) {
     return true;
   }
 
@@ -605,7 +605,7 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveModuleItemGroups(
       [](const TokenPartitionTree& partition)
           -> AlignedPartitionClassification {
         const Symbol* origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (!origin) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
@@ -633,7 +633,7 @@ static std::vector<TaggedTokenPartitionRange> GetConsecutiveClassItemGroups(
       [](const TokenPartitionTree& partition)
           -> AlignedPartitionClassification {
         const Symbol* origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (!origin) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return {AlignmentGroupAction::kIgnore};
@@ -655,7 +655,7 @@ static std::vector<TaggedTokenPartitionRange> GetAlignableStatementGroups(
       [](const TokenPartitionTree& partition)
           -> AlignedPartitionClassification {
         const Symbol* origin = partition.Value().Origin();
-        if (origin == nullptr) return {AlignmentGroupAction::kIgnore};
+        if (!origin) return {AlignmentGroupAction::kIgnore};
         const verible::SymbolTag symbol_tag = origin->Tag();
         if (symbol_tag.kind != verible::SymbolKind::kNode) {
           return AlignClassify(AlignmentGroupAction::kIgnore);
@@ -1548,11 +1548,11 @@ void TabularAlignTokenPartitions(const FormatStyle& style,
   auto& partition = *partition_ptr;
   auto& uwline = partition.Value();
   const auto* origin = uwline.Origin();
-  VLOG(2) << "origin is nullptr? " << (origin == nullptr);
-  if (origin == nullptr) return;
+  VLOG(2) << "origin is nullptr? " << (!origin);
+  if (!origin) return;
   const auto* node = down_cast<const SyntaxTreeNode*>(origin);
-  VLOG(2) << "origin is node? " << (node != nullptr);
-  if (node == nullptr) return;
+  VLOG(2) << "origin is node? " << (node);
+  if (!node) return;
   // Dispatch aligning function based on syntax tree node type.
 
   static const auto* const kAlignHandlers =

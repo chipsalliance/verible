@@ -145,7 +145,7 @@ static std::unique_ptr<VerilogAnalyzer> ParseWithLanguageMode(
 // Prints all tokens in view that are not matched in root.
 static void VerifyParseTree(const TextStructureView &text_structure) {
   const ConcreteSyntaxTree &root = text_structure.SyntaxTree();
-  if (root == nullptr) return;
+  if (!root) return;
   // TODO(fangism): this seems like a good method for TextStructureView.
   ParserVerifier verifier(*root, text_structure.GetTokenStreamView());
   auto unmatched = verifier.Verify();
@@ -256,7 +256,7 @@ static int AnalyzeOneFile(
   const auto &syntax_tree = text_structure.SyntaxTree();
 
   // check for printtree flag, and print tree if on
-  if (absl::GetFlag(FLAGS_printtree) && syntax_tree != nullptr) {
+  if (absl::GetFlag(FLAGS_printtree) && syntax_tree) {
     if (!absl::GetFlag(FLAGS_export_json)) {
       std::cout << std::endl
                 << "Parse Tree"

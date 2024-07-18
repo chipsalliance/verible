@@ -92,7 +92,7 @@ absl::Status VerilogSourceFile::Parse() {
 }
 
 const verible::TextStructureView *VerilogSourceFile::GetTextStructure() const {
-  if (analyzed_structure_ == nullptr) return nullptr;
+  if (!analyzed_structure_) return nullptr;
   return &analyzed_structure_->Data();
 }
 

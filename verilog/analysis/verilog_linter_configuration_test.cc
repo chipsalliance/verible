@@ -181,7 +181,7 @@ TEST(ProjectPolicyTest, MatchesAnyPath) {
   };
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyPath(test.filename);
-    if (test.expected_match != nullptr) {
+    if (test.expected_match) {
       EXPECT_EQ(absl::string_view(match), test.expected_match);
     } else {
       EXPECT_EQ(match, nullptr);
@@ -206,7 +206,7 @@ TEST(ProjectPolicyTest, MatchesAnyExclusions) {
   };
   for (const auto &test : kTestCases) {
     const char *match = test.policy.MatchesAnyExclusions(test.filename);
-    if (test.expected_match != nullptr) {
+    if (test.expected_match) {
       EXPECT_EQ(absl::string_view(match), test.expected_match);
     } else {
       EXPECT_EQ(match, nullptr);
