@@ -41,7 +41,8 @@ TEST(DffNameStyleRuleTest, AcceptDefaults) {
       {"module m; always_ff @(posedge c) a_r <= a_next; endmodule"},
       {"module m; always_ff @(posedge c) a_ff <= a_n; endmodule"},
       {"module m; always_ff @(posedge c) a_q <= a_d; endmodule"},
-      {"module m; always_ff @(posedge c) a_reg <= 0; endmodule"},
+      {"module m; always_ff @(posedge c) if(!rst_ni) begin a_reg <= 0; end; "
+       "endmodule"},
   };
   RunLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases);
 }
@@ -67,8 +68,10 @@ TEST(DffNameStyleRuleTest, AcceptTests) {
       {"module m; always_ff @(posedge c) a_ff <= a_next; endmodule"},
       {"module m; always_ff @(posedge c) someverylongname_ff <= "
        "someverylongname_next; endmodule"},
-      {"module m; always_ff @(posedge c) a_ff <= 0; endmodule"},
-      {"module m; always_ff @(posedge c) aAaAaAaAaAa_ff <= 0; endmodule"},
+      {"module m; always_ff @(posedge c) if(!rst_ni) begin a_ff <= 0; end; "
+       "endmodule"},
+      {"module m; always_ff @(posedge c) if(!rst_ni) begin aAaAaAaAaAa_ff <= "
+       "0; end endmodule"},
       {"module m; always_ff @(posedge c) a_a_a_a_a_a_ff <= a_a_a_a_a_a_next; "
        "endmodule"},
   };
@@ -82,8 +85,10 @@ TEST(DffNameStyleRuleTest, AcceptPipelineStages) {
       {"module m; always_ff @(posedge c) a_ff2 <= a_ff; endmodule"},
       {"module m; always_ff @(posedge c) a_ff3 <= a_ff2; endmodule"},
       {"module m; always_ff @(posedge c) a_ff4 <= a_ff3; endmodule"},
-      {"module m; always_ff @(posedge c) a_ff2 <= 0; endmodule"},
-      {"module m; always_ff @(posedge c) a_ff3 <= 0; endmodule"},
+      {"module m; always_ff @(posedge c) if(!rst_ni) begin a_ff2 <= 0; end "
+       "endmodule"},
+      {"module m; always_ff @(posedge c) if(!rst_ni) begin a_ff3 <= 0; end "
+       "endmodule"},
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, DffNameStyleRule>(kTestCases,
                                                                 "output:ff;"

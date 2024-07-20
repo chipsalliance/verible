@@ -130,6 +130,9 @@ class DffNameStyleRule : public verible::SyntaxTreeLintRule {
   std::vector<std::string> valid_output_suffixes =
       ProcessSuffixes(kDefaultOutputSuffixes);
 
+  std::vector<std::string> waive_conditions = {"!rst_ni", "flush_i",
+                                               "!rst_ni || flush_i"};
+
   // (*) Valid integers span from 2 to n
   static constexpr uint64_t kFirstValidPipeStage = 2;
 };

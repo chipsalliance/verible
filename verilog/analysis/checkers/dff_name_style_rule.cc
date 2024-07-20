@@ -141,14 +141,6 @@ void DffNameStyleRule::HandleNonBlockingAssignments(
   // If the base is empty, lhs is wrongly formatted. Stop making more checks
   if (lhs_base.empty()) return;
 
-  // TODO: Intention is to waive at least numeric constants
-  //  - macros/function calls should be considered too?
-  //  - make it more precise? expand expression.h:ConstantIntegerValue?
-  if (verible::DescendThroughSingletons(rhs_expr)->Kind() ==
-      verible::SymbolKind::kLeaf) {
-    return;
-  }
-
   // Pipeline stage present on the lhs
   // ID_suffixN <= expr;
   if (uint64_t lhs_stage = lhs_pipe_stage.value_or(0)) {
@@ -205,18 +197,56 @@ void DffNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
     return;
   }
 
-  if (!AlwaysFFMatcher().Matches(symbol, &manager)) {
+  // From this point, ignore everything that isn't a nonblocking assignment
+  // inside an always_ff block
+  if (!NodekNonblockingAssignmentStatement().Matches(symbol, &manager) ||
+      !context.NearestParentMatching(
+          [&](const verible::SyntaxTreeNode &node) -> bool {
+            return AlwaysFFMatcher().Matches(node, &manager);
+          })) {
     return;
   }
 
-  // Once we encounter an always_ff statement, extract inner non
-  // blocking assignments.
-  std::vector<verible::TreeSearchMatch> non_blocking_assignments =
-      FindAllNonBlockingAssignments(symbol);
+  std::vector<verible::TreeSearchMatch> ifs =
+      verible::SearchSyntaxTree(symbol, NodekIfClause());
 
-  for (const verible::TreeSearchMatch &tree_match : non_blocking_assignments) {
-    HandleNonBlockingAssignments(*tree_match.match, context);
+  // Waive if this particular nonblocking assignment is inside an if block
+  // related to a reset signal, as we are not capable of determining
+  // reset-values from analyzing the source code.
+  const verible::SyntaxTreeNode *waive = context.NearestParentMatching(
+      [&](const verible::SyntaxTreeNode &node) -> bool {
+        if (!node.MatchesTag(NodeEnum::kIfClause)) {
+          return false;
+        }
+
+        const verible::SyntaxTreeNode *header =
+            verible::GetSubtreeAsNode(node, NodeEnum::kIfClause, 0);
+
+        if (!header) {
+          return false;
+        }
+
+        const verible::SyntaxTreeNode *paren =
+            verible::GetSubtreeAsNode(*header, NodeEnum::kIfHeader, 2);
+        if (!paren) {
+          return false;
+        }
+
+        const verible::Symbol *s = (*paren)[1].get();
+        absl::string_view paren_str = verible::StringSpanOfSymbol(*s);
+
+        // EXACT matching w.r.t waive_conditions. Substring checking isn't
+        // really appropriate because we would have to check for tricky stuff
+        // like negation, negation around parenthesis...
+        return std::find(waive_conditions.cbegin(), waive_conditions.cend(),
+                         paren_str) != waive_conditions.cend();
+      });
+
+  if (waive) {
+    return;
   }
+
+  HandleNonBlockingAssignments(symbol, context);
 }
 
 absl::string_view DffNameStyleRule::CheckSuffix(
