@@ -542,7 +542,7 @@ jobs:
         ls -lah artifact
 
     - name: Deploy release and assets
-      uses: svenstaro/upload-release-action@v2.9.0
+      uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: artifact/verible*.{tar.gz,zip}
