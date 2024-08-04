@@ -586,7 +586,7 @@ jobs:
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.6.3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: /tmp/pages
           CLEAN: true
