@@ -15,33 +15,48 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
 
+#include <memory>
 #include <set>
+#include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "re2/re2.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
 namespace analysis {
 
-// SignalNameStyleRule checks that signal names use lower_snake_case naming
-// convention. Signals are defined as "a net, variable, or port within a
+// SignalNameStyleRule checks that signal names follow
+// a naming convention matching a regex pattern.
+// Signals are defined as "a net, variable, or port within a
 // SystemVerilog design".
 class SignalNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
+  SignalNameStyleRule();
+
   static const LintRuleDescriptor &GetDescriptor();
+
+  std::string CreateViolationMessage();
 
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
+  absl::Status Configure(absl::string_view configuration) final;
+
  private:
   std::set<verible::LintViolation> violations_;
+
+  // A regex to check the style against
+  std::unique_ptr<re2::RE2> style_regex_;
 };
 
 }  // namespace analysis
