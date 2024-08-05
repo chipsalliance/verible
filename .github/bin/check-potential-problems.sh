@@ -83,4 +83,13 @@ if [ $? -eq 0 ]; then
   EXIT_CODE=1
 fi
 
+# Never use std::regex.
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs grep -n '#include <regex>'
+if [ $? -eq 0 ]; then
+  echo "::error:: Don't use stdlib regex, it is slow and requires exceptions. Use RE2 instead (https://github.com/google/re2; header #include \"re2/re2.h\")."
+  echo
+  EXIT_CODE=1
+fi
+
 exit "${EXIT_CODE}"

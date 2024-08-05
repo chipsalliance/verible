@@ -16,12 +16,13 @@
 #define VERIBLE_COMMON_ANALYSIS_LINT_WAIVER_H_
 
 #include <map>
-#include <regex>  // NOLINT
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/line_column_map.h"
@@ -29,13 +30,15 @@
 #include "common/text/text_structure.h"
 #include "common/text/token_stream_view.h"
 #include "common/util/container_util.h"
+#include "re2/re2.h"
 
 namespace verible {
 
 // LintWaiver maintains a set of line ranges per lint rule that should be
 // exempt from each rule.
 class LintWaiver {
-  using RegexVector = std::vector<const std::regex *>;
+  // Vector of un-owned regexes.
+  using RegexVector = std::vector<const re2::RE2 *>;
 
  public:
   LintWaiver() = default;
@@ -58,7 +61,8 @@ class LintWaiver {
                       int line_end);
 
   // Adds a regular expression which will be used to apply a waiver.
-  void WaiveWithRegex(absl::string_view rule_name, const std::string &regex);
+  absl::Status WaiveWithRegex(absl::string_view rule_name,
+                              absl::string_view regex);
 
   // Converts the prepared regular expressions to line numbers and applies the
   // waivers.
@@ -82,14 +86,16 @@ class LintWaiver {
   }
 
  private:
+  const RE2 *GetOrCreateCachedRegex(absl::string_view regex_str);
+
   // Keys in the maps below are the names of the waived rules. They can be
   // string_view because the static strings for each lint rule class exist,
   // and will outlive all LintWaiver objects. This applies to both waiver_map_
   // and waiver_re_map_.
-  std::map<absl::string_view, LineNumberSet> waiver_map_;
-  std::map<absl::string_view, RegexVector> waiver_re_map_;
+  absl::flat_hash_map<absl::string_view, LineNumberSet> waiver_map_;
+  absl::flat_hash_map<absl::string_view, RegexVector> waiver_re_map_;
 
-  std::map<std::string, std::regex> regex_cache_;
+  absl::flat_hash_map<std::string, std::unique_ptr<re2::RE2>> regex_cache_;
 };
 
 // LintWaiverBuilder is a language-agnostic helper class for constructing

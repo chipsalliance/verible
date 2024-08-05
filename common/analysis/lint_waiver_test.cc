@@ -792,7 +792,7 @@ TEST_F(LintWaiverBuilderTest, RegexToLinesCatchAll) {
   const absl::string_view cfg_regex = "waive --rule=rule-1 --regex=\".*\"";
   EXPECT_OK(ApplyExternalWaivers(active_rules, user_file, cfg_file, cfg_regex));
 
-  const absl::string_view file = "abc\ndef\nghi\n";
+  const absl::string_view file = "abc\ndef\nghi\n\n";
   const LineColumnMap line_map(file);
 
   lint_waiver_.RegexToLines(file, line_map);
@@ -801,6 +801,10 @@ TEST_F(LintWaiverBuilderTest, RegexToLinesCatchAll) {
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 0));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 1));
   EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 2));
+  EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 3));
+  EXPECT_TRUE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 4));
+
+  EXPECT_FALSE(lint_waiver_.RuleIsWaivedOnLine("rule-1", 5));  // non-exist line
 }
 
 TEST_F(LintWaiverBuilderTest, RegexToLinesMultipleMatches) {
