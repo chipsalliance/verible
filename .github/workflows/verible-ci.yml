@@ -513,9 +513,12 @@ jobs:
 
 
   Release:
+    name: 📦 Release
     needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
-    name: 📦 Release
+    permissions:
+      contents: write
+
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
 
     steps:
@@ -569,6 +572,9 @@ jobs:
     name: Build and deploy GitHub pages
     needs: [Check]
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v3
 
