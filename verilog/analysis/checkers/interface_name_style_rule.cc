@@ -45,7 +45,7 @@ static constexpr absl::string_view kMessage =
     "Interface names must use lower_snake_case naming convention "
     "and end with _if.";
 
-const LintRuleDescriptor& InterfaceNameStyleRule::GetDescriptor() {
+const LintRuleDescriptor &InterfaceNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "interface-name-style",
       .topic = "interface-conventions",
@@ -56,16 +56,16 @@ const LintRuleDescriptor& InterfaceNameStyleRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& InterfaceMatcher() {
+static const Matcher &InterfaceMatcher() {
   static const Matcher matcher(NodekInterfaceDeclaration());
   return matcher;
 }
 
-void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol& symbol,
-                                          const SyntaxTreeContext& context) {
+void InterfaceNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
+                                          const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   absl::string_view name;
-  const verible::TokenInfo* identifier_token;
+  const verible::TokenInfo *identifier_token;
   if (InterfaceMatcher().Matches(symbol, &manager)) {
     identifier_token = GetInterfaceNameToken(symbol);
     name = identifier_token->text();
