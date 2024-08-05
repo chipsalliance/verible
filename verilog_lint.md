@@ -122,7 +122,10 @@ Checks that a Verilog `` `endif`` directive is followed by a comment that matche
 Enabled by default: false
 
 ### enum-name-style
-Checks that `enum` names use lower_snake_case naming convention and end with '_t' or '_e'. See [Style: enumerations].
+Checks that enum type names follow a naming convention defined by a RE2 regular expression. The default regex pattern expects "lower_snake_case" with either a "_t" or "_e" suffix. Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on verible regex patterns. See [Style: enumerations].
+
+##### Parameter
+  * `style_regex` Default: `[a-z_0-9]+(_t|_e)` A regex used to check enum type name style.
 
 Enabled by default: true
 
@@ -213,7 +216,10 @@ Checks that all lines do not exceed the maximum allowed length.  See [Style: lin
 Enabled by default: true
 
 ### macro-name-style
-Checks that every macro name follows ALL_CAPS naming convention. _Exception_: UVM-like macros. See [Style: defines].
+Checks that macro names conform to a naming convention defined by a RE2 regular expression. The default regex pattern expects "UPPER_SNAKE_CASE". Exceptions are made for UVM like macros, where macros named 'uvm_*' and 'UVM_*' follow "lower_snake_case" and "UPPER_SNAKE_CASE" naming conventions respectively. Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on verible regex patterns. See [Style: defines].
+
+##### Parameter
+  * `style_regex` Default: `[A-Z_0-9]+` A regex used to check macro names style.
 
 Enabled by default: true
 
@@ -327,7 +333,10 @@ Checks that every `parameter` declaration is inside a formal parameter list of m
 Enabled by default: false
 
 ### signal-name-style
-Checks that signal names use lower_snake_case naming convention. Signals are defined as "a net, variable, or port within a SystemVerilog design". See [Style: signal-conventions].
+Checks that signal names conform to a naming convention defined by a RE2 regular expression. Signals are defined as "a net, variable, or port within a SystemVerilog design". The default regex pattern expects "lower_snake_case". Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on verible regex patterns. See [Style: signal-conventions].
+
+##### Parameter
+  * `style_regex` Default: `[a-z_0-9]+` A regex used to check signal names style.
 
 Enabled by default: false
 
@@ -402,4 +411,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-08-05 00:42:11 -0700 from [202f8bc](https://github.com/google/verible/commit/202f8bcdd617ce4d8bf72c30d368f09ecac2326b)
+Generated on 2024-08-05 02:32:14 -0700 from [cc0f5d6](https://github.com/google/verible/commit/cc0f5d67db10bb832d86b935a11c415a599de3e2)
