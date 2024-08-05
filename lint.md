@@ -116,6 +116,11 @@ Checks that every generate block label starts with g_ or gen_. See [Style: gener
 
 Enabled by default: true
 
+### instance-shadowing
+Warns if there are multiple declarations in the same scope that shadow each other with the same name. See [Style: mark-shadowed-instances].
+
+Enabled by default: false
+
 ### interface-name-style
 Checks that `interface` names use lower_snake_case naming convention and end with `_if`. See [Style: interface-conventions].
 
@@ -340,4 +345,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-08-05 02:32:14 -0700 from [cc0f5d6](https://github.com/google/verible/commit/cc0f5d67db10bb832d86b935a11c415a599de3e2)
+Generated on 2024-08-05 12:11:51 -0700 from [79f6290](https://github.com/google/verible/commit/79f6290d63ab787b2941286e4d395dc1684413a2)
