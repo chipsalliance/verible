@@ -45,11 +45,14 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view style_default_regex = "[a-z_0-9]+(_if)";
+static constexpr absl::string_view kLowerSnakeCaseWithSuffixRegex =
+    "[a-z_0-9]+(_if)";
+static constexpr absl::string_view kDefaultStyleRegex =
+    kLowerSnakeCaseWithSuffixRegex;
 
 InterfaceNameStyleRule::InterfaceNameStyleRule()
     : style_regex_(
-          std::make_unique<re2::RE2>(style_default_regex, re2::RE2::Quiet)) {}
+          std::make_unique<re2::RE2>(kDefaultStyleRegex, re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &InterfaceNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -61,7 +64,7 @@ const LintRuleDescriptor &InterfaceNameStyleRule::GetDescriptor() {
           "\"lower_snake_case\" with a \"_if\" or \"_e\" suffix. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on regex patterns.",
-      .param = {{"style_regex", std::string(style_default_regex),
+      .param = {{"style_regex", std::string(kDefaultStyleRegex),
                  "A regex used to check interface name style."}},
   };
   return d;
