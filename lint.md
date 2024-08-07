@@ -122,7 +122,10 @@ Warns if there are multiple declarations in the same scope that shadow each othe
 Enabled by default: false
 
 ### interface-name-style
-Checks that `interface` names use lower_snake_case naming convention and end with `_if`. See [Style: interface-conventions].
+Checks that 'interface' names follow a naming convention defined by a RE2 regular expression. The default regex pattern expects "lower_snake_case" with a "_if" or "_e" suffix. Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on regex patterns. See [Style: interface-conventions].
+
+##### Parameter
+  * `style_regex` Default: `[a-z_0-9]+(_if)` A regex used to check interface name style.
 
 Enabled by default: true
 
@@ -345,4 +348,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-08-05 12:11:51 -0700 from [79f6290](https://github.com/google/verible/commit/79f6290d63ab787b2941286e4d395dc1684413a2)
+Generated on 2024-08-06 23:00:14 -0700 from [8b64887](https://github.com/google/verible/commit/8b64887eb41baad9915908979dfcb144068fd49c)
