@@ -14,9 +14,11 @@
 
 #include "verilog/analysis/checkers/parameter_name_style_rule.h"
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -45,19 +47,21 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using Matcher = verible::matcher::Matcher;
 
-// PascalCase, may end in _[0-9]+
-static constexpr absl::string_view localparam_default_regex =
+// Upper Camel Case (may end in _[0-9]+)
+static constexpr absl::string_view kUpperCamelCaseRegex =
     "([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?";
+// ALL_CAPS
+static constexpr absl::string_view kAllCapsRegex = "[A-Z_0-9]+";
 
-// PascalCase (may end in _[0-9]+) or UPPER_SNAKE_CASE
-static constexpr absl::string_view parameter_default_regex =
-    "(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+)";
+static constexpr absl::string_view kLocalparamDefaultRegex = "";
+static constexpr absl::string_view kParameterDefaultRegex = "";
 
 ParameterNameStyleRule::ParameterNameStyleRule()
     : localparam_style_regex_(std::make_unique<re2::RE2>(
-          localparam_default_regex, re2::RE2::Quiet)),
-      parameter_style_regex_(std::make_unique<re2::RE2>(parameter_default_regex,
-                                                        re2::RE2::Quiet)) {}
+          absl::StrCat("(", kUpperCamelCaseRegex, ")"), re2::RE2::Quiet)),
+      parameter_style_regex_(std::make_unique<re2::RE2>(
+          absl::StrCat("(", kUpperCamelCaseRegex, ")|(", kAllCapsRegex, ")"),
+          re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &ParameterNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -65,20 +69,19 @@ const LintRuleDescriptor &ParameterNameStyleRule::GetDescriptor() {
       .topic = "constants",
       .desc =
           "Checks that parameter and localparm names conform to a naming "
-          "convention defined by RE2 regular expressions. The default regex "
-          "pattern for boht localparam and parameter names is PascalCase with "
-          "an optional _digit suffix. Parameters may also be UPPER_SNAKE_CASE. "
-          "Refer "
-          "to "
+          "convention based on a choice of 'CamelCase', 'ALL_CAPS' and a user "
+          "defined regex ORed together. Empty configurtaion: no style "
+          "enforcement. Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"localparam_style_regex",
-                 std::string(localparam_default_regex),
+      .param = {{"localparam_style", "CamelCase", "Style of localparam names"},
+                {"parameter_style", "CamelCase|ALL_CAPS",
+                 "Style of parameter names."},
+                {"localparam_style_regex", std::string(kLocalparamDefaultRegex),
                  "A regex used to check localparam name style."},
-                {"parameter_style_regex", std::string(parameter_default_regex),
+                {"parameter_style_regex", std::string(kParameterDefaultRegex),
                  "A regex used to check parameter name style."}},
   };
-
   return d;
 }
 
@@ -133,14 +136,103 @@ void ParameterNameStyleRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
+absl::Status ParameterNameStyleRule::AppendRegex(
+    std::unique_ptr<re2::RE2> *rule_regex, absl::string_view regex_str) {
+  if (*rule_regex == nullptr) {
+    *rule_regex = std::make_unique<re2::RE2>(absl::StrCat("(", regex_str, ")"),
+                                             re2::RE2::Quiet);
+  } else {
+    *rule_regex = std::make_unique<re2::RE2>(
+        absl::StrCat((*rule_regex)->pattern(), "|(", regex_str, ")"),
+        re2::RE2::Quiet);
+  }
+
+  if ((*rule_regex)->ok()) {
+    return absl::OkStatus();
+  }
+
+  std::string error_msg = absl::StrCat("Failed to parse regular expression: ",
+                                       (*rule_regex)->error());
+  return absl::InvalidArgumentError(error_msg);
+}
+
+absl::Status ParameterNameStyleRule::ConfigureRegex(
+    std::unique_ptr<re2::RE2> *rule_regex, uint32_t config_style,
+    std::unique_ptr<re2::RE2> *config_style_regex) {
+  absl::Status s;
+
+  int config_style_regex_length = (*config_style_regex)->pattern().length();
+
+  // If no rule is set, no style enforcement
+  if (config_style == 0 && config_style_regex_length == 0) {
+    // Set the regex pattern to match everything
+    *rule_regex = std::make_unique<re2::RE2>(".*", re2::RE2::Quiet);
+    return absl::OkStatus();
+  }
+
+  // Clear rule_regex
+  *rule_regex = nullptr;
+
+  // Append UpperCamelCase regex to rule_regex (if enabled)
+  if (config_style & kUpperCamelCase) {
+    s = AppendRegex(rule_regex, kUpperCamelCaseRegex);
+    if (!s.ok()) {
+      return s;
+    }
+  }
+
+  // Append ALL_CAPS regex to rule_regex (if enabled)
+  if (config_style & kAllCaps) {
+    s = AppendRegex(rule_regex, kAllCapsRegex);
+    if (!s.ok()) {
+      return s;
+    }
+  }
+
+  // Append regex from config_style_regex (if provided by the user)
+  if (config_style_regex_length > 0) {
+    s = AppendRegex(rule_regex, (*config_style_regex)->pattern());
+  }
+
+  return s;
+}
+
 absl::Status ParameterNameStyleRule::Configure(
     absl::string_view configuration) {
+  // same sequence as enum StyleChoicesBits
+  static const std::vector<absl::string_view> choices = {"CamelCase",
+                                                         "ALL_CAPS"};
+
+  uint32_t localparam_style = kUpperCamelCase;
+  uint32_t parameter_style = kUpperCamelCase | kAllCaps;
+  std::unique_ptr<re2::RE2> localparam_style_regex =
+      std::make_unique<re2::RE2>(kLocalparamDefaultRegex, re2::RE2::Quiet);
+  std::unique_ptr<re2::RE2> parameter_style_regex =
+      std::make_unique<re2::RE2>(kParameterDefaultRegex, re2::RE2::Quiet);
+
+  using verible::config::SetNamedBits;
   using verible::config::SetRegex;
+
   absl::Status s = verible::ParseNameValues(
       configuration,
-      {{"localparam_style_regex", SetRegex(&localparam_style_regex_)},
-       {"parameter_style_regex", SetRegex(&parameter_style_regex_)}});
+      {{"localparam_style", SetNamedBits(&localparam_style, choices)},
+       {"parameter_style", SetNamedBits(&parameter_style, choices)},
+       {"localparam_style_regex", SetRegex(&localparam_style_regex)},
+       {"parameter_style_regex", SetRegex(&parameter_style_regex)}});
 
+  if (!s.ok()) {
+    return s;
+  }
+
+  // Form a regex to use based on *_style, and *_style_regex
+  s = ConfigureRegex(&localparam_style_regex_, localparam_style,
+                     &localparam_style_regex);
+  if (!s.ok()) {
+    return s;
+  }
+
+  s = ConfigureRegex(&parameter_style_regex_, parameter_style,
+                     &parameter_style_regex);
   return s;
 }
 
