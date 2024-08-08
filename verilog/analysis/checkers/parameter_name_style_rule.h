@@ -15,6 +15,7 @@
 #ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -51,10 +52,28 @@ class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
 
   absl::Status Configure(absl::string_view configuration) final;
 
+  const RE2 *localparam_style_regex() const {
+    return localparam_style_regex_.get();
+  }
+  const RE2 *parameter_style_regex() const {
+    return parameter_style_regex_.get();
+  }
+
  private:
+  absl::Status AppendRegex(std::unique_ptr<re2::RE2> *rule_regex,
+                           absl::string_view regex_str);
+  absl::Status ConfigureRegex(std::unique_ptr<re2::RE2> *rule_regex,
+                              uint32_t config_style,
+                              std::unique_ptr<re2::RE2> *config_style_regex);
+
+  enum StyleChoicesBits {
+    kUpperCamelCase = (1 << 0),
+    kAllCaps = (1 << 1),
+  };
+
   std::set<verible::LintViolation> violations_;
 
-  // A regex to check the style against
+  // Regex's to check the style against
   std::unique_ptr<re2::RE2> localparam_style_regex_;
   std::unique_ptr<re2::RE2> parameter_style_regex_;
 };

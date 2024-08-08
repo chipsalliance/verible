@@ -15,7 +15,11 @@
 #include "verilog/analysis/checkers/parameter_name_style_rule.h"
 
 #include <initializer_list>
+#include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/linter_test_utils.h"
 #include "common/analysis/syntax_tree_linter_test_utils.h"
 #include "gtest/gtest.h"
@@ -39,6 +43,7 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
       {"module foo; localparam type Bar_1 = 1; endmodule"},
       {"module foo; localparam Bar = 1; endmodule"},
       {"module foo; localparam int Bar = 1; endmodule"},
+      {"module foo; localparam int P = 1; endmodule"},
       {"module foo; parameter int HelloWorld = 1; endmodule"},
       {"module foo #(parameter int HelloWorld_1 = 1); endmodule"},
       {"module foo #(parameter type Foo); endmodule"},
@@ -53,6 +58,7 @@ TEST(ParameterNameStyleRuleTest, AcceptTests) {
       {"parameter int Foo = 1;"},
       {"parameter type FooBar;"},
       {"parameter Foo = 1;"},
+      {"parameter P = 1;"},
 
       // Make sure parameter type triggers no violation
       {"module foo; localparam type Bar_Hello_1 = 1; endmodule"},
@@ -119,8 +125,7 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
 
   // Make sure configuration parameter name matches corresponding style
 
-  {  // parameter:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? (PascalCase),
-     // localparam:[A-Z_0-9]+ (UPPER_SNAKE_CASE)
+  {  // parameter:CamelCase, localparam:ALL_CAPS
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int FooBar = 1; endpackage"},
         {"package a; parameter int ", {kToken, "FOO_BAR"}, " = 1; endpackage"},
@@ -128,12 +133,9 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases,
-        "parameter_style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?;localparam_"
-        "style_regex:[A-Z_0-9]+");
+        kTestCases, "parameter_style:CamelCase;localparam_style:ALL_CAPS");
   }
-  {  // parameter:[A-Z_0-9]+ (UPPER_SNAKE_CASE),
-     // localparam:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? (PascalCase)
+  {  // parameter:ALL_CAPS, localparam:CamelCase
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int ", {kToken, "FooBar"}, " = 1; endpackage"},
         {"package a; parameter int FOO_BAR = 1; endpackage"},
@@ -141,16 +143,13 @@ TEST(ParameterNameStyleRuleTest, ConfigurationStyleParameterAssignment) {
         {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases,
-        "parameter_style_regex:[A-Z_0-9]+;localparam_style_regex:([A-Z0-9]+[a-"
-        "z0-9]*)+(_[0-9]+)?");
+        kTestCases, "parameter_style:ALL_CAPS;localparam_style:CamelCase");
   }
 }
 
 TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
   constexpr int kToken = SymbolIdentifier;
-  {  // (([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+)
-     // (PascalCase|UPPER_SNAKE_CASE) configured
+  {  // CamelCase|ALL_CAPS configured
     const std::initializer_list<LintTestCase> kTestCases = {
         // Single-letter uppercase matches both styles:
         {"package a; parameter int N = 1; endpackage"},
@@ -168,11 +167,10 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
         kTestCases,
-        "parameter_style_regex:(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+);"
-        "localparam_style_regex:(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)|([A-Z_0-9]+"
-        ")");
+        "parameter_style:CamelCase|ALL_CAPS;"
+        "localparam_style:CamelCase|ALL_CAPS");
   }
-  {  // ([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)? configured (PascalCase)
+  {  // CamelCase configured
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
@@ -186,11 +184,9 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int ", {kToken, "FOO_BAR"}, " = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases,
-        "parameter_style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?;localparam_"
-        "style_regex:([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?");
+        kTestCases, "parameter_style:CamelCase;localparam_style:CamelCase");
   }
-  {  // ([A-Z_0-9]+) configured (UPPER_SNAKE_CASE)
+  {  // ALL_CAPS configured
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int ", {kToken, "no_style"}, " = 1; endpackage"},
@@ -204,11 +200,9 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases,
-        "parameter_style_regex:([A-Z_0-9]+);localparam_style_regex:([A-Z_0-9]+"
-        ")");
+        kTestCases, "parameter_style:ALL_CAPS;localparam_style:ALL_CAPS");
   }
-  {  // No styles enforcement (.*)
+  {  // No styles configured
     const std::initializer_list<LintTestCase> kTestCases = {
         {"package a; parameter int N = 1; endpackage"},
         {"package a; parameter int no_style = 1; endpackage"},
@@ -222,8 +216,188 @@ TEST(ParameterNameStyleRuleTest, ConfigurationFlavorCombinations) {
         {"module a; localparam int FOO_BAR = 1; endmodule"},
     };
     RunConfiguredLintTestCases<VerilogAnalyzer, ParameterNameStyleRule>(
-        kTestCases, "parameter_style_regex:.*;localparam_style_regex:.*");
+        kTestCases, "parameter_style:;localparam_style:");
   }
+}
+
+TEST(ParameterNameStyleRuleTest, ConfigurationPass) {
+  ParameterNameStyleRule rule;
+  absl::Status status;
+
+  // Upper Camel Case (may end in _[0-9]+)
+  constexpr absl::string_view kUpperCamelCaseRegex =
+      "(([A-Z0-9]+[a-z0-9]*)+(_[0-9]+)?)";
+  // ALL_CAPS
+  constexpr absl::string_view kAllCapsRegex = "([A-Z_0-9]+)";
+
+  const std::string default_localparam_regex =
+      std::string(kUpperCamelCaseRegex);
+  const std::string default_parameter_regex =
+      absl::StrCat(kUpperCamelCaseRegex, "|", kAllCapsRegex);
+
+  // Default Config
+  EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  // Set to ALL_CAPS using *_style
+  EXPECT_TRUE((status = rule.Configure("localparam_style:ALL_CAPS")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), kAllCapsRegex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure("parameter_style:ALL_CAPS")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), kAllCapsRegex);
+
+  // Set to CamelCase using *_style
+  EXPECT_TRUE((status = rule.Configure("localparam_style:CamelCase")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), kUpperCamelCaseRegex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure("parameter_style:CamelCase")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), kUpperCamelCaseRegex);
+
+  // Set to ALL_CAPS | CamelCase using *_style
+  EXPECT_TRUE(
+      (status = rule.Configure("localparam_style:ALL_CAPS|CamelCase")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(),
+            absl::StrCat(kUpperCamelCaseRegex, "|", kAllCapsRegex));
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE(
+      (status = rule.Configure("parameter_style:ALL_CAPS|CamelCase")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(),
+            absl::StrCat(kUpperCamelCaseRegex, "|", kAllCapsRegex));
+
+  // Set *_style_regex without setting *_style, expect default configuration and
+  // regex
+  EXPECT_TRUE((status = rule.Configure("localparam_style_regex:[a-z_]+")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(),
+            absl::StrCat(default_localparam_regex, "|([a-z_]+)"));
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure("parameter_style_regex:[a-z_]+")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(),
+            absl::StrCat(default_parameter_regex, "|([a-z_]+)"));
+
+  // Set using just a regex pattern
+  EXPECT_TRUE((status = rule.Configure(
+                   "localparam_style:;localparam_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), "([a-z_]+)");
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure(
+                   "parameter_style:;parameter_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), "([a-z_]+)");
+
+  // Set ALL_CAPS and user regex
+  EXPECT_TRUE((status = rule.Configure(
+                   "localparam_style:ALL_CAPS;localparam_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(),
+            absl::StrCat(kAllCapsRegex, "|([a-z_]+)"));
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure(
+                   "parameter_style:ALL_CAPS;parameter_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(),
+            absl::StrCat(kAllCapsRegex, "|([a-z_]+)"));
+
+  // Set CamelCase and user regex
+  EXPECT_TRUE((status = rule.Configure(
+                   "localparam_style:CamelCase;localparam_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(),
+            absl::StrCat(kUpperCamelCaseRegex, "|([a-z_]+)"));
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure(
+                   "parameter_style:CamelCase;parameter_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(),
+            absl::StrCat(kUpperCamelCaseRegex, "|([a-z_]+)"));
+
+  // Set CamelCase|All_CAPS and set user regex (everything)
+  EXPECT_TRUE((status = rule.Configure("localparam_style:CamelCase|ALL_CAPS;"
+                                       "localparam_style_regex:[a-z_]+"))
+                  .ok())
+      << status.message();
+  EXPECT_EQ(
+      rule.localparam_style_regex()->pattern(),
+      absl::StrCat(kUpperCamelCaseRegex, "|", kAllCapsRegex, "|([a-z_]+)"));
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE(
+      (status = rule.Configure(
+           "parameter_style:CamelCase|ALL_CAPS;parameter_style_regex:[a-z_]+"))
+          .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(
+      rule.parameter_style_regex()->pattern(),
+      absl::StrCat(kUpperCamelCaseRegex, "|", kAllCapsRegex, "|([a-z_]+)"));
+
+  // Test *_style with regex and not setting *_style_regex. The rule should not
+  // violate any style
+  EXPECT_TRUE((status = rule.Configure("localparam_style:")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), ".*");
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE((status = rule.Configure("parameter_style:")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), ".*");
+
+  // test empty *style (empty string) and setting *_style_regex with empty
+  // string
+  EXPECT_TRUE(
+      (status = rule.Configure("localparam_style:;localparam_style_regex:"))
+          .ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), ".*");
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), default_parameter_regex);
+
+  EXPECT_TRUE(
+      (status = rule.Configure("parameter_style:;parameter_style_regex:")).ok())
+      << status.message();
+  EXPECT_EQ(rule.localparam_style_regex()->pattern(), default_localparam_regex);
+  EXPECT_EQ(rule.parameter_style_regex()->pattern(), ".*");
+
+  // FIXME: test invalid regex
+  EXPECT_FALSE((status = rule.Configure("localparam_style_regex:[a-z")).ok())
+      << status.message();
+  EXPECT_FALSE((status = rule.Configure("parameter_style_regex:[a-z")).ok())
+      << status.message();
+
+  // FIXME: test invalid style
+  EXPECT_FALSE((status = rule.Configure("localparam_style:invalid_style")).ok())
+      << status.message();
+  EXPECT_FALSE((status = rule.Configure("parameter_style:invalid_style")).ok())
+      << status.message();
 }
 
 }  // namespace
