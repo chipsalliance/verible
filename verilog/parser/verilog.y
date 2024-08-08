@@ -5441,48 +5441,35 @@ module_or_interface_declaration
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign_opt ';'
-    /* local_timeunit_prec_decl_opt */ /* merged into module_item */
+    /* local_timeunit_prec_decl_opt / / merged into module_item */
     module_item_list_opt
-    module_end
+    TK_endmodule
     label_opt
     { const auto node_enum = DeclarationKeywordToNodeEnum(*$1);
       $$ = MakeTaggedNode(node_enum,
                           MakeModuleHeader($1, $2, $3, $4, $5, $6, $7, $8),
                           $9, $10, $11); }
-  | macro_module_start lifetime_opt symbol_or_label
+  | TK_program lifetime_opt symbol_or_label
     module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign_opt ';'
-    /* local_timeunit_prec_decl_opt */ /* merged into module_item */
+    /* local_timeunit_prec_decl_opt / / merged into module_item */
     module_item_list_opt
-    module_end
+    TK_endprogram
     label_opt
     { const auto node_enum = DeclarationKeywordToNodeEnum(*$1);
       $$ = MakeTaggedNode(node_enum,
                           MakeModuleHeader($1, $2, $3, $4, $5, $6, $7, $8),
                           $9, $10, $11); }
-  | program_start lifetime_opt symbol_or_label
+  | TK_interface lifetime_opt symbol_or_label
     module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign_opt ';'
-    /* local_timeunit_prec_decl_opt */ /* merged into module_item */
+    /* local_timeunit_prec_decl_opt / / merged into module_item */
     module_item_list_opt
-    program_end
-    label_opt
-    { const auto node_enum = DeclarationKeywordToNodeEnum(*$1);
-      $$ = MakeTaggedNode(node_enum,
-                          MakeModuleHeader($1, $2, $3, $4, $5, $6, $7, $8),
-                          $9, $10, $11); }
-  interface_start lifetime_opt symbol_or_label
-    module_package_import_list_opt
-    module_parameter_port_list_opt
-    module_port_list_opt
-    module_attribute_foreign_opt ';'
-    /* local_timeunit_prec_decl_opt */ /* merged into module_item */
-    module_item_list_opt
-    interface_end
+    TK_endinterface
     label_opt
     { const auto node_enum = DeclarationKeywordToNodeEnum(*$1);
       $$ = MakeTaggedNode(node_enum,
@@ -5494,32 +5481,10 @@ module_or_interface_declaration
 
 module_start
   : TK_module
-    { $$ = std::move($1); };
-
-macro_module_start
-  : TK_macromodule
-    { $$ = std::move($1); };
-
-program_start
-  : TK_program
-    { $$ = std::move($1); };
-
-interface_start  
-  : TK_interface
+    { $$ = std::move($1); }
+  | TK_macromodule
     { $$ = std::move($1); }
   ;
-
-module_end
-  : TK_endmodule
-    { $$ = std::move($1); };
-
-program_end 
-  : TK_endprogram
-    { $$ = std::move($1); };
-
-interface_end  
-  : TK_endinterface
-    { $$ = std::move($1); };
 
 
 label_opt
