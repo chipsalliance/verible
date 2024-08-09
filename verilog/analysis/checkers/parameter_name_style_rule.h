@@ -16,6 +16,7 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_PARAMETER_NAME_STYLE_RULE_H_
 
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -25,42 +26,56 @@
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
+#include "re2/re2.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
 namespace analysis {
 
 // ParameterNameStyleRule checks that each non-type parameter/localparam
-// follows the correct naming convention.
-// parameter should follow UpperCamelCase (preferred) or ALL_CAPS.
-// localparam should follow UpperCamelCase.
+// follows the correct naming convention matching a regex pattern.
 class ParameterNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
+  ParameterNameStyleRule();
+
   static const LintRuleDescriptor &GetDescriptor();
 
-  absl::Status Configure(absl::string_view configuration) final;
+  std::string CreateLocalparamViolationMessage();
+  std::string CreateParameterViolationMessage();
 
   void HandleSymbol(const verible::Symbol &symbol,
                     const verible::SyntaxTreeContext &context) final;
 
   verible::LintRuleStatus Report() const final;
 
+  absl::Status Configure(absl::string_view configuration) final;
+
+  const RE2 *localparam_style_regex() const {
+    return localparam_style_regex_.get();
+  }
+  const RE2 *parameter_style_regex() const {
+    return parameter_style_regex_.get();
+  }
+
  private:
-  // Format diagnostic message.
-  static std::string ViolationMsg(absl::string_view symbol_type,
-                                  uint32_t allowed_bitmap);
+  absl::Status AppendRegex(std::unique_ptr<re2::RE2> *rule_regex,
+                           absl::string_view regex_str);
+  absl::Status ConfigureRegex(std::unique_ptr<re2::RE2> *rule_regex,
+                              uint32_t config_style,
+                              std::unique_ptr<re2::RE2> *config_style_regex);
 
   enum StyleChoicesBits {
     kUpperCamelCase = (1 << 0),
     kAllCaps = (1 << 1),
   };
 
-  uint32_t localparam_allowed_style_ = kUpperCamelCase;
-  uint32_t parameter_allowed_style_ = kUpperCamelCase | kAllCaps;
-
   std::set<verible::LintViolation> violations_;
+
+  // Regex's to check the style against
+  std::unique_ptr<re2::RE2> localparam_style_regex_;
+  std::unique_ptr<re2::RE2> parameter_style_regex_;
 };
 
 }  // namespace analysis
