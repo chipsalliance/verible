@@ -3502,6 +3502,7 @@ static constexpr ParserTestCaseArray kModuleInstanceTests = {
     "module tryme;\n"
     "logic lol;\n"   // is a data_declaration
     "wire money;\n"  // is a net_declaration
+    "interconnect floyd;\n"  // is a TK_interconnect
     "endmodule",
     "module tryme;\n"
     "foo a;\n"  // looks like data_declaration
