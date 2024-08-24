@@ -228,4 +228,3 @@ InlayHint:
   tooltip?: string
   paddingLeft?: boolean
   paddingRight?: boolean
-  
