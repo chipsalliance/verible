@@ -216,3 +216,16 @@ RenameParams:
 
 # Response: Range[]
 
+# -- textDocument/inlayHint
+InlayHintParams:
+  textDocument: TextDocumentIdentifier
+  range: Range
+
+InlayHint:
+  position: Position
+  label: string
+  kind?: integer  # InlayHintKind enum
+  tooltip?: string
+  paddingLeft?: boolean
+  paddingRight?: boolean
+  
