@@ -419,4 +419,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-08-06 23:00:14 -0700 from [8b64887](https://github.com/google/verible/commit/8b64887eb41baad9915908979dfcb144068fd49c)
+Generated on 2024-08-23 17:35:22 -0700 from [17e909b](https://github.com/google/verible/commit/17e909b09b279e5c1f5cd6a07404691babe3d3c3)
