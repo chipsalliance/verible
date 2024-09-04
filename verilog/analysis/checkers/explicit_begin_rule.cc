@@ -14,16 +14,14 @@
 
 #include "verilog/analysis/checkers/explicit_begin_rule.h"
 
-#include <deque>
 #include <set>
-#include <stack>
-#include <string>
 
+#include "absl/base/attributes.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
-#include "common/strings/comment_utils.h"
 #include "common/text/config_utils.h"
 #include "common/text/token_info.h"
 #include "verilog/analysis/descriptions.h"
@@ -33,7 +31,6 @@
 namespace verilog {
 namespace analysis {
 
-using verible::AutoFix;
 using verible::LintRuleStatus;
 using verible::LintViolation;
 using verible::TokenInfo;
@@ -149,6 +146,10 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
           state_ = State::kInlineConstraint;
           return false;
         }
+        default: {
+          // Do nothing
+          break;
+        }
       }
 
       if (!IsTokenEnabled(token)) {
@@ -158,8 +159,11 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
       switch (token.token_enum()) {
         // After token expect "begin"
         case TK_always_comb:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_always_latch:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_forever:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_initial:
           start_token_ = token;
           state_ = State::kExpectBegin;
@@ -168,9 +172,13 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
         // be tokens prior to the condition (like in an "always_ff" statement)
         // and these are all ignored.
         case TK_if:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_always_ff:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_for:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_foreach:
+          ABSL_FALLTHROUGH_INTENDED;
         case TK_while:
           condition_expr_level_ = 0;
           start_token_ = token;
@@ -200,6 +208,7 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
       // "*") and maybe a condition.
       switch (token.token_enum()) {
         case '@':
+          break;
         case '*':
           break;
         case TK_begin:
@@ -250,6 +259,7 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
           if (condition_expr_level_ == 0) {
             state_ = State::kExpectBegin;
           }
+          break;
         }
         default: {
           // throw away everything else
@@ -287,6 +297,7 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
         }
       }
     }
+      ABSL_FALLTHROUGH_INTENDED;
     case State::kConstraint: {
       // System Verilog constraints are special and use curly braces {}
       // instead of begin-end. So ignore all constraints
@@ -300,12 +311,18 @@ bool ExplicitBeginRule::HandleTokenStateMachine(const TokenInfo &token) {
           if (constraint_expr_level_ == 0) {
             state_ = State::kNormal;
           }
+          break;
         }
         default: {
           // throw away everything else
           break;
         }
       }
+      break;
+    }
+    default: {
+      // Do nothing
+      break;
     }
   }  // switch (state_)
 
@@ -325,8 +342,11 @@ void ExplicitBeginRule::HandleToken(const TokenInfo &token) {
   // Ignore all white space and comments and return immediately
   switch (token.token_enum()) {
     case TK_SPACE:
+      return;
     case TK_NEWLINE:
+      return;
     case TK_COMMENT_BLOCK:
+      return;
     case TK_EOL_COMMENT:
       return;
     default:

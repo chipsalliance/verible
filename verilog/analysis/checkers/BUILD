@@ -1261,13 +1261,15 @@ cc_library(
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:token-stream-lint-rule",
-        "//common/strings:comment-utils",
         "//common/text:config-utils",
         "//common/text:token-info",
         "//verilog/analysis:descriptions",
         "//verilog/analysis:lint-rule-registry",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
     ],
     alwayslink = 1,
 )
@@ -1279,9 +1281,9 @@ cc_test(
         ":explicit-begin-rule",
         "//common/analysis:linter-test-utils",
         "//common/analysis:token-stream-linter-test-utils",
-        "//common/text:symbol",
         "//verilog/analysis:verilog-analyzer",
         "//verilog/parser:verilog-token-enum",
+        "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
     ],
 )

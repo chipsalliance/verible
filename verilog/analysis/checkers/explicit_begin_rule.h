@@ -16,9 +16,9 @@
 #define VERIBLE_VERILOG_ANALYSIS_CHECKERS_EXPLICIT_BEGIN_RULE_H_
 
 #include <set>
-#include <stack>
-#include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/token_stream_lint_rule.h"
 #include "common/text/token_info.h"
@@ -38,8 +38,6 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   static const LintRuleDescriptor &GetDescriptor();
 
   absl::Status Configure(absl::string_view configuration) final;
-
-  ExplicitBeginRule() : state_(State::kNormal), condition_expr_level_(0) {}
 
   void HandleToken(const verible::TokenInfo &token) final;
 
@@ -62,29 +60,29 @@ class ExplicitBeginRule : public verible::TokenStreamLintRule {
   };
 
   // Internal lexical analysis state.
-  State state_;
+  State state_{State::kNormal};
 
   // Level of nested parenthesis when analysing conditional expressions
-  int condition_expr_level_;
+  int condition_expr_level_{0};
 
   // Level inside a constraint expression
-  int constraint_expr_level_;
+  int constraint_expr_level_{0};
 
   // Configuration
-  bool if_enable_ = true;
-  bool else_enable_ = true;
-  bool always_enable_ = true;
-  bool always_comb_enable_ = true;
-  bool always_latch_enable_ = true;
-  bool always_ff_enable_ = true;
-  bool for_enable_ = true;
-  bool forever_enable_ = true;
-  bool foreach_enable_ = true;
-  bool while_enable_ = true;
-  bool initial_enable_ = true;
+  bool if_enable_{true};
+  bool else_enable_{true};
+  bool always_enable_{true};
+  bool always_comb_enable_{true};
+  bool always_latch_enable_{true};
+  bool always_ff_enable_{true};
+  bool for_enable_{true};
+  bool forever_enable_{true};
+  bool foreach_enable_{true};
+  bool while_enable_{true};
+  bool initial_enable_{true};
 
   // Token that requires blocking statement.
-  verible::TokenInfo start_token_ = verible::TokenInfo::EOFToken();
+  verible::TokenInfo start_token_{verible::TokenInfo::EOFToken()};
 
   // Collection of found violations.
   std::set<verible::LintViolation> violations_;
