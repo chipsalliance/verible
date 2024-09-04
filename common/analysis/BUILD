@@ -121,11 +121,6 @@ cc_library(
     name = "lint-waiver",
     srcs = ["lint_waiver.cc"],
     hdrs = ["lint_waiver.h"],
-    copts = select({
-        "@platforms//os:windows": [],
-        "//conditions:default": ["-fexceptions"],
-    }),
-    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
     deps = [
         ":command-file-lexer",
         "//common/strings:comment-utils",
@@ -139,10 +134,12 @@ cc_library(
         "//common/util:file-util",
         "//common/util:iterator-range",
         "//common/util:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
+        "@com_googlesource_code_re2//:re2",
     ],
 )
 
@@ -199,7 +196,6 @@ cc_library(
         "//common/util:algorithm",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -266,7 +262,6 @@ cc_library(
         "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 
@@ -322,7 +317,6 @@ cc_library(
         "//common/text:text-structure",
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@com_google_googletest//:gtest",  # for library testonly
     ],
 )
 

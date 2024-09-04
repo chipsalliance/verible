@@ -19,6 +19,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -32,6 +33,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "common/util/logging.h"
+#include "re2/re2.h"
 
 namespace verible {
 using absl::string_view;
@@ -182,6 +184,20 @@ ConfigValueSetter SetNamedBits(
            *value = result;
            return absl::OkStatus();
          };
+}
+
+ConfigValueSetter SetRegex(std::unique_ptr<re2::RE2> *regex) {
+  CHECK(regex) << "Must provide pointer to a RE2 to store.";
+  return [regex](string_view v) {
+    *regex = std::make_unique<re2::RE2>(v, re2::RE2::Quiet);
+    if((*regex)->ok()) {
+      return absl::OkStatus();
+    }
+
+    std::string error_msg =
+          absl::StrCat("Failed to parse regular expression: ", (*regex)->error());
+    return absl::InvalidArgumentError(error_msg);
+  };
 }
 
 }  // namespace config

@@ -12,4 +12,4 @@ User documentation for the lint rules is generated dynamically, and can be found
 at https://chipsalliance.github.io/verible/verilog_lint.html, or by running
 `verible-verilog-lint --help_rules` for text or `--generate_markdown`.
 
-[Linter user documentation can be found here](../../tool/lint).
+[Linter user documentation can be found here](../../tools/lint).

@@ -63,6 +63,13 @@ enum SymbolKind {
   kOperator = 25,
   kTypeParameter = 26,
 };
+
+// These are the InlayHintKinds defined by the LSP specification.
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintKind
+enum InlayHintKind {
+  kType = 1,
+  kParameter = 2,
+};
 }  // namespace lsp
 }  // namespace verible
 #endif  // COMMON_LSP_LSP_PROTOCOL_ENUMS_H

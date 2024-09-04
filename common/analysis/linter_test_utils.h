@@ -123,14 +123,15 @@ struct AutoFixInOut {
 // Expects test.code to be accepted by AnalyzerType.
 template <class AnalyzerType, class RuleType>
 void RunLintAutoFixCase(const AutoFixInOut &test,
-                        const LintRuleGenerator<RuleType> &make_rule) {
+                        const LintRuleGenerator<RuleType> &make_rule,
+                        absl::string_view filename = "") {
   // All linters start by parsing to yield a TextStructure.
-  AnalyzerType analyzer(test.code, "");
+  AnalyzerType analyzer(test.code, filename);
   absl::Status unused_parser_status = analyzer.Analyze();
 
   // Instantiate a linter that runs a single rule to analyze text.
   LintRunner<RuleType> lint_runner(make_rule());
-  const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), "");
+  const LintRuleStatus rule_status = lint_runner.Run(analyzer.Data(), filename);
   const auto &violations(rule_status.violations);
 
   CHECK_EQ(violations.size(), 1) << "TODO: apply multi-violation fixes";
@@ -144,7 +145,8 @@ void RunLintAutoFixCase(const AutoFixInOut &test,
 
 template <class AnalyzerType, class RuleClass>
 void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
-                      absl::string_view configuration = "") {
+                      absl::string_view configuration = "",
+                      absl::string_view filename = "") {
   using rule_type = typename RuleClass::rule_type;
   auto rule_generator = [&configuration]() -> std::unique_ptr<rule_type> {
     std::unique_ptr<rule_type> instance(new RuleClass());
@@ -153,7 +155,7 @@ void RunApplyFixCases(std::initializer_list<AutoFixInOut> tests,
     return instance;
   };
   for (const auto &test : tests) {
-    RunLintAutoFixCase<AnalyzerType, rule_type>(test, rule_generator);
+    RunLintAutoFixCase<AnalyzerType, rule_type>(test, rule_generator, filename);
   }
 }
 

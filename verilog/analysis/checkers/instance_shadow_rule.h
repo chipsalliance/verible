@@ -12,54 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_
 
-#include <memory>
 #include <set>
-#include <string>
 
-#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "common/analysis/lint_rule_status.h"
 #include "common/analysis/syntax_tree_lint_rule.h"
 #include "common/text/symbol.h"
 #include "common/text/syntax_tree_context.h"
-#include "re2/re2.h"
 #include "verilog/analysis/descriptions.h"
 
 namespace verilog {
 namespace analysis {
 
-// SignalNameStyleRule checks that signal names follow
-// a naming convention matching a regex pattern.
-// Signals are defined as "a net, variable, or port within a
-// SystemVerilog design".
-class SignalNameStyleRule : public verible::SyntaxTreeLintRule {
+// InstanceShadowRule determines if a variable name shadows an already
+// existing instance in that scope.
+class InstanceShadowRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
+  static absl::string_view Name();
 
-  SignalNameStyleRule();
+  // Returns the description of the rule implemented formatted for either the
+  // helper flag or markdown depending on the parameter type.
+  static const LintRuleDescriptor& GetDescriptor();
 
-  static const LintRuleDescriptor &GetDescriptor();
+  void HandleSymbol(const verible::Symbol& symbol,
+                    const verible::SyntaxTreeContext& context) override;
 
-  std::string CreateViolationMessage();
-
-  void HandleSymbol(const verible::Symbol &symbol,
-                    const verible::SyntaxTreeContext &context) final;
-
-  verible::LintRuleStatus Report() const final;
-
-  absl::Status Configure(absl::string_view configuration) final;
+  verible::LintRuleStatus Report() const override;
 
  private:
-  std::set<verible::LintViolation> violations_;
+  // Link to style guide rule.
+  static const char kTopic[];
 
-  // A regex to check the style against
-  std::unique_ptr<re2::RE2> style_regex_;
+  // Diagnostic message.
+  static const char kMessage[];
+
+  std::set<verible::LintViolation> violations_;
 };
 
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_SIGNAL_NAME_STYLE_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_INSTANCE_SHADOW_RULE_H_

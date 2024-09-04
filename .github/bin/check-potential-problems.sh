@@ -26,7 +26,8 @@ EXIT_CODE=0
 #
 # So, until these assumptions are fixed, we need to use absl::string_view that
 # comes with the same implementation everywhere.
-find . -name "*.h" -o -name "*.cc" | xargs grep -n "std::string_view"
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs grep -n "std::string_view"
 if [ $? -eq 0 ]; then
   echo "::error:: use absl::string_view instead of std::string_view"
   echo
@@ -78,6 +79,15 @@ fi
 grep rules_python WORKSPACE* MODULE.bazel
 if [ $? -eq 0 ]; then
   echo "::error:: rules_python() breaks platform independence with shared libs."
+  echo
+  EXIT_CODE=1
+fi
+
+# Never use std::regex.
+find common verilog -name "*.h" -o -name "*.cc" | \
+  xargs grep -n '#include <regex>'
+if [ $? -eq 0 ]; then
+  echo "::error:: Don't use stdlib regex, it is slow and requires exceptions. Use RE2 instead (https://github.com/google/re2; header #include \"re2/re2.h\")."
   echo
   EXIT_CODE=1
 fi

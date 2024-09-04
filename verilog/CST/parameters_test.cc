@@ -153,6 +153,34 @@ TEST(GetParamKeywordTest, MultipleParamsDeclared) {
   }
 }
 
+// Tests that GetParameterToken correctly returns the token of the
+// parameter.
+TEST(GetParameterTokenTest, BasicTests) {
+  constexpr std::pair<absl::string_view, absl::string_view> kTestCases[] = {
+      {"module foo; parameter Bar = 1; endmodule", "parameter"},
+      {"module foo; localparam Bar_1 = 1; endmodule", "localparam"},
+      {"module foo; localparam int HelloWorld = 1; endmodule", "localparam"},
+      {"module foo #(parameter int HelloWorld1 = 1); endmodule", "parameter"},
+      {"class foo; parameter HelloWorld_1 = 1; endclass", "parameter"},
+      {"class foo; localparam FooBar = 1; endclass", "localparam"},
+      {"class foo; localparam int Bar_1_1 = 1; endclass", "localparam"},
+      {"package foo; parameter BAR = 1; endpackage", "parameter"},
+      {"package foo; parameter int HELLO_WORLD = 1; endpackage", "parameter"},
+      {"package foo; localparam BAR = 1; endpackage", "localparam"},
+      {"package foo; localparam int HELLO_WORLD = 1; endpackage", "localparam"},
+      {"parameter int Bar = 1;", "parameter"},
+  };
+  for (const auto &test : kTestCases) {
+    VerilogAnalyzer analyzer(test.first, "");
+    ASSERT_OK(analyzer.Analyze());
+    const auto &root = analyzer.Data().SyntaxTree();
+    const auto param_declarations = FindAllParamDeclarations(*root);
+    const auto name_token =
+        GetParameterToken(*param_declarations.front().match);
+    EXPECT_EQ(name_token->text(), test.second);
+  }
+}
+
 // Tests that GetParamTypeSymbol correctly returns the kParamType node.
 TEST(GetParamTypeSymbolTest, BasicTests) {
   constexpr absl::string_view kTestCases[] = {
