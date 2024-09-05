@@ -39,6 +39,8 @@ TEST(LineLengthRuleTest, Configuration) {
   absl::Status status;
   EXPECT_TRUE((status = rule.Configure("")).ok()) << status.message();
   EXPECT_TRUE((status = rule.Configure("length:50")).ok()) << status.message();
+  EXPECT_TRUE((status = rule.Configure("check_comments:true")).ok());
+  EXPECT_TRUE((status = rule.Configure("check_comments:false")).ok());
 
   EXPECT_FALSE((status = rule.Configure("foo:42")).ok());
   EXPECT_TRUE(absl::StrContains(status.message(), "supported parameter"));
@@ -48,6 +50,10 @@ TEST(LineLengthRuleTest, Configuration) {
 
   EXPECT_FALSE((status = rule.Configure("length:-1")).ok());
   EXPECT_TRUE(absl::StrContains(status.message(), "out of range"));
+
+  EXPECT_FALSE((status = rule.Configure("check_comments:zx")).ok());
+  EXPECT_TRUE(
+      absl::StrContains(status.message(), "Boolean value should be one of"));
 }
 
 // Tests that space-only text passes.
@@ -197,6 +203,34 @@ TEST(LineLengthRuleTest, RejectsTextConfigured) {
   };
   RunConfiguredLintTestCases<VerilogAnalyzer, LineLengthRule>(kTestCases,
                                                               "length:40");
+}
+
+TEST(LineLengthRuleTest, RejectsTextComments) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"// aaaaaaaaaabbbbbbbbbbcccc cccccdddddds", {TK_OTHER, "X"}, "\n"},
+      {"   //aaaaaaaaaaaabbbbbbbbbbcccccccccddds", {TK_OTHER, "X"}, "\n"},
+      {"  // //shorter comment not exceeding 40\n"}};
+  RunConfiguredLintTestCases<VerilogAnalyzer, LineLengthRule>(
+      kTestCases, "length:40;check_comments:true");
+}
+
+TEST(LineLengthRuleTest, RejectsTextBlockComments) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {"/*short  comment  not exceeding 40 */\n"},
+      {"/*   this             block exceeds 40 c", {TK_OTHER, "X"}, "\n*/"},
+      {"/* this multi line block starts ok      \n"
+       "   but this line exceeds **the limit** #",
+       {TK_OTHER, "X"},
+       "\n"
+       "   end of the comment */\n"},
+      {"/* test the last line\n"
+       " zzzzzzzzzzzzzzzzz\n"
+       " zzzz   zz \n"
+       "this last line is too long .............",
+       {TK_OTHER, "X*/"},
+       "\n"}};
+  RunConfiguredLintTestCases<VerilogAnalyzer, LineLengthRule>(
+      kTestCases, "length:40;check_comments:true");
 }
 
 #if 0
