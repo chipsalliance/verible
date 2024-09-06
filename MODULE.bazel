@@ -51,6 +51,8 @@ flex.repository(
 use_repo(flex, "flex")
 register_toolchains("@flex//:toolchain")
 
+# abseil-cpp can not be updated beyond the following curringly, as newer
+# ones use googletest that is not compatible with bazel 6 anymore.
 bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name="com_google_absl")
 single_version_override(
     module_name = "abseil-cpp",
@@ -60,6 +62,8 @@ single_version_override(
 )
 
 bazel_dep(name = "re2", version = "2023-09-01", repo_name="com_googlesource_code_re2")
+
+# Newer versions require bazel 7, so this is the last we can use currently.
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name="com_google_googletest")
 bazel_dep(name = "protobuf", version = "26.0", repo_name="com_google_protobuf")
 bazel_dep(name = "nlohmann_json", version = "3.11.3", repo_name="jsonhpp")

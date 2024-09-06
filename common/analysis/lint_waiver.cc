@@ -19,7 +19,7 @@
 #include <functional>
 #include <iterator>
 #include <map>
-#include <regex>  // NOLINT
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -43,6 +43,7 @@
 #include "common/util/file_util.h"
 #include "common/util/iterator_range.h"
 #include "common/util/logging.h"
+#include "re2/re2.h"
 
 namespace verible {
 
@@ -56,26 +57,43 @@ void LintWaiver::WaiveLineRange(absl::string_view rule_name, int line_begin,
   line_set.Add({line_begin, line_end});
 }
 
-void LintWaiver::WaiveWithRegex(absl::string_view rule_name,
-                                const std::string &regex_str) {
-  RegexVector &regex_vector = waiver_re_map_[rule_name];
-  auto regex_iter = regex_cache_.find(regex_str);
-
-  if (regex_iter == regex_cache_.end()) {
-    regex_cache_[regex_str] = std::regex(regex_str);
+const RE2 *LintWaiver::GetOrCreateCachedRegex(absl::string_view regex_str) {
+  auto found = regex_cache_.find(regex_str);
+  if (found != regex_cache_.end()) {
+    return found->second.get();
   }
 
-  regex_vector.push_back(&regex_cache_[regex_str]);
+  auto inserted = regex_cache_.emplace(
+      regex_str, std::make_unique<re2::RE2>(regex_str, re2::RE2::Quiet));
+  return inserted.first->second.get();
+}
+
+absl::Status LintWaiver::WaiveWithRegex(absl::string_view rule_name,
+                                        absl::string_view regex_str) {
+  const std::string regex_as_group = absl::StrCat("(", regex_str, ")");
+  const RE2 *regex = GetOrCreateCachedRegex(regex_as_group);
+  if (!regex->ok()) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Invalid regex: ", regex->error()));
+  }
+
+  waiver_re_map_[rule_name].push_back(regex);
+  return absl::OkStatus();
 }
 
 void LintWaiver::RegexToLines(absl::string_view contents,
                               const LineColumnMap &line_map) {
   for (const auto &rule : waiver_re_map_) {
-    for (const auto *re : rule.second) {
-      for (std::cregex_iterator i(contents.begin(), contents.end(), *re);
-           i != std::cregex_iterator(); i++) {
-        const std::cmatch &match = *i;
-        WaiveOneLine(rule.first, line_map.LineAtOffset(match.position()));
+    for (const RE2 *re : rule.second) {
+      absl::string_view walk = contents;
+      absl::string_view match;
+      while (RE2::FindAndConsume(&walk, *re, &match)) {
+        const size_t pos = match.begin() - contents.begin();
+        WaiveOneLine(rule.first, line_map.LineAtOffset(pos));
+        if (match.empty()) {
+          if (match.end() == contents.end()) break;
+          walk = contents.substr(pos + 1);
+        }
       }
     }
   }
@@ -338,15 +356,12 @@ static absl::Status WaiveCommandHandler(
         }
 
         if (option == "location") {
-          const std::string file_match_regex(val);
-          try {
-            const std::regex file_matcher(file_match_regex);
-            location_match =
-                std::regex_search(std::string(lintee_filename), file_matcher);
-          } catch (const std::regex_error &e) {
+          const RE2 file_match_regex(val);
+          if (!file_match_regex.ok()) {
             return WaiveCommandError(token_pos, waive_file,
                                      "--location regex is invalid");
           }
+          location_match = RE2::PartialMatch(lintee_filename, file_match_regex);
           continue;
         }
 
@@ -369,13 +384,9 @@ static absl::Status WaiveCommandHandler(
         }
 
         if (can_use_regex) {
-          try {
-            waiver->WaiveWithRegex(rule, regex);
-          } catch (const std::regex_error &e) {
-            const char *reason = e.what();
-
+          if (auto status = waiver->WaiveWithRegex(rule, regex); !status.ok()) {
             return WaiveCommandError(regex_token_pos, waive_file,
-                                     "Invalid regex: ", reason);
+                                     status.message());
           }
         }
 

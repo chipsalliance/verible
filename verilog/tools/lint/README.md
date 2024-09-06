@@ -157,6 +157,26 @@ Additionally, the `--rules_config` flag can be used to read configuration stored
 in a file. The syntax is the same as above, except the rules can be also
 separated with the newline character.
 
+### Regular Expressions
+Some lint rules allow users to use a regular expression to configure the rule. Verible utilises the RE2 regular expression library and full syntax documentation can be found at https://github.com/google/re2/wiki/syntax.
+
+```bash
+verible-verilog-lint --rules="enum-name-style=style_regex:[a-z_0-9]+(_t|_e)" ...
+```
+
+For naming style rules, the regex can be kept simple and not have to worry about 
+the beginning starting with a digit as this is already taken care of by the 
+lexer/parser. Below are some common naming style regex patterns that can be used.
+
+| Naming Style           | Regex Expression                           |
+|------------------------|--------------------------------------------|
+| lower\_snake\_case     | [a-z\_0-9]+                                |
+| UPPER\_SNAKE\_CASE     | [A-Z\_0-9]+                                |
+| Title\_Snake\_Case     | [A-Z]+[a-z0-9]\*(\_[A-Z0-9]+[a-z0-9]\*)\*  |
+| Sentence\_snake\_case  | ([A-Z0-9]+[a-z0-9]\*\_?)([a-z0-9]\*\_\*)\* |
+| camelCase              | ([a-z0-9]+[A-Z0-9]\*)+                     |
+| PascalCase             | ([A-Z0-9]+[a-z0-9]\*)+                     |
+
 ## Waiving Lint Violations {#lint-waiver}
 
 ### In-file waiver comments

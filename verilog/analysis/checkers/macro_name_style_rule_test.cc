@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
 // Tests that the expected number of MacroNameStyleRule violations are found.
@@ -71,6 +72,19 @@ TEST(MacroNameStyleRuleTest, BasicTests) {
       },
   };
   RunLintTestCases<VerilogAnalyzer, MacroNameStyleRule>(kTestCases);
+}
+
+TEST(MacroNameStyleRuleTest, LowerSnakeCaseTests) {
+  const std::initializer_list<LintTestCase> kTestCases = {
+      {""},
+      {"`define foo 1"},
+      {"`define foo 1\n"},
+      // special case uvm_* macros
+      {"`define uvm_foo_bar(arg) arg\n"},
+      {"`define UVM_FOO_BAR(arg) arg\n"},
+  };
+  RunConfiguredLintTestCases<VerilogAnalyzer, MacroNameStyleRule>(
+      kTestCases, "style_regex:[a-z_0-9]+");
 }
 
 }  // namespace

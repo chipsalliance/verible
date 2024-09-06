@@ -11,6 +11,10 @@ on:
     - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   BOT_USER: "Deployment Bot"
   BOT_EMAIL: "verible-dev@googlegroups.com"
@@ -25,11 +29,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Checkout code
       uses: actions/checkout@v3
       with:
@@ -37,10 +36,6 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x ./llvm.sh
-        sudo ./llvm.sh 17
-        sudo apt-get install clang-format-17
         go install github.com/bazelbuild/buildtools/buildifier@latest
         echo "PATH=$PATH:$(go env GOPATH)/bin/" >> $GITHUB_ENV
 
@@ -64,11 +59,6 @@ jobs:
       GHA_MACHINE_TYPE: "n2-standard-4"
 
     steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -212,11 +202,6 @@ jobs:
     name: ${{ matrix.arch }} ${{ matrix.mode }}
 
     steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
 
     - name: Checkout code
       uses: actions/checkout@v3
@@ -371,11 +356,6 @@ jobs:
     runs-on: macos-latest
     steps:
 
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
-
     - name: Install Dependencies
       run: |
         brew install llvm
@@ -416,11 +396,6 @@ jobs:
     # //verilog/tools/lint:lint-tool_test trips over a no-newline-at-end-of-file
     runs-on: macos-12
     steps:
-
-    - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.12.0
-      with:
-        access_token: ${{ github.token }}
 
     - name: Install Dependencies
       run: |
@@ -538,9 +513,12 @@ jobs:
 
 
   Release:
+    name: 📦 Release
     needs: [ Check, MacOsBuild, WindowsBuild, PrepareVSPlugin ]
     runs-on: ubuntu-20.04
-    name: 📦 Release
+    permissions:
+      contents: write
+
     if: ${{github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')}}
 
     steps:
@@ -567,7 +545,7 @@ jobs:
         ls -lah artifact
 
     - name: Deploy release and assets
-      uses: svenstaro/upload-release-action@v2
+      uses: svenstaro/upload-release-action@2.9.0
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: artifact/verible*.{tar.gz,zip}
@@ -594,6 +572,9 @@ jobs:
     name: Build and deploy GitHub pages
     needs: [Check]
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v3
 
@@ -609,9 +590,9 @@ jobs:
 
       - name: Deployment
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4.6.3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: /tmp/pages
           CLEAN: true

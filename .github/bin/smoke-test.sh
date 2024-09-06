@@ -137,18 +137,18 @@ ExpectedFailCount[preprocessor:ibex]=385
 
 ExpectedFailCount[syntax:opentitan]=36
 ExpectedFailCount[lint:opentitan]=36
-ExpectedFailCount[project:opentitan]=800
-ExpectedFailCount[preprocessor:opentitan]=2238
+ExpectedFailCount[project:opentitan]=804
+ExpectedFailCount[preprocessor:opentitan]=2274
 
-ExpectedFailCount[syntax:sv-tests]=77
-ExpectedFailCount[lint:sv-tests]=76
-ExpectedFailCount[project:sv-tests]=187
+ExpectedFailCount[syntax:sv-tests]=76
+ExpectedFailCount[lint:sv-tests]=75
+ExpectedFailCount[project:sv-tests]=186
 ExpectedFailCount[preprocessor:sv-tests]=139
 
 ExpectedFailCount[syntax:caliptra-rtl]=25
 ExpectedFailCount[lint:caliptra-rtl]=25
-ExpectedFailCount[project:caliptra-rtl]=335
-ExpectedFailCount[preprocessor:caliptra-rtl]=777
+ExpectedFailCount[project:caliptra-rtl]=327
+ExpectedFailCount[preprocessor:caliptra-rtl]=757
 
 ExpectedFailCount[syntax:Cores-VeeR-EH2]=2
 ExpectedFailCount[lint:Cores-VeeR-EH2]=2
@@ -157,8 +157,8 @@ ExpectedFailCount[preprocessor:Cores-VeeR-EH2]=43
 
 ExpectedFailCount[syntax:cva6]=7
 ExpectedFailCount[lint:cva6]=7
-ExpectedFailCount[project:cva6]=86
-ExpectedFailCount[preprocessor:cva6]=124
+ExpectedFailCount[project:cva6]=89
+ExpectedFailCount[preprocessor:cva6]=137
 
 ExpectedFailCount[syntax:uvm]=1
 ExpectedFailCount[lint:uvm]=1
@@ -207,15 +207,15 @@ ExpectedFailCount[preprocessor:scr1]=46
 ExpectedFailCount[project:serv]=1
 ExpectedFailCount[preprocessor:serv]=1
 
-ExpectedFailCount[syntax:basejump_stl]=469
-ExpectedFailCount[lint:basejump_stl]=469
-ExpectedFailCount[project:basejump_stl]=581
+ExpectedFailCount[syntax:basejump_stl]=472
+ExpectedFailCount[lint:basejump_stl]=472
+ExpectedFailCount[project:basejump_stl]=584
 ExpectedFailCount[formatter:basejump_stl]=1
-ExpectedFailCount[preprocessor:basejump_stl]=615
+ExpectedFailCount[preprocessor:basejump_stl]=618
 
-ExpectedFailCount[syntax:opl3_fpga]=2
-ExpectedFailCount[lint:opl3_fpga]=2
-ExpectedFailCount[project:opl3_fpga]=4
+ExpectedFailCount[syntax:opl3_fpga]=3
+ExpectedFailCount[lint:opl3_fpga]=3
+ExpectedFailCount[project:opl3_fpga]=5
 ExpectedFailCount[preprocessor:opl3_fpga]=4
 
 # Ideally, we expect all tools to process all files with a zero exit code.
