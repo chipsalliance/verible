@@ -152,7 +152,7 @@ preprocessor yet.)
 ### Source Code Indexer
 
 [`verible-verilog-kythe-extractor`](./verilog/tools/kythe) extracts indexing
-facts fromm SV source code using the [Kythe](http://kythe.io) schema, which can
+facts from SV source code using the [Kythe](http://kythe.io) schema, which can
 then enhance IDEs with linked cross-references for ease of source code
 navigation.
 
