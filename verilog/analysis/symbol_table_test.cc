@@ -15,7 +15,6 @@
 #include "verilog/analysis/symbol_table.h"
 
 #include <algorithm>
-#include <functional>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -26,7 +25,6 @@
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "common/text/symbol.h"
 #include "common/text/tree_utils.h"
 #include "common/util/file_util.h"
 #include "common/util/logging.h"
@@ -34,6 +32,7 @@
 #include "common/util/tree_operations.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "verilog/analysis/verilog_filelist.h"
 #include "verilog/analysis/verilog_project.h"
 
 namespace verilog {

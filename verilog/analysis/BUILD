@@ -487,8 +487,8 @@ cc_test(
     srcs = ["symbol_table_test.cc"],
     deps = [
         ":symbol-table",
+        ":verilog-filelist",
         ":verilog-project",
-        "//common/text:symbol",
         "//common/text:tree-utils",
         "//common/util:file-util",
         "//common/util:logging",
