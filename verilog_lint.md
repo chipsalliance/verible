@@ -298,11 +298,13 @@ Checks that packed dimension ranges are declare in little-endian (decreasing) or
 Enabled by default: true
 
 ### parameter-name-style
-Checks that non-type parameter and localparam names follow at least one of the naming conventions from a choice of CamelCase and ALL_CAPS, ORed together with the pipe-symbol(|). Empty configuration: no style enforcement. See [Style: constants].
+Checks that parameter and localparm names conform to a naming convention based on a choice of 'CamelCase', 'ALL_CAPS' and a user defined regex ORed together. Empty configurtaion: no style enforcement. Refer to https://github.com/chipsalliance/verible/tree/master/verilog/tools/lint#readme for more detail on verible regex patterns. See [Style: constants].
 
 ##### Parameters
-  * `localparam_style` Default: `CamelCase` Style of localparam name
-  * `parameter_style` Default: `CamelCase|ALL_CAPS` Style of parameter names
+  * `localparam_style` Default: `CamelCase` Style of localparam names
+  * `parameter_style` Default: `CamelCase|ALL_CAPS` Style of parameter names.
+  * `localparam_style_regex` Default: `` A regex used to check localparam name style.
+  * `parameter_style_regex` Default: `` A regex used to check parameter name style.
 
 Enabled by default: true
 
@@ -419,4 +421,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-08-23 20:46:23 -0700 from [da9a0f8](https://github.com/google/verible/commit/da9a0f8c4de71372a34f15e30eb2c5055c52635b)
+Generated on 2024-09-16 20:09:06 -0700 from [bfb6c2c](https://github.com/google/verible/commit/bfb6c2c12834ba95606a4eabb4e54e023c441776)
