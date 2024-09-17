@@ -14,7 +14,7 @@
 
 #include "common/util/tree_operations.h"
 
-#include <charconv>
+#include <cstdlib>
 #include <initializer_list>
 #include <list>
 #include <ostream>
@@ -27,7 +27,9 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "common/util/logging.h"
 #include "common/util/spacer.h"
+#include "common/util/type_traits.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
