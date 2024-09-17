@@ -43,7 +43,7 @@ using verible::TextStructureView;
 // Register the lint rule
 VERILOG_REGISTER_LINT_RULE(PackageFilenameRule);
 
-static constexpr absl::string_view optional_suffix = "_pkg";
+static constexpr absl::string_view kOptionalSuffix = "_pkg";
 
 static constexpr absl::string_view kMessage =
     "Package declaration name must match the file name "
@@ -106,7 +106,7 @@ void PackageFilenameRule::Lint(const TextStructureView &text_structure,
         GetPackageNameToken(*package_match.match);
     if (!package_name_token) continue;
     absl::string_view package_id = package_name_token->text();
-    auto package_id_plus_suffix = absl::StrCat(package_id, optional_suffix);
+    auto package_id_plus_suffix = absl::StrCat(package_id, kOptionalSuffix);
     if ((package_id != unitname) && (package_id_plus_suffix != unitname)) {
       violations_.insert(verible::LintViolation(
           *package_name_token,

@@ -48,11 +48,11 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-static constexpr absl::string_view style_default_regex = "[a-z_0-9]+";
+static constexpr absl::string_view kDefaultStyleRegex = "[a-z_0-9]+";
 
 SignalNameStyleRule::SignalNameStyleRule()
     : style_regex_(
-          std::make_unique<re2::RE2>(style_default_regex, re2::RE2::Quiet)) {}
+          std::make_unique<re2::RE2>(kDefaultStyleRegex, re2::RE2::Quiet)) {}
 
 const LintRuleDescriptor &SignalNameStyleRule::GetDescriptor() {
   static const LintRuleDescriptor d{
@@ -65,7 +65,7 @@ const LintRuleDescriptor &SignalNameStyleRule::GetDescriptor() {
           "expects \"lower_snake_case\". Refer to "
           "https://github.com/chipsalliance/verible/tree/master/verilog/tools/"
           "lint#readme for more detail on verible regex patterns.",
-      .param = {{"style_regex", std::string(style_default_regex),
+      .param = {{"style_regex", std::string(kDefaultStyleRegex),
                  "A regex used to check signal names style."}},
   };
   return d;
