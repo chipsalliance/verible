@@ -58,6 +58,24 @@ Checks that enum type names follow a naming convention defined by a RE2 regular 
 
 Enabled by default: true
 
+### explicit-begin
+Checks that a Verilog ``begin`` directive follows all if, else, always, always_comb, always_latch, always_ff, for, forever, foreach, while and initial statements. See [Style: explicit-begin].
+
+##### Parameters
+  * `if_enable` Default: `true` All if statements require an explicit begin-end block
+  * `else_enable` Default: `true` All else statements require an explicit begin-end block
+  * `always_enable` Default: `true` All always statements require an explicit begin-end block
+  * `always_comb_enable` Default: `true` All always_comb statements require an explicit begin-end block
+  * `always_latch_enable` Default: `true` All always_latch statements require an explicit begin-end block
+  * `always_ff_enable` Default: `true` All always_ff statements require an explicit begin-end block
+  * `for_enable` Default: `true` All for statements require an explicit begin-end block
+  * `forever_enable` Default: `true` All forever statements require an explicit begin-end block
+  * `foreach_enable` Default: `true` All foreach statements require an explicit begin-end block
+  * `while_enable` Default: `true` All while statements require an explicit begin-end block
+  * `initial_enable` Default: `true` All initial statements require an explicit begin-end block
+
+Enabled by default: false
+
 ### explicit-function-lifetime
 Checks that every function declared outside of a class is declared with an explicit lifetime (static or automatic). See [Style: function-task-explicit-lifetime].
 
@@ -350,4 +368,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-09-16 21:03:31 -0700 from [14ca40e](https://github.com/google/verible/commit/14ca40e153266700cfc79d0c1c3b2bfe8a6a77cc)
+Generated on 2024-09-17 23:27:45 -0700 from [88bf4fb](https://github.com/google/verible/commit/88bf4fb8320377ce61340a2d05d7417deb1d4608)
