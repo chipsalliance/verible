@@ -15,8 +15,7 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Location: https://github.com/hzeller/dev-tools
-// Last update: 2024-09-16 cf86e3b6c51dbf620a08fb2a59f6ea71b6bebe3d
+// Location: https://github.com/hzeller/dev-tools (2024-09-19)
 
 // Script to run clang-tidy on files in a bazel project while caching the
 // results as clang-tidy can be pretty slow. The clang-tidy output messages
@@ -62,18 +61,19 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 // Dont' change anything here, override for your project below in kConfig.
 struct ConfigValues {
   // Prefix for the cache to write to. If empty, use name of toplevel directory.
+  // Typical would be name of project with underscore suffix.
   std::string_view cache_prefix;
 
   // Directory to start recurse for sources createing a file list.
-  // Some projects need e.g. "src/".
+  // Some projects e.g. start at "src/".
   std::string_view start_dir;
 
-  // Regular expression matching files that should be included from file list.
+  // Regular expression matching files that should be included in file list.
   std::string_view file_include_re = ".*";
 
   // Regular expxression matching files that should be excluded from file list.
-  // If overriding, make sure to include at least ".git".
-  std::string_view file_exclude_re = ".git/|.github/";
+  // If searching from toplevel, make sure to include at least ".git/".
+  std::string_view file_exclude_re = "^(\\.git|\\.github|build)/";
 
   // A file in the toplevel of the project that should exist, typically
   // something used to set up the build environment, such as MODULE.bazel,
@@ -86,6 +86,11 @@ struct ConfigValues {
   // (Default configuration: just .clang-tidy as this should always be there)
   std::string_view toplevel_build_file = ".clang-tidy";
 
+  // Bazel projects have some complicated paths where generated and external
+  // sources reside. Setting this to true will tell this script canonicalize
+  // these in the output. Set to true if this is a bazel project.
+  bool is_bazel_project = false;
+
   // If the compilation DB or toplevel_build_file changed in timestamp, it
   // might be worthwhile revisiting sources that previously had issues.
   // This flag enables that.
@@ -94,6 +99,14 @@ struct ConfigValues {
   // few problematic sources to begin with, otherwise every update of the
   // compilation DB will re-trigger revisiting all of them.
   bool revisit_brokenfiles_if_build_config_newer = true;
+
+  // Revisit a source file if any of its include files changed content. Say
+  // foo.cc includes bar.h. Reprocess foo.cc with clang-tidy when bar.h changed,
+  // even if foo.cc is unchanged. This will find issues in which foo.cc relies
+  // on something bar.h provides.
+  // Usually good to keep on, but it can result in situations in which a header
+  // that is included by a lot of other files results in lots of reprocessing.
+  bool revisit_if_any_include_changes = true;
 };
 
 // --------------[ Project-specific configuration ]--------------
@@ -101,15 +114,27 @@ static constexpr ConfigValues kConfig = {
   .cache_prefix = "verible_",
   .file_exclude_re = ".git/|.github/"  // stuff we're not interested in
   "|vscode/"                           // some generated code in there
-  "|tree_operations_test"              // very slow
-  "|symbol_table_test",
+  "|tree_operations_test"              // very slow to process.
+  "|symbol_table_test",                // ...
   .toplevel_build_file = "MODULE.bazel",
+  .is_bazel_project = true,
 };
 // --------------------------------------------------------------
 
-// Files to be considered.
+// Files that look like relevant include files.
+inline bool IsIncludeExtension(const std::string &extension) {
+  for (const std::string_view e : {".h", ".hpp", ".hxx", ".inl"}) {
+    if (extension == e) return true;
+  }
+  return false;
+}
+
+// Filter for source files to be considered.
 inline bool ConsiderExtension(const std::string &extension) {
-  return extension == ".cc" || extension == ".cpp" || extension == ".h";
+  for (const std::string_view e : {".cc", ".cpp", ".cxx"}) {
+    if (extension == e) return true;
+  }
+  return IsIncludeExtension(extension);
 }
 
 // Configuration of clang-tidy itself.
@@ -289,6 +314,10 @@ class ClangTidyRunner {
 
     // Use major version as part of name of our configuration specific dir.
     auto version = GetCommandOutput(clang_tidy_ + " --version");
+    if (version.empty()) {
+      std::cerr << "Could not invoke " << clang_tidy_ << "; is it in PATH ?\n";
+      exit(EXIT_FAILURE);
+    }
     std::smatch version_match;
     const std::string major_version =
       std::regex_search(version, version_match, std::regex{"version ([0-9]+)"})
@@ -303,16 +332,18 @@ class ClangTidyRunner {
   }
 
   // Fix filename paths found in logfiles that are not emitted relative to
-  // project root in the log (bazel has its own, so this fixes bazel-specific
-  // projects)
+  // project root in the log - remove that prefix.
+  // (bazel has its own, so if this is bazel, also bazel-specific fix up that).
   static void RepairFilenameOccurences(const fs::path &infile,
                                        const fs::path &outfile) {
     static const std::regex sFixPathsRe = []() {
       std::string canonicalize_expr = "(^|\\n)(";  // fix names at start of line
-      auto root = GetCommandOutput("bazel info execution_root 2>/dev/null");
-      if (!root.empty()) {
-        root.pop_back();  // remove newline.
-        canonicalize_expr += root + "/|";
+      if (kConfig.is_bazel_project) {
+        auto bzroot = GetCommandOutput("bazel info execution_root 2>/dev/null");
+        if (!bzroot.empty()) {
+          bzroot.pop_back();  // remove newline.
+          canonicalize_expr += bzroot + "/|";
+        }
       }
       canonicalize_expr += fs::current_path().string() + "/";  // $(pwd)/
       canonicalize_expr +=
@@ -362,34 +393,41 @@ class FileGatherer {
       }
       // Remember content hash of header, so that we can make changed headers
       // influence the hash of a file including this.
-      if (extension == ".h") {
+      if (kConfig.revisit_if_any_include_changes &&
+          IsIncludeExtension(extension)) {
         // Since the files might be included sloppily without prefix path,
         // just keep track of the basename (but since there might be collisions,
         // accomodate all of them by xor-ing the hashes).
-        const std::string just_basename = fs::path(file).filename();
+        const std::string just_basename = p.filename();
         header_hashes[just_basename] ^= hashContent(GetContent(p));
       }
     }
     std::cerr << files_of_interest_.size() << " files of interest.\n";
 
-    // Create content hash address. If any header a file depends on changes, we
-    // want to reprocess. So we make the hash dependent on header content as
-    // well.
+    // Create content hash address for the cache and build list of work items.
+    // If we want to revisit if headers changed, make hash dependent on them.
     std::list<filepath_contenthash_t> work_queue;
-    const std::regex inc_re("\"([0-9a-zA-Z_/-]+\\.h)\"");  // match include
-    for (filepath_contenthash_t &f : files_of_interest_) {
-      const auto content = GetContent(f.first);
-      f.second = hashContent(content);
-      for (ReIt it(content.begin(), content.end(), inc_re); it != ReIt();
-           ++it) {
-        const std::string &header_path = (*it)[1].str();
-        const std::string header_basename = fs::path(header_path).filename();
-        f.second ^= header_hashes[header_basename];
+    const std::regex inc_re(
+        R"""(#\s*include\s+"([0-9a-zA-Z_/-]+\.[a-zA-Z]+)")""");
+    for (filepath_contenthash_t &work_file : files_of_interest_) {
+      const auto content = GetContent(work_file.first);
+      work_file.second = hashContent(content);
+      if (kConfig.revisit_if_any_include_changes) {
+        // Update the hash with all the hashes from all include files.
+        for (ReIt it(content.begin(), content.end(), inc_re); it != ReIt();
+             ++it) {
+          const std::string &header_path = (*it)[1].str();
+          const std::string header_basename = fs::path(header_path).filename();
+          const auto found = header_hashes.find(header_basename);
+          if (found != header_hashes.end()) {
+            work_file.second ^= found->second;
+          }
+        }
       }
-      // Recreate if we don't have it yet or if it contains messages but is
-      // older than WORKSPACE or compilation db. Maybe something got fixed.
-      if (store_.NeedsRefresh(f, min_freshness)) {
-        work_queue.emplace_back(f);
+      // Recreate if we don't have it yet or if it contains findings but is
+      // older than build environment. Maybe something got fixed: revisit file.
+      if (store_.NeedsRefresh(work_file, min_freshness)) {
+        work_queue.emplace_back(work_file);
       }
     }
     return work_queue;
@@ -397,11 +435,14 @@ class FileGatherer {
 
   // Tally up findings for files of interest and assemble in one file.
   // (BuildWorkList() needs to be called first).
-  size_t CreateReport(const fs::path &project_dir,
+  size_t CreateReport(const fs::path &cache_dir,
                       std::string_view symlink_detail,
                       std::string_view symlink_summary) const {
-    const fs::path tidy_outfile = project_dir / "tidy.out";
-    const fs::path tidy_summary = project_dir / "tidy-summary.out";
+    // Make it possible to keep independent reports for different invocation
+    // locations (e.g. two checkouts of the same project) using the same cache.
+    const std::string suffix = ToHex(hashContent(fs::current_path().string()));
+    const fs::path tidy_outfile = cache_dir / ("tidy.out-" + suffix);
+    const fs::path tidy_summary = cache_dir / ("tidy-summary.out-" + suffix);
 
     // Assemble the separate outputs into a single file. Tally up per-check
     const std::regex check_re("(\\[[a-zA-Z.-]+\\])\n");
