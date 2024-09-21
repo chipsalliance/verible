@@ -115,7 +115,7 @@ jobs:
         name: "diag"
         path: "**/plot_*.svg"
 
-  RunBantBuildCleaneer:
+  RunBantBuildCleaner:
     # Running http://bant.build/ to check all dependencies in BUILD files.
     runs-on: ubuntu-24.04
     steps:
@@ -124,34 +124,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build Project genrules
-        run: |
-          # Fetch all dependency and run genrules for bant to see every file
-          # that makes it into the compile.
-          bazel fetch ...
-          bazel build \
-              //common/analysis:command-file-lexer \
-              //common/lsp:jcxxgen-testfile-gen \
-              //common/lsp:lsp-protocol-gen \
-              //common/util:version-header \
-              //verilog/CST:verilog-nonterminals-foreach-gen  \
-              //verilog/parser:gen-verilog-token-enum \
-              //verilog/parser:verilog-lex \
-              //verilog/parser:verilog-parse-interface \
-              //verilog/parser:verilog-y \
-              //verilog/parser:verilog-y-final \
-              //verilog/tools/kythe:verilog-extractor-indexing-fact-type-foreach-gen
-
       - name: Get Bant
         run: |
           # TODO: provide this as action where we simply say with version=...
-          VERSION="v0.1.5"
+          VERSION="v0.1.7"
           STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
           wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
           tar xvzf "${STATIC_VERSION}.tar.gz"
           mkdir -p bin
           ln -sf ../"${STATIC_VERSION}/bin/bant" bin/
           bin/bant -V
+
+      - name: Build Project genrules
+        run: |
+          # Fetch all dependencies and run genrules for bant to see every file
+          # that makes it into the compile. Use bant itself to find genrules.
+          bazel fetch ...
+          bazel build $(bin/bant -q genrule-outputs | awk '{print $2}') \
+              //common/analysis:command-file-lexer \
+              //verilog/parser:verilog-lex \
+              //verilog/parser:verilog-y \
+              //verilog/parser:verilog-y-final
 
       - name: Run bant build-cleaner
         run: |

@@ -65,6 +65,7 @@ static const Matcher &InstanceShadowMatcher() {
   static const Matcher matcher(SymbolIdentifierLeaf());
   return matcher;
 }
+
 static bool isInAllowedNode(const SyntaxTreeContext &ctx) {
   return ctx.IsInside(NodeEnum::kSeqBlock) ||
          ctx.IsInside(NodeEnum::kGenvarDeclaration) ||
