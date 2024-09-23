@@ -76,6 +76,19 @@ TEST(InstanceShadowingTest, FunctionPass) {
           "int a;\n",
           "endmodule:foo;\n",
       },
+      {
+          "interface i;\n",
+          "logic a;\n",
+          "modport m (input a);\n",
+          "endinterface\n",
+      },
+      {
+          "interface i;\n",
+          "logic a;\n",
+          "modport mm(clocking a);\n",
+          "endinterface\n",
+      },
+
   };
   RunLintTestCases<VerilogAnalyzer, InstanceShadowRule>(
       kInstanceShadowingTestCases);
@@ -156,7 +169,7 @@ TEST(InstanceShadowingTest, CorrectLocationTest) {
     CHECK(config_status.ok()) << config_status.message();
     return instance;
   };
-  for (const auto& test : kInstanceShadowingTestCases) {
+  for (const auto &test : kInstanceShadowingTestCases) {
     VerilogAnalyzer analyzer(test.code, "<<inline-test>>");
     absl::Status unused_parser_status = analyzer.Analyze();
     verible::SyntaxTreeLinter linter_;

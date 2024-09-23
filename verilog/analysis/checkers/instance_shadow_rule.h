@@ -36,10 +36,10 @@ class InstanceShadowRule : public verible::SyntaxTreeLintRule {
 
   // Returns the description of the rule implemented formatted for either the
   // helper flag or markdown depending on the parameter type.
-  static const LintRuleDescriptor& GetDescriptor();
+  static const LintRuleDescriptor &GetDescriptor();
 
-  void HandleSymbol(const verible::Symbol& symbol,
-                    const verible::SyntaxTreeContext& context) override;
+  void HandleSymbol(const verible::Symbol &symbol,
+                    const verible::SyntaxTreeContext &context) override;
 
   verible::LintRuleStatus Report() const override;
 

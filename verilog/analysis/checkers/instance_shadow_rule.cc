@@ -51,7 +51,7 @@ const char InstanceShadowRule::kTopic[] = "mark-shadowed-instances";
 const char InstanceShadowRule::kMessage[] =
     "Instance shadows the already declared variable";
 
-const LintRuleDescriptor& InstanceShadowRule::GetDescriptor() {
+const LintRuleDescriptor &InstanceShadowRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "instance-shadowing",
       .topic = "mark-shadowed-instances",
@@ -61,18 +61,20 @@ const LintRuleDescriptor& InstanceShadowRule::GetDescriptor() {
   return d;
 }
 
-static const Matcher& InstanceShadowMatcher() {
+static const Matcher &InstanceShadowMatcher() {
   static const Matcher matcher(SymbolIdentifierLeaf());
   return matcher;
 }
-static bool isInAllowedNode(const SyntaxTreeContext& ctx) {
+
+static bool isInAllowedNode(const SyntaxTreeContext &ctx) {
   return ctx.IsInside(NodeEnum::kSeqBlock) ||
          ctx.IsInside(NodeEnum::kGenvarDeclaration) ||
-         ctx.IsInside(NodeEnum::kReference);
+         ctx.IsInside(NodeEnum::kReference);  // ||
+  //  ctx.IsInside(NodeEnum::kModportSimplePort);
 }
 
-void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
-                                      const SyntaxTreeContext& context) {
+void InstanceShadowRule::HandleSymbol(const verible::Symbol &symbol,
+                                      const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   bool omit_node = false;
   if (!InstanceShadowMatcher().Matches(symbol, &manager)) {
@@ -83,29 +85,35 @@ void InstanceShadowRule::HandleSymbol(const verible::Symbol& symbol,
   // if the considered symbol name is not a declaration
   if (context.IsInside(NodeEnum::kReference)) return;
 
+  // if the considered symbol name is in a modport, discard it
+  if (context.IsInside(NodeEnum::kModportSimplePort) ||
+      context.IsInside(NodeEnum::kModportClockingPortsDeclaration)) {
+    return;
+  }
+
   // TODO: don't latch on to K&R-Style form in which the same symbol shows
   // up twice.
 
   const auto rcontext = reversed_view(context);
-  const auto* const rdirectParent = *std::next(rcontext.begin());
+  const auto *const rdirectParent = *std::next(rcontext.begin());
   // we are looking for the potential labels that might overlap the considered
   // declaration. We are searching all the labels within the visible scope
   // until we find the node or we reach the top of the scope
-  for (const auto* node : rcontext) {
-    for (const verible::SymbolPtr& child : node->children()) {
+  for (const auto *node : rcontext) {
+    for (const verible::SymbolPtr &child : node->children()) {
       if (child == nullptr) {
         continue;
       }
       const auto overlappingLabels = FindAllSymbolIdentifierLeafs(*child);
-      for (const verible::TreeSearchMatch& omatch : overlappingLabels) {
-        const auto& overlappingLabel = SymbolCastToLeaf(*omatch.match);
+      for (const verible::TreeSearchMatch &omatch : overlappingLabels) {
+        const auto &overlappingLabel = SymbolCastToLeaf(*omatch.match);
         // variable in different scopes or this is not a
         // vulnerable declaration
         if (isInAllowedNode(omatch.context)) {
           omit_node = true;
           break;
         }
-        const auto& label = SymbolCastToLeaf(*labels[0].match);
+        const auto &label = SymbolCastToLeaf(*labels[0].match);
         // if found label has the same adress as considered label
         // we found the same node so we don't
         // want to look further
