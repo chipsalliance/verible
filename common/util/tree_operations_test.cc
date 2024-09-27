@@ -30,7 +30,7 @@
 #include "common/util/logging.h"
 #include "common/util/spacer.h"
 #include "common/util/type_traits.h"
-#include "gmock/gmock.h"
+#include "gmock/gmock.h"  // IWYU pragma: keep
 #include "gtest/gtest.h"
 
 /*
