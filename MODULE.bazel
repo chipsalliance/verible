@@ -61,10 +61,17 @@ single_version_override(
     patches = ["//bazel:absl.patch"],
 )
 
+# Json module only provide the multi-header target, but that will
+# make misc-inlude-cleaner complain about not direct includes.
+bazel_dep(name = "nlohmann_json", version = "3.11.3", repo_name="jsonhpp")
+single_version_override(
+    module_name = "nlohmann_json",
+    patches = ["//bazel:nlohmann_module.patch"],
+)
+
 bazel_dep(name = "re2", version = "2023-09-01", repo_name="com_googlesource_code_re2")
 
 # Newer versions require bazel 7, so this is the last we can use currently.
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name="com_google_googletest")
 bazel_dep(name = "protobuf", version = "26.0", repo_name="com_google_protobuf")
-bazel_dep(name = "nlohmann_json", version = "3.11.3", repo_name="jsonhpp")
 bazel_dep(name = "zlib", version = "1.3.1")
