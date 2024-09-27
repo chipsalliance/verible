@@ -1,0 +1,23 @@
+--- BUILD.bazel	2024-09-27 08:43:50.907170239 -0700
++++ BUILD.bazel	2024-09-27 08:46:27.441297623 -0700
+@@ -1,5 +1,5 @@
+ cc_library(
+-    name = "json",
++    name = "json-multiheader",
+     hdrs = [
+         "include/nlohmann/adl_serializer.hpp",
+         "include/nlohmann/byte_container_with_subtype.hpp",
+@@ -51,3 +51,13 @@
+     visibility = ["//visibility:public"],
+     alwayslink = True,
+ )
++cc_library(
++    name = "json",
++    hdrs = [
++        "single_include/nlohmann/json.hpp",
++    ],
++    includes = ["single_include"],
++    visibility = ["//visibility:public"],
++    copts = ["-fexceptions"],
++    features = ["-use_header_modules"],  # precompiled headers incompatible with -fexceptions.
++)
