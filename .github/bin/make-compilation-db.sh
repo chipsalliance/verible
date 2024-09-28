@@ -13,16 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -u
-set -e
+# This is pretty noisy.
+bazel run -c opt @hedron_compile_commands//:refresh_all > /dev/null 2>&1
 
-readonly OUTPUT_BASE="$(bazel info output_base)"
-
-readonly COMPDB_SCRIPT="${OUTPUT_BASE}/external/rules_compdb/generate.py"
-[ -r "${COMPDB_SCRIPT}" ] || bazel fetch ...
-
-python3 "${COMPDB_SCRIPT}"
-
-# Remove a flags observed in the wild that clang-tidy doesn't understand.
-sed -i -e 's/-fno-canonical-system-headers//g; s/DEBUG_PREFIX_MAP_PWD=.//g' \
-       compile_commands.json
+sed -i -e 's/bazel-out\/.*\/bin\/external\//bazel-out\/..\/..\/..\/external\//g' compile_commands.json
+sed -i -e 's/bazel-out\/.*\/bin/bazel-bin/g' compile_commands.json

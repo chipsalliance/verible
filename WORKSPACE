@@ -1,3 +1,4 @@
+# Legacy workspace for bazel5. Will go away.
 workspace(name = "com_google_verible")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -177,14 +178,27 @@ http_archive(
     ],
 )
 
-# 2024-02-06
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
 http_archive(
-    name = "rules_compdb",
-    sha256 = "70232adda61e89a4192be43b4719d35316ed7159466d0ab4f3da0ecb1fbf00b2",
-    strip_prefix = "bazel-compilation-database-fa872dd80742b3dccd79a711f52f286cbde33676",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/fa872dd80742b3dccd79a711f52f286cbde33676.tar.gz"],
+    name = "hedron_compile_commands",
+    sha256 = "044b148b111e17cee61d8c3aaeed42069f7325460382340afca4919f8265094c",
+    strip_prefix = "bazel-compile-commands-extractor-1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93",
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93.tar.gz",
 )
 
-load("@rules_compdb//:deps.bzl", "rules_compdb_deps")
+load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
 
-rules_compdb_deps()
+hedron_compile_commands_setup()
+
+load("@hedron_compile_commands//:workspace_setup_transitive.bzl", "hedron_compile_commands_setup_transitive")
+
+hedron_compile_commands_setup_transitive()
+
+load("@hedron_compile_commands//:workspace_setup_transitive_transitive.bzl", "hedron_compile_commands_setup_transitive_transitive")
+
+hedron_compile_commands_setup_transitive_transitive()
+
+load("@hedron_compile_commands//:workspace_setup_transitive_transitive_transitive.bzl", "hedron_compile_commands_setup_transitive_transitive_transitive")
+
+hedron_compile_commands_setup_transitive_transitive_transitive()

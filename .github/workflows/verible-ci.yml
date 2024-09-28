@@ -92,15 +92,28 @@ jobs:
         path: |
           /root/.cache/clang-tidy
           /root/.cache/bazel
-        key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: clang-tidy-
+        key: clang-tidy-2-${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: clang-tidy-2-
+
+    - name: Make compilation DB
+      run: |
+        .github/bin/make-compilation-db.sh
+        wc -l compile_commands.json
+
+    - name: Build generated files
+      run: |
+        bazel build //common/lsp:jcxxgen-testfile-gen \
+          //common/lsp:lsp-protocol-gen \
+          //common/util:version-header \
+          //verilog/CST:verilog-nonterminals-foreach-gen \
+          //verilog/parser:verilog-parse-interface \
+          //verilog/parser:gen-verilog-token-enum \
+          //third_party/proto/kythe:storage_cc_proto \
+          //third_party/proto/kythe:analysis_cc_proto
 
     - name: Run clang tidy
       run: |
-        echo "::group::Make Compilation DB"
-        .github/bin/make-compilation-db.sh
         wc -l compile_commands.json
-        echo "::endgroup::"
         # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
         CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
            || ( cat verible_clang-tidy.out ; exit 1)
@@ -380,6 +393,7 @@ jobs:
         # Just a smoke test to make sure developer scripts run on Mac
         echo "::group::Make Compilation DB"
         .github/bin/make-compilation-db.sh
+        head -30 compile_commands.json
         echo "::endgroup::"
         # Quick with no checks to be fast (full tidy run in ClangTidy action)
         .github/bin/run-clang-tidy-cached.cc --checks="-*"
