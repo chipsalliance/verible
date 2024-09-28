@@ -260,7 +260,7 @@ local lsp_flags = {
 require'lspconfig'.verible.setup {
     on_attach = on_attach,
     flags = lsp_flags,
-    root_dir = function() return vim.loop.cwd() end
+    root_dir = function() return vim.uv.cwd() end
 }
 EOF
 ```
