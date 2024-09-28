@@ -19,13 +19,10 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace verible {
 namespace {
-
-using ::testing::Eq;
 
 // The tests are comparing this SHA256 implementation and the SHA256 digest
 // produced by the OpenSSL SHA256 implementation. The following code was used to
@@ -47,13 +44,13 @@ using ::testing::Eq;
 TEST(Sha256, DigestsAreEqual) {
   static constexpr absl::string_view kOpenSslSha256BananaDigest =
       "b493d48364afe44d11c0165cf470a4164d1e2609911ef998be868d46ade3de4e";
-  EXPECT_THAT(Sha256Hex("banana"), Eq(kOpenSslSha256BananaDigest));
+  EXPECT_EQ(Sha256Hex("banana"), kOpenSslSha256BananaDigest);
 }
 
 TEST(Sha256, NonAsciiDigestsAreEqual) {
   static constexpr absl::string_view kOpenSslSha256JaBananaDigest =
       "787bcc7042939ad9607bc8ca87332e4178716be0f0b890cbf673884d39d8ff79";
-  EXPECT_THAT(Sha256Hex("バナナ"), Eq(kOpenSslSha256JaBananaDigest));
+  EXPECT_EQ(Sha256Hex("バナナ"), kOpenSslSha256JaBananaDigest);
 }
 
 TEST(Sha256, LargeInputDigestsAreEqual) {
@@ -86,13 +83,13 @@ Abstract
    Authentication Codes (HMACs) is also included.)";
   static constexpr absl::string_view kOpenSslSha256LargeTextDigest =
       "11fc4b5feb7b63ddcc15cfb05d1f969da2e0d537ec8eded8370e12811f7ab1a8";
-  EXPECT_THAT(Sha256Hex(kLargeText), Eq(kOpenSslSha256LargeTextDigest));
+  EXPECT_EQ(Sha256Hex(kLargeText), kOpenSslSha256LargeTextDigest);
 }
 
 TEST(Sha256, EmptyInputDigestsAreEqual) {
   static constexpr absl::string_view kOpenSslSha256EmptyStringDigest =
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-  EXPECT_THAT(Sha256Hex(""), Eq(kOpenSslSha256EmptyStringDigest));
+  EXPECT_EQ(Sha256Hex(""), kOpenSslSha256EmptyStringDigest);
 }
 
 TEST(Sha256, IncrementallyAddedDigestsAreEqual) {
@@ -107,7 +104,7 @@ TEST(Sha256, IncrementallyAddedDigestsAreEqual) {
 
   std::string actual = absl::BytesToHexString(absl::string_view(
       reinterpret_cast<const char*>(digest.data()), digest.size()));
-  EXPECT_THAT(actual, Eq(kOpenSslSha256BananaDigest));
+  EXPECT_EQ(actual, kOpenSslSha256BananaDigest);
 }
 
 }  // namespace
