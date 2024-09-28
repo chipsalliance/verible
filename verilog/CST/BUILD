@@ -749,6 +749,7 @@ cc_test(
     deps = [
         ":match-test-utils",
         ":statement",
+        ":verilog-matchers",
         ":verilog-nonterminals",
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",

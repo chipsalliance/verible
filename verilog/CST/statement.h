@@ -216,6 +216,12 @@ const verible::SyntaxTreeNode *GetNonBlockingAssignmentLhs(
 const verible::SyntaxTreeNode *GetNonBlockingAssignmentRhs(
     const verible::SyntaxTreeNode &non_blocking_assignment);
 
+const verible::SyntaxTreeNode *GetIfClauseHeader(
+    const verible::SyntaxTreeNode &if_clause);
+
+const verible::SyntaxTreeNode *GetIfHeaderExpression(
+    const verible::SyntaxTreeNode &if_header);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_STATEMENT_H_

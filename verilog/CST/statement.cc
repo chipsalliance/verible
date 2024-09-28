@@ -520,4 +520,19 @@ const verible::SyntaxTreeNode *GetNonBlockingAssignmentRhs(
       non_blocking_assignment, NodeEnum::kNonblockingAssignmentStatement, 3);
 }
 
+const verible::SyntaxTreeNode *GetIfClauseHeader(
+    const verible::SyntaxTreeNode &if_clause) {
+  return verible::GetSubtreeAsNode(if_clause, NodeEnum::kIfClause, 0);
+}
+
+const verible::SyntaxTreeNode *GetIfHeaderExpression(
+    const verible::SyntaxTreeNode &if_header) {
+  const verible::SyntaxTreeNode *paren_group =
+      verible::GetSubtreeAsNode(if_header, NodeEnum::kIfHeader, 2);
+
+  if (!paren_group) return nullptr;
+
+  return verible::GetSubtreeAsNode(*paren_group, NodeEnum::kParenGroup, 1);
+}
+
 }  // namespace verilog
