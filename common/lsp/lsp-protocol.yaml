@@ -228,3 +228,13 @@ InlayHint:
   tooltip?: string
   paddingLeft?: boolean
   paddingRight?: boolean
+
+# -- textDcoument/rename
+
+OptionalVersionedTextDocumentIdentifier:
+  <: TextDocumentIdentifier
+  version?: integer
+
+TextDocumentEdit:
+  textDocument: OptionalVersionedTextDocumentIdentifier
+  edits: object  # TextEdit[]
