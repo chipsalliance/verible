@@ -24,7 +24,7 @@
 
 #include "absl/strings/string_view.h"
 #include "third_party/portable_endian/portable_endian.h"
-#include "zlib/include/zlib.h"
+#include "zlib.h"
 
 namespace verible {
 namespace zip {
