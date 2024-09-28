@@ -368,4 +368,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-09-28 08:37:56 -0700 from [0657a40](https://github.com/google/verible/commit/0657a400d05f63ab1e80f10b650177c6b280844a)
+Generated on 2024-09-28 13:17:24 -0700 from [d0f6c1d](https://github.com/google/verible/commit/d0f6c1d1d9d7cdcd4047280d011ce9675b580f17)
