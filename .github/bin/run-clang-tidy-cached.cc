@@ -15,7 +15,7 @@ B=${0%%.cc}; [ "$B" -nt "$0" ] || c++ -std=c++17 -o"$B" "$0" && exec "$B" "$@";
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Location: https://github.com/hzeller/dev-tools (2024-09-19)
+// Location: https://github.com/hzeller/dev-tools (2024-09-28)
 
 // Script to run clang-tidy on files in a bazel project while caching the
 // results as clang-tidy can be pretty slow. The clang-tidy output messages
@@ -512,10 +512,13 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  const auto compdb_ts = fs::last_write_time("compile_commands.json", ec);
+  auto compdb_ts = fs::last_write_time("compile_commands.json", ec);
   if (ec.value() != 0) {
-    std::cerr << "No compilation db compile_commands.json found; "
-              << "create that first. For cmake projects, often simply\n"
+    compdb_ts = fs::last_write_time("compile_flags.txt", ec);
+  }
+  if (ec.value() != 0) {
+    std::cerr << "No compilation db compile_commands.json or compile_flags.txt "
+              << "found; create that first. For cmake projects, often simply\n"
               << "\tln -s build/compile_commands.json .\n";
     return EXIT_FAILURE;
   }
