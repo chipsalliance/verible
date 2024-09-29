@@ -201,5 +201,29 @@ TEST(ConfigUtilsTest, ParseMultipleParameters) {
   EXPECT_EQ(str1, "some text string");
   EXPECT_EQ(regex->pattern(), "[A-B0-9_]");
 }
+
+TEST(ConfigUtilsTest, AllowTrailingOrLeadingSemicolons) {
+  absl::Status s;
+  int answer;
+  bool panic;
+  s = ParseNameValues("answer:42;panic:off;", {{"answer", SetInt(&answer)},
+                                               {"panic", SetBool(&panic)}});
+  EXPECT_TRUE(s.ok());
+  EXPECT_FALSE(panic);
+  EXPECT_EQ(answer, 42);
+
+  s = ParseNameValues(";answer:43;panic:on", {{"answer", SetInt(&answer)},
+                                              {"panic", SetBool(&panic)}});
+  EXPECT_TRUE(s.ok()) << s.message();
+  EXPECT_TRUE(panic);
+  EXPECT_EQ(answer, 43);
+
+  s = ParseNameValues(";answer:44;panic:on;", {{"answer", SetInt(&answer)},
+                                               {"panic", SetBool(&panic)}});
+  EXPECT_TRUE(s.ok()) << s.message();
+  EXPECT_TRUE(panic);
+  EXPECT_EQ(answer, 44);
+}
+
 }  // namespace config
 }  // namespace verible

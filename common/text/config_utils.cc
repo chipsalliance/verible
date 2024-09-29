@@ -45,7 +45,8 @@ absl::Status ParseNameValues(string_view config_string,
                              const std::initializer_list<NVConfigSpec> &spec) {
   if (config_string.empty()) return absl::OkStatus();
 
-  for (const string_view single_config : absl::StrSplit(config_string, ';')) {
+  for (const string_view single_config :
+       absl::StrSplit(config_string, ';', absl::SkipEmpty())) {
     const std::pair<string_view, string_view> nv_pair =
         absl::StrSplit(single_config, ':');
     const auto value_config = std::find_if(  // linear search
