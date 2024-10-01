@@ -53,7 +53,7 @@ cc_library(
     deps = [
         "//common/util:logging",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader/json",
     ],
 )
 
@@ -70,7 +70,7 @@ cc_test(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader/json",
     ],
 )
 
@@ -85,7 +85,7 @@ genrule(
 cc_library(
     name = "lsp-protocol",
     hdrs = ["lsp-protocol.h"],
-    deps = ["@jsonhpp//:json"],
+    deps = ["@jsonhpp//:singleheader/json"],
 )
 
 cc_library(
@@ -167,7 +167,7 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader/json",
     ],
 )
 
@@ -181,7 +181,7 @@ cc_binary(
         ":message-stream-splitter",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader/json",
     ],
 )
 
@@ -224,7 +224,7 @@ genrule(
 cc_library(
     name = "jcxxgen-testfile",
     hdrs = ["jcxxgen-testfile.h"],
-    deps = ["@jsonhpp//:json"],
+    deps = ["@jsonhpp//:singleheader/json"],
 )
 
 cc_test(
@@ -240,6 +240,6 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader/json",
     ],
 )
