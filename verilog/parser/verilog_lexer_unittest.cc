@@ -77,6 +77,13 @@ static std::initializer_list<LexerTestData> kCommentTests = {
     {{TK_EOL_COMMENT, "//foo"}},  // missing \n, but treat as if it were there
 };
 
+static std::initializer_list<LexerTestData> kNewlineTests = {
+    {{TK_NEWLINE, "\n"}, {TK_NEWLINE, "\n"}},
+    {{TK_NEWLINE, "\r"}, {TK_NEWLINE, "\r"}},
+    {{TK_NEWLINE, "\r\n"}, {TK_NEWLINE, "\r\n"}},
+    {{TK_NEWLINE, "\r"}, {TK_NEWLINE, "\r\n"}, {TK_NEWLINE, "\n"}},  // mix
+};
+
 // treating attributes lists as C-style comments,
 // except they are not returned as comment blocks.
 static std::initializer_list<SimpleTestData> kAttributeTests = {
@@ -2288,6 +2295,7 @@ static std::initializer_list<LexerTestData> kLexicalErrorTests = {
 };
 
 TEST(VerilogLexerTest, LexicalErrors) { TestLexer(kLexicalErrorTests); }
+TEST(VerilogLexerTest, NewlineTests) { TestLexer(kNewlineTests); }
 TEST(VerilogLexerTest, Comments) { TestLexer(kCommentTests); }
 TEST(VerilogLexerTest, Attributes) { TestLexer(kAttributeTests, TK_ATTRIBUTE); }
 TEST(VerilogLexerTest, AttributesSequence) {
