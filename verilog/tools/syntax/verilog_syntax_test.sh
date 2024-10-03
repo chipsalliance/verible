@@ -307,11 +307,9 @@ All lexed tokens:
 (#"<<space>>" @6-7: " ")
 (#SymbolIdentifier @7-9: "mm")
 (#';' @9-10: ";")
-(#"<<\\\\n>>" @10-11: "
-")
+(#"<<newline>>" @10-11: "\\n")
 (#"endmodule" @11-20: "endmodule")
-(#"<<\\\\n>>" @20-21: "
-")
+(#"<<newline>>" @20-21: "\\n")
 (#"end of file" @21-21: "")
 EOF
 

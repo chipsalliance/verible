@@ -26,6 +26,7 @@ cc_library(
         "//common/util:iterator-range",
         "//common/util:logging",
         "//common/util:range",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
     ],
 )

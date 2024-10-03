@@ -667,7 +667,7 @@ is not locally defined, so the grammar here uses only generic identifiers.
 %token TK_COMMENT_BLOCK "/&lowast;comment&lowast;/"
 %token TK_EOL_COMMENT "// end of line comment"
 %token TK_SPACE "<<space>>"  /* includes tabs */
-%token TK_NEWLINE "<<\\n>>"
+%token TK_NEWLINE "<<newline>>"
 %token TK_LINE_CONT "<<\\line-cont>>"
 %token TK_ATTRIBUTE "(*attribute*)"
 
@@ -3518,12 +3518,12 @@ instantiation_base
     { $$ = MakeInstantiationBase($1, $2); }
   /*
    * TODO: support mixed anonymous declarations
-   * 
+   *
    * This production rule was commented out because it caused
    * verible-verilog-syntax to crash for some inputs. It may be necessary to
    * re-enable it in the future to support declarations that mix anonymous and
    * named instances.
-   * 
+   *
    * For more details, see https://github.com/chipsalliance/verible/issues/2181
    */
   // | reference call_base ',' gate_instance_or_register_variable_list
