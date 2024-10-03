@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/escaping.h"
 #include "absl/strings/string_view.h"
 #include "common/strings/rebase.h"
 #include "common/text/constants.h"
@@ -53,14 +54,15 @@ std::ostream &TokenInfo::ToStream(std::ostream &output_stream,
   output_stream << "(#";
   context.token_enum_translator(output_stream, token_enum_);
   output_stream << " @" << left(context.base) << '-' << right(context.base)
-                << ": \"" << text_ << "\")";
+                << ": \"" << absl::CEscape(text_) << "\")";
   const auto dist = std::distance(context.base.end(), text_.end());
   CHECK(IsSubRange(text_, context.base)) << "text.end() is off by " << dist;
   return output_stream;
 }
 
 std::ostream &TokenInfo::ToStream(std::ostream &output_stream) const {
-  return output_stream << "(#" << token_enum_ << ": \"" << text_ << "\")";
+  return output_stream << "(#" << token_enum_ << ": \"" << absl::CEscape(text_)
+                       << "\")";
 }
 
 std::string TokenInfo::ToString(const Context &context) const {
