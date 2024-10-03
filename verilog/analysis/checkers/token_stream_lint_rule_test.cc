@@ -59,6 +59,12 @@ TEST(StringLiteralConcatenationTest, FunctionFailures) {
       {"module m;\n",
        "string tmp=",
        {kToken,
+        "\"Humpty Dumpty discovers CRLF \\\r\nHumpty Dumpty CRinged.\""},
+       ";",
+       "\nendmodule"},
+      {"module m;\n",
+       "string tmp=",
+       {kToken,
         "\"Humpty Dumpty sat on a wall. \\\n\\\nHumpty Dumpty had a great "
         "fall.\""},
        ";",
