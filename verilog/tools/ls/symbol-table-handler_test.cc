@@ -14,7 +14,6 @@
 
 #include "verilog/tools/ls/symbol-table-handler.h"
 
-#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -240,7 +239,6 @@ TEST(SymbolTableHandlerTest,
   parameters.position.line = 1;
   parameters.position.character = 11;
 
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
@@ -290,7 +288,6 @@ TEST(SymbolTableHandlerTest,
   parameters.position.line = 3;  // pointing to 'vara'
   parameters.position.character = 5;
 
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
@@ -340,7 +337,6 @@ TEST(SymbolTableHandlerTest, FindRenamableRangeAtCursorReturnsLocation) {
   parameters.position.line = 1;
   parameters.position.character = 11;
 
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
@@ -392,7 +388,6 @@ TEST(SymbolTableHandlerTest,
   parameters.position.character = 11;
   parameters.newName = "aaa";
 
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
@@ -445,7 +440,6 @@ TEST(SymbolTableHandlerTest,
   parameters.position.character = 11;
   parameters.newName = "aaa";
 
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
@@ -494,7 +488,6 @@ TEST(SymbolTableHandlerTest, UpdateWithUnparseableEditorContentRegression) {
   const verible::file::testing::ScopedTestFile filelist(
       sources_dir, filelist_content, "verible.filelist");
   const std::string uri = verible::lsp::PathToLSPUri(sources_dir + "/a.sv");
-  std::filesystem::absolute({sources_dir.begin(), sources_dir.end()}).string();
   std::shared_ptr<VerilogProject> project = std::make_shared<VerilogProject>(
       sources_dir, std::vector<std::string>(), "");
   SymbolTableHandler symbol_table_handler;
