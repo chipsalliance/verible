@@ -91,13 +91,13 @@ TEST(FileUtil, GetContentAsMemBlock) {
   EXPECT_FALSE(result.status().ok());
 
   const std::string test_file = file::JoinPath(testing::TempDir(), "blockfile");
-  const absl::string_view test_content = "Some file content";
-  EXPECT_OK(file::SetContents(test_file, test_content));
+  constexpr absl::string_view kTestContent = "Some file content\nbaz\r\n";
+  EXPECT_OK(file::SetContents(test_file, kTestContent));
 
   result = file::GetContentAsMemBlock(test_file);
   EXPECT_OK(result.status());
   auto &block = *result;
-  EXPECT_EQ(block->AsStringView(), test_content);
+  EXPECT_EQ(block->AsStringView(), kTestContent);
 }
 
 TEST(FileUtil, JoinPath) {
@@ -164,12 +164,19 @@ TEST(FileUtil, StatusErrorReporting) {
       << "expect filename prefixed, but got " << content_or.status();
 
   // Write/read roundtrip
-  const std::string test_file = file::JoinPath(testing::TempDir(), "test-err");
+  const std::string test_file = file::JoinPath(testing::TempDir(), "test-trip");
   unlink(test_file.c_str());  // Remove file if left from previous test.
-  EXPECT_OK(file::SetContents(test_file, "foo"));
+  // Add a bunch of text 'special' characcters to make sure even on Windows
+  // they roundtrip correctly.
+  constexpr absl::string_view kTestContent = "foo\nbar\r\nbaz\rquux";
+  EXPECT_OK(file::SetContents(test_file, kTestContent));
+
+  // Writing again, should not append, but re-write.
+  EXPECT_OK(file::SetContents(test_file, kTestContent));
+
   content_or = file::GetContentAsString(test_file);
   EXPECT_OK(content_or.status());
-  EXPECT_EQ(*content_or, "foo");
+  EXPECT_EQ(*content_or, kTestContent);
 
   const std::string test_dir = file::JoinPath(testing::TempDir(), "test-dir");
   ASSERT_OK(file::CreateDir(test_dir));
