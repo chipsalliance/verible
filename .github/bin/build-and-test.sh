@@ -44,6 +44,9 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-fno-exceptions"
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Werror"  # Always want bail on warning
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-W --cxxopt=-Wall --cxxopt=-Wextra"
 
+# Don't complain if we mention warnings below we don't know about.
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unknown-warning-option"
+
 # The following warning only reports with clang++; it is ignored by gcc
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wunreachable-code"
 
@@ -62,30 +65,17 @@ BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-label"
 # Compiler evaluates  sizeof...(args) and complains about zero
 BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-type-limits"
 
-# Warnings that come from other external parts that we compile.
-# Ideally, we would separate them out to ignore only there, while we keep
-# tight warnings on for 'our' code-base.
-# TODO(hzeller): Remove after
-#            https://github.com/chipsalliance/verible/issues/747 is figured out
-if [[ "${CXX}" == clang* ]]; then
-  # -- only recognized by clang
-  # Don't rely on implicit template type deduction
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wctad-maybe-unsupported"
+# This might need some fixing:
+BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-dangling-reference"
 
-  # Also warn about string conversion issues.
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wstring-conversion"
-
-  BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-unused-function"  # utf8_range dependencyo
-
-  BAZEL_TEST_OPTS="--copt -D_LIBCPP_ENABLE_DEBUG_MODE"
-else  # gcc
-  # disabled for now https://github.com/chipsalliance/verible/issues/1056
-  #BAZEL_TEST_OPTS="--copt -D_GLIBCXX_DEBUG"
-  PLACEHOLDER_ASSIGNMENT_SO_THAT_ELSE_BRANCH_DOES_NOT_CREATE_SYNTAX_ERROR=1
-fi
-
-# Protobuf triggers a maybe-uninitialized warning.
-BAZEL_OPTS="${BAZEL_OPTS} --cxxopt=-Wno-uninitialized"
+# External projects generate warnings, that are not actionable, so
+# switch them off for these.
+# We already mention these in the .bazelrc, but since we set different
+# warning options above, we need to mention it again
+BAZEL_OPTS="${BAZEL_OPTS} --per_file_copt=.*\.tab\.cc@-Wno-unused-but-set-variable"
+BAZEL_OPTS="${BAZEL_OPTS} --host_per_file_copt=.*\.tab\.cc@-Wno-unused-but-set-variable"
+BAZEL_OPTS="${BAZEL_OPTS} --per_file_copt=external/.*@-w"
+BAZEL_OPTS="${BAZEL_OPTS} --host_per_file_copt=external/.*@-w"
 
 # If parameter given and the MODE allows choosing, we build the target
 # as provided, otherwise all. This allows manual invocation of interesting
