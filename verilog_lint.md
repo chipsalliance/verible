@@ -439,4 +439,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-10-02 23:05:01 -0700 from [56d75de](https://github.com/google/verible/commit/56d75de23e8135e392c51cc48f0a3ecf3fda23c9)
+Generated on 2024-10-03 08:37:31 -0700 from [032887d](https://github.com/google/verible/commit/032887d928f95f75382bf8c05413032a46a342f4)
