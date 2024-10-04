@@ -27,6 +27,7 @@ namespace analysis {
 namespace {
 
 using verible::LintTestCase;
+using verible::RunApplyFixCases;
 using verible::RunConfiguredLintTestCases;
 using verible::RunLintTestCases;
 
@@ -117,11 +118,94 @@ TEST(AlwaysFFNonBlockingRule, LocalWaiving) {
        {kToken, "a"},
        "= b;\n"
        "end\nend\nendmodule"},
+      // Waive, 'a' is a local declaration
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; a = b; "
+       "end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; a++; "
+       "end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; ++a; "
+       "end\nendmodule"},
+      {"module m;\nalways_ff @(posedge c) begin static type(b) a; a &= b; "
+       "end\nendmodule"},
   };
 
   RunConfiguredLintTestCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
       kAlwaysFFNonBlockingTestCases,
       "catch_modifying_assignments:on;waive_for_locals:on");
+}
+
+TEST(AlwaysFFNonBlockingRule, AutoFixDefault) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // Check we're not waiving local variables
+      {"module m;\nalways_ff begin reg k; k = 1; end\nendmodule",
+       "module m;\nalways_ff begin reg k; k <= 1; end\nendmodule"},
+      // Check we're ignoring modifying assignments
+      {"module m;\nalways_ff begin k &= 1; k = 1; end\nendmodule",
+       "module m;\nalways_ff begin k &= 1; k <= 1; end\nendmodule"},
+  };
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(kTestCases, "");
+}
+
+TEST(AlwaysFFNonBlockingRule, AutoFixCatchModifyingAssignments) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      {"module m;\nalways_ff begin k &= 1; end\nendmodule",
+       "module m;\nalways_ff begin k <= k & 1; end\nendmodule"},
+      {"module m;\nalways_ff begin k &= a; end\nendmodule",
+       "module m;\nalways_ff begin k <= k & a; end\nendmodule"},
+      {"module m;\nalways_ff begin k |= (2 + 1); end\nendmodule",
+       "module m;\nalways_ff begin k <= k | (2 + 1); end\nendmodule"},
+      {"module m;\nalways_ff begin k |= 2 + (1); end\nendmodule",
+       "module m;\nalways_ff begin k <= k | (2 + (1)); end\nendmodule"},
+      {"module m;\nalways_ff begin k |= (2) + (1); end\nendmodule",
+       "module m;\nalways_ff begin k <= k | ((2) + (1)); end\nendmodule"},
+      {"module m;\nalways_ff begin k *= 2 + 1; end\nendmodule",
+       "module m;\nalways_ff begin k <= k * (2 + 1); end\nendmodule"},
+      {"module m;\nalways_ff begin a++; end\nendmodule",
+       "module m;\nalways_ff begin a <= a + 1; end\nendmodule"},
+      {"module m;\nalways_ff begin ++a; end\nendmodule",
+       "module m;\nalways_ff begin a <= a + 1; end\nendmodule"},
+  };
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
+      kTestCases, "catch_modifying_assignments:on");
+}
+
+TEST(AlwaysFFNonBlockingRule, AutoFixDontBreakCode) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // We can't fix 'k &= 1', because it would affect
+      // 'p <= k'
+      {"module m;\nalways_ff begin\n"
+       "k &= 1;\n"
+       "p <= k;\n"
+       "a++;"
+       "end\nendmodule",
+       "module m;\nalways_ff begin\n"
+       "k &= 1;\n"
+       "p <= k;\n"
+       "a <= a + 1;"
+       "end\nendmodule"},
+      // Correctly fix despite there is a reference to 'k' in the rhs
+      {"module m;\nalways_ff begin k = k + 1; end\nendmodule",
+       "module m;\nalways_ff begin k <= k + 1; end\nendmodule"},
+      // Dont autofix inside expressions
+      {"module m;\nalways_ff begin k <= p++; p++; end\nendmodule",
+       "module m;\nalways_ff begin k <= p++; p <= p + 1; end\nendmodule"}};
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
+      kTestCases, "catch_modifying_assignments:on");
+}
+
+TEST(AlwaysFFNonBlockingRule, AutoFixWaiveLocals) {
+  const std::initializer_list<verible::AutoFixInOut> kTestCases = {
+      // Check that we're correctly waiving the 'p = 0' as it is a local
+      // variable
+      {"module m;\nalways_ff begin reg p; p = 0; k = 1; end\nendmodule",
+       "module m;\nalways_ff begin reg p; p = 0; k <= 1; end\nendmodule"},
+  };
+
+  RunApplyFixCases<VerilogAnalyzer, AlwaysFFNonBlockingRule>(
+      kTestCases, "waive_for_locals:on");
 }
 
 }  // namespace
