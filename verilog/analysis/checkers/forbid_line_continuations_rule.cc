@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/token_stream_lint_rule.h"
+#include "verilog/analysis/checkers/forbid_line_continuations_rule.h"
 
 #include <algorithm>
 #include <set>
@@ -38,14 +38,14 @@ using verible::LintViolation;
 using verible::SyntaxTreeContext;
 using verible::matcher::Matcher;
 
-// Register TokenStreamLintRule
-VERILOG_REGISTER_LINT_RULE(TokenStreamLintRule);
+// Register ForbidLineContinuationsRule
+VERILOG_REGISTER_LINT_RULE(ForbidLineContinuationsRule);
 
 static constexpr absl::string_view kMessage =
     "The lines can't be continued with \'\\\', use concatenation operator with "
     "braces";
 
-const LintRuleDescriptor &TokenStreamLintRule::GetDescriptor() {
+const LintRuleDescriptor &ForbidLineContinuationsRule::GetDescriptor() {
   static const LintRuleDescriptor d{
       .name = "forbid-line-continuations",
       .topic = "forbid-line-continuations",
@@ -62,8 +62,8 @@ static const Matcher &StringLiteralMatcher() {
   return matcher;
 }
 
-void TokenStreamLintRule::HandleSymbol(const verible::Symbol &symbol,
-                                       const SyntaxTreeContext &context) {
+void ForbidLineContinuationsRule::HandleSymbol(
+    const verible::Symbol &symbol, const SyntaxTreeContext &context) {
   verible::matcher::BoundSymbolManager manager;
   if (!StringLiteralMatcher().Matches(symbol, &manager)) {
     return;
@@ -81,7 +81,7 @@ void TokenStreamLintRule::HandleSymbol(const verible::Symbol &symbol,
   }
 }
 
-LintRuleStatus TokenStreamLintRule::Report() const {
+LintRuleStatus ForbidLineContinuationsRule::Report() const {
   return LintRuleStatus(violations_, GetDescriptor());
 }
 
