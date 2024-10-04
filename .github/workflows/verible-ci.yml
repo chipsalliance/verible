@@ -462,8 +462,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: "c:/users/runneradmin/_bazel_runneradmin"
-        key: bazelcache_windows2_${{ steps.cache_timestamp.outputs.time }}
-        restore-keys: bazelcache_windows2_
+        key: bazelcache_windows_${{ steps.cache_timestamp.outputs.time }}
+        restore-keys: bazelcache_windows_
 
     - name: Install dependencies
       run: |

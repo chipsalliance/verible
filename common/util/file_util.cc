@@ -14,13 +14,15 @@
 
 #include "common/util/file_util.h"
 
+#include <fcntl.h>
+
 #include <algorithm>
 #include <cerrno>
+#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <system_error>
@@ -34,10 +36,11 @@
 #include "common/util/logging.h"
 
 #ifndef _WIN32
-#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#else
+#include <io.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -154,34 +157,35 @@ absl::Status FileExists(const std::string &filename) {
 
 absl::StatusOr<std::string> GetContentAsString(absl::string_view filename) {
   std::string content;
-  std::ifstream fs;
-  std::istream *stream = nullptr;
+  FILE *stream = nullptr;
   const bool use_stdin = IsStdin(filename);
   if (use_stdin) {
-    stream = &std::cin;
+#ifdef _WIN32
+    _setmode(_fileno(stdin), _O_BINARY);  // Work around DOS/Win silliness.
+#endif
+    stream = stdin;
   } else {
     const std::string filename_str = std::string{filename};
     if (absl::Status status = FileExists(filename_str); !status.ok()) {
       return status;  // Bail
     }
-    fs.open(filename_str.c_str());
+    stream = fopen(filename_str.c_str(), "rb");
     std::error_code err;
     const size_t prealloc = fs::file_size(filename_str, err);
     if (err.value() == 0) content.reserve(prealloc);
-    stream = &fs;
   }
-  if (!stream->good()) {
+  if (!stream) {
     return CreateErrorStatusFromErrno(filename, "can't read");
   }
   char buffer[4096];
-  while (stream->good() && !stream->eof()) {
-    stream->read(buffer, sizeof(buffer));
-    content.append(buffer, stream->gcount());
-  }
+  int bytes_read;
+  do {
+    bytes_read = fread(buffer, 1, sizeof(buffer), stream);
+    content.append(buffer, bytes_read);
+  } while (bytes_read > 0);
+  fclose(stream);
 
-  // Allow stdin to be reopened for more input.
-  if (use_stdin && std::cin.eof()) std::cin.clear();
-  return std::move(content);
+  return content;
 }
 
 static absl::StatusOr<std::unique_ptr<MemBlock>> AttemptMemMapFile(
@@ -244,11 +248,19 @@ absl::StatusOr<std::unique_ptr<MemBlock>> GetContentAsMemBlock(
 absl::Status SetContents(absl::string_view filename,
                          absl::string_view content) {
   VLOG(1) << __FUNCTION__ << ": Writing file: " << filename;
-  std::ofstream f(std::string(filename).c_str());
-  if (!f.good()) return CreateErrorStatusFromErrno(filename, "can't write.");
-  f << content;
-  f.close();
-  if (!f.good()) return CreateErrorStatusFromErrno(filename, "closing.");
+  FILE *out = fopen(std::string(filename).c_str(), "wb");
+  if (!out) return CreateErrorStatusFromErrno(filename, "can't write.");
+  const int64_t expected_write = content.size();
+  int64_t total_written = 0;
+  while (!content.empty()) {
+    int64_t w = fwrite(content.data(), 1, content.size(), out);
+    total_written += w;
+    content.remove_prefix(w);
+  }
+  const bool written_completely = (total_written == expected_write);
+  if (fclose(out) != 0 || !written_completely) {
+    return CreateErrorStatusFromErrno(filename, "closing.");
+  }
   return absl::OkStatus();
 }
 

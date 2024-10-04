@@ -25,6 +25,11 @@
 #include <sstream>  // IWYU pragma: keep  // for ostringstream
 #include <string>   // for string, allocator, etc
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -70,6 +75,12 @@ static constexpr absl::string_view kBuiltinFunctions[] = {
 };
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+  // stdio: Windows messes with newlines by default. Fix this here.
+  _setmode(_fileno(stdin), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif
+
   const auto usage = absl::StrCat("usage: ", argv[0],
                                   " [options] < original > output\n"
                                   R"(
