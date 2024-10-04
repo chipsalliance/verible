@@ -51,6 +51,14 @@
             "type": "string"
           },
           "description": "Arguments for verible-verilog-ls server."
+        },
+        "verible.includedFileExts": {
+          "type": "array",
+          "default": [".v", ".sv", ".vh", ".svh"],
+          "items": {
+            "type": "string"
+          },
+          "description": "Included files when generating verible.filelist."
         }
       }
     }

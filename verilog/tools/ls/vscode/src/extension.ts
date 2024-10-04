@@ -55,7 +55,12 @@ function restartLanguageClient() {
 
 function bindGenerateFileListCommand(ctx: vscode.ExtensionContext) {
   const cmd = "verible.generateFileList";
+  const includedExts = vscode.workspace
+    .getConfiguration("verible")
+    .get<string[]>("includedFileExts")!;
   const encoder = new TextEncoder();
+
+  console.log(includedExts);
 
   const cmdHandler = () => {
     const fs = vscode.workspace.fs;
@@ -70,10 +75,12 @@ function bindGenerateFileListCommand(ctx: vscode.ExtensionContext) {
         files.forEach(([fileName, type]) => {
           switch (type) {
             case vscode.FileType.File:
+              var dot = fileName.lastIndexOf(".");
               if (
-                fileName.endsWith(".sv") ||
-                fileName.endsWith(".v") ||
-                fileName.endsWith(".vh")
+                dot >= 0 &&
+                includedExts.includes(
+                  fileName.substring(dot, fileName.length)
+                )
               ) {
                 fileList.push(cur + "/" + fileName);
               }
