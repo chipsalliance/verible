@@ -3,3 +3,5 @@ node_modules
 package-lock.json
 README.html
 dist/
+bin/
+.vscode/
