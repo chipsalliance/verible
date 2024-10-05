@@ -1,5 +1,14 @@
 # Verible Language Server Extension
 
+## Quick Start
+The extension provides support for Verible Language Serve in Visual Studio Code.
+
+Before enjoying the privilige of modern language server features, you need to take the following instructions.
+
+1. Install the Verible Language Server. This is described in the `Prerequisite on your machine` section below.
+2. Generate the `verible.filelist` at the root directory. You can execute the `Verible: Generate File List` command in VSCode to achive it.
+> New to VSCode and have no idea how to execute a VSCode command? Try hitting `Ctrl+Shift+P` (for Windows) or `Command+Shift+P` (for MacOS) and type `Verible: Generate File List`, then press `Enter`.
+
 ## Features
 The language server provides a couple of features from the [Verible SystemVerilog productivity suite](https://github.com/chipsalliance/verible) right in the editor.
 
