@@ -31,6 +31,7 @@ cc_library(
         ":explicit-task-lifetime-rule",
         ":forbid-consecutive-null-statements-rule",
         ":forbid-defparam-rule",
+        ":forbid-line-continuations-rule",
         ":forbid-negative-array-dim",
         ":forbidden-anonymous-enums-rule",
         ":forbidden-anonymous-structs-unions-rule",
@@ -66,7 +67,6 @@ cc_library(
         ":struct-union-name-style-rule",
         ":suggest-parentheses-rule",
         ":suspicious-semicolon-rule",
-        ":token-stream-lint-rule",
         ":truncated-numeric-literal-rule",
         ":undersized-binary-literal-rule",
         ":unpacked-dimensions-rule",
@@ -1103,9 +1103,9 @@ cc_test(
 )
 
 cc_library(
-    name = "token-stream-lint-rule",
-    srcs = ["token_stream_lint_rule.cc"],
-    hdrs = ["token_stream_lint_rule.h"],
+    name = "forbid-line-continuations-rule",
+    srcs = ["forbid_line_continuations_rule.cc"],
+    hdrs = ["forbid_line_continuations_rule.h"],
     deps = [
         "//common/analysis:lint-rule-status",
         "//common/analysis:syntax-tree-lint-rule",
@@ -1125,10 +1125,10 @@ cc_library(
 )
 
 cc_test(
-    name = "token-stream-lint-rule_test",
-    srcs = ["token_stream_lint_rule_test.cc"],
+    name = "forbid-line-continuations-rule_test",
+    srcs = ["forbid_line_continuations_rule_test.cc"],
     deps = [
-        ":token-stream-lint-rule",
+        ":forbid-line-continuations-rule",
         "//common/analysis:linter-test-utils",
         "//common/analysis:syntax-tree-linter-test-utils",
         "//verilog/analysis:verilog-analyzer",
