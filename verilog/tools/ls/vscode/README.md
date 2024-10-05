@@ -7,6 +7,7 @@ Before enjoying the privilige of modern language server features, you need to ta
 
 1. Install the Verible Language Server. This is described in the `Prerequisite on your machine` section below.
 2. Generate the `verible.filelist` at the root directory. You can execute the `Verible: Generate File List` command in VSCode to achive it.
+3. If you add new source files into your project, you'll need to generate the `verible.filelist` again to include them.
 > New to VSCode and have no idea how to execute a VSCode command? Try hitting `Ctrl+Shift+P` (for Windows) or `Command+Shift+P` (for MacOS) and type `Verible: Generate File List`, then press `Enter`.
 
 ## Features
