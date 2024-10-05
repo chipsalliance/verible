@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "verilog/analysis/checkers/token_stream_lint_rule.h"
+#include "verilog/analysis/checkers/forbid_line_continuations_rule.h"
 
 #include <initializer_list>
 
@@ -43,7 +43,7 @@ TEST(StringLiteralConcatenationTest, FunctionPass) {
        "end\nendmodule"},
   };
 
-  RunLintTestCases<VerilogAnalyzer, TokenStreamLintRule>(
+  RunLintTestCases<VerilogAnalyzer, ForbidLineContinuationsRule>(
       kStringLiteralTestCases);
 }
 
@@ -83,7 +83,7 @@ TEST(StringLiteralConcatenationTest, FunctionFailures) {
        "end\nendmodule"},
   };
 
-  RunLintTestCases<VerilogAnalyzer, TokenStreamLintRule>(
+  RunLintTestCases<VerilogAnalyzer, ForbidLineContinuationsRule>(
       kStringLiteralTestCases);
 }
 

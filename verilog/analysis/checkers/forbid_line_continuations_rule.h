@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
-#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
+#ifndef VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBID_LINE_CONTINUATIONS_RULE_H_
+#define VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBID_LINE_CONTINUATIONS_RULE_H_
 
 #include <set>
 
@@ -26,8 +26,7 @@
 namespace verilog {
 namespace analysis {
 
-// TokenStreamLintRule finds occurrences of any string literal.
-class TokenStreamLintRule : public verible::SyntaxTreeLintRule {
+class ForbidLineContinuationsRule final : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
 
@@ -45,4 +44,4 @@ class TokenStreamLintRule : public verible::SyntaxTreeLintRule {
 }  // namespace analysis
 }  // namespace verilog
 
-#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_TOKEN_STREAM_LINT_RULE_H_
+#endif  // VERIBLE_VERILOG_ANALYSIS_CHECKERS_FORBID_LINE_CONTINUATIONS_RULE_H_
