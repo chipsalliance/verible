@@ -40,6 +40,17 @@ Checks that the 'name' argument of `type_id::create()` matches the name of the v
 
 Enabled by default: true
 
+### dff-name-style
+Checks that D Flip-Flops use appropiate naming conventions in both input and output ports. The left hand side (output) and right hand side (input) are checked against a set of valid suffixes. Additionally, register names might end in a number to denote the pipeline stage index (var_q/var_q1, var_q2, ...). Pipelined signals must get their value from the previous stage: var_q3 <= var_q2. Exceptions to this rule can be configured using a regular expression or waiving whole `if` blocks See [Style: dff-name-style].
+
+##### Parameters
+  * `input` Default: `next,n,d` Comma separated list of allowed suffixes for the input port. Suffixes should not include the preceding "_". Empty field means no checks for the input port
+  * `output` Default: `reg,r,ff,q` Comma separated list of allowed suffixes for the output port. Should not include the preceding "_". Empty field means no checks for the output port
+  * `waive_ifs_with_conditions` Default: `!rst_ni,flush_i,!rst_ni || flush_i,flush_i || !rst_ni` Comma separated list of conditions that will disable the rule inside the `if`s they are evaluated in
+  * `waive_lhs_regex` Default: `(?i)mem.*` Nonblocking assigments whose lhs match the regex will not be evaluated
+
+Enabled by default: false
+
 ### disable-statement
 Checks that there are no occurrences of `disable some_label` if label is referring to a fork or other none sequential block label. Use `disable fork` instead. See [Style: disable-invalid-in-non-sequential].
 
@@ -368,4 +379,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-10-04 10:22:33 -0700 from [14eed6a](https://github.com/google/verible/commit/14eed6a044d5880513784ee6fcaaa4dff79a6a22)
+Generated on 2024-10-07 11:39:26 -0700 from [32b2456](https://github.com/google/verible/commit/32b2456e37eae5ee379f626c65c8509eaec16230)
