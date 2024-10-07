@@ -28,6 +28,7 @@
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 #include "verilog/analysis/verilog_excerpt_parse.h"
@@ -43,7 +44,7 @@ using verible::TextStructureView;
 using verible::TreeSearchMatch;
 
 TEST(IsZeroTest, NonZero) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "a",
       "a0",
       "1",
@@ -57,7 +58,7 @@ TEST(IsZeroTest, NonZero) {
   for (auto code : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
@@ -66,7 +67,7 @@ TEST(IsZeroTest, NonZero) {
 }
 
 TEST(IsZeroTest, Zero) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "0",
       "00",
       "00000",
@@ -75,7 +76,7 @@ TEST(IsZeroTest, Zero) {
   for (auto code : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
@@ -84,7 +85,7 @@ TEST(IsZeroTest, Zero) {
 }
 
 TEST(ConstantIntegerValueTest, NotInteger) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "a",
       "1+1",
       "(2)",
@@ -92,7 +93,7 @@ TEST(ConstantIntegerValueTest, NotInteger) {
   for (auto code : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
@@ -102,7 +103,7 @@ TEST(ConstantIntegerValueTest, NotInteger) {
 }
 
 TEST(ConstantIntegerValueTest, IsInteger) {
-  const std::pair<const char*, int> kTestCases[] = {
+  const std::pair<const char *, int> kTestCases[] = {
       {"0", 0},
       {"1", 1},
       {"666", 666},
@@ -110,7 +111,7 @@ TEST(ConstantIntegerValueTest, IsInteger) {
   for (auto test : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
@@ -139,10 +140,10 @@ TEST(AssociativeBinaryExpressionsTest, FlatTree) {
       {"function  f;\n", "a = ", {kTag, "b ^ c ^ d ^ e"}, "; endfunction\n"},
       {"function  f;\n", "a = ", {kTag, "b ~^ c ~^ d ~^ e"}, "; endfunction\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -172,12 +173,12 @@ TEST(AssociativeBinaryExpressionsTest, ThreeFlatOperands) {
        {kTag, "x*y*z"},
        "); endfunction\n"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           auto matches = FindAllBinaryOperations(*ABSL_DIE_IF_NULL(root));
-          for (const auto& match : matches) {
+          for (const auto &match : matches) {
             // "A op B op C" is 5 sibling tokens, due to flattening
             EXPECT_EQ(verible::SymbolCastToNode(*ABSL_DIE_IF_NULL(match.match))
                           .size(),
@@ -228,16 +229,16 @@ TEST(GetConditionExpressionPredicateTest, Various) {
        "endcase\n",
        "\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto exprs =
               FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> predicates;
-          for (const auto& expr : exprs) {
-            const auto* predicate =
+          for (const auto &expr : exprs) {
+            const auto *predicate =
                 GetConditionExpressionPredicate(*expr.match);
             if (predicate != nullptr) {
               predicates.push_back(
@@ -315,16 +316,16 @@ TEST(GetConditionExpressionTrueCaseTest, Various) {
        "endcase\n",
        "\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto exprs =
               FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> predicates;
-          for (const auto& expr : exprs) {
-            const auto* predicate = GetConditionExpressionTrueCase(*expr.match);
+          for (const auto &expr : exprs) {
+            const auto *predicate = GetConditionExpressionTrueCase(*expr.match);
             if (predicate != nullptr) {
               predicates.push_back(
                   TreeSearchMatch{predicate, {/* ignored context */}});
@@ -401,16 +402,16 @@ TEST(GetConditionExpressionFalseCaseTest, Various) {
        "endcase\n",
        "\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           const auto exprs =
               FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
 
           std::vector<TreeSearchMatch> predicates;
-          for (const auto& expr : exprs) {
-            const auto* predicate =
+          for (const auto &expr : exprs) {
+            const auto *predicate =
                 GetConditionExpressionFalseCase(*expr.match);
             if (predicate != nullptr) {
               predicates.push_back(
@@ -427,21 +428,21 @@ TEST(GetConditionExpressionFalseCaseTest, Various) {
 }
 
 TEST(GetUnaryPrefixOperator, Exprs) {
-  const std::pair<const char*, const char*> kTestCases[] = {
+  const std::pair<const char *, const char *> kTestCases[] = {
       {"-(2)", "-"},    {"-1", "-"},        {"&1", "&"},
       {"666", nullptr}, {"1 + 2", nullptr}, {"!1", "!"},
   };
   for (auto test : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
-    const verible::Symbol* last_node = DescendThroughSingletons(*node);
+    const verible::Symbol *last_node = DescendThroughSingletons(*node);
 
     if (test.second) {
-      const verible::SyntaxTreeNode& unary_expr =
+      const verible::SyntaxTreeNode &unary_expr =
           verible::SymbolCastToNode(*last_node);
       EXPECT_EQ(NodeEnum(unary_expr.Tag().tag),
                 NodeEnum::kUnaryPrefixExpression);
@@ -455,20 +456,20 @@ TEST(GetUnaryPrefixOperator, Exprs) {
 }
 
 TEST(GetUnaryPrefixOperand, Exprs) {
-  const std::pair<const char*, const char*> kTestCases[] = {
+  const std::pair<const char *, const char *> kTestCases[] = {
       {"-1", ""}, {"&1", ""}, {"666", nullptr}, {"1 + 2", nullptr}, {"!1", ""},
   };
   for (auto test : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(test.first, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     const auto tag = node->Tag();
     EXPECT_EQ(tag.kind, verible::SymbolKind::kNode);
     EXPECT_EQ(NodeEnum(tag.tag), NodeEnum::kExpression);
-    const verible::Symbol* last_node = DescendThroughSingletons(*node);
+    const verible::Symbol *last_node = DescendThroughSingletons(*node);
 
     if (test.second) {
-      const verible::SyntaxTreeNode& unary_expr =
+      const verible::SyntaxTreeNode &unary_expr =
           verible::SymbolCastToNode(*last_node);
       EXPECT_EQ(NodeEnum(unary_expr.Tag().tag),
                 NodeEnum::kUnaryPrefixExpression);
@@ -516,10 +517,10 @@ TEST(FindAllConditionExpressionsTest, Various) {
        "endcase\n",
        "\nendmodule"},
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllConditionExpressions(*ABSL_DIE_IF_NULL(root));
         });
   }
@@ -629,17 +630,17 @@ TEST(FindAllReferenceExpressionsTest, Various) {
       // reference could contain other references like "a[a]", but the testing
       // framework doesn't support nested expected ranges... yet.
   };
-  for (const auto& test : kTestCases) {
+  for (const auto &test : kTestCases) {
     TestVerilogSyntaxRangeMatches(
-        __FUNCTION__, test, [](const TextStructureView& text_structure) {
-          const auto& root = text_structure.SyntaxTree();
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
           return FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(root));
         });
   }
 }
 
 TEST(ReferenceIsSimpleTest, Simple) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "a",
       "bbb",
       "z1",
@@ -648,7 +649,7 @@ TEST(ReferenceIsSimpleTest, Simple) {
   for (auto code : kTestCases) {
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     {
       const auto status = analyzer_ptr->LexStatus();
       ASSERT_TRUE(status.ok()) << status.message();
@@ -659,8 +660,8 @@ TEST(ReferenceIsSimpleTest, Simple) {
     }
     const std::vector<TreeSearchMatch> refs(
         FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(node)));
-    for (const auto& ref : refs) {
-      const verible::TokenInfo* token = ReferenceIsSimpleIdentifier(*ref.match);
+    for (const auto &ref : refs) {
+      const verible::TokenInfo *token = ReferenceIsSimpleIdentifier(*ref.match);
       ASSERT_NE(token, nullptr) << "reference: " << code;
       EXPECT_EQ(token->text(), code);
     }
@@ -668,7 +669,7 @@ TEST(ReferenceIsSimpleTest, Simple) {
 }
 
 TEST(ReferenceIsSimpleTest, NotSimple) {
-  const char* kTestCases[] = {
+  const char *kTestCases[] = {
       "a[0]", "a[4][6]", "bbb[3:0]", "x.y",  "x.y.z",  "x[0].y[1].z[2]",
       "x()",  "x.y()",   "x()[0]",   "x(1)", "f(0,1)", "j[9].k(3, 2, 1)",
   };
@@ -676,7 +677,7 @@ TEST(ReferenceIsSimpleTest, NotSimple) {
     VLOG(1) << __FUNCTION__ << " test: " << code;
     const auto analyzer_ptr =
         AnalyzeVerilogExpression(code, "<file>", kDefaultPreprocess);
-    const auto& node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
+    const auto &node = ABSL_DIE_IF_NULL(analyzer_ptr)->SyntaxTree();
     {
       const auto status = analyzer_ptr->LexStatus();
       ASSERT_TRUE(status.ok()) << status.message();
@@ -687,11 +688,99 @@ TEST(ReferenceIsSimpleTest, NotSimple) {
     }
     const std::vector<TreeSearchMatch> refs(
         FindAllReferenceFullExpressions(*ABSL_DIE_IF_NULL(node)));
-    for (const auto& ref : refs) {
+    for (const auto &ref : refs) {
       VLOG(1) << "match: " << verible::StringSpanOfSymbol(*ref.match);
       EXPECT_FALSE(ReferenceIsSimpleIdentifier(*ref.match))
           << "reference: " << code;
     }
+  }
+}
+
+TEST(GetIncrementDecrementOperatorTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"module m;\nalways_comb begin\n"
+       "a",
+       {kTag, "++"},
+       ";\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n",
+       {kTag, "++"},
+       "a;"
+       "\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n"
+       "somelargename",
+       {kTag, "++"},
+       ";\nend\nendmodule"},
+      {"module m;\nalways_comb begin\n",
+       {kTag, "++"},
+       "somelargename;\n"
+       "end\nendmodule"},
+      {"module m;\nalways_comb begin\nk = a + 2;\nend\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto exprs = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekIncrementDecrementExpression());
+
+          std::vector<TreeSearchMatch> operators;
+          for (const auto &expr : exprs) {
+            const auto *operator_ = GetIncrementDecrementOperator(*expr.match);
+            operators.push_back(
+                TreeSearchMatch{operator_, {/* ignored context */}});
+          }
+          return operators;
+        });
+  }
+}
+
+TEST(GetIncrementDecrementOperandTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m; endmodule\n"},
+      {"module m;\ninitial begin end\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n",
+       {kTag, "a"},
+       "++;\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "++",
+       {kTag, "a"},
+       ";\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n",
+       {kTag, "somelargename"},
+       "++;\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n++",
+       {kTag, "somelargename"},
+       ";\nend\nendmodule"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "k = a + 2;\n"
+       "end\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto exprs = verible::SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekIncrementDecrementExpression());
+
+          std::vector<TreeSearchMatch> operands;
+          for (const auto &expr : exprs) {
+            const auto *operand = GetIncrementDecrementOperand(*expr.match);
+            operands.push_back(
+                TreeSearchMatch{operand, {/* ignored context */}});
+          }
+          return operands;
+        });
   }
 }
 

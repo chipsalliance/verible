@@ -24,9 +24,11 @@
 #include "common/text/concrete_syntax_tree.h"
 #include "common/text/symbol.h"
 #include "common/text/text_structure.h"
+#include "common/text/tree_utils.h"
 #include "common/util/logging.h"
 #include "gtest/gtest.h"
 #include "verilog/CST/match_test_utils.h"
+#include "verilog/CST/verilog_matchers.h"
 #include "verilog/CST/verilog_nonterminals.h"
 #include "verilog/analysis/verilog_analyzer.h"
 
@@ -1364,6 +1366,221 @@ TEST(GetGenerateBlockEndTest, Various) {
             ends.emplace_back(TreeSearchMatch{end, {/* ignored context */}});
           }
           return ends;
+        });
+  }
+}
+
+TEST(FindAllNonBlockingAssignmentTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\n"
+       "always @(*) x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) ",
+       {kTag, "x <= 1;"},
+       "\nendmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) begin\n",
+       {kTag, "a <= b;"},
+       "\n",
+       {kTag, "c <= d();"},
+       "\n",
+       {kTag, "e <= `F;"},
+       "\nend endmodule"},
+      {"module m;\n"
+       "always_latch ",
+       {kTag, "x <= 1;"},
+       "\nendmodule"},
+      {"module m;\n"
+       "always@(*) ",
+       {kTag, "x[1] <= y[2];"},
+       "\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          return FindAllNonBlockingAssignments(*ABSL_DIE_IF_NULL(root));
+        });
+  }
+}
+
+TEST(GetNonBlockingAssignmentRhsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\n"
+       "always @(*) x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) "
+       "x <= ",
+       {kTag, "1"},
+       ";\nendmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) begin\n"
+       "a <= ",
+       {kTag, "b"},
+       ";\nc <= ",
+       {kTag, "d()"},
+       ";\ne <= ",
+       {kTag, "`F"},
+       ";\nend endmodule"},
+      {"module m;\n"
+       "always_latch "
+       "x <= ",
+       {kTag, "1"},
+       ";\nendmodule"},
+      {"module m;\n"
+       "always@(*) x[1] <= ",
+       {kTag, "y[2]"},
+       ";\nendmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &non_blocking_assignments =
+              FindAllNonBlockingAssignments(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> right_hand_sides;
+          right_hand_sides.reserve(non_blocking_assignments.size());
+          for (const auto &assignment : non_blocking_assignments) {
+            const auto *rhs = GetNonBlockingAssignmentRhs(
+                verible::SymbolCastToNode(*assignment.match));
+            right_hand_sides.emplace_back(
+                TreeSearchMatch{rhs, {/* ignored context */}});
+          }
+          return right_hand_sides;
+        });
+  }
+}
+
+TEST(GetNonBlockingAssignmentLhsTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\n"
+       "always @(*) x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) ",
+       {kTag, "x"},
+       " <= 1;\n",
+       "endmodule"},
+      {"module m;\n"
+       "always_ff @(posedge clk) begin\n",
+       {kTag, "a"},
+       " <= b;\n",
+       {kTag, "c"},
+       " <= d();\n",
+       {kTag, "e"},
+       " <= `F;\n"
+       "end endmodule"},
+      {"module m;\n"
+       "always_latch ",
+       {kTag, "x"},
+       " <= 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always@(*) ",
+       {kTag, "x[1]"},
+       " <= y[2];\n"
+       "endmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &non_blocking_assignments =
+              FindAllNonBlockingAssignments(*ABSL_DIE_IF_NULL(root));
+
+          std::vector<TreeSearchMatch> left_hand_sides;
+          left_hand_sides.reserve(non_blocking_assignments.size());
+          for (const auto &assignment : non_blocking_assignments) {
+            const auto *lhs = GetNonBlockingAssignmentLhs(
+                verible::SymbolCastToNode(*assignment.match));
+            left_hand_sides.emplace_back(
+                TreeSearchMatch{lhs, {/* ignored context */}});
+          }
+          return left_hand_sides;
+        });
+  }
+}
+
+TEST(GetIfClauseHeaderTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\n"
+       "always @(*)\n",
+       {kTag, "if (y)"},
+       " x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always @(*) x = 1;\n"
+       "endmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &if_clauses =
+              verible::SearchSyntaxTree(*root, NodekIfClause());
+
+          std::vector<TreeSearchMatch> if_headers;
+          if_headers.reserve(if_clauses.size());
+          for (const auto &if_clause : if_clauses) {
+            const auto *header =
+                GetIfClauseHeader(verible::SymbolCastToNode(*if_clause.match));
+            if_headers.emplace_back(
+                TreeSearchMatch{header, {/* ignored context */}});
+          }
+          return if_headers;
+        });
+  }
+}
+
+TEST(GetIfClauseExpressionTest, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {"module m;\n"
+       "always @(*) if(",
+       {kTag, "y"},
+       ")\n "
+       "x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always @(*) if(",
+       {kTag, "func()"},
+       ") x = 1;\n"
+       "endmodule"},
+      {"module m;\n"
+       "always @(*) if(",
+       {kTag, "y"},
+       ") begin\n",
+       "if(",
+       {kTag, "z"},
+       ") x = 1;\n"
+       "end endmodule"},
+      {"module m;\n"
+       "always @(*) x = 1;\n"
+       "endmodule"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &if_headers =
+              verible::SearchSyntaxTree(*root, NodekIfHeader());
+
+          std::vector<TreeSearchMatch> if_expressions;
+          if_expressions.reserve(if_headers.size());
+          for (const auto &if_header : if_headers) {
+            const auto *expression = GetIfHeaderExpression(
+                verible::SymbolCastToNode(*if_header.match));
+            if_expressions.emplace_back(
+                TreeSearchMatch{expression, {/* ignored context */}});
+          }
+          return if_expressions;
         });
   }
 }

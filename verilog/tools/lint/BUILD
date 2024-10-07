@@ -58,6 +58,7 @@ _linter_test_configs = [
     ("always-ff-non-blocking", "always_ff_non_blocking", True),
     ("case-missing-default", "case_missing_default", True),
     ("constraint-name-style", "constraint_name_style", True),
+    ("dff-name-style", "dff_name_style", False),
     ("disable-statement", "disable_statement", False),
     ("endif-comment", "endif_comment", False),
     ("enum-name-style", "enum_name_style", True),
@@ -69,6 +70,7 @@ _linter_test_configs = [
     ("explicit-task-lifetime", "explicit_task_lifetime", True),
     ("forbid-consecutive-null-statements", "forbid_consecutive_null_statements", True),
     ("forbid-line-continuations", "forbid_line_continuations", True),
+    ("forbid-negative-array-dim", "forbid_negative_array_dim", False),
     ("generate-label", "generate_label_module", True),
     ("generate-label", "generate-label-module-body", True),  # uses parse directive
     ("generate-label-prefix", "generate_label_prefix", True),

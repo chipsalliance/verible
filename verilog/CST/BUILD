@@ -299,6 +299,7 @@ cc_test(
     deps = [
         ":expression",
         ":match-test-utils",
+        ":verilog-matchers",  # fixdeps: keep
         ":verilog-nonterminals",
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",
@@ -748,6 +749,7 @@ cc_test(
     deps = [
         ":match-test-utils",
         ":statement",
+        ":verilog-matchers",
         ":verilog-nonterminals",
         "//common/analysis:syntax-tree-search",
         "//common/analysis:syntax-tree-search-test-utils",
@@ -755,6 +757,7 @@ cc_test(
         "//common/text:concrete-syntax-tree",
         "//common/text:symbol",
         "//common/text:text-structure",
+        "//common/text:tree-utils",
         "//common/util:logging",
         "//verilog/analysis:verilog-analyzer",
         "@com_google_absl//absl/strings:string_view",

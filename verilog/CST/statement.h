@@ -33,6 +33,10 @@ std::vector<verible::TreeSearchMatch> FindAllForLoopsInitializations(
 std::vector<verible::TreeSearchMatch> FindAllGenerateBlocks(
     const verible::Symbol &root);
 
+// Extract every nonblocking assignment starting from root
+std::vector<verible::TreeSearchMatch> FindAllNonBlockingAssignments(
+    const verible::Symbol &root);
+
 // Generate flow control constructs
 //
 // TODO(fangism): consider moving the *GenerateBody functions to generate.{h,cc}
@@ -201,6 +205,22 @@ const verible::SyntaxTreeNode *GetProceduralTimingControlFromAlways(
 // Returns the event control symbol of a procedural timing control statement
 const verible::Symbol *GetEventControlFromProceduralTimingControl(
     const verible::SyntaxTreeNode &proc_timing_ctrl);
+
+// Return the left hand side (lhs) from a nonblocking assignment
+// Example: get 'x' from 'x <= y'
+const verible::SyntaxTreeNode *GetNonBlockingAssignmentLhs(
+    const verible::SyntaxTreeNode &non_blocking_assignment);
+
+// Return the right hand side (rhs) from a nonblocking assignment
+// Example: get 'y' from 'x <= y'
+const verible::SyntaxTreeNode *GetNonBlockingAssignmentRhs(
+    const verible::SyntaxTreeNode &non_blocking_assignment);
+
+const verible::SyntaxTreeNode *GetIfClauseHeader(
+    const verible::SyntaxTreeNode &if_clause);
+
+const verible::SyntaxTreeNode *GetIfHeaderExpression(
+    const verible::SyntaxTreeNode &if_header);
 
 }  // namespace verilog
 
