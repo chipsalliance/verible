@@ -53,7 +53,9 @@ std::string Obfuscator::save() const {
 
 absl::Status Obfuscator::load(absl::string_view mapping) {
   const std::vector<absl::string_view> lines =
-      absl::StrSplit(mapping, '\n', absl::SkipEmpty());
+    absl::StrSplit(mapping, '\n', absl::SkipEmpty());
+  BijectiveMap<std::string, std::string,
+               StringViewCompare, StringViewCompare> footesting;
   for (const auto &line : lines) {
     const std::vector<absl::string_view> elements =
         absl::StrSplit(absl::StripAsciiWhitespace(line), kPairSeparator);

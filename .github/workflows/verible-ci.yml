@@ -52,11 +52,8 @@ jobs:
         path: "**/plot_*.svg"
 
   ClangTidy:
-    container: ubuntu:jammy
-    runs-on: [self-hosted, Linux, X64, gcp-custom-runners]
-
-    env:
-      GHA_MACHINE_TYPE: "n2-standard-4"
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
 
     steps:
 
@@ -64,21 +61,6 @@ jobs:
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
-    - name: Get latest clang-tidy
-      run: |
-        apt -qq -y update
-        apt -qq -y install wget software-properties-common gpg lsb-release
-        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x ./llvm.sh
-        ./llvm.sh 17
-
-    - name: Install other Dependencies
-      run: |
-        apt -qq -y install clang-tidy-11 clang-tidy-17 build-essential git wget
-        source ./.github/settings.sh
-        ./.github/bin/install-bazel.sh
 
     - name: Create Cache Timestamp
       id: cache_timestamp
@@ -95,18 +77,24 @@ jobs:
         key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
         restore-keys: clang-tidy-
 
-    - name: Run clang tidy
+    - name: Make compilation DB
       run: |
-        echo "::group::Make Compilation DB"
+        export USE_BAZEL_VERSION=6.5.0
         .github/bin/make-compilation-db.sh
-        wc -l compile_commands.json
-        echo "::endgroup::"
-        # For runtime references, use clang-tidy 11 that still has it, everything else: latest.
-        CLANG_TIDY=clang-tidy-11 ./.github/bin/run-clang-tidy-cached.cc --checks="-*,google-runtime-references" \
-           || ( cat verible_clang-tidy.out ; exit 1)
+        ls -l compile_commands.json
 
-        CLANG_TIDY=clang-tidy-17 ./.github/bin/run-clang-tidy-cached.cc \
-            || ( cat verible_clang-tidy.out ; exit 1)
+    - name: Create clang-tidy review
+      id: review
+      uses: ZedThree/clang-tidy-review@v0.19.0
+      with:
+        split_workflow: true    # Post comments separately
+        clang_tidy_version: 17
+        config_file: .clang-tidy
+
+    # clang_fixes.json artifact
+    - name: Finish review
+      uses: ZedThree/clang-tidy-review/upload@v0.19.0
+      id: upload-review
 
     - name: 📤 Upload performance graphs
       uses: actions/upload-artifact@v3
