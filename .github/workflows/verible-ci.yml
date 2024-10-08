@@ -127,7 +127,7 @@ jobs:
       - name: Get Bant
         run: |
           # TODO: provide this as action where we simply say with version=...
-          VERSION="v0.1.7"
+          VERSION="v0.1.8"
           STATIC_VERSION="bant-${VERSION}-linux-static-x86_64"
           wget "https://github.com/hzeller/bant/releases/download/${VERSION}/${STATIC_VERSION}.tar.gz"
           tar xvzf "${STATIC_VERSION}.tar.gz"
