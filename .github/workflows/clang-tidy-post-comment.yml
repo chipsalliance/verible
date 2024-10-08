@@ -1,0 +1,14 @@
+name: Post clang-tidy review comments
+
+on:
+  workflow_run:
+    # The name field of the lint action .github/workflows/clang-tidy-run.yml
+    workflows: ["clang-tidy-review"]
+    types:
+      - completed
+
+jobs:
+  PostClangTidyComments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ZedThree/clang-tidy-review/post@v0.19.0

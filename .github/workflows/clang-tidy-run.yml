@@ -1,0 +1,42 @@
+name: clang-tidy-review
+
+on:
+  pull_request:
+
+jobs:
+  RunClangTidy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Cache Timestamp
+        id: cache_timestamp
+        uses: nanzm/get-time-action@v2.0
+        with:
+          format: 'YYYY-MM-DD-HH-mm-ss'
+
+      - name: Retrieve cached results
+        uses: actions/cache@v3
+        with:
+          path: |
+            /root/.cache/clang-tidy
+            /root/.cache/bazel
+            key: clang-tidy-${{ steps.cache_timestamp.outputs.time }}
+            restore-keys: clang-tidy-
+
+      - name: Make compilation DB
+        run: |
+          export USE_BAZEL_VERSION=6.5.0
+          .github/bin/make-compilation-db.sh
+
+      - name: Create clang-tidy review
+        uses: ZedThree/clang-tidy-review@v0.19.0
+        with:
+          split_workflow: true    # Post comments separately
+          clang_tidy_version: 17
+          config_file: .clang-tidy
+
+      - uses: ZedThree/clang-tidy-review/upload@v0.19.0
