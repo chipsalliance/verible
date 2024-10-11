@@ -902,7 +902,7 @@ cc_library(
         "//verilog/parser:verilog-token-classifications",
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
 
@@ -955,6 +955,6 @@ cc_test(
         "//verilog/analysis:verilog-analyzer",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )

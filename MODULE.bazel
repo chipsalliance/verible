@@ -4,74 +4,71 @@ module(
 
 bazel_dep(name = "platforms", version = "0.0.8")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
-
 bazel_dep(name = "rules_license", version = "0.0.8")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 
 # Register m4 rules and toolchain.
 bazel_dep(name = "rules_m4", version = "0.2.3")
+
 m4 = use_extension(
     "@rules_m4//m4/extensions:m4_repository_ext.bzl",
     "m4_repository_ext",
 )
 m4.repository(
     name = "m4",
-    version = "1.4.18",
     extra_copts = ["-O3"],
+    version = "1.4.18",
 )
 use_repo(m4, "m4")
+
 register_toolchains("@m4//:toolchain")
 
 # Register bison rules and toolchain.
 bazel_dep(name = "rules_bison", version = "0.2.2")
+
 bison = use_extension(
     "@rules_bison//bison/extensions:bison_repository_ext.bzl",
     "bison_repository_ext",
 )
 bison.repository(
     name = "bison",
-    version = "3.3.2",
     extra_copts = ["-O3"],
+    version = "3.3.2",
 )
 use_repo(bison, "bison")
+
 register_toolchains("@bison//:toolchain")
 
 # Register flex rules and toolchain.
 bazel_dep(name = "rules_flex", version = "0.2.1")
+
 flex = use_extension(
     "@rules_flex//flex/extensions:flex_repository_ext.bzl",
     "flex_repository_ext",
 )
 flex.repository(
     name = "flex",
-    version = "2.6.4",
     extra_copts = ["-O3"],
+    version = "2.6.4",
 )
 use_repo(flex, "flex")
+
 register_toolchains("@flex//:toolchain")
 
-# abseil-cpp can not be updated beyond the following curringly, as newer
-# ones use googletest that is not compatible with bazel 6 anymore.
-bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name="com_google_absl")
+# abseil-cpp and googletest can not be updated beyond the following currently,
+# as newer googletest is not compatible with bazel 6 anymore, and abseil-cpp
+# depends on it :( -- to support all active bazel's, we're stuck till Dec 2025.
+bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name = "com_google_absl")
 single_version_override(
     module_name = "abseil-cpp",
     patch_strip = 1,
-    version = "20240116.2",
     patches = ["//bazel:absl.patch"],
+    version = "20240116.2",
 )
 
-# Json module only provide the multi-header target, but that will
-# make misc-inlude-cleaner complain about not direct includes.
-bazel_dep(name = "nlohmann_json", version = "3.11.3", repo_name="jsonhpp")
-single_version_override(
-    module_name = "nlohmann_json",
-    patches = ["//bazel:nlohmann_module.patch"],
-)
-
-bazel_dep(name = "re2", version = "2023-09-01", repo_name="com_googlesource_code_re2")
-
-# Newer versions require bazel 7, so this is the last we can use currently.
-bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name="com_google_googletest")
-bazel_dep(name = "protobuf", version = "26.0", repo_name="com_google_protobuf")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1", repo_name = "jsonhpp")
+bazel_dep(name = "protobuf", version = "26.0", repo_name = "com_google_protobuf")
+bazel_dep(name = "re2", version = "2023-09-01", repo_name = "com_googlesource_code_re2")
 bazel_dep(name = "zlib", version = "1.3.1")
