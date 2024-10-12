@@ -950,8 +950,6 @@ TEST(VerilogPreprocessTest, IncludingFileWithRelativePath) {
   constexpr absl::string_view included_content(
       "module included_file(); endmodule");
   const absl::string_view included_filename = "included_file.sv";
-  const std::string included_absolute_path =
-      JoinPath(includes_dir, included_filename);
   const ScopedTestFile tf(includes_dir, included_content, included_filename);
 
   const std::string src_content = absl::StrCat("`include \"", included_filename,
@@ -1008,8 +1006,6 @@ TEST(VerilogPreprocessTest,
   constexpr absl::string_view included_content(
       "module included_file(); endmodule\n");
   const absl::string_view included_filename = "included_file.sv";
-  const std::string included_absolute_path =
-      JoinPath(includes_dir, included_filename);
   const ScopedTestFile tf(includes_dir, included_content, included_filename);
   const std::string src_content = absl::StrCat("`include \"", included_filename,
                                                "\"\nmodule src(); endmodule\n");

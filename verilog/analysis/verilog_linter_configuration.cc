@@ -335,8 +335,6 @@ bool LinterConfiguration::operator==(const LinterConfiguration &config) const {
 absl::Status LinterConfiguration::AppendFromFile(
     absl::string_view config_filename) {
   // Read local configuration file
-  std::string content;
-
   absl::StatusOr<std::string> config_or =
       verible::file::GetContentAsString(config_filename);
   if (config_or.ok()) {

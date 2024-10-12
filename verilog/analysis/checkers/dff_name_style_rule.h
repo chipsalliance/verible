@@ -85,11 +85,10 @@ namespace analysis {
 class DffNameStyleRule : public verible::SyntaxTreeLintRule {
  public:
   using rule_type = verible::SyntaxTreeLintRule;
-  inline static constexpr absl::string_view kDefaultInputSuffixes = "next,n,d";
-  inline static constexpr absl::string_view kDefaultOutputSuffixes =
-      "reg,r,ff,q";
-  inline static constexpr absl::string_view kDefaultWaiveRegex = "(?i)mem.*";
-  inline static constexpr absl::string_view kDefaultWaiveConditions =
+  static constexpr absl::string_view kDefaultInputSuffixes = "next,n,d";
+  static constexpr absl::string_view kDefaultOutputSuffixes = "reg,r,ff,q";
+  static constexpr absl::string_view kDefaultWaiveRegex = "(?i)mem.*";
+  static constexpr absl::string_view kDefaultWaiveConditions =
       "!rst_ni,flush_i,!rst_ni || flush_i,flush_i || !rst_ni";
 
   static const LintRuleDescriptor &GetDescriptor();

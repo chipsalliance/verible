@@ -47,7 +47,7 @@ VerilogLanguageServer::VerilogLanguageServer(const WriteFun &write_fun)
   // All bodies the stream splitter extracts are pushed to the json dispatcher
   stream_splitter_.SetMessageProcessor(
       [this](absl::string_view header, absl::string_view body) {
-        return dispatcher_.DispatchMessage(body);
+        dispatcher_.DispatchMessage(body);
       });
 
   // Whenever the text changes in the editor, reparse affected code.

@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   MessageStreamSplitter stream_splitter;
   stream_splitter.SetMessageProcessor(
       [&dispatcher](absl::string_view /*header*/, absl::string_view body) {
-        return dispatcher.DispatchMessage(body);
+        dispatcher.DispatchMessage(body);
       });
 
   // The buffer collection keeps track of all the buffers opened in the editor.

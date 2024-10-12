@@ -97,12 +97,12 @@ using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 // Type used as a placeholder for unavailable feature in type traits.
 struct UnavailableFeatureTraits {
-  static inline constexpr bool available = false;
+  static constexpr bool available = false;
 };
 
 // Type used as a base for available feature in type traits.
 struct FeatureTraits {
-  static inline constexpr bool available = true;
+  static constexpr bool available = true;
 };
 
 }  // namespace verible
