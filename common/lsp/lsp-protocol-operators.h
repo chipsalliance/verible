@@ -23,15 +23,15 @@ namespace verible {
 namespace lsp {
 
 // Less-than ordering of positions
-inline constexpr bool operator<(const Position &a, const Position &b) {
+constexpr bool operator<(const Position &a, const Position &b) {
   if (a.line > b.line) return false;
   if (a.line < b.line) return true;
   return a.character < b.character;
 }
-inline constexpr bool operator>=(const Position &a, const Position &b) {
+constexpr bool operator>=(const Position &a, const Position &b) {
   return !(a < b);
 }
-inline constexpr bool operator==(const Position &a, const Position &b) {
+constexpr bool operator==(const Position &a, const Position &b) {
   return a.line == b.line && a.character == b.character;
 }
 
@@ -39,7 +39,7 @@ inline constexpr bool operator==(const Position &a, const Position &b) {
 // Also empty ranges are considered overlapping if their start point is within
 // the other range.
 // rangerOverlap() is commutative.
-inline constexpr bool rangeOverlap(const Range &a, const Range &b) {
+constexpr bool rangeOverlap(const Range &a, const Range &b) {
   return !(a.start >= b.end || b.start >= a.end) || (a.start == b.start);
 }
 }  // namespace lsp

@@ -446,7 +446,8 @@ TEST_F(VerilogLanguageServerTest,
   const std::string mini_module =
       DidOpenRequest("file://mini.sv", "module mini();\nendmodule\n");
   ASSERT_OK(SendRequest(mini_module));
-  std::string discard_diagnostics = GetResponse();
+
+  GetResponse();  // ignore response.
 
   // Close the file from the Language Server perspective
   const absl::string_view closing_request = R"(
@@ -1060,7 +1061,6 @@ endmodule
       root_dir, sample_module_b_with_error, "b.sv");
 
   const std::string module_a_uri = PathToLSPUri(module_a.filename());
-  const std::string module_b_uri = PathToLSPUri(module_b.filename());
   const std::string module_a_open_request =
       DidOpenRequest(module_a_uri, kSampleModuleA);
   ASSERT_OK(SendRequest(module_a_open_request));

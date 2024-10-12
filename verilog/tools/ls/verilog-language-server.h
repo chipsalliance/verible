@@ -93,5 +93,5 @@ class VerilogLanguageServer {
   bool shutdown_requested_ = false;
 };
 
-};      // namespace verilog
+}  // namespace verilog
 #endif  // VERILOG_TOOLS_LS_LS_WRAPPER_H

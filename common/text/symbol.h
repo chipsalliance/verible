@@ -53,7 +53,7 @@ template <typename EnumType>
 constexpr SymbolTag NodeTag(EnumType tag) {
   return {SymbolKind::kNode, static_cast<int>(tag)};
 }
-inline constexpr SymbolTag LeafTag(int tag) { return {SymbolKind::kLeaf, tag}; }
+constexpr SymbolTag LeafTag(int tag) { return {SymbolKind::kLeaf, tag}; }
 
 // forward declare Visitor classes to allow references in Symbol
 
