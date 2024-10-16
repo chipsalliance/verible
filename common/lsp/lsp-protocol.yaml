@@ -237,4 +237,4 @@ OptionalVersionedTextDocumentIdentifier:
 
 TextDocumentEdit:
   textDocument: OptionalVersionedTextDocumentIdentifier
-  edits: object  # TextEdit[]
+  edits+: TextEdit
