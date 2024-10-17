@@ -5,7 +5,7 @@ licenses(["unencumbered"])  # Public Domain or MIT
 exports_files(["LICENSE"])
 
 cc_library(
-    name = "json",
+    name = "singleheader-json",
     hdrs = [
         "single_include/nlohmann/json.hpp",
     ],

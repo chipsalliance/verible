@@ -106,7 +106,7 @@ cc_library(
         "//verilog/parser:verilog-token-enum",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
 
@@ -138,7 +138,7 @@ cc_library(
         "//verilog/CST:package",
         "//verilog/CST:seq-block",
         "//verilog/CST:verilog-nonterminals",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
 
@@ -239,7 +239,7 @@ cc_library(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:string_view",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
 
@@ -260,7 +260,7 @@ cc_test(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
 
@@ -312,6 +312,6 @@ cc_test(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googletest//:gtest",
         "@com_google_googletest//:gtest_main",
-        "@jsonhpp//:json",
+        "@jsonhpp//:singleheader-json",
     ],
 )
