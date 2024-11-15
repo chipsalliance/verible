@@ -137,7 +137,6 @@ static bool formatOneFile(absl::string_view filename,
   const bool check_changes_only = absl::GetFlag(FLAGS_verify);
   const bool is_stdin = filename == "-";
   const auto& stdin_name = absl::GetFlag(FLAGS_stdin_name);
-  *any_changes = false;
 
   if (inplace && is_stdin) {
     FileMsg(filename)
@@ -212,11 +211,12 @@ static bool formatOneFile(absl::string_view filename,
   }
 
   // Check if the output is the same as the input.
-  *any_changes = (*content_or != formatted_output);
+  const bool file_changed = (*content_or != formatted_output);
+  *any_changes |= file_changed;
 
   // Don't output or write if --check is set.
   if (check_changes_only) {
-    if (*any_changes) {
+    if (file_changed) {
       FileMsg(filename) << "Needs formatting." << std::endl;
     } else if (absl::GetFlag(FLAGS_verbose)) {
       FileMsg(filename) << "Already formatted, no change." << std::endl;
@@ -226,7 +226,7 @@ static bool formatOneFile(absl::string_view filename,
     if (inplace && !is_stdin) {
       // Don't write if the output is exactly as the input, so that we don't
       // mess with tools that look for timestamp changes (such as make).
-      if (*any_changes) {
+      if (file_changed) {
         if (auto status =
                 verible::file::SetContents(filename, formatted_output);
             !status.ok()) {

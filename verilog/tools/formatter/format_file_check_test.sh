@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Tests verible-verilog-format reading from a file, checking for formatting
-# changes where changes are needed. This should return 1.
+# Tests verible-verilog-format reading from single or multiple files, checking
+# for formatting changes where changes are needed. This should return 1 if any
+# of the files are incorrectly formatted.
 
-
-declare -r MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
 
 # Get tool from argument
 [[ "$#" == 1 ]] || {
@@ -26,16 +25,35 @@ declare -r MY_INPUT_FILE="${TEST_TMPDIR}/myinput.txt"
 }
 formatter="$(rlocation ${TEST_WORKSPACE}/${1})"
 
-cat >${MY_INPUT_FILE} <<EOF
+# create 1 formatted and 1 unformatted file
+unformatted="${TEST_TMPDIR}/unformatted.sv"
+formatted="${TEST_TMPDIR}/formatted.sv"
+cat >"${unformatted}" <<EOF
   module    m   ;endmodule
 EOF
+cp "$unformatted" "$formatted"
+$formatter --inplace "$formatted"
 
-# Run formatter.
-${formatter} --verbose --verify ${MY_INPUT_FILE}
-if [ "$?" -eq 0 ]; then
-    echo "Changes should produce non-zero error code"
-    echo "FAIL"
-    exit 1
-fi
+cases=(
+    "$formatted"
+    "$unformatted"
+    "$unformatted $unformatted"
+    "$unformatted $formatted"
+    "$formatted $unformatted"
+    "$formatted $formatted"
+)
+
+for files in "${cases[@]}"; do
+    echo "$files" | grep -q unformatted.sv
+    expected_ret=$((!$?))
+    echo Formatting...
+    ${formatter} --verbose --verify --inplace $files
+    actual_ret=$?
+    if [ "$actual_ret" -ne "$expected_ret" ]; then
+        echo "Expected return code $expected_ret, got $actual_ret"
+        echo "FAIL"
+        exit 1
+    fi
+done
 
 echo "PASS"
