@@ -115,6 +115,8 @@ void RunLintTestCases(std::initializer_list<LintTestCase> tests,
 }
 
 struct AutoFixInOut {
+  static constexpr int NO_FIX_AVAILABLE = -1;
+
   absl::string_view code;
   absl::string_view expected_output;
   int fix_alternative = 0;  // Some rules provide alternative fixes
@@ -139,6 +141,12 @@ void RunLintAutoFixCase(const AutoFixInOut &test,
   CHECK_GT(violations.size(), test.violation_number);
   const LintViolation &violation =
       *std::next(violations.begin(), test.violation_number);
+
+  if (test.fix_alternative == AutoFixInOut::NO_FIX_AVAILABLE) {
+    CHECK_EQ(violation.autofixes.size(), 0);
+    return;
+  }
+
   CHECK_GT(violation.autofixes.size(), test.fix_alternative);
   const verible::AutoFix &fix = violation.autofixes[test.fix_alternative];
   std::string fix_out = fix.Apply(analyzer.Data().Contents());
