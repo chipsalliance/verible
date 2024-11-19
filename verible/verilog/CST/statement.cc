@@ -552,4 +552,17 @@ const verible::SyntaxTreeNode *GetAssignModifyLhs(
   return verible::GetSubtreeAsNode(assign_modify,
                                    NodeEnum::kAssignModifyStatement, 0);
 }
+
+const verible::SyntaxTreeNode *GetNetVariableAssignmentLhs(
+    const verible::SyntaxTreeNode &assignment) {
+  return verible::GetSubtreeAsNode(assignment, NodeEnum::kNetVariableAssignment,
+                                   0);
+}
+
+const verible::SyntaxTreeLeaf *GetNetVariableAssignmentOperator(
+    const verible::SyntaxTreeNode &assignment) {
+  return verible::GetSubtreeAsLeaf(assignment, NodeEnum::kNetVariableAssignment,
+                                   1);
+}
+
 }  // namespace verilog

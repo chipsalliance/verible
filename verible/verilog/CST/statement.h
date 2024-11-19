@@ -237,6 +237,16 @@ const verible::SyntaxTreeNode *GetAssignModifyRhs(
 const verible::SyntaxTreeNode *GetAssignModifyLhs(
     const verible::SyntaxTreeNode &assign_modify);
 
+// Return the left hand side (Lhs) from a NetVariableAssignment
+// Example: get 'x' from 'x = y'
+const verible::SyntaxTreeNode *GetNetVariableAssignmentLhs(
+    const verible::SyntaxTreeNode &assignment);
+
+// Return the operator from a NetVariableAssignment
+// Example: get '=' from 'x = y'
+const verible::SyntaxTreeLeaf *GetNetVariableAssignmentOperator(
+    const verible::SyntaxTreeNode &assignment);
+
 }  // namespace verilog
 
 #endif  // VERIBLE_VERILOG_CST_STATEMENT_H_

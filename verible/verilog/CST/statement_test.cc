@@ -1745,5 +1745,98 @@ TEST(GetAssignModifyRhs, Various) {
   }
 }
 
+TEST(GetNetVariableAssignmentLhs, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       {kTag, "k"},
+       " =  1;\nend\n",
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       "k &= 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k |= 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_ff begin\n"
+       "k <= 1;\nend\n"
+       "endmodule\n"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &net_var_assignments = SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekNetVariableAssignment());
+
+          std::vector<TreeSearchMatch> left_hand_sides;
+          for (const auto &assignment : net_var_assignments) {
+            const auto *lhs = GetNetVariableAssignmentLhs(
+                verible::SymbolCastToNode(*assignment.match));
+            left_hand_sides.emplace_back(
+                TreeSearchMatch{lhs, {/* ignored context */}});
+          }
+          return left_hand_sides;
+        });
+  }
+}
+
+TEST(GetNetVariableAssignmentOperator, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       "k ",
+       {kTag, "="},
+       " 1;\nend\n",
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       "k &= 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k |= 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_ff begin\n"
+       "k <= 1;\nend\n"
+       "endmodule\n"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &net_var_assignments = SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekNetVariableAssignment());
+
+          std::vector<TreeSearchMatch> left_hand_sides;
+          for (const auto &assignment : net_var_assignments) {
+            const auto *lhs = GetNetVariableAssignmentOperator(
+                verible::SymbolCastToNode(*assignment.match));
+            left_hand_sides.emplace_back(
+                TreeSearchMatch{lhs, {/* ignored context */}});
+          }
+          return left_hand_sides;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog
