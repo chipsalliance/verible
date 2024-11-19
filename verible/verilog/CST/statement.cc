@@ -535,4 +535,21 @@ const verible::SyntaxTreeNode *GetIfHeaderExpression(
   return verible::GetSubtreeAsNode(*paren_group, NodeEnum::kParenGroup, 1);
 }
 
+const verible::SyntaxTreeLeaf *GetAssignModifyOperator(
+    const verible::SyntaxTreeNode &assign_modify) {
+  return verible::GetSubtreeAsLeaf(assign_modify,
+                                   NodeEnum::kAssignModifyStatement, 1);
+}
+
+const verible::SyntaxTreeNode *GetAssignModifyRhs(
+    const verible::SyntaxTreeNode &assign_modify) {
+  return verible::GetSubtreeAsNode(assign_modify,
+                                   NodeEnum::kAssignModifyStatement, 2);
+}
+
+const verible::SyntaxTreeNode *GetAssignModifyLhs(
+    const verible::SyntaxTreeNode &assign_modify) {
+  return verible::GetSubtreeAsNode(assign_modify,
+                                   NodeEnum::kAssignModifyStatement, 0);
+}
 }  // namespace verilog

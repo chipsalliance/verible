@@ -1585,5 +1585,165 @@ TEST(GetIfClauseExpressionTest, Various) {
   }
 }
 
+TEST(GetAssignModifyOperator, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k ",
+       {kTag, "&="},
+       " 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k ",
+       {kTag, "|="},
+       " 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k ",
+       {kTag, "+="},
+       " 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k = 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_ff @(posedge clk) begin "
+       "k <= 1;\nend\n"
+       "endmodule\n"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &assign_modify_statements = SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekAssignModifyStatement());
+
+          std::vector<TreeSearchMatch> operators;
+          for (const auto &block : assign_modify_statements) {
+            const auto *operator_ = GetAssignModifyOperator(
+                verible::SymbolCastToNode(*block.match));
+            operators.emplace_back(
+                TreeSearchMatch{operator_, {/* ignored context */}});
+          }
+          return operators;
+        });
+  }
+}
+
+TEST(GetAssignModifyLhs, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin ",
+       {kTag, "k"},
+       " &=  1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       {kTag, "k"},
+       " |= 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n",
+       {kTag, "k"},
+       " += 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k = 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "reg k = 1;\nend\n"
+       "endmodule\n"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &assign_modify_statements = SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekAssignModifyStatement());
+
+          std::vector<TreeSearchMatch> left_hand_sides;
+          for (const auto &block : assign_modify_statements) {
+            const auto *lhs =
+                GetAssignModifyLhs(verible::SymbolCastToNode(*block.match));
+            left_hand_sides.emplace_back(
+                TreeSearchMatch{lhs, {/* ignored context */}});
+          }
+          return left_hand_sides;
+        });
+  }
+}
+
+TEST(GetAssignModifyRhs, Various) {
+  constexpr int kTag = 1;  // value doesn't matter
+  const SyntaxTreeSearchTestCase kTestCases[] = {
+      {""},
+      {"module m;\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin "
+       "k &= ",
+       {kTag, "1"},
+       ";\nend\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k |= ",
+       {kTag, "(1 + 2)"},
+       ";\nend\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k += ",
+       {kTag, "1"},
+       ";\nend\nendmodule\n"},
+      {"module m;\n"
+       "reg k;\n"
+       "always_comb begin\n"
+       "k = 1;\nend\n"
+       "endmodule\n"},
+      {"module m;\n"
+       "always_comb begin\n"
+       "reg k = 1;\nend\n"
+       "endmodule\n"},
+  };
+  for (const auto &test : kTestCases) {
+    TestVerilogSyntaxRangeMatches(
+        __FUNCTION__, test, [](const TextStructureView &text_structure) {
+          const auto &root = text_structure.SyntaxTree();
+          const auto &assign_modify_statements = SearchSyntaxTree(
+              *ABSL_DIE_IF_NULL(root), NodekAssignModifyStatement());
+
+          std::vector<TreeSearchMatch> right_hand_sides;
+          for (const auto &block : assign_modify_statements) {
+            const auto *rhs =
+                GetAssignModifyRhs(verible::SymbolCastToNode(*block.match));
+            right_hand_sides.emplace_back(
+                TreeSearchMatch{rhs, {/* ignored context */}});
+          }
+          return right_hand_sides;
+        });
+  }
+}
+
 }  // namespace
 }  // namespace verilog
