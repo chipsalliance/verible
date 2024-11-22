@@ -450,4 +450,4 @@ Enabled by default: true
 
 ## Version
 
-Generated on 2024-11-14 17:00:54 -0800 from [5eb8aa3](https://github.com/google/verible/commit/5eb8aa34f28270a636e6471ad610d21c12916791)
+Generated on 2024-11-21 16:48:16 -0800 from [106f651](https://github.com/google/verible/commit/106f651e3f692704bdda1338935132c34f2bca90)
