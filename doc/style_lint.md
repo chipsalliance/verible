@@ -25,7 +25,7 @@ Before you begin, familiarize yourself with:
 Whose style guide serves as a reference for lint rules? Everyone and anyone's.
 Every team may set its own guidelines on what constitutes correct style. The
 style linter hosts an ever-growing library of rules, but _you_ decide
-[which rules or configurations](../verilog/tools/lint.md#usage) best suit your
+[which rules or configurations](../verible/verilog/tools/lint.md#usage) best suit your
 project.
 
 ### Traits of good lint rules
@@ -85,7 +85,7 @@ syntax trees.
 
 ### Syntax Tree Examiner
 
-Use [`verible-verilog-syntax --printtree`](../verilog/tools/syntax) to examine
+Use [`verible-verilog-syntax --printtree`](../verible/verilog/tools/syntax) to examine
 the syntax structure of examples of code of interest.
 
 ### Syntax Tree Visitors
@@ -96,7 +96,7 @@ to query the stack to determine the context at any node.
 
 ### Syntax Tree Direct Substructure Access
 
-The [SV concrete syntax tree (CST) is described here](../verilog/CST). The CST
+The [SV concrete syntax tree (CST) is described here](../verible/verilog/CST). The CST
 library contains a number of useful `GetXFromY`-type accessor functions. These
 functions offer the most direct way of extracting information from syntax tree
 nodes. Accessor functions are useful when you've already narrowed down your
@@ -152,7 +152,7 @@ Cons:
 
 ### Single Node Type Matchers
 
-For every [SystemVerilog CST node enum](../verilog/CST/verilog_nonterminals.h),
+For every [SystemVerilog CST node enum](../verible/verilog/CST/verilog_nonterminals.h),
 we produce a corresponding node-matcher in [verilog_matchers.h] that finds that
 node type. For example, `NodekFunctionDeclaration` matches nodes tagged
 `kFunctionDeclaration`. These are defined using [TagMatchBuilder].
@@ -192,7 +192,7 @@ match result; they are fully commutative.
 Many matchers support _binding_ to user-provided names called
 [BindableMatchers]. This lets you save interesting subtree positions found
 during the match and retrieve them from a [BoundSymbolManager].
-[Example using `.Bind()`](../verilog/analysis/checkers/undersized_binary_literal_rule.h).
+[Example using `.Bind()`](../verible/verilog/analysis/checkers/undersized_binary_literal_rule.h).
 
 ## Reporting Positive Findings
 
